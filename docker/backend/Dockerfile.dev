@@ -1,13 +1,22 @@
 # Development Dockerfile for Rust backend with hot-reload
 # Uses cargo-watch for automatic recompilation
 
-FROM rust:1.75-slim-bookworm
+# Keep in sync with backend/rust-toolchain.toml (channel 1.94.1). The old
+# rust:1.75 base could no longer parse the v4 Cargo.lock (bitrot found
+# 2026-07-22 while live-testing the build-experience roadmap).
+FROM rust:1.94-slim-bookworm
 
-# Install development dependencies
+# Install development dependencies. clang + lld are required because the
+# bind-mounted backend/.cargo/config.toml sets them as the linker for
+# x86_64-linux — without them every runtime `cargo run` fails with
+# "linker `clang` not found" (image-time builds worked only because the
+# COPY below does not include .cargo/).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
     curl \
+    clang \
+    lld \
     && rm -rf /var/lib/apt/lists/*
 
 # Install cargo-watch for hot-reloading
@@ -19,6 +28,13 @@ WORKDIR /app
 COPY backend/Cargo.toml backend/Cargo.lock ./
 COPY backend/crates ./crates
 COPY backend/servers ./servers
+
+# crates/common embeds the frontend sitemap JSON via a relative include that
+# resolves one level above the backend workspace root (/app → /frontend/...).
+# Without it the workspace cannot compile inside the image. The runtime
+# bind-mount only covers /app, so rebuilds keep using this image-baked copy —
+# rebuild the image if the sitemap JSON changes.
+COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/src/json/sitemap.json
 
 # Build dependencies (cached)
 RUN cargo build
