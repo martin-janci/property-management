@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "code-review-mobile-native-kmp-search-stale-response-race-retry2",
   "selected_at": "2026-07-22T16:10:20Z",
-  "last_action": "repick",
-  "reason": "prior target 'code-review-mobile-native-kmp-deeplink-token-not-url-decoded-retry2' exhausted; closest-to-done is 'code-review-mobile-native-kmp-search-stale-response-race-retry2' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

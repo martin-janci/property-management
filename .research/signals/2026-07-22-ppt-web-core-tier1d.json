@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-22",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=30 < floor=36). No fresh CHURN_FILES handed to this slice, so churn-alignment did not apply -> oldest-unreviewed. state.review_cursor is stale relative to the signals-file history (tier1d slices have not folded back into the cursor): cursor lists api-handlers=2026-07-14 and mobile-rn=2026-07-14 as oldest, but (a) an api-handlers slice already landed TODAY (.research/signals/2026-07-22-api-handlers-tier1d.json, 2 findings) so api-handlers is de-facto freshly covered, and (b) mobile-rn was actually reviewed 2026-07-18 per its signal file. Reconciling cursor vs actual signal-file history, the genuinely least-recently-reviewed segment is ppt-web-core (last actual review 2026-07-15, and cursor agrees at 2026-07-15). Not backlog-saturated (0 open code-review-finding items for ppt-web-core; the 3 open ppt-web-ui items are a different segment). Segment root: frontend/apps/ppt-web/src/ core areas only (hooks/, lib/ [api client, error handler, websocket, storage, queryKeys], contexts/ [Auth/Org/WebSocket providers], routes/) EXCLUDING pages/ + components/ + features/ (= ppt-web-ui). Skill map path frontend/ppt-web/src/ resolves to the frontend/apps/ workspace layout. Frontend expert, static-only, no secondary (ppt-web-core has no secondary in the skill matrix).",
+  "experts_used": [
+    "frontend"
+  ],
+  "review_scope_notes": "Grep-driven hit-lists: console.* (usePerformanceMetrics + websocket.ts diagnostics = intentional/dev-gated, not reported), as-any/as-unknown-as (0 in core), useQuery/useMutation error handling, i18n literals, token storage + auth flow, retry/interceptor logic. Read in full: lib/api.ts, lib/storage.ts, lib/errorHandler.ts, contexts/AuthContext.tsx; traced lib/api.ts consumer wiring across the app. Verified NOT reportable: AuthContext token storage/refresh/logout is well-hardened (single-flight refresh via isRefreshing ref, scoped query-cache purge on logout #712, rollback-on-error on SSO/refresh, deriveActiveRole handles multi-tenant role promotion #574); JWT-in-WS-query-param (websocket.ts:88) is the documented browser-handshake workaround, not a defect; AuthContext mount-time skips explicit token-expiry check but the 401 path recovers gracefully. Delegated nothing (single expert, budget-scoped). 3 findings = cap reached.",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-apiclient-never-configured",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:258 (configureApiClient) is NEVER called in production code. A repo-wide grep for `configureApiClient(` finds hits only in lib/api.test.tsx (7 test calls) and the docstring — no call in main.tsx / App.tsx / AuthProvider or any provider. Consequently the singleton created by getApiClient() (api.ts:233-238) is built by createAxiosInstance({}) with config.getToken === undefined, so module-level `tokenGetter` (api.ts:138) stays undefined and the request interceptor's `if (tokenGetter)` guard (api.ts:162) is ALWAYS false -> no Authorization: Bearer header is ever attached. onUnauthorizedCallback is likewise undefined, so the 401 branch (api.ts:180) is dead.",
+        "This client is not dead code: it backs two shipped, routed features. usePredictiveMaintenance.ts:33/50/63/76 and useSentiment.ts:35/53/69/82/93/108 call getApiClient().get/post/put against authenticated endpoints, and both are mounted under the AI Dashboards route group (routes/groups/ai-dashboards.tsx — Sentiment 13.2 + Predictive Maintenance 13.3). Every request from these dashboards therefore goes out with no JWT and is rejected 401 by api-server, with no logout/refresh handling. The token-injection + unauthorized interceptors — and their whole test suite in api.test.tsx that passes getToken/onUnauthorized explicitly — never exercise the wiring the app actually runs. Fix: call configureApiClient({ getToken: getAccessToken, onUnauthorized }) during AuthProvider init (mirroring setTokenProvider for @ppt/api-client at AuthContext.tsx:325), or route these hooks through @ppt/api-client which already has the global token provider."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-retry-nonidempotent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:174-212 — the response interceptor auto-retries (up to MAX_RETRIES=3) whenever isRetryableError() is true, and isRetryableError (api.ts:85-93) returns true for EVERY network error (no response) plus 5xx/408/429, with NO check on config.method. It calls instance.request(config) again regardless of verb, so a POST/PUT/PATCH/DELETE that the server actually processed but whose response was lost to a network blip or 502/504 is silently replayed. On non-idempotent mutation endpoints reachable through this client (e.g. useSentiment acknowledge-alert POST / update-thresholds PUT at useSentiment.ts:93/108, and any future getApiClient() POST) this causes duplicate side-effects. Safer: gate retries to idempotent methods (GET/HEAD/PUT/DELETE per spec, or an explicit idempotency-key allowlist) and never blind-retry POST on a no-response error."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "chore",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53-141 — the entire ERROR_MESSAGES catalog (Authentication Required, Invalid Credentials, Session Expired, Access Denied, Rate Limit Exceeded, Server Error, You are Offline, ...) and DEFAULT_ERROR are hardcoded English string literals rendered to end users via parseApiError()/parseHttpStatusError(), none wrapped in react-i18next t(). ppt-web ships react-i18next (react-i18next 16 per root CLAUDE.md), so this central error-display path is English-only regardless of the user's locale. formatFieldName() (errorHandler.ts:454-464) similarly Title-Cases raw field keys instead of resolving localized labels. Low severity but a wide, systematic i18n gap in a core module; the fix is to key the catalog and translate at render time."
+      ]
+    }
+  ]
+}
