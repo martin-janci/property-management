@@ -1,0 +1,39 @@
+{
+  "segment": "api-handlers",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "generated_by": "dispatcher-tier1d",
+  "generated_at": "2026-07-22T14:15:00Z",
+  "signals": [
+    {
+      "id": "code-review-ai-ocr-correction-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs:261-312 — submit_correction (POST /api/v1/ai/ocr/correction) authorizes only by checking the caller is_member of the CLIENT-SUPPLIED body.organization_id (OcrCorrectionRequest.organization_id: Uuid, line 52), then persists a correction whose body.meter_reading_id (Option<Uuid>, line 58) is NEVER validated to belong to that org. The referenced reading's tenant is never checked.",
+        "backend/crates/db/src/repositories/meter.rs:1140-1157 — create_ocr_correction does a bare INSERT INTO ocr_meter_corrections binding organization_id and meter_reading_id straight from the request with no WHERE/EXISTS ownership guard, so nothing downstream closes the gap. A member of org A can attach a correction to another tenant's meter_reading_id (poisoning cross-tenant correction/training data and creating cross-tenant referential links).",
+        "Contrast with the sibling handler process_meter_reading (ocr.rs:177-195) which DOES verify meter.organization_id membership before writing — submit_correction omits the equivalent meter_reading->org check, making the gap an in-file inconsistency, not an intentional design."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-ai-ocr-rls-bypass-pattern",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs:125-312 — both ai/ocr handlers use the AuthUser extractor plus client-supplied body.organization_id and manual org_member_repo.is_member() checks, opting OUT of the RLS WITH CHECK boundary that every other ai/ handler relies on: equipment.rs (org = rls.tenant_id(), lines 62/86/110/139/167), workflows.rs:434, sessions.rs, voice.rs:65 all derive the authoritative org from the token via RlsConnection. ocr.rs is the lone segment outlier.",
+        "This per-handler opt-out is the root cause enabling code-review-ai-ocr-correction-idor: because the org is taken from the request body rather than rls.tenant_id() and RLS is not in the write path, the ownership invariant must be re-implemented by hand — and one branch (submit_correction) forgot. Recommend migrating both ocr handlers to RlsConnection/rls.tenant_id() so the DB policy enforces tenant scoping uniformly."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

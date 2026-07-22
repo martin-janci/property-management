@@ -10,8 +10,9 @@ tags: [workflow]
 # PPT Tests
 
 Map of change → test command. The implementer prompt requires that you
-quote `just check` and `just test` outputs in the PR body — but during the
-loop you usually want a narrower command. This skill is that map.
+quote the `just verify` output (VERIFY-PLAN + VERIFY OK) in the PR body —
+but during the loop you usually want a narrower command. This skill is
+that map.
 
 ## When to invoke
 
@@ -131,8 +132,12 @@ just --list | grep -qE '^\s+(test-backend|test-frontend|test-integration)\b'
 ## After-task verification
 
 ```bash
-just check && just test    # quote tail of each in PR body (IG7)
+just verify    # impact-scoped gate — quote VERIFY-PLAN block + VERIFY OK <hash> in PR body (IG7)
 ```
+
+Scope is automatic (see `scripts/verify-impact.sh` and
+[`_verify-rules.md`](../_verify-rules.md)) — never hand-compose
+full-workspace commands as a substitute.
 
 ## Cross-references
 

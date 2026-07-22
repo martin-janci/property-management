@@ -88,9 +88,13 @@ output in the PR body.
 
 ### IG7 — CI checks the same things you ran locally
 
-- **Pass when:** `just check` and `just test` (or the project's equivalent
-  per-area subset) pass locally with the diff applied.
-- **Check:** quote the final exit code of each in the PR body.
+- **Pass when:** `just verify` passes locally with the diff applied. Scope
+  is chosen automatically by `scripts/verify-impact.sh`'s escalation table
+  (impact-scoped: per-crate / per-package for narrow diffs, full stack only
+  when lockfiles / migrations / typespec force it). See
+  `.claude/skills/_verify-rules.md`.
+- **Check:** quote the `VERIFY-PLAN base=<sha> files=<n>` block and the
+  `VERIFY OK <hash>` line verbatim in the PR body.
 
 ### IG8 — Hand-off back to the routine
 
@@ -295,8 +299,12 @@ the whole world for a unit-test-only change.
    note in the brief slot (open a GitHub issue summarizing why this plan is
    stale) and don't ship.
 4. **Branch:** `git switch -c impl/$SLUG main`.
-5. **Pre-flight check:** `just check` — confirm a clean baseline. Fix any
-   pre-existing failures first or document them as out-of-scope.
+5. **Pre-flight check:** `just verify-plan` — prints the (empty-on-a-clean-
+   branch) verify plan and confirms the gate tooling works. Don't run a full
+   workspace check as a "baseline" — the gate scopes itself to your diff.
+   If you suspect pre-existing breakage in an area you're about to touch,
+   scope-check just that area (e.g. `cargo clippy -p <crate>`) and document
+   failures as out-of-scope.
 
 ## Implementation loop (per Suggested-approach step)
 
@@ -316,13 +324,16 @@ For each step in the plan's *Suggested approach*:
 
 ## Verification before opening the PR
 
-Run **all of these** and quote the output in the PR body:
+Run the deterministic impact-scoped gate and quote its output in the PR body:
 
 ```bash
-just check       # lint + typecheck across all areas
-just test        # full test suite
-just build       # production build, catches anything check/test miss
+just verify      # scope = f(merge-base with origin/dev, changed paths, escalation table)
+                 # prints VERIFY-PLAN … then VERIFY OK <hash> on success
 ```
+
+Never substitute hand-composed full-workspace commands (`just build` is
+banned locally — no `--release`/`cargo build`; see
+`.claude/skills/_verify-rules.md`).
 
 Plus the plan's *Test plan* commands verbatim. If any of these fail, **do
 not open the PR** — go back to the loop.
@@ -345,10 +356,9 @@ Closes plan: .research/plans/$SLUG.md
 
 ## Verification
 \`\`\`
-$ just check
-<paste exit + tail>
-$ just test
-<paste exit + tail>
+$ just verify
+<paste the VERIFY-PLAN base=<sha> files=<n> block verbatim>
+<paste the VERIFY OK <hash> line>
 $ <plan's test-plan commands>
 <paste outputs>
 \`\`\`

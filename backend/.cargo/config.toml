@@ -15,8 +15,10 @@ rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
 [alias]
 # Common development commands
-dev = "run --package auth-server"
+dev = "run --package api-server"
 test-all = "test --workspace"
 check-all = "check --workspace"
 fmt-all = "fmt --all"
 clippy-all = "clippy --workspace -- -D warnings"
+verify = "clippy --workspace --all-targets -- -D warnings"
+nt = "nextest run --workspace"

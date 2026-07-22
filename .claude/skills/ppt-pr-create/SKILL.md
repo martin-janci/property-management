@@ -15,8 +15,11 @@ will run.
 
 ## When to invoke
 
-`just check && just test && just build` all passed, and the plan's *Test
-plan* commands all exited 0. You're about to open the PR.
+`just verify` is green — you have the `VERIFY-PLAN base=<sha> files=<n>`
+block and the `VERIFY OK <hash>` line to paste into the PR body — and the
+plan's *Test plan* commands all exited 0. You're about to open the PR.
+(No `just build`: local release builds are banned — see
+[`_verify-rules.md`](../_verify-rules.md).)
 
 ## What it gives you
 
@@ -139,10 +142,9 @@ plan* commands all exited 0. You're about to open the PR.
 
    ## Verification
    ```
-   $ just check
-   <paste exit + tail>
-   $ just test
-   <paste exit + tail>
+   $ just verify
+   <paste the VERIFY-PLAN base=<sha> files=<n> block verbatim>
+   <paste the VERIFY OK <hash> line>
    $ <plan's test-plan commands>
    <paste outputs>
    ```
@@ -225,7 +227,7 @@ the blocker in the body, per implementer prompt § *Goals*:
 
 - IG3 failing-on-main can't be reproduced
 - An IG4 step is skipped without justification
-- Any of `just check / just test / just build` failed
+- `just verify` failed (paste the `VERIFY FAIL: <cmd>` line as the blocker)
 
 ## Deterministic verification
 

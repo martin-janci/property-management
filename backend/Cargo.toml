@@ -11,9 +11,15 @@ members = [
     "crates/accounting-core",
     "servers/api-server",
     "servers/reality-server",
-    "servers/deploy-server",
     "servers/accounting-server",
 ]
+# deploy-server is a standalone leaf ops tool, excluded from the workspace on
+# purpose: it is the sole user of sqlx's `sqlite` feature, and keeping it as a
+# member caused feature-unification churn between `-p` and `--workspace` builds
+# (every switch recompiled sqlx and its dependents). It builds with its own
+# lockfile from backend/servers/deploy-server/. See
+# .research/build-experience-report-2026-07-22.md.
+exclude = ["servers/deploy-server"]
 
 [workspace.package]
 version = "0.3.218"
@@ -169,6 +175,19 @@ which = "8.0"
 strip = "symbols"
 lto = "thin"
 codegen-units = 1
+
+# Dev builds are dominated by agent verify loops (check/clippy/test cycles), so
+# we trim debuginfo to cut link time and target-dir size without touching
+# opt-level (which would hurt cold-build time). `line-tables-only` keeps file
+# and line numbers in backtraces — enough for diagnosing panics — while
+# `unpacked` split-debuginfo keeps object debuginfo out of the final link.
+# Dependencies get no debuginfo at all: we never step through them.
+[profile.dev]
+debug = "line-tables-only"
+split-debuginfo = "unpacked"
+
+[profile.dev.package."*"]
+debug = false
 
 # `cargo test --workspace` statically links one large binary per test file.
 # With full debuginfo (the default) these balloon the runner's root disk and
