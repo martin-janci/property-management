@@ -9,7 +9,8 @@
     "generate": "openapi-ts -i ../../../docs/api/generated/accounting-openapi.json -o ./src/generated",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:run": "vitest run"
   },
   "dependencies": {

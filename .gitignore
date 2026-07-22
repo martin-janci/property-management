@@ -26,6 +26,11 @@ orchestrate
 .worktrees/
 .secrets
 
+# === Agent scratch files (root-level, never committed) ===
+/WIP-*.md
+/FEATURE-TEAM-PROMPT.md
+.playwright-cli/
+
 # === Documentation ===
 !docs/
 !docs/**
