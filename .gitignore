@@ -16,7 +16,13 @@ Thumbs.db
 .claude-threads/
 .bmad/
 _bmad/
-.claude/
+# .claude: ignore everything except the shared agent config subset
+.claude/*
+!.claude/settings.json
+!.claude/commands/
+!.claude/agents/
+!.claude/skills/
+!.claude/hooks/
 .cursor/
 .mcp.json
 
