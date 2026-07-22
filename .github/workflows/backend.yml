@@ -280,36 +280,28 @@ jobs:
   # the loaded sitemap so it can't silently rot again — see
   # `backend/crates/common/src/sitemap/mod.rs::test_metadata_stats_match_loaded_collections`.)
   #
-  # This job fans ALL server (`servers/*`) integration test binaries out over
-  # MATRIX_COUNT parallel runners via scripts/ci-test-shard.sh (hash-partitioned
-  # by sorted `crate:test` position). Issue #2248 finding 2: previously only
-  # api-server's binaries were sharded and reality-server's 32 integration
-  # binaries rode sequentially on `test-rest`, making IT the new bottleneck; the
-  # sharder now partitions every server crate's integration binaries together so
-  # the heavy load is spread evenly. EVERY shard — shard 0 included — runs an
-  # identically-shaped, roughly equal-sized ~1/N slice of those binaries and
-  # NOTHING else, so none approaches the timeout. The "everything else once"
-  # workload (non-server workspace tests + each server crate's lib/bins/doc unit
-  # tests) lives in a dedicated parallel job (`test-rest` below), off the shard
-  # hot path.
-  # This is NOT the required status context (branch protection requires exactly
-  # `test`, produced by the thin aggregator job below — one producer, per
-  # #1672); the matrix legs report `test-shard (0..N)` and skip cleanly on
-  # pure-frontend PRs.
-  # De-serialized from `check` (2026-07-22): the test legs start immediately
-  # instead of waiting ~10 min for clippy + the shell gates. The required
-  # `test` aggregator below still needs `check` and hard-fails if it didn't
-  # succeed, so the merge gate semantics are unchanged.
-  test-shard:
+  # Nextest archive model (2026-07-22, roadmap item 7 — see
+  # .research/build-experience-report-2026-07-22.md). The old model
+  # (scripts/ci-test-shard.sh, #2222/#2248) hash-partitioned `crate:test`
+  # PAIRS across 4 legs, but every leg still COMPILED its selected binaries
+  # from source — the workspace compile+link was paid ~5x (4 shards + rest).
+  # Now `test-build` compiles ALL workspace test targets exactly once via
+  # `cargo nextest archive` and uploads the zstd archive; the `test-shard`
+  # legs download it and only RUN their `--partition hash:m/4` slice —
+  # per-TEST partitioning (finer than the old per-binary split), retries and
+  # per-test timeouts come from backend/.config/nextest.toml [profile.ci].
+  # Doctests are outside nextest's scope and run once in `test-build`, so
+  # coverage stays exactly-once with no gap: {shards} ∪ {doctests} = full
+  # workspace surface. The old `test-rest` leg is gone — nextest partitions
+  # lib/bin/integration tests of ALL crates together.
+  # None of these are the required status context (branch protection requires
+  # exactly `test`, produced by the thin aggregator below — one producer, per
+  # #1672); they skip cleanly on pure-frontend PRs.
+  test-build:
     needs: [changes]
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 150
-    strategy:
-      fail-fast: false
-      matrix:
-        # Keep in sync with MATRIX_COUNT passed to ci-test-shard.sh below.
-        shard: [0, 1, 2, 3]
     # Combining many integration-test binaries (each statically links the whole
     # server + deps) spikes peak memory during the parallel link step and the
     # runner OOM-kills the build (SIGTERM/143 with no compile error). Drop
@@ -319,6 +311,73 @@ jobs:
       CARGO_PROFILE_TEST_DEBUG: "0"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_BUILD_JOBS: "2"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.94.1
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      # Single `backend-test` lineage (2026-07-22): only this job compiles the
+      # test surface now, so there is exactly one writer. Saved only from dev
+      # pushes so PR runs don't churn the cache.
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+          shared-key: "backend-test"
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
+          cache-on-failure: true
+
+      # The GitHub-hosted runner's root disk fills during the link step of the
+      # api-server test binaries. Reclaim the preinstalled toolchains we don't
+      # use (dotnet/android/ghc/swift/CodeQL, ~25GB) before compiling.
+      - name: Free disk space
+        run: |
+          echo "Disk before cleanup:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          echo "Disk after cleanup:"; df -h /
+
+      - name: Build test archive (all workspace test binaries, once)
+        working-directory: backend
+        run: cargo nextest archive --workspace --archive-file nextest-archive.tar.zst
+
+      # Doctests are not supported by nextest; run them here, once, against the
+      # warm build cache (#2248 finding 3: doctests must not be silently
+      # dropped). No DB service: workspace doctests are compile-level examples
+      # (observed 0 executable doctests today) — if one ever needs Postgres it
+      # will fail loudly here and this step gets a service.
+      - name: Run doctests
+        working-directory: backend
+        run: cargo test --doc --workspace
+
+      - name: Upload test archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextest-archive
+          path: backend/nextest-archive.tar.zst
+          retention-days: 1
+
+  # Run legs: download the archive and execute one hash partition each. No
+  # compilation happens here (no rust-cache either) — wall clock is pure test
+  # runtime + service startup. Partition indices are 1-based (nextest).
+  test-shard:
+    needs: [changes, test-build]
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with the /4 in the --partition args below.
+        shard: [1, 2, 3, 4]
 
     services:
       postgres:
@@ -349,25 +408,20 @@ jobs:
           --health-retries 5
 
     steps:
+      # Checkout is still needed: nextest re-anchors the archived binaries to
+      # this source tree via --workspace-remap (fixture files, migration dirs,
+      # include_str! paths resolved relative to the workspace).
       - uses: actions/checkout@v7
 
+      # Toolchain pinned for a stable `cargo` shim for `cargo nextest`; no
+      # compilation happens in this job.
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.94.1
 
-      # Shared `backend-test` lineage for all test legs (2026-07-22): the bulk
-      # of the cache value is the dependency artifacts, which are identical
-      # across shards (same env → same final key; rust-cache saves are atomic,
-      # first-finisher wins, so parallel legs can't clobber each other). Kept
-      # separate from the `backend` lineage because the CARGO_PROFILE_*_DEBUG=0
-      # overrides here produce artifacts incompatible with the check job's.
-      # Saved only from dev pushes so PR runs don't churn the cache.
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
         with:
-          workspaces: backend
-          shared-key: "backend-test"
-          save-if: ${{ github.ref == 'refs/heads/dev' }}
-          cache-on-failure: true
+          tool: cargo-nextest
 
       # The voting PDF-report path (routes/voting.rs::render_pdf_report, added
       # in #1625) loads the LiberationSans TTFs from
@@ -380,142 +434,59 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-liberation
 
-      # The GitHub-hosted runner's root disk fills during the link step of the
-      # api-server test binaries. Reclaim the preinstalled toolchains we don't
-      # use (dotnet/android/ghc/swift/CodeQL, ~25GB) before compiling.
-      - name: Free disk space
-        run: |
-          echo "Disk before cleanup:"; df -h /
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
-            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
-          sudo docker image prune --all --force >/dev/null 2>&1 || true
-          echo "Disk after cleanup:"; df -h /
+      - name: Download test archive
+        uses: actions/download-artifact@v4
+        with:
+          name: nextest-archive
+          path: backend
 
-      # Run this shard's slice. The script only compiles the test binaries it
-      # selects (via `cargo test --test <name> ...`), so per-shard compile+link
-      # cost is a fraction of the old `--workspace` build too. Semantics kept
-      # from the monolith: --no-fail-fast (report every failing binary in one
-      # run, PAP-123), --test-threads=4 (cap concurrency to avoid Postgres pool
-      # exhaustion / silent hangs, BIT-334), and a per-invocation
-      # `timeout --kill-after=1m 120m` (SIGKILL a genuinely hung test — a hung
-      # cargo test process ignores SIGTERM, SIGKILL cannot be ignored).
-      - name: Run tests (shard ${{ matrix.shard }} of 4)
+      # Run this shard's per-test hash partition. Retry/timeout/thread-cap
+      # semantics live in backend/.config/nextest.toml [profile.ci]:
+      # fail-fast=false (report every failure in one run, PAP-123),
+      # test-threads=4 (avoid Postgres pool exhaustion / silent hangs,
+      # BIT-334), per-test slow-timeout+terminate (a hung test is killed
+      # individually instead of SIGKILLing the whole leg).
+      - name: Run tests (partition ${{ matrix.shard }} of 4)
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           RUST_ENV: development
-        run: ./scripts/ci-test-shard.sh ${{ matrix.shard }} 4 || { echo "::error::Backend test shard ${{ matrix.shard }} timed out or failed (exit $?)"; exit 1; }
+        run: >
+          cargo nextest run --archive-file nextest-archive.tar.zst
+          --workspace-remap .
+          --profile ci
+          --partition 'hash:${{ matrix.shard }}/4'
+          || { echo "::error::Backend test partition ${{ matrix.shard }}/4 failed (exit $?)"; exit 1; }
 
       # WS pub/sub fanout — closes issue #681. `ws_pubsub_fanout_delivers_to_
       # correct_subscriber` (api-server/tests/ws_integration_tests.rs) is
-      # `#[ignore]` because it needs a live Redis. Run it once, on shard 0,
-      # with --include-ignored against the Redis service above (local runs
-      # without REDIS_URL still skip it).
+      # `#[ignore]` because it needs a live Redis. Run it once, on partition 1,
+      # against the Redis service above (local runs without REDIS_URL still
+      # skip it).
       - name: Run ignored WS+Redis integration tests
-        if: matrix.shard == 0
+        if: matrix.shard == 1
         working-directory: backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           REDIS_URL: redis://localhost:6379
           RUST_ENV: development
-        run: cargo test -p api-server --test ws_integration_tests -- --include-ignored
-
-  # Non-shard test leg (issue #2222 rebalance, generalized in #2248). Runs
-  # everything that is NOT a server integration test binary, exactly once: all
-  # non-server workspace tests (`--workspace` minus every sharded server crate)
-  # plus each server crate's own lib/bins/doc unit tests (--doc closes the #2248
-  # finding-3 gap where api-server doctests were silently dropped). This is the
-  # "everything else once" workload; hosting it in its own parallel runner lets
-  # every `test-shard` leg carry only its equal-sized integration slice.
-  # Like the shards, this is NOT the required context — the aggregator `test`
-  # job below gates on it too (so coverage stays exactly-once, no false green,
-  # #1672) and it skips cleanly on pure-frontend PRs.
-  # De-serialized from `check` (2026-07-22) — same rationale as test-shard;
-  # the required `test` aggregator still gates on `check`.
-  test-rest:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
-    # Same peak-memory mitigations as test-shard: drop test/dev debuginfo and
-    # cap concurrent link jobs so the parallel link step stays under the
-    # runner's memory ceiling (no OOM SIGTERM/143 with no compile error).
-    env:
-      CARGO_PROFILE_TEST_DEBUG: "0"
-      CARGO_PROFILE_DEV_DEBUG: "0"
-      CARGO_BUILD_JOBS: "2"
-
-    services:
-      # Non-api-server crates (reality-server, accounting-server, library
-      # crates) provision their own `#[sqlx::test]` databases against this
-      # Postgres, same as the shard job. (deploy-server is workspace-excluded
-      # since 2026-07-22 — covered by deploy-server.yml instead.)
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.94.1
-
-      # Same shared `backend-test` lineage as the shards (2026-07-22): dep
-      # artifacts dominate and are identical; atomic first-finisher-wins saves
-      # mean no clobbering. Saved only from dev pushes.
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: backend
-          shared-key: "backend-test"
-          save-if: ${{ github.ref == 'refs/heads/dev' }}
-          cache-on-failure: true
-
-      # Parity with test-shard: the voting PDF-report path needs the Liberation
-      # TTFs, and some non-api-server crates exercise shared render helpers.
-      - name: Install PDF report fonts
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends fonts-liberation
-
-      # Same disk-exhaustion guard as test-shard — the link step of the
-      # workspace test binaries fills the runner's root disk.
-      - name: Free disk space
-        run: |
-          echo "Disk before cleanup:"; df -h /
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
-            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
-          sudo docker image prune --all --force >/dev/null 2>&1 || true
-          echo "Disk after cleanup:"; df -h /
-
-      # Everything that is NOT an api-server integration binary, exactly once.
-      - name: Run tests (non-shard leg)
-        working-directory: backend
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
-          RUST_ENV: development
-        run: ./scripts/ci-test-shard.sh rest || { echo "::error::Backend non-shard test leg timed out or failed (exit $?)"; exit 1; }
+        run: >
+          cargo nextest run --archive-file nextest-archive.tar.zst
+          --workspace-remap .
+          --profile ci
+          --run-ignored ignored-only
+          -E 'binary_id(=api-server::ws_integration_tests)'
 
   # REQUIRED context `test`. Produced by EXACTLY ONE job (#1672). It is a thin
-  # aggregator over the `test-shard` matrix + the `test-rest` leg: `if:
-  # always()`-style so the context is emitted on EVERY PR shape (backend, mixed,
-  # pure-frontend), and it fails red iff `check`, any shard, or the non-shard
-  # leg did not succeed. Keeping the heavy legs in separate (non-required) jobs
-  # and gating the single required context here preserves the
-  # one-producer-per-required-context invariant while giving the heavy work real
-  # parallel headroom.
+  # aggregator over `test-build` (archive + doctests) and the `test-shard`
+  # partition matrix: `if: always()`-style so the context is emitted on EVERY
+  # PR shape (backend, mixed, pure-frontend), and it fails red iff `check`,
+  # the archive build, or any partition did not succeed. Keeping the heavy
+  # legs in separate (non-required) jobs and gating the single required
+  # context here preserves the one-producer-per-required-context invariant
+  # while giving the heavy work real parallel headroom.
   test:
-    needs: [changes, check, test-shard, test-rest]
+    needs: [changes, check, test-build, test-shard]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
@@ -524,25 +495,25 @@ jobs:
         run: |
           echo "Pure-frontend PR — no backend/** changes; backend 'test' job not required to run."
 
-      - name: Aggregate backend test shard results
+      - name: Aggregate backend test results
         if: needs.changes.outputs.backend == 'true'
         run: |
           echo "check result:      ${{ needs.check.result }}"
+          echo "test-build result: ${{ needs.test-build.result }}"
           echo "test-shard result: ${{ needs.test-shard.result }}"
-          echo "test-rest result:  ${{ needs.test-rest.result }}"
           if [ "${{ needs.check.result }}" != "success" ]; then
             echo "::error::Upstream 'check' job did not succeed (${{ needs.check.result }}); failing required 'test' context."
             exit 1
           fi
+          if [ "${{ needs.test-build.result }}" != "success" ]; then
+            echo "::error::Test archive build / doctests (test-build) did not succeed (${{ needs.test-build.result }})."
+            exit 1
+          fi
           if [ "${{ needs.test-shard.result }}" != "success" ]; then
-            echo "::error::One or more backend test shards did not succeed (${{ needs.test-shard.result }})."
+            echo "::error::One or more backend test partitions did not succeed (${{ needs.test-shard.result }})."
             exit 1
           fi
-          if [ "${{ needs.test-rest.result }}" != "success" ]; then
-            echo "::error::Backend non-shard test leg (test-rest) did not succeed (${{ needs.test-rest.result }})."
-            exit 1
-          fi
-          echo "All backend test shards and the non-shard leg passed."
+          echo "Archive build, doctests, and all test partitions passed."
 
   # Not run on pull_request (2026-07-22): a full `--release --workspace` build
   # proves nothing the required `check`/`test` contexts don't already prove on

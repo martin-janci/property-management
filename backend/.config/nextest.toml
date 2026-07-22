@@ -1,0 +1,23 @@
+# nextest configuration (2026-07-22, build-experience roadmap item 7).
+# The `ci` profile is used by backend.yml's test-shard partition legs
+# (`cargo nextest run --archive-file ... --profile ci --partition hash:m/4`).
+# Local runs use the default profile unless --profile ci is passed.
+
+[profile.ci]
+# Report every failure in one run instead of stopping at the first
+# (kept from the old `cargo test --no-fail-fast` semantics, PAP-123).
+fail-fast = false
+# Cap concurrency: #[sqlx::test] provisions a database per test; more than 4
+# concurrent tests exhausts the CI Postgres pool and hangs silently (BIT-334).
+test-threads = 4
+# One automatic retry: known-flaky sqlx::test timing sensitivities cause
+# false-red legs that stall the merge queue; a pass-on-retry is reported as
+# FLAKY in the run summary (visible, not silent) rather than failing the leg.
+retries = 1
+# Per-test hang guard, replacing the old whole-leg `timeout 120m` SIGKILL:
+# after 2 minutes a test is flagged slow; after 15 periods (30 min) it is
+# terminated individually and the leg keeps going.
+slow-timeout = { period = "120s", terminate-after = 15 }
+
+[profile.ci.junit]
+path = "junit.xml"
