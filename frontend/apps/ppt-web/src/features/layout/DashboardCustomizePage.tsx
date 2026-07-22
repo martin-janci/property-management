@@ -35,8 +35,12 @@ export function DashboardCustomizePage() {
   // Validation errors from a 422 response — cleared on next change
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Track the JSON we last sent so we can conditionally clear dirty
-  const sentJsonRef = useRef<string | null>(null);
+  // Mirror the latest committed override in a ref so an async save-success
+  // callback can read the CURRENT state (not the stale value captured by the
+  // closure that started the save). Updated every render, so an edit made
+  // while a save is in flight is visible here by the time the save resolves.
+  const localOverrideRef = useRef<TenantOverride | null>(localOverride);
+  localOverrideRef.current = localOverride;
 
   const mutation = useSaveTenantLayoutOverride(SCREEN);
 
@@ -55,17 +59,23 @@ export function DashboardCustomizePage() {
 
   const handleSave = async () => {
     if (localOverride === null) return;
-    const json = JSON.stringify(localOverride);
-    sentJsonRef.current = json;
+    // Snapshot the payload we're about to send. Comparing the CURRENT state
+    // against this snapshot on success tells us whether the user edited while
+    // the save was in flight.
+    const sentJson = JSON.stringify(localOverride);
     try {
       await mutation.mutateAsync(localOverride);
       showToast({
         type: 'success',
         title: t('layout.customize.saveSuccess'),
       });
-      // Only clear dirty if the override hasn't changed since we sent
-      if (JSON.stringify(localOverride) === json) {
+      // Compare the CURRENT override (via the ref) against what we sent. If the
+      // user edited during the in-flight save the two diverge, so we keep the
+      // form dirty instead of silently discarding the newer edit.
+      if (JSON.stringify(localOverrideRef.current) === sentJson) {
         setIsDirty(false);
+      } else {
+        setIsDirty(true);
       }
     } catch (err) {
       if (err instanceof TenantLayoutError && err.status === 422) {
