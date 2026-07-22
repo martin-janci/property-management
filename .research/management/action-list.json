@@ -87,23 +87,6 @@
       }
     },
     {
-      "id": "code-review-api-core-scheduler-target-ids-silent-parse",
-      "action": "scheduler.rs get_announcement_target_users() silently swallows target_ids JSON parse errors — malformed payload publishes zero notifications with no log",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "dx-closed-not-merged-pr-2385",
       "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup",
       "owner_role": "pm-devops",
@@ -331,6 +314,90 @@
       "depends_on": [],
       "first_open_at": "2026-07-22T10:05:12Z",
       "retry_of": "churn-hotspot-mobile-native-search-screen-kt",
+      "retry_round": 2
+    },
+    {
+      "id": "gh-issue-2441",
+      "action": "Security: cross-tenant IDOR cluster in disputes.rs sub-resource handlers (5 handlers, no org scoping) (Closes #2441)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-22T12:09:13Z (#2441)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T12:09:13Z",
+      "issue_ref": {
+        "number": 2441,
+        "url": "https://github.com/martin-janci/property-management/issues/2441",
+        "labels": [
+          "security",
+          "backend",
+          "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2445",
+      "action": "cargo-deny advisories FAILED on every backend PR — RUSTSEC-2026-0213 (ammonia v4.1.3) blocks the merge pipeline (Closes #2445)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-22T12:09:13Z (#2445)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T12:09:13Z",
+      "issue_ref": {
+        "number": 2445,
+        "url": "https://github.com/martin-janci/property-management/issues/2445",
+        "labels": [
+          "security",
+          "backend",
+          "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform [retry 2/2 of failed code-review-mobile-native-kmp-deeplink-token-not-url-decoded]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T12:10:08Z (retry_of=code-review-mobile-native-kmp-deeplink-token-not-url-decoded reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T02:16:12Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T12:10:08Z",
+      "retry_of": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+      "retry_round": 2
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap [retry 2/2 of failed code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T12:10:08Z (retry_of=code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T20:24:52Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T12:10:08Z",
+      "retry_of": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+      "retry_round": 2
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements-retry2",
+      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy [retry 2/2 of failed refactor-churn-hotspot-mobile-announcements]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-22T12:10:08Z (retry_of=refactor-churn-hotspot-mobile-announcements reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T20:24:52Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T12:10:08Z",
+      "retry_of": "refactor-churn-hotspot-mobile-announcements",
       "retry_round": 2
     }
   ],
