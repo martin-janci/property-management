@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-23",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=5 < floor=36). No CHURN_FILES handed to this slice, so churn-alignment did not apply -> fell through to oldest-unreviewed via state.review_cursor. review_cursor.api-handlers=2026-07-14 is the oldest of the 8 segments and is not backlog-saturated (0 open code-review-finding items). Note: two other Tier-1d slices already ran against api-handlers earlier today (2026-07-23-api-handlers-tier1d.json covering marketplace/general; 2026-07-23-api-handlers-tier1d-layout.json covering routes/layout/). To stay additive rather than redundant, this slice deliberately reviewed the governance/voting handlers those two runs did not touch — board_meetings.rs, regional_compliance.rs, lease_abstraction.rs — and emits under a distinct -governance filename to avoid clobbering the earlier files. Segment root: backend/servers/api-server/src/routes/ (skill map path backend/api-server/src/handlers/ resolves to the servers/ workspace layout; the 'handlers/' dir is named 'routes/' here; hotspot_history paths integrations.rs/organizations.rs are stale — those modules are now integrations/ and organizations/ directories). Rust expert primary, Security secondary; static-only, no compilation/test execution.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "review_scope_notes": "77 route files in the segment (>40 -> narrowed per skill token-budget rule). Prior two runs today already swept the churn hotspots (marketplace, layout, documents/reports/integrations/organizations grep hit-lists) so this slice targeted the governance/voting/compliance handlers left uncovered. Grep hit-lists driven: production-only unwrap/expect (cfg(test)-boundary aware, 14 prod hits — all verified safe except the fabricated-data handlers below: and_hms_opt(...).expect always-valid, HMAC accepts-any-length, startup-validated ESIGN secret, std Mutex poison pattern, short-circuit-guarded building/member as_ref().unwrap); StatusCode::OK-on-error (none — all on Ok arms); secrets-in-logs (none — integrations/webhook.rs only logs 'SECRET not configured', never values; auth.rs logs %e only); unsafe (0); TODO/FIXME/placeholder/stub markers across all *.rs. Verified NOT reportable: lease_abstraction is honest (returns all-None + model_used='placeholder'); integrations/ and organizations/ dirs clean; auth.rs/mfa.rs token paths hardened. 3 findings = cap reached.",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-board-vote-wrong-member-id",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/board_meetings.rs:740-745 — cast_vote() (wired at line 124: POST /motions/{id}/vote) persists every board-meeting vote against `let board_member_id = motion_id;` — an explicit placeholder that uses the motion's own UUID as the voting member's identity, then calls board_meeting_repo.cast_vote(conn, board_member_id, input). The in-code comment admits it: 'In production, we'd look up the board_member_id from user.user_id ... For now, we'll use a placeholder - this should be retrieved from the board_members table'. Full call path is live production (not TODO-gated): route registered -> RLS org check on the motion -> vote written. Consequences (data integrity / data corruption on a governance path): (1) all votes on a given motion are attributed to the SAME bogus board_member_id (= the motion id), so the real voter is never recorded; (2) any per-member uniqueness constraint or tally that keys on board_member_id will collapse/collide across distinct voters or across motions; (3) audit/quorum computations built on MotionVote.board_member_id are unreliable. Fix: resolve the actual board_member_id from the authenticated user (rls principal / user_id) against the board_members table before writing the vote."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-regional-compliance-fabricated-minutes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:340-360 (get_slovak_vote_minutes, wired GET /slovak/voting/minutes/{vote_id}) and :893-915 (get_czech_svj_usneseni, wired GET /czech/...) — both legal-compliance document generators return almost entirely HARDCODED/FABRICATED figures on a live path, using only vote.id / vote.building_id / vote.title from the real vote. Every legally-material field is a literal constant: meeting_date: NaiveDate::from_ymd_opt(2024, 1, 15).unwrap() (fixed date, also an unconditional prod unwrap), meeting_location: 'Spolocenska miestnost, Hlavna 1, Bratislava' / 'Spolecenska mistnost, Hlavni 1, Praha', total_ownership_shares 10000, participating_shares 7500, participation_percentage 75%, votes_for 6000, votes_against 1000, abstentions 500, quorum_met: true, result_approved: true, participants: vec![], questions: vec![]. The Czech variant additionally hardcodes svj_name 'SVJ Hlavni 1' and ico '12345678'. Only the quorum_required/legal_reference pair is real (from regional_compliance_repo.get_quorum_rule, with a hardcoded unwrap_or fallback). Consequence: the SS 14/1993 (SK) and SS 1206/2012 (CZ) statutory vote-minutes these endpoints emit contain invented participation/tally data unrelated to the actual vote — a correctness/completeness defect on a document that is meant to be a legal record. Fix: populate the minutes from the real vote's tallies, roster, and meeting metadata."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-lease-extraction-placeholder-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/lease_abstraction.rs:344-388 (perform_ai_extraction, Story 133.2) — the AI lease-term extraction handler is a shipped stub that never touches storage, OCR, or an LLM: it returns a CreateLeaseExtraction with every extracted field (tenant_name, landlord_name, property_address, lease_start/end_date, monthly_rent, security_deposit, payment_due_day, special_clauses) set to None/empty, model_used: Some('placeholder'), extraction_duration_ms: Some(0). It is honest (no fabricated confidence scores — all *_confidence are None), so severity is low, but it means the whole lease-abstraction extraction feature is non-functional in production: any caller of the extraction endpoint gets an all-null result presented as a completed extraction. Completeness gap to track; wire perform_ai_extraction to the real document-retrieval + LLM path, or gate the endpoint behind a not-implemented (501/feature-flag) response until Story 133.2 lands."
+      ]
+    }
+  ]
+}
