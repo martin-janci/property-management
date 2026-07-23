@@ -405,7 +405,7 @@
       "action": "Unblock PR #2433 (mobile-native iOS resolved-layout) — 2 days without update; owner ping / rebase decision",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-scrum-master 2026-07-23 (score=4: stalled review)",
       "deadline": null,
       "dependency": null,
@@ -416,7 +416,7 @@
         "score": 4,
         "vector": "chore"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": "2026-07-23T18:09:04Z"
     },
     {
       "id": "chore-dependabot-cargo-minor-batch-2026-07-23",
