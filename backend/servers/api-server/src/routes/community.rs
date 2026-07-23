@@ -99,6 +99,137 @@ async fn verify_building_access(
     Ok(building.organization_id)
 }
 
+// SECURITY (cross-tenant IDOR — code-review api-handlers/community): the five
+// write handlers that take a *resource* id from the URL path (`group_id`,
+// `post_id`, `event_id`, `item_id`) — `create_post`, `add_reaction`,
+// `create_comment`, `rsvp_event`, `create_inquiry` — used to bind that id
+// straight into the repository write with no tenant check. Any authenticated
+// user of org A could POST into org B's group/post/event/item by guessing an
+// id. The `verify_*_access` helpers below close that gap the same way the
+// building-id routes use `verify_building_access` and the disputes IDOR fix
+// used `*_for_org`: resolve the resource scoped to the caller's JWT-derived
+// org and reject a miss with **404** (not 403) so the id space cannot be
+// enumerated as an existence oracle.
+
+/// Derive the caller's organization from the verified principal.
+///
+/// The scope MUST come from `RequestPrincipal::effective_org` (JWT + host
+/// resolved, server-side) — never a path- or body-supplied org — so a write
+/// cannot cross tenants. Absent org context (e.g. a platform principal on the
+/// platform host) is a 403, matching the disputes IDOR fix.
+fn require_org(principal: &RequestPrincipal) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    principal.effective_org.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })
+}
+
+/// 500 for a tenant-scoping lookup that errored at the DB.
+fn tenant_lookup_error() -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "DATABASE_ERROR",
+            "Failed to verify tenant access",
+        )),
+    )
+}
+
+/// 404 for a resource that is absent OR owned by another tenant. Uses the same
+/// opaque body for both cases so the id space is not an existence oracle.
+fn resource_not_found(what: &'static str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", what)),
+    )
+}
+
+/// Reject the request unless `group_id` belongs to the caller's org.
+async fn verify_group_access(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    group_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = require_org(principal)?;
+    let exists = state
+        .community_repo
+        .group_exists_for_org(group_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Group tenant lookup failed");
+            tenant_lookup_error()
+        })?;
+    if !exists {
+        return Err(resource_not_found("Group not found"));
+    }
+    Ok(())
+}
+
+/// Reject the request unless `post_id`'s group belongs to the caller's org.
+async fn verify_post_access(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    post_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = require_org(principal)?;
+    let exists = state
+        .community_repo
+        .post_exists_for_org(post_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Post tenant lookup failed");
+            tenant_lookup_error()
+        })?;
+    if !exists {
+        return Err(resource_not_found("Post not found"));
+    }
+    Ok(())
+}
+
+/// Reject the request unless `event_id`'s building belongs to the caller's org.
+async fn verify_event_access(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    event_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = require_org(principal)?;
+    let exists = state
+        .community_repo
+        .event_exists_for_org(event_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Event tenant lookup failed");
+            tenant_lookup_error()
+        })?;
+    if !exists {
+        return Err(resource_not_found("Event not found"));
+    }
+    Ok(())
+}
+
+/// Reject the request unless `item_id`'s building belongs to the caller's org.
+async fn verify_item_access(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    item_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = require_org(principal)?;
+    let exists = state
+        .community_repo
+        .item_exists_for_org(item_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Marketplace item tenant lookup failed");
+            tenant_lookup_error()
+        })?;
+    if !exists {
+        return Err(resource_not_found("Item not found"));
+    }
+    Ok(())
+}
+
 /// Create community router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -429,6 +560,7 @@ pub async fn create_post(
     Path(path): Path<GroupPostsPath>,
     Json(data): Json<CreateCommunityPost>,
 ) -> Result<(StatusCode, Json<CommunityPost>), (StatusCode, Json<ErrorResponse>)> {
+    verify_group_access(&state, &principal, path.group_id).await?;
     let post = state
         .community_repo
         .create_post(path.group_id, principal.user_id, data)
@@ -466,6 +598,7 @@ pub async fn add_reaction(
     Path(path): Path<PostIdPath>,
     Json(data): Json<AddReactionRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_post_access(&state, &principal, path.id).await?;
     state
         .community_repo
         .add_post_reaction(path.id, principal.user_id, &data.reaction_type)
@@ -503,6 +636,7 @@ pub async fn create_comment(
     Path(path): Path<PostIdPath>,
     Json(data): Json<CreateCommunityComment>,
 ) -> Result<(StatusCode, Json<CommunityComment>), (StatusCode, Json<ErrorResponse>)> {
+    verify_post_access(&state, &principal, path.id).await?;
     let comment = state
         .community_repo
         .create_comment(path.id, principal.user_id, data)
@@ -618,6 +752,7 @@ pub async fn rsvp_event(
     Path(id): Path<Uuid>,
     Json(data): Json<EventRsvpRequest>,
 ) -> Result<Json<CommunityEventRsvp>, (StatusCode, Json<ErrorResponse>)> {
+    verify_event_access(&state, &principal, id).await?;
     let rsvp = state
         .community_repo
         .rsvp_event(id, principal.user_id, data)
@@ -765,6 +900,7 @@ pub async fn create_inquiry(
     Path(path): Path<ItemIdPath>,
     Json(data): Json<CreateMarketplaceInquiry>,
 ) -> Result<(StatusCode, Json<MarketplaceInquiry>), (StatusCode, Json<ErrorResponse>)> {
+    verify_item_access(&state, &principal, path.id).await?;
     let inquiry = state
         .community_repo
         .create_inquiry(path.id, principal.user_id, data)
