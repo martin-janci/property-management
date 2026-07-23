@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",
-    "@babel/plugin-transform-flow-strip-types": "^7.29.7",
+    "@babel/plugin-transform-flow-strip-types": "^8.0.1",
     "@expo/config-plugins": "~57.0.6",
     "@expo/metro-config": "~57.0.7",
     "@react-native/jest-preset": "^0.86.0",

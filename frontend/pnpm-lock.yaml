@@ -260,8 +260,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       '@babel/plugin-transform-flow-strip-types':
-        specifier: ^7.29.7
-        version: 7.29.7(@babel/core@8.0.1)
+        specifier: ^8.0.1
+        version: 8.0.1(@babel/core@8.0.1)
       '@expo/config-plugins':
         specifier: ~57.0.6
         version: 57.0.6(typescript@5.9.3)
@@ -1025,6 +1025,15 @@ packages:
     resolution: {integrity: sha512-G7sHYigPY17oO5SYWnfD/0MTBwVR781S/JI643e/JhUYgVgWE/61SoW3NH9KWUKyKq5LVh3npif99Wkt6j86Jw==}
     engines: {node: '>=6.9.0'}
 
+  /@babel/helper-plugin-utils@8.0.1(@babel/core@8.0.1):
+    resolution: {integrity: sha512-3PKFgjTyPlhFhorfP+SjKQxLViIL++zWjFOO4hGriYU+Bsm983DxEM1JmDRJVWXV0O9npu+xXRqz7Pbd3mh70g==}
+    engines: {node: ^22.18.0 || >=24.11.0}
+    peerDependencies:
+      '@babel/core': ^8.0.0
+    dependencies:
+      '@babel/core': 8.0.1
+    dev: true
+
   /@babel/helper-remap-async-to-generator@7.29.7(@babel/core@8.0.1):
     resolution: {integrity: sha512-16AMiW26DbXWBbr3B8wNozKM0ydMLB892vaOaJW/fPJdnT8vJk5sdkQcU/isqUxyCE0cEoa8wZOcbgDuC4b6Og==}
     engines: {node: '>=6.9.0'}
@@ -1258,6 +1267,16 @@ packages:
     dependencies:
       '@babel/core': 8.0.1
       '@babel/helper-plugin-utils': 7.29.7
+
+  /@babel/plugin-syntax-flow@8.0.1(@babel/core@8.0.1):
+    resolution: {integrity: sha512-0cXdg5GCKK+PoV+Anjbi0yAXq/mq1iIRBiMG1REOLc4iLN4jj86dWS08qMatUYAsNMzkcurn4okYHnoy0B1Txg==}
+    engines: {node: ^22.18.0 || >=24.11.0}
+    peerDependencies:
+      '@babel/core': ^8.0.0
+    dependencies:
+      '@babel/core': 8.0.1
+      '@babel/helper-plugin-utils': 8.0.1(@babel/core@8.0.1)
+    dev: true
 
   /@babel/plugin-syntax-import-attributes@7.29.7(@babel/core@7.29.7):
     resolution: {integrity: sha512-zGYcYfq/WmZ4V+kBIXQon9dSSc8ircGZqw9ZaNhhGj9nZkeBu1jHLBDQqYYi5WA9uawvA2sIMbry2nCFhf5Djg==}
@@ -1595,6 +1614,17 @@ packages:
       '@babel/core': 8.0.1
       '@babel/helper-plugin-utils': 7.29.7
       '@babel/plugin-syntax-flow': 7.29.7(@babel/core@8.0.1)
+
+  /@babel/plugin-transform-flow-strip-types@8.0.1(@babel/core@8.0.1):
+    resolution: {integrity: sha512-jEfYZWRhHvJPt2ckSBYtFGWHG/rbxer5IiVqV5BoSY42bMG/2PZUfWXcU67jcPLH6fKe8eRncmLZLzVu76TdAA==}
+    engines: {node: ^22.18.0 || >=24.11.0}
+    peerDependencies:
+      '@babel/core': ^8.0.0
+    dependencies:
+      '@babel/core': 8.0.1
+      '@babel/helper-plugin-utils': 8.0.1(@babel/core@8.0.1)
+      '@babel/plugin-syntax-flow': 8.0.1(@babel/core@8.0.1)
+    dev: true
 
   /@babel/plugin-transform-for-of@7.29.7(@babel/core@8.0.1):
     resolution: {integrity: sha512-zeSIHh0+E1Um1WJRXCFlHQYu2ieJNdivLLjlBEp+dIBu3S51n+SZZmIXjxnItw6pz56Cn+KvK68BIBVsxq2JiQ==}
