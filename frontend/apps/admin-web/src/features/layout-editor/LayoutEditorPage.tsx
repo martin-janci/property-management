@@ -27,6 +27,23 @@ import {
   type ScreenConfig,
   unkill,
 } from './api';
+import {
+  ALERT_STYLE,
+  BTN_BASE,
+  BTN_DANGER,
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+  CARD_STYLE,
+  CARD_TITLE_STYLE,
+  INPUT_STYLE,
+  PAGE_STYLE,
+  ROW_STYLE,
+  SELECT_STYLE,
+  TABLE_STYLE,
+  TD_STYLE,
+  TH_STYLE,
+  TOGGLE_STYLE,
+} from './LayoutEditorPage.styles';
 import { PreviewPanel } from './PreviewPanel';
 import { RailsEditor } from './RailsEditor';
 import { SectionTreeEditor } from './SectionTreeEditor';
@@ -42,125 +59,6 @@ const EMPTY_RAILS: Rails = {
   mode_editable: [],
   reorderable: false,
   prop_whitelist: {},
-};
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const PAGE_STYLE: React.CSSProperties = {
-  padding: '24px',
-  maxWidth: 960,
-  margin: '0 auto',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 24,
-};
-
-const CARD_STYLE: React.CSSProperties = {
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 'var(--ppt-radius-lg, 10px)',
-  padding: '20px 24px',
-  background: 'var(--ppt-bg-surface, #fff)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 16,
-};
-
-const CARD_TITLE_STYLE: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 600,
-  color: 'var(--ppt-fg-primary, #111827)',
-  margin: 0,
-};
-
-const ROW_STYLE: React.CSSProperties = {
-  display: 'flex',
-  gap: 8,
-  alignItems: 'center',
-  flexWrap: 'wrap',
-};
-
-const SELECT_STYLE: React.CSSProperties = {
-  padding: '6px 10px',
-  fontSize: 14,
-  borderRadius: 6,
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  minWidth: 200,
-};
-
-const INPUT_STYLE: React.CSSProperties = {
-  padding: '6px 10px',
-  fontSize: 14,
-  borderRadius: 6,
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  minWidth: 240,
-};
-
-const BTN_BASE: React.CSSProperties = {
-  padding: '6px 14px',
-  fontSize: 14,
-  borderRadius: 6,
-  cursor: 'pointer',
-  border: '1px solid transparent',
-  fontWeight: 500,
-};
-
-const BTN_PRIMARY: React.CSSProperties = {
-  ...BTN_BASE,
-  background: 'var(--ppt-primary-600, #2563eb)',
-  color: '#fff',
-  borderColor: 'var(--ppt-primary-600, #2563eb)',
-};
-
-const BTN_SECONDARY: React.CSSProperties = {
-  ...BTN_BASE,
-  background: 'var(--ppt-bg-surface, #fff)',
-  color: 'var(--ppt-fg-primary, #111827)',
-  borderColor: 'var(--ppt-border-default, #e5e7eb)',
-};
-
-const BTN_DANGER: React.CSSProperties = {
-  ...BTN_BASE,
-  background: 'var(--ppt-danger-600, #dc2626)',
-  color: '#fff',
-  borderColor: 'var(--ppt-danger-600, #dc2626)',
-};
-
-const ALERT_STYLE: React.CSSProperties = {
-  background: 'var(--ppt-danger-50, #fef2f2)',
-  border: '1px solid var(--ppt-danger-200, #fecaca)',
-  borderRadius: 8,
-  padding: '12px 16px',
-  color: 'var(--ppt-danger-800, #991b1b)',
-};
-
-const TABLE_STYLE: React.CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  fontSize: 13,
-};
-
-const TH_STYLE: React.CSSProperties = {
-  textAlign: 'left',
-  padding: '6px 10px',
-  fontWeight: 600,
-  color: 'var(--ppt-fg-secondary, #6b7280)',
-  borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
-};
-
-const TD_STYLE: React.CSSProperties = {
-  padding: '6px 10px',
-  borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
-  verticalAlign: 'middle',
-};
-
-const TOGGLE_STYLE: React.CSSProperties = {
-  display: 'flex',
-  gap: 4,
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 6,
-  overflow: 'hidden',
 };
 
 // ---------------------------------------------------------------------------
