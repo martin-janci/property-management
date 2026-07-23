@@ -34,13 +34,17 @@ describe('resetLocalData', () => {
     mockStore.clear();
   });
 
-  it('purges offline cache, queue, sync marker and widget namespaces', async () => {
+  it('purges offline cache, queue, sync marker, widget and layout namespaces', async () => {
     mockStore.set('ppt_cache_faults_list', '[]');
     mockStore.set('ppt_cache_buildings', '[]');
     mockStore.set('ppt_offline_queue', '[]');
     mockStore.set('ppt_last_sync', '111');
     mockStore.set('@ppt/widget_data', '{}');
     mockStore.set('@ppt/widget_configs', '[]');
+    // Tenant-scoped dashboard layout cache — swept by `ppt_layout_` prefix
+    // regardless of the dynamic scope/screen suffix (issue #2486).
+    mockStore.set('ppt_layout_org-a_ppt_dashboard', '{}');
+    mockStore.set('ppt_layout_org-b_ppt_dashboard', '{}');
     // Keys outside the tenant-cache namespace must survive. `ppt_access_token`
     // starts with `ppt_` but not `ppt_cache_`, so prefix scoping must not
     // over-match it.

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   CACHE_PREFIX,
   LAST_SYNC_KEY,
+  LAYOUT_PREFIX,
   QUEUE_KEY,
   WIDGET_CONFIG_KEY,
   WIDGET_DATA_KEY,
@@ -17,6 +18,11 @@ import {
  * a login/logout and even an app restart:
  *   - `ppt_cache_*` + `ppt_offline_queue` + `ppt_last_sync` (`useOfflineSupport`)
  *   - `@ppt/widget_data` + `@ppt/widget_configs` (`WidgetDataProvider`)
+ *   - `ppt_layout_*` (`useDashboardLayout` — the resolved screen layout embeds
+ *     the org's tenant override, so a stale entry would let a prior tenant's
+ *     dashboard customization activate for the next account on a shared device;
+ *     issue #2486). The key is a function of a dynamic `scopeId`/`screen`, so it
+ *     is swept by prefix rather than matched against a fixed key.
  *
  * Server RLS still prevents an actual data breach on refetch, so the exposure
  * this closes is stale-display + queued-write misattribution (a prior user's
@@ -38,6 +44,7 @@ export async function resetLocalData(): Promise<void> {
     const toRemove = keys.filter(
       (key) =>
         key.startsWith(CACHE_PREFIX) ||
+        key.startsWith(LAYOUT_PREFIX) ||
         key === QUEUE_KEY ||
         key === LAST_SYNC_KEY ||
         key === WIDGET_DATA_KEY ||

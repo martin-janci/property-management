@@ -9,6 +9,8 @@ export { resolveDeepLinkTarget } from './deepLinkRouting';
 export {
   CACHE_PREFIX,
   LAST_SYNC_KEY,
+  LAYOUT_CACHE_KEY,
+  LAYOUT_PREFIX,
   QUEUE_KEY,
   WIDGET_CONFIG_KEY,
   WIDGET_DATA_KEY,
