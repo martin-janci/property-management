@@ -337,16 +337,19 @@ async fn add_evidence_persists_and_records_activity(pool: PgPool) {
         .expect("file dispute");
 
     let evidence = repo
-        .add_evidence(AddEvidence {
-            dispute_id: dispute.id,
-            uploaded_by: user,
-            filename: "noise-recording.mp3".into(),
-            original_filename: "recording (1).mp3".into(),
-            content_type: "audio/mpeg".into(),
-            size_bytes: 1024,
-            storage_url: "s3://evidence/noise-recording.mp3".into(),
-            description: Some("Recording of the noise".into()),
-        })
+        .add_evidence(
+            AddEvidence {
+                dispute_id: dispute.id,
+                uploaded_by: user,
+                filename: "noise-recording.mp3".into(),
+                original_filename: "recording (1).mp3".into(),
+                content_type: "audio/mpeg".into(),
+                size_bytes: 1024,
+                storage_url: "s3://evidence/noise-recording.mp3".into(),
+                description: Some("Recording of the noise".into()),
+            },
+            org,
+        )
         .await
         .expect("add evidence");
     assert_eq!(evidence.dispute_id, dispute.id);
