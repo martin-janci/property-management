@@ -463,13 +463,14 @@ jobs:
       # `#[ignore]` because it needs a live Redis. Run it once, on partition 1,
       # against the Redis service above (local runs without REDIS_URL still
       # skip it).
-      # --test-threads=1: these tests bind real TCP ports via axum-test's
-      # http_transport, whose free-port registry is PER-PROCESS. nextest runs
-      # each test as its own process, so concurrent tests raced for the same
-      # ports and the pubsub test connected to a SIBLING test's server
-      # (different JWT/db → non-upgrade response → "WebSocket upgrade … is
-      # None", observed on the first #2459 run). The old single-process
-      # `cargo test --include-ignored` never raced; serializing restores that.
+      # --test-threads=1: conservative serialization for this small (8-test,
+      # ~1 min) step — the tests bind real TCP ports via axum-test's
+      # http_transport and share one Redis, so parallelism buys nothing.
+      # (The first #2459 red here turned out to be a latent order-dependent
+      # test, not a concurrency race: the pubsub test never initialized
+      # TestApp's env Once guards and only passed when a sibling in the same
+      # process had — fixed in the test itself; single-test repro failed
+      # under old-style `cargo test --exact` too.)
       - name: Run ignored WS+Redis integration tests
         if: matrix.shard == 1
         working-directory: backend
