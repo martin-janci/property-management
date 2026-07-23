@@ -401,6 +401,19 @@ export async function uploadDocumentDirect(
     params.onProgress
   );
 
+  // NOTE (#2366): `params.buildingId` is deliberately NOT forwarded here.
+  // There is no `building_id` on the registration contract — the backend
+  // `documents` table has no such column, `CreateDocumentRequest` (Rust) has no
+  // such field, and it lacks `#[serde(deny_unknown_fields)]`, so a forwarded
+  // `building_id` would be *silently* dropped server-side (a false-green: the
+  // client would compile and pass CI while persisting nothing). The legacy
+  // multipart `uploadDocument` path drops it the same way (drained + ignored in
+  // the handler). Building association today is carried by `folder_id`
+  // (folders are building-scoped) or by `access_scope='building'` +
+  // `access_target_ids`. Adding a real `building_id` needs a backend
+  // migration + struct + repo change first — tracked in #2366. Do not add
+  // `building_id` here until that lands, or association loss just moves one
+  // layer deeper.
   const registration: CreateDocumentRequest = {
     title: params.title,
     description: params.description,

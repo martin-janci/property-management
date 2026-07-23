@@ -155,4 +155,62 @@ describe('documents api client', () => {
 
     vi.unstubAllGlobals();
   });
+
+  it('uploadDocumentDirect forwards folder_id but NOT building_id (#2366)', async () => {
+    // Guards the deliberate omission documented in `uploadDocumentDirect`:
+    // the backend registration contract has no `building_id` (no column, no
+    // struct field, no `deny_unknown_fields`), so forwarding it would be a
+    // silent no-op — a false-green. `folder_id` DOES carry building scope and
+    // must survive. When #2366's backend support lands, this test should be
+    // updated deliberately alongside the forwarding change.
+    const listeners: Record<string, () => void> = {};
+    const xhrMock = {
+      upload: { addEventListener: vi.fn() },
+      addEventListener: (evt: string, cb: () => void) => {
+        listeners[evt] = cb;
+      },
+      open: vi.fn(),
+      setRequestHeader: vi.fn(),
+      send: vi.fn(() => {
+        queueMicrotask(() => {
+          xhrMock.status = 200;
+          listeners.load?.();
+        });
+      }),
+      status: 0,
+    };
+    vi.stubGlobal('XMLHttpRequest', function XMLHttpRequestMock() {
+      return xhrMock;
+    });
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        mockOkResponse({
+          url: 'https://s3.example/bucket/key?sig=abc',
+          file_key: 'org/2026/07/uuid_report.pdf',
+          content_type: 'application/pdf',
+          method: 'PUT',
+          expires_at: '2026-07-15T00:05:00Z',
+        })
+      )
+      .mockResolvedValueOnce(mockOkResponse({ id: 'doc-99', message: 'created' }));
+
+    const file = new File(['hello'], 'report.pdf', { type: 'application/pdf' });
+    await uploadDocumentDirect({
+      file,
+      title: 'Report',
+      category: 'report',
+      organizationId: 'org-1',
+      buildingId: 'building-7',
+      folderId: 'folder-3',
+    });
+
+    const registerBody = JSON.parse(
+      (vi.mocked(fetch).mock.calls[1][1] as RequestInit).body as string
+    );
+    expect(registerBody.folder_id).toBe('folder-3');
+    expect(registerBody).not.toHaveProperty('building_id');
+
+    vi.unstubAllGlobals();
+  });
 });

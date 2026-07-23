@@ -122,9 +122,19 @@ UC-08 document upload — single-step form. Multi-file with per-file progress an
   → presigned `PUT` straight to S3 → `POST /api/v1/documents` to register. Bytes
   no longer proxy through the api-server multipart `/upload` route. Per-file
   progress is driven by the S3 PUT phase. The legacy multipart `useUploadDocument`
-  hook is still exported for callers that need the byte-proxy path. NB: a backend
-  PR (#2339) is hardening the presigned endpoint (org-scoped `file_key` +
-  signed Content-Length) — the client already sends the signed `Content-Type`.
+  hook is still exported for callers that need the byte-proxy path. The backend
+  presigned endpoint shipped in **#2309** (org-scoped `file_key` + size cap); the
+  client already sends the signed `Content-Type` on the PUT.
+- **Known limitation — building association not persisted (#2366):** the
+  direct-upload registration (`POST /api/v1/documents`) does **not** record a
+  `building_id`, and neither did the legacy multipart `/upload` path — the
+  `documents` table has no such column and the Rust `CreateDocumentRequest`
+  has no such field. `DocumentUpload` still accepts a `buildingId` prop, but it
+  is intentionally NOT forwarded to the register call (see the `#2366` note in
+  `api-client` `uploadDocumentDirect` + its regression test). Building scope is
+  carried today by `folder_id` (folders are building-scoped) or by
+  `access_scope='building'` + `access_target_ids`. A real `building_id` needs a
+  backend migration/struct/repo change first — tracked in **#2366**.
 - The bundle uses **single-screen layout** (dropzone + metadata + submit on one page) instead of a multi-step wizard. This is intentional for the common case (1–4 files, single batch). For 10+ files or split-batch needs, document a future "advanced upload" flow.
 - File-icon block uses 3-letter colored tags matching `forms/file-upload.html`: PDF red, XLS green, DOC blue, JPG amber, PNG cyan, ZIP gray, generic gray for unknown types.
 - "HLAVNÝ" pill is auto-assigned to the first successful upload — the design states "Premenujte ho v zozname, ak chcete iný" (rename in list to swap). Production must allow per-file context menu to manually set "Make primary".
@@ -142,6 +152,7 @@ UC-08 document upload — single-step form. Multi-file with per-file progress an
 
 <!-- newest entries on top -->
 
+- 2026-07-23 — agent: gap-84-1 verified already wired in dev (api-client binding + `DocumentUpload` integration + tests all present); documented the deliberate `building_id` omission on the direct-upload register path (#2366 — no backend column/field, forwarding would be a false-green) with an anchor comment in `uploadDocumentDirect` + a regression test; reconciled backend ref to #2309. #2366 remains blocked on a backend migration/product decision.
 - 2026-07-15 — agent: wired direct-to-S3 upload (gap-84-1) — added `createUploadUrl` + `uploadDocumentDirect` bindings and `useUploadDocumentDirect` hook to @ppt/api-client; switched `DocumentUpload` to the direct hook (upload-url → presigned PUT → register). Frontend-only; backend endpoint landed in #2309.
 - 2026-05-09 — agent: design analyzed (pages/ppt-upload-document.html — 3 artboards: loaded-4-files-mixed / empty-drag-over / success-toast); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (10 sections), 6 states, design-specific notes (HLAVNÝ auto-detect + per-file error specificity + audience-driven notification count + draft-bypass-upload-completion); declared 8 sharedComponents; added 1 relatedScreen (document-detail sibling)
 - 2026-05-08 — init: created from scan (source: sitemap)
