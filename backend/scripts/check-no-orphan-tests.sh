@@ -99,6 +99,41 @@ for crate in "${CRATE_ROOTS[@]}"; do
             continue
         fi
 
+        # Consolidated-harness pattern (2026-07-23, build-experience roadmap
+        # item 8): suite harness binaries include individual subdir files via
+        #   #[path = "<subdir>/<file>.rs"] mod <file>;
+        # In that case reachability is checked PER FILE — every .rs directly
+        # under the subdir must be #[path]-referenced by some top-level
+        # tests/*.rs, which is stricter than the whole-dir `mod` rule (a
+        # single dropped file is flagged even when its siblings compile).
+        path_refs="$(
+            for f in "$tests_dir"/*.rs; do
+                [[ -e "$f" ]] || continue
+                grep -hoE "#\[path[[:space:]]*=[[:space:]]*\"${name}/[^\"]+\"\]" "$f" 2>/dev/null \
+                    | sed -E "s|.*\"${name}/([^\"]+)\".*|\1|"
+            done | sort -u
+        )"
+        if [[ -n "$path_refs" ]]; then
+            unreferenced="$(
+                while IFS= read -r rs; do
+                    [[ -n "$rs" ]] || continue
+                    rel="${rs#"$subdir/"}"
+                    grep -qxF "$rel" <<< "$path_refs" || printf '%s\n' "$rs"
+                done < <(find "$subdir" -maxdepth 1 -type f -name '*.rs' | sort)
+            )"
+            if [[ -z "$unreferenced" ]]; then
+                continue
+            fi
+            had_violation=true
+            echo -e "${RED}✗ Orphaned files in ${rel_crate}/tests/${name}/ (harness pattern):${NC}"
+            echo -e "  ${RED}no top-level ${rel_crate}/tests/*.rs carries \`#[path = \"${name}/<file>\"]\` for:${NC}"
+            while IFS= read -r rs; do
+                [[ -n "$rs" ]] || continue
+                echo "    - ${rs#"$BACKEND_DIR/"}"
+            done <<< "$unreferenced"
+            continue
+        fi
+
         # Orphan: no top-level file pulls this subdir into a binary.
         had_violation=true
         echo -e "${RED}✗ Orphaned test subtree in ${rel_crate}/tests/${name}/:${NC}"
