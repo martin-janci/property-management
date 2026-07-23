@@ -38,6 +38,14 @@
 #       an anchored "<id>:" prefix that stems to the candidate stem (same
 #       join convention as dev-reconcile.sh). Both degrade gracefully when
 #       their input is missing (no exclusion).
+#     - archive-marker guard (issue #2460 — out-of-band ghost blind spot):
+#       the stem's LATEST action-list-archive row carries NO done/ghost marker
+#       (`[RECONCILED-DONE`, `[DROPPED`, `[already-satisfied`, `[CASCADED-DROP`,
+#       `[GHOST-DROP`, `[GHOST-RETRY-DROP`, `[BAD-RETRY-REMINT-DROP`). Those are
+#       written by gc1-reconcile/dev-reconcile/cascade EXACTLY when the work
+#       landed under a different id, was already satisfied, or is non-completable
+#       — the signal the coverage/dev-log guards (which key on the task's OWN id)
+#       structurally miss. Degrades gracefully when the archive is absent.
 #
 #   Minted rows carry `retry_of` (the original failed task_id) and
 #   `retry_round`. `retry_of` is the field Phase 3 and backlog-refill.sh use
@@ -165,6 +173,23 @@ CANDIDATES=$(jq -n \
   # same join convention as dev-reconcile.sh (prefix must contain no spaces,
   # so a chore commit merely MENTIONING an id never matches).
   | ([ $devlog_f[0][] | capture("^(?<p>[^:\\s]+):") | .p | stem ] | unique) as $dev_landed_stems
+  # Archive-marker guard (issue #2460): stems whose LATEST action-list-archive
+  # row carries a done/ghost marker written by reconcile/cascade. These prove
+  # the work landed under a DIFFERENT id, was already satisfied, or is
+  # non-completable — the blind spot the coverage/dev-log guards (which key on
+  # the failed task id itself) structurally miss. Latest = max last_updated (falls back
+  # to first_open_at). Missing archive => empty array => no exclusion.
+  | ([ $arch_items[]
+       | select(.id != null)
+       | { stem: (.id | stem),
+           ts: (.last_updated // .first_open_at // "1970-01-01T00:00:00Z"),
+           marked: (((.action // "")
+             | test("\\[(RECONCILED-DONE|DROPPED|already-satisfied|CASCADED-DROP|GHOST-DROP|GHOST-RETRY-DROP|BAD-RETRY-REMINT-DROP)"))) }
+     ]
+     | group_by(.stem)
+     | map(sort_by(.ts) | last)              # newest archive row per stem
+     | map(select(.marked) | .stem)
+     | unique) as $ghost_marked_stems
 
   | ([ $assign[] | select(.status=="failed") ]
      | group_by(.task_id | stem)
@@ -187,6 +212,7 @@ CANDIDATES=$(jq -n \
          and ((.stem | IN($al_live_stems[])) | not)
          and ((.stem | IN($cov_done_stems[])) | not)
          and ((.stem | IN($dev_landed_stems[])) | not)
+         and ((.stem | IN($ghost_marked_stems[])) | not)
          and (($now_e - (.newest_failure | epoch)) >= $cooldown_s)
        ))
      | map(. + { mint_id: (.stem + "-retry" + ((.rounds_used + 1) | tostring)) })
