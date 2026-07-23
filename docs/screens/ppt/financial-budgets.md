@@ -18,7 +18,8 @@ sharedComponents: []
 diagrams: []
 useCases:
   - UC-40
-epics: []
+epics:
+  - Epic-11
 designSources: []
 owner: pm-frontend
 ---

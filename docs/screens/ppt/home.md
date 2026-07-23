@@ -39,7 +39,8 @@ useCases:
   - UC-04
   - UC-17
 endpoints: []
-epics: []
+epics:
+  - Epic-3
 diagrams: []
 owner: pm-frontend
 ---

@@ -15,7 +15,8 @@ sharedComponents: []
 diagrams: []
 useCases:
   - UC-33
-epics: []
+epics:
+  - Epic-19
 designSources: []
 owner: pm-frontend
 ---

@@ -42,7 +42,8 @@ designSources:
     frame: MobVotingScreen
 useCases:
   - UC-04
-epics: []
+epics:
+  - Epic-5
 diagrams: []
 owner: pm-frontend
 ---

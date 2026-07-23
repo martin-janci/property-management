@@ -24,7 +24,8 @@ sharedComponents:
   - bar-chart
   - date-range-filter
   - building-selector
-epics: []
+epics:
+  - Epic-4
 diagrams: []
 owner: pm-frontend
 ---
