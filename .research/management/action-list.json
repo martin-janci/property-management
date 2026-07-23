@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
-      "action": "Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)",
+      "action": "Churn hotspot: docs/screens/ppt/dashboard.md \u2014 3 touches this run (Layout & Content Manager pilot integration)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -21,7 +21,7 @@
     },
     {
       "id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
-      "action": "Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)",
+      "action": "Churn hotspot: docs/repo-map.md \u2014 4 touches this window (per-PR route-map refresh)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -134,7 +134,7 @@
     },
     {
       "id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
-      "action": "Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
+      "action": "Churn hotspot: backend/Cargo.toml \u2014 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -151,5 +151,6 @@
       "last_updated": "2026-07-23T08:16:02Z"
     }
   ],
-  "generated": "2026-07-15T01:55:00Z"
+  "generated": "2026-07-23T08:35:00Z",
+  "scan_kind": "upkeep"
 }

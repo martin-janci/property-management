@@ -2,7 +2,7 @@
 
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
 
-_Last touched (upkeep-only, no deep re-analysis): 2026-07-21 — routine Phase 1.6 lightweight run. Advanced pm_cursor 5 → 6 (pm-security done today; pm-data next) and coverage_cursor 12 → 0 (epic-9 re-checked, still 1/1 done — cycled back to epic-10a). The delivery sections below are the 2026-06-16 snapshot and NOT refreshed — the sprint has since shipped Layout & Content Manager (PRs #2424–#2432, defensive rendering + editor MVP + tenant editor + preview bridge + publish webhook + mobile registries). For a deep re-analysis, invoke `/ppt-project-management scan` locally._
+_Last touched (upkeep-only, no deep re-analysis): 2026-07-23 — routine Phase 1.6 lightweight run. Advanced pm_cursor 6 → 7 (pm-data done today; pm-integration next) and coverage_cursor 0 → 1 (epic-10a re-checked, cycling to epic-10b). Sprint has since shipped: RUSTSEC-2026-0213 ammonia bump (#2446), disputes IDOR cluster fixed (#2450 org-scopes 5 handlers, but #2483 `add_evidence` still open), get_document org-scoped (#2438), announcement fan-out AND-org guard (#2455), layout-core docstring corrected (#2452), agent-experience hardening & deterministic verify (#2444/#2448), tenant layout-override records `updated_by` (#2443), docker-compose dev flow repaired (#2454). Four open follow-up issues #2483/#2484/#2485/#2486 already ingested by dispatcher. The delivery sections below are the 2026-06-16 snapshot and NOT refreshed. For a deep re-analysis, invoke `/ppt-project-management scan` locally._
 
 ## Executive summary
 
