@@ -4630,7 +4630,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log-since-2026-07-20T03:12:00Z"
       ],
@@ -4642,7 +4642,12 @@
       ],
       "created_at": "2026-07-21",
       "updated_at": "2026-07-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-23T04:05:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2464
+      }
     },
     {
       "id": "screen-map-drift-pr-2431-reality",
@@ -4650,7 +4655,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2431"
       ],
@@ -4664,7 +4669,12 @@
       ],
       "created_at": "2026-07-21",
       "updated_at": "2026-07-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-23T04:05:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2462
+      }
     },
     {
       "id": "code-review-ppt-web-ui-propinput-json-coerce",

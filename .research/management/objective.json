@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gh-issue-2466",
-  "selected_at": "2026-07-23T02:08:01Z",
+  "epic_prefix": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
+  "selected_at": "2026-07-23T04:14:42Z",
   "last_action": "repick",
-  "reason": "prior target 'test-gap-hotfix-no-test-pr-1288-webhook-rls-retry2' exhausted; closest-to-done is 'gh-issue-2466' (open=1 claimable=1)",
+  "reason": "prior target '82-1-swiftui-project-setup-retry1' exhausted; closest-to-done is 'refactor-churn-hotspot-backend-cargo-toml-2026-07-20' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-23T02:10:23Z",
+  "archived_at": "2026-07-23T04:15:38Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -373,6 +373,21 @@
       }
     },
     {
+      "id": "82-1-swiftui-project-setup-retry1",
+      "action": "[MACOS-GATE-DROP: retry re-mint of macOS-gated task, not buildable in cloud dispatcher env; un-claimed by dispatcher 2026-07-23T04:14:42Z] [MACOS-GATE-DEFER: SwiftUI/iOS project setup not buildable in this env or fleet (no macOS toolchain); dispatcher cannot verify — human/macOS path] Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "82-1-swiftui-project-setup",
+      "retry_round": 1,
+      "last_updated": "2026-07-23T04:14:42Z"
+    },
+    {
       "id": "82-3-home-search-screens",
       "action": "Coverage gap [phase4]: Home and Search Screens — verify and finish to done. Gaps: mobile-native KMP buildStatus still in-progress; SwiftUI iOS slice is a parallel port that lagged (bug-ios-searchview-uncompilable PR #1357 was a recent fix)",
       "owner_role": "pm-frontend",
@@ -626,6 +641,21 @@
       "retry_round": 1,
       "first_open_at": "2026-07-13T04:04:29Z",
       "gc1_closed": "archive=failed → dropped (no-op already-fixed-on-dev)"
+    },
+    {
+      "id": "bug-ios-deeplink-info-plist-missing-retry2",
+      "action": "[GHOST-DROP: base task bug-ios-deeplink-info-plist-missing is done in assignments-archive; retry re-mint of already-landed work; un-claimed by dispatcher 2026-07-23T04:14:42Z] iOS deep-link layer dead at runtime — Info.plist missing CFBundleURLTypes + applinks entitlement [retry 2/2 of failed bug-ios-deeplink-info-plist-missing]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T14:06:53Z (retry_of=bug-ios-deeplink-info-plist-missing reason=failed-no-pr cooldown_ok newest_failure=2026-07-13T04:12:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T14:06:53Z",
+      "retry_of": "bug-ios-deeplink-info-plist-missing",
+      "retry_round": 2,
+      "last_updated": "2026-07-23T04:14:42Z"
     },
     {
       "id": "bug-ios-searchview-uncompilable",
@@ -8023,6 +8053,60 @@
       }
     },
     {
+      "id": "gh-issue-2460",
+      "action": "retry-remint.sh re-mints ghost retries for work already landed out-of-band (dev-truth guard blind spot) (Closes #2460)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-23T00:03:30Z (#2460) | gc1-reconcile 2026-07-23T04:15:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T00:03:30Z",
+      "issue_ref": {
+        "number": 2460,
+        "url": "https://github.com/martin-janci/property-management/issues/2460",
+        "labels": [
+          "enhancement",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2463,
+        "merged_at": "2026-07-23T04:05:11Z",
+        "at": "2026-07-23T04:15:38Z"
+      }
+    },
+    {
+      "id": "gh-issue-2466",
+      "action": "Add Dependabot ignore rule for dtolnay/rust-toolchain (invalid 1.100.0 group bump recurs weekly) (Closes #2466)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-23T02:05:39Z (#2466) | gc1-reconcile 2026-07-23T04:15:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T02:05:39Z",
+      "issue_ref": {
+        "number": 2466,
+        "url": "https://github.com/martin-janci/property-management/issues/2466",
+        "labels": [
+          "enhancement",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2467,
+        "merged_at": "2026-07-23T04:08:35Z",
+        "at": "2026-07-23T04:15:38Z"
+      }
+    },
+    {
       "id": "pm-backend-fix-ai-equipment-idor",
       "action": "Fix cross-tenant IDOR cluster in ai.rs: thread tenant_id into equipment_repo.update/delete/update_maintenance and scope the WHERE clauses (or route through the RLS connection) for update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), update_maintenance (ai.rs:1192) — all currently discard `_principal`; add a cross-tenant regression test",
       "owner_role": "pm-backend",
@@ -8655,6 +8739,30 @@
       }
     },
     {
+      "id": "refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21",
+      "action": "Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-23T04:15:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2464,
+        "merged_at": "2026-07-23T04:05:11Z",
+        "at": "2026-07-23T04:15:38Z"
+      }
+    },
+    {
       "id": "refactor-churn-hotspot-mobile-announcements",
       "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
       "owner_role": "pm-frontend",
@@ -8835,6 +8943,30 @@
       "depends_on": []
     },
     {
+      "id": "screen-map-drift-pr-2431-reality",
+      "action": "Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-07-23T04:15:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2462,
+        "merged_at": "2026-07-23T04:05:11Z",
+        "at": "2026-07-23T04:15:38Z"
+      }
+    },
+    {
       "id": "security-forgot-password-no-rate-limit",
       "action": "/forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber",
       "owner_role": "pm-security",
@@ -8955,6 +9087,27 @@
         "reason": "retry-stem-terminal-already-closed",
         "retry_of": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
         "at": "2026-07-12T22:04:03Z"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry2",
+      "action": "[archive-terminal-reconcile: prior attempt archived-failed; re-plan upstream] Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods [retry 2/2 of failed test-gap-hotfix-no-test-pr-1288-webhook-rls]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T14:06:53Z (retry_of=test-gap-hotfix-no-test-pr-1288-webhook-rls reason=failed-no-pr cooldown_ok newest_failure=2026-07-13T00:13:01Z) | gc1-reconcile 2026-07-23T04:05:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T14:06:53Z",
+      "retry_of": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-23T04:05:59Z"
       }
     },
     {
@@ -9115,6 +9268,27 @@
         "archive_status": "failed",
         "merged_pr": null,
         "at": "2026-07-12T22:04:03Z"
+      }
+    },
+    {
+      "id": "test-gap-repeated-churn-oauth-integration-tests-retry1",
+      "action": "oauth_integration_tests.rs repeated-churn (runs_seen 2→3) — OAuth handlers still moving [retry 1/2 of failed test-gap-repeated-churn-oauth-integration-tests]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=test-gap-repeated-churn-oauth-integration-tests reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T04:04:05Z) | gc1-reconcile 2026-07-23T04:15:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:43Z",
+      "retry_of": "test-gap-repeated-churn-oauth-integration-tests",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2465,
+        "merged_at": "2026-07-23T04:05:11Z",
+        "at": "2026-07-23T04:15:38Z"
       }
     },
     {
