@@ -86,7 +86,7 @@ UC-15 + UC-02 + UC-03 + UC-04 hub for residents on mobile (RN). The home screen 
 
 ### Specific (recent)
 
-- Load errors surface via a retryable inline banner above the stats grid (`hasError` across all four dashboard queries; #2282/#2304). The banner is now the shared `components/QueryErrorBanner.tsx` (extracted #2323) so sibling screens can reuse the same contract — it renders a caller-provided, already-localized message and never a raw `error.message`. The whole mobile screens tree was swept in #2323 to drop raw `error.message`/`combinedError.message` renders (backend-internals leak).
+- Load errors surface via a retryable inline banner above the My-home card (`hasError` across the dashboard queries; #2282/#2304). The banner is now the shared `components/QueryErrorBanner.tsx` (extracted #2323) so sibling screens can reuse the same contract — it renders a caller-provided, already-localized message and never a raw `error.message`. The whole mobile screens tree was swept in #2323 to drop raw `error.message`/`combinedError.message` renders (backend-internals leak).
 - Dashboard dates now localize to `i18n.language` (was hardcoded `en-US`); the announcement category badge is translated via `dashboard.category.*` (was rendering the raw enum).
 - Mobile tokens defined as a JS object (`MOB_TOKENS`) inline in screens.jsx — production must replace with imports from a shared RN theme file consumed from `@ppt/ui-kit` or equivalent. Don't ship inline-token objects.
 - 📌 emoji in pinned-announcement card violates SKILL.md non-negotiable — replace with Lucide `pin` SVG. Same for any other emoji glyph elsewhere.
@@ -103,6 +103,7 @@ UC-15 + UC-02 + UC-03 + UC-04 hub for residents on mobile (RN). The home screen 
 
 <!-- newest entries on top -->
 
+- 2026-07-23 — agent: doc tidy (behaviour-preserving) — fixed error-banner drift in Notes ("above the stats grid / four dashboard queries" → "above the My-home card / dashboard queries") to match the States section and this mobile-only screen; frontmatter and sitemap IDs unchanged
 - 2026-07-20 — agent: RN mobile dashboard renders via cached resolved layout (next-launch activation).
 - 2026-07-20 — agent: layout preview mode (postMessage bridge) added.
 - 2026-07-20 — agent: org-admin customize entry point added (/dashboard/customize, layout tenant editor)
