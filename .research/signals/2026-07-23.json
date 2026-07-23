@@ -1,0 +1,267 @@
+{
+  "generated_at": "2026-07-23",
+  "generator": "routine",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1 matches",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json cursor advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog.json id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup vs seen_signals (cumulative allowlist honored)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap: no score>8; decay: no open item stale >14d",
+      "observed": "0 stale",
+      "expected": "0 stale"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation for each new plan",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; each has 4 metadata + 11 headings + tick + mode + files exist",
+      "observed": "1 new plan, structure OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff clean",
+      "expected": "diff clean"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases; cursor not advanced on failed",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in active or _archive",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 7 >= HEAD 7",
+      "observed": "7>=7",
+      "expected": "cur>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff clean",
+      "expected": "diff clean"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap; no candidate this run",
+      "observed": "0 actions",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor in [0..7]; coverage_cursor in [0..13); advanced this run (0\u21921 with pm_cursor 6\u21927)",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-marketplace-award-quote-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/marketplace.rs:922-951 \u2014 award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {id} RFQ belongs to the caller's org. It then calls marketplace_repo.award_rfq(id, data.quote_id) where data.quote_id comes straight from the request body (AwardQuoteRequest.quote_id: Uuid, marketplace.rs:93) and is NEVER validated to belong to this RFQ or to the caller's org.",
+        "backend/crates/db/src/repositories/marketplace.rs:781-835 \u2014 award_rfq(id, quote_id) resolves the quote via find_quote_by_id(quote_id) (by id alone, no rfq_id/org predicate) to derive provider_id, then `UPDATE rfqs SET status='awarded', awarded_to=$2, awarded_quote_id=$3 WHERE id=$1` \u2014 the only constraint is rfqs.id=$1; there is no `AND EXISTS (SELECT 1 FROM provider_quotes WHERE id=quote_id AND rfq_id=id)` guard. A manager who owns RFQ-A can award it to a quote_id that belongs to a DIFFERENT RFQ (potentially another tenant's), corrupting RFQ-A.awarded_quote_id/awarded_to with an unrelated provider that never quoted RFQ-A.",
+        "backend/crates/db/src/repositories/marketplace.rs:808-817 \u2014 the same call then runs `UPDATE provider_quotes SET status='accepted', updated_at=NOW() WHERE id=$1` bound to the client quote_id: a cross-RFQ (and cross-tenant) state write that flips an unrelated provider's quote to 'accepted'. The sibling reject step (marketplace.rs:820-831) correctly scopes `WHERE rfq_id=$1 AND id!=$2`, highlighting that the accept step's missing rfq_id constraint is an in-file inconsistency, not an intentional design.",
+        "Same IDOR class as the 2026-07-22 ai/ocr submit_correction finding: parent-org membership is checked, but a client-supplied foreign id (quote_id) is persisted/actioned without validating it belongs to the authorized parent. Fix: resolve the quote inside award_rfq (or in the handler) and reject unless quote.rfq_id == id, e.g. add `AND rfq_id = $1` to the find and to both provider_quotes updates.",
+        "Secondary correctness defect in the same method: award_rfq has no status guard (contrast cancel_rfq at marketplace.rs:837 which uses `WHERE id=$1 AND status NOT IN ('awarded','cancelled')`), so an already-awarded or cancelled RFQ can be re-awarded, re-flipping quote statuses each call."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/marketplace.rs",
+        "backend/crates/db/src/repositories/marketplace.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-layout-admin-db-err-422",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:15-20 (bad_request helper) returns StatusCode::UNPROCESSABLE_ENTITY (422), and every admin handler funnels its DB failures through it: list_screens (:41,:45), get_config (:69,:74,:84,:88), put_draft (:118,:122), put_rails (:149,:153), list_manifests (:176,:180), put_manifest (:216,:220), publish (:247,:253,:271,:294), rollback (:319), kill (:356,:360), preview_resolve (:401,:407,:420), unkill (:449,:453). This maps infrastructure/connection failures (acquire_public() errors and sqlx query errors) to a client-side 4xx meaning 'your input is unprocessable'. Two concrete consequences: (1) a Postgres outage or pool exhaustion on any layout-admin endpoint surfaces as 422, which 5xx-based alerting/SLO monitors do not fire on -> DB outages are silently swallowed on this path; (2) API clients are told their well-formed request was rejected as invalid. Confirmed to be an oversight, not intent: the two SIBLING handler files in the same module handle identical DB errors correctly with StatusCode::INTERNAL_SERVER_ERROR -- tenant.rs:28-35,:40-47,:51-58,:68-75,:206-213 and resolved.rs:35-40 (err500) at :70,:76,:80,:86,:95,:98,:103,:111. admin.rs reused its validation-error closure for infra errors too. Fix: give admin.rs a distinct err500 path (mirroring resolved.rs's err500 closure) for acquire_public()/repo DB errors, reserving bad_request (422) for the genuine parse/validation branches."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-layout-to-value-null-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs",
+        "backend/servers/api-server/src/routes/layout/tenant.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:46,:123,:154,:181,:221,:296 and tenant.rs:214 -- successful responses are built with serde_json::to_value(row).unwrap_or_default(). On a serialization failure the .unwrap_or_default() yields serde_json::Value::Null, so the handler returns 200 OK with a body of literal null instead of a 500. A caller (ppt-web layout admin UI) that just performed a publish/rollback/put-draft/put-rails/put-manifest would receive a success status with no payload and no error signal, masking a genuine serialization bug as a successful empty write. Low severity because the row types reliably serialize today, but the pattern is a latent silent-failure across 7 write/read sites. Fix: map the serialization error to a 500 path rather than defaulting to Null (Json(serde_json::to_value(row).map_err(err500)?))."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-23",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "last_run_iso=2026-07-21T03:13Z; now=2026-07-23T03:15Z; lag=1d 47h > 36h threshold. Wednesday run was skipped; cloud cron may have skipped or the routine failed silently. Not stale yet (would need 3+ days) but worth noting."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-platform_admin_authz_batch2_tests-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2447",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs \u2014 417 lines this window across 1 PR(s) (PR #2447). 417 lines added \u2014 net-new authz backfill test suite for platform-admin (BIT-268 salvage). Low-signal: intentional test coverage growth, single-PR add."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-org_property_authz_backfill_tests-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2447; PR #2453",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/org_property_authz_backfill_tests.rs \u2014 412 lines this window across 2 PR(s) (PR #2447, PR #2453). 412 lines across 2 PRs \u2014 new authz backfill suite (#2447), then cert-document authz sweep re-add after SSRF review (#2453 BIT-559). Slight iteration but net-new test coverage."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/org_property_authz_backfill_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-admin_platform_happy_path_batch3_tests-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2439",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/admin_platform_happy_path_batch3_tests.rs \u2014 384 lines this window across 1 PR(s) (PR #2439). 384 lines added \u2014 net-new admin-platform happy-path batch 3 (13 new 2xx tests, BIT-557). Low-signal: intentional coverage growth, single-PR add."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/admin_platform_happy_path_batch3_tests.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2436",
+      "type": "hotfix-no-test",
+      "source": "PR #2436",
+      "score_delta": 2,
+      "confidence": "low",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2436 'fix(api-server): log malformed announcement target_ids in scheduler' \u2014 title starts with 'fix', single file diff (backend/servers/api-server/src/services/scheduler.rs, +N lines of tracing::error!), no test file in diff.",
+        "Judgement caveat: change is defensive log-only (no behavior change / no user-visible bug fix); the mechanical rule fires but there's no missing regression test to add. Recommend triage."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2454",
+      "type": "hotfix-no-test",
+      "source": "PR #2454",
+      "score_delta": 2,
+      "confidence": "low",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2454 'fix(dev-stack): repair bitrotted docker-compose dev flow' \u2014 3 files (Cargo.toml, docker-compose.dev.yml, Dockerfile.dev), no test file in diff.",
+        "Judgement caveat: infra/build config \u2014 no unit-test surface. Rule fires mechanically. Recommend triage / dismiss."
+      ],
+      "files": [
+        "backend/servers/api-server/Cargo.toml",
+        "docker-compose.dev.yml",
+        "docker/backend/Dockerfile.dev"
+      ]
+    }
+  ],
+  "auto_fix_actions": []
+}

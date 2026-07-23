@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-21T03:13:00Z",
-  "last_run_ms": 1200000,
-  "last_pr_seen": 2432,
-  "last_issue_seen": 2422,
-  "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d",
+  "last_run_iso": "2026-07-23T03:15:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2458,
+  "last_issue_seen": 2466,
+  "last_commit_sha": "439d900b47d9456921b399ac239b0b47180feff1",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -381,6 +381,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-21",
       "recent_churn": 900
+    },
+    "backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 417
+    },
+    "backend/servers/api-server/tests/org_property_authz_backfill_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 412
+    },
+    "backend/servers/api-server/tests/admin_platform_happy_path_batch3_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 384
     }
   },
   "seen_signals": [
@@ -403,8 +418,11 @@
     "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-tests-admin_platform_happy_path_batch3_tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+    "churn-hotspot-backend-servers-api-server-tests-org_property_authz_backfill_tests-rs",
+    "churn-hotspot-backend-servers-api-server-tests-platform_admin_authz_batch2_tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
@@ -486,6 +504,9 @@
     "code-review-api-core-vote-partial-cmp-panic",
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
     "code-review-api-handlers-forgot-password-no-rate-limit",
+    "code-review-api-handlers-layout-admin-db-err-422",
+    "code-review-api-handlers-layout-to-value-null-swallow",
+    "code-review-api-handlers-marketplace-award-quote-idor",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
     "code-review-finding-cross-cutting-schema-drift-1008",
@@ -548,6 +569,8 @@
     "hotfix-no-test-pr-1288-webhook-rls",
     "hotfix-no-test-pr-1289-api-ecosystem",
     "hotfix-no-test-pr-1292-mfa-rls",
+    "hotfix-no-test-pr-2436",
+    "hotfix-no-test-pr-2454",
     "hotfix-no-test-pr-497",
     "hotfix-no-test-pr-532",
     "hotfix-no-test-pr-553",
@@ -570,6 +593,7 @@
     "lag-warning-2026-07-12",
     "lag-warning-2026-07-16",
     "lag-warning-2026-07-20",
+    "lag-warning-2026-07-23",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -658,7 +682,7 @@
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-14",
+    "api-handlers": "2026-07-23",
     "api-core": "2026-07-20",
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-21",
@@ -668,9 +692,9 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 47,
-    "vectors_created": 198,
-    "plans_created": 14,
+    "runs": 48,
+    "vectors_created": 206,
+    "plans_created": 15,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -685,7 +709,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
@@ -693,11 +717,11 @@
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
       "pm-security": "2026-07-21",
-      "pm-data": "2026-05-28",
+      "pm-data": "2026-07-23",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }
