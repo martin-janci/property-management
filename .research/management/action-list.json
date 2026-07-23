@@ -77,7 +77,7 @@
       "action": "Follow-up: announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (PR #2455) (Closes #2484)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2484)",
       "deadline": null,
       "dependency": null,
@@ -90,14 +90,15 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-23T14:11:48Z"
     },
     {
       "id": "gh-issue-2485",
       "action": "Follow-up: layout publish webhook has no timestamp/replay protection (PR #2431) (Closes #2485)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2485)",
       "deadline": null,
       "dependency": null,
@@ -110,14 +111,15 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-23T14:11:48Z"
     },
     {
       "id": "gh-issue-2486",
       "action": "Follow-up: mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (PR #2432) (Closes #2486)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2486)",
       "deadline": null,
       "dependency": null,
@@ -130,7 +132,8 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-23T14:11:48Z"
     },
     {
       "id": "gh-issue-2366-retry1",
