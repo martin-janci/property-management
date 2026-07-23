@@ -1,0 +1,178 @@
+{
+  "run_date": "2026-07-23",
+  "run_iso": "2026-07-23T04:20:00Z",
+  "phases_failed": [
+    "phase-1.5-code-review-skipped-budget",
+    "phase-1.6-project-management-skipped-budget"
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-21T03:13Z..2026-07-23T04:20Z origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 commits touched services/scheduler.rs: #2436 (log malformed announcement target_ids) + #2455 (AND-scope announcement fan-out to org) + #2439 (BIT-557 admin-platform happy-path tests). 1876 lines added+deleted total."
+    },
+    {
+      "id": "churn-hotspot-.github/workflows/backend.yml",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-21T03:13Z..2026-07-23T04:20Z origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 commits: #2459 (nextest archive + per-test partition) + #2444 (deterministic AI-agent verify gate + layered CI) + #2448 (agent-experience hardening)."
+    },
+    {
+      "id": "churn-hotspot-backend/scripts/ci-test-shard.sh",
+      "type": "churn-hotspot",
+      "source": "git log 2026-07-21T03:13Z..2026-07-23T04:20Z origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3 commits, all paired with backend.yml above — shard driver churned alongside CI-tier restructure."
+    },
+    {
+      "id": "lag-warning-2026-07-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso 2026-07-21T03:13:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "49h since last routine run; >36h threshold — routine skipped a daily tick."
+    },
+    {
+      "id": "dep-update-noise-2026-07-23",
+      "type": "dep-update-noise",
+      "source": "gh pr list --state open (dependabot batch 2026-07-23)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "8 dependabot PRs opened today (#2468–#2477): tokio, serde, cargo-minor, npm-minor, actions/upload-artifact, actions/download-artifact, expo-*, @babel/plugin-transform-flow-strip-types. Logged, not scored."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist type this run (churn-hotspot is on the allowlist but not eligible; no fresh screen-map-drift / screen-map-orphan / fixme-in-merged-code / lockfile-drift / stalled-review candidates)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-23.md; head -1 first line == \"# 2026-07-23\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap+decay",
+      "observed": "no items >8; no open items >14d old",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans adversarial pass",
+      "observed": "no plans promoted this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans ≤2",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in added lines",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regenerated backlog.json",
+      "observed": "diff -q clean",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "phase-1.5 + phase-1.6 skipped; review_cursor + pm_cursor + coverage_cursor NOT advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "no plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count only grows",
+      "observed": "HEAD=7 current=7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regeneration",
+      "observed": "diff -q clean",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[]; no push, no PR",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped this run)",
+      "observed": "n/a — Phase 1.6 skipped, gate is no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret committed",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

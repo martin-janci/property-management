@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-21 03:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-23 04:20 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -18,11 +18,11 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | test-gap | `screen-map-drift-pr-2431-reality` | Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen) | open | 2026-07-21 |  |
-| 2 | bug | `code-review-ppt-web-ui-propinput-json-coerce` | TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted ("true" -> boolean, "[]" -> array) | open | 2026-07-21 |  |
-| 2 | bug | `code-review-ppt-web-ui-savedirty-stale-closure` | DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded | open | 2026-07-21 |  |
-| 2 | bug | `code-review-ppt-web-ui-actionqueue-mock-shipped` | Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action items; approve/reject/dismiss are silent no-ops | open | 2026-07-21 |  |
-| 2 | security | `code-review-api-core-scheduler-units-target-cross-tenant` | scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across tenants if create-announcement validation is bypassed | open | 2026-07-20 |  |
+| 2 | test-gap | `screen-map-drift-pr-2431-reality` | Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen) | done | 2026-07-23 |  |
+| 2 | bug | `code-review-ppt-web-ui-propinput-json-coerce` | TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted ("true" -> boolean, "[]" -> array) | done | 2026-07-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-savedirty-stale-closure` | DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded | done | 2026-07-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-actionqueue-mock-shipped` | Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action items; approve/reject/dismiss are silent no-ops | done | 2026-07-21 |  |
+| 2 | security | `code-review-api-core-scheduler-units-target-cross-tenant` | scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across tenants if create-announcement validation is bypassed | done | 2026-07-20 |  |
 | 2 | refactor | `refactor-churn-hotspots-api-server-auth-2026-07-12` | Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs | done | 2026-07-12 |  |
 | 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | done | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
@@ -68,14 +68,17 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21` | Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run | done | 2026-07-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-scheduler-rs-2026-07-23` | Churn hotspot: backend/servers/api-server/src/services/scheduler.rs (3 touches this run — announcement target_ids fix + cross-tenant AND-scope + BIT-557 admin-platform tests) | open | 2026-07-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-github-workflows-backend-yml-2026-07-23` | Churn hotspot: .github/workflows/backend.yml (3 touches — nextest archive/partition + agent-experience verify + layered CI) | open | 2026-07-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-scripts-ci-test-shard-sh-2026-07-23` | Churn hotspot: backend/scripts/ci-test-shard.sh (3 touches — CI-tier test shard rewiring) | open | 2026-07-23 |  |
 | 1 | refactor | `refactor-churn-hotspot-repo-map-md-2026-07-20` | Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh) | open | 2026-07-21 |  |
 | 1 | refactor | `refactor-churn-hotspot-ppt-dashboard-md-2026-07-21` | Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration) | open | 2026-07-21 |  |
-| 1 | refactor | `refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21` | Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run | open | 2026-07-21 |  |
-| 1 | bug | `code-review-api-core-scheduler-target-ids-silent-parse` | scheduler.rs get_announcement_target_users() silently swallows target_ids JSON parse errors — malformed payload publishes zero notifications with no log | open | 2026-07-20 |  |
+| 1 | bug | `code-review-api-core-scheduler-target-ids-silent-parse` | scheduler.rs get_announcement_target_users() silently swallows target_ids JSON parse errors — malformed payload publishes zero notifications with no log | done | 2026-07-20 |  |
 | 1 | refactor | `refactor-churn-hotspot-mobile-package-json-2026-07-20` | Churn hotspot: frontend/apps/mobile/package.json — 5 touches this window (Expo/expo-notifications/expo-config-plugins dependabot cascade) | open | 2026-07-20 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-cargo-toml-2026-07-20` | Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate) | open | 2026-07-20 |  |
-| 1 | dx | `dx-closed-not-merged-pr-2385` | PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup | open | 2026-07-20 |  |
-| 1 | dx | `dx-closed-not-merged-pr-2387` | PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 | open | 2026-07-20 |  |
+| 1 | dx | `dx-closed-not-merged-pr-2385` | PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup | dropped | 2026-07-20 |  |
+| 1 | dx | `dx-closed-not-merged-pr-2387` | PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 | dropped | 2026-07-20 |  |
 | 1 | refactor | `refactor-churn-hotspots-en-json-2026-07-16` | Churn hotspot: frontend/apps/ppt-web/messages/en.json — frontend/apps/ppt-web/messages/en.json: +3926 lines this run (runs_seen was 0; last_seen never) | done | 2026-07-16 |  |
 | 1 | refactor | `refactor-churn-hotspots-sitemap-json-2026-07-16` | Churn hotspot: frontend/packages/sitemap/src/json/sitemap.json — frontend/packages/sitemap/src/json/sitemap.json: +3727 lines this run (runs_seen was 0; last_seen never) | done | 2026-07-16 |  |
 | 1 | refactor | `refactor-churn-hotspot-backend-integrations-booking-mod` | backend integrations booking/mod.rs — instability watch after PR #2176 split | done | 2026-07-09 |  |

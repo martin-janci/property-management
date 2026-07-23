@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-21T03:13:00Z",
-  "last_run_ms": 1200000,
-  "last_pr_seen": 2432,
+  "last_run_iso": "2026-07-23T04:20:00Z",
+  "last_run_ms": 45000,
+  "last_pr_seen": 2467,
   "last_issue_seen": 2422,
-  "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d",
+  "last_commit_sha": "e0c2fa4a7569b1e6f14be1c7de1c5303bb02fe6c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -381,9 +381,25 @@
       "runs_seen": 1,
       "last_seen": "2026-07-21",
       "recent_churn": 900
+    },
+    "backend/servers/api-server/src/services/scheduler.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 1876
+    },
+    ".github/workflows/backend.yml": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 1409
+    },
+    "backend/scripts/ci-test-shard.sh": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 376
     }
   },
   "seen_signals": [
+    "churn-hotspot-.github/workflows/backend.yml",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -408,6 +424,7 @@
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/scripts/ci-test-shard.sh",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
@@ -423,6 +440,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
@@ -525,6 +543,7 @@
     "dep-update-noise-2026-05-28",
     "dep-update-noise-2026-05-29",
     "dep-update-noise-2026-06-05",
+    "dep-update-noise-2026-07-23",
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
@@ -570,6 +589,7 @@
     "lag-warning-2026-07-12",
     "lag-warning-2026-07-16",
     "lag-warning-2026-07-20",
+    "lag-warning-2026-07-23",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -668,8 +688,8 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 47,
-    "vectors_created": 198,
+    "runs": 48,
+    "vectors_created": 201,
     "plans_created": 14,
     "quiet_days": 2,
     "auto_fix_count": 0

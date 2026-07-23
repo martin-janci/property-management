@@ -4630,18 +4630,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "git-log-since-2026-07-20T03:12:00Z"
+        "git-log-since-2026-07-20T03:12:00Z",
+        "PR #2464"
       ],
       "evidence": [
-        "LayoutEditorPage.tsx touched 2x this run — created in PR #2428 (Layout editor MVP) and extended in PR #2430 (live preview bridge PreviewPanel wiring). Iteration inside a single feature series; monitor for repeated-churn if it re-fires next window."
+        "LayoutEditorPage.tsx touched 2x this run — created in PR #2428 (Layout editor MVP) and extended in PR #2430 (live preview bridge PreviewPanel wiring). Iteration inside a single feature series; monitor for repeated-churn if it re-fires next window.",
+        "resolved: PR #2464 merged 2026-07-23 — refactor(admin-web): extract LayoutEditorPage style constants into styles module"
       ],
       "files": [
         "frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx"
       ],
       "created_at": "2026-07-21",
-      "updated_at": "2026-07-21",
+      "updated_at": "2026-07-23",
       "plan": null
     },
     {
@@ -4650,20 +4652,22 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2431"
+        "PR #2431",
+        "PR #2462"
       ],
       "evidence": [
         "PR #2431 (Layout publish webhook — signed ISR revalidation) matches the src/app/** drift trigger via frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts. No docs/screens/reality/*.md touched.",
-        "Best-effort heuristic caveat: the touched file is an internal webhook (/api/), not a user-facing screen, so a matching doc under docs/screens/reality/ would be inappropriate. Treat as review candidate, not promotable plan — operator can dismiss."
+        "Best-effort heuristic caveat: the touched file is an internal webhook (/api/), not a user-facing screen, so a matching doc under docs/screens/reality/ would be inappropriate. Treat as review candidate, not promotable plan — operator can dismiss.",
+        "resolved: PR #2462 merged 2026-07-23 — docs(reality-web): record layout-revalidate webhook in listing-detail screen-map (heuristic false-positive addressed by noting the internal-webhook path)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
         "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts"
       ],
       "created_at": "2026-07-21",
-      "updated_at": "2026-07-21",
+      "updated_at": "2026-07-23",
       "plan": null
     },
     {
@@ -4740,6 +4744,72 @@
         "assignment_status": "merged",
         "pr_number": 2456
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-scheduler-rs-2026-07-23",
+      "vector": "refactor",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs (3 touches this run — announcement target_ids fix + cross-tenant AND-scope + BIT-557 admin-platform tests)",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2436",
+        "PR #2455",
+        "PR #2439"
+      ],
+      "evidence": [
+        "3 commits touched scheduler.rs in the 2026-07-21 → 2026-07-23 window: #2436 (log malformed announcement target_ids), #2455 (AND-scope announcement fan-out to org), #2439 (BIT-557 admin-platform happy-path tests). All three land with tests; churn is instability-signal, not test-gap. Watch for repeated-churn next run."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-github-workflows-backend-yml-2026-07-23",
+      "vector": "refactor",
+      "title": "Churn hotspot: .github/workflows/backend.yml (3 touches — nextest archive/partition + agent-experience verify + layered CI)",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2459",
+        "PR #2444",
+        "PR #2448"
+      ],
+      "evidence": [
+        "3 commits touched .github/workflows/backend.yml this window: #2459 (nextest archive + per-test partition), #2444 (deterministic AI-agent verify gate + layered CI), #2448 (agent-experience hardening). CI-workflow instability — expected during test-tier consolidation, watch that the layered CI stabilises rather than becoming a repeated-churn."
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-scripts-ci-test-shard-sh-2026-07-23",
+      "vector": "refactor",
+      "title": "Churn hotspot: backend/scripts/ci-test-shard.sh (3 touches — CI-tier test shard rewiring)",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2459",
+        "PR #2444",
+        "PR #2448"
+      ],
+      "evidence": [
+        "3 commits touched backend/scripts/ci-test-shard.sh alongside .github/workflows/backend.yml — the shard driver is the file that pairs with the nextest partition change. If it churns again next run, the shard interface has not stabilised."
+      ],
+      "files": [
+        "backend/scripts/ci-test-shard.sh"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
     }
   ]
 }
