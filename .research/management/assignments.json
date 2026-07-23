@@ -66,28 +66,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
-      "branch": "auto-impl/refactor-churn-hotspot-backend-cargo-tom-85f7a001",
-      "status": "in-progress",
-      "claimed_at": "2026-07-23T08:16:02Z",
-      "last_updated": "2026-07-23T08:16:02Z",
-      "status_changed_at": "2026-07-23T08:16:02Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ]
 }

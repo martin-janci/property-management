@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-23T08:16:31Z",
+  "archived_at": "2026-07-23T08:30:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8650,6 +8650,24 @@
         "merged_at": "2026-07-12T00:02:59Z",
         "at": "2026-07-12T02:04:00Z"
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
+      "action": "Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-23T08:05:50Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T08:05:50Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-07-23T08:30:28Z"
     },
     {
       "id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
