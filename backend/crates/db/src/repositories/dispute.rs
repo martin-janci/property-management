@@ -617,12 +617,29 @@ impl DisputeRepository {
         Ok(evidence)
     }
 
-    pub async fn add_evidence(&self, req: AddEvidence) -> Result<DisputeEvidence, AppError> {
+    /// Attach evidence to a dispute, scoped to the caller's organization
+    /// (issue #2483 — follow-up to #2441/PR #2450, which org-scoped the sibling
+    /// sub-resource methods but missed this write).
+    ///
+    /// The INSERT is gated by an `EXISTS` predicate on the parent dispute's
+    /// organization, so the write is atomic — a caller from another org cannot
+    /// attach evidence by guessing the `dispute_id`. A foreign-org (or unknown)
+    /// `dispute_id` selects no source row, inserts nothing, and surfaces as
+    /// `NotFound`. The follow-up `record_activity` is gated on the same success,
+    /// so no phantom activity row is written for a rejected attempt.
+    pub async fn add_evidence(
+        &self,
+        req: AddEvidence,
+        org_id: Uuid,
+    ) -> Result<DisputeEvidence, AppError> {
         let evidence = sqlx::query_as::<_, DisputeEvidence>(
             r#"
             INSERT INTO dispute_evidence (dispute_id, uploaded_by, filename, original_filename,
                                           content_type, size_bytes, storage_url, description)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            SELECT $1, $2, $3, $4, $5, $6, $7, $8
+            WHERE EXISTS (
+                SELECT 1 FROM disputes WHERE id = $1 AND organization_id = $9
+            )
             RETURNING id, dispute_id, uploaded_by, filename, original_filename, content_type,
                       size_bytes, storage_url, description, created_at
             "#,
@@ -635,9 +652,11 @@ impl DisputeRepository {
         .bind(req.size_bytes)
         .bind(&req.storage_url)
         .bind(&req.description)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Dispute not found".to_string()))?;
 
         self.record_activity(
             req.dispute_id,
