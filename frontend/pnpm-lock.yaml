@@ -202,8 +202,8 @@ importers:
         specifier: ~57.0.8
         version: 57.0.8(@babel/core@8.0.1)(@expo/dom-webview@57.0.1)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
       expo-clipboard:
-        specifier: ^56.0.4
-        version: 56.0.4(expo@57.0.8)(react-native@0.86.0)(react@19.2.0)
+        specifier: ^57.0.1
+        version: 57.0.1(expo@57.0.8)(react-native@0.86.0)(react@19.2.0)
       expo-constants:
         specifier: ~56.0.18
         version: 56.0.21(expo@57.0.8)(react-native@0.86.0)
@@ -6404,8 +6404,8 @@ packages:
       - supports-color
       - typescript
 
-  /expo-clipboard@56.0.4(expo@57.0.8)(react-native@0.86.0)(react@19.2.0):
-    resolution: {integrity: sha512-qb4DYlkiowHYHaUYVT2FN9nk/nI1xShXOUYsI7J9dVpQCOHcGFjCBPX1VAvEW4Ye4/Aagd6IuhOVAq/+scBOiA==}
+  /expo-clipboard@57.0.1(expo@57.0.8)(react-native@0.86.0)(react@19.2.0):
+    resolution: {integrity: sha512-HWICri4+1ao7S6QEfcorxVumXDiDnx1guGGewjZgGJWLGxFYs0RgH8ujBs+lkTzBkMmlwADaWSlaesR+nDJt5Q==}
     peerDependencies:
       expo: '*'
       react: 19.2.0
