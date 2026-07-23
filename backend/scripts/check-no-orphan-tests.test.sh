@@ -110,6 +110,36 @@ else
     fail "expected exit 0 for an .rs-free subdir"
 fi
 
+# --- Case 7: harness pattern — fully #[path]-referenced subdir passes --------
+# Consolidated suites (build-experience roadmap item 8): top-level harness
+# binaries include subdir files individually via #[path = "suites/<f>.rs"].
+echo "case: #[path]-referenced suites/ subdir passes"
+c7="$(new_crate)"
+printf '#[path = "suites/a_tests.rs"]\nmod a_tests;\n#[path = "suites/b_tests.rs"]\nmod b_tests;\n' > "$c7/tests/suite_1.rs"
+mkdir -p "$c7/tests/suites"
+: > "$c7/tests/suites/a_tests.rs"
+: > "$c7/tests/suites/b_tests.rs"
+if "$CHECKER" "$c7" >/dev/null 2>&1; then
+    pass "exit 0 when every suites/ file is #[path]-referenced"
+else
+    fail "expected exit 0 for a fully #[path]-referenced suites dir"
+fi
+
+# --- Case 8: harness pattern — one unreferenced file is flagged --------------
+echo "case: unreferenced file in a #[path]-referenced subdir is detected"
+c8="$(new_crate)"
+printf '#[path = "suites/a_tests.rs"]\nmod a_tests;\n' > "$c8/tests/suite_1.rs"
+mkdir -p "$c8/tests/suites"
+: > "$c8/tests/suites/a_tests.rs"
+: > "$c8/tests/suites/dropped_tests.rs"   # nobody references this one
+out="$("$CHECKER" "$c8" 2>&1)"; code=$?
+if [[ "$code" -ne 1 ]]; then fail "expected exit 1, got $code"; else pass "exit 1"; fi
+if grep -q 'suites/dropped_tests.rs' <<< "$out"; then
+    pass "unreferenced suite file reported"
+else
+    fail "expected dropped_tests.rs in output; got: $out"
+fi
+
 echo
 if [[ "$failures" -gt 0 ]]; then
     echo "FAILED: $failures assertion(s) failed"
