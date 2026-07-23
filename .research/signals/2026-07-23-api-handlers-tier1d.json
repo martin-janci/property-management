@@ -1,0 +1,34 @@
+{
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "generated_at": "2026-07-23",
+  "generator": "dev-review",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed (Tier-1d demand-driven generation; dispatcher buffer starved, claimable < floor). review_cursor.api-handlers=2026-07-14 was the oldest of the 8 segments; no churn input supplied; 0 open code-review-finding items in backlog for this segment (no saturation skip).",
+  "notes": "Tier-1d rotating-expert static review of api-handlers (backend/servers/api-server/src/routes/). Static analysis only — no compilation, no tests. Rust+Security sweep triaged the discarded-principal / client-supplied-org_id surface (the historically productive IDOR class here). Most leads reviewed CLEAN and were NOT emitted: (1) ai/workflows.rs handlers that bind `_principal` only serve static built-in template catalogs (no tenant data); (2) budgets.rs / reports.rs / templates.rs discard `_auth: AuthUser` but route every query through *_rls repo methods on RlsConnection, which sets app.current_org_id from the JWT+DB-validated principal (crates/api-core/src/extractors/rls_connection.rs:249 -> db::tenant_context::set_request_context), so a mismatched client organization_id yields zero rows via RLS — defense-in-depth, not IDOR; (3) meters.rs submit_reading, work_orders.rs create/load_*_for_user, and financial.rs create_transaction all derive the authoritative org from the looked-up record (or force payload.account_id = path id) before writing — correctly guarded. ONE confirmed high-severity cross-RFQ/cross-tenant write IDOR found in marketplace.rs award_quote, full path traced handler->repo->SQL and code-verified. Distinct from the 2026-06-11 marketplace signal (invitation/badge/verification moderation) and from the already-filed news_articles (#2314) and ai/ocr (2026-07-22) IDORs. Not runtime-verified.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-marketplace-award-quote-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {id} RFQ belongs to the caller's org. It then calls marketplace_repo.award_rfq(id, data.quote_id) where data.quote_id comes straight from the request body (AwardQuoteRequest.quote_id: Uuid, marketplace.rs:93) and is NEVER validated to belong to this RFQ or to the caller's org.",
+        "backend/crates/db/src/repositories/marketplace.rs:781-835 — award_rfq(id, quote_id) resolves the quote via find_quote_by_id(quote_id) (by id alone, no rfq_id/org predicate) to derive provider_id, then `UPDATE rfqs SET status='awarded', awarded_to=$2, awarded_quote_id=$3 WHERE id=$1` — the only constraint is rfqs.id=$1; there is no `AND EXISTS (SELECT 1 FROM provider_quotes WHERE id=quote_id AND rfq_id=id)` guard. A manager who owns RFQ-A can award it to a quote_id that belongs to a DIFFERENT RFQ (potentially another tenant's), corrupting RFQ-A.awarded_quote_id/awarded_to with an unrelated provider that never quoted RFQ-A.",
+        "backend/crates/db/src/repositories/marketplace.rs:808-817 — the same call then runs `UPDATE provider_quotes SET status='accepted', updated_at=NOW() WHERE id=$1` bound to the client quote_id: a cross-RFQ (and cross-tenant) state write that flips an unrelated provider's quote to 'accepted'. The sibling reject step (marketplace.rs:820-831) correctly scopes `WHERE rfq_id=$1 AND id!=$2`, highlighting that the accept step's missing rfq_id constraint is an in-file inconsistency, not an intentional design.",
+        "Same IDOR class as the 2026-07-22 ai/ocr submit_correction finding: parent-org membership is checked, but a client-supplied foreign id (quote_id) is persisted/actioned without validating it belongs to the authorized parent. Fix: resolve the quote inside award_rfq (or in the handler) and reject unless quote.rfq_id == id, e.g. add `AND rfq_id = $1` to the find and to both provider_quotes updates.",
+        "Secondary correctness defect in the same method: award_rfq has no status guard (contrast cancel_rfq at marketplace.rs:837 which uses `WHERE id=$1 AND status NOT IN ('awarded','cancelled')`), so an already-awarded or cancelled RFQ can be re-awarded, re-flipping quote statuses each call."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/marketplace.rs",
+        "backend/crates/db/src/repositories/marketplace.rs"
+      ]
+    }
+  ]
+}

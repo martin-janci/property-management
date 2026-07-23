@@ -2173,6 +2173,50 @@
       "merge_attempted_at": "2026-07-02T14:14:26Z"
     },
     {
+      "task_id": "dx-closed-not-merged-pr-2385",
+      "branch": "auto-impl/dx-closed-not-merged-pr-2385-f857ae5f",
+      "status": "failed",
+      "claimed_at": "2026-07-23T00:08:04Z",
+      "last_updated": "2026-07-23T00:17:49Z",
+      "status_changed_at": "2026-07-23T00:17:49Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=none status=blocked specialist=generic scope_drift=false code_reuse_warn=none note=closure-correct-1.100.0-nonexistent-rust; dev pins valid 1.94.1; bump invalid not stale",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "dx-closed-not-merged-pr-2387",
+      "branch": "auto-impl/dx-closed-not-merged-pr-2387-48a551ed",
+      "status": "failed",
+      "claimed_at": "2026-07-23T00:08:04Z",
+      "last_updated": "2026-07-23T00:17:49Z",
+      "status_changed_at": "2026-07-23T00:17:49Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=none status=blocked specialist=generic scope_drift=false code_reuse_warn=none note=superseded-by-2423-already-on-dev (merged 2026-07-19; all 15 bumps present at equal-or-newer)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "dx-routine-lag-catchup-2026-07",
       "branch": "auto-impl/dx-routine-lag-catchup-2026-07-2a7a3130",
       "status": "failed",
@@ -7671,5 +7715,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-22T22:28:57Z"
+  "archived_at": "2026-07-23T00:17:50Z"
 }

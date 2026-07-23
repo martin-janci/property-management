@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-22T22:13:54Z",
+  "archived_at": "2026-07-23T00:08:22Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1409,6 +1409,30 @@
       }
     },
     {
+      "id": "code-review-api-core-scheduler-units-target-cross-tenant",
+      "action": "scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across tenants if create-announcement validation is bypassed",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=security) | gc1-reconcile 2026-07-23T00:03:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2455,
+        "merged_at": "2026-07-22T22:25:51Z",
+        "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "action": "security (broken access control / IDOR): backend/servers/api-server/src/routes/documents/shares.rs revoke_share checks authorization (created_by/is_manager) against the document from the path `id`, but then looks up + revokes the share purely by `share_id` (find_share_by_id_rls result discarded at :349; revoke_share_rls at :370) with no check that `share.document_id == id`. RLS only scopes to tenant, so a non-manager who created any document A can pass A's id (passing the creator check) plus a share_id belonging to another creator's document B in the same tenant and revoke B's share. Add a `share.document_id == id` guard before revoking.",
       "owner_role": "pm-backend",
@@ -1708,6 +1732,78 @@
         "merged_pr": 1681,
         "merged_at": "2026-06-22T16:33:10Z",
         "at": "2026-06-24T00:14:14Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",
+      "action": "Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action items; approve/reject/dismiss are silent no-ops",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-07-23T00:03:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2456,
+        "merged_at": "2026-07-22T22:27:57Z",
+        "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-propinput-json-coerce",
+      "action": "TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted (\"true\" -> boolean, \"[]\" -> array)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-07-23T00:03:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2458,
+        "merged_at": "2026-07-22T22:23:24Z",
+        "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-savedirty-stale-closure",
+      "action": "DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-07-23T00:03:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2457,
+        "merged_at": "2026-07-22T22:23:38Z",
+        "at": "2026-07-23T00:03:08Z"
       }
     },
     {

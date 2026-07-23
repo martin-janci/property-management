@@ -2,74 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "code-review-api-core-scheduler-units-target-cross-tenant",
-      "action": "scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across tenants if create-announcement validation is bypassed",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",
-      "action": "Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action items; approve/reject/dismiss are silent no-ops",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-propinput-json-coerce",
-      "action": "TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted (\"true\" -> boolean, \"[]\" -> array)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-savedirty-stale-closure",
-      "action": "DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "screen-map-drift-pr-2431-reality",
       "action": "Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen)",
       "owner_role": "pm-qa",
@@ -317,6 +249,26 @@
       "first_open_at": "2026-07-22T14:06:53Z",
       "retry_of": "bug-ios-deeplink-info-plist-missing",
       "retry_round": 2
+    },
+    {
+      "id": "gh-issue-2460",
+      "action": "retry-remint.sh re-mints ghost retries for work already landed out-of-band (dev-truth guard blind spot) (Closes #2460)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-23T00:03:30Z (#2460)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T00:03:30Z",
+      "issue_ref": {
+        "number": 2460,
+        "url": "https://github.com/martin-janci/property-management/issues/2460",
+        "labels": [
+          "enhancement",
+          "follow-up"
+        ]
+      }
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
