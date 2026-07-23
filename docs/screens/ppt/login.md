@@ -34,7 +34,8 @@ designSources:
     frame: row1-loaded+magic / row2-totp+sms / row3-loading+empty / row4-errors-3up
 useCases:
   - UC-14
-epics: []
+epics:
+  - Epic-1
 diagrams: []
 owner: pm-frontend
 ---

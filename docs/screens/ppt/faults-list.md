@@ -37,7 +37,8 @@ designSources:
     frame: mobile-faults-list
 useCases:
   - UC-03
-epics: []
+epics:
+  - Epic-4
 diagrams: []
 owner: pm-frontend
 ---

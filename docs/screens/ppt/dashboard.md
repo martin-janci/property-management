@@ -32,7 +32,8 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/ui_kits/mobile/screens.jsx
     frame: MobHomeScreen
-epics: []
+epics:
+  - Epic-3
 diagrams: []
 owner: pm-frontend
 ---

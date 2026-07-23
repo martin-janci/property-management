@@ -15,7 +15,8 @@ relatedScreens: []
 sharedComponents: []
 diagrams: []
 useCases: []
-epics: []
+epics:
+  - Epic-1
 designSources: []
 owner: pm-frontend
 ---

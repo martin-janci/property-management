@@ -34,7 +34,8 @@ designSources:
 useCases:
   - UC-04
 endpoints: []
-epics: []
+epics:
+  - Epic-5
 diagrams: []
 owner: pm-frontend
 ---
