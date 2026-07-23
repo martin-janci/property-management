@@ -7,14 +7,15 @@ vi.mock('next/cache', () => ({
 }));
 
 import { revalidateTag } from 'next/cache';
-import { layoutTagsFor, POST } from './route';
+import { isTimestampFresh, layoutTagsFor, POST, parseWebhookTimestamp } from './route';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeSignature(secret: string, body: string): string {
-  return 'sha256=' + createHmac('sha256', secret).update(body).digest('base64');
+/** Sign the timestamped payload "{timestamp}.{body}" (issue #2485). */
+function makeSignature(secret: string, timestamp: number, body: string): string {
+  return 'sha256=' + createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('base64');
 }
 
 function makeRequest(body: string, headers: Record<string, string> = {}): Request {
@@ -22,6 +23,29 @@ function makeRequest(body: string, headers: Record<string, string> = {}): Reques
     method: 'POST',
     body,
     headers: { 'Content-Type': 'application/json', ...headers },
+  });
+}
+
+/** A fresh unix-seconds timestamp for the current wall clock. */
+function nowTs(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+/**
+ * Build a fully-signed request: fresh (or supplied) timestamp header plus a
+ * signature over "{timestamp}.{body}". This is the happy-path shape every
+ * non-timestamp test reuses so those tests exercise the check they name.
+ */
+function signedRequest(
+  secret: string,
+  body: string,
+  opts: { timestamp?: number; extraHeaders?: Record<string, string> } = {}
+): Request {
+  const ts = opts.timestamp ?? nowTs();
+  return makeRequest(body, {
+    'X-Webhook-Timestamp': String(ts),
+    'X-Webhook-Signature': makeSignature(secret, ts, body),
+    ...opts.extraHeaders,
   });
 }
 
@@ -46,6 +70,49 @@ describe('layoutTagsFor', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Replay-protection helpers (issue #2485)
+// ---------------------------------------------------------------------------
+
+describe('parseWebhookTimestamp', () => {
+  it('parses a plain unix-seconds integer', () => {
+    expect(parseWebhookTimestamp('1700000000')).toBe(1_700_000_000);
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(parseWebhookTimestamp('  1700000000  ')).toBe(1_700_000_000);
+  });
+
+  it('returns null for a missing header', () => {
+    expect(parseWebhookTimestamp(null)).toBeNull();
+  });
+
+  it.each(['', 'abc', '123abc', '1.5', '0x10', '1e3', 'NaN'])(
+    'returns null for malformed value %j',
+    (raw) => {
+      expect(parseWebhookTimestamp(raw)).toBeNull();
+    }
+  );
+});
+
+describe('isTimestampFresh', () => {
+  const NOW = 1_700_000_000;
+
+  it('accepts a timestamp equal to now', () => {
+    expect(isTimestampFresh(NOW, NOW)).toBe(true);
+  });
+
+  it('accepts the exact ±300s boundary (inclusive)', () => {
+    expect(isTimestampFresh(NOW - 300, NOW)).toBe(true);
+    expect(isTimestampFresh(NOW + 300, NOW)).toBe(true);
+  });
+
+  it('rejects just outside the window in the past and future', () => {
+    expect(isTimestampFresh(NOW - 301, NOW)).toBe(false);
+    expect(isTimestampFresh(NOW + 301, NOW)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // POST handler
 // ---------------------------------------------------------------------------
 
@@ -61,7 +128,7 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 503 when LAYOUT_WEBHOOK_SECRET is not set', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', '');
     const body = JSON.stringify({ screen: 'reality/listing-detail' });
-    const req = makeRequest(body, { 'X-Webhook-Signature': makeSignature(SECRET, body) });
+    const req = signedRequest(SECRET, body);
     const res = await POST(req);
     expect(res.status).toBe(503);
     const json = await res.json();
@@ -72,7 +139,8 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 401 when X-Webhook-Signature header is missing', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'reality/listing-detail' });
-    const req = makeRequest(body);
+    // Fresh timestamp present, but no signature header.
+    const req = makeRequest(body, { 'X-Webhook-Timestamp': String(nowTs()) });
     const res = await POST(req);
     expect(res.status).toBe(401);
     const json = await res.json();
@@ -83,7 +151,10 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 401 when X-Webhook-Signature is wrong', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'reality/listing-detail' });
-    const req = makeRequest(body, { 'X-Webhook-Signature': 'sha256=invalidsignature==' });
+    const req = makeRequest(body, {
+      'X-Webhook-Timestamp': String(nowTs()),
+      'X-Webhook-Signature': 'sha256=invalidsignature==',
+    });
     const res = await POST(req);
     expect(res.status).toBe(401);
     const json = await res.json();
@@ -91,11 +162,68 @@ describe('POST /api/layout-revalidate', () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
-  it('returns 200 and revalidates layout:listing-detail on valid request', async () => {
+  // --- Replay protection (issue #2485) ---
+
+  it('returns 401 when X-Webhook-Timestamp header is missing', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail' });
+    // Signature is valid for a fresh ts, but no timestamp header is sent.
+    const req = makeRequest(body, {
+      'X-Webhook-Signature': makeSignature(SECRET, nowTs(), body),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'missing timestamp' });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when X-Webhook-Timestamp is malformed', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail' });
+    const req = makeRequest(body, {
+      'X-Webhook-Timestamp': 'not-a-number',
+      'X-Webhook-Signature': makeSignature(SECRET, nowTs(), body),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'missing timestamp' });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 for a stale timestamp (replay outside the freshness window)', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });
-    const sig = makeSignature(SECRET, body);
-    const req = makeRequest(body, { 'X-Webhook-Signature': sig });
+    // Correctly signed, but 301s in the past — just outside the ±300s window.
+    const staleTs = nowTs() - 301;
+    const req = signedRequest(SECRET, body, { timestamp: staleTs });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'stale timestamp' });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when a fresh timestamp is swapped onto an old signature', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });
+    // Attacker captured (oldTs, sigOverOldTs) and presents a fresh timestamp to
+    // beat the window while reusing the old signature. Because the timestamp is
+    // folded into the HMAC, the swap fails the signature check.
+    const oldTs = nowTs() - 10_000;
+    const staleSig = makeSignature(SECRET, oldTs, body);
+    const req = makeRequest(body, {
+      'X-Webhook-Timestamp': String(nowTs()),
+      'X-Webhook-Signature': staleSig,
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'invalid signature' });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it('returns 200 and revalidates layout:listing-detail on a fresh signed request', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });
+    const req = signedRequest(SECRET, body);
     const res = await POST(req);
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -104,11 +232,19 @@ describe('POST /api/layout-revalidate', () => {
     expect(revalidateTag).toHaveBeenCalledTimes(1);
   });
 
+  it('accepts a timestamp at the exact ±300s boundary', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });
+    const req = signedRequest(SECRET, body, { timestamp: nowTs() - 300 });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(revalidateTag).toHaveBeenCalledTimes(1);
+  });
+
   it('returns 422 when screen has no slash', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'listing-detail' });
-    const sig = makeSignature(SECRET, body);
-    const req = makeRequest(body, { 'X-Webhook-Signature': sig });
+    const req = signedRequest(SECRET, body);
     const res = await POST(req);
     expect(res.status).toBe(422);
     expect(revalidateTag).not.toHaveBeenCalled();
@@ -117,8 +253,7 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 422 when second segment is empty (e.g., "foo/")', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'foo/' });
-    const sig = makeSignature(SECRET, body);
-    const req = makeRequest(body, { 'X-Webhook-Signature': sig });
+    const req = signedRequest(SECRET, body);
     const res = await POST(req);
     expect(res.status).toBe(422);
     expect(revalidateTag).not.toHaveBeenCalled();
@@ -127,8 +262,7 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 422 when body is not valid JSON', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = 'not-json';
-    const sig = makeSignature(SECRET, body);
-    const req = makeRequest(body, { 'X-Webhook-Signature': sig });
+    const req = signedRequest(SECRET, body);
     const res = await POST(req);
     expect(res.status).toBe(422);
     expect(revalidateTag).not.toHaveBeenCalled();
@@ -137,8 +271,7 @@ describe('POST /api/layout-revalidate', () => {
   it('returns 422 when body is JSON but has no screen string', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ event: 'published' });
-    const sig = makeSignature(SECRET, body);
-    const req = makeRequest(body, { 'X-Webhook-Signature': sig });
+    const req = signedRequest(SECRET, body);
     const res = await POST(req);
     expect(res.status).toBe(422);
     expect(revalidateTag).not.toHaveBeenCalled();

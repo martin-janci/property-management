@@ -7,15 +7,26 @@
 //!
 //! ## Signature format
 //!
-//! The outbound signature is placed in the `X-Webhook-Signature` header as:
+//! Each delivery carries an `X-Webhook-Timestamp` header (unix seconds) and an
+//! `X-Webhook-Signature` header computed over the **timestamped** payload:
 //!
 //! ```text
-//! sha256=<base64(HMAC-SHA256(LAYOUT_WEBHOOK_SECRET, body))>
+//! X-Webhook-Timestamp: <unix-seconds>
+//! X-Webhook-Signature: sha256=<base64(HMAC-SHA256(LAYOUT_WEBHOOK_SECRET, "{timestamp}.{body}"))>
 //! ```
 //!
-//! This matches the exact format used by the inbound portal-webhook receivers
-//! (`routes/portal_webhooks.rs`), enabling the same `verify_webhook_signature`
-//! helper to verify outbound deliveries on the receiving end.
+//! This mirrors the timestamped portal-webhook convention
+//! (`routes/portal_webhooks.rs::verify_timestamped_portal_webhook` and the
+//! Stripe receiver): folding the timestamp into the signed payload binds it to
+//! the signature so it cannot be swapped independently, and the receiver
+//! (`reality-web /api/layout-revalidate`) enforces a ±300s freshness window.
+//!
+//! ## Replay protection (issue #2485)
+//!
+//! Previously the signature was computed over the raw body ALONE with no
+//! timestamp, so a captured POST could be replayed against the reality-web
+//! revalidation endpoint indefinitely. Signing `"{timestamp}.{body}"` and
+//! shipping the timestamp lets the receiver reject stale/replayed deliveries.
 //!
 //! ## Fire-and-forget
 //!
@@ -35,15 +46,16 @@ type HmacSha256 = Hmac<Sha256>;
 /// receiving end can reuse the same verification logic.
 const SIGNATURE_HEADER: &str = "X-Webhook-Signature";
 
-/// Sign `body` with `secret` using HMAC-SHA256 and return the header value.
+/// The header name carrying the signed unix-seconds timestamp used for replay
+/// protection (issue #2485). Matches the portal-webhook convention
+/// (`portal_webhooks.rs::TIMESTAMP_HEADER`).
+const TIMESTAMP_HEADER: &str = "X-Webhook-Timestamp";
+
+/// Sign `bytes` with `secret` using HMAC-SHA256 and return the header value.
 ///
-/// The returned string has the form `sha256=<base64-digest>`, matching the
-/// format the inbound `verify_webhook_signature` helper in
-/// `routes/portal_webhooks.rs` expects:
-///
-/// ```text
-/// sha256=<base64(HMAC-SHA256(secret, body))>
-/// ```
+/// The returned string has the form `sha256=<base64-digest>`. This is the
+/// low-level primitive; outbound layout deliveries sign the *timestamped*
+/// payload via [`sign_timestamped_payload`].
 ///
 /// This is a pure function with no I/O; it is unit-tested with a hardcoded
 /// known vector below.
@@ -52,6 +64,23 @@ pub fn sign_payload(secret: &str, body: &[u8]) -> String {
         HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts keys of any length");
     mac.update(body);
     format!("sha256={}", BASE64.encode(mac.finalize().into_bytes()))
+}
+
+/// Sign the timestamped payload `"{timestamp}.{body}"` with `secret`.
+///
+/// This is the format the reality-web receiver reconstructs and verifies: the
+/// unix-seconds `timestamp` (also shipped in the `X-Webhook-Timestamp` header)
+/// is folded into the signed bytes so it cannot be swapped independently of the
+/// signature, defeating replay of a captured delivery outside the freshness
+/// window (issue #2485). Mirrors
+/// `portal_webhooks.rs::verify_timestamped_portal_webhook`'s
+/// `"{timestamp}.{raw_body}"` construction.
+pub fn sign_timestamped_payload(secret: &str, timestamp: i64, body: &[u8]) -> String {
+    let mut signed = Vec::with_capacity(body.len() + 20);
+    signed.extend_from_slice(timestamp.to_string().as_bytes());
+    signed.push(b'.');
+    signed.extend_from_slice(body);
+    sign_payload(secret, &signed)
 }
 
 /// Notify an external webhook endpoint that a layout change occurred.
@@ -105,7 +134,11 @@ pub fn notify_layout_change(screen: &str, event: &'static str) {
         .to_string()
         .into_bytes();
 
-    let signature = sign_payload(&secret, &body);
+    // Replay protection (issue #2485): ship a signed unix-seconds timestamp and
+    // sign over "{timestamp}.{body}" so the reality-web receiver can reject any
+    // captured delivery replayed outside its ±300s freshness window.
+    let timestamp = chrono::Utc::now().timestamp();
+    let signature = sign_timestamped_payload(&secret, timestamp, &body);
 
     tokio::spawn(async move {
         let client = reqwest::Client::builder()
@@ -126,6 +159,7 @@ pub fn notify_layout_change(screen: &str, event: &'static str) {
         match client
             .post(&url)
             .header("Content-Type", "application/json")
+            .header(TIMESTAMP_HEADER, timestamp.to_string())
             .header(SIGNATURE_HEADER, &signature)
             .body(body)
             .send()
@@ -230,6 +264,66 @@ mod tests {
         assert!(
             BASE64.decode(b64_part).is_ok(),
             "the portion after 'sha256=' must be valid standard base64, got: {b64_part}"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Timestamped signing (issue #2485): the outbound delivery must sign
+    // "{timestamp}.{body}" so the reality-web receiver can enforce a
+    // freshness window and reject replayed captures.
+    // ------------------------------------------------------------------
+
+    const TS: i64 = 1_700_000_000;
+
+    #[test]
+    fn sign_timestamped_payload_matches_prefixed_body() {
+        // The timestamped signer must equal signing the composed
+        // "{ts}.{body}" bytes through the low-level primitive — this is the
+        // exact string the receiver reconstructs.
+        let mut composed = Vec::new();
+        composed.extend_from_slice(format!("{TS}.").as_bytes());
+        composed.extend_from_slice(KNOWN_BODY);
+
+        assert_eq!(
+            sign_timestamped_payload(KNOWN_SECRET, TS, KNOWN_BODY),
+            sign_payload(KNOWN_SECRET, &composed),
+            "timestamped signature must cover exactly \"{{timestamp}}.{{body}}\""
+        );
+    }
+
+    #[test]
+    fn sign_timestamped_payload_known_vector() {
+        // Independently verified:
+        //   printf '1700000000.{"screen":"home","event":"published"}' \
+        //     | openssl dgst -sha256 -hmac "test-secret" -binary | base64
+        let sig = sign_timestamped_payload(KNOWN_SECRET, TS, KNOWN_BODY);
+        assert_eq!(
+            sig, "sha256=JUbVDRhJ5cUMQCjGQZ3EM3xJbMOGT/D7UqU/TXmAvEg=",
+            "timestamped signer must produce the pinned known-vector output"
+        );
+    }
+
+    #[test]
+    fn sign_timestamped_payload_differs_per_timestamp() {
+        // A different timestamp must yield a different signature — this is what
+        // makes a captured (timestamp, signature) pair non-replayable with a
+        // swapped-in fresh timestamp.
+        assert_ne!(
+            sign_timestamped_payload(KNOWN_SECRET, TS, KNOWN_BODY),
+            sign_timestamped_payload(KNOWN_SECRET, TS + 1, KNOWN_BODY),
+            "the timestamp must be bound into the signature"
+        );
+    }
+
+    #[test]
+    fn sign_timestamped_payload_differs_from_body_only() {
+        // Regression guard for #2485: the timestamped signature must NOT equal
+        // the old body-only signature, or a legacy replayable delivery would
+        // still validate.
+        assert_ne!(
+            sign_timestamped_payload(KNOWN_SECRET, TS, KNOWN_BODY),
+            sign_payload(KNOWN_SECRET, KNOWN_BODY),
+            "timestamped and body-only signatures must diverge"
         );
     }
 }
