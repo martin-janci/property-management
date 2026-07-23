@@ -57,7 +57,7 @@
       "action": "Follow-up: add_evidence dispute sub-resource is still cross-tenant-writable (missed by #2441/PR #2450) (Closes #2483)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2483)",
       "deadline": null,
       "dependency": null,
@@ -126,6 +126,28 @@
       "issue_ref": {
         "number": 2486,
         "url": "https://github.com/martin-janci/property-management/issues/2486",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2366-retry1",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 1/2 of failed gh-issue-2366]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-23T10:07:50Z (retry_of=gh-issue-2366 reason=failed-no-pr cooldown_ok newest_failure=2026-07-16T08:15:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T10:07:50Z",
+      "retry_of": "gh-issue-2366",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2366,
+        "url": "https://github.com/martin-janci/property-management/issues/2366",
         "labels": [
           "follow-up",
           "from-merged-review"
