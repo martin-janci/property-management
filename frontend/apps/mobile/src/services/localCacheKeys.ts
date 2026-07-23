@@ -24,4 +24,15 @@ export const WIDGET_DATA_KEY = '@ppt/widget_data';
 // `useDashboardLayout` / layout registry — server-driven resolved screen layout,
 // persisted across restarts so the last-known layout activates at launch before
 // the background fetch completes (next-launch activation pattern).
-export const LAYOUT_CACHE_KEY = (screen: string) => `ppt_layout_${screen.replace(/\//g, '_')}`;
+//
+// The resolved layout embeds the org's tenant override (which sections are
+// hidden/reordered — the org-admin's customization), so — like
+// `WIDGET_CONFIG_KEY` above — it is tenant-scoped data. It MUST therefore be
+// (a) keyed by the logged-in user/org id so a foreign tenant can never read a
+// prior tenant's layout, and (b) purged on session change. Because the exact
+// key is a *function* of a dynamic `screen` (and now a dynamic `scopeId`),
+// `resetLocalData` sweeps every key under `LAYOUT_PREFIX` rather than a fixed
+// list (issue #2486, follow-up to PR #2432 / #2399).
+export const LAYOUT_PREFIX = 'ppt_layout_';
+export const LAYOUT_CACHE_KEY = (scopeId: string, screen: string) =>
+  `${LAYOUT_PREFIX}${scopeId}_${screen.replace(/\//g, '_')}`;

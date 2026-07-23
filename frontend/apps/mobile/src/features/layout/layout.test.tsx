@@ -14,6 +14,7 @@ import { act, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import { DashboardScreen } from '../../screens/dashboard/DashboardScreen';
+import { resetLocalData } from '../../services/resetLocalData';
 import { LayoutSections } from './LayoutSections';
 import { readCachedLayout, writeCachedLayout } from './layoutCache';
 import type { SectionComponentProps, SectionRegistry } from './registry';
@@ -27,9 +28,11 @@ jest.mock('../../hooks/useApi', () => ({
   apiRequest: jest.fn(),
 }));
 
+// The real `useDashboardLayout` reads `user.id` to tenant-scope the layout
+// cache key (issue #2486), so the mocked auth user must expose an id.
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Byron' },
+    user: { id: 'user-a', firstName: 'Ada', lastName: 'Byron' },
     logout: jest.fn(),
   }),
 }));
@@ -171,12 +174,13 @@ describe('layoutCache', () => {
     (mockAsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
     (mockAsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(SAMPLE_LAYOUT));
 
-    await writeCachedLayout('ppt/dashboard', SAMPLE_LAYOUT);
-    const result = await readCachedLayout('ppt/dashboard');
+    await writeCachedLayout('user-a', 'ppt/dashboard', SAMPLE_LAYOUT);
+    const result = await readCachedLayout('user-a', 'ppt/dashboard');
 
     expect(result).toEqual(SAMPLE_LAYOUT);
+    // Key is tenant-scoped by the `user-a` scope id (issue #2486).
     expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
-      'ppt_layout_ppt_dashboard',
+      'ppt_layout_user-a_ppt_dashboard',
       JSON.stringify(SAMPLE_LAYOUT)
     );
   });
@@ -185,10 +189,10 @@ describe('layoutCache', () => {
     (mockAsyncStorage.getItem as jest.Mock).mockResolvedValue('not-valid-json{{{');
     (mockAsyncStorage.removeItem as jest.Mock).mockResolvedValue(undefined);
 
-    const result = await readCachedLayout('ppt/dashboard');
+    const result = await readCachedLayout('user-a', 'ppt/dashboard');
 
     expect(result).toBeNull();
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('ppt_layout_ppt_dashboard');
+    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('ppt_layout_user-a_ppt_dashboard');
   });
 
   it('returns null and calls removeItem when screen key does not match', async () => {
@@ -196,10 +200,58 @@ describe('layoutCache', () => {
     (mockAsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(wrongScreen));
     (mockAsyncStorage.removeItem as jest.Mock).mockResolvedValue(undefined);
 
-    const result = await readCachedLayout('ppt/dashboard');
+    const result = await readCachedLayout('user-a', 'ppt/dashboard');
 
     expect(result).toBeNull();
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('ppt_layout_ppt_dashboard');
+    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('ppt_layout_user-a_ppt_dashboard');
+  });
+
+  // ── cross-tenant isolation (#2486) ──────────────────────────────────────
+  // The key carries the scope (user/org) id, so a layout written under org A
+  // cannot be read back under org B — different scope ⇒ different key ⇒ miss.
+  it('does not activate org A layout for org B (scoped key)', async () => {
+    const store = new Map<string, string>();
+    (mockAsyncStorage.setItem as jest.Mock).mockImplementation(async (k: string, v: string) => {
+      store.set(k, v);
+    });
+    (mockAsyncStorage.getItem as jest.Mock).mockImplementation(async (k: string) =>
+      store.has(k) ? (store.get(k) as string) : null
+    );
+    (mockAsyncStorage.removeItem as jest.Mock).mockImplementation(async (k: string) => {
+      store.delete(k);
+    });
+
+    // org A caches its dashboard layout…
+    await writeCachedLayout('org-a', 'ppt/dashboard', SAMPLE_LAYOUT);
+    expect(store.has('ppt_layout_org-a_ppt_dashboard')).toBe(true);
+
+    // …org B reading the same screen gets NOTHING (its key never existed).
+    const forOrgB = await readCachedLayout('org-b', 'ppt/dashboard');
+    expect(forOrgB).toBeNull();
+
+    // org A still reads its own entry back.
+    const forOrgA = await readCachedLayout('org-a', 'ppt/dashboard');
+    expect(forOrgA).toEqual(SAMPLE_LAYOUT);
+  });
+
+  // A logout/session-teardown prefix sweep (`resetLocalData`) removes every
+  // `ppt_layout_*` key regardless of scope/screen — so even org A's own entry
+  // does not survive to the next login on a shared device (#2486).
+  it('layout cache is cleared on logout via the ppt_layout_ prefix sweep', async () => {
+    const store = new Map<string, string>([
+      ['ppt_layout_org-a_ppt_dashboard', JSON.stringify(SAMPLE_LAYOUT)],
+      ['ppt_access_token', 'tok'],
+    ]);
+    (mockAsyncStorage.getAllKeys as jest.Mock).mockResolvedValueOnce(Array.from(store.keys()));
+    (mockAsyncStorage.removeMany as jest.Mock).mockImplementation(async (keys: string[]) => {
+      for (const k of keys) store.delete(k);
+    });
+
+    await resetLocalData();
+
+    expect(store.has('ppt_layout_org-a_ppt_dashboard')).toBe(false);
+    // A non-tenant key (the auth token) is untouched by the sweep.
+    expect(store.has('ppt_access_token')).toBe(true);
   });
 });
 
@@ -330,9 +382,11 @@ describe('useDashboardLayout — tightest activation cage', () => {
     expect(capturedLayout).toEqual(cachedLayout);
     expect(capturedLayout).not.toEqual(fetchedLayout);
 
-    // writeCachedLayout / AsyncStorage.setItem must have been called with the FETCHED layout
+    // writeCachedLayout / AsyncStorage.setItem must have been called with the
+    // FETCHED layout, under the tenant-scoped key (scope id `user-a` from the
+    // mocked auth user — issue #2486).
     expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
-      'ppt_layout_ppt_dashboard',
+      'ppt_layout_user-a_ppt_dashboard',
       JSON.stringify(fetchedLayout)
     );
   });
