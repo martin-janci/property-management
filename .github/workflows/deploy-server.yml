@@ -74,8 +74,9 @@ jobs:
           tool: cargo-deny
 
       # Workspace policy applied to the standalone graph (see header note).
+      # NB: --config is a GLOBAL cargo-deny option — it must precede `check`.
       - name: cargo-deny (workspace policy)
-        run: cargo deny check --config ../../deny.toml
+        run: cargo deny --config ../../deny.toml check
 
       - name: Test
         run: cargo test

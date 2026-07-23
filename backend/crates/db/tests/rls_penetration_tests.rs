@@ -859,11 +859,7 @@ async fn test_rls_context_isolation_between_connections() {
 // ==================== Test Runner Helper ====================
 
 /// Run all RLS penetration tests
-/// Execute with: cargo test --test suite_4 -- --ignored --test-threads=1
-// Dead-code allow: as a standalone binary this `pub` fn counted as the crate's
-// public API; as a suite module nothing calls it — kept as documentation of
-// the suite's scope.
-#[allow(dead_code)]
+/// Execute with: cargo test --test rls_penetration_tests -- --ignored --test-threads=1
 pub async fn run_all_rls_tests() {
     println!("Running RLS Penetration Test Suite...");
     println!("=====================================");

@@ -2,6 +2,9 @@
 // (build-experience roadmap item 8 follow-up; recipe from api-server,
 // PR #2461). Former top-level tests/*.rs live in tests/suites/ as
 // #[path]-included modules — one link instead of one binary per file.
+// (rls_smoke_tests.rs and rls_penetration_tests.rs stay STANDALONE:
+// the rls-smoke-test and security-tests CI jobs invoke them by name via
+// `cargo test --test <name>` — same exception as ws_integration_tests.)
 
 mod common;
 
@@ -17,10 +20,6 @@ mod reserve_funds_rls_repo_tests;
 mod rls_context_bleed_tests;
 #[path = "suites/rls_listings_global_context_tests.rs"]
 mod rls_listings_global_context_tests;
-#[path = "suites/rls_penetration_tests.rs"]
-mod rls_penetration_tests;
-#[path = "suites/rls_smoke_tests.rs"]
-mod rls_smoke_tests;
 #[path = "suites/search_alert_delivery_tests.rs"]
 mod search_alert_delivery_tests;
 #[path = "suites/sensor_rls_repo_tests.rs"]
