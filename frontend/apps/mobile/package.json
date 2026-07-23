@@ -1,5 +1,6 @@
 {
   "name": "@ppt/mobile",
+  "version": "0.3.218",
   "private": true,
   "description": "Property Management Mobile App (React Native)",
   "scripts": {
@@ -64,6 +65,5 @@
     "jest-expo": "^56.0.5",
     "react-test-renderer": "19.2.7",
     "typescript": "^5.3.0"
-  },
-  "version": "0.3.218"
+  }
 }
