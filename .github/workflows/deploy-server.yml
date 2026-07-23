@@ -11,8 +11,10 @@
 # and ADVISORY (not a required context) — deploy-server is an ops tool,
 # not product code.
 #
-# Follow-up: cargo-deny coverage for deploy-server's standalone graph
-# (backend/deny.toml no longer scans it) — needs a deny config decision.
+# cargo-deny (2026-07-23): the standalone graph is scanned with the
+# WORKSPACE policy (backend/deny.toml via `check --config`) — one policy
+# file, no drift; deploy-server gets no license/advisory exemptions the
+# workspace doesn't have.
 
 name: Deploy Server
 
@@ -65,6 +67,16 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      # Workspace policy applied to the standalone graph (see header note).
+      # NB: --config is a GLOBAL cargo-deny option — it must precede `check`.
+      - name: cargo-deny (workspace policy)
+        run: cargo deny --config ../../deny.toml check
 
       - name: Test
         run: cargo test

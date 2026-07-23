@@ -158,7 +158,12 @@ jobs:
           NEW_CHECKS=$(printf '%s\n' \
             "security-gate-conclusion" \
             "deny-toml-ban-gate" \
-            "Workflow scripts must be executable (100755)")
+            "Workflow scripts must be executable (100755)" \
+            "frontend")
+          # "frontend" (2026-07-23): the frontend.yml aggregator context added
+          # in #2444 — single producer with a no-op path on pure-backend PRs
+          # (proven green on backend-only #2454), so requiring it cannot wedge
+          # any PR shape. Closes the "frontend breakage merges silently" gap.
 
           # Build the merged list of required status checks (existing ∪ new).
           MERGED=$(python3 -c "
