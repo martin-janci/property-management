@@ -41,6 +41,16 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # dtolnay/rust-toolchain tags track Rust toolchain releases, so Dependabot
+    # keeps proposing a group bump to a nonexistent version (e.g. 1.100.0),
+    # which never resolves. All refs are pinned intentionally (9x @1.94.1 plus
+    # one @stable in deploy-server.yml); bump them by hand alongside the Rust
+    # version. Ignore major/minor auto-bumps here. (See #2466.)
+    ignore:
+      - dependency-name: "dtolnay/rust-toolchain"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
     groups:
       actions-minor-patch:
         patterns: ["*"]
