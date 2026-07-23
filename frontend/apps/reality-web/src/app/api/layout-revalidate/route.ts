@@ -16,6 +16,41 @@ export function layoutTagsFor(screen: string): string[] | null {
 }
 
 // ---------------------------------------------------------------------------
+// Replay protection (issue #2485).
+//
+// The delivery must carry an `X-Webhook-Timestamp` (unix seconds), and the
+// signature is computed over the timestamped payload `"{timestamp}.{body}"`
+// (matching api-server `routes/layout/webhook.rs::sign_timestamped_payload`
+// and the portal-webhook convention). A captured POST is only valid within
+// TOLERANCE_SECS of the receiver's clock, so it cannot be replayed
+// indefinitely, and because the timestamp is folded into the HMAC it cannot be
+// swapped for a fresh one without invalidating the signature.
+// ---------------------------------------------------------------------------
+
+/** Max accepted clock skew (seconds) between the signed timestamp and now. */
+const TOLERANCE_SECS = 300;
+
+/** Parse a strict base-10 integer unix-seconds timestamp, or null if malformed. */
+export function parseWebhookTimestamp(raw: string | null): number | null {
+  if (raw === null) return null;
+  const trimmed = raw.trim();
+  // Reject empty, non-integer, or anything Number.parseInt would silently
+  // truncate (e.g. "123abc", "1.5", "0x10").
+  if (!/^-?\d+$/.test(trimmed)) return null;
+  const ts = Number.parseInt(trimmed, 10);
+  return Number.isSafeInteger(ts) ? ts : null;
+}
+
+/** Whether `timestamp` is within `tolerance` seconds of `nowSecs` (inclusive). */
+export function isTimestampFresh(
+  timestamp: number,
+  nowSecs: number,
+  tolerance: number = TOLERANCE_SECS
+): boolean {
+  return Math.abs(nowSecs - timestamp) <= tolerance;
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/layout-revalidate
 // ---------------------------------------------------------------------------
 
@@ -29,9 +64,23 @@ export async function POST(request: Request): Promise<NextResponse> {
   // 2. Read raw body FIRST — signature is over the raw bytes
   const rawBody = await request.text();
 
-  // 3. Verify HMAC signature
+  // 3. Replay protection (issue #2485): require a fresh signed timestamp.
+  // Reject a missing/malformed timestamp, or one outside the ±TOLERANCE_SECS
+  // window, BEFORE the HMAC check — a captured delivery is only valid briefly.
+  const timestamp = parseWebhookTimestamp(request.headers.get('X-Webhook-Timestamp'));
+  if (timestamp === null) {
+    return NextResponse.json({ error: 'missing timestamp' }, { status: 401 });
+  }
+  const nowSecs = Math.floor(Date.now() / 1000);
+  if (!isTimestampFresh(timestamp, nowSecs)) {
+    return NextResponse.json({ error: 'stale timestamp' }, { status: 401 });
+  }
+
+  // 4. Verify HMAC signature over the timestamped payload "{timestamp}.{body}"
+  // so the timestamp is bound to the signature and cannot be swapped.
   const header = request.headers.get('X-Webhook-Signature') ?? '';
-  const expected = 'sha256=' + createHmac('sha256', secret).update(rawBody).digest('base64');
+  const signedPayload = `${timestamp}.${rawBody}`;
+  const expected = 'sha256=' + createHmac('sha256', secret).update(signedPayload).digest('base64');
 
   const headerBuf = Buffer.from(header);
   const expectedBuf = Buffer.from(expected);
@@ -41,7 +90,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
 
-  // 4. Parse body and validate shape
+  // 5. Parse body and validate shape
   let body: unknown;
   try {
     body = JSON.parse(rawBody);
@@ -59,12 +108,12 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const screen = (body as { screen: string }).screen;
 
-  // 5. Validate screen contains a slash and has non-empty second segment
+  // 6. Validate screen contains a slash and has non-empty second segment
   if (!screen.includes('/')) {
     return NextResponse.json({ error: 'invalid screen' }, { status: 422 });
   }
 
-  // 6. Revalidate tags
+  // 7. Revalidate tags
   const tags = layoutTagsFor(screen);
   if (!tags) {
     return NextResponse.json({ error: 'invalid screen' }, { status: 422 });
