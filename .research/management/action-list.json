@@ -2,8 +2,8 @@
   "version": 1,
   "items": [
     {
-      "id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
-      "action": "Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
+      "id": "refactor-churn-hotspot-mobile-package-json-2026-07-20",
+      "action": "Churn hotspot: frontend/apps/mobile/package.json — 5 touches this window (Expo/expo-notifications/expo-config-plugins dependabot cascade)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -17,31 +17,14 @@
         "score": 1,
         "vector": "refactor"
       },
-      "last_updated": "2026-07-23T04:15:00Z"
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-package-json-2026-07-20",
-      "action": "Churn hotspot: frontend/apps/mobile/package.json — 5 touches this window (Expo/expo-notifications/expo-config-plugins dependabot cascade)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
+      "last_updated": "2026-07-23T06:07:02Z"
     },
     {
       "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
       "action": "Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -51,14 +34,15 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "last_updated": "2026-07-23T06:07:02Z"
     },
     {
       "id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
       "action": "Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -68,63 +52,23 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "last_updated": "2026-07-23T06:07:02Z"
     },
     {
       "id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry2",
       "action": "Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 2/2 of failed refactor-churn-hotspot-backend-crates-db-src-models-mod-rs]",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-07-22T10:05:12Z (retry_of=refactor-churn-hotspot-backend-crates-db-src-models-mod-rs reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T18:24:00Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-07-22T10:05:12Z",
       "retry_of": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
-      "retry_round": 2
-    },
-    {
-      "id": "gh-issue-2441",
-      "action": "Security: cross-tenant IDOR cluster in disputes.rs sub-resource handlers (5 handlers, no org scoping) (Closes #2441)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-22T12:09:13Z (#2441)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T12:09:13Z",
-      "issue_ref": {
-        "number": 2441,
-        "url": "https://github.com/martin-janci/property-management/issues/2441",
-        "labels": [
-          "security",
-          "backend",
-          "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2445",
-      "action": "cargo-deny advisories FAILED on every backend PR — RUSTSEC-2026-0213 (ammonia v4.1.3) blocks the merge pipeline (Closes #2445)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-07-22T12:09:13Z (#2445)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T12:09:13Z",
-      "issue_ref": {
-        "number": 2445,
-        "url": "https://github.com/martin-janci/property-management/issues/2445",
-        "labels": [
-          "security",
-          "backend",
-          "follow-up"
-        ]
-      }
+      "retry_round": 2,
+      "last_updated": "2026-07-23T06:07:02Z"
     }
   ],
   "generated": "2026-07-15T01:55:00Z"
