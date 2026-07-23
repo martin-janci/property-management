@@ -19,40 +19,6 @@
       }
     },
     {
-      "id": "dx-closed-not-merged-pr-2385",
-      "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
-      "id": "dx-closed-not-merged-pr-2387",
-      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
       "id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
       "action": "Churn hotspot: backend/Cargo.toml — 3 touches this window (dependabot minor-patch cascade + layout-core crate)",
       "owner_role": "pm-tech-lead",
@@ -264,6 +230,26 @@
       "issue_ref": {
         "number": 2460,
         "url": "https://github.com/martin-janci/property-management/issues/2460",
+        "labels": [
+          "enhancement",
+          "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2466",
+      "action": "Add Dependabot ignore rule for dtolnay/rust-toolchain (invalid 1.100.0 group bump recurs weekly) (Closes #2466)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-23T02:05:39Z (#2466)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T02:05:39Z",
+      "issue_ref": {
+        "number": 2466,
+        "url": "https://github.com/martin-janci/property-management/issues/2466",
         "labels": [
           "enhancement",
           "follow-up"

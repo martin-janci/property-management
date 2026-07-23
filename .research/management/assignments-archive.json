@@ -7361,6 +7361,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "test-gap-hotfix-no-test-pr-1288-webhook-rls-retry2",
+      "branch": "auto-impl/test-gap-hotfix-no-test-pr-1288-webhook-ee949cba",
+      "status": "failed",
+      "claimed_at": "2026-07-22T22:13:28Z",
+      "last_updated": "2026-07-23T02:21:55Z",
+      "status_changed_at": "2026-07-23T02:21:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-covered on dev: PR#1288 repo methods pinned by webhook_repo_dedup_tests.rs + esignature_workflow_repo_tests.rs (88aaa8b); false-positive test-gap, no PR needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
       "branch": "auto-impl/test-gap-hotfix-no-test-pr-1289-api-ecos-2c3333ae",
       "status": "failed",
@@ -7715,5 +7737,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-23T00:17:50Z"
+  "archived_at": "2026-07-23T02:22:03Z"
 }

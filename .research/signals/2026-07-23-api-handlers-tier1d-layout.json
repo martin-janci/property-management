@@ -1,0 +1,48 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-23",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "dispatcher-tier1d-demand-driven (action-list buffer starved: claimable=8 < floor=36). CHURN_FILES from Phase 1 concentrate in backend/servers/api-server/src/routes/layout/ (tenant.rs, mod.rs, admin.rs each at churn=3) plus services/scheduler.rs -> churn-aligned to api-handlers. Independently corroborated by oldest-unreviewed: state.review_cursor.api-handlers=2026-07-14 was the single oldest cursor of the 8 segments, so churn and recency agree. COEXISTENCE NOTE: an earlier same-day Tier-1d slice (.research/signals/2026-07-23-api-handlers-tier1d.json, 02:01) also picked api-handlers via oldest-unreviewed but reviewed the discarded-principal / client-supplied-org_id IDOR surface (marketplace.rs et al.) and EXPLICITLY did not touch the layout churn subtree; this slice reviews the churn-hot routes/layout/ module, so the two are additive and non-duplicative (distinct signal ids, written to a distinct file to avoid clobbering that HIGH-severity marketplace IDOR finding). Not backlog-saturated (0 open code-review-finding items for any segment). NOTE: skill segment-map path backend/api-server/src/handlers/ is stale for this workspace layout -> the handler dir is backend/servers/api-server/src/routes/. Rust expert primary + Security secondary (api-handlers matrix), static-only, no compilation.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "review_scope_notes": "~1.2k LoC across the routes/layout/ module (admin.rs, tenant.rs, resolved.rs, webhook.rs, mod.rs, types.rs). Grep hit-lists driven: unwrap/expect (non-test), todo!/unimplemented!/panic!/unreachable! (0 hits), StatusCode::OK on error branches, JWT claims/verify, secrets-in-logs (0 hits), raw sqlx without tenant scoping. Security review of webhook.rs (outbound HMAC-SHA256 notifier) came back CLEAN: sign_payload is a tested pure function; the sole .expect() at webhook.rs:52 has a documented always-valid invariant (HMAC accepts any key length); delivery is fire-and-forget with a 5s timeout and warn!-only failure logging; no secret is logged. Auth verified consistent: every admin.rs handler gates on extract_super_admin_token; tenant.rs/resolved.rs gate on AuthUser + TenantExtractor (put_tenant_override additionally requires tenant.role.is_admin()); RLS override reads run on the RLS-bound connection (fail-safe no-leak comment at resolved.rs:61-63). Findings verified by cross-reading the three sibling handler files to establish the module's own intended error-status convention. 2 findings (cap not reached; no third issue met the severity bar).",
+  "findings_count": 2,
+  "fresh_findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-layout-admin-db-err-422",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:15-20 (bad_request helper) returns StatusCode::UNPROCESSABLE_ENTITY (422), and every admin handler funnels its DB failures through it: list_screens (:41,:45), get_config (:69,:74,:84,:88), put_draft (:118,:122), put_rails (:149,:153), list_manifests (:176,:180), put_manifest (:216,:220), publish (:247,:253,:271,:294), rollback (:319), kill (:356,:360), preview_resolve (:401,:407,:420), unkill (:449,:453). This maps infrastructure/connection failures (acquire_public() errors and sqlx query errors) to a client-side 4xx meaning 'your input is unprocessable'. Two concrete consequences: (1) a Postgres outage or pool exhaustion on any layout-admin endpoint surfaces as 422, which 5xx-based alerting/SLO monitors do not fire on -> DB outages are silently swallowed on this path; (2) API clients are told their well-formed request was rejected as invalid. Confirmed to be an oversight, not intent: the two SIBLING handler files in the same module handle identical DB errors correctly with StatusCode::INTERNAL_SERVER_ERROR -- tenant.rs:28-35,:40-47,:51-58,:68-75,:206-213 and resolved.rs:35-40 (err500) at :70,:76,:80,:86,:95,:98,:103,:111. admin.rs reused its validation-error closure for infra errors too. Fix: give admin.rs a distinct err500 path (mirroring resolved.rs's err500 closure) for acquire_public()/repo DB errors, reserving bad_request (422) for the genuine parse/validation branches."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-layout-to-value-null-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs",
+        "backend/servers/api-server/src/routes/layout/tenant.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:46,:123,:154,:181,:221,:296 and tenant.rs:214 -- successful responses are built with serde_json::to_value(row).unwrap_or_default(). On a serialization failure the .unwrap_or_default() yields serde_json::Value::Null, so the handler returns 200 OK with a body of literal null instead of a 500. A caller (ppt-web layout admin UI) that just performed a publish/rollback/put-draft/put-rails/put-manifest would receive a success status with no payload and no error signal, masking a genuine serialization bug as a successful empty write. Low severity because the row types reliably serialize today, but the pattern is a latent silent-failure across 7 write/read sites. Fix: map the serialization error to a 500 path rather than defaulting to Null (Json(serde_json::to_value(row).map_err(err500)?))."
+      ]
+    }
+  ]
+}

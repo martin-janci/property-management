@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-23T00:08:22Z",
+  "archived_at": "2026-07-23T02:10:23Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1866,6 +1866,54 @@
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "code-review-reality-web-share-comparison-404",
       "retry_round": 1
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2385",
+      "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=dx) | gc1-reconcile 2026-07-23T02:05:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-23T02:05:11Z"
+      }
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2387",
+      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=dx) | gc1-reconcile 2026-07-23T02:05:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-23T02:05:11Z"
+      }
     },
     {
       "id": "dx-documentsbrowse-folder-preselect",

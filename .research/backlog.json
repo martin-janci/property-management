@@ -4559,7 +4559,7 @@
       "vector": "dx",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2385"
       ],
@@ -4571,7 +4571,12 @@
       ],
       "created_at": "2026-07-20",
       "updated_at": "2026-07-20",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-23T02:05:11Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "dx-closed-not-merged-pr-2387",
@@ -4579,7 +4584,7 @@
       "vector": "dx",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2387",
         "PR #2423"
@@ -4592,7 +4597,12 @@
       ],
       "created_at": "2026-07-20",
       "updated_at": "2026-07-20",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-23T02:05:11Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
