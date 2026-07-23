@@ -6,12 +6,12 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "peerDependencies": {
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "typescript": "^5.4.0",
     "vitest": "^4.1.10",
     "@testing-library/react": "^16.0.0",
