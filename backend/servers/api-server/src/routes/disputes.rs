@@ -800,28 +800,29 @@ async fn list_evidence(
 }
 
 /// Add evidence to a dispute.
+///
+/// Issue #2483 (follow-up to #2441 / PR #2450, which org-scoped the other five
+/// dispute sub-resource handlers but missed this one): the INSERT is scoped to
+/// the caller's JWT tenant. A `dispute_id` owned by another org returns 404 and
+/// is never mutated, so a caller cannot attach evidence to a foreign dispute by
+/// guessing the `dispute_id`.
 async fn add_evidence(
     State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<AddEvidenceRequest>,
 ) -> Result<(StatusCode, Json<DisputeEvidence>), (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(&user)?;
     let mut evidence = data.data;
     evidence.dispute_id = id;
     evidence.uploaded_by = user.user_id;
 
     state
         .dispute_repo
-        .add_evidence(evidence)
+        .add_evidence(evidence, organization_id)
         .await
         .map(|e| (StatusCode::CREATED, Json(e)))
-        .map_err(|e| {
-            tracing::error!("Failed to add evidence: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to add evidence")),
-            )
-        })
+        .map_err(|e| map_dispute_err(e, "Failed to add evidence"))
 }
 
 /// Delete evidence from a dispute.

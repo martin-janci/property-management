@@ -544,6 +544,64 @@ async fn delete_evidence_is_scoped_to_owning_org(pool: PgPool) {
     assert!(own, "org A deletes its own evidence");
 }
 
+// R9 — add_evidence: foreign org writes nothing (NotFound); owner attaches.
+//
+// Issue #2483 — follow-up to #2441/PR #2450, which org-scoped the five sibling
+// sub-resource methods but missed this WRITE. Before the fix, `add_evidence`
+// INSERTed on the path-supplied `dispute_id` alone, so any authenticated user
+// could attach evidence to any dispute in any org. The INSERT is now gated by an
+// `EXISTS` on the parent dispute's org: a foreign-org `dispute_id` inserts no
+// row and surfaces `NotFound`, while the owning org still succeeds. This is the
+// IG3 regression test — it fails on pre-fix `dev` and passes after.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_evidence_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "sub-addev-a").await;
+    let org_b = seed_org(&pool, "sub-addev-b").await;
+    let user_a = seed_user(&pool, "sub-addev-a@dispute-idor.test").await;
+    let attacker = seed_user(&pool, "sub-addev-attacker@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    let new_evidence = |uploaded_by: Uuid| db::models::AddEvidence {
+        dispute_id: dispute_a,
+        uploaded_by,
+        filename: "ev.pdf".into(),
+        original_filename: "evidence.pdf".into(),
+        content_type: "application/pdf".into(),
+        size_bytes: 2048,
+        storage_url: "s3://ppt-evidence/injected-object.pdf".into(),
+        description: Some("injected".into()),
+    };
+
+    // Foreign-org write must fail with NotFound and attach nothing.
+    let cross = repo.add_evidence(new_evidence(attacker), org_b).await;
+    assert!(
+        matches!(cross, Err(::common::errors::AppError::NotFound(_))),
+        "org B must not attach evidence to org A's dispute, got {cross:?}"
+    );
+    let injected_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM dispute_evidence WHERE dispute_id = $1 AND uploaded_by = $2",
+    )
+    .bind(dispute_a)
+    .bind(attacker)
+    .fetch_one(&pool)
+    .await
+    .expect("count evidence");
+    assert_eq!(
+        injected_count, 0,
+        "cross-org add_evidence must write no row"
+    );
+
+    // Owning org attaches successfully.
+    let ev = repo
+        .add_evidence(new_evidence(user_a), org_a)
+        .await
+        .expect("org A attaches evidence to its own dispute");
+    assert_eq!(ev.dispute_id, dispute_a);
+    assert_eq!(ev.uploaded_by, user_a);
+}
+
 // R8 — list_activities: owner reads the trail, foreign org gets NotFound.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_activities_is_scoped_to_owning_org(pool: PgPool) {
