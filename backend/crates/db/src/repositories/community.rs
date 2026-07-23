@@ -102,6 +102,31 @@ impl CommunityRepository {
             .await
     }
 
+    /// Tenant-safe group existence check: `true` only when the group belongs
+    /// to `org_id` (resolved via `buildings.organization_id`). `false` when the
+    /// group is absent OR owned by another organization, so handlers can map
+    /// the miss to a 404 without leaking cross-tenant existence (mirrors the
+    /// disputes IDOR fix — enforce the JWT-derived org, never a path-supplied
+    /// id). Uses `EXISTS` (not a row fetch) so the check never has to decode a
+    /// `CommunityGroup`, whose `group_type`/`visibility` are Postgres enum
+    /// columns typed as `String` in the model.
+    pub async fn group_exists_for_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM community_groups g
+                JOIN buildings b ON b.id = g.building_id
+                WHERE g.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// List groups for a building.
     pub async fn list_groups(
         &self,
@@ -259,6 +284,28 @@ impl CommunityRepository {
         .await
     }
 
+    /// Tenant-safe post existence check: `true` only when the post's group's
+    /// building belongs to `org_id`. `false` when the post is absent OR owned
+    /// by another organization. `EXISTS` avoids decoding `CommunityPost`
+    /// (`post_type` is a Postgres enum typed as `String`).
+    pub async fn post_exists_for_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM community_posts p
+                JOIN community_groups g ON g.id = p.group_id
+                JOIN buildings b ON b.id = g.building_id
+                WHERE p.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Add reaction to post.
     pub async fn add_post_reaction(
         &self,
@@ -377,6 +424,27 @@ impl CommunityRepository {
         .await
     }
 
+    /// Tenant-safe event existence check: `true` only when the event's
+    /// building belongs to `org_id`. `false` when the event is absent OR owned
+    /// by another organization. `EXISTS` avoids decoding `CommunityEvent`
+    /// (`event_type` is a Postgres enum typed as `String`).
+    pub async fn event_exists_for_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM community_events e
+                JOIN buildings b ON b.id = e.building_id
+                WHERE e.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// RSVP to an event.
     pub async fn rsvp_event(
         &self,
@@ -477,6 +545,27 @@ impl CommunityRepository {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    /// Tenant-safe marketplace-item existence check: `true` only when the
+    /// item's building belongs to `org_id`. `false` when the item is absent OR
+    /// owned by another organization. `EXISTS` avoids decoding `MarketplaceItem`
+    /// (`category`/`condition` are Postgres enums typed as `String`).
+    pub async fn item_exists_for_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM marketplace_items i
+                JOIN buildings b ON b.id = i.building_id
+                WHERE i.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
     }
 
     /// Create inquiry on item.
