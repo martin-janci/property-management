@@ -211,8 +211,8 @@ importers:
         specifier: ~56.0.4
         version: 56.0.4(expo@57.0.8)
       expo-document-picker:
-        specifier: ~13.1.6
-        version: 13.1.6(expo@57.0.8)
+        specifier: ~57.0.1
+        version: 57.0.1(expo@57.0.8)
       expo-file-system:
         specifier: ~55.0.19
         version: 55.0.24(expo@57.0.8)(react-native@0.86.0)
@@ -6420,8 +6420,8 @@ packages:
       ua-parser-js: 0.7.41
     dev: false
 
-  /expo-document-picker@13.1.6(expo@57.0.8):
-    resolution: {integrity: sha512-8FTQPDOkyCvFN/i4xyqzH7ELW4AsB6B3XBZQjn1FEdqpozo6rpNJRr7sWFU/93WrLgA9FJEKpKbyr6XxczK6BA==}
+  /expo-document-picker@57.0.1(expo@57.0.8):
+    resolution: {integrity: sha512-qBwM5oxDZ3I9kwFD3pUE1oK/WNv9artoEKO6UpqhQgNRr0XA1ALRVWYjkF4+ge9lUNDRehjTm/jenINkzqg84g==}
     peerDependencies:
       expo: '*'
     dependencies:
