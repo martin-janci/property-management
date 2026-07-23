@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-23T20:17:00Z",
+  "generated": "2026-07-23T20:35:00Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -48,18 +48,18 @@
     {
       "task_id": "code-review-api-handlers-community-cross-tenant-idor",
       "branch": "auto-impl/code-review-api-handlers-community-cross-a199f2a2",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-23T20:03:00Z",
-      "last_updated": "2026-07-23T20:03:00Z",
-      "status_changed_at": "2026-07-23T20:03:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-23T20:35:00Z",
+      "status_changed_at": "2026-07-23T20:35:00Z",
+      "pr_number": 2498,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2498",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2498 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=5 community write handlers now org-scoped via EXISTS checks->404; IG3 regression 6/6 pass on fix, 5/6 fail pre-fix; clippy+fmt clean; scope_drift=true (routes/repo, not pm-security auth areas)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
