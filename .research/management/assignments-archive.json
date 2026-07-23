@@ -911,6 +911,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "chore-uc-33-dispute-subuc-links-2026-07-23",
+      "branch": "auto-impl/chore-uc-33-dispute-subuc-links-2026-07-7cf3454a",
+      "status": "failed",
+      "claimed_at": "2026-07-23T16:22:35Z",
+      "last_updated": "2026-07-23T16:27:48Z",
+      "status_changed_at": "2026-07-23T16:27:48Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked — false premise: UC-33.1/.2/.3 are Tenant-Screening sub-UCs (UC-38/Epic-77 already correctly linked to disputes); linking would corrupt screen-maps. No change made.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
       "branch": "auto-impl/churn-hotspot-backend-crates-db-src-repo-3c9d0245",
       "status": "failed",
@@ -8003,5 +8025,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-23T16:22:46Z"
+  "archived_at": "2026-07-23T16:27:48Z"
 }

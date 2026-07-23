@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-23T16:22:35Z",
+  "generated": "2026-07-23T16:27:48Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -52,28 +52,6 @@
       "claimed_at": "2026-07-23T14:11:48Z",
       "last_updated": "2026-07-23T16:04:29Z",
       "status_changed_at": "2026-07-23T14:11:48Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "chore-uc-33-dispute-subuc-links-2026-07-23",
-      "branch": "auto-impl/chore-uc-33-dispute-subuc-links-2026-07-7cf3454a",
-      "status": "in-progress",
-      "claimed_at": "2026-07-23T16:22:35Z",
-      "last_updated": "2026-07-23T16:22:35Z",
-      "status_changed_at": "2026-07-23T16:22:35Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
