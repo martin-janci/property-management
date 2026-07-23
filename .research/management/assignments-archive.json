@@ -1619,6 +1619,28 @@
       "merge_attempted_at": "2026-07-22T22:21:44Z"
     },
     {
+      "task_id": "code-review-api-handlers-community-cross-tenant-idor",
+      "branch": "auto-impl/code-review-api-handlers-community-cross-a199f2a2",
+      "status": "merged",
+      "claimed_at": "2026-07-23T20:03:00Z",
+      "last_updated": "2026-07-23T22:18:31Z",
+      "status_changed_at": "2026-07-23T22:18:31Z",
+      "pr_number": 2498,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2498",
+      "merged_at": "2026-07-23T22:16:56Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2498 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=5 community write handlers now org-scoped via EXISTS checks->404; IG3 regression 6/6 pass on fix, 5/6 fail pre-fix; clippy+fmt clean; scope_drift=true (routes/repo, not pm-security auth areas)",
+      "reviewer_summary": "verdict=approve head_oid=82e4bc8f510320b08ba672471217feaa701e2263 note=idor-guards-correct-ci-green-scopedrift-justified",
+      "last_reviewed_oid": "82e4bc8f510320b08ba672471217feaa701e2263",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-23T22:18:31Z"
+    },
+    {
       "task_id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "branch": "auto-impl/code-review-api-handlers-shares-revoke-d-658489f1",
       "status": "merged",
@@ -3116,6 +3138,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 2,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-84-2-document-sign-page-2026-07-23-retry3",
+      "branch": "auto-impl/gap-84-2-document-sign-page-2026-07-23-r-585b3ef4",
+      "status": "failed",
+      "claimed_at": "2026-07-23T22:09:19Z",
+      "last_updated": "2026-07-23T22:15:13Z",
+      "status_changed_at": "2026-07-23T22:15:13Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=already shipped on dev (empty diff vs origin/dev: /sign page+route+hooks+i18n+screen-map:shipped+email delivery+tests all present) [no PR: work already landed; retry loop terminated]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {
@@ -7117,6 +7161,28 @@
       "merge_attempted_at": "2026-07-23T04:08:11Z"
     },
     {
+      "task_id": "gh-issue-2483",
+      "branch": "auto-impl/gh-issue-2483-0580271e",
+      "status": "merged",
+      "claimed_at": "2026-07-23T10:10:35Z",
+      "last_updated": "2026-07-23T22:18:31Z",
+      "status_changed_at": "2026-07-23T22:18:31Z",
+      "pr_number": 2490,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2490",
+      "merged_at": "2026-07-23T22:16:44Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=596e06f0dd2bfe1fdcc751a527db246c459ab8f5 note=idor-fix-atomic-org-gated-insert-r9-regression-ci-green",
+      "last_reviewed_oid": "596e06f0dd2bfe1fdcc751a527db246c459ab8f5",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-23T22:18:31Z"
+    },
+    {
       "task_id": "gh-issue-2484",
       "branch": "auto-impl/gh-issue-2484-2cd2b542",
       "status": "merged",
@@ -7601,6 +7667,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-23T02:21:55Z"
+    },
+    {
+      "task_id": "sec-layout-webhook-hmac-verify-2026-07-23",
+      "branch": "auto-impl/sec-layout-webhook-hmac-verify-2026-07-2-53a3b544",
+      "status": "failed",
+      "claimed_at": "2026-07-23T22:09:19Z",
+      "last_updated": "2026-07-23T22:15:13Z",
+      "status_changed_at": "2026-07-23T22:15:13Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend note=parity already confirmed — layout webhook signer+receiver do timestamped HMAC + constant-time compare + 300s replay window; fix landed in #2497; no change needed [no PR: work already on dev]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "security-forgot-password-no-rate-limit",
@@ -8135,5 +8223,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-23T20:17:19Z"
+  "archived_at": "2026-07-23T22:19:00Z"
 }
