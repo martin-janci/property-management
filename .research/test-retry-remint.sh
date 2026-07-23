@@ -3,9 +3,12 @@
 # Exercises: retryable classification (pr_number=null only), cool-down gate,
 # retry-round cap, landed-stem exclusion, active-stem exclusion, live
 # action-list stem exclusion (T24), minted-id idempotency, retry_of/round
-# stamping, per-run cap + ceil headroom, append-only count guard, and the
+# stamping, per-run cap + ceil headroom, append-only count guard, the
 # issue #2153 dev-truth guards (coverage-done exclusion + anchored dev-log
-# subject exclusion, both degrading gracefully when their input is missing).
+# subject exclusion, both degrading gracefully when their input is missing),
+# and the issue #2460 archive-marker guard (skip a stem whose LATEST
+# action-list-archive row carries a done/ghost marker — latest-row semantics
+# and graceful degradation when the archive is absent).
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -34,7 +37,8 @@ seed() {
 EOF
   cat > "$ALA" <<'EOF'
 { "version": 1, "items": [
-  { "id": "bug-retryable", "action": "Fix the retryable bug", "owner_role": "pm-backend", "priority": "high", "status": "dropped" }
+  { "id": "bug-retryable", "action": "Fix the retryable bug", "owner_role": "pm-backend", "priority": "high", "status": "dropped" },
+  { "id": "bug-ghost-marked", "action": "[RECONCILED-DONE: fix landed on dev under a DIFFERENT story id] Fix the ghost-marked bug", "owner_role": "pm-backend", "priority": "high", "status": "done", "last_updated": "2026-06-20T00:00:00Z" }
 ] }
 EOF
   cat > "$ASG" <<'EOF'
@@ -72,6 +76,8 @@ EOF
   { "task_id": "bug-cov-done",        "status": "failed", "pr_number": null,
     "last_updated": "2026-06-20T00:00:00Z" },
   { "task_id": "bug-on-dev",          "status": "failed", "pr_number": null,
+    "last_updated": "2026-06-20T00:00:00Z" },
+  { "task_id": "bug-ghost-marked",    "status": "failed", "pr_number": null,
     "last_updated": "2026-06-20T00:00:00Z" }
 ] }
 EOF
@@ -109,6 +115,7 @@ grep -q "active-stem-task" <<<"$OUT" && bad "active assignment stem must block" 
 grep -q "live-stem-task"   <<<"$OUT" && bad "live action-list stem must block (T24)" || ok "live action-list stem excluded"
 grep -q "bug-cov-done"     <<<"$OUT" && bad "coverage-done story must not re-mint (#2153)" || ok "coverage-done stem excluded"
 grep -q "bug-on-dev"       <<<"$OUT" && bad "anchored dev-log subject must block (#2153)" || ok "dev-log subject-prefix excluded"
+grep -q "bug-ghost-marked" <<<"$OUT" && bad "archive-marker stem must not re-mint (#2460)" || ok "archive-marker stem excluded"
 grep -q "bug-second-round-retry2" <<<"$OUT" && ok "loose (non-anchored) dev-log mention does NOT exclude" || bad "non-anchored mention wrongly excluded bug-second-round"
 grep -q "bug-retryable-retry1"    <<<"$OUT" && ok "coverage status=partial does NOT exclude" || bad "coverage partial wrongly excluded bug-retryable"
 [ "$(jq '.items | length' "$AL")" = "2" ] && ok "dry-run leaves file untouched" || bad "dry-run mutated action-list"
@@ -159,6 +166,38 @@ OUT=$(ACTION_LIST="$AL" ACTION_ARCHIVE="$ALA" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASG
 grep -q "bug-retryable-retry1" <<<"$OUT" && ok "still mints without guard inputs" || bad "no-guard-input run minted nothing: $OUT"
 grep -q "bug-cov-done-retry1"  <<<"$OUT" && ok "coverage guard inert when file missing" || bad "coverage guard fired without file"
 grep -q "bug-on-dev-retry1"    <<<"$OUT" && ok "dev-log guard inert when file missing" || bad "dev-log guard fired without file"
+
+echo "T8 archive-marker guard: latest-row semantics + graceful degradation (#2460)"
+seed
+# (b) an OLDER marked archive row superseded by a NEWER unmarked row in the
+#     same stem must NOT exclude — the guard keys on the LATEST row only.
+A8="$TMP/al8.json"; ALA8="$TMP/ala8.json"; ASG8="$TMP/asg8.json"; ASGA8="$TMP/asga8.json"
+cat > "$A8" <<'EOF'
+{ "version": 1, "items": [] }
+EOF
+cat > "$ALA8" <<'EOF'
+{ "version": 1, "items": [
+  { "id": "bug-superseded",     "action": "[DROPPED: stale] first attempt", "status": "dropped", "last_updated": "2026-05-01T00:00:00Z" },
+  { "id": "bug-superseded-fix", "action": "genuine reopen, no marker",        "status": "open",    "last_updated": "2026-06-25T00:00:00Z" }
+] }
+EOF
+cat > "$ASG8" <<'EOF'
+{ "assignments": [] }
+EOF
+cat > "$ASGA8" <<'EOF'
+{ "assignments": [
+  { "task_id": "bug-superseded", "status": "failed", "pr_number": null, "last_updated": "2026-06-20T00:00:00Z" }
+] }
+EOF
+OUT=$(ACTION_LIST="$A8" ACTION_ARCHIVE="$ALA8" ASSIGN="$ASG8" ASSIGN_ARCHIVE="$ASGA8" \
+      RETRY_NOW="$NOW" bash "$SCRIPT")
+grep -q "bug-superseded-retry1" <<<"$OUT" && ok "newer unmarked archive row supersedes older marker -> mints" || bad "latest-row semantics wrong: $OUT"
+# (c) guard inert when the action-list-archive file is absent: bug-ghost-marked
+#     (blocked only by the marker in T1) becomes eligible and mints.
+OUT=$(ACTION_LIST="$AL" ACTION_ARCHIVE="$TMP/no-ala.json" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" \
+      COVERAGE_FILE="$COV" DEV_LOG_FILE="$DEVLOG" RETRY_NOW="$NOW" bash "$SCRIPT"); RC=$?
+[ "$RC" -eq 0 ] && ok "missing archive exits 0" || bad "missing archive errored (rc=$RC): $OUT"
+grep -q "bug-ghost-marked-retry1" <<<"$OUT" && ok "archive-marker guard inert when archive missing" || bad "marker guard fired without archive file: $OUT"
 
 echo
 [ "$FAIL" = "0" ] && { echo "ALL PASS"; exit 0; } || { echo "FAILURES"; exit 1; }
