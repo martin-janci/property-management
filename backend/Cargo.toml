@@ -50,43 +50,45 @@ utoipa-swagger-ui = { version = "9", features = ["axum"] }
 validator = { version = "0.20", features = ["derive"] }
 
 # Database
-sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
+# Entries within each group are kept alphabetically sorted so that Dependabot
+# and manual edits land in a deterministic spot (minimizes merge conflicts).
 rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
 rust_decimal_macros = "1.34"
+sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 
 # Auth
+argon2 = "=0.6.0-rc.8"
 # jsonwebtoken 10 split its crypto backend into a cargo feature; without one it
 # panics at runtime ("Could not determine the CryptoProvider"). `rust_crypto` is
 # the pure-Rust backend (matches the provider jsonwebtoken 9 had built in).
 jsonwebtoken = { version = "10", features = ["rust_crypto"] }
-argon2 = "=0.6.0-rc.8"
 
 # Utilities
-uuid = { version = "1.6", features = ["v4", "serde"] }
+anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.10"
-thiserror = "2.0"
-anyhow = "1.0"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 config = "0.15"
 dotenvy = "0.15"
-rand = "0.10"
 hex = "0.4"
+rand = "0.10"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
 
 # Crypto
-sha2 = "0.11"
-sha1 = "0.11"
-hmac = "0.13"
 base64 = "0.22"
 # base32 for RFC-6238 TOTP secrets (authenticator-app compatible)
 data-encoding = "2"
+hmac = "0.13"
+sha1 = "0.11"
+sha2 = "0.11"
 # provably-constant-time equality (timing-safe secret compares)
 subtle = "2"
 
 # URL encoding
-urlencoding = "2.1"
 url = "2.5"
+urlencoding = "2.1"
 
 # HTTP client (for integrations)
 reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
@@ -121,20 +123,20 @@ reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
 quick-xml = { version = "=0.41.0", features = ["serialize"] }
 
 # Observability (Epic 95)
-opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
-opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic"] }
-tracing-opentelemetry = "0.33"
 metrics = "0.24"
 metrics-exporter-prometheus = "0.12"
+opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
+opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
+tracing-opentelemetry = "0.33"
 
 # Error tracking (Epic 95)
 sentry = { version = "0.48", features = ["tracing", "tower", "tower-http"] }
 
 # AWS SDK for S3 (Epic 103)
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
-aws-sdk-s3 = "1.17"
 aws-credential-types = "1.1"
+aws-sdk-s3 = "1.17"
 
 # Redis (Epic 103)
 redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
@@ -149,26 +151,26 @@ rust_xlsxwriter = "0.96"
 fluent = "0.16"
 fluent-bundle = "0.16"
 fluent-syntax = "0.11"
-unic-langid = "0.9"
 intl-memoizer = "0.5"
+unic-langid = "0.9"
 
 # Internal crates
-common = { path = "crates/common" }
-api-core = { path = "crates/api-core" }
+accounting-core = { path = "crates/accounting-core" }
 admin-core = { path = "crates/admin-core" }
+api-core = { path = "crates/api-core" }
+common = { path = "crates/common" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
-tenant-ops = { path = "crates/tenant-ops" }
-accounting-core = { path = "crates/accounting-core" }
 layout-core = { path = "crates/layout-core" }
+tenant-ops = { path = "crates/tenant-ops" }
 
 # Phase 1: deploy-server
-bollard = "0.16"
-listenfd = "1.0"
-tokio-util = { version = "0.7", features = ["io"] }
-futures-util = "0.3"
 async-trait = "0.1"
+bollard = "0.16"
+futures-util = "0.3"
+listenfd = "1.0"
 tempfile = "3.10"
+tokio-util = { version = "0.7", features = ["io"] }
 which = "8.0"
 
 [profile.release]
