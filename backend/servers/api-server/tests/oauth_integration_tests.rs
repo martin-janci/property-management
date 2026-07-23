@@ -705,6 +705,90 @@ mod pkce_flow {
         let body = second.json_value();
         assert_eq!(body["error"], "invalid_grant");
     }
+
+    /// The consent POST (`authorize_post`) must reject an unauthenticated caller
+    /// with 401, symmetric with the authorize GET guard (issue #820). The
+    /// endpoint advertises `bearer_auth` + a 401 in its OpenAPI and parses the
+    /// acting user from the validated token (routes/oauth.rs:196-207); a missing
+    /// Authorization header must be rejected *before* any authorization code is
+    /// minted — otherwise an anonymous caller could forge consent on behalf of
+    /// whichever user the token would have identified.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_authorize_post_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+        let (_verifier, challenge) = pkce_pair();
+
+        // Well-formed consent form, but NO Authorization header.
+        let consent_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile"),
+            ("code_challenge", &challenge),
+            ("code_challenge_method", "S256"),
+            ("consent", "approve"),
+        ]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/authorize", &consent_form))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "unauthenticated authorize POST must be rejected with 401. body={}",
+            resp.text()
+        );
+
+        // And no authorization code may have been persisted as a side effect.
+        let code_count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM oauth_authorization_codes WHERE client_id = $1",
+        )
+        .bind(&client_id)
+        .fetch_one(&pool)
+        .await
+        .expect("count auth codes");
+        assert_eq!(
+            code_count, 0,
+            "no authorization code must be issued for an unauthenticated consent POST"
+        );
+    }
+
+    /// The authorize GET must reject a `response_type` other than `code`
+    /// (routes/oauth.rs:126-131). Only the authorization-code flow is supported;
+    /// an implicit-flow `response_type=token` must return 400 `invalid_request`.
+    /// The request carries a valid bearer token so the check under test (response
+    /// type validation) is reached rather than short-circuited by the #820 auth
+    /// guard, which runs first.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_authorize_get_rejects_non_code_response_type(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+        let (_verifier, challenge) = pkce_pair();
+
+        // response_type=token (implicit flow) is not supported.
+        let uri = format!(
+            "/api/v1/oauth/authorize?response_type=token&client_id={}&redirect_uri={}&scope=profile&code_challenge={}&code_challenge_method=S256",
+            urlencoding::encode(&client_id),
+            urlencoding::encode(&redirect_uri),
+            urlencoding::encode(&challenge),
+        );
+        let resp = app
+            .execute(get_request_with_auth(&uri, &access_token))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "non-'code' response_type must be rejected with 400. body={}",
+            resp.text()
+        );
+        let err = resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_request",
+            "unsupported response_type must return invalid_request, got {}",
+            err
+        );
+    }
 }
 
 // ─── module: consent_revoke ─────────────────────────────────────────────────────────────────────────
@@ -1328,6 +1412,75 @@ mod audit_trail {
         );
     }
 
+    /// Token introspection with a valid client_id but the WRONG client_secret
+    /// must return 401 `invalid_client` (RFC 7662 §2.1). This is distinct from
+    /// the no-credentials case above: here the client is known and active, but
+    /// `validate_client_credentials` fails password verification
+    /// (services/oauth.rs:285-289), which the handler maps to 401 — no token
+    /// metadata may leak to a caller that cannot prove it is the client.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_introspect_wrong_client_secret_returns_invalid_client(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // Mint a genuinely-active token so a credential bypass would be visible
+        // as active=true rather than a benign inactive result.
+        let (oauth_at, _rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+
+        let intro = introspect_with_creds(
+            &app,
+            &oauth_at,
+            &client_id,
+            "totally-wrong-client-secret-value",
+        )
+        .await;
+        // introspect_with_creds returns the parsed JSON regardless of status; the
+        // handler rejects at auth time, so the body carries the OAuth error.
+        assert_eq!(
+            intro["error"], "invalid_client",
+            "wrong client_secret at introspect must return invalid_client, got {}",
+            intro
+        );
+        // And it must not have leaked the token's active state.
+        assert!(
+            intro.get("active").is_none(),
+            "a rejected introspect must not report token active state, got {}",
+            intro
+        );
+    }
+
+    /// Token introspection of an unknown/opaque token by a validly-authenticated
+    /// client must return `active=false` (RFC 7662 §2.2 —
+    /// `IntrospectionResponse::inactive()`, services/oauth.rs:621). A token the
+    /// server has never issued is indistinguishable from an expired/revoked one,
+    /// so the endpoint reports inactive without leaking any metadata.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_introspect_unknown_token_returns_inactive(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let (client_id, client_secret, _redirect_uri) = seed_confidential_client(&pool).await;
+
+        let intro = introspect_with_creds(
+            &app,
+            "an-opaque-token-that-was-never-issued",
+            &client_id,
+            &client_secret,
+        )
+        .await;
+        assert_eq!(
+            intro["active"], false,
+            "an unknown token must introspect as active=false, got {}",
+            intro
+        );
+        assert!(
+            intro["sub"].is_null() && intro["scope"].is_null(),
+            "no metadata may accompany an inactive introspection result, got {}",
+            intro
+        );
+    }
+
     /// Token introspection: a live refresh token must return active=true
     /// with the correct `token_type`, `sub`, `scope`, and `client_id` fields.
     ///
@@ -1561,6 +1714,47 @@ mod token_endpoint_validation {
         );
         let err = resp.json_value();
         assert_eq!(err["error"], "invalid_client");
+    }
+
+    /// SEC-001 downgrade guard: a *public* client that presents a `client_secret`
+    /// at the token endpoint must be rejected with 401 `invalid_client`
+    /// (routes/oauth.rs:327-340). Public clients have no usable secret hash, so
+    /// the endpoint must refuse the credentialed request outright rather than
+    /// routing it into `validate_client_credentials` (which would `verify_password`
+    /// against an empty hash and surface a `server_error`). This rejection happens
+    /// during client authentication, *before* grant processing, so a bogus `code`
+    /// suffices to drive the path.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_public_client_with_secret_rejected_at_token(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+
+        let body = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", "irrelevant-the-secret-is-rejected-first"),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            // A public client must NOT authenticate with a secret.
+            (
+                "client_secret",
+                "some-secret-a-public-client-should-not-have",
+            ),
+        ]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "public client presenting a client_secret must return 401. body={}",
+            resp.text()
+        );
+        let err = resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_client",
+            "error must be invalid_client for a public client that supplies a secret, got {}",
+            err
+        );
     }
 }
 
