@@ -17,6 +17,8 @@ mod budgets_tests;
 mod building_manager_rbac_tests;
 #[path = "suites/caddy_ask_tests.rs"]
 mod caddy_ask_tests;
+#[path = "suites/community_cross_tenant_idor_tests.rs"]
+mod community_cross_tenant_idor_tests;
 #[path = "suites/community_happy_path_tests.rs"]
 mod community_happy_path_tests;
 #[path = "suites/compliance_wave1b_tests.rs"]
