@@ -1748,6 +1748,219 @@ mod tests {
         assert_eq!(targets, vec![user_1, user_2]);
     }
 
+    // ------------------------------------------------------------------
+    // DB-backed regression (issue #2484, follow-up to PR #2455). IG3.
+    //
+    // The pure-model tests above (`org_scoped_target_users`) reimplement
+    // the `AND b.organization_id = $2` skip in Rust and are therefore
+    // independent of the query they claim to mirror — if someone drops or
+    // weakens that predicate (or the `JOIN buildings b`) in the live SQL,
+    // those tests still pass. The two `#[sqlx::test]`s below exercise the
+    // *real* query in `Scheduler::get_announcement_target_users` against
+    // Postgres, so they fail on the pre-fix SQL and cannot be satisfied by
+    // a drifted re-model. They pin both the `"building"` and `"units"`
+    // legs against the cross-tenant fan-out leak the fix defends against.
+    // ------------------------------------------------------------------
+
+    async fn seed_org(pool: &sqlx::PgPool, slug: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO organizations (name, slug, contact_email, status)
+            VALUES ($1, $2, $3, 'active') RETURNING id
+            "#,
+        )
+        .bind(format!("Fanout Org {slug}"))
+        .bind(format!("fanout-{slug}"))
+        .bind(format!("{slug}@fanout.test"))
+        .fetch_one(pool)
+        .await
+        .expect("seed org")
+    }
+
+    async fn seed_user(pool: &sqlx::PgPool, email: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO users (email, password_hash, name, status, email_verified_at)
+            VALUES ($1, 'test_hash', 'Fanout Resident', 'active', NOW())
+            RETURNING id
+            "#,
+        )
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("seed user")
+    }
+
+    async fn seed_building(pool: &sqlx::PgPool, org_id: Uuid, slug: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO buildings (organization_id, street, city, postal_code, country)
+            VALUES ($1, $2, 'Bratislava', '81101', 'Slovakia') RETURNING id
+            "#,
+        )
+        .bind(org_id)
+        .bind(format!("{slug} Street 1"))
+        .fetch_one(pool)
+        .await
+        .expect("seed building")
+    }
+
+    async fn seed_unit(pool: &sqlx::PgPool, building_id: Uuid, designation: &str) -> Uuid {
+        // `units` has no `organization_id` column — org is reached only via
+        // the building (migration 00116), which is exactly why the fix must
+        // JOIN buildings to scope the fan-out.
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO units (building_id, designation, floor)
+            VALUES ($1, $2, 1) RETURNING id
+            "#,
+        )
+        .bind(building_id)
+        .bind(designation)
+        .fetch_one(pool)
+        .await
+        .expect("seed unit")
+    }
+
+    async fn seed_resident(pool: &sqlx::PgPool, unit_id: Uuid, user_id: Uuid) {
+        // Open-ended residency (`end_date IS NULL`) — the active-resident
+        // predicate the query filters on.
+        sqlx::query(
+            r#"
+            INSERT INTO unit_residents (unit_id, user_id, resident_type)
+            VALUES ($1, $2, 'tenant')
+            "#,
+        )
+        .bind(unit_id)
+        .bind(user_id)
+        .execute(pool)
+        .await
+        .expect("seed resident");
+    }
+
+    /// Build an in-memory published announcement owned by `org_id` and
+    /// targeting `target_type` / `target_ids`. It is deliberately NOT
+    /// inserted: `get_announcement_target_users` only reads the struct's
+    /// fields, so no FK rows are required for the announcement itself —
+    /// which lets us simulate the bypassed-create-validation path where
+    /// `target_ids` carry a foreign org's building/unit.
+    fn make_announcement(
+        org_id: Uuid,
+        target_type: &str,
+        target_ids: Vec<Uuid>,
+    ) -> db::models::Announcement {
+        let now = chrono::Utc::now();
+        db::models::Announcement {
+            id: Uuid::new_v4(),
+            organization_id: org_id,
+            author_id: Uuid::new_v4(),
+            title: "Fanout guard".to_string(),
+            content: "body".to_string(),
+            target_type: target_type.to_string(),
+            target_ids: serde_json::json!(target_ids),
+            status: "published".to_string(),
+            scheduled_at: None,
+            published_at: Some(now),
+            pinned: false,
+            pinned_at: None,
+            pinned_by: None,
+            comments_enabled: true,
+            acknowledgment_required: false,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn test_scheduler(pool: sqlx::PgPool) -> Scheduler {
+        Scheduler::new(
+            pool.clone(),
+            AnnouncementRepository::new(pool),
+            SchedulerConfig::default(),
+        )
+    }
+
+    /// `"building"` leg: an announcement in org A whose `target_ids` include
+    /// org B's building must fan out ONLY to org A's resident. Fails on the
+    /// pre-fix SQL (no `JOIN buildings b` / `AND b.organization_id = $2`),
+    /// which would also return org B's resident.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_announcement_building_fanout_excludes_cross_tenant_sql(pool: sqlx::PgPool) {
+        let org_a = seed_org(&pool, "bld-a").await;
+        let org_b = seed_org(&pool, "bld-b").await;
+        let building_a = seed_building(&pool, org_a, "A").await;
+        let building_b = seed_building(&pool, org_b, "B").await;
+        let unit_a = seed_unit(&pool, building_a, "A-1").await;
+        let unit_b = seed_unit(&pool, building_b, "B-1").await;
+        let resident_a = seed_user(&pool, "bld-a@fanout.test").await;
+        let resident_b = seed_user(&pool, "bld-b@fanout.test").await;
+        seed_resident(&pool, unit_a, resident_a).await;
+        seed_resident(&pool, unit_b, resident_b).await;
+
+        // org A's announcement carries org B's building id in target_ids too.
+        let announcement = make_announcement(org_a, "building", vec![building_a, building_b]);
+
+        let scheduler = test_scheduler(pool.clone());
+        let targets = scheduler
+            .get_announcement_target_users(&announcement)
+            .await
+            .expect("query announcement target users");
+
+        assert!(
+            targets.contains(&resident_a),
+            "org A's own resident must be notified"
+        );
+        assert!(
+            !targets.contains(&resident_b),
+            "cross-org building resident must be excluded — fan-out leaked across \
+             orgs (AND b.organization_id = $2 missing or weakened in the live SQL)"
+        );
+        assert_eq!(
+            targets,
+            vec![resident_a],
+            "only the owning org's resident is targeted"
+        );
+    }
+
+    /// `"units"` leg: same guard, but the foreign id in `target_ids` is a
+    /// unit rather than a building. Chains `unit_residents -> units ->
+    /// buildings` and must exclude org B's resident.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_announcement_units_fanout_excludes_cross_tenant_sql(pool: sqlx::PgPool) {
+        let org_a = seed_org(&pool, "unit-a").await;
+        let org_b = seed_org(&pool, "unit-b").await;
+        let building_a = seed_building(&pool, org_a, "UA").await;
+        let building_b = seed_building(&pool, org_b, "UB").await;
+        let unit_a = seed_unit(&pool, building_a, "UA-1").await;
+        let unit_b = seed_unit(&pool, building_b, "UB-1").await;
+        let resident_a = seed_user(&pool, "unit-a@fanout.test").await;
+        let resident_b = seed_user(&pool, "unit-b@fanout.test").await;
+        seed_resident(&pool, unit_a, resident_a).await;
+        seed_resident(&pool, unit_b, resident_b).await;
+
+        // org A's announcement carries org B's unit id in target_ids too.
+        let announcement = make_announcement(org_a, "units", vec![unit_a, unit_b]);
+
+        let scheduler = test_scheduler(pool.clone());
+        let targets = scheduler
+            .get_announcement_target_users(&announcement)
+            .await
+            .expect("query announcement target users");
+
+        assert!(
+            targets.contains(&resident_a),
+            "org A's own resident must be notified"
+        );
+        assert!(
+            !targets.contains(&resident_b),
+            "cross-org unit resident must be excluded — fan-out leaked across orgs"
+        );
+        assert_eq!(
+            targets,
+            vec![resident_a],
+            "only the owning org's resident is targeted"
+        );
+    }
+
     #[test]
     fn test_scheduler_config_default() {
         let config = SchedulerConfig::default();
