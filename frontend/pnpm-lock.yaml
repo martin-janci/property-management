@@ -214,8 +214,8 @@ importers:
         specifier: ~57.0.1
         version: 57.0.1(expo@57.0.8)
       expo-file-system:
-        specifier: ~55.0.19
-        version: 55.0.24(expo@57.0.8)(react-native@0.86.0)
+        specifier: ~57.0.1
+        version: 57.0.1(expo@57.0.8)(react-native@0.86.0)
       expo-image-manipulator:
         specifier: ~56.0.19
         version: 56.0.22(expo@57.0.8)
@@ -6456,16 +6456,6 @@ packages:
       expo: '*'
     dependencies:
       expo: 57.0.8(@babel/core@8.0.1)(@expo/dom-webview@57.0.1)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
-    dev: false
-
-  /expo-file-system@55.0.24(expo@57.0.8)(react-native@0.86.0):
-    resolution: {integrity: sha512-7/HJdvaaf3kP5T3atd+6Q0/QexrGio4Fs2GVtp7G8d/xQCSu01yeGReu7tGQo9VAM67Snq+ujGlL8q2wbMXLkQ==}
-    peerDependencies:
-      expo: '*'
-      react-native: '*'
-    dependencies:
-      expo: 57.0.8(@babel/core@8.0.1)(@expo/dom-webview@57.0.1)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
-      react-native: 0.86.0(@babel/core@8.0.1)(@react-native/jest-preset@0.86.0)(@types/react@19.2.14)(react@19.2.0)
     dev: false
 
   /expo-file-system@57.0.1(expo@57.0.8)(react-native@0.86.0):
