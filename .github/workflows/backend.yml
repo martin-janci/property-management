@@ -434,6 +434,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-liberation
 
+      # The archive extracts the FULL target/debug/deps test-binary set into
+      # /tmp — tens of GB. Dependabot PR #2471's shard 3 died with ENOSPC
+      # ("error writing file … No space left on device") because this step
+      # only existed in test-build after the #2459 restructure. Same reclaim
+      # as there: drop the preinstalled toolchains we never use.
+      - name: Free disk space
+        run: |
+          echo "Disk before cleanup:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          echo "Disk after cleanup:"; df -h /
+
       - name: Download test archive
         uses: actions/download-artifact@v4
         with:
