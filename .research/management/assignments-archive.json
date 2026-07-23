@@ -6511,6 +6511,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2366-retry1",
+      "branch": "auto-impl/gh-issue-2366-retry1-4a51fce5",
+      "status": "failed",
+      "claimed_at": "2026-07-23T12:15:00Z",
+      "last_updated": "2026-07-23T16:04:29Z",
+      "status_changed_at": "2026-07-23T16:04:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=backend/typespec gap: documents table + CreateDocumentRequest have no building_id and no deny_unknown_fields, so a frontend-only forward would be silently dropped; needs rust-backend/typespec first. Finding posted to issue #2366. [fast-path failed transition DEFERRED — 382KB assignments-archive.json exceeds 64KiB MCP push ceiling; reclaim_attempts set to 1 so next run fails without re-spawn] [sandbox-failure-after-reclaim]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-2367",
       "branch": "auto-impl/gh-issue-2367-fcc8c533",
       "status": "merged",
@@ -6983,6 +7007,50 @@
       "merge_attempted_at": "2026-07-23T04:08:11Z"
     },
     {
+      "task_id": "gh-issue-2484",
+      "branch": "auto-impl/gh-issue-2484-2cd2b542",
+      "status": "merged",
+      "claimed_at": "2026-07-23T14:11:48Z",
+      "last_updated": "2026-07-23T16:22:35Z",
+      "status_changed_at": "2026-07-23T16:22:35Z",
+      "pr_number": 2493,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2493",
+      "merged_at": "2026-07-23T16:22:35Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2493 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=DB-backed sqlx fan-out test added; 4/4 pass, IG3 fail-on-prefix proven; drift=src/services/scheduler.rs (private method, test-only)",
+      "reviewer_summary": "verdict=approve head_oid=3a3544d7ef260bf9ba500242089f29a0f1b7833d note=test-only-sqlx-guard-scope-drift-justified",
+      "last_reviewed_oid": "3a3544d7ef260bf9ba500242089f29a0f1b7833d",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2486",
+      "branch": "auto-impl/gh-issue-2486-ebc990be",
+      "status": "merged",
+      "claimed_at": "2026-07-23T14:11:48Z",
+      "last_updated": "2026-07-23T16:22:35Z",
+      "status_changed_at": "2026-07-23T16:22:35Z",
+      "pr_number": 2492,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2492",
+      "merged_at": "2026-07-23T16:22:35Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2492 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=scoped LAYOUT_CACHE_KEY by user.id + ppt_layout_ logout sweep; verify green 591 tests",
+      "reviewer_summary": "verdict=approve head_oid=66ff0105c1c3f88375f055a79bb82c74861fb4b5 note=all-3-reqs-met-ci-green",
+      "last_reviewed_oid": "66ff0105c1c3f88375f055a79bb82c74861fb4b5",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -7269,6 +7337,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-23T08:16:02Z"
+    },
+    {
+      "task_id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
+      "branch": "auto-impl/refactor-churn-hotspot-ppt-dashboard-md-1efc81ca",
+      "status": "merged",
+      "claimed_at": "2026-07-23T06:07:02Z",
+      "last_updated": "2026-07-23T16:22:35Z",
+      "status_changed_at": "2026-07-23T16:22:35Z",
+      "pr_number": 2481,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2481",
+      "merged_at": "2026-07-23T16:22:35Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2481 status=done specialist=generic scope_drift=false code_reuse_warn=none note=screen-map doc tidy; fixed stats-grid error-banner drift; /screens validate 167 ok",
+      "reviewer_summary": "verdict=approve head_oid=1b7e3ec23a2a57af2464765f83709bf3b1d5f814 note=behaviour-preserving-doc-tidy-verified-at-head",
+      "last_reviewed_oid": "1b7e3ec23a2a57af2464765f83709bf3b1d5f814",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "refactor-churn-hotspots-api-server-auth-2026-07-12",
@@ -7913,5 +8003,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-23T14:12:08Z"
+  "archived_at": "2026-07-23T16:22:46Z"
 }

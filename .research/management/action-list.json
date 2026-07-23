@@ -199,7 +199,7 @@
       "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter (missing_use_cases in coverage.json)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-scrum-master 2026-07-23 (score=5: screen-gap + easy)",
       "deadline": null,
       "dependency": null,
@@ -295,7 +295,7 @@
       "action": "Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) \u2014 Layout & Content Manager shipped end-to-end but has no KPI hooks yet",
       "owner_role": "pm-data",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-data 2026-07-23 (score=5: KPI gap on newly-shipped feature)",
       "deadline": null,
       "dependency": null,
@@ -313,7 +313,7 @@
       "action": "Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) \u2014 Epic 80 stories all done but no analytics dashboard exists; align with SupportDataPage metric definitions",
       "owner_role": "pm-data",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-data 2026-07-23 (score=5: KPI gap on shipped MVP epic)",
       "deadline": null,
       "dependency": null,
@@ -405,7 +405,7 @@
       "action": "Backfill screen-map frontmatter epics: field so epic->screen linkage stops manufacturing orphans in coverage scan (systemic finding from 2026-06-23 deep scan; still present)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-scrum-master 2026-07-23 (score=5: screen-gap + high-leverage; unblocks future deep scans)",
       "deadline": null,
       "dependency": null,
@@ -673,6 +673,108 @@
         "vector": "sec"
       },
       "last_updated": "2026-07-23T14:34:52.019013Z"
+    },
+    {
+      "id": "code-review-api-handlers-community-cross-tenant-idor",
+      "action": "SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=3 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md",
+        "score": 3,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-community-unauthenticated-reads",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated \u2014 anonymous cross-tenant read",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=3 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-api-handlers-community-unauthenticated-reads.md",
+        "score": 3,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
+      "action": "Churn hotspot: infra_ops_authz_backfill_tests.rs \u2014 364 lines this run (BIT-268 test backfill)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-org-property-authz-backfill-2026-07-23",
+      "action": "Churn hotspot: org_property_authz_backfill_tests.rs \u2014 412 lines this run (BIT-268/BIT-559 authz salvage)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23",
+      "action": "Churn hotspot: platform_admin_authz_batch2_tests.rs \u2014 417 lines this run (BIT-557 test backfill)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "triage-closed-not-merged-pr-2489",
+      "action": "PR #2489 closed unmerged: dependabot npm-minor-patch (5\u21924 update group) superseded by #2491",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=triage)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      }
     }
   ],
   "generated": "2026-07-23T14:34:52.019013Z"
