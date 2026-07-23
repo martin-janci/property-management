@@ -1,0 +1,330 @@
+{
+  "date": "2026-07-23",
+  "since_iso": "2026-07-21T03:13:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-21T03:13:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "417 additions+deletions in the 2026-07-21..07-23 window; test-file backfill for BIT-557 admin-platform happy-path batches."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/org_property_authz_backfill_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-21T03:13:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "412 additions+deletions this window; test-file backfill for BIT-268 + BIT-559 (import/cert-document SSRF-adjacent salvage)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/infra_ops_authz_backfill_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-since-2026-07-21T03:13:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "364 additions+deletions this window; BIT-268 authz test-backfill; legitimate test churn."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2489",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2489",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #2489 (chore(deps) bump npm-minor-patch group, 4-update react/@types/react/react-dom/react-test-renderer) closed 2026-07-23T13:50:55Z, superseded by PR #2491 (5-update group covering react/react-dom 19.2.8)."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-07-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-21T03:13:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Routine last ran 2026-07-21T03:13:00Z; now 2026-07-23T14:19Z; lag = 2d 11h (>36h threshold). Under stale_routine_alert threshold (3d)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2468",
+      "type": "dep-update-noise",
+      "source": "PR #2468",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump tokio group"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2469",
+      "type": "dep-update-noise",
+      "source": "PR #2469",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump serde group"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2470",
+      "type": "dep-update-noise",
+      "source": "PR #2470",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump actions/download-artifact 4->8"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2471",
+      "type": "dep-update-noise",
+      "source": "PR #2471",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump actions/upload-artifact 4->7"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2472",
+      "type": "dep-update-noise",
+      "source": "PR #2472",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: npm-minor-patch group (18 updates)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2473",
+      "type": "dep-update-noise",
+      "source": "PR #2473",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: cargo-minor-patch group (6 updates)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2474",
+      "type": "dep-update-noise",
+      "source": "PR #2474",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump @babel/plugin-transform-flow-strip-types"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2475",
+      "type": "dep-update-noise",
+      "source": "PR #2475",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: expo-document-picker 13.1.6->57.0.1"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2476",
+      "type": "dep-update-noise",
+      "source": "PR #2476",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: expo-clipboard 56.0.4->57.0.1"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2477",
+      "type": "dep-update-noise",
+      "source": "PR #2477",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: expo-file-system 55.0.24->57.0.1"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-community-unauthenticated-reads",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/community.rs:289 \u2014 get_group handler signature omits RequestPrincipal; only State+Path \u2014 anonymous callers can read any community_groups row by UUID",
+        "backend/servers/api-server/src/routes/community.rs:392 \u2014 list_posts handler signature omits RequestPrincipal; repository SELECT is WHERE group_id=$1 with no tenant filter (repositories/community.rs:241 get_group_posts)",
+        "backend/servers/api-server/src/routes/community.rs:727 \u2014 get_item handler signature omits RequestPrincipal; leaks marketplace_items across tenants",
+        "backend/servers/api-server/src/lib.rs:292 \u2014 nested at /api/v1/community with no auth middleware; only global layers are security_headers/TraceLayer/CorsLayer (lib.rs:451-461)",
+        "reachability: mod community declared at backend/servers/api-server/src/routes/mod.rs:76 \u2014 live",
+        "contradicts the file's own SECURITY docstring at community.rs:29-34 which promises 'every handler now goes through RequestPrincipal'"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-community-cross-tenant-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/community.rs:426 create_post \u2014 group_id from URL path, no verify_group_tenant check; repository INSERT binds group_id verbatim (repositories/community.rs:194)",
+        "backend/servers/api-server/src/routes/community.rs:463 add_reaction \u2014 post_id from URL, no tenant check",
+        "backend/servers/api-server/src/routes/community.rs:500 create_comment \u2014 post_id from URL, no tenant check",
+        "backend/servers/api-server/src/routes/community.rs:615 rsvp_event \u2014 event id from URL, no tenant check",
+        "backend/servers/api-server/src/routes/community.rs:762 create_inquiry \u2014 item_id from URL, no tenant check; sibling verify_building_access helper (47-100) covers building_id only",
+        "reachability: mod community declared at routes/mod.rs:76 and mounted at lib.rs:292 \u2014 live",
+        "community_repo has no *_for_org variants at all \u2014 same shape as the automation.rs / disputes fix pattern"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-23.md; head -1 grep '# 2026-07-23'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq dedup vs seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score<=8; decay for open>14d",
+      "observed": "true; no decay-eligible items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'adversarial pass:' brief per new plan",
+      "observed": "both plans annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count<=2, metadata+headings+files-exist per plan",
+      "observed": "2 plans, all metadata/headings present, all Files exist",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures reported",
+      "observed": "all phases succeeded",
+      "expected": "honest reporting"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "no silent deletions",
+      "expected": "convergent"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= head",
+      "observed": "7 >= 7",
+      "expected": "non-shrinking"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap check",
+      "observed": "empty (no candidate)",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor 0..7; coverage_cursor advance",
+      "observed": "pm 6->7, coverage 0->1, 13 epics",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

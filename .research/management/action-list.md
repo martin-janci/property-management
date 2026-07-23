@@ -1,67 +1,96 @@
 # PPT Action List
 
-_Generated: 2026-06-16T00:00:00Z · 61 items · 51 open_
+_Generated: 2026-07-23 · 36 items · 36 open (target buffer: 36)_
 
-| Priority | Status | Owner | ID | Action | Dependency | Source |
+| Priority | Status | Owner | ID | Action | Dep | Source |
 |---|---|---|---|---|---|---|
-| high | open | pm-devops | pm-devops-dev-push-compile-gate | Add a `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) — would have caugh... | none | pm-analysis 2026-06-16 |
-| high | open | pm-devops | pm-devops-fix-dev-compile-1437 | URGENT: Fix `dev` backend compile break introduced by PR #1426 — land #1435 or #1436. Blocks ALL ... | none | pm-analysis 2026-06-16 |
-| high | open | pm-frontend | bug-ios-searchview-uncompilable | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corru... | none | dispatcher-tier1-refill 2026-06-12 (backlog.json promote) |
-| high | open | pm-frontend | feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend | web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-build-configuration-by-environ-build-scripts-created-mobile | build scripts (scripts/build-mobile\|android\|ios.sh) not created (85-2-build-configuration Build... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-build-configuration-by-environ-ios-xcconfig-files-mobile | iOS xcconfig files + schemes not created (85-2-build-configuration Build Configuration by Environ... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-dispute-filing-flow-task-checklist-unchecked-frontend | task checklist unchecked (80-2-dispute-filing-flow Dispute Filing Flow) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-environment-variable-setup-env-setup-documentation-mobile | env setup documentation missing (85-1-environment-variables Environment Variable Setup) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-environment-variable-setup-ios-info-lacks-api-base-url-mobile | iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys (85-1-environment-variables Environment Variab... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-environment-variable-setup-react-native-config-metro-bundler-mobile | react-native-config + Metro bundler setup not done (Expo Constants used) (85-1-environment-variab... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-qa | pm-qa-record-payment-atomicity-test | Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-p... | none | pm-analysis 2026-06-15 |
-| high | open | pm-qa | pm-qa-service-history-cross-org-idor | Add cross-org IDOR test coverage to service-history endpoints (#1372) | none | pm-analysis 2026-06-15 |
-| high | open | pm-scrum-master | pm-qa-close-issue-1332-if-ci-green | Close issue #1332 if dev CI now green after PR #1379 unblock | none | pm-analysis 2026-06-15 |
-| high | open | pm-scrum-master | pm-qa-triage-followup-issues-2026-06-14 | Triage the 18 follow-up issues #1360-#1377 from 2026-06-14 post-merge review — assign owners or c... | none | pm-analysis 2026-06-15 |
-| medium | open | pm-backend | feat-airbnb-oauth-and-sync-no-integrations-airbnb-backend | no /integrations/airbnb/* API routes (83-1-airbnb-integration Airbnb OAuth and Sync) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-backend | feat-airbnb-oauth-token-exchange-route-backend | Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| medium | open | pm-backend | feat-airbnb-realtime-webhook-handler-backend | Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notif... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| medium | open | pm-backend | feat-booking-integration-ota-xml-parsing-backend | Coverage 83-2: implement Booking.com OTA XML parsing/generation for rate/availability messages; i... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-backend | feat-booking-integration-rate-availability-push-backend | Coverage 83-2 (AC-5): complete the Booking.com rate/availability push full flow (build + send OTA... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-backend | feat-esignature-email-webhook-idempotency-guard-backend | Coverage 84-2: add the missing e-signature email webhook idempotency guard (terminal-state dedup)... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-backend | feat-notification-pref-sync-mobile-push-fcm-apns-backend | Coverage 8a-3: implement mobile OS push integration (FCM/APNs) for notification preference sync —... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-devops | pm-devops-confirm-eas-workflows-healthy | Confirm `eas-build-android.yml` + `eas-build-ios.yml` (now in .github/workflows/) green on a no-o... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-devops | pm-devops-pre-push-fmt-gate-scope | Decide pre-push fmt/clippy gate (#1431 merged) scope — local hook only, mirror as CI status check... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-devops | pm-devops-security-test-gate-required-check | Confirm `security-test-gate.yml` is configured as a required status check on `dev` branch protect... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-frontend | feat-announcement-comments-discussion-web-ui-frontend | Coverage 6-3: implement/wire the announcement comments & discussion web UI in ppt-web (comment li... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-document-download-preview-mobile-slice | Coverage 7a-4: implement the mobile document download & preview slice (presigned download + inlin... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-folder-organization-mobile-implementation | Coverage 7a-2: implement the mobile (folder organization) slice for documents — folder tree/list ... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-home-and-search-screens-debounced-search-evidenced-mobile | debounced search (AC-2) not evidenced (82-3-home-search-screens Home and Search Screens) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | feat-home-and-search-screens-infinite-scroll-evidenced-mobile | Coverage 82-3: evidence infinite scroll (AC-4) on the Reality mobile (KMP) Search screen — add th... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-pinned-announcements-pin-unpin-web-ui-frontend | Coverage 6-4: add pin/unpin announcement controls to the ppt-web announcements UI wired to the ba... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-swiftui-project-setup-no-epic-82-commits-git-mobile | no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | feat-swiftui-project-setup-no-screen-map-ppt-reality-mobile-docs-mobile | no screen-map for ppt-reality-mobile in docs/screens/ (82-1-swiftui-project-setup SwiftUI Project... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | feat-swiftui-project-setup-vs-implementation-mapping-mobile | story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope) (82-1-s... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | fix-report-schedule-editing-cron-edits-round-trip-through-frontend | cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | verify-navigation-and-routing-deep-linking-url-schemes-confirmed-mobile | deep-linking with URL schemes not confirmed (82-2-navigation-routing Navigation and Routing) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-qa | pm-qa-allowed-pet-types-enum-decode-audit | Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-canonical-seed-membership-helper | Migrate duplicated seed_membership in IDOR tests to canonical helper (#1373) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-cron-validator-drift-test | Add silent-regression test for cron validator to prevent #616 reintroduction (#1368) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-dispute-draft-autosave-coverage | Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-ios-searchview-pagination-stale-guard | Add iOS UI test for SearchView stale-response guard preserving pagination (#1365) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-pre-push-fmt-clippy-gate | Add pre-push cargo fmt + clippy gate (#1375) — prevents unformatted re-lands | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-record-reserve-transaction-atomicity | Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1... | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-rls-write-download-coverage | Extend forms RLS write/download path coverage + tighten release() discipline (#1369) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-tenant-aware-rls-helper | Introduce canonical tenant-aware request helper for RLS tests (#1370) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-scrum-master | pm-qa-stale-draft-pr-decision | Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d) — promote, rebase or close | none | pm-analysis 2026-06-15 |
-| low | open | pm-backend | verify-document-folder-organization-backend-promote | Coverage 7a-2: verify the document folder-organization backend (CRUD + RLS + capability gates) ag... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| low | open | pm-backend | verify-document-upload-metadata-promote-to-done-backend | Coverage 7a-1: verify Document Upload with Metadata end-to-end and promote sprint-status ready-fo... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| low | open | pm-devops | pm-devops-app-tsx-merge-queue-confirm | Confirm `app-tsx-merge-queue.yml` is actively serializing App.tsx-touching PRs (carry-over from 2... | none | pm-analysis 2026-06-16 |
-| low | open | pm-frontend | feat-listing-detail-favorites-swiftui-polish-mobile | Coverage 82-4: complete the remaining SwiftUI listing-detail polish for the Reality mobile Listin... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| low | open | pm-frontend | refactor-churn-hotspot-mobile-announcements-test | Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy | none | dispatcher-tier1-refill 2026-06-07 (backlog.json promote) |
-| low | open | pm-frontend | verify-report-execution-history-presigned-download-retry-frontend | Coverage 81-2: confirm presigned download + retry end-to-end on the report execution-history surf... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| high | done | pm-backend | feat-airbnb-oauth-and-sync-no-oauth-token-exchange-backend | no OAuth token exchange route (models only) (83-1-airbnb-integration Airbnb OAuth and Sync) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-frontend | feat-navigation-and-routing-auth-guard-evidenced-mobile | auth guard (AC-5) not evidenced (82-2-navigation-routing Navigation and Routing) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-booking-oauth-csrf-coverage | Add Booking.com OAuth handler / CSRF / secure-credential-replacement coverage (#1362, #1374) | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-document-download-preview-tests | Add presigned-URL minting/expiry/access-gate allow-path tests for document download/preview (#1377) | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-realtime-pref-sync-ci-coverage | Add CI-executable coverage for realtime preference-sync publish leg (#1376) | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-vote-partial-cmp-nan-fuzz | Add NaN-weight fuzz test for /votes/{id}/results to guard partial_cmp().unwrap() panic (Phase 1.5... | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-16T02:20:29Z |
-| medium | done | pm-frontend | feat-home-and-search-screens-filtersheet-location-features-mobile | FilterSheet/location features missing (82-3-home-search-screens Home and Search Screens) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| medium | done | pm-frontend | feat-navigation-and-routing-navigation-state-preservation-mobile | navigation state preservation (AC-4) unverified (82-2-navigation-routing Navigation and Routing) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| medium | done | pm-frontend | feat-web-announcements-faults-api-hooks-wiring | [CLOSED: verified already shipped on dev (gap-79-1) — AnnouncementsPage+FaultsPage wired to TanSt... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| medium | done | pm-frontend | verify-home-and-search-screens-corelocation-integration-confirmed-mobile | CoreLocation integration not confirmed (82-3-home-search-screens Home and Search Screens) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
+| high | open | pm-frontend | gap-84-1-wire-ppt-web-direct-to-s3-upload-2026-07-23 | Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument in... | none | pm-scrum-master 2026-07-23 (score=8: mvp*2 + partial*2 + fin |
+| high | open | pm-frontend | gap-84-2-document-sign-page-2026-07-23-retry3 | Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-si... | none | pm-scrum-master 2026-07-23 (score=8: mvp*2 + partial*2 + fin |
+| high | open | pm-integration | integrations-webhook-hardening-audit-2026-07-23 | Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #24... | gh-issue-2485 | pm-scrum-master 2026-07-23 (score=7: security*2 + cross-cutt |
+| high | open | pm-security | sec-layout-webhook-hmac-verify-2026-07-23 | Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 ... | gh-issue-2485 | pm-security 2026-07-23 (score=7: sec*2 + dep-blocker + arch- |
+| medium | open | pm-data | data-audit-add-evidence-idor-fix-2026-07-23 | After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which disp... | gh-issue-2483 | pm-data 2026-07-23 (score=6: security-adjacent + audit-compl |
+| medium | open | pm-qa | sec-mobile-layout-cache-tenant-scope-test-2026-07-23 | Add mobile test asserting LAYOUT_CACHE_KEY is cleared/tenant-scoped on logout+re-login (follows #2486 fix) | gh-issue-2486 | pm-scrum-master 2026-07-23 (score=6: security*2 + mobile + d |
+| medium | open | pm-security | sec-layout-webhook-integration-test-2026-07-23 | Add integration test for layout publish webhook replay/timestamp handling once #2485 fix lands (parity with ge... | gh-issue-2485 | pm-scrum-master 2026-07-23 (score=6: security*2 + dep-blocke |
+| medium | open | pm-data | data-layout-publish-event-tracking-2026-07-23 | Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) — Layout & ... | none | pm-data 2026-07-23 (score=5: KPI gap on newly-shipped featur |
+| medium | open | pm-data | data-dispute-fsm-kpi-definitions-2026-07-23 | Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) — ... | none | pm-data 2026-07-23 (score=5: KPI gap on shipped MVP epic) |
+| medium | open | pm-data | data-announcement-fanout-metric-2026-07-23 | Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL ... | gh-issue-2484 | pm-data 2026-07-23 (score=5: KPI gap on Epic 6 + data-integr |
+| medium | open | pm-data | data-support-data-audit-event-def-2026-07-23 | Formalize support-staff read audit event schema (who viewed which tenant's diagnostics, who revoked sessions) ... | none | pm-data 2026-07-23 (score=5: reopens 2026-05-28 pm-data deci |
+| medium | open | pm-data | data-fault-kpi-unification-2026-07-23 | Unify FaultStatusCount metric with owner/portfolio fault KPIs into one shared definition (open decision from 2... | none | pm-data 2026-07-23 (score=5: metric-consistency) |
+| medium | open | pm-data | data-signup-funnel-tracking-2026-07-23 | Instrument signup / onboarding-tour completion funnel (10b-6) — TourOverlay hook exists, no analytics events f... | none | pm-data 2026-07-23 (score=5: onboarding KPI blindness) |
+| medium | open | pm-data | data-privacy-retention-policy-2026-07-23 | Publish data-retention policy for support-data / analytics events / audit trail (append-only support_tooling_e... | none | pm-data 2026-07-23 (score=5: privacy/GDPR) |
+| medium | open | pm-frontend | chore-uc-33-dispute-subuc-links-2026-07-23 | Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter (missing_use_... | none | pm-scrum-master 2026-07-23 (score=5: screen-gap + easy) |
+| medium | open | pm-frontend | docs-screen-map-frontmatter-epics-2026-07-23 | Backfill screen-map frontmatter epics: field so epic->screen linkage stops manufacturing orphans in coverage s... | none | pm-scrum-master 2026-07-23 (score=5: screen-gap + high-lever |
+| medium | open | pm-qa | test-scheduler-target-ids-regression-2026-07-23 | Backfill regression test for scheduler malformed target_ids parse (fix in #2436) — currently no test asserts s... | none | pm-scrum-master 2026-07-23 (score=5: security-adjacent test- |
+| medium | open | pm-security | sec-ammonia-supply-chain-audit-2026-07-23 | Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other... | none | pm-scrum-master 2026-07-23 (score=5: security-hygiene follow |
+| medium | open | pm-scrum-master | chore-stale-pr-2433-ios-layout-2026-07-23 | Unblock PR #2433 (mobile-native iOS resolved-layout) — 2 days without update; owner ping / rebase decision | none | pm-scrum-master 2026-07-23 (score=4: stalled review) |
+| medium | in-progress | pm-tech-lead | gh-issue-2483 | Follow-up: add_evidence dispute sub-resource is still cross-tenant-writable (missed by #2441/PR #2450) (Closes... | none | dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2483) |
+| medium | in-progress | pm-tech-lead | gh-issue-2484 | Follow-up: announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (... | none | dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2484) |
+| medium | in-progress | pm-tech-lead | gh-issue-2485 | Follow-up: layout publish webhook has no timestamp/replay protection (PR #2431) (Closes #2485) | none | dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2485) |
+| medium | in-progress | pm-tech-lead | gh-issue-2486 | Follow-up: mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (PR #2432) (Closes #2486) | none | dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2486) |
+| medium | in-progress | pm-tech-lead | gh-issue-2366-retry1 | Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345)... | none | dispatcher-retry-remint 2026-07-23T10:07:50Z (retry_of=gh-is |
+| low | open | pm-data | data-audit-oauth-token-usage-2026-07-23 | Add analytics tracking for OAuth token issuance/refresh/revocation events per client (Epic 10A shipped; needed... | none | pm-data 2026-07-23 (score=4: KPI gap; developer-ecosystem vi |
+| low | open | pm-data | data-mobile-native-analytics-parity-2026-07-23 | Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing ... | none | pm-data 2026-07-23 (score=4: mobile-parity KPI gap) |
+| low | open | pm-data | data-pgvector-rag-observability-2026-07-23 | Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empt... | none | pm-data 2026-07-23 (score=4: observability gap on freshly-sh |
+| low | open | pm-data | data-reality-portal-listing-view-events-2026-07-23 | Add listing-view analytics events (reality-web + mobile-native) with view-source, filter-state, session contex... | none | pm-data 2026-07-23 (score=4: KPI gap on public listings surf |
+| low | open | pm-devops | devops-nextest-partition-runbook-2026-07-23 | Document the nextest archive + per-test partition workflow (#2459) and the 206->8 test-binary consolidation (#... | none | pm-scrum-master 2026-07-23 (score=3: docs + follow-through o |
+| low | open | pm-frontend | refactor-layout-editor-styles-followthrough-2026-07-23 | Follow-through on #2464 LayoutEditorPage style extraction — apply same pattern to remaining layout-editor comp... | none | pm-scrum-master 2026-07-23 (score=3: refactor; follows shipp |
+| low | open | pm-qa | qa-verify-gate-adoption-checkin-2026-07-23 | Confirm every open PR (#2478/#2481/#2482/#2490/#2491) has run `just verify` locally (per #2444 verify gate) — ... | none | pm-scrum-master 2026-07-23 (score=3: process check) |
+| low | open | pm-scrum-master | chore-triage-untriaged-issues-750s-2026-07-23 | Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or b... | none | pm-scrum-master 2026-07-23 (score=3: backlog hygiene) |
+| low | open | pm-devops | chore-dependabot-cargo-minor-batch-2026-07-23 | Review + merge dependabot cargo-minor-patch batch #2473 (6 crates) once CI is green; verify no lockfile drift ... | none | pm-scrum-master 2026-07-23 (score=2: routine deps) |
+| low | in-progress | pm-tech-lead | refactor-churn-hotspot-ppt-dashboard-md-2026-07-21 | Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration) | none | dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf |
+| low | in-progress | pm-tech-lead | refactor-churn-hotspot-repo-map-md-2026-07-20 | Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh) | none | dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf |
+| low | in-progress | pm-tech-lead | refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry2 | Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 2/2 of failed refact... | none | dispatcher-retry-remint 2026-07-22T10:05:12Z (retry_of=refac |
+
+## Grouped by owner
+
+### pm-data (12)
+- !! `data-audit-add-evidence-idor-fix-2026-07-23` — After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern)
+- !! `data-layout-publish-event-tracking-2026-07-23` — Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) — Layout & Content Manager shipped end-to-end but has no KPI hooks yet
+- !! `data-dispute-fsm-kpi-definitions-2026-07-23` — Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) — Epic 80 stories all done but no analytics dashboard exists; align with SupportDataPage metric definitions
+- !! `data-announcement-fanout-metric-2026-07-23` — Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model)
+- !! `data-support-data-audit-event-def-2026-07-23` — Formalize support-staff read audit event schema (who viewed which tenant's diagnostics, who revoked sessions) separate from audit_read capability gate (open decision from 2026-05-28)
+- !! `data-fault-kpi-unification-2026-07-23` — Unify FaultStatusCount metric with owner/portfolio fault KPIs into one shared definition (open decision from 2026-05-28)
+- !! `data-signup-funnel-tracking-2026-07-23` — Instrument signup / onboarding-tour completion funnel (10b-6) — TourOverlay hook exists, no analytics events fired on complete/skip/reset
+- !! `data-privacy-retention-policy-2026-07-23` — Publish data-retention policy for support-data / analytics events / audit trail (append-only support_tooling_events has no TTL yet)
+- ! `data-audit-oauth-token-usage-2026-07-23` — Add analytics tracking for OAuth token issuance/refresh/revocation events per client (Epic 10A shipped; needed for platform-admin ecosystem health dashboard)
+- ! `data-mobile-native-analytics-parity-2026-07-23` — Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry)
+- ! `data-pgvector-rag-observability-2026-07-23` — Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows
+- ! `data-reality-portal-listing-view-events-2026-07-23` — Add listing-view analytics events (reality-web + mobile-native) with view-source, filter-state, session context — foundational for realtor conversion metrics
+
+### pm-devops (2)
+- ! `devops-nextest-partition-runbook-2026-07-23` — Document the nextest archive + per-test partition workflow (#2459) and the 206->8 test-binary consolidation (#2461/#2487) as a contributor runbook so future test files land in the consolidated crates
+- ! `chore-dependabot-cargo-minor-batch-2026-07-23` — Review + merge dependabot cargo-minor-patch batch #2473 (6 crates) once CI is green; verify no lockfile drift with dev
+
+### pm-frontend (5)
+- !!! `gap-84-1-wire-ppt-web-direct-to-s3-upload-2026-07-23` — Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument integration + screen-map note (84-1 partial; backend #2309 shipped)
+- !!! `gap-84-2-document-sign-page-2026-07-23-retry3` — Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery (84-2 partial; prior attempt failed no-PR)
+- !! `chore-uc-33-dispute-subuc-links-2026-07-23` — Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter (missing_use_cases in coverage.json)
+- !! `docs-screen-map-frontmatter-epics-2026-07-23` — Backfill screen-map frontmatter epics: field so epic->screen linkage stops manufacturing orphans in coverage scan (systemic finding from 2026-06-23 deep scan; still present)
+- ! `refactor-layout-editor-styles-followthrough-2026-07-23` — Follow-through on #2464 LayoutEditorPage style extraction — apply same pattern to remaining layout-editor components to reduce inline-style churn
+
+### pm-integration (1)
+- !!! `integrations-webhook-hardening-audit-2026-07-23` — Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review
+
+### pm-qa (3)
+- !! `sec-mobile-layout-cache-tenant-scope-test-2026-07-23` — Add mobile test asserting LAYOUT_CACHE_KEY is cleared/tenant-scoped on logout+re-login (follows #2486 fix)
+- !! `test-scheduler-target-ids-regression-2026-07-23` — Backfill regression test for scheduler malformed target_ids parse (fix in #2436) — currently no test asserts silent-parse behavior is gone
+- ! `qa-verify-gate-adoption-checkin-2026-07-23` — Confirm every open PR (#2478/#2481/#2482/#2490/#2491) has run `just verify` locally (per #2444 verify gate) — enforcement or advisory-only?
+
+### pm-scrum-master (2)
+- !! `chore-stale-pr-2433-ios-layout-2026-07-23` — Unblock PR #2433 (mobile-native iOS resolved-layout) — 2 days without update; owner ping / rebase decision
+- ! `chore-triage-untriaged-issues-750s-2026-07-23` — Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close
+
+### pm-security (3)
+- !!! `sec-layout-webhook-hmac-verify-2026-07-23` — Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design
+- !! `sec-layout-webhook-integration-test-2026-07-23` — Add integration test for layout publish webhook replay/timestamp handling once #2485 fix lands (parity with generic integration webhook test pattern)
+- !! `sec-ammonia-supply-chain-audit-2026-07-23` — Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories
+
+### pm-tech-lead (8)
+- !! `gh-issue-2483` — Follow-up: add_evidence dispute sub-resource is still cross-tenant-writable (missed by #2441/PR #2450) (Closes #2483)
+- !! `gh-issue-2484` — Follow-up: announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (PR #2455) (Closes #2484)
+- !! `gh-issue-2485` — Follow-up: layout publish webhook has no timestamp/replay protection (PR #2431) (Closes #2485)
+- !! `gh-issue-2486` — Follow-up: mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (PR #2432) (Closes #2486)
+- !! `gh-issue-2366-retry1` — Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 1/2 of failed gh-issue-2366]
+- ! `refactor-churn-hotspot-ppt-dashboard-md-2026-07-21` — Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)
+- ! `refactor-churn-hotspot-repo-map-md-2026-07-20` — Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)
+- ! `refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry2` — Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 2/2 of failed refactor-churn-hotspot-backend-crates-db-src-models-mod-rs]

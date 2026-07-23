@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-15T01:55:00Z",
-  "scan_kind": "deep",
+  "generated": "2026-07-23T14:30:00Z",
+  "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
     "orphan_screens": [],
@@ -761,13 +761,15 @@
         "sprint-status done (verified 2026-06-17)",
         "POST /api/v1/documents/upload in routes/documents/core.rs",
         "document_upload_tests.rs (T1-T15) cover AC-1/AC-2/AC-3",
-        "screen-map upload-document.md buildStatus=shipped"
+        "screen-map upload-document.md buildStatus=shipped",
+        "PR #2447 BIT-268 (2026-07-22): document authz backfill \u2014 cross-tenant regression tests",
+        "PR #2453 (2026-07-22): import + cert-doc authz cases added"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": []
     },
     {
@@ -809,14 +811,16 @@
         "sprint-status done (verified 2026-07-04)",
         "routes/documents/core.rs gates list/download/preview",
         "all five access scopes implemented",
-        "document_access_test.rs (217 lines)"
+        "document_access_test.rs (217 lines)",
+        "PR #2438 (2026-07-21): get_document org-scoping fix (closes #2422) \u2014 cross-org read prevented at handler layer",
+        "PR #2447 BIT-268 (2026-07-22): document authz backfill wave"
       ],
       "gaps": [
         "frontend permission authoring UI (AccessScopeSelector/RoleSelector/UserSelector) not shipped - tracked separately",
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": []
     },
     {
@@ -883,14 +887,16 @@
         "oauth.rs (1198 lines): complete auth/token/revoke/introspect with PKCE, Argon2, audit logging",
         "test_revoked_refresh_token_rejected_at_token_endpoint + comprehensive oauth test files",
         "Issue #481 CLOSED 2026-05-26 (revoked-filtering + family-reuse detection paths)",
-        "Issue #487 CLOSED: test_mfa_verify_rate_limited present (#[ignore] pending middleware), mod-common fix applied"
+        "Issue #487 CLOSED: test_mfa_verify_rate_limited present (#[ignore] pending middleware), mod-common fix applied",
+        "PR #2465 (2026-07-22): OAuth handler test backfill \u2014 additional regression coverage on authorize/token endpoints",
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
       ],
       "gaps": [
         "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed \u2014 reconcile gate note",
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": []
     },
     {
@@ -908,13 +914,15 @@
         "oauth.rs: register/list/get/update/revoke client + regenerate_client_secret handlers",
         "OAuthClientsPage.tsx admin console full CRUD",
         "Issue #482 CLOSED: ProtectedRoute.test.tsx covers deny-missing-role/allow-correct/deny-wrong",
-        "screen-map admin-oauth-clients buildStatus=shipped apiStatus=complete"
+        "screen-map admin-oauth-clients buildStatus=shipped apiStatus=complete",
+        "PR #2465 (2026-07-22): OAuth handler backfill covers client-facing endpoints",
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
       ],
       "gaps": [
         "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-oauth-clients",
@@ -939,13 +947,15 @@
         "oauth.rs: refresh_tokens, introspect_token, revocation, user grant management",
         "OAuthGrantsPage list/revoke wired",
         "oauth_token_introspection_rotation_test.rs",
-        "Issue #481 CLOSED 2026-05-26"
+        "Issue #481 CLOSED 2026-05-26",
+        "PR #2465 (2026-07-22): OAuth token-management endpoint tests refreshed",
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
       ],
       "gaps": [
         "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",
@@ -969,11 +979,13 @@
       "evidence": [
         "sprint-status: done",
         "screen-map ppt/disputes.md shipped",
-        "feat(epic-80) commits merged"
+        "feat(epic-80) commits merged",
+        "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers (add_evidence follow-up #2483 remains; PR #2490 open)",
+        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -1008,11 +1020,12 @@
       "evidence": [
         "screen-map ppt/file-dispute.md shipped/complete, AC-4 noted SHIPPED",
         "useDraftStorage imported+called in FileDisputePage.tsx (lines 20,124) \u2014 07-13 'unwired' finding was a false positive (route wrapper delegates)",
-        "gap-80-2 task archived already-satisfied 2026-07-13, 37 tests pass"
+        "gap-80-2 task archived already-satisfied 2026-07-13, 37 tests pass",
+        "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers used by filing flow"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -1036,11 +1049,12 @@
       "evidence": [
         "sprint-status: done (promoted 2026-06-25)",
         "party-submission endpoints wired both sides",
-        "152 dispute tests green"
+        "152 dispute tests green",
+        "PR #2450 (2026-07-22): mediation-adjacent IDOR handlers hardened (5 endpoints)"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-23",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",

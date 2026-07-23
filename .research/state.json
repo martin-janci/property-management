@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-21T03:13:00Z",
-  "last_run_ms": 1200000,
-  "last_pr_seen": 2432,
-  "last_issue_seen": 2422,
-  "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d",
+  "last_run_iso": "2026-07-23T14:43:59Z",
+  "last_run_ms": 900000,
+  "last_pr_seen": 2491,
+  "last_issue_seen": 2486,
+  "last_commit_sha": "74cc2004f7cf842ec25313771c56ef233de832be",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -381,6 +381,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-21",
       "recent_churn": 900
+    },
+    "backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 417
+    },
+    "backend/servers/api-server/tests/org_property_authz_backfill_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 412
+    },
+    "backend/servers/api-server/tests/infra_ops_authz_backfill_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 364
     }
   },
   "seen_signals": [
@@ -654,11 +669,28 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/org_property_authz_backfill_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/infra_ops_authz_backfill_tests.rs",
+    "closed-not-merged-pr-2489",
+    "lag-warning-2026-07-23",
+    "dep-update-noise-pr-2468",
+    "dep-update-noise-pr-2469",
+    "dep-update-noise-pr-2470",
+    "dep-update-noise-pr-2471",
+    "dep-update-noise-pr-2472",
+    "dep-update-noise-pr-2473",
+    "dep-update-noise-pr-2474",
+    "dep-update-noise-pr-2475",
+    "dep-update-noise-pr-2476",
+    "dep-update-noise-pr-2477",
+    "code-review-api-handlers-community-unauthenticated-reads",
+    "code-review-api-handlers-community-cross-tenant-idor"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-14",
+    "api-handlers": "2026-07-23",
     "api-core": "2026-07-20",
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-21",
@@ -668,9 +700,9 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 47,
-    "vectors_created": 198,
-    "plans_created": 14,
+    "runs": 48,
+    "vectors_created": 204,
+    "plans_created": 16,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -685,7 +717,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
@@ -693,11 +725,11 @@
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
       "pm-security": "2026-07-21",
-      "pm-data": "2026-05-28",
+      "pm-data": "2026-07-23",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }

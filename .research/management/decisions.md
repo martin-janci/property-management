@@ -85,3 +85,14 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-07-23 (Phase 1.6 — pm-scrum-master + pm-data)
+
+- **NEW (2026-07-23, pm-scrum-master):** Prioritize the 2 remaining `partial` MVP stories (84-1 direct-to-S3 upload wiring, 84-2 document-sign page) over post-merge follow-up issues in the next implementer window — both are frontend-only, backend is shipped, and closing them would take the project to 49/49. Owner: pm-frontend.
+- **NEW (2026-07-23, pm-scrum-master):** Cross-cutting webhook hardening audit — treat #2485 (layout webhook lacks timestamp/replay guard) as a symptom, not an isolated bug. Booking / Airbnb / esignature / layout webhooks need parity check for signature verification, timestamp window, and replay protection. Owner: pm-integration + pm-security.
+- **NEW (2026-07-23, pm-data):** Minimum-analytics DoD for new stories — proposed. Every new story that ships user-facing behavior must define at least (a) a business event, (b) an audit event if it mutates cross-tenant or platform-admin state, and (c) a KPI dashboard link (even if placeholder). Owner: pm-scrum-master + pm-data to decide binding vs advisory.
+- **NEW (2026-07-23, pm-data):** Layout & Content Manager pilot shipped with zero instrumentation — publish/webhook analytics event schema needs to be defined before adoption grows and retrofitting becomes costly. Sequenced as `data-layout-publish-event-tracking-2026-07-23` on action-list. Owner: pm-data + pm-backend.
+- **NEW (2026-07-23, pm-data):** Retention policy for `support_tooling_events` — carried over from 2026-05-28 open decision, still unresolved. Publishing a policy (TTL vs indefinite, PII classification) is now blocking pm-data's ability to expand the audit event pattern to disputes/OAuth/layout. Owner: pm-security + pm-data.
+- **NEW (2026-07-23, pm-data):** FaultStatusCount metric unification — also carried over from 2026-05-28. As dashboards expand, dual definitions will produce contradictory numbers. Owner: pm-data (final call).
