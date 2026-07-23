@@ -1,0 +1,257 @@
+{
+  "run_date": "2026-07-23",
+  "trigger_text": "",
+  "trigger_payload": "buffer-low: claimable=3/72 — refill planner/backlog (dispatcher Tier 2 deep-starvation kick 2026-07-23)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-21T03:13:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-07-21T03:13Z — 57h ago (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-issue-2483-add-evidence-idor",
+      "type": "code-review-finding",
+      "source": "GitHub issue #2483 (post-merge review PR #2450)",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/disputes.rs:803 — add_evidence handler takes AuthUser but never calls require_org(&user) nor threads organization_id into the repo call, unlike sibling list_evidence at line 795 which does",
+        "backend/crates/db/src/repositories/dispute.rs:620 — add_evidence unconditional INSERT with no WHERE EXISTS (... organization_id) guard",
+        "PR #2450 hardened 5 sub-resource handlers (list_parties, add_party, list_evidence, delete_evidence, list_activities) but missed the sixth (add_evidence) — same table family, same threat class",
+        "Cross-tenant write IDOR — any authenticated user can attach evidence (forged filename/content_type/storage_url) to any dispute in any org by enumerating dispute_id"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-issue-2486-mobile-layout-cache-key-tenant-scope",
+      "type": "code-review-finding",
+      "source": "GitHub issue #2486 (post-merge review PR #2432)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/services/localCacheKeys.ts — LAYOUT_CACHE_KEY(screen) yields ppt_layout_${screen} with no org/user prefix",
+        "frontend/apps/mobile/src/features/layout/layoutCache.ts — useDashboardLayout hydrates from cache at mount (Phase 1) and setLayout(cached) before background refresh (Phase 2), so org B sees org A's dashboard layout after account switch until Phase 2 completes",
+        "Adjacent WIDGET_CONFIG_KEY comment already flags this class of problem (references building ids — tenant data); LAYOUT_CACHE_KEY reintroduces the untenanted variant",
+        "Fix scope: prefix key with orgId + AsyncStorage.getAllKeys() prefix sweep on logout"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-issue-2485-layout-webhook-no-replay-protection",
+      "type": "code-review-finding",
+      "source": "GitHub issue #2485 (post-merge review PR #2431)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/webhook.rs::sign_payload signs HMAC-SHA256(secret, body) — no X-Webhook-Timestamp, no freshness window",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts verifies HMAC but has no timestamp check",
+        "Divergence from PORTAL_WEBHOOK_SECRET / REALITY_PORTAL_WEBHOOK_SECRET family (backend/CLAUDE.md) — those sign over {timestamp}.{body} and reject deliveries outside ±300s (gap 83-3 / issue #2330)",
+        "Impact: single captured POST to /api/layout-revalidate can be replayed indefinitely to force revalidateTag on reality-web ISR cache — DoS/amplification primitive, cache invalidation not data disclosure"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-issue-2484-fan-out-guard-modeled-not-tested",
+      "type": "code-review-finding",
+      "source": "GitHub issue #2484 (post-merge review PR #2455)",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2455 added AND b.organization_id = $2 to Scheduler::get_announcement_target_users in backend/servers/api-server/src/services/scheduler.rs (real security fix)",
+        "Regression tests exercise a hand-written org_scoped_target_users helper that reimplements the row_org != announcement_org skip in Rust — does not run the real SQL",
+        "If someone later drops AND b.organization_id = $2 or the JOIN buildings b, tests still pass — the model is independent of the SQL it claims to mirror",
+        "Fix: add DB-backed #[sqlx::test(migrator = \"db::MIGRATOR\")] that seeds cross-org buildings and calls the real scheduler query, matching the dispute_cross_org_idor_tests.rs style"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-issue-2366-direct-upload-drops-building-id",
+      "type": "code-review-finding",
+      "source": "GitHub issue #2366 (post-merge review PR #2345, updated 2026-07-23)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/packages/api-client/src/documents/api.ts uploadDocumentDirect never reads params.buildingId — the CreateDocumentRequest it builds omits building_id",
+        "frontend/packages/api-client/src/documents/types.ts:204 — CreateDocumentRequest has no building_id field",
+        "DocumentUploadPage still forwards buildingId → callers believe the building is being recorded but registration drops it",
+        "Silent data-association loss — post-upload document does not appear in building-scoped listing/filter"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-role-lookup-stub-locked",
+      "type": "code-review-finding",
+      "source": "static-review api-handlers segment 2026-07-23",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/critical_notifications.rs:478 — TODO(security): is_admin branches replaced with false (least privilege) → create_notification / get_stats unreachable until real role lookup is wired",
+        "backend/servers/api-server/src/routes/faults.rs:133 — TODO(security): is_manager branches replaced with false → same lockdown pattern",
+        "Canonical pattern (routes/organizations.rs) uses memberships-table lookup — should be reinstated per handler"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-github-workflows-backend-yml",
+      "type": "churn-hotspot",
+      "source": "git log 7d52c40..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "5 touches this window (PRs #2459/#2461/#2487/#2488 CI restructuring + related follow-ups)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-package-json",
+      "type": "churn-hotspot",
+      "source": "git log 7d52c40..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "4 touches this window (dependabot Expo bumps + refactor field-order tidy #2480)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-gitignore",
+      "type": "churn-hotspot",
+      "source": "git log 7d52c40..HEAD",
+      "score_delta": 1,
+      "evidence": [
+        "3 touches this window — dev-stack repair (#2454) + agent-config versioning (#2451) + follow-ups"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar this run (no lockfile-drift, no orphan/drift signals, no fixme-in-merged-code, no stalled-review)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/2026-07-23.md == '# 2026-07-23'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals not double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "scores <=8, no decay-eligible open items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has 'adversarial pass:' line in brief",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all metadata+headings+mode+files present",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plan slugs present in active or archive",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged>=HEAD",
+      "observed": "7>=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped -> no-op",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

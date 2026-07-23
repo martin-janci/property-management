@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-21T03:13:00Z",
+  "last_run_iso": "2026-07-23T12:30:00Z",
   "last_run_ms": 1200000,
-  "last_pr_seen": 2432,
-  "last_issue_seen": 2422,
-  "last_commit_sha": "7d52c4099dfe1b136cb1a6af0e8ed4270b7cb86d",
+  "last_pr_seen": 2488,
+  "last_issue_seen": 2486,
+  "last_commit_sha": "0bac4670bafe05d069d2b2d4d52719d0b177a987",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -358,9 +358,9 @@
       "recent_churn": 3727
     },
     "frontend/apps/mobile/package.json": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-20",
-      "recent_churn": 5
+      "runs_seen": 2,
+      "last_seen": "2026-07-23",
+      "recent_churn": 4
     },
     "docs/repo-map.md": {
       "runs_seen": 2,
@@ -381,6 +381,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-21",
       "recent_churn": 900
+    },
+    ".github/workflows/backend.yml": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 5
+    },
+    ".gitignore": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-23",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -654,11 +664,21 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-07-23",
+    "code-review-issue-2483-add-evidence-idor",
+    "code-review-issue-2486-mobile-layout-cache-key-tenant-scope",
+    "code-review-issue-2485-layout-webhook-no-replay-protection",
+    "code-review-issue-2484-fan-out-guard-modeled-not-tested",
+    "code-review-issue-2366-direct-upload-drops-building-id",
+    "code-review-api-handlers-role-lookup-stub-locked",
+    "churn-hotspot-github-workflows-backend-yml",
+    "churn-hotspot-frontend-apps-mobile-package-json",
+    "churn-hotspot-gitignore"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-14",
+    "api-handlers": "2026-07-23",
     "api-core": "2026-07-20",
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-21",
@@ -668,9 +688,9 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 47,
-    "vectors_created": 198,
-    "plans_created": 14,
+    "runs": 48,
+    "vectors_created": 207,
+    "plans_created": 16,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

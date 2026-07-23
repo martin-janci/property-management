@@ -4760,6 +4760,219 @@
         "assignment_status": "merged",
         "pr_number": 2456
       }
+    },
+    {
+      "id": "security-add-evidence-cross-tenant-idor-issue-2483",
+      "title": "add_evidence dispute handler is cross-tenant writable (IDOR) — org-scope like PR #2450 sweep",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2483",
+        "PR #2450"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/disputes.rs:803 — add_evidence handler takes AuthUser but never calls require_org(&user) nor threads organization_id into the repo call, unlike sibling list_evidence at line 795 which does",
+        "backend/crates/db/src/repositories/dispute.rs:620 — add_evidence unconditional INSERT with no WHERE EXISTS (... organization_id) guard",
+        "PR #2450 hardened 5 sub-resource handlers (list_parties, add_party, list_evidence, delete_evidence, list_activities) but missed the sixth (add_evidence) — same table family, same threat class",
+        "Cross-tenant write IDOR — any authenticated user can attach evidence (forged filename/content_type/storage_url) to any dispute in any org by enumerating dispute_id"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/disputes.rs",
+        "backend/crates/db/src/repositories/dispute.rs",
+        "backend/servers/api-server/tests/dispute_cross_org_idor_tests.rs"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": "plans/security-add-evidence-cross-tenant-idor-issue-2483.md"
+    },
+    {
+      "id": "security-mobile-layout-cache-tenant-scope-issue-2486",
+      "title": "Mobile LAYOUT_CACHE_KEY has no tenant scope — org A layout activates for org B on shared device",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Issue #2486",
+        "PR #2432"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/services/localCacheKeys.ts — LAYOUT_CACHE_KEY(screen) yields ppt_layout_${screen} with no org/user prefix",
+        "frontend/apps/mobile/src/features/layout/layoutCache.ts — useDashboardLayout hydrates from cache at mount (Phase 1) and setLayout(cached) before background refresh (Phase 2), so org B sees org A's dashboard layout after account switch until Phase 2 completes",
+        "Adjacent WIDGET_CONFIG_KEY comment already flags this class of problem (references building ids — tenant data); LAYOUT_CACHE_KEY reintroduces the untenanted variant",
+        "Fix scope: prefix key with orgId + AsyncStorage.getAllKeys() prefix sweep on logout"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/localCacheKeys.ts",
+        "frontend/apps/mobile/src/features/layout/layoutCache.ts",
+        "frontend/apps/mobile/src/features/layout/layout.test.tsx"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": "plans/security-mobile-layout-cache-tenant-scope-issue-2486.md"
+    },
+    {
+      "id": "security-layout-webhook-replay-protection-issue-2485",
+      "title": "Layout publish webhook (api-server → reality-web) lacks X-Webhook-Timestamp replay protection",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2485",
+        "PR #2431"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/webhook.rs::sign_payload signs HMAC-SHA256(secret, body) — no X-Webhook-Timestamp, no freshness window",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts verifies HMAC but has no timestamp check",
+        "Divergence from PORTAL_WEBHOOK_SECRET / REALITY_PORTAL_WEBHOOK_SECRET family (backend/CLAUDE.md) — those sign over {timestamp}.{body} and reject deliveries outside ±300s (gap 83-3 / issue #2330)",
+        "Impact: single captured POST to /api/layout-revalidate can be replayed indefinitely to force revalidateTag on reality-web ISR cache — DoS/amplification primitive, cache invalidation not data disclosure"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/webhook.rs",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts",
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "test-gap-scheduler-fan-out-guard-sqlx-test-issue-2484",
+      "title": "Announcement cross-tenant fan-out guard only tested via re-model — add sqlx-test against real SQL",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2484",
+        "PR #2455"
+      ],
+      "evidence": [
+        "PR #2455 added AND b.organization_id = $2 to Scheduler::get_announcement_target_users in backend/servers/api-server/src/services/scheduler.rs (real security fix)",
+        "Regression tests exercise a hand-written org_scoped_target_users helper that reimplements the row_org != announcement_org skip in Rust — does not run the real SQL",
+        "If someone later drops AND b.organization_id = $2 or the JOIN buildings b, tests still pass — the model is independent of the SQL it claims to mirror",
+        "Fix: add DB-backed #[sqlx::test(migrator = \"db::MIGRATOR\")] that seeds cross-org buildings and calls the real scheduler query, matching the dispute_cross_org_idor_tests.rs style"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs",
+        "backend/servers/api-server/tests/dispute_cross_org_idor_tests.rs"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "bug-document-direct-upload-drops-building-id-issue-2366",
+      "title": "Direct-to-S3 document upload silently drops building_id — building-scoped listings lose the doc",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2366",
+        "PR #2345"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/documents/api.ts uploadDocumentDirect never reads params.buildingId — the CreateDocumentRequest it builds omits building_id",
+        "frontend/packages/api-client/src/documents/types.ts:204 — CreateDocumentRequest has no building_id field",
+        "DocumentUploadPage still forwards buildingId → callers believe the building is being recorded but registration drops it",
+        "Silent data-association loss — post-upload document does not appear in building-scoped listing/filter"
+      ],
+      "files": [
+        "frontend/packages/api-client/src/documents/api.ts",
+        "frontend/packages/api-client/src/documents/types.ts",
+        "frontend/apps/ppt-web/src/pages/documents/DocumentUpload.tsx"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-api-handlers-role-lookup-stubs-locked",
+      "title": "Role stubs locked to false in critical_notifications + faults — wire memberships-role lookup",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "static-review api-handlers 2026-07-23"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/critical_notifications.rs:478 — TODO(security): is_admin branches replaced with false (least privilege) → create_notification / get_stats unreachable until real role lookup is wired",
+        "backend/servers/api-server/src/routes/faults.rs:133 — TODO(security): is_manager branches replaced with false → same lockdown pattern",
+        "Canonical pattern (routes/organizations.rs) uses memberships-table lookup — should be reinstated per handler"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/critical_notifications.rs",
+        "backend/servers/api-server/src/routes/faults.rs",
+        "backend/servers/api-server/src/routes/organizations.rs"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-yml-2026-07-23",
+      "title": "Churn hotspot: .github/workflows/backend.yml — 5 touches this run (nextest partition + shard disk reclaim)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 7d52c40..0bac467"
+      ],
+      "evidence": [
+        "5 touches this window (PRs #2459/#2461/#2487/#2488 CI restructuring + related follow-ups)"
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-package-json-2026-07-23",
+      "title": "Churn hotspot: frontend/apps/mobile/package.json — 4 touches (Expo bumps + field-order tidy)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 7d52c40..0bac467"
+      ],
+      "evidence": [
+        "4 touches this window (dependabot Expo bumps + refactor field-order tidy #2480)"
+      ],
+      "files": [
+        "frontend/apps/mobile/package.json"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-gitignore-2026-07-23",
+      "title": "Churn hotspot: .gitignore — 3 touches (dev-stack repair + agent-config versioning)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 7d52c40..0bac467"
+      ],
+      "evidence": [
+        "3 touches this window — dev-stack repair (#2454) + agent-config versioning (#2451) + follow-ups"
+      ],
+      "files": [
+        ".gitignore"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-07-23",
+      "plan": null
     }
   ]
 }
