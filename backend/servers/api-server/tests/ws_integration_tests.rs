@@ -464,6 +464,16 @@ async fn ws_pubsub_fanout_delivers_to_correct_subscriber(pool: PgPool) {
     use integrations::{PubSubService, RedisClient, RedisConfig};
     use tokio::time::{sleep, Duration};
 
+    // Initialize the process env (JWT_SECRET / RUST_ENV) via TestApp's Once
+    // guards, exactly like the sibling tests that go through
+    // `build_ws_test_server`. This test hand-rolls its AppState below (it
+    // needs `.with_redis`), so without this call it only ever passed when
+    // ANOTHER test in the same process had already run TestApp::new — a
+    // latent order dependency that per-test process isolation (nextest,
+    // #2459) exposed: the auth path read the unset env and rejected the
+    // upgrade (observed as "WebSocket upgrade … is None").
+    let _env_warmup = TestApp::new(pool.clone()).await;
+
     let redis_url = match std::env::var("REDIS_URL") {
         Ok(url) => url,
         Err(_) => {
