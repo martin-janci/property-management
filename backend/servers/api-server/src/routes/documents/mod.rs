@@ -26,6 +26,12 @@ pub fn router() -> Router<AppState> {
         .merge(folders::router())
         .merge(shares::authenticated_router())
         .merge(intelligence::router())
+        // Signature requests are a document sub-resource; see BIT-313 —
+        // the handlers extract `Path(document_id)`, so they are mounted here
+        // as `/api/v1/documents/{id}/signature-requests` rather than under the
+        // bare `/api/v1/signature-requests` root where extraction had no
+        // segment to bind.
+        .merge(crate::routes::signatures::document_signature_router())
 }
 
 /// Public (no-auth) document routes — shared document access.

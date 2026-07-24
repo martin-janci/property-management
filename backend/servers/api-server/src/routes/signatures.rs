@@ -50,14 +50,27 @@ static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(|| {
 /// Create router for signature endpoints.
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/",
-            get(list_signature_requests).post(create_signature_request),
-        )
         .route("/{id}", get(get_signature_request))
         .route("/{id}/remind", post(send_reminder))
         .route("/{id}/cancel", post(cancel_signature_request))
         .route("/webhook/{provider}", post(handle_webhook))
+}
+
+/// Document-nested signature-request routes.
+///
+/// Mounted by `routes::documents` under `/api/v1/documents`, yielding
+/// `/api/v1/documents/{id}/signature-requests`. The `list`/`create` handlers
+/// extract `Path(document_id)`, so they must live under a route that actually
+/// carries that path segment — the previous bare `/` mount under
+/// `/api/v1/signature-requests` left `Path<Uuid>` extraction with nothing to
+/// bind, making both endpoints unreachable (BIT-313). The document param is
+/// named `{id}` to match the sibling document sub-routes and keep axum's
+/// path-parameter names consistent across the shared prefix.
+pub fn document_signature_router() -> Router<AppState> {
+    Router::new().route(
+        "/{id}/signature-requests",
+        get(list_signature_requests).post(create_signature_request),
+    )
 }
 
 /// Create a new signature request for a document.

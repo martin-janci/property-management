@@ -65,11 +65,11 @@ _Server: api-server. Modules: signatures.rs, templates.rs, legal.rs, lease_abstr
 | DELETE | /api/v1/templates/{id} | delete_template | done | documents_intelligence_templates_tests.rs | NO_CONTENT + follow-up GET returns 404 |
 | POST | /api/v1/templates/{id}/generate | generate_document | done | documents_intelligence_templates_tests.rs | CREATED happy path asserting document_id |
 
-## signatures.rs  (mount: /api/v1/signature-requests router; /api/v1/signatures public_sign_router)
+## signatures.rs  (mount: /api/v1/signature-requests router; /api/v1/documents/{id}/signature-requests document_signature_router; /api/v1/signatures public_sign_router)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|
-| GET | /api/v1/signature-requests | list_signature_requests | partial | — | BLOCKED: handler extracts Path(document_id) but router registers it at "/" with no path param — unreachable as wired (see BIT-312 follow-up) |
-| POST | /api/v1/signature-requests | create_signature_request | partial | — | BLOCKED: same Path(document_id)-vs-"/" wiring mismatch; requests currently seeded via SQL, not the API (see BIT-312 follow-up) |
+| GET | /api/v1/documents/{id}/signature-requests | list_signature_requests | done | signature_request_happy_path_tests.rs | BIT-313: re-mounted as a document sub-resource (was unreachable at bare "/"); OK happy path asserts total + document_id |
+| POST | /api/v1/documents/{id}/signature-requests | create_signature_request | done | signature_request_happy_path_tests.rs | BIT-313: re-mounted as a document sub-resource (was unreachable at bare "/"); CREATED happy path asserts signature_request.id + document_id |
 | GET | /api/v1/signature-requests/{id} | get_signature_request | done | esignature_email_status_tracking_tests.rs | OK happy path asserting signer_counts |
 | POST | /api/v1/signature-requests/{id}/remind | send_reminder | partial | — | no test |
 | POST | /api/v1/signature-requests/{id}/cancel | cancel_signature_request | partial | — | no test |
