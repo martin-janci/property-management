@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-24T00:10:46Z",
+  "archived_at": "2026-07-24T12:13:08Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1956,6 +1956,31 @@
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "code-review-reality-web-share-comparison-404",
       "retry_round": 1
+    },
+    {
+      "id": "data-signup-funnel-tracking-2026-07-23",
+      "action": "Instrument signup / onboarding-tour completion funnel (10b-6) — TourOverlay hook exists, no analytics events fired on complete/skip/reset",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=5: onboarding KPI blindness) | gc1-reconcile 2026-07-24T12:08:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2515,
+        "merged_at": "2026-07-24T08:15:17Z",
+        "at": "2026-07-24T12:08:39Z"
+      }
     },
     {
       "id": "dx-closed-not-merged-pr-2385",
@@ -9497,6 +9522,31 @@
         "merged_pr": 2075,
         "merged_at": "2026-07-04T18:14:24Z",
         "at": "2026-07-05T00:04:44Z"
+      }
+    },
+    {
+      "id": "test-scheduler-target-ids-regression-2026-07-23",
+      "action": "Backfill regression test for scheduler malformed target_ids parse (fix in #2436) — currently no test asserts silent-parse behavior is gone",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=5: security-adjacent test-gap on shipped fix) | gc1-reconcile 2026-07-24T12:08:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "test"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2520,
+        "merged_at": "2026-07-24T10:26:07Z",
+        "at": "2026-07-24T12:08:39Z"
       }
     },
     {

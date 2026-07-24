@@ -419,24 +419,6 @@
       "last_updated": "2026-07-23T14:34:52.019013Z"
     },
     {
-      "id": "test-scheduler-target-ids-regression-2026-07-23",
-      "action": "Backfill regression test for scheduler malformed target_ids parse (fix in #2436) — currently no test asserts silent-parse behavior is gone",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-23 (score=5: security-adjacent test-gap on shipped fix)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 5,
-        "vector": "test"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
       "id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories",
       "owner_role": "pm-security",
@@ -542,24 +524,6 @@
       "backlog_ref": {
         "plan": null,
         "score": 4,
-        "vector": "data"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
-      "id": "data-signup-funnel-tracking-2026-07-23",
-      "action": "Instrument signup / onboarding-tour completion funnel (10b-6) — TourOverlay hook exists, no analytics events fired on complete/skip/reset",
-      "owner_role": "pm-data",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-data 2026-07-23 (score=5: onboarding KPI blindness)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 5,
         "vector": "data"
       },
       "last_updated": "2026-07-23T14:34:52.019013Z"
