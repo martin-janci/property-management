@@ -29,6 +29,13 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/Toast';
+import {
+  trackStepCompleted,
+  trackTourCompleted,
+  trackTourReset,
+  trackTourSkipped,
+  trackTourStarted,
+} from '../features/onboarding/analytics';
 import { TourOverlay } from '../features/onboarding/TourOverlay';
 import type {
   OnboardingTour,
@@ -254,6 +261,9 @@ export default function OnboardingToursPage() {
     // Auto-start if not yet started
     if (!progress) {
       startMutation.mutate(tour.tour_id, {
+        onSuccess: () => {
+          trackTourStarted({ tourId: tour.tour_id, tourName: tour.name });
+        },
         onError: (err) => {
           showToast({
             title: t('onboarding.toast.startFailedTitle'),
@@ -273,12 +283,14 @@ export default function OnboardingToursPage() {
       { tourId, stepId },
       {
         onSuccess: () => {
+          trackStepCompleted({ tourId, tourName }, stepId, isLast);
           // Chain `completeOnboardingTour` only after the final step POST
           // has succeeded — keeps the two requests sequenced instead of
           // racing against the backend (issue #702 finding #1).
           if (!isLast) return;
           completeTourMutation.mutate(tourId, {
             onSuccess: () => {
+              trackTourCompleted({ tourId, tourName });
               showToast({
                 title: t('onboarding.toast.completedTitle'),
                 message: t('onboarding.toast.completedMessage', { name: tourName }),
@@ -309,6 +321,7 @@ export default function OnboardingToursPage() {
     if (!activeTour) return;
     skipMutation.mutate(activeTour.tour.tour_id, {
       onSuccess: () => {
+        trackTourSkipped({ tourId: activeTour.tour.tour_id, tourName: activeTour.tour.name });
         showToast({
           title: t('onboarding.toast.skippedTitle'),
           message: t('onboarding.toast.skippedMessage', { name: activeTour.tour.name }),
@@ -330,6 +343,7 @@ export default function OnboardingToursPage() {
     if (!activeTour) return;
     resetMutation.mutate(activeTour.tour.tour_id, {
       onSuccess: () => {
+        trackTourReset({ tourId: activeTour.tour.tour_id, tourName: activeTour.tour.name });
         showToast({
           title: t('onboarding.toast.resetTitle'),
           message: t('onboarding.toast.resetMessage', { name: activeTour.tour.name }),
