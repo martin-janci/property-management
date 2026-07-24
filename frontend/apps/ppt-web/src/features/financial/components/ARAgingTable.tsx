@@ -97,10 +97,10 @@ export function ARAgingTable({ entries, totals, isLoading, onRowClick }: ARAging
                 }}
                 tabIndex={onRowClick ? 0 : undefined}
                 role={onRowClick ? 'button' : undefined}
-                aria-label={onRowClick ? `View details for unit ${entry.unit_number}` : undefined}
+                aria-label={onRowClick ? `View details for unit ${entry.designation}` : undefined}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {entry.unit_number}
+                  {entry.designation}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
                   {formatCurrency(entry.current)}
