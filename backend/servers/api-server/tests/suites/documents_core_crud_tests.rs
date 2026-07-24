@@ -151,7 +151,6 @@ async fn list_documents_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -208,7 +207,6 @@ async fn delete_document_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_document_access_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -261,7 +259,6 @@ async fn get_version_history_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_version_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -323,7 +320,6 @@ async fn get_version_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn restore_version_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -351,7 +347,6 @@ async fn restore_version_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_shares_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
