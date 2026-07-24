@@ -482,7 +482,7 @@ impl NewsArticleRepository {
     pub async fn get_reaction_counts(&self, article_id: Uuid) -> Result<ReactionCounts, SqlxError> {
         let counts = sqlx::query_as::<_, (String, i64)>(
             r#"
-            SELECT reaction, COUNT(*) as count
+            SELECT reaction::text, COUNT(*) as count
             FROM article_reactions
             WHERE article_id = $1
             GROUP BY reaction

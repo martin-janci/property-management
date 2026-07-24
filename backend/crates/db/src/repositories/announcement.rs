@@ -166,7 +166,7 @@ impl AnnouncementRepository {
                 target_type, target_ids, status, scheduled_at,
                 comments_enabled, acknowledgment_required
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, $4, $5::announcement_target_type, $6, $7::announcement_status, $8, $9, $10)
             RETURNING
                 id, organization_id, author_id, title, content,
                 target_type::text as target_type, target_ids,
