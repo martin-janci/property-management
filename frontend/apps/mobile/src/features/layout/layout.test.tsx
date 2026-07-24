@@ -255,6 +255,91 @@ describe('layoutCache', () => {
   });
 });
 
+// ─── 2b. logout → re-login round-trip (#2486) ────────────────────────────────
+// The pieces above are proven in isolation (scoped key; prefix sweep). This
+// block ties them into the single session-boundary flow the fix has to
+// guarantee end to end: a layout written under user A must NOT survive a
+// logout to activate for the *next* login on a shared device — neither for a
+// different user (B) nor for user A re-authenticating. It drives the REAL
+// writeCachedLayout / readCachedLayout / resetLocalData against one shared
+// in-memory store so nothing is stubbed between write and read.
+describe('layoutCache — logout + re-login round-trip (#2486)', () => {
+  // A single backing store shared by every mocked AsyncStorage method, so the
+  // write → sweep → read sequence flows through the production code paths.
+  function wireSharedStore(initial: Iterable<[string, string]> = []) {
+    const store = new Map<string, string>(initial);
+    (mockAsyncStorage.setItem as jest.Mock).mockImplementation(async (k: string, v: string) => {
+      store.set(k, v);
+    });
+    (mockAsyncStorage.getItem as jest.Mock).mockImplementation(async (k: string) =>
+      store.has(k) ? (store.get(k) as string) : null
+    );
+    (mockAsyncStorage.removeItem as jest.Mock).mockImplementation(async (k: string) => {
+      store.delete(k);
+    });
+    (mockAsyncStorage.getAllKeys as jest.Mock).mockImplementation(async () =>
+      Array.from(store.keys())
+    );
+    (mockAsyncStorage.removeMany as jest.Mock).mockImplementation(async (keys: string[]) => {
+      for (const k of keys) store.delete(k);
+    });
+    return store;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('user A layout does not survive logout to activate for user B on re-login', async () => {
+    const store = wireSharedStore([['ppt_access_token', 'tok-a']]);
+
+    // 1. User A is logged in and their dashboard layout gets cached.
+    await writeCachedLayout('user-a', 'ppt/dashboard', SAMPLE_LAYOUT);
+    expect(await readCachedLayout('user-a', 'ppt/dashboard')).toEqual(SAMPLE_LAYOUT);
+
+    // 2. User A logs out — the session-teardown purge runs.
+    await resetLocalData();
+    expect(store.has('ppt_layout_user-a_ppt_dashboard')).toBe(false);
+
+    // 3. User B logs in on the same device and opens the dashboard: the read
+    //    misses (scoped key never existed AND the sweep cleared everything),
+    //    so B falls back to the default layout + a fresh fetch — never A's
+    //    tenant-customized layout.
+    expect(await readCachedLayout('user-b', 'ppt/dashboard')).toBeNull();
+  });
+
+  it('user A re-authenticating starts from a cleared cache, not the pre-logout layout', async () => {
+    wireSharedStore();
+
+    // User A caches a layout, then logs out.
+    await writeCachedLayout('user-a', 'ppt/dashboard', SAMPLE_LAYOUT);
+    await resetLocalData();
+
+    // Re-login as the SAME user must not resurrect the pre-logout entry — the
+    // logout sweep is unconditional, so the read is a miss until a fresh fetch
+    // repopulates it.
+    expect(await readCachedLayout('user-a', 'ppt/dashboard')).toBeNull();
+
+    // A post-re-login fetch re-populates the (again tenant-scoped) cache, and
+    // that new entry is readable — proving the cache is cleared, not disabled.
+    const freshLayout: ResolvedScreen = { ...SAMPLE_LAYOUT, version: 9 };
+    await writeCachedLayout('user-a', 'ppt/dashboard', freshLayout);
+    expect(await readCachedLayout('user-a', 'ppt/dashboard')).toEqual(freshLayout);
+  });
+
+  it('logout purge leaves the auth token intact so re-login is not forced to re-auth blindly', async () => {
+    const store = wireSharedStore([['ppt_access_token', 'tok-a']]);
+    await writeCachedLayout('user-a', 'ppt/dashboard', SAMPLE_LAYOUT);
+
+    await resetLocalData();
+
+    // Only tenant-cache namespaces are swept; the auth-token key (which is not
+    // under a tenant prefix) must be left for the auth layer to manage.
+    expect(store.has('ppt_layout_user-a_ppt_dashboard')).toBe(false);
+    expect(store.get('ppt_access_token')).toBe('tok-a');
+  });
+});
+
 // ─── 3. useDashboardLayout hook ───────────────────────────────────────────────
 
 describe('useDashboardLayout hook', () => {
