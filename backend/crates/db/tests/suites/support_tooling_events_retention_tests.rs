@@ -121,11 +121,13 @@ async fn update_is_still_rejected(pool: PgPool) {
     let admin = seed_admin_user(&pool, "no-update-admin@test.local").await;
     let id = insert_event_at(&pool, admin, 5).await;
 
-    let err = sqlx::query("UPDATE support_tooling_events SET event_kind = 'support_data_viewed' WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
-        .expect_err("UPDATE must always be rejected");
+    let err = sqlx::query(
+        "UPDATE support_tooling_events SET event_kind = 'support_data_viewed' WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&pool)
+    .await
+    .expect_err("UPDATE must always be rejected");
     assert!(
         err.to_string().contains("immutable"),
         "unexpected error: {err}"

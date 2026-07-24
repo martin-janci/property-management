@@ -800,12 +800,10 @@ impl PlatformAdminRepository {
         &self,
         retention_days: i32,
     ) -> Result<i64, SqlxError> {
-        let deleted = sqlx::query_scalar::<_, i64>(
-            "SELECT cleanup_old_support_tooling_events($1)",
-        )
-        .bind(retention_days)
-        .fetch_one(&self.pool)
-        .await?;
+        let deleted = sqlx::query_scalar::<_, i64>("SELECT cleanup_old_support_tooling_events($1)")
+            .bind(retention_days)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(deleted)
     }
