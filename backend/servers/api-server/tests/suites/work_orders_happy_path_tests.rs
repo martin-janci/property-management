@@ -124,7 +124,6 @@ async fn create_schedule(app: &TestApp, token: &str, org_id: Uuid, building_id: 
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_work_order_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-create").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -132,7 +131,6 @@ async fn create_work_order_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_work_orders_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-list").await;
     create_work_order(&app, &token, org_id, building_id).await;
@@ -151,7 +149,6 @@ async fn list_work_orders_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_work_orders_with_details_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-details").await;
     create_work_order(&app, &token, org_id, building_id).await;
@@ -166,7 +163,6 @@ async fn list_work_orders_with_details_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_statistics_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-stats").await;
     create_work_order(&app, &token, org_id, building_id).await;
@@ -181,7 +177,6 @@ async fn get_statistics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_overdue_succeeds(pool: PgPool) {
     let (app, token, org_id, _building_id) = setup(pool, "wo-overdue").await;
 
@@ -195,7 +190,6 @@ async fn list_overdue_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_work_order_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-get").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -214,7 +208,6 @@ async fn get_work_order_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_work_order_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-update").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -231,7 +224,6 @@ async fn update_work_order_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn assign_work_order_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-assign").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -254,7 +246,6 @@ async fn assign_work_order_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn start_work_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-start").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -269,7 +260,6 @@ async fn start_work_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn complete_work_order_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-complete").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -278,14 +268,13 @@ async fn complete_work_order_succeeds(pool: PgPool) {
         .post(&format!("{BASE}/{id}/complete"))
         .bearer(&token)
         .tenant(org_id)
-        .json(json!({ "actual_cost": 120.50, "resolution_notes": "Fixed" }))
+        .json(json!({ "actual_cost": "120.50", "resolution_notes": "Fixed" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "complete: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn put_on_hold_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-hold").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -301,7 +290,6 @@ async fn put_on_hold_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn add_and_list_comments_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-comments").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -339,7 +327,6 @@ async fn add_and_list_comments_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_work_order_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "wo-delete").await;
     let id = create_work_order(&app, &token, org_id, building_id).await;
@@ -370,7 +357,6 @@ async fn delete_work_order_succeeds(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_schedule_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-create").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -378,7 +364,6 @@ async fn create_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_schedules_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-list").await;
     create_schedule(&app, &token, org_id, building_id).await;
@@ -399,7 +384,6 @@ async fn list_schedules_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_upcoming_schedules_succeeds(pool: PgPool) {
     let (app, token, org_id, _building_id) = setup(pool, "sch-upcoming").await;
 
@@ -415,7 +399,6 @@ async fn get_upcoming_schedules_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn process_due_schedules_succeeds(pool: PgPool) {
     let (app, token, org_id, _building_id) = setup(pool, "sch-process").await;
 
@@ -431,7 +414,6 @@ async fn process_due_schedules_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_schedule_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-get").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -450,7 +432,6 @@ async fn get_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_schedule_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-update").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -472,7 +453,6 @@ async fn update_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn activate_deactivate_schedule_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-toggle").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -497,7 +477,6 @@ async fn activate_deactivate_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn skip_schedule_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-skip").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -513,7 +492,6 @@ async fn skip_schedule_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_executions_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-exec").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -528,7 +506,6 @@ async fn list_executions_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_schedule_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "sch-delete").await;
     let id = create_schedule(&app, &token, org_id, building_id).await;
@@ -552,7 +529,6 @@ async fn delete_schedule_succeeds(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn equipment_service_history_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "svc-eq").await;
     let equipment_id = seed_equipment(&app.pool, org_id, building_id).await;
@@ -572,7 +548,6 @@ async fn equipment_service_history_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn building_service_history_succeeds(pool: PgPool) {
     let (app, token, org_id, building_id) = setup(pool, "svc-bld").await;
 
@@ -591,7 +566,6 @@ async fn building_service_history_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_cost_summary_succeeds(pool: PgPool) {
     let (app, token, org_id, _building_id) = setup(pool, "cost").await;
 

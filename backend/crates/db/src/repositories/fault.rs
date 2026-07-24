@@ -177,8 +177,21 @@ impl FaultRepository {
                 title, description, location_description,
                 category, priority, idempotency_key
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::fault_category, $9::fault_priority, $10)
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -358,10 +371,23 @@ impl FaultRepository {
                 title = COALESCE($2, title),
                 description = COALESCE($3, description),
                 location_description = COALESCE($4, location_description),
-                category = COALESCE($5, category),
+                category = COALESCE($5::fault_category, category),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -391,12 +417,25 @@ impl FaultRepository {
             r#"
             UPDATE faults
             SET
-                status = $2,
+                status = $2::fault_status,
                 scheduled_date = COALESCE($3, scheduled_date),
                 estimated_completion = COALESCE($4, estimated_completion),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -436,7 +475,12 @@ impl FaultRepository {
     {
         let faults = sqlx::query_as::<_, FaultSummary>(
             r#"
-            SELECT id, building_id, unit_id, title, category, priority, status, created_at
+            SELECT
+                id, building_id, unit_id, title,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                created_at
             FROM faults
             WHERE building_id = $1
             ORDER BY created_at DESC
@@ -710,7 +754,12 @@ impl FaultRepository {
 
         let sql = format!(
             r#"
-            SELECT id, building_id, unit_id, title, category, priority, status, created_at
+            SELECT
+                id, building_id, unit_id, title,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                created_at
             FROM faults
             WHERE {}
             ORDER BY {}
@@ -767,7 +816,12 @@ impl FaultRepository {
     ) -> Result<Vec<FaultSummary>, SqlxError> {
         let faults = sqlx::query_as::<_, FaultSummary>(
             r#"
-            SELECT id, building_id, unit_id, title, category, priority, status, created_at
+            SELECT
+                id, building_id, unit_id, title,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                created_at
             FROM faults
             WHERE reporter_id = $1
             ORDER BY created_at DESC
@@ -807,8 +861,8 @@ impl FaultRepository {
             r#"
             UPDATE faults
             SET
-                priority = $2,
-                category = COALESCE($3, category),
+                priority = $2::fault_priority,
+                category = COALESCE($3::fault_category, category),
                 assigned_to = $4,
                 assigned_at = CASE WHEN $4 IS NOT NULL THEN NOW() ELSE assigned_at END,
                 triaged_by = $5,
@@ -816,7 +870,20 @@ impl FaultRepository {
                 status = 'triaged',
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -858,7 +925,20 @@ impl FaultRepository {
                 assigned_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -922,7 +1002,20 @@ impl FaultRepository {
                 resolution_notes = $3,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -965,7 +1058,20 @@ impl FaultRepository {
                 feedback = $4,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -1007,7 +1113,20 @@ impl FaultRepository {
                 confirmed_by = NULL,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -1046,13 +1165,26 @@ impl FaultRepository {
             r#"
             UPDATE faults
             SET
-                ai_category = $2,
-                ai_priority = $3,
+                ai_category = $2::fault_category,
+                ai_priority = $3::fault_priority,
                 ai_confidence = $4,
                 ai_processed_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -1159,8 +1291,11 @@ impl FaultRepository {
             INSERT INTO fault_timeline (
                 fault_id, user_id, action, note, old_value, new_value, metadata, is_internal
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING *
+            VALUES ($1, $2, $3::timeline_action, $4, $5, $6, $7, $8)
+            RETURNING
+                id, fault_id, user_id,
+                action::text AS action,
+                note, old_value, new_value, metadata, is_internal, created_at
             "#,
         )
         .bind(data.fault_id)
@@ -1186,8 +1321,10 @@ impl FaultRepository {
         let rows = if include_internal {
             sqlx::query_as::<_, TimelineEntryRow>(
                 r#"
-                SELECT ft.id, ft.fault_id, ft.user_id, ft.action, ft.note,
-                       ft.old_value, ft.new_value, ft.metadata, ft.is_internal, ft.created_at,
+                SELECT ft.id, ft.fault_id, ft.user_id,
+                       ft.action::text AS action,
+                       ft.note, ft.old_value, ft.new_value, ft.metadata,
+                       ft.is_internal, ft.created_at,
                        u.name as user_name, u.email as user_email
                 FROM fault_timeline ft
                 JOIN users u ON ft.user_id = u.id
@@ -1201,8 +1338,10 @@ impl FaultRepository {
         } else {
             sqlx::query_as::<_, TimelineEntryRow>(
                 r#"
-                SELECT ft.id, ft.fault_id, ft.user_id, ft.action, ft.note,
-                       ft.old_value, ft.new_value, ft.metadata, ft.is_internal, ft.created_at,
+                SELECT ft.id, ft.fault_id, ft.user_id,
+                       ft.action::text AS action,
+                       ft.note, ft.old_value, ft.new_value, ft.metadata,
+                       ft.is_internal, ft.created_at,
                        u.name as user_name, u.email as user_email
                 FROM fault_timeline ft
                 JOIN users u ON ft.user_id = u.id
