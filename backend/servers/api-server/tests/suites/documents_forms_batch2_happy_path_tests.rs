@@ -169,7 +169,7 @@ async fn validate_import_succeeds(pool: PgPool) {
                 "/api/v1/lease-abstraction/extractions/{ext_id}/validate"
             ))
             .bearer(&token)
-            .json(&json!({ "unit_id": unit_id }))
+            .json(json!({ "unit_id": unit_id }))
             .build(),
         )
         .await;
@@ -207,7 +207,7 @@ async fn import_to_lease_succeeds(pool: PgPool) {
                 "/api/v1/lease-abstraction/extractions/{ext_id}/import"
             ))
             .bearer(&token)
-            .json(&json!({ "unit_id": unit_id }))
+            .json(json!({ "unit_id": unit_id }))
             .build(),
         )
         .await;
