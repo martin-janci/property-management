@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-07-23 — daily PM rotation (Scrum Master + pm-data; routine Phase 1.6 lightweight run). Coverage `scan_kind=upkeep`; pm_cursor idx 6 → 7 (pm-data done today; pm-integration next), coverage_cursor idx 0 → 1 (epic-10a re-checked, all 3 stories still done — advances to epic-10b)._
+_Generated: 2026-07-24 — daily PM rotation (Scrum Master + pm-integration; routine Phase 1.6 lightweight run). Coverage `scan_kind=upkeep`; pm_cursor idx 7 → 0 (pm-integration wraps rotation; pm-tech-lead next), coverage_cursor idx 1 → 2 (epic-10b re-checked, all 7 stories still done — advances to epic-6)._
 
 ## Executive summary
 

@@ -4901,6 +4901,88 @@
         "assignment_status": "merged",
         "pr_number": 2498
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-init-stale-role",
+      "title": "AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 — mount-time initializeAuth duplicates refresh logic inline (getAuthApi().refreshToken() direct) instead of calling refreshTokenInternal, skipping the deriveActiveRole re-derivation from #574 and the single-flight guard. Multi-tenant users boot with stale persisted role until a later refresh corrects it."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-token-rotation-stale",
+      "title": "WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-259 fires on [isAuthenticated, accessToken] but WebSocketService.connect() (lib/websocket.ts) short-circuits when the socket is OPEN. The JWT is transmitted only via ?token=<jwt> at handshake — post-rotation, the live WS keeps running on the ORIGINAL token past TTL. Two failure modes: mid-connection expiry causes avoidable drop/reconnect churn; if server doesn't re-validate mid-connection, a rotated/revoked session keeps receiving realtime pushes. Fix: on token change with socket open, force disconnect()+connect()."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-ungated-console",
+      "title": "10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:344,352,472,484,489,504,519,559,570,621 — 10 console.warn/error calls run unconditionally in prod; only :203 is import.meta.env.DEV-gated. Inconsistent with the codebase's own DEV-gating convention (lib/api.ts:199 retry-warn, hooks/usePerformanceMetrics.ts:174, main.tsx MSW). Low severity — console noise + minor internal-diagnostic leakage."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2497-reality",
+      "title": "screen-map drift: PR #2497 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2497"
+      ],
+      "evidence": [
+        "PR #2497 (layout webhook timestamp/replay-protection) touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts without touching any docs/screens/reality/*.md.",
+        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen. Review candidate only — Phase 3 promotion gate explicitly de-prioritises this heuristic false-positive class."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-23T14:30:00Z",
+  "generated": "2026-07-24T03:10:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -33,7 +33,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-organizations",
@@ -61,7 +61,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-feature-flags",
@@ -89,7 +89,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-platform-health",
@@ -117,7 +117,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-system-announcements",
@@ -146,7 +146,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-support-data",
@@ -175,7 +175,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/onboarding-tour",
@@ -211,7 +211,7 @@
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-24",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-contextual-help",
