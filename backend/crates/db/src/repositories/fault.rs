@@ -137,7 +137,20 @@ impl FaultRepository {
                 category, priority, idempotency_key
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
+            RETURNING
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
