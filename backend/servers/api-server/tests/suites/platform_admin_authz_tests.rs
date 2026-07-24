@@ -200,8 +200,8 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Tests
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn platform_admin_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -216,8 +216,8 @@ async fn platform_admin_endpoints_require_auth(pool: PgPool) {
     }
 }
 
+#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn platform_admin_endpoints_reject_unprivileged_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _user) = create_authenticated_user(&app, &TestUser::new()).await;
