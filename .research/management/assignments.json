@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-24T22:20:40Z",
+  "generated": "2026-07-24T22:32:02Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -48,18 +48,18 @@
     {
       "task_id": "code-review-ppt-web-core-authctx-init-stale-role",
       "branch": "auto-impl/code-review-ppt-web-core-authctx-init-st-2676c0eb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-24T22:10:54Z",
-      "last_updated": "2026-07-24T22:10:54Z",
-      "status_changed_at": "2026-07-24T22:10:54Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-24T22:32:02Z",
+      "status_changed_at": "2026-07-24T22:32:02Z",
+      "pr_number": 2553,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2553",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2553 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=cold-boot init routes via refreshTokenInternal; regression test fails-on-base then passes; 1601 ppt-web tests green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
