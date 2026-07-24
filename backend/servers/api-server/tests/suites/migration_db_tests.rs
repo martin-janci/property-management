@@ -50,9 +50,52 @@ fn request(
     builder.body(req_body).unwrap()
 }
 
+/// Mint an access token carrying the `platform_admin` role and a `tenant_id`
+/// claim pinned to `org_id`.
+///
+/// `require_platform_admin` checks `AuthUser::is_platform_admin()` (the `role`
+/// JWT claim). The `/auth/login` flow mints tokens with `role = None`
+/// ("roles set when org context is selected"), so a login token always 403s on
+/// this gate. We mint directly, mirroring `migration_pagination_tests.rs`.
+fn mint_platform_admin_token(user_id: Uuid, org_id: Uuid, email: &str) -> String {
+    use jsonwebtoken::{encode, EncodingKey, Header};
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct Claims {
+        sub: String,
+        exp: i64,
+        iat: i64,
+        token_type: String,
+        tenant_id: String,
+        role: String,
+        email: String,
+        name: String,
+    }
+
+    let now = chrono::Utc::now().timestamp();
+    encode(
+        &Header::default(),
+        &Claims {
+            sub: user_id.to_string(),
+            exp: now + 900,
+            iat: now,
+            token_type: "access".into(),
+            tenant_id: org_id.to_string(),
+            role: "platform_admin".into(),
+            email: email.into(),
+            name: "Migration DB Admin".into(),
+        },
+        &EncodingKey::from_secret(
+            b"test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes",
+        ),
+    )
+    .expect("mint platform-admin token")
+}
+
 /// Provision a platform admin member for RLS.
 async fn create_platform_admin(app: &TestApp, user: &TestUser, slug: &str) -> (String, Uuid) {
-    let (access_token, _refresh) = create_authenticated_user(app, user).await;
+    let (_login_token, _refresh) = create_authenticated_user(app, user).await;
 
     let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
@@ -63,7 +106,8 @@ async fn create_platform_admin(app: &TestApp, user: &TestUser, slug: &str) -> (S
     let org_id = seed_org(&app.pool, slug).await;
     seed_membership(&app.pool, org_id, user_id, "platform_admin").await;
 
-    (access_token, org_id)
+    let token = mint_platform_admin_token(user_id, org_id, &user.email);
+    (token, org_id)
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
