@@ -169,7 +169,7 @@ async fn seed_perf_transaction(pool: &PgPool, portfolio_id: Uuid, property_id: U
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO property_transactions
                (portfolio_id, property_id, transaction_type, amount, currency, transaction_date, is_recurring)
-           VALUES ($1, $2, 'income', 1200, 'EUR', '2024-03-01', false)
+           VALUES ($1, $2, 'rental_income', 1200, 'EUR', '2024-03-01', false)
            RETURNING id"#,
     )
     .bind(portfolio_id)
@@ -538,7 +538,7 @@ async fn pp_create_transaction_succeeds(pool: PgPool) {
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
                     "property_id": prop_id,
-                    "transaction_type": "income",
+                    "transaction_type": "rental_income",
                     "amount": "1200.00",
                     "transaction_date": "2024-03-01"
                 }))
