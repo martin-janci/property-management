@@ -202,7 +202,12 @@ async fn test_delete_chat_session_roundtrip(pool: PgPool) {
     let del_resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
-    assert_eq!(del_resp.status, StatusCode::OK, "delete chat session");
+    // The delete handler returns 204 No Content on success.
+    assert_eq!(
+        del_resp.status,
+        StatusCode::NO_CONTENT,
+        "delete chat session"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -300,7 +305,7 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
         .execute(authed(
             &token,
             Method::POST,
-            "/api/v1/ai/workflows/",
+            "/api/v1/ai/workflows",
             Some(create_body),
             org_id,
         ))
@@ -411,5 +416,6 @@ async fn test_delete_equipment_returns_200(pool: PgPool) {
     let resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "delete equipment");
+    // The delete handler returns 204 No Content on success.
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete equipment");
 }
