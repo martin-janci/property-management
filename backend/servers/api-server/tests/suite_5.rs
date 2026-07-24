@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/documents_forms_batch2_happy_path_tests.rs"]
+mod documents_forms_batch2_happy_path_tests;
 #[path = "suites/integrations_cross_org_idor_tests.rs"]
 mod integrations_cross_org_idor_tests;
 #[path = "suites/integrations_marketplace_reviews_tests.rs"]
