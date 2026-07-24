@@ -25,46 +25,70 @@ describe('extractKnownContexts', () => {
     expect(ctx.knownUseCases.has('UC-13')).toBe(true);
   });
 
-  it('extracts Epic IDs from docs/epics/*.md filenames (leading zeros stripped)', async () => {
-    await mkdir(path.join(tmpRoot, 'docs/epics'), { recursive: true });
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-001-foo.md'), '');
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-002-bar.md'), '');
+  it('extracts Epic IDs from _bmad-output/epics.md headings', async () => {
+    await mkdir(path.join(tmpRoot, '_bmad-output'), { recursive: true });
+    await writeFile(
+      path.join(tmpRoot, '_bmad-output/epics.md'),
+      [
+        '## Epic List',
+        '#### Epic 1: User Authentication & Sessions',
+        '#### Epic 12: Meter Readings & Utilities',
+        '## Epic 1: User Authentication & Sessions',
+        '',
+      ].join('\n')
+    );
     const ctx = await extractKnownContexts(tmpRoot);
-    // Numeric prefixes normalize to the unpadded frontmatter form (`Epic-1`),
+    // Heading epic ids map to the unpadded frontmatter form (`Epic-1`),
     // matching how `epics:` refs are written in screen-map frontmatter.
     expect(ctx.knownEpics.has('Epic-1')).toBe(true);
-    expect(ctx.knownEpics.has('Epic-2')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-12')).toBe(true);
+    // The `## Epic List` section header must NOT be read as an epic.
+    expect(ctx.knownEpics.has('Epic-List')).toBe(false);
   });
 
   it('preserves and upper-cases letter-suffixed epics (10A/10B/7B convention)', async () => {
-    await mkdir(path.join(tmpRoot, 'docs/epics'), { recursive: true });
-    // Letter-suffixed epic — must round-trip to the canonical `Epic-10A`.
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-010A-oauth.md'), '');
-    // Plain numeric epic — must still collapse to `Epic-10`, not `Epic-010`.
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-010-platform.md'), '');
-    // Lowercase suffix normalizes so `Epic-7b` and `Epic-7B` don't diverge.
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-007b-docs.md'), '');
+    await mkdir(path.join(tmpRoot, '_bmad-output'), { recursive: true });
+    await writeFile(
+      path.join(tmpRoot, '_bmad-output/epics.md'),
+      [
+        // Letter-suffixed epic — must round-trip to the canonical `Epic-10A`.
+        '#### Epic 10A: OAuth Provider Foundation',
+        // Plain numeric epic — must still collapse to `Epic-10`, not `Epic-010`.
+        '## Epic 10B: Platform Administration',
+        // Lowercase suffix normalizes so `Epic-7b` and `Epic-7B` don't diverge.
+        '### Epic 7b: Advanced Document Features',
+        // A trailing `-SSO`/`-Complete` heading qualifier is dropped.
+        '#### Epic 2B-Complete: WebSocket & Mobile Notification Infrastructure',
+        '',
+      ].join('\n')
+    );
     const ctx = await extractKnownContexts(tmpRoot);
     expect(ctx.knownEpics.has('Epic-10A')).toBe(true);
-    expect(ctx.knownEpics.has('Epic-10')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-10B')).toBe(true);
     expect(ctx.knownEpics.has('Epic-7B')).toBe(true);
-    // The letter-suffixed epic must NOT collapse to the bare numeric prefix.
-    expect(ctx.knownEpics.has('Epic-010A')).toBe(false);
+    // The `-Complete` qualifier collapses onto the canonical `Epic-2B`.
+    expect(ctx.knownEpics.has('Epic-2B')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-2B-COMPLETE')).toBe(false);
   });
 
-  it('rejects malformed epic filenames instead of mis-binning them', async () => {
-    await mkdir(path.join(tmpRoot, 'docs/epics'), { recursive: true });
-    // Missing hyphen typo — must NOT become a garbage `Epic-10BETA`.
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-10beta.md'), '');
-    // Multi-char malformed suffix — must NOT silently truncate onto `Epic-7A`.
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-7A2-x.md'), '');
-    // A well-formed epic alongside them still extracts normally.
-    await writeFile(path.join(tmpRoot, 'docs/epics/EPIC-011-billing.md'), '');
+  it('only reads heading lines, not prose mentions or malformed ids', async () => {
+    await mkdir(path.join(tmpRoot, '_bmad-output'), { recursive: true });
+    await writeFile(
+      path.join(tmpRoot, '_bmad-output/epics.md'),
+      [
+        '#### Epic 11: Financial Management & Payments',
+        // Prose cross-reference — must NOT be mined as a catalog entry.
+        'This story depends on Epic 99 which lives elsewhere.',
+        // Missing-hyphen typo in a heading — must NOT become `Epic-10BETA`.
+        '#### Epic 10beta: typo',
+        '',
+      ].join('\n')
+    );
     const ctx = await extractKnownContexts(tmpRoot);
     expect(ctx.knownEpics.has('Epic-11')).toBe(true);
+    expect(ctx.knownEpics.has('Epic-99')).toBe(false);
     expect(ctx.knownEpics.has('Epic-10BETA')).toBe(false);
-    expect(ctx.knownEpics.has('Epic-7A')).toBe(false);
-    // The two malformed names contribute nothing; only the valid epic remains.
+    // Only the single well-formed heading contributes.
     expect(ctx.knownEpics.size).toBe(1);
   });
 

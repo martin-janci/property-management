@@ -45,8 +45,8 @@ describe('buildValidationContext', () => {
     await withTmpRepo(async (root) => {
       await mkdir(path.join(root, 'docs'), { recursive: true });
       await writeFile(path.join(root, 'docs/use-cases.md'), '## UC-12 Foo\n');
-      await mkdir(path.join(root, 'docs/epics'), { recursive: true });
-      await writeFile(path.join(root, 'docs/epics/EPIC-001-foo.md'), '');
+      await mkdir(path.join(root, '_bmad-output'), { recursive: true });
+      await writeFile(path.join(root, '_bmad-output/epics.md'), '#### Epic 1: Foo\n');
       await mkdir(path.join(root, 'frontend/packages/ui-kit/src'), { recursive: true });
       await writeFile(
         path.join(root, 'frontend/packages/ui-kit/src/index.ts'),
