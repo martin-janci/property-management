@@ -13,6 +13,10 @@ import {
 } from '../../lib/analytics';
 import {
   ONBOARDING_EVENTS,
+  SIGNUP_EVENTS,
+  trackEmailVerified,
+  trackRegistrationSubmitted,
+  trackSignupLoggedIn,
   trackStepCompleted,
   trackTourCompleted,
   trackTourReset,
@@ -90,5 +94,43 @@ describe('onboarding funnel analytics', () => {
     expect(() => trackTourCompleted(TOUR)).not.toThrow();
     // The well-behaved sink still received the event.
     expect(captured).toHaveLength(1);
+  });
+});
+
+describe('signup funnel analytics (issue #2530)', () => {
+  it('fires registration_submitted with the signup method', () => {
+    trackRegistrationSubmitted();
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(SIGNUP_EVENTS.registrationSubmitted);
+    expect(captured[0].properties).toMatchObject({ method: 'email_password' });
+    expect(captured[0].timestamp).toEqual(expect.any(String));
+  });
+
+  it('fires email_verified', () => {
+    trackEmailVerified();
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(SIGNUP_EVENTS.emailVerified);
+  });
+
+  it('fires logged_in with an overridable method', () => {
+    trackSignupLoggedIn('sso');
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe(SIGNUP_EVENTS.loggedIn);
+    expect(captured[0].properties).toMatchObject({ method: 'sso' });
+  });
+
+  it('emits the full funnel in order when driven end-to-end', () => {
+    trackRegistrationSubmitted();
+    trackEmailVerified();
+    trackSignupLoggedIn();
+    trackTourStarted(TOUR);
+    trackTourCompleted(TOUR);
+    expect(captured.map((e) => e.event)).toEqual([
+      SIGNUP_EVENTS.registrationSubmitted,
+      SIGNUP_EVENTS.emailVerified,
+      SIGNUP_EVENTS.loggedIn,
+      ONBOARDING_EVENTS.tourStarted,
+      ONBOARDING_EVENTS.tourCompleted,
+    ]);
   });
 });

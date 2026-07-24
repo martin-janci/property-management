@@ -63,6 +63,11 @@ import { useEffect } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import {
+  __clearAnalyticsSinks,
+  type AnalyticsEvent,
+  registerAnalyticsSink,
+} from '../lib/analytics';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // ---------------------------------------------------------------------------
@@ -247,6 +252,59 @@ describe('AuthContext.login — email/password flow (Story 79.2)', () => {
     expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     expect(ctxRef.current?.isAuthenticated).toBe(false);
     expect(screen.getByText('Login page')).toBeInTheDocument();
+  });
+});
+
+describe('AuthContext.login — signup-funnel analytics (issue #2530)', () => {
+  let captured: AnalyticsEvent[];
+
+  beforeEach(() => {
+    loginSpy.mockReset();
+    refreshTokenSpy.mockReset();
+    localStorage.clear();
+    sessionStorage.clear();
+    captured = [];
+    registerAnalyticsSink((e) => captured.push(e));
+  });
+
+  afterEach(() => {
+    __clearAnalyticsSinks();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  it('emits signup.logged_in after a successful email/password login', async () => {
+    loginSpy.mockResolvedValue(makeLoginResponse());
+    const { ctxRef } = renderAuthApp('/dashboard');
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    await act(async () => {
+      await ctxRef.current?.login({ email: 'manager@example.com', password: 'pw' });
+    });
+
+    const signupEvents = captured.filter((e) => e.event === 'signup.logged_in');
+    expect(signupEvents).toHaveLength(1);
+    expect(signupEvents[0].properties).toMatchObject({ method: 'email_password' });
+  });
+
+  it('does not emit signup.logged_in when login rejects', async () => {
+    loginSpy.mockRejectedValue(new Error('invalid_credentials'));
+    const { ctxRef } = renderAuthApp('/dashboard');
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    await act(async () => {
+      await expect(ctxRef.current?.login({ email: 'x@y.z', password: 'wrong' })).rejects.toThrow(
+        'invalid_credentials'
+      );
+    });
+
+    expect(captured.some((e) => e.event === 'signup.logged_in')).toBe(false);
   });
 });
 
