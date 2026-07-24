@@ -26,7 +26,9 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user_with_org, TestApp, TestUser};
+use crate::common::{
+    create_authenticated_user_with_org, create_manager_with_org, TestApp, TestUser,
+};
 
 // ---------------------------------------------------------------------------
 // Seed helpers
@@ -114,7 +116,6 @@ async fn get_classification_succeeds(pool: PgPool) {
     res.assert_status(StatusCode::OK);
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn submit_classification_feedback_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -233,12 +234,11 @@ async fn create_template(app: &TestApp, token: &str, org_id: Uuid) -> Uuid {
         .expect("template id")
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-create").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "tpl-create").await;
 
     let req = app
         .session(token, org_id)
@@ -264,12 +264,11 @@ async fn create_template_succeeds(pool: PgPool) {
     res.assert_json_field("id");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_templates_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-list").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "tpl-list").await;
     create_template(&app, &token, org_id).await;
 
     let req = app.session(token, org_id).get("/api/v1/templates").build();
@@ -283,12 +282,11 @@ async fn list_templates_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-get").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "tpl-get").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
     let req = app
@@ -305,12 +303,11 @@ async fn get_template_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-update").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "tpl-update").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
     let req = app
@@ -330,12 +327,11 @@ async fn update_template_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn delete_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-delete").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "tpl-delete").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
     let req = app
@@ -355,12 +351,11 @@ async fn delete_template_succeeds(pool: PgPool) {
     res2.assert_status(StatusCode::NOT_FOUND);
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn generate_document_from_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "tpl-generate").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "tpl-generate").await;
     let tpl_id = create_template(&app, &token, org_id).await;
 
     let req = app
