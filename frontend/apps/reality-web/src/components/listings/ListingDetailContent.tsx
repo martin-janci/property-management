@@ -7,12 +7,15 @@
 'use client';
 
 import type { ListingDetail } from '@ppt/reality-api-client';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 import { Footer, Header } from '@/components/ui';
 import type { ResolvedScreen } from '@/lib/layout';
 import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
 import { ContactForm } from './ContactForm';
 import { LayoutSections, Placeholder } from './LayoutSections';
+import { trackListingViewed } from './listingAnalytics';
 import { listingRegistry } from './sections/registry';
 import { useListingPreviewLayout } from './useListingPreviewLayout';
 
@@ -80,6 +83,28 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
 
   const { previewLayout, inPreview, sendSectionClick } =
     useListingPreviewLayout('reality/listing-detail');
+
+  const searchParams = useSearchParams();
+
+  // Emit one `listing.viewed` analytics event per real listing view. Keyed on
+  // the listing id (via primitive deps) so re-renders within the same listing
+  // don't double-count, and skipped while a layout preview is being pushed
+  // (preview traffic must not pollute conversion metrics). view-source /
+  // filter-state / session context are derived inside `trackListingViewed`.
+  const listingId = listing?.id;
+  const listingSlug = listing?.slug;
+  const listingTransactionType = listing?.transactionType;
+  useEffect(() => {
+    if (!listingId || !listingSlug || inPreview) return;
+    trackListingViewed({
+      listingId,
+      slug: listingSlug,
+      transactionType: listingTransactionType,
+      searchParams,
+      referrer: typeof document !== 'undefined' ? document.referrer : '',
+      origin: typeof window !== 'undefined' ? window.location.origin : '',
+    });
+  }, [listingId, listingSlug, listingTransactionType, inPreview, searchParams]);
 
   if (!listing) {
     return <ListingNotFound />;
