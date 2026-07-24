@@ -367,11 +367,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (storedUser) {
         const storedTenants = tokenStorage.getTenants();
         const derivedRole = deriveActiveRole(response.accessToken, storedTenants ?? undefined);
-        if (derivedRole != null) {
-          const updated = { ...storedUser, role: derivedRole };
-          tokenStorage.setUser(updated);
-          setUser(updated);
-        }
+        // Always re-hydrate `user` from the stored record (applying the freshly
+        // derived role when one is available). Restoring the user here — rather
+        // than only when a role could be derived — is what lets the cold-boot
+        // init path funnel through this routine safely: it both refreshes the
+        // role (#574) and re-authenticates the session in one place.
+        const updated = derivedRole != null ? { ...storedUser, role: derivedRole } : storedUser;
+        tokenStorage.setUser(updated);
+        setUser(updated);
       }
 
       return response.accessToken;
@@ -399,18 +402,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // In production, we might verify with the server
           setUser(storedUser);
         } else if (refreshTokenValue) {
-          // Try to refresh the token using the API client
+          // Cold-boot refresh: route through refreshTokenInternal (the SAME
+          // routine used by the runtime silent-refresh path) rather than
+          // calling authApi.refreshToken inline. The inline version persisted
+          // the rotated tokens but re-hydrated `user` straight from storage,
+          // so a server-side role change was NOT picked up on a cold boot —
+          // the user kept a stale role until the next runtime refresh or a
+          // full re-login. refreshTokenInternal re-derives the role from the
+          // fresh access token + persisted tenant memberships (#574) and owns
+          // its own failure cleanup (clear + de-auth + rethrow).
           try {
-            const authApi = getAuthApi();
-            const response = await authApi.refreshToken({ refreshToken: refreshTokenValue });
-            tokenStorage.setAccessToken(response.accessToken);
-            tokenStorage.setRefreshToken(response.refreshToken);
-            // Note: refresh doesn't return user, so we keep stored user if available
-            if (storedUser) {
-              setUser(storedUser);
-            }
+            await refreshTokenInternal();
           } catch {
-            tokenStorage.clear();
+            // refreshTokenInternal already cleared storage and reset the user.
           }
         }
       } catch {
@@ -422,7 +426,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
-  }, []);
+    // refreshTokenInternal is a stable useCallback([]) reference, so this
+    // effect still runs exactly once on mount (no re-run loop).
+  }, [refreshTokenInternal]);
 
   /**
    * Refresh the access token with request queuing.
