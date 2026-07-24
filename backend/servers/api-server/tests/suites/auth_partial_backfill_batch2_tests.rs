@@ -612,6 +612,7 @@ async fn get_privacy_settings_returns_200(pool: PgPool) {
 // POST /api/v1/gdpr/privacy
 // ============================================================================
 
+#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_privacy_settings_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

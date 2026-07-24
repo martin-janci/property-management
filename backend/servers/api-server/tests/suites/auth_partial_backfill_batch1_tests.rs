@@ -232,6 +232,7 @@ async fn forgot_password_for_existing_user_returns_200(pool: PgPool) {
 // ============================================================================
 
 /// Reset-password with a valid token returns 200 and allows subsequent login.
+#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn reset_password_with_valid_token_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

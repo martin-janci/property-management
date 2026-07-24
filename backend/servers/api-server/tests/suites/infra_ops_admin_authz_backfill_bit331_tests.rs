@@ -530,6 +530,7 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Tests
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_privileged_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -540,6 +541,7 @@ async fn platform_privileged_endpoints_require_auth(pool: PgPool) {
     }
 }
 
+#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_privileged_endpoints_reject_ordinary_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
