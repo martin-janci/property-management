@@ -41,7 +41,7 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 1,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
@@ -63,7 +63,7 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 1,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
