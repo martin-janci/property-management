@@ -65,7 +65,6 @@ async fn seed_vote(pool: &PgPool, org_id: Uuid, building_id: Uuid, created_by: U
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_get_report_pdf_returns_application_pdf_and_archives_document(pool: PgPool) {
     db::run_migrations(&pool)
         .await
@@ -122,7 +121,6 @@ async fn test_get_report_pdf_returns_application_pdf_and_archives_document(pool:
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_get_report_json_with_format_pdf_returns_application_pdf(pool: PgPool) {
     db::run_migrations(&pool)
         .await

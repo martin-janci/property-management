@@ -96,7 +96,7 @@ impl NewsArticleRepository {
             r#"
             SELECT
                 a.id, a.organization_id, a.author_id, a.title, a.content,
-                a.excerpt, a.cover_image_url, a.building_ids, a.status,
+                a.excerpt, a.cover_image_url, a.building_ids, a.status::TEXT AS status,
                 a.published_at, a.archived_at, a.pinned, a.pinned_at, a.pinned_by,
                 a.comments_enabled, a.reactions_enabled, a.view_count,
                 a.reaction_count, a.comment_count, a.share_count,
@@ -434,7 +434,7 @@ impl NewsArticleRepository {
     ) -> Result<bool, SqlxError> {
         // First, check if user already has a reaction on this article
         let existing: Option<(String,)> = sqlx::query_as(
-            "SELECT reaction FROM article_reactions WHERE article_id = $1 AND user_id = $2",
+            "SELECT reaction::text FROM article_reactions WHERE article_id = $1 AND user_id = $2",
         )
         .bind(article_id)
         .bind(user_id)
@@ -454,7 +454,7 @@ impl NewsArticleRepository {
             Some(_) => {
                 // Different reaction - update to new reaction
                 sqlx::query(
-                    "UPDATE article_reactions SET reaction = $3 WHERE article_id = $1 AND user_id = $2",
+                    "UPDATE article_reactions SET reaction = $3::reaction_type WHERE article_id = $1 AND user_id = $2",
                 )
                 .bind(article_id)
                 .bind(user_id)
@@ -466,7 +466,7 @@ impl NewsArticleRepository {
             None => {
                 // No existing reaction - add new one
                 sqlx::query(
-                    "INSERT INTO article_reactions (article_id, user_id, reaction) VALUES ($1, $2, $3)",
+                    "INSERT INTO article_reactions (article_id, user_id, reaction) VALUES ($1, $2, $3::reaction_type)",
                 )
                 .bind(article_id)
                 .bind(user_id)
@@ -482,7 +482,7 @@ impl NewsArticleRepository {
     pub async fn get_reaction_counts(&self, article_id: Uuid) -> Result<ReactionCounts, SqlxError> {
         let counts = sqlx::query_as::<_, (String, i64)>(
             r#"
-            SELECT reaction, COUNT(*) as count
+            SELECT reaction::text, COUNT(*) as count
             FROM article_reactions
             WHERE article_id = $1
             GROUP BY reaction
@@ -520,7 +520,7 @@ impl NewsArticleRepository {
         user_id: Uuid,
     ) -> Result<Option<String>, SqlxError> {
         let result: Option<(String,)> = sqlx::query_as(
-            "SELECT reaction FROM article_reactions WHERE article_id = $1 AND user_id = $2",
+            "SELECT reaction::text FROM article_reactions WHERE article_id = $1 AND user_id = $2",
         )
         .bind(article_id)
         .bind(user_id)

@@ -28,7 +28,7 @@
 
 #![allow(dead_code)]
 
-use crate::common::{create_authenticated_user_with_org, TestApp, TestUser};
+use crate::common::{create_manager_with_org, TestApp, TestUser};
 use axum::http::StatusCode;
 use serde_json::{json, Value};
 use sqlx::PgPool;
@@ -110,11 +110,10 @@ async fn seed_comment(pool: &PgPool, article_id: Uuid, user_id: Uuid, content: &
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-create").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-create").await;
 
     let resp = app
         .execute(
@@ -158,11 +157,10 @@ async fn create_article_requires_auth(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_articles_returns_articles(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-list").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-list").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     seed_article(&app.pool, org, author_id, "Article A").await;
@@ -188,11 +186,10 @@ async fn list_articles_returns_articles(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-get").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-get").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Detail article").await;
@@ -215,11 +212,10 @@ async fn get_article_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_article_not_found(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-get-nf").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-get-nf").await;
 
     let resp = app
         .execute(
@@ -238,11 +234,10 @@ async fn get_article_not_found(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-update").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-update").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Original title").await;
@@ -267,11 +262,10 @@ async fn update_article_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn publish_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-publish").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-publish").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Draft to publish").await;
@@ -296,11 +290,10 @@ async fn publish_article_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn archive_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-archive").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-archive").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_published_article(&app.pool, org, author_id).await;
@@ -325,11 +318,10 @@ async fn archive_article_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn restore_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-restore").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-restore").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     // Seed archived article directly
@@ -365,11 +357,10 @@ async fn restore_article_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pin_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-pin").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-pin").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Pin me").await;
@@ -394,11 +385,10 @@ async fn pin_article_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_media_returns_media(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-list-media").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-list-media").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Media article").await;
@@ -427,7 +417,7 @@ async fn list_media_returns_media(pool: PgPool) {
 async fn add_media_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-add-media").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-add-media").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Media article 2").await;
@@ -459,11 +449,10 @@ async fn add_media_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_media_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-del-media").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-del-media").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Media article 3").await;
@@ -486,11 +475,10 @@ async fn delete_media_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn toggle_reaction_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-react").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-react").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "React article").await;
@@ -516,11 +504,10 @@ async fn toggle_reaction_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_reaction_counts_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-react-counts").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-react-counts").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Counts article").await;
@@ -542,11 +529,10 @@ async fn get_reaction_counts_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_comments_returns_comments(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-list-cmts").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-list-cmts").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Comment article").await;
@@ -572,11 +558,10 @@ async fn list_comments_returns_comments(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_comment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-create").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-cmt-create").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Commentable article").await;
@@ -602,11 +587,10 @@ async fn create_comment_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_comment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-update").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-cmt-update").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Article for edit").await;
@@ -632,11 +616,10 @@ async fn update_comment_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_comment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-delete").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-cmt-delete").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Article for delete cmt").await;
@@ -659,11 +642,10 @@ async fn delete_comment_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn moderate_comment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-moderate").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-cmt-moderate").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Moderated article").await;
@@ -689,11 +671,10 @@ async fn moderate_comment_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_comment_replies_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-cmt-replies").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-cmt-replies").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "Reply article").await;
@@ -733,11 +714,10 @@ async fn list_comment_replies_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn record_view_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-view").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-view").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "View article").await;
@@ -760,11 +740,10 @@ async fn record_view_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_statistics_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-stats").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-stats").await;
 
     let resp = app
         .execute(
@@ -785,11 +764,10 @@ async fn get_statistics_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_article_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org) = create_authenticated_user_with_org(&app, &user, "news-delete").await;
+    let (token, org) = create_manager_with_org(&app, &user, "news-delete").await;
     let author_id = user_id_for(&app.pool, &user.email).await;
 
     let article_id = seed_article(&app.pool, org, author_id, "To be deleted").await;

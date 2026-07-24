@@ -38,7 +38,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user_with_org, TestApp, TestUser};
+use crate::common::{create_manager_with_org, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Seed helpers
@@ -50,6 +50,42 @@ async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
         .fetch_one(pool)
         .await
         .expect("fetch user id")
+}
+
+/// Seed an active, manager-tier `user_memberships` row.
+///
+/// The critical-notification handlers authorize through `RequestPrincipal`,
+/// whose `is_active` / `is_manager_in_org` checks read `user_memberships`
+/// (not the `organization_members` table that `seed_membership` writes). The
+/// role is stored PascalCase (`OrgAdmin`) so it matches `is_manager_in_org`'s
+/// manager-tier set (`SuperAdmin`, `PlatformAdmin`, `OrgAdmin`, …).
+async fn seed_user_membership(pool: &PgPool, user_id: Uuid, org_id: Uuid) {
+    sqlx::query(
+        r#"INSERT INTO user_memberships (user_id, organization_id, role)
+           VALUES ($1, $2, 'OrgAdmin')
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(user_id)
+    .bind(org_id)
+    .execute(pool)
+    .await
+    .expect("seed user_membership");
+}
+
+/// Inject the `ResolvedTenant` request extension that `host_tenant_middleware`
+/// would normally add. The bare `TestApp` router (`create_router`) does not
+/// install that middleware, so `RequestPrincipal` handlers otherwise fail with
+/// 403 "tenant not resolved". Mirrors `community_happy_path_tests`.
+fn inject_tenant(
+    mut req: axum::http::Request<axum::body::Body>,
+    org_id: Uuid,
+) -> axum::http::Request<axum::body::Body> {
+    use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
+    req.extensions_mut().insert(ResolvedTenant {
+        organization_id: org_id,
+        source: TenantSource::Subdomain,
+    });
+    req
 }
 
 /// Seed a draft announcement and return its id.
@@ -120,11 +156,10 @@ async fn seed_critical_notification(pool: &PgPool, org_id: Uuid, created_by: Uui
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-create").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-create").await;
 
     let resp = app
         .execute(
@@ -149,11 +184,10 @@ async fn create_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_announcements_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-list").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-list").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let _ = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -181,7 +215,7 @@ async fn list_announcements_succeeds(pool: PgPool) {
 async fn list_published_announcements_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-pub-list").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-pub-list").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let _ = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -206,11 +240,10 @@ async fn list_published_announcements_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-get").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-get").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -224,7 +257,10 @@ async fn get_announcement_succeeds(pool: PgPool) {
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     let body = resp.json_value();
-    assert_eq!(body["id"].as_str().unwrap_or(""), ann_id.to_string());
+    assert_eq!(
+        body["announcement"]["id"].as_str().unwrap_or(""),
+        ann_id.to_string()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -232,11 +268,10 @@ async fn get_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-update").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-update").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -257,11 +292,10 @@ async fn update_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn publish_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-publish").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-publish").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -282,11 +316,10 @@ async fn publish_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn schedule_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-sched").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-sched").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -309,11 +342,10 @@ async fn schedule_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn archive_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-archive").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-archive").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -334,11 +366,10 @@ async fn archive_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pin_announcement_post_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-pin-post").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-pin-post").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -359,11 +390,10 @@ async fn pin_announcement_post_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pin_announcement_patch_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-pin-patch").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-pin-patch").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -387,7 +417,7 @@ async fn pin_announcement_patch_succeeds(pool: PgPool) {
 async fn list_attachments_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-att-list").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-att-list").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
     let _ = seed_attachment(&pool, ann_id).await;
@@ -408,11 +438,10 @@ async fn list_attachments_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn add_attachment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-att-add").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-att-add").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -438,11 +467,10 @@ async fn add_attachment_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_attachment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-att-del").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-att-del").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
     let att_id = seed_attachment(&pool, ann_id).await;
@@ -473,7 +501,7 @@ async fn delete_attachment_succeeds(pool: PgPool) {
 async fn mark_read_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-read").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-read").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -497,7 +525,7 @@ async fn mark_read_succeeds(pool: PgPool) {
 async fn acknowledge_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-ack").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-ack").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -518,11 +546,10 @@ async fn acknowledge_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_acknowledgments_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-ackl").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-ackl").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_published_announcement(&pool, org_id, user_id).await;
 
@@ -542,11 +569,10 @@ async fn get_acknowledgments_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_statistics_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-stats").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-stats").await;
 
     let resp = app
         .execute(
@@ -567,7 +593,7 @@ async fn get_statistics_succeeds(pool: PgPool) {
 async fn get_unread_count_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-unread").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-unread").await;
 
     let resp = app
         .execute(
@@ -585,11 +611,10 @@ async fn get_unread_count_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_announcement_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ann-delete").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "ann-delete").await;
     let user_id = user_id_for(&pool, &user.email).await;
     let ann_id = seed_draft_announcement(&pool, org_id, user_id).await;
 
@@ -614,14 +639,15 @@ async fn delete_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_critical_notification_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "crit-create").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "crit-create").await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .post(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications"
@@ -631,7 +657,8 @@ async fn create_critical_notification_succeeds(pool: PgPool) {
                     "message": "Water will be shut off tomorrow at 8am."
                 }))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
@@ -644,22 +671,23 @@ async fn create_critical_notification_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_critical_notifications_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "crit-list").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "crit-list").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let _ = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .get(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications"
                 ))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
@@ -670,22 +698,23 @@ async fn list_critical_notifications_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_unacknowledged_critical_notifications_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "crit-unack").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "crit-unack").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let _ = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .get(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications/unacknowledged"
                 ))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
@@ -696,23 +725,24 @@ async fn get_unacknowledged_critical_notifications_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn acknowledge_critical_notification_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "crit-ack").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "crit-ack").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let notif_id = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .post(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications/{notif_id}/acknowledge"
                 ))
                 .json(json!({}))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
@@ -723,22 +753,23 @@ async fn acknowledge_critical_notification_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_critical_notification_stats_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
-    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "crit-stats").await;
+    let (token, org_id) = create_manager_with_org(&app, &user, "crit-stats").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let notif_id = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .get(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications/{notif_id}/stats"
                 ))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());

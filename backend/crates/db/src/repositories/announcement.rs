@@ -166,8 +166,13 @@ impl AnnouncementRepository {
                 target_type, target_ids, status, scheduled_at,
                 comments_enabled, acknowledgment_required
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5::announcement_target_type, $6, $7::announcement_status, $8, $9, $10)
+            RETURNING
+                id, organization_id, author_id, title, content,
+                target_type::text as target_type, target_ids,
+                status::text as status, scheduled_at, published_at,
+                pinned, pinned_at, pinned_by, comments_enabled,
+                acknowledgment_required, created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -527,7 +532,7 @@ impl AnnouncementRepository {
             SET
                 title = COALESCE($2, title),
                 content = COALESCE($3, content),
-                target_type = COALESCE($4, target_type),
+                target_type = COALESCE($4::announcement_target_type, target_type),
                 target_ids = COALESCE($5, target_ids),
                 scheduled_at = COALESCE($6, scheduled_at),
                 comments_enabled = COALESCE($7, comments_enabled),
@@ -798,17 +803,21 @@ impl AnnouncementRepository {
         let mut tx = conn.begin().await?;
 
         // Lock all currently-pinned rows for this org; any concurrent pin
-        // attempt blocks here until we commit.
-        let (count,): (i64,) = sqlx::query_as(
+        // attempt blocks here until we commit. Postgres rejects `FOR UPDATE`
+        // combined with an aggregate (`SELECT COUNT(*) … FOR UPDATE` →
+        // SQLSTATE 0A000), so we lock the individual rows and count them in
+        // Rust instead — same locking semantics, valid SQL.
+        let locked_ids: Vec<(Uuid,)> = sqlx::query_as(
             r#"
-            SELECT COUNT(*) FROM announcements
+            SELECT id FROM announcements
             WHERE organization_id = $1 AND pinned = true
             FOR UPDATE
             "#,
         )
         .bind(org_id)
-        .fetch_one(&mut *tx)
+        .fetch_all(&mut *tx)
         .await?;
+        let count = locked_ids.len() as i64;
 
         if count >= max_pinned {
             tx.rollback().await?;
