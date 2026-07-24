@@ -117,10 +117,19 @@ async fn test_list_automation_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-1").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let uri = format!("/api/v1/automation/organizations/{org_id}/rules");
     let resp = app
-        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
         .await;
     assert_eq!(resp.status, StatusCode::OK, "list automation rules");
 }
@@ -130,6 +139,12 @@ async fn test_create_automation_rule_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-2").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let uri = format!("/api/v1/automation/organizations/{org_id}/rules");
     let body = json!({
@@ -139,7 +154,10 @@ async fn test_create_automation_rule_returns_201(pool: PgPool) {
         "actions": [{"type": "notify", "config": {}}]
     });
     let resp = app
-        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .execute(inject_tenant(
+            authed(&token, Method::POST, &uri, Some(body), org_id),
+            org_id,
+        ))
         .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create automation rule");
 }
@@ -166,13 +184,22 @@ async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-tmpl-1").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/automation/templates",
-            None,
+        .execute(inject_tenant(
+            authed(
+                &token,
+                Method::GET,
+                "/api/v1/automation/templates",
+                None,
+                org_id,
+            ),
             org_id,
         ))
         .await;
@@ -460,7 +487,7 @@ async fn test_list_equipment_returns_200(pool: PgPool) {
         .execute(authed(
             &token,
             Method::GET,
-            "/api/v1/ai/equipment/",
+            "/api/v1/ai/equipment",
             None,
             org_id,
         ))
@@ -576,7 +603,7 @@ async fn test_create_workflow_returns_201(pool: PgPool) {
         .execute(authed(
             &token,
             Method::POST,
-            "/api/v1/ai/workflows/",
+            "/api/v1/ai/workflows",
             Some(body),
             org_id,
         ))
@@ -594,7 +621,7 @@ async fn test_list_workflows_returns_200(pool: PgPool) {
         .execute(authed(
             &token,
             Method::GET,
-            "/api/v1/ai/workflows/",
+            "/api/v1/ai/workflows",
             None,
             org_id,
         ))
@@ -644,13 +671,22 @@ async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-5").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/ai/workflows/templates",
-            None,
+        .execute(inject_tenant(
+            authed(
+                &token,
+                Method::GET,
+                "/api/v1/ai/workflows/templates",
+                None,
+                org_id,
+            ),
             org_id,
         ))
         .await;
@@ -662,13 +698,22 @@ async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-6").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/ai/workflows/templates/builtin",
-            None,
+        .execute(inject_tenant(
+            authed(
+                &token,
+                Method::GET,
+                "/api/v1/ai/workflows/templates/builtin",
+                None,
+                org_id,
+            ),
             org_id,
         ))
         .await;

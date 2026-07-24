@@ -755,7 +755,7 @@ async fn ip_create_report_succeeds(pool: PgPool) {
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
                     "investor_id": inv_id,
-                    "report_type": "quarterly",
+                    "report_type": "performance",
                     "title": "Q1 2024 Report",
                     "report_data": {}
                 }))
@@ -802,7 +802,7 @@ async fn ip_get_report_succeeds(pool: PgPool) {
     let report_id = sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO investor_reports
                (organization_id, investor_id, portfolio_id, report_type, title, report_data)
-           VALUES ($1, $2, $3, 'quarterly', 'Q1 2024', '{}')
+           VALUES ($1, $2, $3, 'performance', 'Q1 2024', '{}')
            RETURNING id"#,
     )
     .bind(f.org_id)
@@ -948,10 +948,11 @@ async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
+                    "investor_id": inv_id,
+                    "metric_date": "2024-12-31",
                     "total_invested": "100000.00",
-                    "current_value": "108000.00",
-                    "total_distributions": "5000.00",
-                    "total_return_pct": "8.0"
+                    "total_value": "108000.00",
+                    "total_distributions": "5000.00"
                 }))
                 .build(),
         )

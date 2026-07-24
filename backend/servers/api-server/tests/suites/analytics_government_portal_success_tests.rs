@@ -112,7 +112,7 @@ async fn seed_template(pool: &PgPool) -> Uuid {
         r#"INSERT INTO regulatory_report_templates
                (template_code, template_name, portal_type, country_code,
                 schema_version, field_mappings, validation_rules, effective_from)
-           VALUES ('SK_VAT_MONTHLY', 'SK VAT Monthly Report',
+           VALUES ('TEST_SK_VAT_MONTHLY', 'SK VAT Monthly Report',
                    'tax_authority'::government_portal_type, 'SK',
                    '1.0', '{}', '[]', '2024-01-01')
            RETURNING id"#,

@@ -286,7 +286,7 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
         .execute(
             session
                 .post(&format!("/api/v1/ai/chat/messages/{msg_id}/feedback"))
-                .json(json!({"rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
+                .json(json!({"message_id": msg_id, "rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
                 .build(),
         )
         .await;
@@ -372,6 +372,11 @@ async fn update_sentiment_thresholds_succeeds(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ust").await;
     let session = app.session(token, org_id);
+    // The PUT handler UPDATEs an existing row (no upsert); GET auto-creates a
+    // default thresholds row, so prime it first to avoid a RowNotFound -> 500.
+    let _ = app
+        .execute(session.get("/api/v1/ai/sentiment/thresholds").build())
+        .await;
     let resp = app
         .execute(
             session
@@ -409,7 +414,7 @@ async fn create_equipment_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post("/api/v1/ai/equipment/")
+                .post("/api/v1/ai/equipment")
                 .json(json!({
                     "building_id": building_id,
                     "name": "Elevator",
@@ -429,7 +434,7 @@ async fn list_equipment_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "leq").await;
     let session = app.session(token, org_id);
     let resp = app
-        .execute(session.get("/api/v1/ai/equipment/").build())
+        .execute(session.get("/api/v1/ai/equipment").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value()["equipment"].is_array());
@@ -548,7 +553,7 @@ async fn update_equipment_maintenance_succeeds(pool: PgPool) {
         .execute(
             session
                 .put(&format!("/api/v1/ai/equipment/maintenance/{maint_id}"))
-                .json(json!({"maintenance_type": "repair"}))
+                .json(json!({"maintenance_type": "corrective"}))
                 .build(),
         )
         .await;
