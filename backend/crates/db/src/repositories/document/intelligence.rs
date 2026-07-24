@@ -335,7 +335,7 @@ impl DocumentRepository {
             r#"
             UPDATE documents SET
                 ai_classification_accepted = $2,
-                category = COALESCE($3, category),
+                category = COALESCE($3::document_category, category),
                 updated_at = NOW()
             WHERE id = $1
             "#,

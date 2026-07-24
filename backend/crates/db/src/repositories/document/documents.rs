@@ -483,14 +483,20 @@ impl DocumentRepository {
             SET
                 title = COALESCE($2, title),
                 description = COALESCE($3, description),
-                category = COALESCE($4, category),
+                category = COALESCE($4::document_category, category),
                 folder_id = COALESCE($5, folder_id),
-                access_scope = COALESCE($6, access_scope),
+                access_scope = COALESCE($6::document_access_scope, access_scope),
                 access_target_ids = COALESCE($7, access_target_ids),
                 access_roles = COALESCE($8, access_roles),
                 updated_at = NOW()
             WHERE id = $1 AND deleted_at IS NULL
-            RETURNING *
+            RETURNING
+                id, organization_id, folder_id, title, description,
+                category::text AS category, file_key, file_name, mime_type,
+                size_bytes, access_scope::text AS access_scope,
+                access_target_ids, access_roles, created_by, created_at,
+                updated_at, deleted_at, version_number, parent_document_id,
+                is_current_version, template_id, generation_metadata
             "#,
         )
         .bind(id)

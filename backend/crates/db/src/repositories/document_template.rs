@@ -137,7 +137,7 @@ impl DocumentTemplateRepository {
             SELECT
                 id, name, description,
                 template_type::text AS template_type, usage_count,
-                jsonb_array_length(placeholders) as placeholder_count,
+                jsonb_array_length(placeholders)::bigint as placeholder_count,
                 created_at
             FROM document_templates
             WHERE organization_id = $1
