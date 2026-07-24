@@ -7579,6 +7579,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2528",
+      "branch": "auto-impl/gh-issue-2528-6293adf9",
+      "status": "failed",
+      "claimed_at": "2026-07-24T14:09:06Z",
+      "last_updated": "2026-07-24T22:10:54Z",
+      "status_changed_at": "2026-07-24T22:10:54Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -8707,5 +8729,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T20:12:21Z"
+  "archived_at": "2026-07-24T22:10:54Z"
 }
