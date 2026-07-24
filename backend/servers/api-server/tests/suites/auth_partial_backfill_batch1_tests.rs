@@ -266,13 +266,15 @@ async fn reset_password_with_valid_token_returns_200(pool: PgPool) {
 
     const NEW_PASSWORD: &str = "NewSecurePass456!";
 
-    // The request field is `new_password` (the old test sent `password`, which
-    // failed to deserialize — BIT-588).
+    // The wire field is `newPassword` — the request struct renames all fields
+    // to camelCase (`#[serde(rename_all = "camelCase")]`), so the Rust field
+    // `new_password` serializes as `newPassword`. Sending `new_password` (or
+    // the old `password`) fails to deserialize with 422 — BIT-588.
     let resp = app
         .post("/api/v1/auth/reset-password")
         .json(json!({
             "token": RAW_TOKEN,
-            "new_password": NEW_PASSWORD
+            "newPassword": NEW_PASSWORD
         }))
         .build();
     let resp = app.execute(resp).await;
