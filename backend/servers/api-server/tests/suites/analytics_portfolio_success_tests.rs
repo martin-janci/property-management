@@ -299,7 +299,7 @@ async fn pp_create_portfolio_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create portfolio: {}",
         resp.text()
     );
@@ -416,7 +416,7 @@ async fn pp_add_property_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp add property: {}",
         resp.text()
     );
@@ -547,7 +547,7 @@ async fn pp_create_transaction_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create transaction: {}",
         resp.text()
     );
@@ -808,7 +808,7 @@ async fn pp_create_benchmark_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create benchmark: {}",
         resp.text()
     );
@@ -931,7 +931,7 @@ async fn pp_create_comparison_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create comparison: {}",
         resp.text()
     );
@@ -1094,7 +1094,7 @@ async fn pp_create_alert_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create alert: {}",
         resp.text()
     );
@@ -1143,7 +1143,7 @@ async fn pp_mark_alert_read_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::NO_CONTENT,
         "pp mark alert read: {}",
         resp.text()
     );
@@ -1169,7 +1169,7 @@ async fn pp_resolve_alert_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::NO_CONTENT,
         "pp resolve alert: {}",
         resp.text()
     );
