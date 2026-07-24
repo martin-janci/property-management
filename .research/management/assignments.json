@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-24T06:12:51Z",
+  "generated": "2026-07-24T06:20:50Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -72,15 +72,15 @@
       "branch": "auto-impl/data-signup-funnel-tracking-2026-07-23-52df10f5",
       "status": "review",
       "claimed_at": "2026-07-24T04:04:21Z",
-      "last_updated": "2026-07-24T06:12:51Z",
+      "last_updated": "2026-07-24T06:20:50Z",
       "status_changed_at": "2026-07-24T06:12:51Z",
       "pr_number": 2515,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2515",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=none status=partial specialist=react-web scope_drift=true code_reuse_warn=none note=verify red ONLY from pre-existing dev-broken tests (CapabilitiesAdminPage 18v17 + 4 e2e specs, identical on base); funnel events wired, own tests+typecheck+biome green; branch pushed 2c4689b — left in-progress for next Phase 2 to PR",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=2c4689b772b7afad1cd103ba79814ce3f60ed1b5 note=funnel-instrumentation-clean;scope-drift-analytics-bus-justified;reuse-warn-none-correct;posted-as-comment-own-pr",
+      "last_reviewed_oid": "2c4689b772b7afad1cd103ba79814ce3f60ed1b5",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
