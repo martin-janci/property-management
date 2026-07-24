@@ -297,8 +297,8 @@ async fn esg_list_metrics_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list metrics: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_create_metric_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-metric").await;
     let resp = f
@@ -418,8 +418,8 @@ async fn esg_list_carbon_footprints_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list carbon: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_create_carbon_footprint_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-carbon").await;
     let resp = f
@@ -469,8 +469,8 @@ async fn esg_get_carbon_summary_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_get_carbon_footprint_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "esg-get-carbon").await;
     let carbon_id = seed_carbon(&pool, f.org_id).await;
@@ -535,8 +535,8 @@ async fn esg_list_benchmarks_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_create_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-bm").await;
     let resp = f
@@ -608,8 +608,8 @@ async fn esg_list_targets_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list targets: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_create_target_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-tgt").await;
     let resp = f
@@ -721,8 +721,8 @@ async fn esg_list_reports_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list reports: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn esg_create_report_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-rep").await;
     let resp = f

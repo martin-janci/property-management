@@ -354,8 +354,8 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK);
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn oa_get_portfolio_summary_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "portfolio").await;

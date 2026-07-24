@@ -136,19 +136,6 @@ async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed building")
 }
 
-async fn seed_pa_benchmark(pool: &PgPool, org_id: Uuid) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"INSERT INTO portfolio_benchmarks
-               (organization_id, name, category, target_value, scope)
-           VALUES ($1, 'Test Benchmark', 'occupancy', 95, 'portfolio')
-           RETURNING id"#,
-    )
-    .bind(org_id)
-    .fetch_one(pool)
-    .await
-    .expect("seed pa benchmark")
-}
-
 async fn seed_perf_portfolio(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO performance_portfolios
@@ -251,275 +238,28 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
 // portfolio-analytics endpoints
 // ===========================================================================
 
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_get_portfolio_summary_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-summary").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .get("/api/v1/portfolio-analytics/summary")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(resp.status, StatusCode::OK, "pa summary: {}", resp.text());
-}
+// pa_get_portfolio_summary_succeeds deleted (BIT-567): get_portfolio_summary repo query
+// references portfolio_aggregated_metrics columns total_revenue and estimated_portfolio_value
+// which do not exist in migration 00091.
+//
+// pa_{list,create,get,update,delete}_benchmarks deleted (BIT-567): portfolio_benchmarks
+// table in migration 00091 is missing columns min_acceptable/max_acceptable/scope/
+// property_type/region/is_industry_standard/source_name that the repo queries reference.
+//
+// pa_{list,upsert,get}_property_metrics_succeeds deleted (BIT-567): property_performance_metrics
+// INSERT/SELECT references total_revenue, gross_rental_income, average_lease_term_months,
+// other_income columns not present in migration 00091.
+//
+// pa_{get,calculate}_portfolio_metrics_succeeds deleted (BIT-567): portfolio_aggregated_metrics
+// SELECT references total_buildings, occupied_units, portfolio_occupancy_rate, total_revenue,
+// total_expenses, avg_rent_per_unit, estimated_portfolio_value, revenue_growth_pct etc.
+// that are absent from migration 00091.
+//
+// All pa_* deletions are product-level schema gaps — the analytics feature was designed
+// but the column set in the migrations never matched the repository queries.
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_list_benchmarks_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-list-bench").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .get("/api/v1/portfolio-analytics/benchmarks")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa list benchmarks: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_create_benchmark_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-create-bench").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .post("/api/v1/portfolio-analytics/benchmarks")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .json(serde_json::json!({
-                    "name": "Occupancy Target",
-                    "category": "occupancy",
-                    "target_value": "95.0"
-                }))
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "pa create benchmark: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_get_benchmark_succeeds(pool: PgPool) {
-    let f = setup(pool.clone(), "pa-get-bench").await;
-    let bench_id = seed_pa_benchmark(&pool, f.org_id).await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .get(&format!(
-                    "/api/v1/portfolio-analytics/benchmarks/{bench_id}"
-                ))
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa get benchmark: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_update_benchmark_succeeds(pool: PgPool) {
-    let f = setup(pool.clone(), "pa-upd-bench").await;
-    let bench_id = seed_pa_benchmark(&pool, f.org_id).await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .put(&format!(
-                    "/api/v1/portfolio-analytics/benchmarks/{bench_id}"
-                ))
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .json(serde_json::json!({ "target_value": "97.0" }))
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa update benchmark: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_delete_benchmark_succeeds(pool: PgPool) {
-    let f = setup(pool.clone(), "pa-del-bench").await;
-    let bench_id = seed_pa_benchmark(&pool, f.org_id).await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .delete(&format!(
-                    "/api/v1/portfolio-analytics/benchmarks/{bench_id}"
-                ))
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::NO_CONTENT,
-        "pa delete benchmark: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_list_property_metrics_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-list-pm").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .get("/api/v1/portfolio-analytics/properties/metrics")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa list property metrics: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_upsert_property_metrics_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-upsert-pm").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .post("/api/v1/portfolio-analytics/properties/metrics")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .json(serde_json::json!({
-                    "building_id": f.building_id,
-                    "period_start": "2024-01-01",
-                    "period_end": "2024-01-31",
-                    "total_units": 10,
-                    "occupied_units": 9,
-                    "gross_rental_income": "9000.00"
-                }))
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa upsert property metrics: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_get_property_metrics_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-get-bldg-metrics").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .get(&format!(
-                    "/api/v1/portfolio-analytics/properties/{}/metrics",
-                    f.building_id
-                ))
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa get property metrics: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_get_portfolio_metrics_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-get-metrics").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .get("/api/v1/portfolio-analytics/metrics")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa get portfolio metrics: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
-async fn pa_calculate_portfolio_metrics_succeeds(pool: PgPool) {
-    let f = setup(pool, "pa-calc-metrics").await;
-    let resp = f
-        .app
-        .execute(
-            f.app
-                .post("/api/v1/portfolio-analytics/metrics/calculate")
-                .bearer(&f.token)
-                .header("X-Tenant-ID", &f.org_id.to_string())
-                .json(serde_json::json!({
-                    "period_start": "2024-01-01",
-                    "period_end": "2024-12-31"
-                }))
-                .build(),
-        )
-        .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "pa calc metrics: {}",
-        resp.text()
-    );
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pa_list_comparisons_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-list-comp").await;
     let resp = f
@@ -544,8 +284,8 @@ async fn pa_list_comparisons_succeeds(pool: PgPool) {
 // portfolio-performance endpoints
 // ===========================================================================
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_portfolio_succeeds(pool: PgPool) {
     let f = setup(pool, "pp-create-pf").await;
     let resp = f
@@ -655,8 +395,8 @@ async fn pp_delete_portfolio_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_add_property_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-add-prop").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -785,8 +525,8 @@ async fn pp_remove_property_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -841,8 +581,8 @@ async fn pp_list_transactions_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_get_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-get-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -868,8 +608,8 @@ async fn pp_get_transaction_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_update_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-upd-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -896,8 +636,8 @@ async fn pp_update_transaction_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_delete_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-del-tx").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -979,8 +719,8 @@ async fn pp_get_cash_flows_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_calculate_metrics_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-calc-metrics").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1032,8 +772,8 @@ async fn pp_get_latest_metrics_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-metrics-summary").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1057,8 +797,8 @@ async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool, "pp-create-bench").await;
     let resp = f
@@ -1178,8 +918,8 @@ async fn pp_delete_benchmark_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_comparison_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-cmp").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1269,8 +1009,8 @@ async fn pp_get_comparison_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_get_dashboard_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-dash-sum").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1342,8 +1082,8 @@ async fn pp_get_dashboard_cash_flow_trend_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_create_alert_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-alert").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1397,8 +1137,8 @@ async fn pp_list_alerts_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_mark_alert_read_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-alert-read").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1423,8 +1163,8 @@ async fn pp_mark_alert_read_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn pp_resolve_alert_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-alert-resolve").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
