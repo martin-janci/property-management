@@ -803,17 +803,21 @@ impl AnnouncementRepository {
         let mut tx = conn.begin().await?;
 
         // Lock all currently-pinned rows for this org; any concurrent pin
-        // attempt blocks here until we commit.
-        let (count,): (i64,) = sqlx::query_as(
+        // attempt blocks here until we commit. Postgres rejects `FOR UPDATE`
+        // combined with an aggregate (`SELECT COUNT(*) … FOR UPDATE` →
+        // SQLSTATE 0A000), so we lock the individual rows and count them in
+        // Rust instead — same locking semantics, valid SQL.
+        let locked_ids: Vec<(Uuid,)> = sqlx::query_as(
             r#"
-            SELECT COUNT(*) FROM announcements
+            SELECT id FROM announcements
             WHERE organization_id = $1 AND pinned = true
             FOR UPDATE
             "#,
         )
         .bind(org_id)
-        .fetch_one(&mut *tx)
+        .fetch_all(&mut *tx)
         .await?;
+        let count = locked_ids.len() as i64;
 
         if count >= max_pinned {
             tx.rollback().await?;

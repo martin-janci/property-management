@@ -52,6 +52,42 @@ async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
         .expect("fetch user id")
 }
 
+/// Seed an active, manager-tier `user_memberships` row.
+///
+/// The critical-notification handlers authorize through `RequestPrincipal`,
+/// whose `is_active` / `is_manager_in_org` checks read `user_memberships`
+/// (not the `organization_members` table that `seed_membership` writes). The
+/// role is stored PascalCase (`OrgAdmin`) so it matches `is_manager_in_org`'s
+/// manager-tier set (`SuperAdmin`, `PlatformAdmin`, `OrgAdmin`, …).
+async fn seed_user_membership(pool: &PgPool, user_id: Uuid, org_id: Uuid) {
+    sqlx::query(
+        r#"INSERT INTO user_memberships (user_id, organization_id, role)
+           VALUES ($1, $2, 'OrgAdmin')
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(user_id)
+    .bind(org_id)
+    .execute(pool)
+    .await
+    .expect("seed user_membership");
+}
+
+/// Inject the `ResolvedTenant` request extension that `host_tenant_middleware`
+/// would normally add. The bare `TestApp` router (`create_router`) does not
+/// install that middleware, so `RequestPrincipal` handlers otherwise fail with
+/// 403 "tenant not resolved". Mirrors `community_happy_path_tests`.
+fn inject_tenant(
+    mut req: axum::http::Request<axum::body::Body>,
+    org_id: Uuid,
+) -> axum::http::Request<axum::body::Body> {
+    use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
+    req.extensions_mut().insert(ResolvedTenant {
+        organization_id: org_id,
+        source: TenantSource::Subdomain,
+    });
+    req
+}
+
 /// Seed a draft announcement and return its id.
 async fn seed_draft_announcement(pool: &PgPool, org_id: Uuid, author_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
@@ -330,7 +366,6 @@ async fn archive_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-573 follow-up: pin path returns 500 (non-RowNotFound DB error in pin_with_cap_rls's nested tx on the RLS connection); needs a live DB to diagnose — verify host (mercury) down"]
 async fn pin_announcement_post_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -604,14 +639,15 @@ async fn delete_announcement_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-573 follow-up: critical-notification endpoints use RequestPrincipal, which needs a ResolvedTenant extension (host_tenant_middleware) absent from the test router; requires harness ResolvedTenant injection + user_memberships seed — verify host down"]
 async fn create_critical_notification_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     let (token, org_id) = create_manager_with_org(&app, &user, "crit-create").await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .post(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications"
@@ -621,7 +657,8 @@ async fn create_critical_notification_succeeds(pool: PgPool) {
                     "message": "Water will be shut off tomorrow at 8am."
                 }))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::CREATED, "body: {}", resp.text());
@@ -634,22 +671,23 @@ async fn create_critical_notification_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-573 follow-up: critical-notification endpoints use RequestPrincipal, which needs a ResolvedTenant extension (host_tenant_middleware) absent from the test router; requires harness ResolvedTenant injection + user_memberships seed — verify host down"]
 async fn list_critical_notifications_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     let (token, org_id) = create_manager_with_org(&app, &user, "crit-list").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let _ = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .get(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications"
                 ))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
@@ -665,16 +703,18 @@ async fn get_unacknowledged_critical_notifications_succeeds(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_manager_with_org(&app, &user, "crit-unack").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let _ = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .get(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications/unacknowledged"
                 ))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
@@ -685,23 +725,24 @@ async fn get_unacknowledged_critical_notifications_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-573 follow-up: critical-notification endpoints use RequestPrincipal, which needs a ResolvedTenant extension (host_tenant_middleware) absent from the test router; requires harness ResolvedTenant injection + user_memberships seed — verify host down"]
 async fn acknowledge_critical_notification_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     let (token, org_id) = create_manager_with_org(&app, &user, "crit-ack").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let notif_id = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .post(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications/{notif_id}/acknowledge"
                 ))
                 .json(json!({}))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
@@ -712,22 +753,23 @@ async fn acknowledge_critical_notification_succeeds(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-573 follow-up: critical-notification endpoints use RequestPrincipal, which needs a ResolvedTenant extension (host_tenant_middleware) absent from the test router; requires harness ResolvedTenant injection + user_memberships seed — verify host down"]
 async fn get_critical_notification_stats_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     let (token, org_id) = create_manager_with_org(&app, &user, "crit-stats").await;
     let user_id = user_id_for(&pool, &user.email).await;
+    seed_user_membership(&pool, user_id, org_id).await;
     let notif_id = seed_critical_notification(&pool, org_id, user_id).await;
 
     let resp = app
-        .execute(
+        .execute(inject_tenant(
             app.session(token, org_id)
                 .get(&format!(
                     "/api/v1/organizations/{org_id}/critical-notifications/{notif_id}/stats"
                 ))
                 .build(),
-        )
+            org_id,
+        ))
         .await;
 
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
