@@ -483,9 +483,9 @@ impl DocumentRepository {
             SET
                 title = COALESCE($2, title),
                 description = COALESCE($3, description),
-                category = COALESCE($4, category),
+                category = COALESCE($4::document_category, category),
                 folder_id = COALESCE($5, folder_id),
-                access_scope = COALESCE($6, access_scope),
+                access_scope = COALESCE($6::document_access_scope, access_scope),
                 access_target_ids = COALESCE($7, access_target_ids),
                 access_roles = COALESCE($8, access_roles),
                 updated_at = NOW()
