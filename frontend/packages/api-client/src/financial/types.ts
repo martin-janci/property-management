@@ -343,7 +343,7 @@ export interface PaymentResponse {
 
 export interface ARReportEntry {
   unit_id: string;
-  unit_number: string;
+  designation: string;
   current: number;
   days_30: number;
   days_60: number;
