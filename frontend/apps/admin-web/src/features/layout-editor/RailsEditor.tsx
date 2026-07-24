@@ -12,10 +12,19 @@
  * same derive-unless-editing discipline as SectionTreeEditor's props textarea).
  */
 
-import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Rails } from './api';
+import {
+  GLOBAL_ROW_STYLE,
+  INPUT_STYLE,
+  LABEL_STYLE,
+  SECTION_STYLE,
+  TABLE_STYLE,
+  TD_STYLE,
+  TH_STYLE,
+  TYPE_LABEL_STYLE,
+} from './RailsEditor.styles';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,73 +35,6 @@ interface Props {
   sectionTypes: string[];
   onChange: (next: Rails) => void;
 }
-
-// ---------------------------------------------------------------------------
-// Styles (inline, --ppt-* token vars — admin-web house style)
-// ---------------------------------------------------------------------------
-
-const SECTION_STYLE: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 16,
-};
-
-const GLOBAL_ROW_STYLE: React.CSSProperties = {
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 'var(--ppt-radius-lg, 10px)',
-  padding: '12px 16px',
-  background: 'var(--ppt-bg-surface, #fff)',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-};
-
-const TABLE_STYLE: React.CSSProperties = {
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 'var(--ppt-radius-lg, 10px)',
-  background: 'var(--ppt-bg-surface, #fff)',
-  overflow: 'hidden',
-};
-
-const TH_STYLE: React.CSSProperties = {
-  padding: '8px 12px',
-  textAlign: 'left',
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'var(--ppt-fg-secondary, #6b7280)',
-  borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
-  background: 'var(--ppt-bg-muted, #f9fafb)',
-};
-
-const TD_STYLE: React.CSSProperties = {
-  padding: '8px 12px',
-  fontSize: 13,
-  borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
-  verticalAlign: 'middle',
-};
-
-const TYPE_LABEL_STYLE: React.CSSProperties = {
-  fontFamily: 'monospace',
-  fontSize: 13,
-  fontWeight: 600,
-  color: 'var(--ppt-fg-primary, #111827)',
-};
-
-const INPUT_STYLE: React.CSSProperties = {
-  width: '100%',
-  padding: '4px 8px',
-  fontSize: 12,
-  fontFamily: 'monospace',
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 6,
-  boxSizing: 'border-box',
-};
-
-const LABEL_STYLE: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 500,
-  color: 'var(--ppt-fg-primary, #111827)',
-};
 
 // ---------------------------------------------------------------------------
 // Helpers
