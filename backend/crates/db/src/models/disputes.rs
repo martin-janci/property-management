@@ -642,6 +642,66 @@ pub struct PriorityCount {
     pub count: i64,
 }
 
+/// Lifecycle funnel KPIs for a dispute cohort (issue #2533).
+///
+/// Backs the `dispute.funnel.*` metrics defined in
+/// `docs/data/dispute-lifecycle-kpis.md`. `reached_mediation` is computed from
+/// the structured `dispute_activities.metadata->>'to'` written on every
+/// `status_changed` (with a legacy free-text fallback for pre-#2533 rows).
+/// Rates are `None` (not `0.0`) when the denominator is `0` — an empty cohort
+/// reads as "no data", never a misleading `0%`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisputeFunnelKpis {
+    /// Disputes filed in the window — the funnel denominator.
+    pub filed: i64,
+    /// Cohort disputes that entered `mediation` at any point.
+    pub reached_mediation: i64,
+    /// Cohort disputes that reached `resolved` (`resolved_at IS NOT NULL`).
+    pub reached_resolved: i64,
+    /// Cohort disputes currently sitting in `mediation`.
+    pub currently_in_mediation: i64,
+    /// `reached_mediation / filed`, or `None` when `filed = 0`.
+    pub mediation_rate: Option<f64>,
+    /// `reached_resolved / filed`, or `None` when `filed = 0`.
+    pub resolution_rate: Option<f64>,
+}
+
+/// Time-to-resolution percentile KPIs for a dispute cohort (issue #2533).
+///
+/// Backs `dispute.ttr.*`. TTR = `resolved_at - created_at`; only disputes with
+/// `resolved_at IS NOT NULL` enter the population. Durations are reported in
+/// **hours** (the canonical unit from the KPI spec). Percentiles use
+/// `percentile_cont` for stable interpolation on small samples, and are `None`
+/// when the sample is empty.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisputeTtrKpis {
+    /// Number of resolved disputes in the cohort (TTR sample size).
+    pub count: i64,
+    /// 50th percentile (median) TTR in hours.
+    pub p50_hours: Option<f64>,
+    /// 90th percentile TTR in hours.
+    pub p90_hours: Option<f64>,
+    /// 95th percentile TTR in hours.
+    pub p95_hours: Option<f64>,
+    /// Arithmetic mean TTR in hours.
+    pub mean_hours: Option<f64>,
+    /// Slowest resolution in the cohort, in hours.
+    pub max_hours: Option<f64>,
+}
+
+/// Dispute lifecycle KPIs for a `[window_start, window_end)` cohort (issue #2533).
+///
+/// SQL-backed counterpart to the definitions in
+/// `docs/data/dispute-lifecycle-kpis.md`. Cohort membership is keyed on
+/// `disputes.created_at` (filing time) so a dispute stays in exactly one window.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisputeKpis {
+    pub window_start: DateTime<Utc>,
+    pub window_end: DateTime<Utc>,
+    pub funnel: DisputeFunnelKpis,
+    pub ttr: DisputeTtrKpis,
+}
+
 /// Mediation case view with sessions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MediationCase {
