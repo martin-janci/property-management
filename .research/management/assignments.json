@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-24T02:15:24Z",
+  "generated": "2026-07-24T02:58:00Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -92,18 +92,18 @@
     {
       "task_id": "data-privacy-retention-policy-2026-07-23",
       "branch": "auto-impl/data-privacy-retention-policy-2026-07-23-41b347af",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-24T02:15:24Z",
-      "last_updated": "2026-07-24T02:15:24Z",
-      "status_changed_at": "2026-07-24T02:15:24Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-24T02:58:00Z",
+      "status_changed_at": "2026-07-24T02:58:00Z",
+      "pr_number": 2512,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2512",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "db-migration",
+      "implementer_summary": "pr=2512 status=done specialist=db-migration scope_drift=false code_reuse_warn=none note=support_tooling_events 730d retention (migration 00222 + repo method + tests + docs); pm-data scope; fmt/clippy-db/test-compile green, DB tests + workspace-clippy env-blocked (swagger-ui download + no :5433 DB) deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
