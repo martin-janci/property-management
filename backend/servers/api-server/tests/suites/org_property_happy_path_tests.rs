@@ -105,13 +105,12 @@ fn id_of(resp: &common::TestResponse) -> Uuid {
 // Buildings / units / owners / residents — tenant-scoped (X-Tenant-ID).
 // ---------------------------------------------------------------------------
 
-// BIT-575 Wave J2: building/unit/owner steps pass, but POST
-// /units/{uid}/residents returns 500 DB_ERROR ("Failed to add resident") while
-// the parallel owner-add path (assign_owner_rls) succeeds. Root cause not yet
-// isolated (all static paths — enum cast, FK created_by, NOT NULL, RETURNING
-// decode — check out); quarantined so the rest of Wave J2 can land. Tracked as
-// a follow-up; do NOT delete — this is a real un-quarantine target.
-#[ignore = "BIT-575 follow-up: resident-add 500 DB_ERROR, root cause pending"]
+// BIT-585 (BIT-575 Wave J2 follow-up): the resident-add POST used to 500 because
+// `UnitResidentRepository::create` bound the `resident_type` String straight into
+// the Postgres `resident_type` ENUM column with no cast — Postgres sent it as
+// `text` (OID 25) and there is no implicit text→enum coercion (SQLSTATE 42804).
+// Fixed by casting `$3::resident_type` (and `$2::resident_type` in `update`), so
+// the test is re-enabled.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn buildings_units_owners_residents_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
