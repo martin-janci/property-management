@@ -178,7 +178,6 @@ fn authed_get(uri: &str, token: &str, tenant: Uuid) -> Request<Body> {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_connection_from_other_org_is_not_found(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -216,7 +215,6 @@ async fn get_connection_from_other_org_is_not_found(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_connection_same_org_succeeds_without_leaking_tokens(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -278,7 +276,6 @@ async fn get_connection_same_org_succeeds_without_leaking_tokens(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_connection_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -339,7 +336,6 @@ async fn assert_route_removed(app: &TestApp, uri: &str) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn legacy_rental_oauth_callback_routes_are_removed(pool: PgPool) {
     // The rentals router IS mounted here (the connection tests above hit
     // `/api/v1/rentals/connections/{id}`), so a 404 on the callback paths proves

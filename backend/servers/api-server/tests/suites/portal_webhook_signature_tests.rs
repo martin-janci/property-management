@@ -61,7 +61,6 @@ fn sign(secret: &str, body: &[u8]) -> String {
 /// Fail-closed: with NO secret configured the route rejects any webhook (even a
 /// well-formed body) with `401` — never silently accepts an unverified payload.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn unconfigured_secret_rejects_webhook(pool: PgPool) {
     let _guard = ENV_LOCK.lock().await;
     std::env::remove_var(PORTAL_SECRET_ENV);
@@ -87,7 +86,6 @@ async fn unconfigured_secret_rejects_webhook(pool: PgPool) {
 /// Fail-closed: with a secret configured but an INVALID signature, the route
 /// rejects with `401` before parsing the body or touching the database.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn invalid_signature_is_rejected(pool: PgPool) {
     let _guard = ENV_LOCK.lock().await;
     std::env::set_var(PORTAL_SECRET_ENV, "super-secret-key");
@@ -115,7 +113,6 @@ async fn invalid_signature_is_rejected(pool: PgPool) {
 /// Fail-closed: with a secret configured but the signature header MISSING
 /// entirely, the route rejects with `401`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn missing_signature_header_is_rejected(pool: PgPool) {
     let _guard = ENV_LOCK.lock().await;
     std::env::set_var(PORTAL_SECRET_ENV, "super-secret-key");
@@ -145,7 +142,6 @@ async fn missing_signature_header_is_rejected(pool: PgPool) {
 /// The assertion that matters for this regression is "not 401": the valid
 /// signature was accepted rather than rejected as forged.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn valid_signature_is_accepted(pool: PgPool) {
     let _guard = ENV_LOCK.lock().await;
     let secret = "super-secret-key";

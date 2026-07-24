@@ -181,7 +181,6 @@ async fn ws_request_status(server: &TestServer, token: &str, org_id: Uuid) -> u1
 
 /// An invalid/garbage token is rejected with 401 before the upgrade.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn invalid_token_is_rejected_with_401(pool: PgPool) {
     let server = build_ws_test_server(pool.clone()).await;
     let org = seed_org(&pool, "inv").await;
@@ -193,7 +192,6 @@ async fn invalid_token_is_rejected_with_401(pool: PgPool) {
 /// A valid token for a user who is NOT a member of the requested org is rejected
 /// with 403 before the upgrade — the headline tenant-isolation property.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn non_member_is_rejected_with_403(pool: PgPool) {
     let server = build_ws_test_server(pool.clone()).await;
     let org_a = seed_org(&pool, "a").await;
@@ -213,7 +211,6 @@ async fn non_member_is_rejected_with_403(pool: PgPool) {
 /// A non-active (suspended) membership row must still yield 403 — the
 /// `status = 'active'` predicate in `is_member` is load-bearing.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn suspended_member_is_rejected_with_403(pool: PgPool) {
     let server = build_ws_test_server(pool.clone()).await;
     let org = seed_org(&pool, "susp").await;
@@ -232,7 +229,6 @@ async fn suspended_member_is_rejected_with_403(pool: PgPool) {
 /// rejected the request, `into_websocket()` would fail instead of yielding a
 /// live socket.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn active_member_completes_ws_upgrade(pool: PgPool) {
     let server = build_ws_test_server(pool.clone()).await;
     let org = seed_org(&pool, "ok").await;
