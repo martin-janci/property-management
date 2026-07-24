@@ -1,0 +1,50 @@
+{
+  "generated": "2026-07-24T00:00:00Z",
+  "segment": "ppt-web-core",
+  "source": "dispatcher-tier1d",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-ts-client-unconfigured",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:258 — configureApiClient() is the only thing that installs a getToken/onUnauthorized, but it has zero call sites in src/ (only re-exported by lib/index.ts:12). getApiClient() therefore lazily builds the instance via createAxiosInstance({}) leaving module-level tokenGetter=undefined.",
+        "frontend/apps/ppt-web/src/lib/api.ts:162 — request interceptor is guarded by `if (tokenGetter)`, so with tokenGetter undefined NO Authorization header is attached; the 401 branch at api.ts:180 also no-ops because onUnauthorizedCallback is undefined.",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:5 and frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:7 — both call getApiClient() and their comments claim the shared interceptors attach the Bearer token, but no config is ever applied, so these authenticated GET/POST/PUT calls go out unauthenticated and 401."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-ts-retry-nonidempotent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:85 — isRetryableError() returns true for ANY error with no response (network error) regardless of HTTP method, and for 500/502/503/504.",
+        "frontend/apps/ppt-web/src/lib/api.ts:185 — the response interceptor retries `config` up to MAX_RETRIES (3) with no idempotency/method guard, so POST/PUT/PATCH mutations (create fault, cast vote, create payment) are silently re-sent on a network blip or 5xx, risking duplicate resource creation / double submissions."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-stale-token-on-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246 — the auth effect is keyed on [auth.isAuthenticated, auth.accessToken] and calls service.connect() when the access token rotates (intent: reconnect with the fresh token).",
+        "frontend/apps/ppt-web/src/lib/websocket.ts:292 — connect() early-returns `if (this.socket.readyState === WebSocket.OPEN)`, so on a token refresh it never rebuilds the URL; the JWT is carried only in the handshake query param (buildWebSocketUrl, websocket.ts:88), so the live socket keeps the stale token until the server expires it, causing a drop + reconnect gap (missed realtime events) on every refresh."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

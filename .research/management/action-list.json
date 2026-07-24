@@ -627,26 +627,6 @@
       }
     },
     {
-      "id": "gh-issue-2529",
-      "action": "Follow-up: close join_group/leave_group cross-tenant IDOR (PR #2498) (Closes #2529)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2529)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2529,
-        "url": "https://github.com/martin-janci/property-management/issues/2529",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2530",
       "action": "Follow-up: instrument the full signup funnel, not just the onboarding tour (PR #2515) (Closes #2530)",
       "owner_role": "pm-tech-lead",
@@ -668,26 +648,6 @@
       "last_updated": "2026-07-24T18:09:34Z"
     },
     {
-      "id": "gh-issue-2531",
-      "action": "Follow-up: schedule the support_tooling_events retention prune (defined but never invoked) (PR #2512) (Closes #2531)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2531)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2531,
-        "url": "https://github.com/martin-janci/property-management/issues/2531",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2532",
       "action": "Follow-up: wire layout publish/webhook event emission (spec-only, no producers) (PR #2494) (Closes #2532)",
       "owner_role": "pm-tech-lead",
@@ -701,86 +661,6 @@
       "issue_ref": {
         "number": 2532,
         "url": "https://github.com/martin-janci/property-management/issues/2532",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2533",
-      "action": "Follow-up: back dispute KPIs with SQL + structural status transitions (PR #2495) (Closes #2533)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2533)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2533,
-        "url": "https://github.com/martin-janci/property-management/issues/2533",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2534",
-      "action": "Follow-up: prevent orphaned S3 objects on failed direct-to-S3 upload (PR #2500) (Closes #2534)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2534)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2534,
-        "url": "https://github.com/martin-janci/property-management/issues/2534",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2536",
-      "action": "Follow-up: fix screen-map extractEpics catalog source so epic refs validate (PR #2496) (Closes #2536)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2536)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2536,
-        "url": "https://github.com/martin-janci/property-management/issues/2536",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2537",
-      "action": "Follow-up: add cross-tenant IDOR + error-branch tests for lease-abstraction import (PR #2440) (Closes #2537)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2537)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2537,
-        "url": "https://github.com/martin-janci/property-management/issues/2537",
         "labels": [
           "follow-up",
           "from-merged-review"
