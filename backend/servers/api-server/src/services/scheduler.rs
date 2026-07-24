@@ -5,8 +5,8 @@
 
 use db::repositories::{
     AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, MeterRepository,
-    ReportScheduleRepository, SessionRepository, SignatureRequestRepository,
-    UnitResidentRepository, VoteRepository,
+    PlatformAdminRepository, ReportScheduleRepository, SessionRepository,
+    SignatureRequestRepository, UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -22,6 +22,12 @@ use super::EmailService;
 /// background scheduler. Prevents the every-60s scheduler tick from
 /// spamming the same signer for the entire reminder window.
 const SIGNATURE_REMINDER_MIN_INTERVAL_HOURS: i64 = 12;
+
+/// Minimum interval between successive `support_tooling_events` retention
+/// prunes (issue #2531). The scheduler ticks every ~60s, but the append-only
+/// admin-audit prune only needs a daily cadence — this gate skips the prune
+/// until 24h have elapsed since the last successful run.
+const SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 
 /// Scheduler service configuration.
 #[derive(Clone)]
@@ -44,6 +50,10 @@ pub struct SchedulerConfig {
     /// Grace period (in days) after `due_date` before an invoice is
     /// transitioned to `overdue` (default: 0 — transition on the due date).
     pub overdue_grace_period_days: i64,
+    /// Retention window (in days) for the append-only `support_tooling_events`
+    /// admin-audit trail before the daily prune deletes aged rows (issue #2531,
+    /// default: 730 — 24 months, matching the SQL-layer default).
+    pub support_tooling_retention_days: i64,
 }
 
 impl Default for SchedulerConfig {
@@ -57,6 +67,7 @@ impl Default for SchedulerConfig {
             signature_reminder_days_before: 3,
             pin_max_age_days: 30,
             overdue_grace_period_days: 0,
+            support_tooling_retention_days: 730,
         }
     }
 }
@@ -78,6 +89,9 @@ pub struct SchedulerMetrics {
     pub login_attempts_cleaned: u64,
     /// Report schedules fired by the due-work consumer (issue #2303).
     pub report_schedules_fired: u64,
+    /// Aged `support_tooling_events` rows pruned by the daily retention job
+    /// (issue #2531).
+    pub support_tooling_events_pruned: u64,
     pub errors: u64,
 }
 
@@ -93,10 +107,15 @@ pub struct Scheduler {
     e_signature_nonce_repo: ESignatureNonceRepository,
     financial_repo: FinancialRepository,
     report_schedule_repo: ReportScheduleRepository,
+    platform_admin_repo: PlatformAdminRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
     metrics: std::sync::Mutex<SchedulerMetrics>,
+    /// Timestamp of the last successful `support_tooling_events` retention
+    /// prune, used to enforce the daily cadence across the ~60s tick loop
+    /// (issue #2531). `None` until the first prune runs.
+    last_support_tooling_prune_at: std::sync::Mutex<Option<chrono::DateTime<chrono::Utc>>>,
 }
 
 impl Scheduler {
@@ -122,12 +141,14 @@ impl Scheduler {
             e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
             financial_repo: FinancialRepository::new(pool.clone()),
             report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
+            platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
             email_service,
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
+            last_support_tooling_prune_at: std::sync::Mutex::new(None),
         }
     }
 
@@ -148,12 +169,14 @@ impl Scheduler {
             e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
             financial_repo: FinancialRepository::new(pool.clone()),
             report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
+            platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
             email_service,
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
+            last_support_tooling_prune_at: std::sync::Mutex::new(None),
         }
     }
 
@@ -180,6 +203,7 @@ impl Scheduler {
             sessions_cleaned: guard.sessions_cleaned,
             login_attempts_cleaned: guard.login_attempts_cleaned,
             report_schedules_fired: guard.report_schedules_fired,
+            support_tooling_events_pruned: guard.support_tooling_events_pruned,
             errors: guard.errors,
         }
     }
@@ -251,6 +275,12 @@ impl Scheduler {
         // Story 106.4: Clean up expired sessions
         if let Err(e) = self.cleanup_sessions().await {
             tracing::error!("Failed to cleanup sessions: {}", e);
+            self.increment_errors();
+        }
+
+        // Issue #2531: prune aged support_tooling_events on a daily cadence.
+        if let Err(e) = self.prune_support_tooling_events().await {
+            tracing::error!("Failed to prune support tooling events: {}", e);
             self.increment_errors();
         }
 
@@ -891,6 +921,69 @@ impl Scheduler {
             let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.sessions_cleaned += tokens_cleaned;
             metrics.login_attempts_cleaned += attempts_cleaned;
+        }
+
+        Ok(())
+    }
+
+    // ========================================================================
+    // Issue #2531: support_tooling_events retention prune (daily cadence)
+    // ========================================================================
+
+    /// Prune aged rows from the append-only `support_tooling_events` admin-audit
+    /// trail past the configured retention window (issue #2531).
+    ///
+    /// The prune calls `PlatformAdminRepository::cleanup_old_support_tooling_events`,
+    /// which routes through the sanctioned `app.retention_prune` GUC path so the
+    /// table's immutability trigger permits these — and only these — deletes
+    /// (migration `00222_support_tooling_events_retention.sql`). The repository
+    /// method existed but nothing invoked it, so the audit trail grew without
+    /// bound; this tick wires it into the scheduler, mirroring `cleanup_sessions`.
+    ///
+    /// Cadence: the scheduler ticks every ~60s, but retention only needs to run
+    /// once per day. A stored last-run timestamp gates the prune to at most one
+    /// run per [`SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS`] window. The stamp is
+    /// written only after a successful prune, so a failed run retries next tick.
+    async fn prune_support_tooling_events(&self) -> Result<(), sqlx::Error> {
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS);
+
+        // Daily gate — skip until 24h have elapsed since the last prune.
+        {
+            let last = self
+                .last_support_tooling_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            if !support_tooling_prune_due(*last, now, min_interval) {
+                return Ok(());
+            }
+        }
+
+        // Note: Scheduler runs in background without user context. This prune is
+        // a privileged/admin-level retention job and does not need RLS context.
+        let deleted = self
+            .platform_admin_repo
+            .cleanup_old_support_tooling_events(self.config.support_tooling_retention_days as i32)
+            .await?;
+
+        // Stamp only after a successful prune so a transient DB error retries on
+        // the next tick instead of being suppressed for a full day.
+        {
+            let mut last = self
+                .last_support_tooling_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            *last = Some(now);
+        }
+
+        if deleted > 0 {
+            tracing::info!(
+                deleted = deleted,
+                retention_days = self.config.support_tooling_retention_days,
+                "Pruned aged support_tooling_events"
+            );
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
+            metrics.support_tooling_events_pruned += deleted as u64;
         }
 
         Ok(())
@@ -1571,6 +1664,22 @@ fn parse_announcement_target_ids(
     }
 }
 
+/// Decide whether the daily `support_tooling_events` retention prune is due
+/// (issue #2531). Returns `true` on the first run (`last` is `None`) or once at
+/// least `min_interval` has elapsed since the last successful prune. Extracted
+/// as a pure function so the daily-cadence gate is testable without a DB or a
+/// live clock.
+fn support_tooling_prune_due(
+    last: Option<chrono::DateTime<chrono::Utc>>,
+    now: chrono::DateTime<chrono::Utc>,
+    min_interval: chrono::Duration,
+) -> bool {
+    match last {
+        None => true,
+        Some(t) => now.signed_duration_since(t) >= min_interval,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2026,7 +2135,62 @@ mod tests {
         assert_eq!(metrics.votes_closed, 0);
         assert_eq!(metrics.payment_reminders_sent, 0);
         assert_eq!(metrics.invoices_transitioned_to_overdue, 0);
+        assert_eq!(metrics.support_tooling_events_pruned, 0);
         assert_eq!(metrics.errors, 0);
+    }
+
+    #[test]
+    fn test_scheduler_config_support_tooling_retention_default() {
+        // Issue #2531: the append-only support_tooling_events audit trail is
+        // pruned after 730 days (24 months) by default, matching the SQL-layer
+        // default of cleanup_old_support_tooling_events().
+        let config = SchedulerConfig::default();
+        assert_eq!(config.support_tooling_retention_days, 730);
+    }
+
+    // ------------------------------------------------------------------
+    // Issue #2531: daily-cadence gate for the support_tooling_events prune.
+    //
+    // The scheduler ticks every ~60s but the retention prune must run at
+    // most once per day. These pin the gate that stops the ~60s tick loop
+    // from re-pruning on every tick — the behaviour that distinguishes the
+    // fix (bounded daily prune) from a naive "prune every tick" wiring.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_support_tooling_prune_due_on_first_run() {
+        // Never pruned before → due immediately.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS);
+        assert!(support_tooling_prune_due(None, now, min_interval));
+    }
+
+    #[test]
+    fn test_support_tooling_prune_skipped_within_interval() {
+        // Pruned 1h ago, interval is 24h → NOT due (the every-60s tick must
+        // not re-prune).
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - chrono::Duration::hours(1);
+        assert!(!support_tooling_prune_due(Some(last), now, min_interval));
+    }
+
+    #[test]
+    fn test_support_tooling_prune_due_after_interval() {
+        // Pruned 25h ago, interval is 24h → due again.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - chrono::Duration::hours(25);
+        assert!(support_tooling_prune_due(Some(last), now, min_interval));
+    }
+
+    #[test]
+    fn test_support_tooling_prune_due_at_exact_boundary() {
+        // Exactly at the interval boundary → due (>= comparison).
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - min_interval;
+        assert!(support_tooling_prune_due(Some(last), now, min_interval));
     }
 
     #[test]
