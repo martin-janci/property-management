@@ -395,17 +395,29 @@ async fn test_delete_parking_spot_not_found_returns_client_error(pool: PgPool) {
     );
 }
 
+async fn seed_registry_rules(pool: &PgPool, org_id: Uuid, building_id: Uuid) {
+    sqlx::query(
+        "INSERT INTO building_registry_rules (tenant_id, building_id) VALUES ($1, $2) \
+         ON CONFLICT (tenant_id, building_id) DO NOTHING",
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .execute(pool)
+    .await
+    .expect("seed registry rules");
+}
+
 // ---------------------------------------------------------------------------
 // Registry — Building Rules & Statistics
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_registry_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-rules-1").await;
     let building = seed_building(&pool, org_id).await;
+    seed_registry_rules(&pool, org_id, building).await;
 
     let uri = format!("/api/v1/registry/buildings/{building}/rules");
     let resp = app

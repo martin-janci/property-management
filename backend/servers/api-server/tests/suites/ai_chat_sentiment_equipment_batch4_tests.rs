@@ -166,6 +166,18 @@ async fn seed_parking_spot(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uu
     .expect("seed parking spot")
 }
 
+async fn seed_registry_rules(pool: &PgPool, org_id: Uuid, building_id: Uuid) {
+    sqlx::query(
+        "INSERT INTO building_registry_rules (tenant_id, building_id) VALUES ($1, $2) \
+         ON CONFLICT (tenant_id, building_id) DO NOTHING",
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .execute(pool)
+    .await
+    .expect("seed registry rules");
+}
+
 // ---------------------------------------------------------------------------
 // AI Chat Sessions — ai/sessions.rs chat section (6 endpoints)
 // send_message is excluded: makes live LLM calls.
@@ -189,7 +201,6 @@ async fn create_chat_session_succeeds(pool: PgPool) {
     assert!(resp.json_value()["id"].is_string());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_chat_sessions_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -200,7 +211,7 @@ async fn list_chat_sessions_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/ai/chat/sessions").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["sessions"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -243,7 +254,6 @@ async fn delete_chat_session_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_chat_messages_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -260,10 +270,9 @@ async fn list_chat_messages_succeeds(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["messages"].is_array());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn provide_chat_feedback_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -277,7 +286,9 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
         .execute(
             session
                 .post(&format!("/api/v1/ai/chat/messages/{msg_id}/feedback"))
-                .json(json!({"rating": "positive", "comment": "Very helpful"}))
+                // `ProvideFeedback` requires `message_id` in the body (the handler
+                // re-derives it from the path, but the field is non-optional).
+                .json(json!({"message_id": msg_id, "rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
                 .build(),
         )
         .await;
@@ -312,7 +323,6 @@ async fn get_sentiment_trends_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_sentiment_alerts_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -323,7 +333,7 @@ async fn list_sentiment_alerts_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/ai/sentiment/alerts").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["alerts"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -358,7 +368,6 @@ async fn get_sentiment_thresholds_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_sentiment_thresholds_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -392,7 +401,6 @@ async fn get_sentiment_dashboard_succeeds(pool: PgPool) {
 // AI Equipment — ai/equipment.rs (11 endpoints, RlsConnection)
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_equipment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -403,7 +411,7 @@ async fn create_equipment_succeeds(pool: PgPool) {
     let resp = app
         .execute(
             session
-                .post("/api/v1/ai/equipment/")
+                .post("/api/v1/ai/equipment")
                 .json(json!({
                     "building_id": building_id,
                     "name": "Elevator",
@@ -416,7 +424,6 @@ async fn create_equipment_succeeds(pool: PgPool) {
     assert!(resp.json_value()["id"].is_string());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_equipment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -424,7 +431,7 @@ async fn list_equipment_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "leq").await;
     let session = app.session(token, org_id);
     let resp = app
-        .execute(session.get("/api/v1/ai/equipment/").build())
+        .execute(session.get("/api/v1/ai/equipment").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
     assert!(resp.json_value()["equipment"].is_array());
@@ -530,7 +537,6 @@ async fn create_equipment_maintenance_succeeds(pool: PgPool) {
     assert!(resp.json_value()["id"].is_string());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_equipment_maintenance_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -544,7 +550,10 @@ async fn update_equipment_maintenance_succeeds(pool: PgPool) {
         .execute(
             session
                 .put(&format!("/api/v1/ai/equipment/maintenance/{maint_id}"))
-                .json(json!({"maintenance_type": "repair"}))
+                // `maintenance_type` is a TEXT column with a CHECK constraint
+                // (preventive|corrective|emergency|inspection); "repair" is not a
+                // permitted value and violated the constraint → 500.
+                .json(json!({"maintenance_type": "corrective"}))
                 .build(),
         )
         .await;
@@ -633,7 +642,6 @@ async fn create_pet_registration_succeeds(pool: PgPool) {
     assert!(resp.json_value()["registration"]["id"].is_string());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_pet_registrations_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -644,10 +652,9 @@ async fn list_pet_registrations_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/registry/pets").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["registrations"].is_array());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_pet_registration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -760,7 +767,6 @@ async fn create_vehicle_registration_succeeds(pool: PgPool) {
     assert!(resp.json_value()["registration"]["id"].is_string());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_vehicle_registrations_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -771,10 +777,9 @@ async fn list_vehicle_registrations_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/registry/vehicles").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["registrations"].is_array());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_vehicle_registration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -883,7 +888,6 @@ async fn create_parking_spot_succeeds(pool: PgPool) {
     assert!(resp.json_value()["spot"]["id"].is_string());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_parking_spots_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -894,7 +898,7 @@ async fn list_parking_spots_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/registry/parking-spots").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["spots"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -956,13 +960,13 @@ async fn delete_parking_spot_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_registry_rules_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "grr").await;
     let building_id = seed_building(&pool, org_id).await;
+    seed_registry_rules(&pool, org_id, building_id).await;
     let session = app.session(token, org_id);
     let resp = app
         .execute(

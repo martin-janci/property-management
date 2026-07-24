@@ -112,26 +112,41 @@ async fn seed_workflow(pool: &PgPool, org_id: Uuid, creator: Uuid) -> Uuid {
 // Automation — Rules
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_automation_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-1").await;
+    // Automation endpoints authenticate via `RequestPrincipal` (host-resolved
+    // tenant + active `user_memberships`), not `RlsConnection`.
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let uri = format!("/api/v1/automation/organizations/{org_id}/rules");
     let resp = app
-        .execute(authed(&token, Method::GET, &uri, None, org_id))
+        .execute(inject_tenant(
+            authed(&token, Method::GET, &uri, None, org_id),
+            org_id,
+        ))
         .await;
     assert_eq!(resp.status, StatusCode::OK, "list automation rules");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_automation_rule_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-2").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let uri = format!("/api/v1/automation/organizations/{org_id}/rules");
     let body = json!({
@@ -141,7 +156,10 @@ async fn test_create_automation_rule_returns_201(pool: PgPool) {
         "actions": [{"type": "notify", "config": {}}]
     });
     let resp = app
-        .execute(authed(&token, Method::POST, &uri, Some(body), org_id))
+        .execute(inject_tenant(
+            authed(&token, Method::POST, &uri, Some(body), org_id),
+            org_id,
+        ))
         .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create automation rule");
 }
@@ -163,19 +181,27 @@ async fn test_get_automation_rule_not_found(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-tmpl-1").await;
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/automation/templates",
-            None,
+        .execute(inject_tenant(
+            authed(
+                &token,
+                Method::GET,
+                "/api/v1/automation/templates",
+                None,
+                org_id,
+            ),
             org_id,
         ))
         .await;
@@ -429,7 +455,6 @@ async fn test_get_sentiment_dashboard_returns_200(pool: PgPool) {
 // AI Equipment
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_equipment_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -454,7 +479,6 @@ async fn test_create_equipment_returns_201(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED, "create ai equipment");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_equipment_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -465,7 +489,7 @@ async fn test_list_equipment_returns_200(pool: PgPool) {
         .execute(authed(
             &token,
             Method::GET,
-            "/api/v1/ai/equipment/",
+            "/api/v1/ai/equipment",
             None,
             org_id,
         ))
@@ -567,7 +591,6 @@ async fn test_list_maintenance_returns_200(pool: PgPool) {
 // AI Workflows
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_workflow_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -582,7 +605,7 @@ async fn test_create_workflow_returns_201(pool: PgPool) {
         .execute(authed(
             &token,
             Method::POST,
-            "/api/v1/ai/workflows/",
+            "/api/v1/ai/workflows",
             Some(body),
             org_id,
         ))
@@ -590,7 +613,6 @@ async fn test_create_workflow_returns_201(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED, "create workflow");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_workflows_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -601,7 +623,7 @@ async fn test_list_workflows_returns_200(pool: PgPool) {
         .execute(authed(
             &token,
             Method::GET,
-            "/api/v1/ai/workflows/",
+            "/api/v1/ai/workflows",
             None,
             org_id,
         ))
@@ -646,38 +668,59 @@ async fn test_list_workflow_executions_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list workflow executions");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-5").await;
+    // Templates endpoints use `RequestPrincipal`, which resolves the tenant from
+    // a `ResolvedTenant` extension (normally set by `host_tenant_middleware`,
+    // absent under `TestApp`) and requires an active `user_memberships` row.
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/ai/workflows/templates",
-            None,
+        .execute(inject_tenant(
+            authed(
+                &token,
+                Method::GET,
+                "/api/v1/ai/workflows/templates",
+                None,
+                org_id,
+            ),
             org_id,
         ))
         .await;
     assert_eq!(resp.status, StatusCode::OK, "list workflow templates");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-6").await;
+    // Templates endpoints use `RequestPrincipal` — inject the resolved tenant and
+    // seed an active `user_memberships` row so the membership check passes.
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/ai/workflows/templates/builtin",
-            None,
+        .execute(inject_tenant(
+            authed(
+                &token,
+                Method::GET,
+                "/api/v1/ai/workflows/templates/builtin",
+                None,
+                org_id,
+            ),
             org_id,
         ))
         .await;

@@ -172,7 +172,6 @@ async fn test_delete_automation_rule_not_found(pool: PgPool) {
 // AI Chat — delete session, list messages (need seeded session via POST)
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_delete_chat_session_roundtrip(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -203,7 +202,12 @@ async fn test_delete_chat_session_roundtrip(pool: PgPool) {
     let del_resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
-    assert_eq!(del_resp.status, StatusCode::OK, "delete chat session");
+    // The delete handler returns 204 No Content on success.
+    assert_eq!(
+        del_resp.status,
+        StatusCode::NO_CONTENT,
+        "delete chat session"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -246,7 +250,6 @@ async fn test_list_chat_messages_roundtrip(pool: PgPool) {
 // AI Sentiment — update thresholds, acknowledge alert (not-found path)
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_update_sentiment_thresholds_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -290,7 +293,6 @@ async fn test_acknowledge_sentiment_alert_not_found(pool: PgPool) {
 // AI Workflows — update, delete, list/add actions, workflow templates
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_workflow_actions_roundtrip(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -303,7 +305,7 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
         .execute(authed(
             &token,
             Method::POST,
-            "/api/v1/ai/workflows/",
+            "/api/v1/ai/workflows",
             Some(create_body),
             org_id,
         ))
@@ -332,7 +334,7 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
     let action_body = json!({
         "workflow_id": wf_id,
         "action_order": 1,
-        "action_type": "notify",
+        "action_type": "send_notification",
         "action_config": {}
     });
     let add_resp = app
@@ -402,7 +404,6 @@ async fn test_update_equipment_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "update equipment");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_delete_equipment_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -415,5 +416,6 @@ async fn test_delete_equipment_returns_200(pool: PgPool) {
     let resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "delete equipment");
+    // The delete handler returns 204 No Content on success.
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete equipment");
 }

@@ -284,16 +284,32 @@ impl SentimentRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // Upsert: a bare UPDATE ... RETURNING + fetch_one raised `RowNotFound`
+        // (→ 500) for an org that never materialized a thresholds row, whereas
+        // `get_thresholds` auto-creates one. Insert defaults on first write and
+        // COALESCE-merge on conflict so PUT /thresholds is create-or-update.
+        // The INSERT-side literal defaults mirror migration 00043.
         sqlx::query_as(
             r#"
-            UPDATE sentiment_thresholds SET
-                negative_threshold = COALESCE($2, negative_threshold),
-                alert_on_spike = COALESCE($3, alert_on_spike),
-                spike_threshold_change = COALESCE($4, spike_threshold_change),
-                min_messages_for_alert = COALESCE($5, min_messages_for_alert),
-                enabled = COALESCE($6, enabled),
+            INSERT INTO sentiment_thresholds (
+                organization_id, negative_threshold, alert_on_spike,
+                spike_threshold_change, min_messages_for_alert, enabled
+            )
+            VALUES (
+                $1,
+                COALESCE($2, -0.3),
+                COALESCE($3, TRUE),
+                COALESCE($4, 0.2),
+                COALESCE($5, 5),
+                COALESCE($6, TRUE)
+            )
+            ON CONFLICT (organization_id) DO UPDATE SET
+                negative_threshold = COALESCE($2, sentiment_thresholds.negative_threshold),
+                alert_on_spike = COALESCE($3, sentiment_thresholds.alert_on_spike),
+                spike_threshold_change = COALESCE($4, sentiment_thresholds.spike_threshold_change),
+                min_messages_for_alert = COALESCE($5, sentiment_thresholds.min_messages_for_alert),
+                enabled = COALESCE($6, sentiment_thresholds.enabled),
                 updated_at = NOW()
-            WHERE organization_id = $1
             RETURNING *
             "#,
         )

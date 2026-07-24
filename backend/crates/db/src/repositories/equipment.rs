@@ -280,7 +280,12 @@ impl EquipmentRepository {
     {
         sqlx::query_as(
             r#"
-            SELECT em.* FROM equipment_maintenance em
+            SELECT em.id, em.equipment_id, em.maintenance_type, em.description,
+                em.performed_by, em.external_vendor, em.cost,
+                COALESCE(em.parts_replaced, '{}') AS parts_replaced,
+                em.fault_id, em.scheduled_date, em.completed_date,
+                em.status, em.notes, em.created_at, em.updated_at
+            FROM equipment_maintenance em
             JOIN equipment e ON e.id = em.equipment_id
             WHERE em.id = $1 AND e.organization_id = $2
             "#,
@@ -309,7 +314,12 @@ impl EquipmentRepository {
     {
         sqlx::query_as(
             r#"
-            SELECT em.* FROM equipment_maintenance em
+            SELECT em.id, em.equipment_id, em.maintenance_type, em.description,
+                em.performed_by, em.external_vendor, em.cost,
+                COALESCE(em.parts_replaced, '{}') AS parts_replaced,
+                em.fault_id, em.scheduled_date, em.completed_date,
+                em.status, em.notes, em.created_at, em.updated_at
+            FROM equipment_maintenance em
             JOIN equipment e ON e.id = em.equipment_id
             WHERE em.equipment_id = $1 AND e.organization_id = $2
             ORDER BY COALESCE(em.completed_date, em.scheduled_date) DESC NULLS LAST
@@ -360,7 +370,10 @@ impl EquipmentRepository {
                   WHERE e.id = equipment_maintenance.equipment_id
                     AND e.organization_id = $11
               )
-            RETURNING *
+            RETURNING
+                id, equipment_id, maintenance_type, description, performed_by, external_vendor,
+                cost, COALESCE(parts_replaced, '{}') AS parts_replaced, fault_id,
+                scheduled_date, completed_date, status, notes, created_at, updated_at
             "#,
         )
         .bind(id)
