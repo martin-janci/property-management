@@ -85,8 +85,8 @@ fn mint_token(user_id: Uuid, email: &str) -> String {
 // Happy Path Tests
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn messaging_happy_paths(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "beh").await;

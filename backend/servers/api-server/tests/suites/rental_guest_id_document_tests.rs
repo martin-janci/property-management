@@ -203,8 +203,8 @@ fn extract_request(guest_id: Uuid, token: &str, org: Uuid) -> Request<Body> {
 // (1) upload → 201, sets id-documents/ url + records a row
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn upload_succeeds_sets_url_and_records_row(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, guest) = seed_manager_with_guest(&pool, "upok").await;
@@ -254,7 +254,6 @@ async fn upload_succeeds_sets_url_and_records_row(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn extract_with_stub_returns_501(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, guest) = seed_manager_with_guest(&pool, "extract").await;
@@ -289,7 +288,6 @@ async fn extract_with_stub_returns_501(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn extract_without_document_is_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, guest) = seed_manager_with_guest(&pool, "nodoc").await;
@@ -309,7 +307,6 @@ async fn extract_without_document_is_404(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn upload_for_cross_org_guest_is_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -348,7 +345,6 @@ async fn upload_for_cross_org_guest_is_404(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn upload_unsupported_mime_is_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, guest) = seed_manager_with_guest(&pool, "badmime").await;
@@ -369,7 +365,6 @@ async fn upload_unsupported_mime_is_400(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn upload_oversize_is_413(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, guest) = seed_manager_with_guest(&pool, "big").await;
@@ -391,7 +386,6 @@ async fn upload_oversize_is_413(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn non_manager_is_forbidden_on_both_endpoints(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -629,8 +623,8 @@ fn get_request(uri: &str, token: &str, org: Uuid) -> Request<Body> {
 /// must reject a non-manager member with 403 — parity with the already-gated
 /// write/upload paths — while a manager in the same org is allowed (2xx),
 /// proving the rejection is the role gate and not a no-context pass.
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn guest_booking_pii_reads_are_manager_gated(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
