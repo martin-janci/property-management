@@ -2283,6 +2283,28 @@
       "merge_attempted_at": "2026-07-23T18:18:07Z"
     },
     {
+      "task_id": "data-privacy-retention-policy-2026-07-23",
+      "branch": "auto-impl/data-privacy-retention-policy-2026-07-23-41b347af",
+      "status": "merged",
+      "claimed_at": "2026-07-24T02:15:24Z",
+      "last_updated": "2026-07-24T04:19:39Z",
+      "status_changed_at": "2026-07-24T04:19:39Z",
+      "pr_number": 2512,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2512",
+      "merged_at": "2026-07-24T04:18:21Z",
+      "specialist": "db-migration",
+      "implementer_summary": "pr=2512 status=done specialist=db-migration scope_drift=false code_reuse_warn=none note=support_tooling_events 730d retention (migration 00222 + repo method + tests + docs); pm-data scope; fmt/clippy-db/test-compile green, DB tests + workspace-clippy env-blocked (swagger-ui download + no :5433 DB) deferred to CI",
+      "reviewer_summary": "verdict=approve head_oid=1c1fbadfd9a1be1ce621424c5dc84e45c4ab91fd note=migration+GUC-gated-retention-delete sound, immutability preserved, tests+CI green; draft (post blocked: self-approval)",
+      "last_reviewed_oid": "1c1fbadfd9a1be1ce621424c5dc84e45c4ab91fd",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-24T04:17:37Z"
+    },
+    {
       "task_id": "dep-bump-ammonia-rustsec-2026-06",
       "branch": "auto-impl/dep-bump-ammonia-rustsec-2026-06-aa96169c",
       "status": "merged",
@@ -8289,5 +8311,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T04:09:27Z"
+  "archived_at": "2026-07-24T04:23:58Z"
 }

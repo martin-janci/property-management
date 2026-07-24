@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-24",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer below floor ~21<36). No CHURN_FILES passed to this standalone slice; hotspot_history entries are all ~2 months stale (2026-05), so selection fell to oldest-unreviewed. state.review_cursor oldest entry was mobile-native-kmp (2026-07-16); backlog.json has 0 OPEN code-review-finding rows for the segment (no saturation-skip). Kotlin (primary) + Tester (secondary) experts ran static-only over mobile-native/. All three surviving candidates match findings emitted in prior signal runs (2026-07-07/08/09/15/16), but NONE is currently tracked as an open backlog row and each underlying code issue was re-verified as still present in the working tree. Per demand-driven refill intent, re-surfaced under CANONICAL prior ids (not fresh slugs) so the backlog reconciler merges rather than proliferates. Capped at 3 highest-severity across both experts.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-navigation-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 — the CreateListing route wires onSubmit to `Result.failure(NotImplementedError(\"Wire to listing API\"))`; no createListing() method exists on ApiClient/ListingRepository (grep of shared/ finds only createInquiry/createSavedSearch/createMobileToken).",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:120-126 — the fully-built realtor form folds that failure into the 'publish failed' banner, so MyListings -> Create -> submit can never succeed in production. Handled gracefully (no crash) but the feature is silently dead on Android. Fix: add createListing() to ApiClient + ListingRepository and wire the nav callback. Re-verified present 2026-07-24; still not tracked as an open backlog row."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "candidate_vector": "test",
+      "confidence": "medium",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt (349 lines) — auth-critical service (createMobileToken/validateAndLogin/getSession/refreshSession/loginWithPassword/register/password-reset/updateProfile/restoreSession + AuthState StateFlow) has NO test file anywhere in commonTest; grep for 'SsoService' matches only production + androidApp/iosApp code. Notably restoreSession() (line 318) collapses BOTH a real 401 and a transient network error into token-drop + Unauthenticated, and getSession()/refreshSession() force logout() on 401 — untested branches on the app-boot auth path. Re-verified 2026-07-24; not currently backlogged."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-no-http-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — the single shared HttpClient installs ContentNegotiation + Logging + defaultRequest but NO `install(HttpTimeout)` (no request/connect/socket timeout). On a stalled connection every suspend call (SsoService, ListingRepository, ApiClient) hangs indefinitely; ViewModels that set AuthState.Loading / state.isLoading before awaiting (e.g. SsoService.validateAndLogin line 63, loginWithPassword line 151) can leave the UI stuck in a spinner with no error path. Fix: install(HttpTimeout){ requestTimeoutMillis/connectTimeoutMillis/socketTimeoutMillis }. Re-verified present 2026-07-24; not currently backlogged."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}
