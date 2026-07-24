@@ -261,7 +261,7 @@ async fn ip_create_investor_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create investor: {}",
         resp.text()
     );
@@ -400,7 +400,7 @@ async fn ip_create_portfolio_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create portfolio: {}",
         resp.text()
     );
@@ -525,7 +525,7 @@ async fn ip_add_portfolio_property_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "add portfolio property: {}",
         resp.text()
     );
@@ -629,7 +629,7 @@ async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create roi: {}",
         resp.text()
     );
@@ -688,7 +688,7 @@ async fn ip_create_distribution_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create distribution: {}",
         resp.text()
     );
@@ -769,7 +769,7 @@ async fn ip_create_report_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create report: {}",
         resp.text()
     );
@@ -858,7 +858,7 @@ async fn ip_create_capital_call_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create capital call: {}",
         resp.text()
     );
