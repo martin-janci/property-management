@@ -57,32 +57,34 @@ async fn seed_building(pool: &sqlx::PgPool, org_id: Uuid) -> Uuid {
     .expect("seed building")
 }
 
-/// Create a fault via API and return its id.
-async fn create_fault(app: &TestApp, token: &str, org_id: Uuid, building_id: Uuid) -> Uuid {
-    let payload = json!({
-        "building_id": building_id,
-        "unit_id": null,
-        "title": "Test Fault",
-        "description": "Integration test fault",
-        "location_description": "Basement",
-        "category": "plumbing",
-        "priority": "medium",
-        "idempotency_key": null
-    });
-    let r = app
-        .post("/api/v1/faults")
-        .bearer(token)
-        .tenant(org_id)
-        .json(&payload)
-        .build();
-    let resp = app.execute(inject_tenant(r, org_id)).await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "create fault: {}",
-        resp.text()
-    );
-    Uuid::parse_str(resp.json_value()["id"].as_str().expect("id")).expect("uuid")
+/// Seed a fault directly via SQL — mirrors the pattern from `faults_cross_org_idor_tests`.
+/// Using raw SQL avoids the HTTP create path, which requires `host_tenant_middleware` to
+/// be mounted (TestApp does not mount it). The `reporter_id` must belong to the test user
+/// so that `GET /api/v1/faults/my` returns the row.
+async fn seed_fault(
+    pool: &sqlx::PgPool,
+    org_id: Uuid,
+    building_id: Uuid,
+    reporter_id: Uuid,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO faults (
+               organization_id, building_id, reporter_id,
+               title, description, location_description, category, priority
+           )
+           VALUES (
+               $1, $2, $3,
+               'Test Fault', 'Integration test fault', 'Basement',
+               'plumbing'::fault_category, 'medium'::fault_priority
+           )
+           RETURNING id"#,
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .bind(reporter_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed fault")
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +103,7 @@ async fn test_get_fault_returns_detail(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     let r = app
         .get(&format!("/api/v1/faults/{}", fault_id))
@@ -129,7 +131,7 @@ async fn test_update_fault_title(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     let r = app
         .put(&format!("/api/v1/faults/{}", fault_id))
@@ -157,7 +159,7 @@ async fn test_update_fault_status_to_in_progress(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     let r = app
         .put(&format!("/api/v1/faults/{}/status", fault_id))
@@ -184,7 +186,7 @@ async fn test_resolve_fault(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     let r = app
         .post(&format!("/api/v1/faults/{}/resolve", fault_id))
@@ -211,7 +213,7 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     // Resolve first
     let r = app
@@ -260,7 +262,7 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     // Resolve first
     let r = app
@@ -304,7 +306,7 @@ async fn test_list_my_faults(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    create_fault(&app, &token, org_id, building_id).await;
+    seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     let r = app
         .get("/api/v1/faults/my")
@@ -340,7 +342,7 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     // Add comment
     let r = app
@@ -384,7 +386,7 @@ async fn test_add_work_note(pool: PgPool) {
         .expect("user id");
     seed_membership(&app.pool, org_id, user_id).await;
     let building_id = seed_building(&app.pool, org_id).await;
-    let fault_id = create_fault(&app, &token, org_id, building_id).await;
+    let fault_id = seed_fault(&app.pool, org_id, building_id, user_id).await;
 
     let r = app
         .post(&format!("/api/v1/faults/{}/work-notes", fault_id))
