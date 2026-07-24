@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-24",
+  "generated_by": "dispatcher-tier1d",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (research backlog buffer starved, below floor; scripted refills empty). No CHURN_FILES passed to this standalone slice, so churn-alignment did not apply. state.review_cursor oldest entry is mobile-native-kmp (2026-07-16), but a 2026-07-24-mobile-native-kmp-tier1d.json signal was already produced today by a prior tier1d slice; ppt-web-core (cursor=2026-07-24) was also already covered today. Next oldest-unreviewed segment WITHOUT a today signal file is reality-web (review_cursor.reality-web=2026-07-17) -> selected to avoid duplicate work. Saturation check: backlog.json has 0 OPEN code-review-finding rows for reality-web (no saturation-skip). Frontend expert (primary; reality-web has no secondary) ran static-only over frontend/apps/reality-web/src/. All 3 evidence line numbers re-verified by direct file read on 2026-07-24. Capped at 3 highest-severity.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "note": "SSR data paths are well-guarded (listing detail page null-checks + parseListingDetail normalizer; layout-revalidate route has HMAC + replay protection). console.error hits are all legitimate catch/error-boundary paths and `as unknown as` casts are confined to *.test files -> neither flagged. Real issues are on public client pages: two profile routes ship MOCK/hardcoded data and one primary search path lacks an error branch.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11,20 — the public, SEO-indexed agent profile route imports MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS and sets `const agent = MOCK_AGENT` (line 20); the [id] route param is never read, so every agent URL renders the same fabricated agent, listings, and reviews to real users. Fix: fetch the agent by id and remove the ./_mock dependency.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:21-27 — handleSendMessage only flips local messageSent state and closes the modal; the contact form sends nothing to any API, so inquiries from this page are silently dropped."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-iserror",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoading } = useListings(filters, currentPage)` destructures neither isError nor an onError; on API failure `data` is undefined.",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:337 — `listings={data?.data ?? []}` then renders the empty 'no results' state on API failure, making a backend outage indistinguishable from a genuinely empty search on the portal's primary search path. error.tsx does not catch this (a rejected TanStack query sets isError, it does not throw during render). Fix: branch on isError with a retry/error UI."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-profile-pages-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,47,157,169,219,223,279,303,306 — user-facing copy hardcoded in Slovak with no next-intl on a 4-language app (sk/cs/de/en): 'Nacitavam...' (36), 'Kancelaria sa nenasla.' (47), 'O kancelarii' (157), 'Nas tim' (169), 'Aktivne ponuky' (219), 'Ziadne aktivne ponuky.' (223), 'Kontakt' (279), 'Navstivit web' (303), 'Licencia:' (306). File header comment acknowledges 'hardcoded Slovak copy', so cs/de/en visitors see Slovak.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:~154 — same class of gap on the realtor profile route ('Kontaktovat', 'Overeny makler', 'O maklerovi', ...), reinforcing a portal-wide i18n hole on the public profile pages."
+      ]
+    }
+  ]
+}

@@ -8267,6 +8267,28 @@
       "merge_attempted_at": "2026-07-04T18:13:02Z"
     },
     {
+      "task_id": "test-scheduler-target-ids-regression-2026-07-23",
+      "branch": "auto-impl/test-scheduler-target-ids-regression-202-e4affd38",
+      "status": "merged",
+      "claimed_at": "2026-07-24T06:12:51Z",
+      "last_updated": "2026-07-24T10:26:07Z",
+      "status_changed_at": "2026-07-24T10:26:07Z",
+      "pr_number": 2520,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2520",
+      "merged_at": "2026-07-24T10:26:07Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=d7905611b9f5fec2f57d456178077c7b1fde0122 note=approve-test-only-backfill;dedup-existing-bot-review",
+      "last_reviewed_oid": "d7905611b9f5fec2f57d456178077c7b1fde0122",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "triage-dispatcher-mcp-push-large-file-issue-1014",
       "branch": "auto-impl/triage-dispatcher-mcp-push-large-file-is-b746df24",
       "status": "merged",
@@ -8355,5 +8377,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T10:11:41Z"
+  "archived_at": "2026-07-24T10:26:31Z"
 }
