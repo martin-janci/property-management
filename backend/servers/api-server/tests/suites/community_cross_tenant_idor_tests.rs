@@ -68,6 +68,19 @@ async fn seed_group(pool: &PgPool, building_id: Uuid, owner: Uuid, slug: &str) -
     .expect("seed group")
 }
 
+async fn seed_group_member(pool: &PgPool, group_id: Uuid, user_id: Uuid) {
+    sqlx::query(
+        r#"INSERT INTO community_group_members (group_id, user_id, role)
+           VALUES ($1, $2, 'member')
+           ON CONFLICT (group_id, user_id) DO NOTHING"#,
+    )
+    .bind(group_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed group member");
+}
+
 async fn seed_post(pool: &PgPool, group_id: Uuid, author: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO community_posts (group_id, author_id, content)
@@ -121,6 +134,7 @@ struct Ctx {
     app: TestApp,
     pool: PgPool,
     org_a: Uuid,
+    user_a: Uuid,
     // org-A resources (legitimate — the caller owns these)
     group_a: Uuid,
     post_a: Uuid,
@@ -162,6 +176,7 @@ async fn setup(pool: PgPool) -> Ctx {
         app,
         pool,
         org_a,
+        user_a: user_id,
         group_a,
         post_a,
         token,
@@ -234,6 +249,63 @@ async fn create_post_cross_tenant_404(pool: PgPool) {
     assert_eq!(
         before, after,
         "no post row may be written into org B's group"
+    );
+}
+
+/// IG3 regression (issue #2529, follow-up to PR #2498): an authenticated org-A
+/// caller joining org B's group must get 404 and insert NO membership row.
+/// Fails on pre-fix `dev` (returns 200 and a `community_group_members` row for
+/// the org-A user lands under org B's group).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn join_group_cross_tenant_404(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/groups/{}/join", ctx.group_b),
+            json!({}),
+        )
+        .await;
+    assert_404(&resp, "join_group");
+
+    let members = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_group_members WHERE group_id = $1",
+            ctx.group_b,
+        )
+        .await;
+    assert_eq!(members, 0, "no membership may land on org B's group");
+}
+
+/// IG3 regression (issue #2529): an authenticated org-A caller leaving org B's
+/// group must get 404 and DELETE no membership row. We seed a membership into
+/// org B's group first and assert it survives the cross-tenant leave attempt.
+/// Fails on pre-fix `dev` (returns 200 and deletes the seeded row).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn leave_group_cross_tenant_404(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    // A pre-existing membership on org B's group (same user id satisfies the FK;
+    // tenant ownership flows through group_b -> org B).
+    seed_group_member(&ctx.pool, ctx.group_b, ctx.user_a).await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/groups/{}/leave", ctx.group_b),
+            json!({}),
+        )
+        .await;
+    assert_404(&resp, "leave_group");
+
+    let members = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_group_members WHERE group_id = $1",
+            ctx.group_b,
+        )
+        .await;
+    assert_eq!(
+        members, 1,
+        "org B's membership row must not be deleted cross-tenant"
     );
 }
 
@@ -324,6 +396,34 @@ async fn create_inquiry_cross_tenant_404(pool: PgPool) {
 // ============================================================================
 // Same-tenant (must still succeed — guard doesn't block legitimate writes)
 // ============================================================================
+
+/// The tenant guard must not regress the happy path: a caller can still join a
+/// group its own org owns (2xx + membership row written).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn join_group_same_tenant_200(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/groups/{}/join", ctx.group_a),
+            json!({}),
+        )
+        .await;
+    assert!(
+        resp.status.is_success(),
+        "same-tenant join_group should 2xx, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let members = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_group_members WHERE group_id = $1",
+            ctx.group_a,
+        )
+        .await;
+    assert_eq!(members, 1, "the legitimate membership must be written");
+}
 
 /// The tenant guard must not regress the happy path: a caller can still react
 /// to a post its own org owns.

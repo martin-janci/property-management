@@ -456,6 +456,8 @@ pub async fn join_group(
     principal: RequestPrincipal,
     Path(path): Path<GroupIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_group_access(&state, &principal, path.id).await?;
+
     state
         .community_repo
         .join_group(path.id, principal.user_id)
@@ -488,6 +490,8 @@ pub async fn leave_group(
     principal: RequestPrincipal,
     Path(path): Path<GroupIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_group_access(&state, &principal, path.id).await?;
+
     state
         .community_repo
         .leave_group(path.id, principal.user_id)
