@@ -226,7 +226,7 @@ async fn messaging_happy_paths(pool: PgPool) {
     let blocked_body = list_blocked.json_value();
     assert_eq!(blocked_body["count"].as_i64(), Some(1));
     assert_eq!(
-        blocked_body["blockedUsers"][0]["blockedId"].as_str(),
+        blocked_body["blockedUsers"][0]["blockedUser"]["id"].as_str(),
         Some(bob.to_string().as_str())
     );
 

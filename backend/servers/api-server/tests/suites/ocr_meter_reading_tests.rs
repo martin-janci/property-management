@@ -172,11 +172,13 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
         Uuid::parse_str(body["reading_id"].as_str().unwrap()).expect("reading_id is a UUID");
 
     // Verify the row actually landed in the DB.
-    let row = sqlx::query("SELECT source, status, photo_url FROM meter_readings WHERE id = $1")
-        .bind(reading_id)
-        .fetch_one(&pool)
-        .await
-        .expect("reading must exist in DB");
+    let row = sqlx::query(
+        "SELECT source::text, status::text, photo_url FROM meter_readings WHERE id = $1",
+    )
+    .bind(reading_id)
+    .fetch_one(&pool)
+    .await
+    .expect("reading must exist in DB");
 
     let source: String = row.get("source");
     let status: String = row.get("status");

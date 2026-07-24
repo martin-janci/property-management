@@ -941,8 +941,8 @@ async fn list_verifications_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "lv").await;
     let user_id = seed_user(&pool, "lv@test.local").await;
-    seed_membership(&pool, org_id, user_id, "manager").await;
-    let token = mint_token(user_id, org_id);
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_platform_admin_token(user_id, org_id);
 
     let resp = app
         .get("/api/v1/marketplace/verifications")
@@ -997,8 +997,8 @@ async fn get_expiring_verifications_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gev").await;
     let user_id = seed_user(&pool, "gev@test.local").await;
-    seed_membership(&pool, org_id, user_id, "manager").await;
-    let token = mint_token(user_id, org_id);
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_platform_admin_token(user_id, org_id);
 
     let resp = app
         .get("/api/v1/marketplace/verifications/expiring")

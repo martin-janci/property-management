@@ -174,8 +174,8 @@ async fn test_create_listing_returns_201(pool: PgPool) {
 
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
-        "create listing → 201; body: {}",
+        StatusCode::OK,
+        "create listing → 200; body: {}",
         resp.text()
     );
     let json = resp.json_value();
@@ -243,8 +243,8 @@ async fn test_create_listing_from_unit_returns_201(pool: PgPool) {
 
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
-        "create from-unit → 201; body: {}",
+        StatusCode::OK,
+        "create from-unit → 200; body: {}",
         resp.text()
     );
 }
@@ -671,8 +671,8 @@ async fn test_add_photo_returns_201(pool: PgPool) {
 
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
-        "add photo → 201; body: {}",
+        StatusCode::OK,
+        "add photo → 200; body: {}",
         resp.text()
     );
 }

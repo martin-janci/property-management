@@ -420,10 +420,10 @@ impl RentalRepository {
         let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, Option<String>, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
             r#"
             SELECT
-                b.id, b.unit_id, u.designation, bld.name,
+                b.id, b.unit_id, u.designation, COALESCE(bld.name, ''),
                 b.platform::text, b.external_booking_id, b.guest_name, b.guest_count,
                 b.check_in, b.check_out, b.total_amount, b.currency,
-                b.status,
+                b.status::text,
                 (SELECT status FROM rental_guests WHERE booking_id = b.id AND is_primary = true LIMIT 1)
             FROM rental_bookings b
             JOIN units u ON u.id = b.unit_id

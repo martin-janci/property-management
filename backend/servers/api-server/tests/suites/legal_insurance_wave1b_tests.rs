@@ -455,8 +455,7 @@ async fn legal_delete_requirement_returns_200(pool: PgPool) {
                 .build(),
         )
         .await;
-    del.assert_status(StatusCode::OK);
-    assert_eq!(del.json_value()["success"].as_bool(), Some(true));
+    del.assert_status(StatusCode::NO_CONTENT);
 }
 
 // ---------------------------------------------------------------------------

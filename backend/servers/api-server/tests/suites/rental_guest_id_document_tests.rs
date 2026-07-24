@@ -211,7 +211,7 @@ async fn upload_succeeds_sets_url_and_records_row(pool: PgPool) {
     let body = multipart_file(
         "passport.png",
         "image/png",
-        &[0x89, b'P', b'N', b'G', 1, 2, 3],
+        &[0x89, b'P', b'N', b'G', b'\r', b'\n', 0x1a, b'\n', 1, 2, 3],
     );
     let resp = app.execute(upload_request(guest, &token, org, body)).await;
 
