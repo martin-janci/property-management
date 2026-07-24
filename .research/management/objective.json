@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "code-review-api-handlers-community-cross-tenant-idor",
-  "selected_at": "2026-07-23T20:08:50Z",
+  "epic_prefix": "code-review-api-handlers-community-unauthenticated-reads",
+  "selected_at": "2026-07-24T00:08:22Z",
   "last_action": "repick",
-  "reason": "prior target 'chore-stale-pr-2433-ios-layout-2026-07-23' exhausted; closest-to-done is 'code-review-api-handlers-community-cross-tenant-idor' (open=1 claimable=1)",
+  "reason": "prior target 'code-review-api-handlers-community-cross-tenant-idor' exhausted; closest-to-done is 'code-review-api-handlers-community-unauthenticated-reads' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

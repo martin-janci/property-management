@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-24",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: claimable=22 < floor=36; scripted refill tiers empty). No fresh CHURN_FILES handed to this slice, so churn-alignment did not apply -> oldest-unreviewed. From state.review_cursor the ascending order is ppt-web-core=2026-07-15 (oldest), mobile-native-kmp=2026-07-16, reality-web=2026-07-17, reality-server=2026-07-18, api-core=2026-07-20, ppt-web-ui=2026-07-21, mobile-rn=2026-07-22, api-handlers=2026-07-23. Winner = ppt-web-core. Not backlog-saturated (0 open code-review-finding items for ANY segment in backlog.json; threshold is >=3 open for the winning segment). Note: a ppt-web-core tier1d slice already landed 2026-07-22 covering lib/api.ts (client-never-configured, non-idempotent-retry) + lib/errorHandler.ts (i18n gap); this run deliberately targets DIFFERENT core files (contexts/AuthContext.tsx init path, contexts/WebSocketContext.tsx, lib/websocket.ts) so findings are fresh and non-duplicative. Segment root: frontend/apps/ppt-web/src/ core areas only (hooks/, lib/, contexts/, routes/) EXCLUDING pages/ + components/ + features/ (= ppt-web-ui). Skill map path frontend/ppt-web/src/ resolves to the frontend/apps/ workspace layout. Frontend expert, static-only, no secondary (ppt-web-core has no secondary in the skill matrix).",
+  "experts_used": [
+    "frontend"
+  ],
+  "review_scope_notes": "Grep-driven hit-lists: console.* (usePerformanceMetrics.ts + lib/api.ts retry-warn are DEV-gated via import.meta.env.DEV = not reported; lib/websocket.ts is NOT gated = reported), as-any/as-unknown-as (0 in strict core dirs; the hits in features/settings/SessionsPage + features/iot are ppt-web-ui/feature scope, out-of-segment), localStorage/token storage, refresh/reconnect flows. Read in full: contexts/AuthContext.tsx (mount init + refreshTokenInternal + decodeJwtPayload/deriveActiveRole), contexts/WebSocketContext.tsx (service-create + auth-change effects), lib/websocket.ts connect()/send()/handlers, hooks/useWebSocket.ts. Verified NOT reportable: MSW is dynamic-import + DEV-gated (main.tsx), top-level ErrorBoundary present, useWebSocket/useWebSocketSubscriptions have correct effect cleanup, decodeJwtPayload is explicitly unverified-client-side-only (server still enforces), refreshTokenInternal single-flight guard + logout cache purge are sound. 3 fresh findings = cap reached. This run intentionally does NOT re-flag the 2026-07-22 lib/api.ts + errorHandler.ts findings.",
+  "findings_count": 3,
+  "fresh_findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-authctx-init-stale-role",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 — the mount-time initializeAuth effect duplicates token-refresh logic inline (calls getAuthApi().refreshToken() directly) instead of delegating to refreshTokenInternal (AuthContext.tsx:346-383). The inline path sets the new access/refresh tokens but SKIPS the deriveActiveRole re-derivation that refreshTokenInternal performs (AuthContext.tsx:366-374, the #574 multi-tenant fix). Result: on a cold app boot where the access token is absent/expired but a refresh token is present, the user's stored `role` is NOT re-derived from the fresh JWT — a multi-tenant user whose active tenant/role changed server-side boots with a STALE role (falls into the `if (storedUser) setUser(storedUser)` branch at line 408-410 using the old persisted role) until a later refreshTokenInternal call corrects it. The #574 fix is therefore incomplete on the init path. The inline path also bypasses the single-flight refresh guard (isRefreshing/refreshPromise). Fix: have initializeAuth call refreshTokenInternal() in the refresh branch so role derivation + concurrency guard apply uniformly."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-token-rotation-stale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-259 — the auth-change effect re-runs on [auth.isAuthenticated, auth.accessToken] and calls service.connect() whenever the access token changes. But WebSocketService.connect() (lib/websocket.ts) short-circuits with `if (this.socket && this.socket.readyState === WebSocket.OPEN) return; // Already connected`. AuthContext rotates BOTH tokens on every refresh (refreshTokenInternal sets a new accessToken, AuthContext.tsx:356), so on a normal token rotation the effect fires while the socket is still OPEN and connect() returns early — the live WebSocket is NEVER re-handshaked with the fresh token.",
+        "The JWT is transmitted only as the `?token=<jwt>` handshake query param (lib/websocket.ts:88-94, buildWebSocketUrl) and validated by api-server once at connection time (documented at lib/websocket.ts:80-86). Consequently a long-lived WS connection keeps running under the ORIGINAL access token past its TTL. Two failure modes: (a) if api-server enforces token expiry mid-connection the socket is dropped and auto-reconnect recovers (reconnect reads getToken() -> ref -> fresh token), causing avoidable drop/reconnect churn plus a window where events flow on an expired token; (b) if the server does not re-validate mid-connection, a session whose token was rotated/revoked (e.g. logout-elsewhere) keeps receiving realtime push data because the WS was never re-authenticated. Fix: when the token changes and a socket is already open, force a reconnect (disconnect()+connect(), or a dedicated re-auth) rather than relying on connect()'s already-open early-return. Confidence medium: severity of (b) depends on reality/api-server WS TTL enforcement, not traced in this static frontend slice."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-ungated-console",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "chore",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts — 10 console.warn/console.error calls ship to the production console with NO import.meta.env.DEV guard: lines 344, 352, 472, 484, 489, 504, 519, 559, 570, 621. Only line 203 (connection-URL logging) is DEV-gated. This is inconsistent with the codebase's own convention of gating console output on import.meta.env.DEV (lib/api.ts:199 retry-warn, hooks/usePerformanceMetrics.ts:174 logPerformanceMetrics early-return, main.tsx MSW gating). It also corrects the 2026-07-22 ppt-web-core review's assumption that 'websocket.ts diagnostics = intentional/dev-gated' — the send()/message-parse/handler-error/pong-timeout logs are in fact ungated and run in prod. Low severity (console noise + minor internal-diagnostic leakage of message types / connection state to end-user consoles); wrap operational logs behind DEV or route through a logger that is silent in production."
+      ]
+    }
+  ]
+}

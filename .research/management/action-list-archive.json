@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-23T18:24:42Z",
+  "archived_at": "2026-07-24T00:10:46Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1496,6 +1496,30 @@
         "merged_pr": 2455,
         "merged_at": "2026-07-22T22:25:51Z",
         "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-community-cross-tenant-idor",
+      "action": "SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=3 conf=medium vector=security) | gc1-reconcile 2026-07-24T00:06:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md",
+        "score": 3,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2498,
+        "merged_at": "2026-07-23T22:16:56Z",
+        "at": "2026-07-24T00:06:07Z"
       }
     },
     {

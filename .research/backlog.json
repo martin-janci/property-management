@@ -4876,7 +4876,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-07-23 (api-handlers segment)"
       ],
@@ -4895,7 +4895,12 @@
       ],
       "created_at": "2026-07-23",
       "updated_at": "2026-07-23",
-      "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md"
+      "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md",
+      "reconciled": {
+        "at": "2026-07-24T00:06:07Z",
+        "assignment_status": "merged",
+        "pr_number": 2498
+      }
     }
   ]
 }
