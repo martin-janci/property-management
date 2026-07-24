@@ -425,7 +425,45 @@ export async function uploadDocumentDirect(
     size_bytes: params.file.size,
   };
 
-  return createDocument(registration);
+  // ORPHANED-OBJECT CLEANUP (#2534): by this point step 2 has already PUT the
+  // bytes into S3. If registration (step 3) throws — validation, auth, or a
+  // dropped connection — the object is left in the bucket with no `documents`
+  // row referencing it, so every failed/abandoned upload would leak storage.
+  //
+  // There is NO client-reachable compensating delete today:
+  //   - `deleteDocument` operates on a document *id*, which does not exist yet
+  //     (registration is exactly what failed), and
+  //   - there is no `DELETE`-by-`file_key` endpoint on the api-server. Adding
+  //     one is a backend (pm-backend) change: it would wrap the existing
+  //     `StorageService::delete` behind an auth+org-scoped route
+  //     (`validate_file_key_org_scope` already exists) and pull the live-infra
+  //     api-server test suite into scope — out of scope for this pm-frontend
+  //     follow-up.
+  //
+  // Compensating mechanism (the authorised alternative in #2534): reap these
+  // unreferenced keys with an S3 bucket LIFECYCLE RULE on the storage bucket
+  // used by `StorageService` (the `generate_storage_key` upload namespace):
+  //
+  //   Expire objects under the org upload prefix after 1 day. This is safe
+  //   because a successful upload registers within seconds and the presigned
+  //   PUT URL itself lives only ~5 min, so any object older than a day with no
+  //   matching `documents.file_key` is a presigned-but-never-registered
+  //   orphan. Configure this once on the S3/MinIO bucket (infra/DevOps) — it is
+  //   the durable backstop for the leak described above.
+  //
+  // Client-side we can only make the orphan observable so it is greppable in
+  // logs/telemetry and correlatable with the lifecycle sweep; we re-throw the
+  // ORIGINAL registration error unchanged so callers still see the real
+  // failure.
+  try {
+    return await createDocument(registration);
+  } catch (err) {
+    console.warn(
+      `[documents] registration failed after direct-to-S3 upload; orphaned object left at file_key="${presigned.file_key}" — it will be reaped by the bucket lifecycle rule (see #2534)`,
+      err
+    );
+    throw err;
+  }
 }
 
 // --- Document Sharing (Story 7A.5) ---

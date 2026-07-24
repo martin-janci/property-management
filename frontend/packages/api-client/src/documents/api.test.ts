@@ -213,4 +213,60 @@ describe('documents api client', () => {
 
     vi.unstubAllGlobals();
   });
+
+  it('uploadDocumentDirect surfaces the orphaned file_key when registration fails (#2534)', async () => {
+    // Regression for the orphaned-S3-object leak: after the bytes are PUT to S3
+    // (step 2), a failing register (step 3) must NOT be swallowed — the caller
+    // still sees the real registration error — and the orphaned `file_key`
+    // must be logged so the lifecycle-rule sweep / ops can correlate it.
+    const listeners: Record<string, () => void> = {};
+    const xhrMock = {
+      upload: { addEventListener: vi.fn() },
+      addEventListener: (evt: string, cb: () => void) => {
+        listeners[evt] = cb;
+      },
+      open: vi.fn(),
+      setRequestHeader: vi.fn(),
+      send: vi.fn(() => {
+        queueMicrotask(() => {
+          xhrMock.status = 200;
+          listeners.load?.();
+        });
+      }),
+      status: 0,
+    };
+    vi.stubGlobal('XMLHttpRequest', function XMLHttpRequestMock() {
+      return xhrMock;
+    });
+
+    const registrationError = new Error('registration boom (HTTP 422)');
+    // 1) upload-url succeeds  2) register document rejects
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        mockOkResponse({
+          url: 'https://s3.example/bucket/key?sig=abc',
+          file_key: 'org/2026/07/uuid_report.pdf',
+          content_type: 'application/pdf',
+          method: 'PUT',
+          expires_at: '2026-07-15T00:05:00Z',
+        })
+      )
+      .mockRejectedValueOnce(registrationError);
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const file = new File(['hello'], 'report.pdf', { type: 'application/pdf' });
+    // The ORIGINAL registration error is re-thrown unchanged (not swallowed).
+    await expect(
+      uploadDocumentDirect({ file, title: 'Report', category: 'report', organizationId: 'org-1' })
+    ).rejects.toBe(registrationError);
+
+    // The S3 PUT (step 2) did happen — this is why the object is now orphaned.
+    expect(xhrMock.open).toHaveBeenCalledWith('PUT', 'https://s3.example/bucket/key?sig=abc');
+    // The orphan is observable: the warning names the exact orphaned file_key.
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain('org/2026/07/uuid_report.pdf');
+
+    vi.unstubAllGlobals();
+  });
 });
