@@ -22,6 +22,32 @@ use crate::common::{
     TestApp, TestUser,
 };
 
+/// Inject a `ResolvedTenant` extension so `RequestPrincipal` can resolve the
+/// tenant without a running `host_tenant_middleware`.
+fn inject_tenant(mut req: Request<Body>, org_id: Uuid) -> Request<Body> {
+    use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
+    req.extensions_mut().insert(ResolvedTenant {
+        organization_id: org_id,
+        source: TenantSource::Subdomain,
+    });
+    req
+}
+
+/// Seed an active `user_memberships` row so `RequestPrincipal` membership
+/// checks pass for endpoints that use it instead of `RlsConnection`.
+async fn seed_user_membership(pool: &PgPool, user_id: Uuid, org_id: Uuid) {
+    sqlx::query(
+        r#"INSERT INTO user_memberships (user_id, organization_id, role)
+           VALUES ($1, $2, 'org_admin')
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(user_id)
+    .bind(org_id)
+    .execute(pool)
+    .await
+    .expect("seed user_membership");
+}
+
 const UUID: &str = "00000000-0000-0000-0000-000000000001";
 
 fn authed(
@@ -86,8 +112,8 @@ async fn seed_workflow(pool: &PgPool, org_id: Uuid, creator: Uuid) -> Uuid {
 // Automation — Rules
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_automation_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -100,8 +126,8 @@ async fn test_list_automation_rules_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list automation rules");
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_create_automation_rule_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -137,8 +163,8 @@ async fn test_get_automation_rule_not_found(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -403,8 +429,8 @@ async fn test_get_sentiment_dashboard_returns_200(pool: PgPool) {
 // AI Equipment
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_create_equipment_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -420,7 +446,7 @@ async fn test_create_equipment_returns_201(pool: PgPool) {
         .execute(authed(
             &token,
             Method::POST,
-            "/api/v1/ai/equipment/",
+            "/api/v1/ai/equipment",
             Some(body),
             org_id,
         ))
@@ -428,8 +454,8 @@ async fn test_create_equipment_returns_201(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED, "create ai equipment");
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_equipment_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -541,8 +567,8 @@ async fn test_list_maintenance_returns_200(pool: PgPool) {
 // AI Workflows
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_create_workflow_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -564,8 +590,8 @@ async fn test_create_workflow_returns_201(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED, "create workflow");
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_workflows_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -620,8 +646,8 @@ async fn test_list_workflow_executions_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list workflow executions");
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -639,8 +665,8 @@ async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list workflow templates");
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();

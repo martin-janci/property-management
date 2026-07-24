@@ -91,8 +91,8 @@ async fn seed_prediction(pool: &PgPool, equipment_id: Uuid) -> Uuid {
 
 async fn seed_chat_session(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
-        "INSERT INTO ai_chat_sessions (organization_id, user_id, title, language)
-         VALUES ($1, $2, 'Test Session', 'en') RETURNING id",
+        "INSERT INTO ai_chat_sessions (organization_id, user_id, title)
+         VALUES ($1, $2, 'Test Session') RETURNING id",
     )
     .bind(org_id)
     .bind(user_id)
@@ -189,8 +189,8 @@ async fn create_chat_session_succeeds(pool: PgPool) {
     assert!(resp.json_value()["id"].is_string());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_chat_sessions_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -204,7 +204,6 @@ async fn list_chat_sessions_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_chat_session_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -227,7 +226,6 @@ async fn get_chat_session_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_chat_session_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -245,8 +243,8 @@ async fn delete_chat_session_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_chat_messages_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -265,8 +263,8 @@ async fn list_chat_messages_succeeds(pool: PgPool) {
     assert!(resp.json_value().is_array());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn provide_chat_feedback_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -314,8 +312,8 @@ async fn get_sentiment_trends_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_sentiment_alerts_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -360,8 +358,8 @@ async fn get_sentiment_thresholds_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_sentiment_thresholds_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -394,8 +392,8 @@ async fn get_sentiment_dashboard_succeeds(pool: PgPool) {
 // AI Equipment — ai/equipment.rs (11 endpoints, RlsConnection)
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn create_equipment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -418,8 +416,8 @@ async fn create_equipment_succeeds(pool: PgPool) {
     assert!(resp.json_value()["id"].is_string());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_equipment_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -532,8 +530,8 @@ async fn create_equipment_maintenance_succeeds(pool: PgPool) {
     assert!(resp.json_value()["id"].is_string());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_equipment_maintenance_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -635,8 +633,8 @@ async fn create_pet_registration_succeeds(pool: PgPool) {
     assert!(resp.json_value()["registration"]["id"].is_string());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_pet_registrations_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -649,8 +647,8 @@ async fn list_pet_registrations_succeeds(pool: PgPool) {
     assert!(resp.json_value().is_array());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_pet_registration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -762,8 +760,8 @@ async fn create_vehicle_registration_succeeds(pool: PgPool) {
     assert!(resp.json_value()["registration"]["id"].is_string());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_vehicle_registrations_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -776,8 +774,8 @@ async fn list_vehicle_registrations_succeeds(pool: PgPool) {
     assert!(resp.json_value().is_array());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_vehicle_registration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -885,8 +883,8 @@ async fn create_parking_spot_succeeds(pool: PgPool) {
     assert!(resp.json_value()["spot"]["id"].is_string());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_parking_spots_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -958,8 +956,8 @@ async fn delete_parking_spot_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::NO_CONTENT, "body: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_registry_rules_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();

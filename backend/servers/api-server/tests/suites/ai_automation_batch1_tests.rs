@@ -399,8 +399,8 @@ async fn test_delete_parking_spot_not_found_returns_client_error(pool: PgPool) {
 // Registry — Building Rules & Statistics
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_get_registry_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
