@@ -96,7 +96,7 @@ impl NewsArticleRepository {
             r#"
             SELECT
                 a.id, a.organization_id, a.author_id, a.title, a.content,
-                a.excerpt, a.cover_image_url, a.building_ids, a.status,
+                a.excerpt, a.cover_image_url, a.building_ids, a.status::TEXT AS status,
                 a.published_at, a.archived_at, a.pinned, a.pinned_at, a.pinned_by,
                 a.comments_enabled, a.reactions_enabled, a.view_count,
                 a.reaction_count, a.comment_count, a.share_count,

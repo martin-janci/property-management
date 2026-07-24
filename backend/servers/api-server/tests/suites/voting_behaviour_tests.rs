@@ -350,10 +350,7 @@ async fn test_check_eligibility_returns_result(pool: PgPool) {
         resp.text()
     );
     let body = resp.json_value();
-    assert!(
-        body.get("isEligible").is_some() || body.get("is_eligible").is_some(),
-        "expected eligibility field"
-    );
+    assert!(body.get("can_vote").is_some(), "expected can_vote field");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

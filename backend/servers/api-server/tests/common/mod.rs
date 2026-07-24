@@ -777,3 +777,62 @@ pub async fn create_authenticated_user_with_org(
 
     (access_token, org_id)
 }
+
+/// Mint a JWT in `api_core::Claims` format with the given tenant role.
+///
+/// Login tokens from `create_authenticated_user` carry `roles: [...]` (plural,
+/// the services::JwtService format). `TenantExtractor` reads `role` (singular,
+/// `api_core::Claims` format) — so manager-gated handlers return 403 for Guest
+/// when given a plain login token. Use this helper (or `create_manager_with_org`)
+/// when the handler checks `tenant.role.is_manager()`.
+pub fn mint_tenant_token(
+    user_id: Uuid,
+    email: &str,
+    org_id: Uuid,
+    role: common::tenant::TenantRole,
+) -> String {
+    use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+
+    const TEST_JWT_SECRET: &str =
+        "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+
+    let now = chrono::Utc::now().timestamp();
+    let claims = api_core::Claims {
+        sub: user_id,
+        exp: now + 3600,
+        iat: now,
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some(role),
+        email: email.to_string(),
+        name: "Test User".to_string(),
+    };
+
+    encode(
+        &Header::new(Algorithm::HS256),
+        &claims,
+        &EncodingKey::from_secret(TEST_JWT_SECRET.as_bytes()),
+    )
+    .expect("mint tenant token")
+}
+
+/// Register + org-seed a user (like `create_authenticated_user_with_org`),
+/// but return a JWT with `role: "org_admin"` in `api_core::Claims` format so
+/// `TenantExtractor` resolves the role correctly for manager-gated handlers.
+pub async fn create_manager_with_org(app: &TestApp, user: &TestUser, slug: &str) -> (String, Uuid) {
+    let (_login_token, org_id) = create_authenticated_user_with_org(app, user, slug).await;
+
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+
+    let token = mint_tenant_token(
+        user_id,
+        &user.email,
+        org_id,
+        common::tenant::TenantRole::OrgAdmin,
+    );
+    (token, org_id)
+}
