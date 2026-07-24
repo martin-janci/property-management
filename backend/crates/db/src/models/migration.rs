@@ -14,6 +14,10 @@ use uuid::Uuid;
 /// Type of data being imported.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "import_data_type", rename_all = "snake_case")]
+// serde casing must match the wire contract (frontend `ImportDataType` is
+// lowercase, e.g. "buildings") — without this the HTTP body/query would
+// (de)serialize as PascalCase and reject valid client payloads with 422.
+#[serde(rename_all = "snake_case")]
 pub enum ImportDataType {
     Buildings,
     Units,
