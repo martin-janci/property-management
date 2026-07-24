@@ -4988,6 +4988,196 @@
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
       "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-analytics-portfolio-success-tests-2026-07-24",
+      "title": "Churn hotspot: analytics_portfolio_success_tests.rs — 330 lines this run (BIT-567 restore burst)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2507 (BIT-567)",
+        "delta-run 2026-07-24 12:00"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs — 330 add/del in the 09:00–12:00 delta window; sole contributor is the BIT-567 test-restoration wave (PR #2507). Not instability — one-shot un-quarantine burst. Flagged for future churn correlation, not for immediate action."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-documents-forms-batch2-2026-07-24",
+      "title": "Churn hotspot: documents_forms_batch2_happy_path_tests.rs — 255 lines this run (BIT-558)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2440 (BIT-558)",
+        "delta-run 2026-07-24 12:00"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs — 255 add/del in the 09:00–12:00 delta window; sole contributor is PR #2440 (documents-forms batch 2 lease-abstraction import). One-shot restoration; not instability."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-db-fault-repo-2026-07-24",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/fault.rs — 247 lines this run (fault-KPI unification)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2519 (data-fault-kpi-unification)",
+        "delta-run 2026-07-24 12:00"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/fault.rs — 247 add/del in the 09:00–12:00 delta window; driver is PR #2519 (fault-KPI unification with owner/portfolio dashboards). Real production-code churn — worth watching next run for repeated-churn if follow-on PRs land."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/fault.rs"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-navigation-create-listing-stub",
+      "title": "Android CreateListing route wired to Result.failure(NotImplementedError) — silent dead flow for realtors",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (mobile-native-kmp tier1d, kotlin expert)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:473-479 — CreateListing route's onSubmit stubbed to Result.failure(NotImplementedError('Wire to listing API'))",
+        "mobile-native/shared/src/commonMain/kotlin/ — grep 'suspend fun create' returns only createInquiry / createSavedSearch / createMobileToken; no createListing sibling",
+        "Backend POST /api/v1/my/listings is already live (backend/servers/reality-server/src/routes/portal_listings.rs:195-207) — the fix is a pure KMP wiring extension",
+        "CreateListingScreen.kt:120-126 folds the failure into 'publish failed' banner — non-crashing but silently dead for the realtor flow"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": "plans/code-review-mobile-native-kmp-navigation-create-listing-stub.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "title": "SsoService (349 lines) — auth-critical KMP service has zero unit tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (mobile-native-kmp tier1d, kotlin expert)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt (349 lines) — createMobileToken / validateAndLogin / getSession / refreshSession / loginWithPassword all untested in commonTest",
+        "commonTest tree has coverage for InquiryRepository, FavoritesRepository, ListingRepository, but nothing for SsoService — auth is highest-risk untested surface in the shared module"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-no-http-timeout",
+      "title": "HttpClientProvider — shared KMP HttpClient has no request/socket timeout install",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (mobile-native-kmp tier1d, kotlin expert)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — HttpClient config installs ContentNegotiation + Logging + defaultRequest but no `install(HttpTimeout) { requestTimeoutMillis = ...; socketTimeoutMillis = ...; connectTimeoutMillis = ... }`. Any network stall hangs coroutines indefinitely on both Android and iOS."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-data",
+      "title": "Public /realtor/[id] SEO route ships MOCK_AGENT — reality-portal exposes stub data to search engines",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (reality-web tier1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11,20 — imports MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS and sets `const agent = MOCK_AGENT` on a public, SEO-indexed route. Google will index mock content."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-iserror",
+      "title": "Listings page destructure drops isError — API failure renders empty state, not error UI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (reality-web tier1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoading } = useListings(filters, currentPage)` destructures neither isError nor error; on API failure `data` is undefined and the page silently shows the empty-results template, indistinguishable from a legitimate zero-hit query."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-pages-i18n-gap",
+      "title": "Agency and realtor profile pages ship hardcoded Slovak strings — 4-language app has i18n regression",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-24 (reality-web tier1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — user-facing strings hardcoded in Slovak at lines 36, 47, 157, 169, 219, 223, 279, 303, 306 (e.g. 'Načítavam…', 'Agent nebol nájdený') on a 4-language app (sk/cs/de/en); no next-intl wrapper. Same pattern in sibling profile pages."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-07-24",
+      "updated_at": "2026-07-24",
+      "plan": null
     }
   ]
 }

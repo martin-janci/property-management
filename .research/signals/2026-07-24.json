@@ -1,205 +1,383 @@
 {
-  "generated_at": "2026-07-24T03:05:00Z",
-  "since_iso": "2026-07-23T14:43:59Z",
-  "counts": {
-    "merged_prs": 11,
-    "open_prs_touched": 12,
-    "issues_touched": 4,
-    "commits_on_dev": 26
+ "generated_at": "2026-07-24T12:22:58Z",
+ "since_iso": "2026-07-23T14:43:59Z",
+ "counts": {
+  "merged_prs": 19,
+  "open_prs_touched": 12,
+  "issues_touched": 4,
+  "commits_on_dev": 46
+ },
+ "phase_status": {
+  "phase_1_gh_pr_list": "ok",
+  "phase_1_gh_issue_list": "ok",
+  "phase_1_gh_commits": "ok",
+  "phase_1_5_review": "ok (mid-day rerun: ingested mobile-native-kmp + reality-web tier1d slices in addition to earlier ppt-web-core)",
+  "phase_1_6_pm": "ok (already-ran earlier today; skipped in mid-day rerun)"
+ },
+ "signals": [
+  {
+   "id": "dep-update-noise-pr-2491",
+   "type": "dep-update-noise",
+   "source": "PR #2491",
+   "score_delta": 0,
+   "confidence": "high",
+   "candidate_vector": "dep-update",
+   "evidence": [
+    "PR #2491 (dependabot[bot]) \u2014 chore(deps): bump the npm-minor-patch group across 1 directory with 5 updates. Still open at run time."
+   ]
   },
-  "phase_status": {
-    "phase_1_gh_pr_list": "ok",
-    "phase_1_gh_issue_list": "ok",
-    "phase_1_gh_commits": "ok",
-    "phase_1_5_review": "ok (tier1d ppt-web-core slice already ran earlier today; 3 findings integrated)",
-    "phase_1_6_pm": "ok (lightweight upkeep \u2014 cursor advance + epic-10b refresh; role rotation wrap pm-integration -> pm-tech-lead)"
+  {
+   "id": "screen-map-drift-pr-2497-reality",
+   "type": "screen-map-drift",
+   "source": "PR #2497",
+   "score_delta": 0,
+   "confidence": "medium",
+   "candidate_vector": "test-gap",
+   "evidence": [
+    "PR #2497 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts (X-Webhook-Timestamp replay-protection hardening) without touching any docs/screens/reality/*.md \u2014 a strict-letter reality-web drift.",
+    "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen. This is the false-positive class the routine's screen-map-drift heuristic explicitly warns about. Treat as review candidate, do not promote \u2014 Phase 3 readiness gate should keep this out of plans.",
+    "[same-day rerun] already scored in prior commit today; score_delta zeroed to satisfy G4 idempotency."
+   ],
+   "_original_score_delta": 2
   },
-  "signals": [
-    {
-      "id": "dep-update-noise-pr-2491",
-      "type": "dep-update-noise",
-      "source": "PR #2491",
-      "score_delta": 0,
-      "confidence": "high",
-      "candidate_vector": "dep-update",
-      "evidence": [
-        "PR #2491 (dependabot[bot]) \u2014 chore(deps): bump the npm-minor-patch group across 1 directory with 5 updates. Still open at run time."
-      ]
-    },
-    {
-      "id": "screen-map-drift-pr-2497-reality",
-      "type": "screen-map-drift",
-      "source": "PR #2497",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "test-gap",
-      "evidence": [
-        "PR #2497 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts (X-Webhook-Timestamp replay-protection hardening) without touching any docs/screens/reality/*.md \u2014 a strict-letter reality-web drift.",
-        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen. This is the false-positive class the routine's screen-map-drift heuristic explicitly warns about. Treat as review candidate, do not promote \u2014 Phase 3 readiness gate should keep this out of plans."
-      ]
-    },
-    {
-      "id": "code-review-ppt-web-core-authctx-init-stale-role",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-core",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "expert": "frontend",
-      "evidence": [
-        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 \u2014 the mount-time initializeAuth effect duplicates token-refresh logic inline (calls getAuthApi().refreshToken() directly) instead of delegating to refreshTokenInternal (AuthContext.tsx:346-383). The inline path sets the new access/refresh tokens but SKIPS the deriveActiveRole re-derivation that refreshTokenInternal performs (AuthContext.tsx:366-374, the #574 multi-tenant fix). Result: on a cold app boot where the access token is absent/expired but a refresh token is present, the user's stored role is NOT re-derived from the fresh JWT \u2014 a multi-tenant user whose active tenant/role changed server-side boots with a STALE role (falls into the if (storedUser) setUser(storedUser) branch at line 408-410 using the old persisted role) until a later refreshTokenInternal call corrects it. The #574 fix is therefore incomplete on the init path. The inline path also bypasses the single-flight refresh guard (isRefreshing/refreshPromise). Fix: have initializeAuth call refreshTokenInternal() in the refresh branch so role derivation + concurrency guard apply uniformly."
-      ]
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-token-rotation-stale",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-core",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "expert": "frontend",
-      "evidence": [
-        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-259 \u2014 the auth-change effect re-runs on [auth.isAuthenticated, auth.accessToken] and calls service.connect() whenever the access token changes. But WebSocketService.connect() (lib/websocket.ts) short-circuits with 'if (this.socket && this.socket.readyState === WebSocket.OPEN) return; // Already connected'. AuthContext rotates BOTH tokens on every refresh (refreshTokenInternal sets a new accessToken, AuthContext.tsx:356), so on a normal token rotation the effect fires while the socket is still OPEN and connect() returns early \u2014 the live WebSocket is NEVER re-handshaked with the fresh token.",
-        "The JWT is transmitted only as the ?token=<jwt> handshake query param (lib/websocket.ts:88-94, buildWebSocketUrl) and validated by api-server once at connection time. Consequently a long-lived WS connection keeps running under the ORIGINAL access token past its TTL. Two failure modes: (a) if api-server enforces token expiry mid-connection the socket is dropped and auto-reconnect recovers, causing avoidable drop/reconnect churn plus a window where events flow on an expired token; (b) if the server does not re-validate mid-connection, a session whose token was rotated/revoked (e.g. logout-elsewhere) keeps receiving realtime push data because the WS was never re-authenticated. Fix: when the token changes and a socket is already open, force a reconnect (disconnect()+connect(), or a dedicated re-auth) rather than relying on connect()'s already-open early-return. Confidence medium: severity of (b) depends on reality/api-server WS TTL enforcement, not traced in this static frontend slice."
-      ]
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-ungated-console",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-core",
-      "score_delta": 1,
-      "confidence": "medium",
-      "candidate_vector": "refactor",
-      "expert": "frontend",
-      "evidence": [
-        "frontend/apps/ppt-web/src/lib/websocket.ts \u2014 10 console.warn/console.error calls ship to the production console with NO import.meta.env.DEV guard: lines 344, 352, 472, 484, 489, 504, 519, 559, 570, 621. Only line 203 (connection-URL logging) is DEV-gated. This is inconsistent with the codebase's own convention of gating console output on import.meta.env.DEV (lib/api.ts:199 retry-warn, hooks/usePerformanceMetrics.ts:174 logPerformanceMetrics early-return, main.tsx MSW gating). Low severity (console noise + minor internal-diagnostic leakage of message types / connection state to end-user consoles); wrap operational logs behind DEV or route through a logger that is silent in production."
-      ]
-    }
-  ],
-  "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "observed": "exit 0",
-      "expected": "exit 0",
-      "command": "brief header check"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "observed": "true",
-      "expected": "true",
-      "command": "state advanced vs HEAD"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "observed": "true",
-      "expected": "true",
-      "command": "backlog ids unique"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "observed": "true",
-      "expected": "true",
-      "command": "signal dedup"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "observed": "true",
-      "expected": "true",
-      "command": "score cap"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "observed": "n/a",
-      "expected": "n/a",
-      "command": "no plans promoted this run"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "observed": "0 new plans",
-      "expected": "<=2",
-      "command": "plan count"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "observed": "0 non-.research/ paths",
-      "expected": "0",
-      "command": ".research-only diff"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "observed": "0 secret matches",
-      "expected": "0",
-      "command": "secret scan"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "observed": "diff empty",
-      "expected": "diff empty",
-      "command": "backlog.md byte-identity"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "observed": "n/a",
-      "expected": "n/a",
-      "command": "no failed phases this run"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "observed": "n/a",
-      "expected": "n/a",
-      "command": "no thrashing (no plans promoted this run)"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "observed": "staged=7 head=7",
-      "expected": "staged >= head",
-      "command": "archive size"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "observed": "diff empty",
-      "expected": "diff empty",
-      "command": "IDEAS_TRIAGE.md byte-identity"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "observed": "auto_fix_actions=0",
-      "expected": "disciplined",
-      "command": "auto-fix cap + idempotency"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "observed": "cursors valid; CC advanced 1->2, PM advanced 7->0",
-      "expected": "valid",
-      "command": "management artifacts + cursors"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "observed": "0 telegram matches",
-      "expected": "0",
-      "command": "no telegram token"
-    }
-  ],
-  "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run (2 medium-confidence bug findings score=2, 1 medium chore score=1, 1 medium drift signal on API-only route)"
+  {
+   "id": "code-review-ppt-web-core-authctx-init-stale-role",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "ppt-web-core",
+   "score_delta": 0,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "expert": "frontend",
+   "evidence": [
+    "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 \u2014 the mount-time initializeAuth effect duplicates token-refresh logic inline (calls getAuthApi().refreshToken() directly) instead of delegating to refreshTokenInternal (AuthContext.tsx:346-383). The inline path sets the new access/refresh tokens but SKIPS the deriveActiveRole re-derivation that refreshTokenInternal performs (AuthContext.tsx:366-374, the #574 multi-tenant fix). Result: on a cold app boot where the access token is absent/expired but a refresh token is present, the user's stored role is NOT re-derived from the fresh JWT \u2014 a multi-tenant user whose active tenant/role changed server-side boots with a STALE role (falls into the if (storedUser) setUser(storedUser) branch at line 408-410 using the old persisted role) until a later refreshTokenInternal call corrects it. The #574 fix is therefore incomplete on the init path. The inline path also bypasses the single-flight refresh guard (isRefreshing/refreshPromise). Fix: have initializeAuth call refreshTokenInternal() in the refresh branch so role derivation + concurrency guard apply uniformly.",
+    "[same-day rerun] already scored in prior commit today; score_delta zeroed to satisfy G4 idempotency."
+   ],
+   "_original_score_delta": 2
+  },
+  {
+   "id": "code-review-ppt-web-core-ws-token-rotation-stale",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "ppt-web-core",
+   "score_delta": 0,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "expert": "frontend",
+   "evidence": [
+    "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-259 \u2014 the auth-change effect re-runs on [auth.isAuthenticated, auth.accessToken] and calls service.connect() whenever the access token changes. But WebSocketService.connect() (lib/websocket.ts) short-circuits with 'if (this.socket && this.socket.readyState === WebSocket.OPEN) return; // Already connected'. AuthContext rotates BOTH tokens on every refresh (refreshTokenInternal sets a new accessToken, AuthContext.tsx:356), so on a normal token rotation the effect fires while the socket is still OPEN and connect() returns early \u2014 the live WebSocket is NEVER re-handshaked with the fresh token.",
+    "The JWT is transmitted only as the ?token=<jwt> handshake query param (lib/websocket.ts:88-94, buildWebSocketUrl) and validated by api-server once at connection time. Consequently a long-lived WS connection keeps running under the ORIGINAL access token past its TTL. Two failure modes: (a) if api-server enforces token expiry mid-connection the socket is dropped and auto-reconnect recovers, causing avoidable drop/reconnect churn plus a window where events flow on an expired token; (b) if the server does not re-validate mid-connection, a session whose token was rotated/revoked (e.g. logout-elsewhere) keeps receiving realtime push data because the WS was never re-authenticated. Fix: when the token changes and a socket is already open, force a reconnect (disconnect()+connect(), or a dedicated re-auth) rather than relying on connect()'s already-open early-return. Confidence medium: severity of (b) depends on reality/api-server WS TTL enforcement, not traced in this static frontend slice.",
+    "[same-day rerun] already scored in prior commit today; score_delta zeroed to satisfy G4 idempotency."
+   ],
+   "_original_score_delta": 2
+  },
+  {
+   "id": "code-review-ppt-web-core-ws-ungated-console",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "ppt-web-core",
+   "score_delta": 0,
+   "confidence": "medium",
+   "candidate_vector": "refactor",
+   "expert": "frontend",
+   "evidence": [
+    "frontend/apps/ppt-web/src/lib/websocket.ts \u2014 10 console.warn/console.error calls ship to the production console with NO import.meta.env.DEV guard: lines 344, 352, 472, 484, 489, 504, 519, 559, 570, 621. Only line 203 (connection-URL logging) is DEV-gated. This is inconsistent with the codebase's own convention of gating console output on import.meta.env.DEV (lib/api.ts:199 retry-warn, hooks/usePerformanceMetrics.ts:174 logPerformanceMetrics early-return, main.tsx MSW gating). Low severity (console noise + minor internal-diagnostic leakage of message types / connection state to end-user consoles); wrap operational logs behind DEV or route through a logger that is silent in production.",
+    "[same-day rerun] already scored in prior commit today; score_delta zeroed to satisfy G4 idempotency."
+   ],
+   "_original_score_delta": 1
+  },
+  {
+   "id": "churn-hotspot-backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs",
+   "type": "churn-hotspot",
+   "source": "PR #2507 (BIT-567 restore burst)",
+   "score_delta": 1,
+   "confidence": "high",
+   "candidate_vector": "refactor",
+   "evidence": [
+    "delta-run 2026-07-24 12:00 UTC \u2014 backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs accumulated 330 add/del lines in the 09:00-12:00 window. Driver: PR #2507 (BIT-567 restore burst)."
+   ]
+  },
+  {
+   "id": "churn-hotspot-backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs",
+   "type": "churn-hotspot",
+   "source": "PR #2440 (BIT-558 documents-forms batch 2 lease-abstraction)",
+   "score_delta": 1,
+   "confidence": "high",
+   "candidate_vector": "refactor",
+   "evidence": [
+    "delta-run 2026-07-24 12:00 UTC \u2014 backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs accumulated 255 add/del lines in the 09:00-12:00 window. Driver: PR #2440 (BIT-558 documents-forms batch 2 lease-abstraction)."
+   ]
+  },
+  {
+   "id": "churn-hotspot-backend/crates/db/src/repositories/fault.rs",
+   "type": "churn-hotspot",
+   "source": "PR #2519 (data-fault-kpi-unification 2026-07-23)",
+   "score_delta": 1,
+   "confidence": "high",
+   "candidate_vector": "refactor",
+   "evidence": [
+    "delta-run 2026-07-24 12:00 UTC \u2014 backend/crates/db/src/repositories/fault.rs accumulated 247 add/del lines in the 09:00-12:00 window. Driver: PR #2519 (data-fault-kpi-unification 2026-07-23)."
+   ]
+  },
+  {
+   "id": "unchecked-todo-pr-2505",
+   "type": "unchecked-todo",
+   "source": "PR #2505",
+   "score_delta": 0,
+   "confidence": "high",
+   "candidate_vector": "dep-update",
+   "evidence": [
+    "PR #2505 body carries an unticked '- [ ] CI `check` + `test` gate green' checkbox. This is the standard PR-template CI-gate placeholder (verified externally by CI on merge), not code work. Score suppressed as procedural boilerplate \u2014 same treatment as dep-update-noise."
+   ]
+  },
+  {
+   "id": "unchecked-todo-pr-2507",
+   "type": "unchecked-todo",
+   "source": "PR #2507",
+   "score_delta": 0,
+   "confidence": "high",
+   "candidate_vector": "dep-update",
+   "evidence": [
+    "PR #2507 body carries an unticked '- [ ] CI `check` + `test` gate green' checkbox. This is the standard PR-template CI-gate placeholder (verified externally by CI on merge), not code work. Score suppressed as procedural boilerplate \u2014 same treatment as dep-update-noise."
+   ]
+  },
+  {
+   "id": "unchecked-todo-pr-2508",
+   "type": "unchecked-todo",
+   "source": "PR #2508",
+   "score_delta": 0,
+   "confidence": "high",
+   "candidate_vector": "dep-update",
+   "evidence": [
+    "PR #2508 body carries an unticked '- [ ] CI `check` + `test` gate green' checkbox. This is the standard PR-template CI-gate placeholder (verified externally by CI on merge), not code work. Score suppressed as procedural boilerplate \u2014 same treatment as dep-update-noise."
+   ]
+  },
+  {
+   "id": "unchecked-todo-pr-2510",
+   "type": "unchecked-todo",
+   "source": "PR #2510",
+   "score_delta": 0,
+   "confidence": "high",
+   "candidate_vector": "dep-update",
+   "evidence": [
+    "PR #2510 body carries an unticked '- [ ] CI `check` + `test` gate green' checkbox. This is the standard PR-template CI-gate placeholder (verified externally by CI on merge), not code work. Score suppressed as procedural boilerplate \u2014 same treatment as dep-update-noise."
+   ]
+  },
+  {
+   "id": "unchecked-todo-pr-2511",
+   "type": "unchecked-todo",
+   "source": "PR #2511",
+   "score_delta": 0,
+   "confidence": "high",
+   "candidate_vector": "dep-update",
+   "evidence": [
+    "PR #2511 body carries an unticked '- [ ] CI `check` + `test` gate green' checkbox. This is the standard PR-template CI-gate placeholder (verified externally by CI on merge), not code work. Score suppressed as procedural boilerplate \u2014 same treatment as dep-update-noise."
+   ]
+  },
+  {
+   "id": "code-review-mobile-native-kmp-navigation-create-listing-stub",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "mobile-native-kmp",
+   "score_delta": 3,
+   "confidence": "high",
+   "candidate_vector": "bug",
+   "evidence": [
+    "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 \u2014 the CreateListing route wires onSubmit to `Result.failure(NotImplementedError(\"Wire to listing API\"))`; no createListing() method exists on ApiClient/ListingRepository (grep of shared/ finds only createInquiry/createSavedSearch/createMobileToken).",
+    "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:120-126 \u2014 the fully-built realtor form folds that failure into the 'publish failed' banner, so MyListings -> Create -> submit can never succeed in production. Handled gracefully (no crash) but the feature is silently dead on Android. Fix: add createListing() to ApiClient + ListingRepository and wire the nav callback. Re-verified present 2026-07-24; still not tracked as an open backlog row."
+   ],
+   "expert": "kotlin"
+  },
+  {
+   "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "mobile-native-kmp",
+   "score_delta": 2,
+   "candidate_vector": "test",
+   "confidence": "medium",
+   "evidence": [
+    "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt (349 lines) \u2014 auth-critical service (createMobileToken/validateAndLogin/getSession/refreshSession/loginWithPassword/register/password-reset/updateProfile/restoreSession + AuthState StateFlow) has NO test file anywhere in commonTest; grep for 'SsoService' matches only production + androidApp/iosApp code. Notably restoreSession() (line 318) collapses BOTH a real 401 and a transient network error into token-drop + Unauthenticated, and getSession()/refreshSession() force logout() on 401 \u2014 untested branches on the app-boot auth path. Re-verified 2026-07-24; not currently backlogged."
+   ],
+   "expert": "tester"
+  },
+  {
+   "id": "code-review-mobile-native-kmp-no-http-timeout",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "mobile-native-kmp",
+   "score_delta": 2,
+   "candidate_vector": "bug",
+   "confidence": "medium",
+   "evidence": [
+    "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 \u2014 the single shared HttpClient installs ContentNegotiation + Logging + defaultRequest but NO `install(HttpTimeout)` (no request/connect/socket timeout). On a stalled connection every suspend call (SsoService, ListingRepository, ApiClient) hangs indefinitely; ViewModels that set AuthState.Loading / state.isLoading before awaiting (e.g. SsoService.validateAndLogin line 63, loginWithPassword line 151) can leave the UI stuck in a spinner with no error path. Fix: install(HttpTimeout){ requestTimeoutMillis/connectTimeoutMillis/socketTimeoutMillis }. Re-verified present 2026-07-24; not currently backlogged."
+   ],
+   "expert": "kotlin"
+  },
+  {
+   "id": "code-review-reality-web-realtor-profile-mock-data",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "reality-web",
+   "score_delta": 2,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "expert": "frontend",
+   "evidence": [
+    "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11,20 \u2014 the public, SEO-indexed agent profile route imports MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS and sets `const agent = MOCK_AGENT` (line 20); the [id] route param is never read, so every agent URL renders the same fabricated agent, listings, and reviews to real users. Fix: fetch the agent by id and remove the ./_mock dependency.",
+    "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:21-27 \u2014 handleSendMessage only flips local messageSent state and closes the modal; the contact form sends nothing to any API, so inquiries from this page are silently dropped."
+   ]
+  },
+  {
+   "id": "code-review-reality-web-listings-page-no-iserror",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "reality-web",
+   "score_delta": 2,
+   "confidence": "medium",
+   "candidate_vector": "bug",
+   "expert": "frontend",
+   "evidence": [
+    "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 \u2014 `const { data, isLoading } = useListings(filters, currentPage)` destructures neither isError nor an onError; on API failure `data` is undefined.",
+    "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:337 \u2014 `listings={data?.data ?? []}` then renders the empty 'no results' state on API failure, making a backend outage indistinguishable from a genuinely empty search on the portal's primary search path. error.tsx does not catch this (a rejected TanStack query sets isError, it does not throw during render). Fix: branch on isError with a retry/error UI."
+   ]
+  },
+  {
+   "id": "code-review-reality-web-profile-pages-i18n-gap",
+   "type": "code-review-finding",
+   "source": "rotating-expert-review",
+   "segment": "reality-web",
+   "score_delta": 1,
+   "confidence": "high",
+   "candidate_vector": "refactor",
+   "expert": "frontend",
+   "evidence": [
+    "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,47,157,169,219,223,279,303,306 \u2014 user-facing copy hardcoded in Slovak with no next-intl on a 4-language app (sk/cs/de/en): 'Nacitavam...' (36), 'Kancelaria sa nenasla.' (47), 'O kancelarii' (157), 'Nas tim' (169), 'Aktivne ponuky' (219), 'Ziadne aktivne ponuky.' (223), 'Kontakt' (279), 'Navstivit web' (303), 'Licencia:' (306). File header comment acknowledges 'hardcoded Slovak copy', so cs/de/en visitors see Slovak.",
+    "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:~154 \u2014 same class of gap on the realtor profile route ('Kontaktovat', 'Overeny makler', 'O maklerovi', ...), reinforcing a portal-wide i18n hole on the public profile pages."
+   ]
+  }
+ ],
+ "goal_checks": [
+  {
+   "goal": "G1",
+   "passed": true,
+   "command": "test -f briefs/today && head grep",
+   "observed": "exit 0",
+   "expected": "exit 0"
+  },
+  {
+   "goal": "G2",
+   "passed": true,
+   "command": "jq state advance vs HEAD",
+   "observed": "true",
+   "expected": "true"
+  },
+  {
+   "goal": "G3",
+   "passed": true,
+   "command": "jq unique ids",
+   "observed": "true",
+   "expected": "true"
+  },
+  {
+   "goal": "G4",
+   "passed": true,
+   "command": "jq signal id vs prev seen (cumulative carve-out); re-emitted signals zeroed",
+   "observed": "true",
+   "expected": "true"
+  },
+  {
+   "goal": "G5",
+   "passed": true,
+   "command": "jq score cap + decay ledger",
+   "observed": "true (0 violations)",
+   "expected": "true"
+  },
+  {
+   "goal": "G6",
+   "passed": true,
+   "command": "grep 'adversarial pass:' brief for each new plan",
+   "observed": "PASS on 1 new plan",
+   "expected": "pass all"
+  },
+  {
+   "goal": "G7",
+   "passed": true,
+   "command": "plan sections + metadata + capability + mode + files exist",
+   "observed": "1 new plan, all checks pass",
+   "expected": "pass"
+  },
+  {
+   "goal": "G8",
+   "passed": true,
+   "command": "git diff --cached --name-only | grep -v ^.research/",
+   "observed": "0",
+   "expected": "0"
+  },
+  {
+   "goal": "G9",
+   "passed": true,
+   "command": "grep secrets/private hostnames",
+   "observed": "0",
+   "expected": "0"
+  },
+  {
+   "goal": "G10",
+   "passed": true,
+   "command": "diff -q backlog.md /tmp/regen",
+   "observed": "identical",
+   "expected": "identical"
+  },
+  {
+   "goal": "G11",
+   "passed": true,
+   "command": "phase-failure honesty \u2014 no failed phases this run",
+   "observed": "no phase failures",
+   "expected": "true"
+  },
+  {
+   "goal": "G12",
+   "passed": true,
+   "command": "prev plan slugs still exist in plans/ or plans/_archive/",
+   "observed": "0 thrashed",
+   "expected": "0"
+  },
+  {
+   "goal": "G13",
+   "passed": true,
+   "command": "archive count now >= prev",
+   "observed": "now=7 prev=7",
+   "expected": "now>=prev"
+  },
+  {
+   "goal": "G14",
+   "passed": true,
+   "command": "diff -q IDEAS_TRIAGE.md /tmp/regen",
+   "observed": "identical",
+   "expected": "identical"
+  },
+  {
+   "goal": "G15",
+   "passed": true,
+   "command": "auto_fix caps + idempotency",
+   "observed": "true (auto_fix_actions empty)",
+   "expected": "true"
+  },
+  {
+   "goal": "G16",
+   "passed": true,
+   "command": "management artifacts valid + pm_cursor 0..7 + coverage_cursor in-bounds",
+   "observed": "action-list/risks/state OK; pm_cursor=0; coverage_cursor=2 in [0,13)",
+   "expected": "exit 0"
+  },
+  {
+   "goal": "G17",
+   "passed": true,
+   "command": "no Telegram bot-token value literal",
+   "observed": "0 matches",
+   "expected": "0"
+  }
+ ],
+ "auto_fix_actions": [],
+ "auto_fix_skipped_reason": "no candidate \u2014 mid-day rerun promoted 1 plan (mobile-native-kmp create-listing stub) via manual promotion path; auto-fix allowlist (screen-map-drift/orphan, fixme-in-merged-code, lockfile-bump, stalled-review) had no fresh candidate this delta"
 }

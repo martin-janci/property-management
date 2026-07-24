@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-24 03:05 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-24 12:22 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
-| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read | ready | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
+| 3 | bug | `code-review-mobile-native-kmp-navigation-create-listing-stub` | Android CreateListing route wired to Result.failure(NotImplementedError) — silent dead flow for realtors | ready | 2026-07-24 | [plan](plans/code-review-mobile-native-kmp-navigation-create-listing-stub.md) |
+| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read | dropped | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
 | 3 | security | `code-review-api-handlers-community-cross-tenant-idor` | SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs | done | 2026-07-23 | [plan](plans/code-review-api-handlers-community-cross-tenant-idor.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
@@ -23,6 +24,10 @@
 | 2 | bug | `code-review-ppt-web-core-authctx-init-stale-role` | AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap) | open | 2026-07-24 |  |
 | 2 | bug | `code-review-ppt-web-core-ws-token-rotation-stale` | WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token | open | 2026-07-24 |  |
 | 2 | test-gap | `screen-map-drift-pr-2497-reality` | screen-map drift: PR #2497 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/ | open | 2026-07-24 |  |
+| 2 | test-gap | `code-review-mobile-native-kmp-ssoservice-no-test` | SsoService (349 lines) — auth-critical KMP service has zero unit tests | open | 2026-07-24 |  |
+| 2 | bug | `code-review-mobile-native-kmp-no-http-timeout` | HttpClientProvider — shared KMP HttpClient has no request/socket timeout install | open | 2026-07-24 |  |
+| 2 | bug | `code-review-reality-web-realtor-profile-mock-data` | Public /realtor/[id] SEO route ships MOCK_AGENT — reality-portal exposes stub data to search engines | open | 2026-07-24 |  |
+| 2 | bug | `code-review-reality-web-listings-page-no-iserror` | Listings page destructure drops isError — API failure renders empty state, not error UI | open | 2026-07-24 |  |
 | 2 | test-gap | `screen-map-drift-pr-2431-reality` | Screen-map drift: PR #2431 touched reality-web/src/app/api/layout-revalidate/route.ts without updating docs/screens/reality/*.md (heuristic — internal API, not user-facing screen) | done | 2026-07-21 |  |
 | 2 | bug | `code-review-ppt-web-ui-propinput-json-coerce` | TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted ("true" -> boolean, "[]" -> array) | done | 2026-07-21 |  |
 | 2 | bug | `code-review-ppt-web-ui-savedirty-stale-closure` | DashboardCustomizePage 'changed since sent' check is tautological — concurrent edits during in-flight save are silently discarded | done | 2026-07-21 |  |
@@ -74,6 +79,10 @@
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
 | 1 | refactor | `code-review-ppt-web-core-ws-ungated-console` | 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod | open | 2026-07-24 |  |
+| 1 | refactor | `refactor-churn-hotspot-analytics-portfolio-success-tests-2026-07-24` | Churn hotspot: analytics_portfolio_success_tests.rs — 330 lines this run (BIT-567 restore burst) | open | 2026-07-24 |  |
+| 1 | refactor | `refactor-churn-hotspot-documents-forms-batch2-2026-07-24` | Churn hotspot: documents_forms_batch2_happy_path_tests.rs — 255 lines this run (BIT-558) | open | 2026-07-24 |  |
+| 1 | refactor | `refactor-churn-hotspot-db-fault-repo-2026-07-24` | Churn hotspot: backend/crates/db/src/repositories/fault.rs — 247 lines this run (fault-KPI unification) | open | 2026-07-24 |  |
+| 1 | refactor | `code-review-reality-web-profile-pages-i18n-gap` | Agency and realtor profile pages ship hardcoded Slovak strings — 4-language app has i18n regression | open | 2026-07-24 |  |
 | 1 | refactor | `refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23` | Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill) | open | 2026-07-23 |  |
 | 1 | refactor | `refactor-churn-hotspot-org-property-authz-backfill-2026-07-23` | Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage) | open | 2026-07-23 |  |
 | 1 | refactor | `refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23` | Churn hotspot: infra_ops_authz_backfill_tests.rs — 364 lines this run (BIT-268 test backfill) | open | 2026-07-23 |  |

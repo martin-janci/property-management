@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-24T03:10:00Z",
+  "last_run_iso": "2026-07-24T12:23:27Z",
   "last_run_ms": 4000,
-  "last_pr_seen": 2512,
+  "last_pr_seen": 2520,
   "last_issue_seen": 2486,
-  "last_commit_sha": "500fe1bcb564004956d9072b40850c29667d8b24",
+  "last_commit_sha": "d9f25cb9d322473eebb8e6d9aea39481c2ad8312",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -396,6 +396,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-23",
       "recent_churn": 364
+    },
+    "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-24",
+      "recent_churn": 330
+    },
+    "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-24",
+      "recent_churn": 255
+    },
+    "backend/crates/db/src/repositories/fault.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-24",
+      "recent_churn": 247
     }
   },
   "seen_signals": [
@@ -691,7 +706,21 @@
     "screen-map-drift-pr-2497-reality",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-ws-token-rotation-stale",
-    "code-review-ppt-web-core-ws-ungated-console"
+    "code-review-ppt-web-core-ws-ungated-console",
+    "churn-hotspot-backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs",
+    "churn-hotspot-backend/crates/db/src/repositories/fault.rs",
+    "unchecked-todo-pr-2505",
+    "unchecked-todo-pr-2507",
+    "unchecked-todo-pr-2508",
+    "unchecked-todo-pr-2510",
+    "unchecked-todo-pr-2511",
+    "code-review-mobile-native-kmp-navigation-create-listing-stub",
+    "code-review-mobile-native-kmp-ssoservice-no-test",
+    "code-review-mobile-native-kmp-no-http-timeout",
+    "code-review-reality-web-realtor-profile-mock-data",
+    "code-review-reality-web-listings-page-no-iserror",
+    "code-review-reality-web-profile-pages-i18n-gap"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -700,14 +729,14 @@
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
-    "reality-web": "2026-07-17",
+    "reality-web": "2026-07-24",
     "mobile-rn": "2026-07-22",
-    "mobile-native-kmp": "2026-07-16"
+    "mobile-native-kmp": "2026-07-24"
   },
   "stats": {
-    "runs": 49,
-    "vectors_created": 208,
-    "plans_created": 16,
+    "runs": 50,
+    "vectors_created": 217,
+    "plans_created": 17,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
