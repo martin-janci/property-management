@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-24T12:13:08Z",
+  "archived_at": "2026-07-24T14:15:21Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -814,6 +814,31 @@
         "vector": "chore"
       },
       "last_updated": "2026-07-23T18:24:41Z"
+    },
+    {
+      "id": "chore-triage-untriaged-issues-750s-2026-07-23",
+      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "dropped",
+      "source": "pm-scrum-master 2026-07-23 (score=3: backlog hygiene) | gc1-reconcile 2026-07-24T14:09:15Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "triage"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-24T14:09:15Z"
+      }
     },
     {
       "id": "chore-uc-33-dispute-subuc-links-2026-07-23",
@@ -9085,6 +9110,33 @@
         "merged_pr": 2462,
         "merged_at": "2026-07-23T04:05:11Z",
         "at": "2026-07-23T04:15:38Z"
+      }
+    },
+    {
+      "id": "sec-mobile-layout-cache-tenant-scope-test-2026-07-23",
+      "action": "Add mobile test asserting LAYOUT_CACHE_KEY is cleared/tenant-scoped on logout+re-login (follows #2486 fix)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=6: security*2 + mobile + dep-blocker; follows #2486) | gc1-reconcile 2026-07-24T14:09:15Z",
+      "deadline": null,
+      "dependency": "gh-issue-2486",
+      "depends_on": [
+        "gh-issue-2486"
+      ],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 6,
+        "vector": "test"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2522,
+        "merged_at": "2026-07-24T12:19:30Z",
+        "at": "2026-07-24T14:09:15Z"
       }
     },
     {

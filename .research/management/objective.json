@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "data-signup-funnel-tracking-2026-07-23",
-  "selected_at": "2026-07-24T04:08:17Z",
+  "epic_prefix": "gh-issue-2528",
+  "selected_at": "2026-07-24T14:11:53Z",
   "last_action": "repick",
-  "reason": "prior target 'data-privacy-retention-policy-2026-07-23' exhausted; closest-to-done is 'data-signup-funnel-tracking-2026-07-23' (open=1 claimable=1)",
+  "reason": "prior target 'data-signup-funnel-tracking-2026-07-23' exhausted; closest-to-done is 'gh-issue-2528' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
