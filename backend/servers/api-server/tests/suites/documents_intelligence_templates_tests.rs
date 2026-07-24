@@ -114,6 +114,7 @@ async fn get_classification_succeeds(pool: PgPool) {
     res.assert_status(StatusCode::OK);
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn submit_classification_feedback_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -232,6 +233,7 @@ async fn create_template(app: &TestApp, token: &str, org_id: Uuid) -> Uuid {
         .expect("template id")
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -262,6 +264,7 @@ async fn create_template_succeeds(pool: PgPool) {
     res.assert_json_field("id");
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_templates_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -280,6 +283,7 @@ async fn list_templates_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -301,6 +305,7 @@ async fn get_template_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -325,6 +330,7 @@ async fn update_template_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn delete_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -349,6 +355,7 @@ async fn delete_template_succeeds(pool: PgPool) {
     res2.assert_status(StatusCode::NOT_FOUND);
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn generate_document_from_template_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

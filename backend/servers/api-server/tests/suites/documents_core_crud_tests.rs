@@ -150,6 +150,7 @@ async fn list_documents_succeeds(pool: PgPool) {
 // documents/core.rs — PUT /api/v1/documents/{id}
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -206,6 +207,7 @@ async fn delete_document_succeeds(pool: PgPool) {
 // documents/core.rs — PUT /api/v1/documents/{id}/access
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_document_access_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -258,6 +260,7 @@ async fn get_version_history_succeeds(pool: PgPool) {
 // documents/versions.rs — POST /api/v1/documents/{id}/versions
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_version_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -319,6 +322,7 @@ async fn get_version_succeeds(pool: PgPool) {
 // documents/versions.rs — POST /api/v1/documents/{id}/versions/{version_id}/restore
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn restore_version_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

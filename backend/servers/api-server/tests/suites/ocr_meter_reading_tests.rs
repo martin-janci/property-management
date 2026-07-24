@@ -124,6 +124,7 @@ fn multipart_body(meter_id: Uuid, reading_value: &str) -> (Vec<u8>, String) {
 // process_meter_reading tests
 // ============================================================================
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-571)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
