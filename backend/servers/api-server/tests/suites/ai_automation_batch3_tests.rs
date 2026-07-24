@@ -411,5 +411,5 @@ async fn test_delete_equipment_returns_200(pool: PgPool) {
     let resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
-    assert_eq!(resp.status, StatusCode::OK, "delete equipment");
+    assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete equipment");
 }

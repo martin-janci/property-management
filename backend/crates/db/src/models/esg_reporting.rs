@@ -23,10 +23,13 @@ pub enum EsgMetricCategory {
 
 /// Emission scope type (GHG Protocol scopes).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
-#[sqlx(type_name = "esg_emission_scope", rename_all = "snake_case")]
+#[sqlx(type_name = "esg_emission_scope")]
 pub enum EsgEmissionScope {
+    #[sqlx(rename = "scope_1_direct")]
     Scope1Direct,
+    #[sqlx(rename = "scope_2_indirect")]
     Scope2Indirect,
+    #[sqlx(rename = "scope_3_value_chain")]
     Scope3ValueChain,
 }
 

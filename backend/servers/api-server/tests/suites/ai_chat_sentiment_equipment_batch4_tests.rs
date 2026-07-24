@@ -286,7 +286,7 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
         .execute(
             session
                 .post(&format!("/api/v1/ai/chat/messages/{msg_id}/feedback"))
-                .json(json!({"rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
+                .json(json!({"message_id": msg_id, "rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
                 .build(),
         )
         .await;
@@ -371,12 +371,16 @@ async fn update_sentiment_thresholds_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ust").await;
-    let session = app.session(token, org_id);
+    let session = app.session(token.clone(), org_id);
+    // GET first to create the default sentiment_thresholds row (UPDATE requires a row to exist).
+    app.execute(session.get("/api/v1/ai/sentiment/thresholds").build())
+        .await;
+    let session2 = app.session(token, org_id);
     let resp = app
         .execute(
-            session
+            session2
                 .put("/api/v1/ai/sentiment/thresholds")
-                .json(json!({"negative_threshold": 0.6, "positive_threshold": 0.4}))
+                .json(json!({"negative_threshold": 0.6}))
                 .build(),
         )
         .await;

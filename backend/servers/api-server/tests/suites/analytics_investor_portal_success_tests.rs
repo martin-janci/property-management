@@ -948,10 +948,11 @@ async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
+                    "investor_id": inv_id,
+                    "metric_date": "2024-01-01",
                     "total_invested": "100000.00",
-                    "current_value": "108000.00",
-                    "total_distributions": "5000.00",
-                    "total_return_pct": "8.0"
+                    "total_value": "108000.00",
+                    "total_distributions": "5000.00"
                 }))
                 .build(),
         )

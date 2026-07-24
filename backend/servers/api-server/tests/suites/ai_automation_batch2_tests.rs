@@ -644,6 +644,13 @@ async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-5").await;
+    // RequestPrincipal checks user_memberships (not organization_members); seed it explicitly.
+    let user_id = sqlx::query_scalar::<_, uuid::Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&pool)
+        .await
+        .expect("resolve user id for workflow templates test");
+    seed_user_membership(&pool, user_id, org_id).await;
 
     let resp = app
         .execute(authed(
