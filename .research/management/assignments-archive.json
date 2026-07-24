@@ -2239,6 +2239,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-announcement-fanout-metric-2026-07-23",
+      "branch": "auto-impl/data-announcement-fanout-metric-2026-07-b9456a0c",
+      "status": "failed",
+      "claimed_at": "2026-07-23T22:09:19Z",
+      "last_updated": "2026-07-24T10:06:46Z",
+      "status_changed_at": "2026-07-24T10:06:46Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim (branch never pushed; reclaim cap reached)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "data-dispute-fsm-kpi-definitions-2026-07-23",
       "branch": "auto-impl/data-dispute-fsm-kpi-definitions-2026-07-160b1a55",
       "status": "merged",
@@ -2303,6 +2325,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-24T04:17:37Z"
+    },
+    {
+      "task_id": "data-signup-funnel-tracking-2026-07-23",
+      "branch": "auto-impl/data-signup-funnel-tracking-2026-07-23-52df10f5",
+      "status": "merged",
+      "claimed_at": "2026-07-24T04:04:21Z",
+      "last_updated": "2026-07-24T10:06:46Z",
+      "status_changed_at": "2026-07-24T10:06:46Z",
+      "pr_number": 2515,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2515",
+      "merged_at": "2026-07-24T08:15:17Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=partial specialist=react-web scope_drift=true code_reuse_warn=none note=verify red ONLY from pre-existing dev-broken tests (CapabilitiesAdminPage 18v17 + 4 e2e specs, identical on base); funnel events wired, own tests+typecheck+biome green; branch pushed 2c4689b — left in-progress for next Phase 2 to PR",
+      "reviewer_summary": "verdict=approve head_oid=2c4689b772b7afad1cd103ba79814ce3f60ed1b5 note=funnel-instrumentation-clean;scope-drift-analytics-bus-justified;reuse-warn-none-correct;posted-as-comment-own-pr",
+      "last_reviewed_oid": "2c4689b772b7afad1cd103ba79814ce3f60ed1b5",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "dep-bump-ammonia-rustsec-2026-06",
@@ -8311,5 +8355,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T04:23:58Z"
+  "archived_at": "2026-07-24T10:11:41Z"
 }

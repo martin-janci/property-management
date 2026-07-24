@@ -239,7 +239,7 @@
       "action": "Document the nextest archive + per-test partition workflow (#2459) and the 206->8 test-binary consolidation (#2461/#2487) as a contributor runbook so future test files land in the consolidated crates",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-scrum-master 2026-07-23 (score=3: docs + follow-through on shipped work)",
       "deadline": null,
       "dependency": null,
@@ -250,7 +250,7 @@
         "score": 3,
         "vector": "docs"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": ""
     },
     {
       "id": "data-audit-add-evidence-idor-fix-2026-07-23",
@@ -313,7 +313,7 @@
       "action": "Add analytics tracking for OAuth token issuance/refresh/revocation events per client (Epic 10A shipped; needed for platform-admin ecosystem health dashboard)",
       "owner_role": "pm-data",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-data 2026-07-23 (score=4: KPI gap; developer-ecosystem visibility)",
       "deadline": null,
       "dependency": null,
@@ -324,7 +324,7 @@
         "score": 4,
         "vector": "data"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": ""
     },
     {
       "id": "data-announcement-fanout-metric-2026-07-23",
@@ -351,7 +351,7 @@
       "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry)",
       "owner_role": "pm-data",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-data 2026-07-23 (score=4: mobile-parity KPI gap)",
       "deadline": null,
       "dependency": null,
@@ -362,14 +362,14 @@
         "score": 4,
         "vector": "data"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": ""
     },
     {
       "id": "refactor-layout-editor-styles-followthrough-2026-07-23",
       "action": "Follow-through on #2464 LayoutEditorPage style extraction — apply same pattern to remaining layout-editor components to reduce inline-style churn",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-scrum-master 2026-07-23 (score=3: refactor; follows shipped PR)",
       "deadline": null,
       "dependency": null,
@@ -380,7 +380,7 @@
         "score": 3,
         "vector": "refactor"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": ""
     },
     {
       "id": "docs-screen-map-frontmatter-epics-2026-07-23",
@@ -441,7 +441,7 @@
       "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories",
       "owner_role": "pm-security",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-scrum-master 2026-07-23 (score=5: security-hygiene follow-through)",
       "deadline": null,
       "dependency": null,
@@ -452,7 +452,7 @@
         "score": 5,
         "vector": "sec"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": ""
     },
     {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
@@ -497,7 +497,7 @@
       "action": "Formalize support-staff read audit event schema (who viewed which tenant's diagnostics, who revoked sessions) separate from audit_read capability gate (open decision from 2026-05-28)",
       "owner_role": "pm-data",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-data 2026-07-23 (score=5: reopens 2026-05-28 pm-data decision)",
       "deadline": null,
       "dependency": null,
@@ -508,7 +508,7 @@
         "score": 5,
         "vector": "data"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": ""
     },
     {
       "id": "data-fault-kpi-unification-2026-07-23",
