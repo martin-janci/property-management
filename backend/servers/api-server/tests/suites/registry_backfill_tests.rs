@@ -527,7 +527,6 @@ async fn delete_parking_spot_succeeds(pool: PgPool) {
 // Rules + statistics
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_registry_rules_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -535,6 +534,22 @@ async fn get_registry_rules_succeeds(pool: PgPool) {
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "reg-rules-g").await;
     let building_id = seed_building(&pool, org_id).await;
     let session = app.session(token, org_id);
+
+    // Upsert rules first so GET has something to return
+    let put_resp = app
+        .execute(
+            session
+                .put(&format!("/api/v1/registry/buildings/{building_id}/rules"))
+                .json(json!({"pets_allowed": false}))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        put_resp.status,
+        StatusCode::OK,
+        "put rules body: {}",
+        put_resp.text()
+    );
 
     let resp = app
         .execute(

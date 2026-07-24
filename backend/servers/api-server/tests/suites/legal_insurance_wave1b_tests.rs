@@ -315,7 +315,6 @@ async fn legal_list_versions_returns_200(pool: PgPool) {
 // Legal: create_requirement  →  201 with id / requirement_type
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_create_requirement_returns_201(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-c").await;
@@ -325,7 +324,7 @@ async fn legal_create_requirement_returns_201(pool: PgPool) {
         .execute(
             sess.post("/api/v1/legal/requirements")
                 .json(json!({
-                    "requirement_type": "regulatory",
+                    "category": "regulatory",
                     "name": "GDPR Data Retention Policy",
                     "description": "Annual review required",
                     "due_date": "2027-01-01"
@@ -337,7 +336,7 @@ async fn legal_create_requirement_returns_201(pool: PgPool) {
     resp.assert_status(StatusCode::CREATED);
     let body = resp.json_value();
     assert!(body["id"].is_string());
-    assert_eq!(body["requirement_type"].as_str(), Some("regulatory"));
+    assert_eq!(body["category"].as_str(), Some("regulatory"));
 }
 
 // ---------------------------------------------------------------------------
@@ -361,7 +360,6 @@ async fn legal_list_requirements_returns_200(pool: PgPool) {
 // Legal: get_requirement  →  200 same-org / 404 unknown id
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_get_requirement_200_and_404(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-g").await;
@@ -372,7 +370,7 @@ async fn legal_get_requirement_200_and_404(pool: PgPool) {
         .execute(
             sess.post("/api/v1/legal/requirements")
                 .json(json!({
-                    "requirement_type": "internal",
+                    "category": "internal",
                     "name": "Fire Safety Compliance",
                 }))
                 .build(),
@@ -408,7 +406,6 @@ async fn legal_get_requirement_200_and_404(pool: PgPool) {
 // Legal: update_requirement  →  200 title changed
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_update_requirement_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-u").await;
@@ -417,7 +414,7 @@ async fn legal_update_requirement_returns_200(pool: PgPool) {
     let create = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "regulatory", "name": "Old Title"}))
+                .json(json!({"category": "regulatory", "name": "Old Title"}))
                 .build(),
         )
         .await;
@@ -438,7 +435,6 @@ async fn legal_update_requirement_returns_200(pool: PgPool) {
 // Legal: delete_requirement  →  200 success=true
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_delete_requirement_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-d").await;
@@ -447,7 +443,7 @@ async fn legal_delete_requirement_returns_200(pool: PgPool) {
     let create = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "internal", "name": "To Delete"}))
+                .json(json!({"category": "internal", "name": "To Delete"}))
                 .build(),
         )
         .await;
@@ -459,15 +455,13 @@ async fn legal_delete_requirement_returns_200(pool: PgPool) {
                 .build(),
         )
         .await;
-    del.assert_status(StatusCode::OK);
-    assert_eq!(del.json_value()["success"].as_bool(), Some(true));
+    del.assert_status(StatusCode::NO_CONTENT);
 }
 
 // ---------------------------------------------------------------------------
 // Legal: create_verification  →  201 with requirement_id
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_create_verification_returns_201(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-ver-c").await;
@@ -476,7 +470,7 @@ async fn legal_create_verification_returns_201(pool: PgPool) {
     let create_req = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "regulatory", "name": "Verification Target"}))
+                .json(json!({"category": "regulatory", "name": "Verification Target"}))
                 .build(),
         )
         .await;
@@ -505,7 +499,6 @@ async fn legal_create_verification_returns_201(pool: PgPool) {
 // Legal: list_verifications  →  200 array
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_list_verifications_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-ver-l").await;
@@ -514,7 +507,7 @@ async fn legal_list_verifications_returns_200(pool: PgPool) {
     let create_req = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "internal", "name": "List Verifs Target"}))
+                .json(json!({"category": "internal", "name": "List Verifs Target"}))
                 .build(),
         )
         .await;
