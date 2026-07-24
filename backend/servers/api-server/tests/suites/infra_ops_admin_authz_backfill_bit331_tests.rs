@@ -8,7 +8,9 @@
 //!   * `/api/v1/platform-admin/**` — orgs, stats, feature-flags, health, announcements,
 //!     maintenance, support
 //!   * `/api/v1/admin/**`          — user lifecycle, MFA enroll, notifications,
-//!     tenant lifecycle/branding/feature-flags, agencies
+//!     tenant lifecycle (export/purge), agencies. (Tenant branding/feature-flags
+//!     live on the host-routed production surface, not in the API router — see
+//!     the BIT-588 note in `admin_cases`.)
 //!
 //! All of these are gated for platform operators. We assert the security invariant:
 //!   1. unauthenticated  → 401 (also guards route existence);
@@ -367,23 +369,13 @@ fn admin_cases() -> Vec<(Method, String, Option<&'static str>)> {
         // Tenant lifecycle
         (Method::POST, format!("{base}/tenants/{UUID}/export"), None),
         (Method::POST, format!("{base}/tenants/{UUID}/purge"), None),
-        // Tenant branding + feature-flags
-        (Method::GET, format!("{base}/tenants/{UUID}/branding"), None),
-        (
-            Method::PUT,
-            format!("{base}/tenants/{UUID}/branding"),
-            Some(r##"{"primary_color":"#fff"}"##),
-        ),
-        (
-            Method::GET,
-            format!("{base}/tenants/{UUID}/feature-flags"),
-            None,
-        ),
-        (
-            Method::PUT,
-            format!("{base}/tenants/{UUID}/feature-flags"),
-            Some(r#"{"key":"x","enabled":true}"#),
-        ),
+        // NOTE (BIT-588): tenant branding + feature-flags under
+        // `/api/v1/admin/tenants/{id}/…` were probed here but are NOT registered
+        // in the API router — `admin_tenant_lifecycle` only mounts
+        // export/purge/restore, and the branding/feature-flags handlers live at
+        // the host-routed `/admin/tenants/{id}/…` production-only surface
+        // (mounted in `main.rs`, excluded from `route_table()`). Probing them
+        // returned 404 and re-quarantined this file; they are dropped here.
         // Admin agencies
         (Method::GET, format!("{base}/agencies"), None),
         (Method::GET, format!("{base}/agencies/{UUID}"), None),
@@ -530,27 +522,45 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Tests
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_privileged_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
+    let mut failures = Vec::new();
     for (method, uri, body) in all_cases() {
         let resp = app.execute(anon(method.clone(), &uri, body)).await;
-        assert_requires_auth(resp.status, &method, &uri);
+        if resp.status != StatusCode::UNAUTHORIZED {
+            failures.push(format!("{method} {uri} -> {} (want 401)", resp.status));
+        }
     }
+    assert!(
+        failures.is_empty(),
+        "these endpoints must require auth (401):\n{}",
+        failures.join("\n")
+    );
 }
 
-#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_privileged_endpoints_reject_ordinary_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _user) = create_authenticated_user(&app, &TestUser::new()).await;
 
+    let mut failures = Vec::new();
     for (method, uri, body) in all_cases() {
         let resp = app
             .execute(authed(&token, method.clone(), &uri, body))
             .await;
-        assert_denied(resp.status, &method, &uri);
+        let c = resp.status.as_u16();
+        if !((400..=499).contains(&c) && c != 404 && c != 405) {
+            failures.push(format!(
+                "{method} {uri} -> {} (want 4xx≠404/405)",
+                resp.status
+            ));
+        }
     }
+    assert!(
+        failures.is_empty(),
+        "these endpoints must deny an unprivileged user:\n{}",
+        failures.join("\n")
+    );
 }

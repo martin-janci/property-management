@@ -18,7 +18,16 @@
 use crate::common::{cleanup_test_user, create_authenticated_user, TestApp, TestUser};
 use axum::http::StatusCode;
 use serde_json::json;
+use sha2::{Digest, Sha256};
 use sqlx::PgPool;
+
+/// SHA-256 hex of a token — mirrors `AuthService::hash_token`, so a token we
+/// seed directly with a known plaintext can be looked up by the handler.
+fn hash_token(token: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(token.as_bytes());
+    hex::encode(hasher.finalize())
+}
 
 // ============================================================================
 // GET /api/v1/auth/verify-email
@@ -233,7 +242,6 @@ async fn forgot_password_for_existing_user_returns_200(pool: PgPool) {
 // ============================================================================
 
 /// Reset-password with a valid token returns 200 and allows subsequent login.
-#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn reset_password_with_valid_token_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -241,41 +249,30 @@ async fn reset_password_with_valid_token_returns_200(pool: PgPool) {
     cleanup_test_user(&pool, &user.email).await;
     create_authenticated_user(&app, &user).await;
 
-    // Trigger password reset to seed a token.
-    let forgot = app
-        .post("/api/v1/auth/forgot-password")
-        .json(json!({ "email": user.email }))
-        .build();
-    app.execute(forgot).await;
-
-    // Pull the raw reset token from the DB.
-    let raw_token: Option<String> = sqlx::query_scalar(
-        "SELECT token FROM password_reset_tokens \
-         WHERE user_id = (SELECT id FROM users WHERE email = $1) \
-         ORDER BY created_at DESC LIMIT 1",
+    // The service stores only the SHA-256 hash of a reset token — there is no
+    // raw `token` column (the previous version of this test queried a
+    // non-existent column and could never pass; BIT-588). Seed a row with the
+    // hash of a known plaintext, then drive the handler with that plaintext.
+    const RAW_TOKEN: &str = "bit588-known-reset-token-000000000000";
+    sqlx::query(
+        "INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) \
+         VALUES ((SELECT id FROM users WHERE email = $1), $2, NOW() + INTERVAL '1 hour')",
     )
     .bind(&user.email)
-    .fetch_optional(&pool)
+    .bind(hash_token(RAW_TOKEN))
+    .execute(&pool)
     .await
-    .expect("query failed");
-
-    let raw_token = match raw_token {
-        Some(t) => t,
-        None => {
-            // Email service is disabled in tests; if the handler skips token
-            // creation without a real mailer this test is a no-op.
-            cleanup_test_user(&pool, &user.email).await;
-            return;
-        }
-    };
+    .expect("seed reset token");
 
     const NEW_PASSWORD: &str = "NewSecurePass456!";
 
+    // The request field is `new_password` (the old test sent `password`, which
+    // failed to deserialize — BIT-588).
     let resp = app
         .post("/api/v1/auth/reset-password")
         .json(json!({
-            "token": raw_token,
-            "password": NEW_PASSWORD
+            "token": RAW_TOKEN,
+            "new_password": NEW_PASSWORD
         }))
         .build();
     let resp = app.execute(resp).await;

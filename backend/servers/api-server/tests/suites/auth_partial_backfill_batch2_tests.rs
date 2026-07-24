@@ -612,18 +612,22 @@ async fn get_privacy_settings_returns_200(pool: PgPool) {
 // POST /api/v1/gdpr/privacy
 // ============================================================================
 
-#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_privacy_settings_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
     cleanup_test_user(&pool, &user.email).await;
 
-    let (access, _refresh) = create_authenticated_user(&app, &user).await;
+    // The handler extracts `RlsConnection`, which requires a resolved tenant
+    // (X-Tenant-ID header + an organization_members row). The old test used a
+    // plain `create_authenticated_user` with no tenant, so extraction failed
+    // before the handler ran (BIT-588). Provide an org + tenant header.
+    let (access, org_id) = create_authenticated_user_with_org(&app, &user, "pt-priv").await;
 
     let resp = app
         .post("/api/v1/gdpr/privacy")
         .bearer(&access)
+        .tenant(org_id)
         .json(json!({}))
         .build();
     let resp = app.execute(resp).await;
