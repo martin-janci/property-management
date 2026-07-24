@@ -669,7 +669,7 @@
       "action": "Follow-up: instrument the full signup funnel, not just the onboarding tour (PR #2515) (Closes #2530)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2530)",
       "deadline": null,
       "dependency": null,
@@ -682,7 +682,8 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-24T18:09:34Z"
     },
     {
       "id": "gh-issue-2531",
