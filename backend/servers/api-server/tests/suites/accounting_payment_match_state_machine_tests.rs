@@ -98,7 +98,6 @@ async fn invoice_state(pool: &PgPool, invoice: Uuid) -> (rust_decimal::Decimal, 
 /// After confirm: paid=100/paid. After reject (unapply): paid=0/issued.
 /// The final confirm of a now-rejected match is illegal (409) and leaves paid=0.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
     let (org, invoice, match_id) = seed_match_scenario(&pool, "pap325-replay").await;
     let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
@@ -150,7 +149,6 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
 /// Confirming an already-confirmed match is an idempotent no-op — it must not
 /// re-apply paid_amount.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn double_confirm_is_idempotent(pool: PgPool) {
     let (org, invoice, match_id) = seed_match_scenario(&pool, "pap325-double-confirm").await;
     let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
@@ -177,7 +175,6 @@ async fn double_confirm_is_idempotent(pool: PgPool) {
 /// subtraction). Here the match was only ever Suggested -> Rejected, so paid
 /// stays 0 and the second reject is harmless.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn double_reject_is_idempotent(pool: PgPool) {
     let (org, invoice, match_id) = seed_match_scenario(&pool, "pap325-double-reject").await;
     let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
