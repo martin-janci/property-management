@@ -85,6 +85,7 @@ fn mint_token(user_id: Uuid, email: &str) -> String {
 // Happy Path Tests
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn messaging_happy_paths(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

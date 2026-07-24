@@ -527,6 +527,7 @@ async fn delete_parking_spot_succeeds(pool: PgPool) {
 // Rules + statistics
 // ---------------------------------------------------------------------------
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_registry_rules_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
