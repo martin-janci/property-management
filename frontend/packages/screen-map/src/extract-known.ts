@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export interface KnownContexts {
@@ -11,13 +11,17 @@ export interface KnownContexts {
  * Extract the "known IDs" sets that drive the drift-context optional checks
  * in `scanDrift`. Sources:
  * - `docs/use-cases.md` — regex `\bUC-(\d+(?:\.\d+)?)\b`.
- * - `docs/epics/EPIC-NNN-*.md` — regex `^EPIC-0*(\d+[A-Z]?)(?=[-.]|$)` on
- *   filenames. The optional single letter suffix preserves the established
- *   `10A`/`10B`/`7B` epic convention (see `docs/EPIC_STORY_STATUS.md`); leading
- *   zeros are stripped and the suffix is upper-cased so the extracted id matches
- *   the unpadded frontmatter refs (`Epic-10A`, not `Epic-010A`). The `(?=[-.]|$)`
- *   boundary rejects malformed ids (`EPIC-10beta`, `EPIC-7A2-*`) rather than
- *   silently mis-binning them onto a real-looking epic.
+ * - `_bmad-output/epics.md` — the authoritative epic catalog (the BMAD "Epic
+ *   Breakdown" doc). Epic ids are read from markdown headings of the form
+ *   `#### Epic 10A: …` / `## Epic 2B-Complete: …` via
+ *   `^#{1,6}\s+Epic\s+(\d+[A-Z]?)\b`. The optional single letter suffix
+ *   preserves the established `10A`/`10B`/`7B` epic convention and is
+ *   upper-cased so the extracted id matches the frontmatter refs (`Epic-10A`);
+ *   any further `-SSO`/`-Complete` heading qualifier is dropped so the id maps
+ *   onto the canonical `Epic-N`. Only heading lines are scanned so prose
+ *   cross-references don't get mis-binned as catalog entries.
+ *   (The previous filename-based `docs/epics/EPIC-*.md` reader always resolved
+ *   to an empty set because that directory does not exist — see #2536.)
  * - `frontend/packages/ui-kit/src/index.ts` — `export { Foo, Bar }` and `export const Baz`
  *   (excludes `export type` lines so type-only exports aren't treated as components).
  *
@@ -47,10 +51,14 @@ async function extractUseCases(repoRoot: string): Promise<Set<string>> {
 
 async function extractEpics(repoRoot: string): Promise<Set<string>> {
   try {
-    const entries = await readdir(path.join(repoRoot, 'docs/epics'));
+    const content = await readFile(path.join(repoRoot, '_bmad-output/epics.md'), 'utf8');
     const out = new Set<string>();
-    for (const entry of entries) {
-      const m = entry.match(/^EPIC-0*(\d+[A-Z]?)(?=[-.]|$)/i);
+    for (const line of content.split(/\r?\n/)) {
+      // Only markdown headings introduce a catalog epic. `\d+[A-Z]?` captures the
+      // number plus an optional single-letter phase suffix (`10A`); the `\b`
+      // boundary stops before any `-SSO`/`-Complete` qualifier and rejects
+      // malformed ids (`Epic 10beta`) instead of mis-binning them.
+      const m = line.match(/^#{1,6}\s+Epic\s+(\d+[A-Z]?)\b/i);
       if (m) out.add(`Epic-${m[1].toUpperCase()}`);
     }
     return out;
