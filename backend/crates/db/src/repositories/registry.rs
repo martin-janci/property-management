@@ -115,8 +115,10 @@ impl RegistryRepository {
             None => return Ok(None),
         };
 
-        // `units` has no `unit_number` column — the display value is `designation`.
-        // `buildings.name` is nullable, so decode as Option<String> to avoid ColumnDecode errors.
+        // `units` has no `unit_number` column — the display value is `designation`
+        // (NOT NULL). `buildings.name` is nullable ("Optional building name",
+        // migration 00007), so it MUST decode as `Option<String>` — a nameless
+        // building otherwise fails the row decode and 500s this endpoint.
         let unit_info: Option<(String, Option<String>)> = sqlx::query_as(
             r#"
             SELECT u.designation AS unit_number, b.name as building_name
@@ -403,8 +405,11 @@ impl RegistryRepository {
             None => return Ok(None),
         };
 
-        // `units` has no `unit_number` column — the display value is `designation`.
-        let unit_info: Option<(String, String)> = sqlx::query_as(
+        // `units` has no `unit_number` column — the display value is `designation`
+        // (NOT NULL). `buildings.name` is nullable ("Optional building name",
+        // migration 00007), so it MUST decode as `Option<String>` — a nameless
+        // building otherwise fails the row decode and 500s this endpoint.
+        let unit_info: Option<(String, Option<String>)> = sqlx::query_as(
             r#"
             SELECT u.designation AS unit_number, b.name as building_name
             FROM units u
@@ -449,7 +454,7 @@ impl RegistryRepository {
         Ok(Some(VehicleRegistrationWithDetails {
             registration,
             unit_number: unit_info.as_ref().map(|(u, _)| u.clone()),
-            building_name: unit_info.map(|(_, b)| b),
+            building_name: unit_info.and_then(|(_, b)| b),
             owner_name,
             reviewed_by_name,
             parking_spot_number,

@@ -30,6 +30,7 @@ pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
 pub mod oauth;
+pub mod oauth_token_event;
 pub mod organization;
 pub mod organization_member;
 pub mod password_reset;
@@ -238,6 +239,10 @@ pub use oauth::{
     OAuthClientSummary, OAuthError, OAuthRefreshToken, OAuthScope, RegisterClientRequest,
     RegisterClientResponse, RevokeTokenRequest, ScopeDisplay, TokenRequest, TokenResponse,
     UpdateOAuthClient, UserGrantWithClient, UserGrantWithClientRow, UserOAuthGrant,
+};
+pub use oauth_token_event::{
+    CreateOAuthTokenEvent, OAuthClientTokenUsage, OAuthTokenEvent, OAuthTokenEventTotals,
+    OAuthTokenEventType, OAuthTokenKind,
 };
 pub use organization::{
     CreateOrganization, Organization, OrganizationStatus, OrganizationSummary, UpdateOrganization,

@@ -1,9 +1,86 @@
 {
-  "generated": "2026-07-23T18:16:57Z",
+  "generated": "2026-07-24T12:18:05Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-24T12:18:05Z",
+      "prs_scanned": 15,
+      "clean": [
+        2517,
+        2490,
+        2497,
+        2519,
+        2501,
+        2520
+      ],
+      "with_issues": [
+        {
+          "pr": 2499,
+          "issue": 2528,
+          "findings": 3,
+          "specialist": "pm-security",
+          "note": "booking webhook unhardened + airbnb replay parity"
+        },
+        {
+          "pr": 2498,
+          "issue": 2529,
+          "findings": 3,
+          "specialist": "pm-security",
+          "note": "join/leave_group cross-tenant IDOR gap"
+        },
+        {
+          "pr": 2515,
+          "issue": 2530,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "signup funnel only tour leg instrumented"
+        },
+        {
+          "pr": 2512,
+          "issue": 2531,
+          "findings": 3,
+          "specialist": "pm-backend",
+          "note": "retention prune defined but never scheduled"
+        },
+        {
+          "pr": 2494,
+          "issue": 2532,
+          "findings": 2,
+          "specialist": "pm-backend",
+          "note": "layout events spec-only, no producers"
+        },
+        {
+          "pr": 2495,
+          "issue": 2533,
+          "findings": 2,
+          "specialist": "pm-backend",
+          "note": "dispute KPIs no backing SQL; LIKE-parsed transitions"
+        },
+        {
+          "pr": 2500,
+          "issue": 2534,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "orphaned S3 object on failed direct upload"
+        },
+        {
+          "pr": 2496,
+          "issue": 2536,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "extractEpics reads nonexistent catalog"
+        },
+        {
+          "pr": 2440,
+          "issue": 2537,
+          "findings": 2,
+          "specialist": "pm-qa",
+          "note": "lease-import IDOR + error branches untested"
+        }
+      ]
+    },
     {
       "run_at": "2026-07-23T18:16:57Z",
       "prs_scanned": 15,

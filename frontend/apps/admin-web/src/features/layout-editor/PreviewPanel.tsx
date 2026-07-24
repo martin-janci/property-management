@@ -15,6 +15,15 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { previewResolve, type ScreenConfig } from './api';
+import {
+  BTN_STYLE,
+  ERROR_STYLE,
+  IFRAME_STYLE,
+  INPUT_STYLE,
+  NOTE_STYLE,
+  PANEL_STYLE,
+  ROW_STYLE,
+} from './PreviewPanel.styles';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -34,60 +43,6 @@ export interface Props {
   token: string | null;
   onSectionSelected: (type: string) => void;
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const PANEL_STYLE: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-};
-
-const ROW_STYLE: React.CSSProperties = {
-  display: 'flex',
-  gap: 8,
-  alignItems: 'center',
-  flexWrap: 'wrap',
-};
-
-const INPUT_STYLE: React.CSSProperties = {
-  flex: 1,
-  minWidth: 240,
-  padding: '6px 10px',
-  fontSize: 14,
-  borderRadius: 6,
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-};
-
-const BTN_STYLE: React.CSSProperties = {
-  padding: '6px 14px',
-  fontSize: 14,
-  borderRadius: 6,
-  cursor: 'pointer',
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  fontWeight: 500,
-  background: 'var(--ppt-bg-subtle, #f3f4f6)',
-  color: 'var(--ppt-fg-primary, #111827)',
-};
-
-const ERROR_STYLE: React.CSSProperties = {
-  fontSize: 12,
-  color: 'var(--ppt-danger-600, #dc2626)',
-};
-
-const NOTE_STYLE: React.CSSProperties = {
-  fontSize: 12,
-  color: 'var(--ppt-warning-700, #b45309)',
-};
-
-const IFRAME_STYLE: React.CSSProperties = {
-  width: '100%',
-  height: 600,
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 8,
-};
 
 // ---------------------------------------------------------------------------
 // Helpers

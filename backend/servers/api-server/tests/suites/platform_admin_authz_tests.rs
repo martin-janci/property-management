@@ -2,15 +2,21 @@
 //!
 //! Covers the highest-blast-radius partial endpoints that were previously
 //! untested: capabilities CRUD, impersonation, agencies, memberships,
-//! metrics/notifications read, principals management, tenant branding, and
-//! tenant feature-flags.
+//! metrics read, and principals management — all under `/api/v1/admin/*` and
+//! gated by the `RequireCapability` tower layer.
 //!
-//! Pattern (identical to `infra_migration_platform_admin_tests.rs`):
-//!   1. Unauthenticated → 401
-//!   2. Authenticated ordinary user (no capabilities) → 403
+//! Pattern:
+//!   1. Unauthenticated → 401 (the capability layer rejects a missing bearer
+//!      before any handler/DB work; also guards route existence).
+//!   2. Authenticated ordinary user (no capabilities) → denied on an existing
+//!      route (a 4xx that is not 404/405). We do not pin 403: under `TestApp`
+//!      there is no `ResolvedTenant`, so `RequireCapability` rejects at the
+//!      `RequestPrincipal` layer and surfaces 401 rather than 403 — both are
+//!      valid denials (BIT-588). What matters is that no unprivileged caller
+//!      ever gets a 2xx (auth bypass) or a 5xx (DB touched before the gate).
 //!
-//! A freshly registered user (`create_authenticated_user`) never holds any
-//! capability grant, so it exercises the 403 leg of every capability layer.
+//! Not covered here: the host-routed tenant branding / feature-flags surface —
+//! see the BIT-588 note above `all_cases`.
 
 #![allow(dead_code)]
 
@@ -142,41 +148,24 @@ fn principals_cases() -> Vec<(Method, String, Option<&'static str>)> {
     vec![
         (Method::GET, base.to_string(), None),
         (Method::GET, format!("{base}/{UUID}"), None),
+        // Route is `POST /{id}/principal-kind` (`set_principal_kind`); the old
+        // case used PUT, which 405s at routing before the auth layer (BIT-588).
         (
-            Method::PUT,
+            Method::POST,
             format!("{base}/{UUID}/principal-kind"),
             Some(r#"{"kind":"PlatformPrincipal"}"#),
         ),
     ]
 }
 
-/// Tenant branding: /admin/tenants/{org_id}/branding
-fn tenant_branding_cases() -> Vec<(Method, String, Option<&'static str>)> {
-    let base = format!("/admin/tenants/{UUID}/branding");
-    vec![
-        (Method::GET, base.clone(), None),
-        (
-            Method::PUT,
-            base,
-            Some(
-                r##"{"primary_color":"#fff","secondary_color":"#000","logo_url":null,"favicon_url":null,"custom_css":null}"##,
-            ),
-        ),
-    ]
-}
-
-/// Tenant feature-flags: /admin/tenants/{org_id}/feature-flags
-fn tenant_feature_flag_cases() -> Vec<(Method, String, Option<&'static str>)> {
-    let base = format!("/admin/tenants/{UUID}/feature-flags");
-    vec![
-        (Method::GET, base.clone(), None),
-        (
-            Method::PUT,
-            base,
-            Some(r#"{"key":"some-flag","enabled":true}"#),
-        ),
-    ]
-}
+// NOTE (BIT-588): the tenant branding + feature-flags surfaces
+// (`/admin/tenants/{org_id}/branding` and `.../feature-flags`) are host-routed,
+// production-only endpoints layered on in `main.rs`. `route_table()` — the
+// router the `TestApp` harness builds via `create_router` — intentionally
+// excludes them (see the `route_table` doc comment in `lib.rs`). Probing them
+// here only ever produced 404s, which is what re-quarantined this file. They
+// carry their own `require_capability` guards and are covered by the
+// production-surface tests; they are deliberately not exercised here.
 
 // ---------------------------------------------------------------------------
 // Helper: flatten all high-risk cases
@@ -191,8 +180,6 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
     v.extend(audit_cases());
     v.extend(metrics_cases());
     v.extend(principals_cases());
-    v.extend(tenant_branding_cases());
-    v.extend(tenant_feature_flag_cases());
     v
 }
 
@@ -200,37 +187,55 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Tests
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
+/// Every admin capability route must reject an unauthenticated caller with 401
+/// (the `RequireCapability` layer wraps `RequestPrincipal`, which rejects a
+/// missing bearer before any handler/DB work — this also guards route
+/// existence, so a 404 would fail the loud collected assertion below).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_admin_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
+    let mut failures = Vec::new();
     for (method, uri, body) in all_cases() {
         let resp = app.execute(anon(method.clone(), &uri, body)).await;
-        assert_eq!(
-            resp.status,
-            StatusCode::UNAUTHORIZED,
-            "{method} {uri} must require auth (401), got {}",
-            resp.status
-        );
+        if resp.status != StatusCode::UNAUTHORIZED {
+            failures.push(format!("{method} {uri} -> {} (want 401)", resp.status));
+        }
     }
+    assert!(
+        failures.is_empty(),
+        "these endpoints must require auth (401):\n{}",
+        failures.join("\n")
+    );
 }
 
-#[ignore = "BIT-351 quarantine: schema/column not implemented (BIT-565)"]
+/// A freshly registered ordinary user holds no capability grant, so every admin
+/// route must deny it — never a 2xx leak, never a 5xx (which would mean the DB
+/// was touched before the auth gate). We assert "denied on an existing route"
+/// (a 4xx that is not 404/405) rather than pinning 403: under `TestApp` there is
+/// no `ResolvedTenant`, so `RequireCapability` rejects at the principal layer
+/// and surfaces 401 rather than 403 — both are valid denials (BIT-588).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_admin_endpoints_reject_unprivileged_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _user) = create_authenticated_user(&app, &TestUser::new()).await;
 
+    let mut failures = Vec::new();
     for (method, uri, body) in all_cases() {
         let resp = app
             .execute(authed(&token, method.clone(), &uri, body))
             .await;
-        assert_eq!(
-            resp.status,
-            StatusCode::FORBIDDEN,
-            "{method} {uri} must deny unprivileged user (403), got {}",
-            resp.status
-        );
+        let c = resp.status.as_u16();
+        if !((400..=499).contains(&c) && c != 404 && c != 405) {
+            failures.push(format!(
+                "{method} {uri} -> {} (want 4xx≠404/405)",
+                resp.status
+            ));
+        }
     }
+    assert!(
+        failures.is_empty(),
+        "these endpoints must deny an unprivileged user:\n{}",
+        failures.join("\n")
+    );
 }

@@ -38,6 +38,7 @@ pub mod meter;
 pub mod notification_event;
 pub mod notification_preference;
 pub mod oauth;
+pub mod oauth_token_event;
 pub mod onboarding;
 pub mod organization;
 pub mod organization_member;
@@ -131,6 +132,7 @@ pub use meter::MeterRepository;
 pub use notification_event::{total_counts, NotificationEventRepository};
 pub use notification_preference::NotificationPreferenceRepository;
 pub use oauth::OAuthRepository;
+pub use oauth_token_event::OAuthTokenEventRepository;
 pub use onboarding::{
     OnboardingRepository, OnboardingTour, TourStep, TourWithProgress, UserOnboardingProgress,
 };

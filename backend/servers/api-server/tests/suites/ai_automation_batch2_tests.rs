@@ -117,6 +117,8 @@ async fn test_list_automation_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "auto-rule-1").await;
+    // Automation endpoints authenticate via `RequestPrincipal` (host-resolved
+    // tenant + active `user_memberships`), not `RlsConnection`.
     let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
         .fetch_one(&pool)
@@ -671,6 +673,9 @@ async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-5").await;
+    // Templates endpoints use `RequestPrincipal`, which resolves the tenant from
+    // a `ResolvedTenant` extension (normally set by `host_tenant_middleware`,
+    // absent under `TestApp`) and requires an active `user_memberships` row.
     let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
         .fetch_one(&pool)
@@ -698,6 +703,8 @@ async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-6").await;
+    // Templates endpoints use `RequestPrincipal` — inject the resolved tenant and
+    // seed an active `user_memberships` row so the membership check passes.
     let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
         .fetch_one(&pool)

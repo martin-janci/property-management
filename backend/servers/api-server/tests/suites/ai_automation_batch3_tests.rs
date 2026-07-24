@@ -202,6 +202,7 @@ async fn test_delete_chat_session_roundtrip(pool: PgPool) {
     let del_resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
+    // The delete handler returns 204 No Content on success.
     assert_eq!(
         del_resp.status,
         StatusCode::NO_CONTENT,
@@ -254,18 +255,6 @@ async fn test_update_sentiment_thresholds_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-sent-upd-1").await;
-
-    // The PUT handler UPDATEs an existing row (no upsert); GET auto-creates a
-    // default thresholds row, so prime it first to avoid a RowNotFound -> 500.
-    let _ = app
-        .execute(authed(
-            &token,
-            Method::GET,
-            "/api/v1/ai/sentiment/thresholds",
-            None,
-            org_id,
-        ))
-        .await;
 
     let body = json!({
         "negative_threshold": -0.5,
@@ -427,5 +416,6 @@ async fn test_delete_equipment_returns_200(pool: PgPool) {
     let resp = app
         .execute(authed(&token, Method::DELETE, &uri, None, org_id))
         .await;
+    // The delete handler returns 204 No Content on success.
     assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete equipment");
 }

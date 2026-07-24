@@ -286,6 +286,8 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
         .execute(
             session
                 .post(&format!("/api/v1/ai/chat/messages/{msg_id}/feedback"))
+                // `ProvideFeedback` requires `message_id` in the body (the handler
+                // re-derives it from the path, but the field is non-optional).
                 .json(json!({"message_id": msg_id, "rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
                 .build(),
         )
@@ -372,11 +374,6 @@ async fn update_sentiment_thresholds_succeeds(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ust").await;
     let session = app.session(token, org_id);
-    // The PUT handler UPDATEs an existing row (no upsert); GET auto-creates a
-    // default thresholds row, so prime it first to avoid a RowNotFound -> 500.
-    let _ = app
-        .execute(session.get("/api/v1/ai/sentiment/thresholds").build())
-        .await;
     let resp = app
         .execute(
             session
@@ -553,6 +550,9 @@ async fn update_equipment_maintenance_succeeds(pool: PgPool) {
         .execute(
             session
                 .put(&format!("/api/v1/ai/equipment/maintenance/{maint_id}"))
+                // `maintenance_type` is a TEXT column with a CHECK constraint
+                // (preventive|corrective|emergency|inspection); "repair" is not a
+                // permitted value and violated the constraint → 500.
                 .json(json!({"maintenance_type": "corrective"}))
                 .build(),
         )
@@ -780,7 +780,6 @@ async fn list_vehicle_registrations_succeeds(pool: PgPool) {
     assert!(resp.json_value()["registrations"].is_array());
 }
 
-#[ignore = "BIT-622: endpoint calls external vehicle registry service FETCH_FAILED 500; not testable in isolation without service stub"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_vehicle_registration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

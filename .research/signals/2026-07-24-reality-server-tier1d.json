@@ -1,0 +1,29 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-07-24",
+  "generated_by": "dispatcher-tier1d",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (research backlog buffer starved, claimable=16 below floor=36; scripted refills 1b/1c empty). reality-server confirmed oldest-unreviewed segment without a today signal file. Rust expert ran static-only over backend/servers/reality-server/src/. Segment is notably hardened (extensive audit-round security comments, exact-origin CORS with wildcard rejection, status='active' visibility filters on all public listing queries, token-introspection instead of local JWT decode, ownership-scoped mutations) — one genuine security issue found, no padding.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "note": "SSO open-redirect allowlist guard blocks protocol-relative '//evil.com' but not the backslash variant '/\\evil.com', which WHATWG-compliant browsers normalize to a network-path reference to the external host. redirect_uri is user-controlled via the login query param; the '//evil.com' case is tested but the backslash bypass is not.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-backslash-redirect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash form); browsers normalize backslashes to slashes making it a network-path reference to evil.com.",
+        "backend/servers/reality-server/src/routes/sso.rs:305 — user-controlled redirect_uri is passed to Redirect::temporary after this guard on the SSO callback, so the bypass yields an external redirect (open redirect / phishing pivot).",
+        "backend/servers/reality-server/src/routes/sso.rs:1686 — regression test covers '//evil.com' but omits the '/\\evil.com' backslash bypass, confirming the gap is untested."
+      ]
+    }
+  ]
+}

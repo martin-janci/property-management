@@ -195,46 +195,6 @@
       "last_updated": "2026-07-23T14:34:52.019013Z"
     },
     {
-      "id": "sec-layout-webhook-integration-test-2026-07-23",
-      "action": "Add integration test for layout publish webhook replay/timestamp handling once #2485 fix lands (parity with generic integration webhook test pattern)",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-23 (score=6: security*2 + dep-blocker; follows #2485)",
-      "deadline": null,
-      "dependency": "gh-issue-2485",
-      "depends_on": [
-        "gh-issue-2485"
-      ],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 6,
-        "vector": "test"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
-      "id": "sec-mobile-layout-cache-tenant-scope-test-2026-07-23",
-      "action": "Add mobile test asserting LAYOUT_CACHE_KEY is cleared/tenant-scoped on logout+re-login (follows #2486 fix)",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-23 (score=6: security*2 + mobile + dep-blocker; follows #2486)",
-      "deadline": null,
-      "dependency": "gh-issue-2486",
-      "depends_on": [
-        "gh-issue-2486"
-      ],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 6,
-        "vector": "test"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
       "id": "devops-nextest-partition-runbook-2026-07-23",
       "action": "Document the nextest archive + per-test partition workflow (#2459) and the 206->8 test-binary consolidation (#2461/#2487) as a contributor runbook so future test files land in the consolidated crates",
       "owner_role": "pm-devops",
@@ -251,26 +211,6 @@
         "vector": "docs"
       },
       "last_updated": ""
-    },
-    {
-      "id": "data-audit-add-evidence-idor-fix-2026-07-23",
-      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern)",
-      "owner_role": "pm-data",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-data 2026-07-23 (score=6: security-adjacent + audit-completeness + dep-blocker)",
-      "deadline": null,
-      "dependency": "gh-issue-2483",
-      "depends_on": [
-        "gh-issue-2483"
-      ],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 6,
-        "vector": "data"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
     },
     {
       "id": "data-layout-publish-event-tracking-2026-07-23",
@@ -401,24 +341,6 @@
       "last_updated": "2026-07-23T14:34:52.019013Z"
     },
     {
-      "id": "chore-dependabot-cargo-minor-batch-2026-07-23",
-      "action": "Review + merge dependabot cargo-minor-patch batch #2473 (6 crates) once CI is green; verify no lockfile drift with dev",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-23 (score=2: routine deps)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "deps"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
       "id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories",
       "owner_role": "pm-security",
@@ -453,24 +375,6 @@
         "plan": null,
         "score": 7,
         "vector": "sec"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
-      "id": "qa-verify-gate-adoption-checkin-2026-07-23",
-      "action": "Confirm every open PR (#2478/#2481/#2482/#2490/#2491) has run `just verify` locally (per #2444 verify gate) — enforcement or advisory-only?",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-23 (score=3: process check)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "chore"
       },
       "last_updated": "2026-07-23T14:34:52.019013Z"
     },
@@ -545,42 +449,6 @@
         "vector": "data"
       },
       "last_updated": "2026-07-24T02:15:24Z"
-    },
-    {
-      "id": "data-reality-portal-listing-view-events-2026-07-23",
-      "action": "Add listing-view analytics events (reality-web + mobile-native) with view-source, filter-state, session context — foundational for realtor conversion metrics",
-      "owner_role": "pm-data",
-      "priority": "low",
-      "status": "open",
-      "source": "pm-data 2026-07-23 (score=4: KPI gap on public listings surface)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 4,
-        "vector": "data"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
-    },
-    {
-      "id": "chore-triage-untriaged-issues-750s-2026-07-23",
-      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-23 (score=3: backlog hygiene)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T14:34:52.019013Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "triage"
-      },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
     },
     {
       "id": "sec-layout-webhook-hmac-verify-2026-07-23",
@@ -754,6 +622,186 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      }
+    },
+    {
+      "id": "gh-issue-2528",
+      "action": "Follow-up: harden booking_push_notification webhook + Airbnb replay parity (PR #2499) (Closes #2528)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2528)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2528,
+        "url": "https://github.com/martin-janci/property-management/issues/2528",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2529",
+      "action": "Follow-up: close join_group/leave_group cross-tenant IDOR (PR #2498) (Closes #2529)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2529)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2529,
+        "url": "https://github.com/martin-janci/property-management/issues/2529",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2530",
+      "action": "Follow-up: instrument the full signup funnel, not just the onboarding tour (PR #2515) (Closes #2530)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2530)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2530,
+        "url": "https://github.com/martin-janci/property-management/issues/2530",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2531",
+      "action": "Follow-up: schedule the support_tooling_events retention prune (defined but never invoked) (PR #2512) (Closes #2531)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2531)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2531,
+        "url": "https://github.com/martin-janci/property-management/issues/2531",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2532",
+      "action": "Follow-up: wire layout publish/webhook event emission (spec-only, no producers) (PR #2494) (Closes #2532)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2532)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2532,
+        "url": "https://github.com/martin-janci/property-management/issues/2532",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2533",
+      "action": "Follow-up: back dispute KPIs with SQL + structural status transitions (PR #2495) (Closes #2533)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2533)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2533,
+        "url": "https://github.com/martin-janci/property-management/issues/2533",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2534",
+      "action": "Follow-up: prevent orphaned S3 objects on failed direct-to-S3 upload (PR #2500) (Closes #2534)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2534)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2534,
+        "url": "https://github.com/martin-janci/property-management/issues/2534",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2536",
+      "action": "Follow-up: fix screen-map extractEpics catalog source so epic refs validate (PR #2496) (Closes #2536)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2536)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2536,
+        "url": "https://github.com/martin-janci/property-management/issues/2536",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2537",
+      "action": "Follow-up: add cross-tenant IDOR + error-branch tests for lease-abstraction import (PR #2440) (Closes #2537)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2537)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2537,
+        "url": "https://github.com/martin-janci/property-management/issues/2537",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
