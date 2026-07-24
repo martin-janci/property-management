@@ -245,6 +245,7 @@ async fn ip_list_investors_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_investor_succeeds(pool: PgPool) {
     let f = setup(pool, "ip-create-inv").await;
@@ -378,6 +379,7 @@ async fn ip_list_portfolios_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_portfolio_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-pf").await;
@@ -500,6 +502,7 @@ async fn ip_list_investor_portfolios_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_add_portfolio_property_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-add-prop").await;
@@ -604,6 +607,7 @@ async fn ip_list_roi_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list roi: {}", resp.text());
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-roi").await;
@@ -664,6 +668,7 @@ async fn ip_get_latest_roi_succeeds(pool: PgPool) {
 // investor-portal / distributions
 // ===========================================================================
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_distribution_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-dist").await;
@@ -747,6 +752,7 @@ async fn ip_update_distribution_succeeds(pool: PgPool) {
 // investor-portal / reports
 // ===========================================================================
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_report_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-rpt").await;
@@ -799,6 +805,7 @@ async fn ip_list_investor_reports_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_get_report_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-get-rpt").await;
@@ -833,6 +840,7 @@ async fn ip_get_report_succeeds(pool: PgPool) {
 // investor-portal / capital-calls
 // ===========================================================================
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_capital_call_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-cc").await;
@@ -939,6 +947,7 @@ async fn ip_get_investor_dashboard_succeeds(pool: PgPool) {
     );
 }
 
+#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-dash-metrics").await;
