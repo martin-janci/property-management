@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-24T16:09:07Z",
+  "archived_at": "2026-07-24T20:12:29Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2032,6 +2032,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-24T16:04:54Z"
+      }
+    },
+    {
+      "id": "data-pgvector-rag-observability-2026-07-23",
+      "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "dropped",
+      "source": "pm-data 2026-07-23 (score=4: observability gap on freshly-shipped AI feature) | gc1-reconcile 2026-07-24T20:12:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 4,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-24T20:12:21Z"
       }
     },
     {

@@ -2437,6 +2437,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-pgvector-rag-observability-2026-07-23",
+      "branch": "auto-impl/data-pgvector-rag-observability-2026-07-7ed4e19f",
+      "status": "failed",
+      "claimed_at": "2026-07-24T12:10:00Z",
+      "last_updated": "2026-07-24T20:08:23Z",
+      "status_changed_at": "2026-07-24T20:08:23Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " [sandbox-failure-after-reclaim]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "data-privacy-retention-policy-2026-07-23",
       "branch": "auto-impl/data-privacy-retention-policy-2026-07-23-41b347af",
       "status": "merged",
@@ -8685,5 +8707,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T18:10:20Z"
+  "archived_at": "2026-07-24T20:12:21Z"
 }
