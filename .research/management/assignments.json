@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-24T18:10:46Z",
+  "generated": "2026-07-24T18:34:56Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -92,18 +92,18 @@
     {
       "task_id": "gh-issue-2530",
       "branch": "auto-impl/gh-issue-2530-1070e7c8",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-24T18:09:34Z",
-      "last_updated": "2026-07-24T18:09:34Z",
-      "status_changed_at": "2026-07-24T18:09:34Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-24T18:34:56Z",
+      "status_changed_at": "2026-07-24T18:34:56Z",
+      "pr_number": 2544,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2544",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2544 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=signup.* wired in admin-web+ppt-web; all changed-file tests green; verify red is pre-existing unrelated CapabilitiesAdminPage(18!=17)+e2e-collection on dev; draft for adjudication",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
