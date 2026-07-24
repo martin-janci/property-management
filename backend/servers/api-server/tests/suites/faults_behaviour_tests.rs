@@ -288,7 +288,7 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
         .unwrap_or("")
         .to_string();
     assert!(
-        status == "open" || status == "reported" || status == "in_progress",
+        matches!(status.as_str(), "open" | "reported" | "in_progress" | "reopened"),
         "expected open-like status, got: {}",
         status
     );
