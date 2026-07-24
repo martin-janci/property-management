@@ -76,6 +76,26 @@ fn mint_token(user_id: Uuid, org_id: Uuid) -> String {
     .expect("mint token")
 }
 
+fn mint_platform_admin_token(user_id: Uuid, org_id: Uuid) -> String {
+    let now = Utc::now();
+    let claims = Claims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("platform_admin".to_string()),
+        email: "mp-test@test.local".to_string(),
+        name: "MP Test".to_string(),
+    };
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint platform admin token")
+}
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -949,8 +969,8 @@ async fn get_verification_queue_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gvq").await;
     let user_id = seed_user(&pool, "gvq@test.local").await;
-    seed_membership(&pool, org_id, user_id, "manager").await;
-    let token = mint_token(user_id, org_id);
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_platform_admin_token(user_id, org_id);
 
     let resp = app
         .get("/api/v1/marketplace/verifications/queue")

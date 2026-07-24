@@ -535,6 +535,22 @@ async fn get_registry_rules_succeeds(pool: PgPool) {
     let building_id = seed_building(&pool, org_id).await;
     let session = app.session(token, org_id);
 
+    // Upsert rules first so GET has something to return
+    let put_resp = app
+        .execute(
+            session
+                .put(&format!("/api/v1/registry/buildings/{building_id}/rules"))
+                .json(json!({"pets_allowed": false}))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        put_resp.status,
+        StatusCode::OK,
+        "put rules body: {}",
+        put_resp.text()
+    );
+
     let resp = app
         .execute(
             session

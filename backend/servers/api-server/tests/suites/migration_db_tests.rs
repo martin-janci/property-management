@@ -324,7 +324,9 @@ async fn test_migration_exports(pool: PgPool) {
         "categories": ["buildings", "units"],
         "privacy_options": {
             "anonymize_personal_data": true,
-            "mask_financial_data": true
+            "mask_financial_data": true,
+            "exclude_document_contents": false,
+            "hash_identifiers": false
         }
     });
 

@@ -324,7 +324,7 @@ async fn legal_create_requirement_returns_201(pool: PgPool) {
         .execute(
             sess.post("/api/v1/legal/requirements")
                 .json(json!({
-                    "requirement_type": "regulatory",
+                    "category": "regulatory",
                     "name": "GDPR Data Retention Policy",
                     "description": "Annual review required",
                     "due_date": "2027-01-01"
@@ -336,7 +336,7 @@ async fn legal_create_requirement_returns_201(pool: PgPool) {
     resp.assert_status(StatusCode::CREATED);
     let body = resp.json_value();
     assert!(body["id"].is_string());
-    assert_eq!(body["requirement_type"].as_str(), Some("regulatory"));
+    assert_eq!(body["category"].as_str(), Some("regulatory"));
 }
 
 // ---------------------------------------------------------------------------
@@ -370,7 +370,7 @@ async fn legal_get_requirement_200_and_404(pool: PgPool) {
         .execute(
             sess.post("/api/v1/legal/requirements")
                 .json(json!({
-                    "requirement_type": "internal",
+                    "category": "internal",
                     "name": "Fire Safety Compliance",
                 }))
                 .build(),
@@ -414,7 +414,7 @@ async fn legal_update_requirement_returns_200(pool: PgPool) {
     let create = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "regulatory", "name": "Old Title"}))
+                .json(json!({"category": "regulatory", "name": "Old Title"}))
                 .build(),
         )
         .await;
@@ -443,7 +443,7 @@ async fn legal_delete_requirement_returns_200(pool: PgPool) {
     let create = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "internal", "name": "To Delete"}))
+                .json(json!({"category": "internal", "name": "To Delete"}))
                 .build(),
         )
         .await;
@@ -471,7 +471,7 @@ async fn legal_create_verification_returns_201(pool: PgPool) {
     let create_req = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "regulatory", "name": "Verification Target"}))
+                .json(json!({"category": "regulatory", "name": "Verification Target"}))
                 .build(),
         )
         .await;
@@ -508,7 +508,7 @@ async fn legal_list_verifications_returns_200(pool: PgPool) {
     let create_req = app
         .execute(
             sess.post("/api/v1/legal/requirements")
-                .json(json!({"requirement_type": "internal", "name": "List Verifs Target"}))
+                .json(json!({"category": "internal", "name": "List Verifs Target"}))
                 .build(),
         )
         .await;
