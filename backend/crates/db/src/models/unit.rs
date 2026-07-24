@@ -20,7 +20,6 @@ pub struct Unit {
 
     // Unit details
     pub unit_type: String,
-    #[sqlx(try_from = "rust_decimal::Decimal")]
     pub size_sqm: Option<Decimal>,
     pub rooms: Option<i32>,
     #[sqlx(try_from = "rust_decimal::Decimal")]

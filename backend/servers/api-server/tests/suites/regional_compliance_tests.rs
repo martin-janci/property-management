@@ -88,7 +88,6 @@ async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_jurisdiction_lifecycle(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -136,7 +135,6 @@ async fn test_jurisdiction_lifecycle(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_slovak_voting_config_lifecycle(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -199,7 +197,6 @@ async fn test_slovak_voting_config_lifecycle(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_gdpr_consent_lifecycle(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -297,7 +294,6 @@ async fn test_gdpr_consent_lifecycle(pool: PgPool) {
 /// the gate derives from the trusted DB role, not the (here manager-claiming)
 /// token, and is not a no-context pass.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn configure_writes_require_manager(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "rolegate-org").await;

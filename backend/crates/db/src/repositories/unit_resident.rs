@@ -43,7 +43,7 @@ impl UnitResidentRepository {
                 unit_id, user_id, resident_type, is_primary,
                 start_date, receives_notifications, receives_mail, notes, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, $3::resident_type, $4, $5, $6, $7, $8, $9)
             RETURNING {UNIT_RESIDENT_COLUMNS}
             "#
         )))
@@ -215,7 +215,7 @@ impl UnitResidentRepository {
             r#"
             UPDATE unit_residents
             SET
-                resident_type = COALESCE($2, resident_type),
+                resident_type = COALESCE($2::resident_type, resident_type),
                 is_primary = COALESCE($3, is_primary),
                 end_date = COALESCE($4, end_date),
                 receives_notifications = COALESCE($5, receives_notifications),

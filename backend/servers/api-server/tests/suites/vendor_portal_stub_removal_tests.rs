@@ -132,7 +132,6 @@ fn mint_token(user_id: Uuid, email: &str) -> String {
 /// unmounted (ROADMAP(PAP-24)/PAP-33), so the fabricating handler is not
 /// routable at all: every caller — authenticated or not — gets `404`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn job_details_never_returns_fabricated_pii(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "pii-a").await;
@@ -172,7 +171,6 @@ async fn job_details_never_returns_fabricated_pii(pool: PgPool) {
 /// `list_jobs` and `list_invoices` previously returned `200` with a fabricated
 /// array. Neither may return a `200` body anymore.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_endpoints_never_return_fabricated_arrays(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "lst-a").await;
@@ -211,7 +209,6 @@ async fn list_endpoints_never_return_fabricated_arrays(pool: PgPool) {
 /// will sit on. Without it, the portal would have no correct way to keep one
 /// party's jobs from another's.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn work_orders_are_org_scoped(pool: PgPool) {
     let org_a = seed_org(&pool, "scope-a").await;
     let org_b = seed_org(&pool, "scope-b").await;

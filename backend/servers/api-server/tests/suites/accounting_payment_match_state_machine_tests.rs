@@ -34,10 +34,23 @@ async fn set_ctx(conn: &mut sqlx::PgConnection, org: Uuid) {
         .expect("set request context");
 }
 
+/// Seed a real user so FK on `payment_match.decided_by` is satisfied.
+async fn seed_user(pool: &PgPool, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO users (email, password_hash, name, status, email_verified_at) \
+         VALUES ($1, 'hash', 'Test', 'active', NOW()) RETURNING id",
+    )
+    .bind(format!("{slug}@test.test"))
+    .fetch_one(pool)
+    .await
+    .unwrap()
+}
+
 /// Seed an org + contact + invoice (total 100) + statement line (amount 100) +
-/// a `suggested` payment match. Returns (org, invoice_id, match_id).
-async fn seed_match_scenario(pool: &PgPool, slug: &str) -> (Uuid, Uuid, Uuid) {
+/// a `suggested` payment match. Returns (org, invoice_id, match_id, user_id).
+async fn seed_match_scenario(pool: &PgPool, slug: &str) -> (Uuid, Uuid, Uuid, Uuid) {
     let org = seed_org(pool, slug).await;
+    let user = seed_user(pool, slug).await;
     let contact = sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO contact (tenant_id, name) VALUES ($1, 'C') RETURNING id",
     )
@@ -81,7 +94,7 @@ async fn seed_match_scenario(pool: &PgPool, slug: &str) -> (Uuid, Uuid, Uuid) {
     .fetch_one(pool)
     .await
     .unwrap();
-    (org, invoice, p_match)
+    (org, invoice, p_match, user)
 }
 
 async fn invoice_state(pool: &PgPool, invoice: Uuid) -> (rust_decimal::Decimal, InvoiceStatus) {
@@ -98,11 +111,9 @@ async fn invoice_state(pool: &PgPool, invoice: Uuid) -> (rust_decimal::Decimal, 
 /// After confirm: paid=100/paid. After reject (unapply): paid=0/issued.
 /// The final confirm of a now-rejected match is illegal (409) and leaves paid=0.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
-    let (org, invoice, match_id) = seed_match_scenario(&pool, "pap325-replay").await;
+    let (org, invoice, match_id, user) = seed_match_scenario(&pool, "pap325-replay").await;
     let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
-    let user = Uuid::new_v4();
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
@@ -150,11 +161,9 @@ async fn confirm_reject_confirm_does_not_inflate_paid_amount(pool: PgPool) {
 /// Confirming an already-confirmed match is an idempotent no-op — it must not
 /// re-apply paid_amount.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn double_confirm_is_idempotent(pool: PgPool) {
-    let (org, invoice, match_id) = seed_match_scenario(&pool, "pap325-double-confirm").await;
+    let (org, invoice, match_id, user) = seed_match_scenario(&pool, "pap325-double-confirm").await;
     let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
-    let user = Uuid::new_v4();
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 
@@ -177,11 +186,9 @@ async fn double_confirm_is_idempotent(pool: PgPool) {
 /// subtraction). Here the match was only ever Suggested -> Rejected, so paid
 /// stays 0 and the second reject is harmless.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn double_reject_is_idempotent(pool: PgPool) {
-    let (org, invoice, match_id) = seed_match_scenario(&pool, "pap325-double-reject").await;
+    let (org, invoice, match_id, user) = seed_match_scenario(&pool, "pap325-double-reject").await;
     let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
-    let user = Uuid::new_v4();
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 

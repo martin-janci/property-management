@@ -105,8 +105,14 @@ fn id_of(resp: &common::TestResponse) -> Uuid {
 // Buildings / units / owners / residents — tenant-scoped (X-Tenant-ID).
 // ---------------------------------------------------------------------------
 
+// BIT-575 Wave J2: building/unit/owner steps pass, but POST
+// /units/{uid}/residents returns 500 DB_ERROR ("Failed to add resident") while
+// the parallel owner-add path (assign_owner_rls) succeeds. Root cause not yet
+// isolated (all static paths — enum cast, FK created_by, NOT NULL, RETURNING
+// decode — check out); quarantined so the rest of Wave J2 can land. Tracked as
+// a follow-up; do NOT delete — this is a real un-quarantine target.
+#[ignore = "BIT-575 follow-up: resident-add 500 DB_ERROR, root cause pending"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn buildings_units_owners_residents_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, user_id, _role) = manager_with_org(&pool, &app, "bldg").await;
@@ -335,7 +341,6 @@ async fn buildings_units_owners_residents_happy_path(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn organizations_read_surface_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, _user, _role) = manager_with_org(&pool, &app, "org-read").await;
@@ -365,7 +370,6 @@ async fn organizations_read_surface_happy_path(pool: PgPool) {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn organizations_mutation_happy_path(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org, _user, seeded_role) = manager_with_org(&pool, &app, "org-mut").await;
@@ -418,7 +422,13 @@ async fn organizations_mutation_happy_path(pool: PgPool) {
         )
         .await;
     resp.assert_status(StatusCode::CREATED);
-    let role_id = id_of(&resp);
+    // POST /roles returns `CreateRoleResponse { role: RoleResponse { id, .. } }`,
+    // so the id is nested under `.role`, not at the document root.
+    let role_id: Uuid = resp.json_value()["role"]["id"]
+        .as_str()
+        .expect("role create response has string role.id")
+        .parse()
+        .expect("role id is a uuid");
 
     app.execute(
         sess.get(&format!("/api/v1/organizations/{org}/roles/{role_id}"))
