@@ -268,7 +268,7 @@ async fn complete_work_order_succeeds(pool: PgPool) {
         .post(&format!("{BASE}/{id}/complete"))
         .bearer(&token)
         .tenant(org_id)
-        .json(json!({ "actual_cost": 120.50, "resolution_notes": "Fixed" }))
+        .json(json!({ "actual_cost": "120.50", "resolution_notes": "Fixed" }))
         .build();
     let resp = app.execute(r).await;
     assert_eq!(resp.status, StatusCode::OK, "complete: {}", resp.text());

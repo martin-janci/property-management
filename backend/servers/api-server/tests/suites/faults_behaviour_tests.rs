@@ -7,7 +7,8 @@
 
 #![allow(dead_code)]
 
-use axum::http::StatusCode;
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -17,6 +18,20 @@ use crate::common::{create_authenticated_user_with_org, TestApp, TestUser};
 // ---------------------------------------------------------------------------
 // Shared seed helpers
 // ---------------------------------------------------------------------------
+
+/// Inject the host-resolved [`ResolvedTenant`] extension the faults handlers
+/// read via [`RequestPrincipal`]. The bare `TestApp` harness does not run
+/// `host_tenant_middleware`, so this mirrors what that middleware would insert
+/// after resolving the caller's host. Membership is still enforced downstream
+/// against the `user_memberships` row seeded by `seed_membership`.
+fn inject_tenant(mut req: Request<Body>, org_id: Uuid) -> Request<Body> {
+    use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
+    req.extensions_mut().insert(ResolvedTenant {
+        organization_id: org_id,
+        source: TenantSource::Subdomain,
+    });
+    req
+}
 
 async fn seed_membership(pool: &sqlx::PgPool, org_id: Uuid, user_id: Uuid) {
     sqlx::query(
@@ -60,7 +75,7 @@ async fn create_fault(app: &TestApp, token: &str, org_id: Uuid, building_id: Uui
         .tenant(org_id)
         .json(&payload)
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::CREATED,
@@ -93,7 +108,7 @@ async fn test_get_fault_returns_detail(pool: PgPool) {
         .bearer(&token)
         .tenant(org_id)
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(resp.status, StatusCode::OK, "get fault: {}", resp.text());
     let body = resp.json_value();
     assert_eq!(
@@ -122,7 +137,7 @@ async fn test_update_fault_title(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "title": "Updated Fault Title" }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(resp.status, StatusCode::OK, "update fault: {}", resp.text());
     assert_eq!(
         resp.json_value()["fault"]["title"].as_str(),
@@ -150,7 +165,7 @@ async fn test_update_fault_status_to_in_progress(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "status": "in_progress", "note": "Work started" }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.json_value()["fault"]["status"].as_str(),
         Some("in_progress")
@@ -177,7 +192,7 @@ async fn test_resolve_fault(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "resolution_notes": "Pipe was replaced." }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.json_value()["fault"]["status"].as_str(),
         Some("resolved")
@@ -205,7 +220,7 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "resolution_notes": "Fixed." }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(resp.status, StatusCode::OK);
 
     // Confirm
@@ -215,7 +230,7 @@ async fn test_confirm_fault_resolution(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "rating": 5, "feedback": "Great work!" }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::OK,
@@ -254,7 +269,7 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "resolution_notes": "Fixed temporarily." }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(resp.status, StatusCode::OK);
 
     // Reopen
@@ -264,7 +279,7 @@ async fn test_reopen_resolved_fault(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "reason": "Problem recurred." }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(resp.status, StatusCode::OK, "reopen fault: {}", resp.text());
     let status = resp.json_value()["fault"]["status"]
         .as_str()
@@ -296,7 +311,7 @@ async fn test_list_my_faults(pool: PgPool) {
         .bearer(&token)
         .tenant(org_id)
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::OK,
@@ -334,7 +349,7 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "note": "Investigating the issue.", "is_internal": false }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::CREATED,
@@ -348,7 +363,7 @@ async fn test_add_and_list_fault_comments(pool: PgPool) {
         .bearer(&token)
         .tenant(org_id)
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::OK,
@@ -377,7 +392,7 @@ async fn test_add_work_note(pool: PgPool) {
         .tenant(org_id)
         .json(json!({ "note": "Ordered replacement parts." }))
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::CREATED,
@@ -403,7 +418,7 @@ async fn test_get_fault_statistics(pool: PgPool) {
         .bearer(&token)
         .tenant(org_id)
         .build();
-    let resp = app.execute(r).await;
+    let resp = app.execute(inject_tenant(r, org_id)).await;
     assert_eq!(
         resp.status,
         StatusCode::OK,
