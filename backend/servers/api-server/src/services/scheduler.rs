@@ -2072,4 +2072,88 @@ mod tests {
         let ids = parse_announcement_target_ids(Uuid::new_v4(), "all", &payload);
         assert!(ids.is_empty(), "null target_ids degrades to empty");
     }
+
+    // ------------------------------------------------------------------
+    // Regression (PR #2436): the malformed-parse must NOT be silent. IG3.
+    //
+    // The `*_falls_back_to_empty` tests above only pin the *return value*
+    // (empty Vec). That value is identical to the pre-#2436 behaviour,
+    // which parsed with `serde_json::from_value(...).unwrap_or_default()`
+    // and swallowed the error silently — so those tests pass on BOTH the
+    // pre-fix and post-fix code and cannot guard the regression the fix
+    // actually made: emitting a diagnostic `warn` so a broken announcement
+    // is discoverable instead of silently publishing zero notifications.
+    //
+    // This test captures the tracing output and asserts a WARN event
+    // carrying the diagnostic message and the announcement id. It FAILS on
+    // the pre-fix silent `unwrap_or_default()` (no event emitted) and PASSES
+    // on current dev — the discriminating property IG3 requires.
+    // ------------------------------------------------------------------
+
+    /// A `MakeWriter` that appends every subscriber write into a shared
+    /// buffer so a `#[test]` can inspect what tracing emitted.
+    #[derive(Clone)]
+    struct CaptureWriter(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+    impl std::io::Write for CaptureWriter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .extend_from_slice(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for CaptureWriter {
+        type Writer = CaptureWriter;
+        fn make_writer(&'a self) -> Self::Writer {
+            self.clone()
+        }
+    }
+
+    #[test]
+    fn test_parse_target_ids_malformed_emits_diagnostic_warning() {
+        let buf = std::sync::Arc::new(std::sync::Mutex::new(Vec::<u8>::new()));
+        let subscriber = tracing_subscriber::fmt()
+            .with_writer(CaptureWriter(buf.clone()))
+            .with_max_level(tracing::Level::WARN)
+            .with_ansi(false)
+            .finish();
+
+        let announcement_id = Uuid::new_v4();
+        let payload = serde_json::json!({ "not": "a uuid array" });
+
+        // `parse_announcement_target_ids` is synchronous, so a thread-local
+        // default subscriber captures its `warn!` deterministically.
+        let ids = tracing::subscriber::with_default(subscriber, || {
+            parse_announcement_target_ids(announcement_id, "building", &payload)
+        });
+
+        assert!(
+            ids.is_empty(),
+            "malformed target_ids must still degrade to an empty target set"
+        );
+
+        let captured = String::from_utf8(buf.lock().unwrap_or_else(|e| e.into_inner()).clone())
+            .expect("captured tracing output is valid utf-8");
+
+        assert!(
+            captured.contains("Failed to parse announcement target_ids"),
+            "the malformed parse must emit a diagnostic warn, not silently \
+             swallow the error (pre-#2436 used unwrap_or_default()); captured: {captured:?}"
+        );
+        assert!(
+            captured.contains("WARN"),
+            "the diagnostic must be emitted at WARN level; captured: {captured:?}"
+        );
+        assert!(
+            captured.contains(&announcement_id.to_string()),
+            "the warn must carry the announcement id so the broken row is \
+             diagnosable; captured: {captured:?}"
+        );
+    }
 }
