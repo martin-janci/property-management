@@ -37,6 +37,47 @@ use serde_json::Value as JsonValue;
 use sqlx::{Error as SqlxError, Executor, FromRow, Postgres};
 use uuid::Uuid;
 
+/// Canonical fault-by-status KPI definition — the single source of truth.
+///
+/// Both the owner/portfolio fault statistics ([`FaultStatistics::by_status`]) and
+/// the platform-admin support-data diagnostics (`SupportData.fault_by_status`)
+/// derive their per-status fault counts from this one query, so the two
+/// dashboards can never disagree. This unifies the dual `FaultStatusCount`
+/// definition flagged in the 2026-05-28 pm-data decision — do not reintroduce a
+/// second inline `GROUP BY status` count; call this instead.
+///
+/// Scope:
+/// - `org_id = None` counts faults across **all** organisations (platform scope,
+///   used by the support-data admin page).
+/// - `org_id = Some(_)` scopes to a single organisation, optionally narrowed to
+///   one building via `building_id`.
+///
+/// Rows are ordered by descending count so callers can render "top statuses"
+/// directly.
+pub async fn fault_counts_by_status<'e, E>(
+    executor: E,
+    org_id: Option<Uuid>,
+    building_id: Option<Uuid>,
+) -> Result<Vec<StatusCount>, SqlxError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    sqlx::query_as::<_, StatusCount>(
+        r#"
+        SELECT status::text AS status, COUNT(*) AS count
+        FROM faults
+        WHERE ($1::uuid IS NULL OR organization_id = $1)
+          AND ($2::uuid IS NULL OR building_id = $2)
+        GROUP BY status
+        ORDER BY count DESC
+        "#,
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .fetch_all(executor)
+    .await
+}
+
 /// Row struct for fault with details query.
 #[derive(Debug, FromRow)]
 struct FaultDetailsRow {
@@ -1265,21 +1306,8 @@ impl FaultRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        // By status
-        let by_status = sqlx::query_as::<_, StatusCount>(
-            r#"
-            SELECT status::text as status, COUNT(*) as count
-            FROM faults
-            WHERE organization_id = $1
-              AND ($2::uuid IS NULL OR building_id = $2)
-            GROUP BY status
-            ORDER BY count DESC
-            "#,
-        )
-        .bind(org_id)
-        .bind(building_id)
-        .fetch_all(&self.pool)
-        .await?;
+        // By status — canonical KPI definition (single source of truth).
+        let by_status = fault_counts_by_status(&self.pool, Some(org_id), building_id).await?;
 
         // By category
         let by_category = sqlx::query_as::<_, CategoryCount>(
