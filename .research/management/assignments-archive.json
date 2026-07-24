@@ -933,6 +933,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "chore-triage-untriaged-issues-750s-2026-07-23",
+      "branch": "auto-impl/chore-triage-untriaged-issues-750s-2026-ae4cbf99",
+      "status": "failed",
+      "claimed_at": "2026-07-24T12:10:00Z",
+      "last_updated": "2026-07-24T12:25:00Z",
+      "status_changed_at": "2026-07-24T12:25:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "pm-scrum-master",
+      "implementer_summary": "pr=none status=blocked specialist=pm-scrum-master note=issues-already-resolved-nothing-to-triage (#749-#779 all closed 2026-06-02; nothing to land)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "chore-uc-33-dispute-subuc-links-2026-07-23",
       "branch": "auto-impl/chore-uc-33-dispute-subuc-links-2026-07-7cf3454a",
       "status": "failed",
@@ -2283,6 +2305,28 @@
       "merge_attempted_at": "2026-07-23T18:18:07Z"
     },
     {
+      "task_id": "data-fault-kpi-unification-2026-07-23",
+      "branch": "auto-impl/data-fault-kpi-unification-2026-07-23-c9a9bea3",
+      "status": "merged",
+      "claimed_at": "2026-07-23T22:09:19Z",
+      "last_updated": "2026-07-24T12:25:00Z",
+      "status_changed_at": "2026-07-24T12:25:00Z",
+      "pr_number": 2521,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2521",
+      "merged_at": "2026-07-24T12:19:06Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=fa255ea6c0b44151aac45267a5beb589f46c30cf note=clean-kpi-unification-behavior-preserved-tests-added-ci-green",
+      "last_reviewed_oid": "fa255ea6c0b44151aac45267a5beb589f46c30cf",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-24T12:25:00Z"
+    },
+    {
       "task_id": "data-layout-publish-event-tracking-2026-07-23",
       "branch": "auto-impl/data-layout-publish-event-tracking-2026-5ca2af84",
       "status": "merged",
@@ -2349,6 +2393,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-support-data-audit-event-def-2026-07-23",
+      "branch": "auto-impl/data-support-data-audit-event-def-2026-0-26b82b74",
+      "status": "merged",
+      "claimed_at": "2026-07-24T10:11:11Z",
+      "last_updated": "2026-07-24T12:25:00Z",
+      "status_changed_at": "2026-07-24T12:25:00Z",
+      "pr_number": 2524,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2524",
+      "merged_at": "2026-07-24T12:21:09Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2524 status=done specialist=generic scope_drift=false note=new docs/data/support-tooling-audit-events.md formalizes support_tooling_events schema; resolves 2026-05-28 decision",
+      "reviewer_summary": "verdict=approve head_oid=c66c2997fd11f51254fdee1c9f868b5d0c57f89f note=docs-only-def-doc-claims-verified-against-code",
+      "last_reviewed_oid": "c66c2997fd11f51254fdee1c9f868b5d0c57f89f",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-24T12:25:00Z"
+    },
+    {
       "task_id": "dep-bump-ammonia-rustsec-2026-06",
       "branch": "auto-impl/dep-bump-ammonia-rustsec-2026-06-aa96169c",
       "status": "merged",
@@ -2369,6 +2435,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-07-02T14:14:26Z"
+    },
+    {
+      "task_id": "devops-nextest-partition-runbook-2026-07-23",
+      "branch": "auto-impl/devops-nextest-partition-runbook-2026-07-8717c586",
+      "status": "merged",
+      "claimed_at": "2026-07-24T10:11:11Z",
+      "last_updated": "2026-07-24T12:25:00Z",
+      "status_changed_at": "2026-07-24T12:25:00Z",
+      "pr_number": 2523,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2523",
+      "merged_at": "2026-07-24T12:20:53Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2523 status=done specialist=generic scope_drift=true code_reuse_warn=none note=docs-only runbook nextest-partition-and-test-consolidation.md; drift docs/runbooks not in pm-devops globs",
+      "reviewer_summary": "verdict=approve head_oid=e71b995e6d5be1cf44b8a077d1d7097d2c614c3f note=docs-only-runbook-verified-against-repo-scope-drift-benign-owner-glob-gap",
+      "last_reviewed_oid": "e71b995e6d5be1cf44b8a077d1d7097d2c614c3f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-24T12:25:00Z"
     },
     {
       "task_id": "docs-screen-map-frontmatter-epics-2026-07-23",
@@ -7823,6 +7911,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "sec-mobile-layout-cache-tenant-scope-test-2026-07-23",
+      "branch": "auto-impl/sec-mobile-layout-cache-tenant-scope-tes-dd79de09",
+      "status": "merged",
+      "claimed_at": "2026-07-24T06:12:51Z",
+      "last_updated": "2026-07-24T12:25:00Z",
+      "status_changed_at": "2026-07-24T12:25:00Z",
+      "pr_number": 2522,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2522",
+      "merged_at": "2026-07-24T12:19:30Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=0fb95352573c39beb29d53ce8a11a32a80392a74 note=test-only-mobile-cache-tenant-scope-verified-ci-green",
+      "last_reviewed_oid": "0fb95352573c39beb29d53ce8a11a32a80392a74",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-24T12:25:00Z"
+    },
+    {
       "task_id": "security-forgot-password-no-rate-limit",
       "branch": "auto-impl/security-forgot-password-no-rate-limit-e34169b5",
       "status": "merged",
@@ -8377,5 +8487,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T10:26:31Z"
+  "archived_at": "2026-07-24T12:23:04Z"
 }
