@@ -37,8 +37,13 @@ impl AutomationRepository {
                 organization_id, name, description, trigger_type, trigger_config,
                 conditions, actions, is_active, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9)
-            RETURNING *
+            -- trigger_type is a Postgres ENUM (workflow_automation_trigger); the String
+            -- bind must be cast on encode, and cast back to text on decode.
+            VALUES ($1, $2, $3, $4::workflow_automation_trigger, $5, $6, $7, COALESCE($8, true), $9)
+            RETURNING
+                id, organization_id, name, description, trigger_type::text AS trigger_type,
+                trigger_config, conditions, actions, is_active, last_run_at, next_run_at,
+                run_count, error_count, last_error, created_by, created_at, updated_at
             "#,
         )
         .bind(organization_id)
@@ -62,7 +67,13 @@ impl AutomationRepository {
     /// is derived from the persisted row itself rather than from a caller.
     pub async fn get_rule(&self, id: Uuid) -> Result<Option<WorkflowAutomationRule>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationRule>(
-            "SELECT * FROM workflow_automation_rules WHERE id = $1",
+            r#"
+            SELECT
+                id, organization_id, name, description, trigger_type::text AS trigger_type,
+                trigger_config, conditions, actions, is_active, last_run_at, next_run_at,
+                run_count, error_count, last_error, created_by, created_at, updated_at
+            FROM workflow_automation_rules WHERE id = $1
+            "#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -81,7 +92,13 @@ impl AutomationRepository {
         organization_id: Uuid,
     ) -> Result<Option<WorkflowAutomationRule>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationRule>(
-            "SELECT * FROM workflow_automation_rules WHERE id = $1 AND organization_id = $2",
+            r#"
+            SELECT
+                id, organization_id, name, description, trigger_type::text AS trigger_type,
+                trigger_config, conditions, actions, is_active, last_run_at, next_run_at,
+                run_count, error_count, last_error, created_by, created_at, updated_at
+            FROM workflow_automation_rules WHERE id = $1 AND organization_id = $2
+            "#,
         )
         .bind(id)
         .bind(organization_id)
@@ -95,7 +112,13 @@ impl AutomationRepository {
         organization_id: Uuid,
     ) -> Result<Vec<WorkflowAutomationRule>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationRule>(
-            "SELECT * FROM workflow_automation_rules WHERE organization_id = $1 ORDER BY created_at DESC",
+            r#"
+            SELECT
+                id, organization_id, name, description, trigger_type::text AS trigger_type,
+                trigger_config, conditions, actions, is_active, last_run_at, next_run_at,
+                run_count, error_count, last_error, created_by, created_at, updated_at
+            FROM workflow_automation_rules WHERE organization_id = $1 ORDER BY created_at DESC
+            "#,
         )
         .bind(organization_id)
         .fetch_all(&self.pool)
@@ -124,7 +147,10 @@ impl AutomationRepository {
                 is_active = COALESCE($8, is_active),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $2
-            RETURNING *
+            RETURNING
+                id, organization_id, name, description, trigger_type::text AS trigger_type,
+                trigger_config, conditions, actions, is_active, last_run_at, next_run_at,
+                run_count, error_count, last_error, created_by, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -335,7 +361,12 @@ impl AutomationRepository {
     /// List all templates.
     pub async fn list_templates(&self) -> Result<Vec<WorkflowAutomationTemplate>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationTemplate>(
-            "SELECT * FROM workflow_automation_templates ORDER BY category, name",
+            r#"
+            SELECT
+                id, name, description, category, trigger_type::text AS trigger_type,
+                trigger_config_template, actions_template, is_system, created_at
+            FROM workflow_automation_templates ORDER BY category, name
+            "#,
         )
         .fetch_all(&self.pool)
         .await
@@ -347,7 +378,12 @@ impl AutomationRepository {
         id: Uuid,
     ) -> Result<Option<WorkflowAutomationTemplate>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationTemplate>(
-            "SELECT * FROM workflow_automation_templates WHERE id = $1",
+            r#"
+            SELECT
+                id, name, description, category, trigger_type::text AS trigger_type,
+                trigger_config_template, actions_template, is_system, created_at
+            FROM workflow_automation_templates WHERE id = $1
+            "#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -403,7 +439,11 @@ impl AutomationRepository {
     pub async fn get_due_rules(&self) -> Result<Vec<WorkflowAutomationRule>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationRule>(
             r#"
-            SELECT * FROM workflow_automation_rules
+            SELECT
+                id, organization_id, name, description, trigger_type::text AS trigger_type,
+                trigger_config, conditions, actions, is_active, last_run_at, next_run_at,
+                run_count, error_count, last_error, created_by, created_at, updated_at
+            FROM workflow_automation_rules
             WHERE is_active = true
               AND trigger_type = 'schedule'
               AND (next_run_at IS NULL OR next_run_at <= NOW())
