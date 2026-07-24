@@ -142,7 +142,6 @@ async fn token_count(pool: &PgPool, token: &str) -> i64 {
 /// `RlsConnection` validates the JWT before any handler body runs, so
 /// unauthenticated callers can never register a token.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn register_push_token_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
@@ -170,7 +169,6 @@ async fn register_push_token_without_auth_is_rejected(pool: PgPool) {
 /// This test documents the layered defence: invalid tokens can never slip
 /// through regardless of auth state.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn register_push_token_empty_token_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
@@ -193,7 +191,6 @@ async fn register_push_token_empty_token_is_rejected(pool: PgPool) {
 
 /// A whitespace-only token must be rejected (the handler trims before checking).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn register_push_token_whitespace_token_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
@@ -215,7 +212,6 @@ async fn register_push_token_whitespace_token_is_rejected(pool: PgPool) {
 /// `DELETE /api/v1/users/me/push-tokens/{token}` with no Bearer token must be
 /// rejected. Verifies the delete endpoint is protected by the same auth gate.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_push_token_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
@@ -245,7 +241,6 @@ async fn delete_push_token_without_auth_is_rejected(pool: PgPool) {
 /// the DB itself and is covered by the migration's `FORCE ROW LEVEL
 /// SECURITY` + `app.current_user_id` policy.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn delete_push_token_cross_user_is_rejected_and_token_survives(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
