@@ -315,7 +315,6 @@ async fn legal_list_versions_returns_200(pool: PgPool) {
 // Legal: create_requirement  →  201 with id / requirement_type
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_create_requirement_returns_201(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-c").await;
@@ -361,7 +360,6 @@ async fn legal_list_requirements_returns_200(pool: PgPool) {
 // Legal: get_requirement  →  200 same-org / 404 unknown id
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_get_requirement_200_and_404(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-g").await;
@@ -408,7 +406,6 @@ async fn legal_get_requirement_200_and_404(pool: PgPool) {
 // Legal: update_requirement  →  200 title changed
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_update_requirement_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-u").await;
@@ -438,7 +435,6 @@ async fn legal_update_requirement_returns_200(pool: PgPool) {
 // Legal: delete_requirement  →  200 success=true
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_delete_requirement_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-req-d").await;
@@ -467,7 +463,6 @@ async fn legal_delete_requirement_returns_200(pool: PgPool) {
 // Legal: create_verification  →  201 with requirement_id
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_create_verification_returns_201(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-ver-c").await;
@@ -505,7 +500,6 @@ async fn legal_create_verification_returns_201(pool: PgPool) {
 // Legal: list_verifications  →  200 array
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn legal_list_verifications_returns_200(pool: PgPool) {
     let (app, token, org_id) = setup(&pool, "leg-ver-l").await;

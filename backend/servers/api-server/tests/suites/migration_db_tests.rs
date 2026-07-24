@@ -66,7 +66,6 @@ async fn create_platform_admin(app: &TestApp, user: &TestUser, slug: &str) -> (S
     (access_token, org_id)
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_import_template_lifecycle(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -200,7 +199,6 @@ async fn test_import_template_lifecycle(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_import_job_execution_flow(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -315,7 +313,6 @@ async fn test_import_job_execution_flow(pool: PgPool) {
     assert_eq!(db_status.0, "importing");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_migration_exports(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

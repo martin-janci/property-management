@@ -138,7 +138,6 @@ fn mint_manager_jwt(user_id: Uuid, org_id: Uuid) -> String {
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_create_listing_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "crlt").await;
@@ -212,7 +211,6 @@ async fn test_list_listings_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_create_listing_from_unit_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "lfun").await;
@@ -645,7 +643,6 @@ async fn test_get_photos_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn test_add_photo_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "adph").await;

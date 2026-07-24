@@ -916,7 +916,6 @@ async fn submit_verification_returns_201(pool: PgPool) {
 // GET /api/v1/marketplace/verifications — list_verifications
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_verifications_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -945,7 +944,6 @@ async fn list_verifications_returns_200(pool: PgPool) {
 // GET /api/v1/marketplace/verifications/queue — get_verification_queue
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_verification_queue_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -974,7 +972,6 @@ async fn get_verification_queue_returns_200(pool: PgPool) {
 // GET /api/v1/marketplace/verifications/expiring — get_expiring_verifications
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-574)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_expiring_verifications_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
