@@ -383,7 +383,6 @@ async fn gp_list_templates_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn gp_get_template_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-get-tpl").await;
@@ -706,7 +705,6 @@ async fn gp_list_schedules_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn gp_create_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-create-sched").await;
@@ -734,7 +732,6 @@ async fn gp_create_schedule_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn gp_get_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-get-sched").await;
@@ -754,7 +751,6 @@ async fn gp_get_schedule_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "get schedule: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn gp_update_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-upd-sched").await;
@@ -782,7 +778,6 @@ async fn gp_update_schedule_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn gp_delete_schedule_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "gp-del-sched").await;
