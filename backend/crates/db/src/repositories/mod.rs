@@ -125,7 +125,7 @@ pub use health_monitoring::{
     MetricStats, MetricStatus,
 };
 pub use help::{FaqEntry, HelpArticle, HelpCategory, HelpRepository, Tooltip};
-pub use layout::{LayoutPublishError, LayoutRepository};
+pub use layout::{LayoutChangeEventKind, LayoutPublishError, LayoutRepository};
 pub use membership::MembershipRepository;
 pub use messaging::MessagingRepository;
 pub use meter::MeterRepository;

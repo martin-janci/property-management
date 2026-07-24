@@ -3,8 +3,9 @@ use crate::state::AppState;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
-use db::repositories::LayoutRepository;
+use db::repositories::{LayoutChangeEventKind, LayoutRepository};
 use db::RlsPool;
+use uuid::Uuid;
 
 use super::types::{
     KillRequest, PreviewResolveRequest, PublishRequest, PutDraftRequest, PutManifestRequest,
@@ -33,6 +34,37 @@ fn internal_error(err: impl std::fmt::Display) -> (StatusCode, Json<ValidationEr
             errors: vec!["internal server error".into()],
         }),
     )
+}
+
+/// Persist a `layout_change_published` analytics event to the append-only sink
+/// (migration 00225). Fire-and-forget: a failure is logged at `warn!` and never
+/// fails the admin mutation, which already committed (events doc §7).
+async fn record_change_published(
+    repo: &LayoutRepository,
+    conn: &mut sqlx::PgConnection,
+    screen: &str,
+    delivery_id: Uuid,
+    published_by: Option<Uuid>,
+    props: serde_json::Value,
+) {
+    if let Err(e) = repo
+        .record_change_event(
+            &mut *conn,
+            LayoutChangeEventKind::Published,
+            Some(screen),
+            Some(delivery_id),
+            published_by,
+            &props,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            screen = %screen,
+            delivery_id = %delivery_id,
+            "failed to persist layout_change_published event"
+        );
+    }
 }
 
 #[utoipa::path(get, path = "/api/v1/platform-admin/layout/screens", tag = "Layout Admin",
@@ -327,7 +359,33 @@ pub async fn publish(
             ),
             db::repositories::LayoutPublishError::Sqlx(e) => internal_error(e),
         })?;
-    webhook::notify_layout_change(&req.screen, "published");
+
+    // One correlation id shared by the published event, the outbound webhook,
+    // and (echoed) the receiver's revalidate event (events doc gap D).
+    let delivery_id = Uuid::new_v4();
+    let props = serde_json::json!({
+        "event": LayoutChangeEventKind::Published.as_str(),
+        "change_kind": "published",
+        "published_by": admin_id,
+        "layout_version": row.published_version,
+        "target_tenant": "*",
+    });
+    record_change_published(
+        &repo,
+        &mut conn,
+        &req.screen,
+        delivery_id,
+        Some(admin_id),
+        props,
+    )
+    .await;
+    webhook::notify_layout_change(
+        state.db.clone(),
+        &req.screen,
+        "published",
+        Some(row.published_version),
+        delivery_id,
+    );
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -352,7 +410,8 @@ pub async fn rollback(
         .acquire_public()
         .await
         .map_err(internal_error)?;
-    let row = LayoutRepository::new()
+    let repo = LayoutRepository::new();
+    let row = repo
         .rollback(&mut conn, &req.screen, req.version, Some(admin_id))
         .await
         .map_err(|e| match e {
@@ -364,7 +423,33 @@ pub async fn rollback(
             ),
             other => internal_error(other),
         })?;
-    webhook::notify_layout_change(&req.screen, "rolled_back");
+
+    let delivery_id = Uuid::new_v4();
+    let props = serde_json::json!({
+        "event": LayoutChangeEventKind::Published.as_str(),
+        "change_kind": "rolled_back",
+        "published_by": admin_id,
+        "layout_version": row.published_version,
+        // The source version requested — distinct from the new layout_version.
+        "rolled_back_to": req.version,
+        "target_tenant": "*",
+    });
+    record_change_published(
+        &repo,
+        &mut conn,
+        &req.screen,
+        delivery_id,
+        Some(admin_id),
+        props,
+    )
+    .await;
+    webhook::notify_layout_change(
+        state.db.clone(),
+        &req.screen,
+        "rolled_back",
+        Some(row.published_version),
+        delivery_id,
+    );
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -389,11 +474,32 @@ pub async fn kill(
         .acquire_public()
         .await
         .map_err(internal_error)?;
-    LayoutRepository::new()
-        .kill(&mut **conn, &req.screen, &req.section_type, Some(admin_id))
+    let repo = LayoutRepository::new();
+    repo.kill(&mut **conn, &req.screen, &req.section_type, Some(admin_id))
         .await
         .map_err(internal_error)?;
-    webhook::notify_layout_change(&req.screen, "killed");
+
+    let delivery_id = Uuid::new_v4();
+    let props = serde_json::json!({
+        "event": LayoutChangeEventKind::Published.as_str(),
+        "change_kind": "killed",
+        "published_by": admin_id,
+        // kill/unkill bypass the publish gate (spec §5) — no version row; the
+        // killed section identifies the change instead (events doc §5.1).
+        "layout_version": serde_json::Value::Null,
+        "section_type": req.section_type,
+        "target_tenant": "*",
+    });
+    record_change_published(
+        &repo,
+        &mut conn,
+        &req.screen,
+        delivery_id,
+        Some(admin_id),
+        props,
+    )
+    .await;
+    webhook::notify_layout_change(state.db.clone(), &req.screen, "killed", None, delivery_id);
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -469,7 +575,7 @@ pub async fn unkill(
     headers: axum::http::HeaderMap,
     Json(req): Json<KillRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let _admin = extract_super_admin_token(&headers, &state).map_err(|_| {
+    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
         (
             StatusCode::FORBIDDEN,
             Json(ValidationErrorsResponse {
@@ -482,12 +588,31 @@ pub async fn unkill(
         .acquire_public()
         .await
         .map_err(internal_error)?;
-    let removed = LayoutRepository::new()
+    let repo = LayoutRepository::new();
+    let removed = repo
         .unkill(&mut **conn, &req.screen, &req.section_type)
         .await
         .map_err(internal_error)?;
     if removed {
-        webhook::notify_layout_change(&req.screen, "unkilled");
+        let delivery_id = Uuid::new_v4();
+        let props = serde_json::json!({
+            "event": LayoutChangeEventKind::Published.as_str(),
+            "change_kind": "unkilled",
+            "published_by": admin_id,
+            "layout_version": serde_json::Value::Null,
+            "section_type": req.section_type,
+            "target_tenant": "*",
+        });
+        record_change_published(
+            &repo,
+            &mut conn,
+            &req.screen,
+            delivery_id,
+            Some(admin_id),
+            props,
+        )
+        .await;
+        webhook::notify_layout_change(state.db.clone(), &req.screen, "unkilled", None, delivery_id);
         Ok(StatusCode::NO_CONTENT)
     } else {
         Err((
