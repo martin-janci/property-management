@@ -166,6 +166,18 @@ async fn seed_parking_spot(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uu
     .expect("seed parking spot")
 }
 
+async fn seed_registry_rules(pool: &PgPool, org_id: Uuid, building_id: Uuid) {
+    sqlx::query(
+        "INSERT INTO building_registry_rules (tenant_id, building_id) VALUES ($1, $2) \
+         ON CONFLICT (tenant_id, building_id) DO NOTHING",
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .execute(pool)
+    .await
+    .expect("seed registry rules");
+}
+
 // ---------------------------------------------------------------------------
 // AI Chat Sessions — ai/sessions.rs chat section (6 endpoints)
 // send_message is excluded: makes live LLM calls.
@@ -635,7 +647,7 @@ async fn list_pet_registrations_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/registry/pets").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["registrations"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -760,7 +772,7 @@ async fn list_vehicle_registrations_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/registry/vehicles").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["registrations"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -881,7 +893,7 @@ async fn list_parking_spots_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/registry/parking-spots").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["spots"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -949,6 +961,7 @@ async fn get_registry_rules_succeeds(pool: PgPool) {
     let user = TestUser::new();
     let (token, org_id) = create_authenticated_user_with_org(&app, &user, "grr").await;
     let building_id = seed_building(&pool, org_id).await;
+    seed_registry_rules(&pool, org_id, building_id).await;
     let session = app.session(token, org_id);
     let resp = app
         .execute(
