@@ -569,7 +569,7 @@
       "action": "Publish data-retention policy for support-data / analytics events / audit trail (append-only support_tooling_events has no TTL yet)",
       "owner_role": "pm-data",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "pm-data 2026-07-23 (score=5: privacy/GDPR)",
       "deadline": null,
       "dependency": null,
@@ -580,7 +580,7 @@
         "score": 5,
         "vector": "data"
       },
-      "last_updated": "2026-07-23T14:34:52.019013Z"
+      "last_updated": "2026-07-24T02:15:24Z"
     },
     {
       "id": "data-reality-portal-listing-view-events-2026-07-23",

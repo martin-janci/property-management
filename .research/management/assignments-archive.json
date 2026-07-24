@@ -3119,6 +3119,28 @@
       "merge_attempted_at": "2026-07-15T16:24:04Z"
     },
     {
+      "task_id": "gap-84-1-wire-ppt-web-direct-to-s3-upload-2026-07-23",
+      "branch": "auto-impl/gap-84-1-wire-ppt-web-direct-to-s3-uploa-3b2da692",
+      "status": "merged",
+      "claimed_at": "2026-07-23T22:09:19Z",
+      "last_updated": "2026-07-24T02:15:24Z",
+      "status_changed_at": "2026-07-24T02:15:24Z",
+      "pr_number": 2500,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2500",
+      "merged_at": "2026-07-24T02:07:43Z",
+      "specialist": null,
+      "implementer_summary": "[auto-PR from in-progress branch: branch pushed with commits, no PR; dispatcher opened #2500]",
+      "reviewer_summary": "verdict=approve head_oid=c85e0f4a7372180286f8ab5d9672474c8e0deab1 note=verified-no-building_id-column/field/deny_unknown_fields; test-pins-boundary; approve posted as comment (self-approval blocked)",
+      "last_reviewed_oid": "c85e0f4a7372180286f8ab5d9672474c8e0deab1",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-24T00:21:04Z"
+    },
+    {
       "task_id": "gap-84-2-build-document-sign-page",
       "branch": "auto-impl/gap-84-2-build-document-sign-page-8831c6fc",
       "status": "merged",
@@ -8245,5 +8267,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-24T00:25:13Z"
+  "archived_at": "2026-07-24T02:16:10Z"
 }
