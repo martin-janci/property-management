@@ -136,7 +136,7 @@ impl FaultRepository {
                 title, description, location_description,
                 category, priority, idempotency_key
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::fault_category, $9::fault_priority, $10)
             RETURNING
                 id, organization_id, building_id, unit_id, reporter_id,
                 title, description, location_description,
@@ -330,7 +330,7 @@ impl FaultRepository {
                 title = COALESCE($2, title),
                 description = COALESCE($3, description),
                 location_description = COALESCE($4, location_description),
-                category = COALESCE($5, category),
+                category = COALESCE($5::fault_category, category),
                 updated_at = NOW()
             WHERE id = $1
             RETURNING
@@ -376,7 +376,7 @@ impl FaultRepository {
             r#"
             UPDATE faults
             SET
-                status = $2,
+                status = $2::fault_status,
                 scheduled_date = COALESCE($3, scheduled_date),
                 estimated_completion = COALESCE($4, estimated_completion),
                 updated_at = NOW()
@@ -820,8 +820,8 @@ impl FaultRepository {
             r#"
             UPDATE faults
             SET
-                priority = $2,
-                category = COALESCE($3, category),
+                priority = $2::fault_priority,
+                category = COALESCE($3::fault_category, category),
                 assigned_to = $4,
                 assigned_at = CASE WHEN $4 IS NOT NULL THEN NOW() ELSE assigned_at END,
                 triaged_by = $5,
@@ -1124,8 +1124,8 @@ impl FaultRepository {
             r#"
             UPDATE faults
             SET
-                ai_category = $2,
-                ai_priority = $3,
+                ai_category = $2::fault_category,
+                ai_priority = $3::fault_priority,
                 ai_confidence = $4,
                 ai_processed_at = NOW(),
                 updated_at = NOW()
@@ -1250,7 +1250,7 @@ impl FaultRepository {
             INSERT INTO fault_timeline (
                 fault_id, user_id, action, note, old_value, new_value, metadata, is_internal
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3::timeline_action, $4, $5, $6, $7, $8)
             RETURNING
                 id, fault_id, user_id,
                 action::text AS action,
