@@ -781,6 +781,32 @@ impl PlatformAdminRepository {
         .fetch_one(&self.pool)
         .await
     }
+
+    /// Prune `support_tooling_events` older than the retention period, returning
+    /// the number of rows deleted.
+    ///
+    /// This is the retention (TTL) entry point for the append-only admin audit
+    /// trail (migration `00222_support_tooling_events_retention.sql`). It calls
+    /// the DB-native `cleanup_old_support_tooling_events(retention_days)`
+    /// function, mirroring the tracing / health-monitoring retention jobs
+    /// (`cleanup_old_traces`, `cleanup_old_health_check_results`). The function
+    /// opens the sanctioned retention path so the immutability trigger permits
+    /// these — and only these — deletes; every other `UPDATE`/`DELETE` on the
+    /// table remains rejected.
+    ///
+    /// `retention_days` defaults to 730 (24 months) at the SQL layer; callers
+    /// pass an explicit value here so the policy is visible at the call site.
+    pub async fn cleanup_old_support_tooling_events(
+        &self,
+        retention_days: i32,
+    ) -> Result<i64, SqlxError> {
+        let deleted = sqlx::query_scalar::<_, i64>("SELECT cleanup_old_support_tooling_events($1)")
+            .bind(retention_days)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(deleted)
+    }
 }
 
 #[cfg(test)]

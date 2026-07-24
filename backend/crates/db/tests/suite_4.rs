@@ -30,6 +30,8 @@ mod sentiment_rls_repo_tests;
 mod subscription_rls_repo_tests;
 #[path = "suites/support_data_session_columns_tests.rs"]
 mod support_data_session_columns_tests;
+#[path = "suites/support_tooling_events_retention_tests.rs"]
+mod support_tooling_events_retention_tests;
 #[path = "suites/thread_participant_state_tests.rs"]
 mod thread_participant_state_tests;
 #[path = "suites/unified_portal_user_tests.rs"]
