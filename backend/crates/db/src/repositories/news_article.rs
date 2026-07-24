@@ -434,7 +434,7 @@ impl NewsArticleRepository {
     ) -> Result<bool, SqlxError> {
         // First, check if user already has a reaction on this article
         let existing: Option<(String,)> = sqlx::query_as(
-            "SELECT reaction FROM article_reactions WHERE article_id = $1 AND user_id = $2",
+            "SELECT reaction::text FROM article_reactions WHERE article_id = $1 AND user_id = $2",
         )
         .bind(article_id)
         .bind(user_id)
@@ -454,7 +454,7 @@ impl NewsArticleRepository {
             Some(_) => {
                 // Different reaction - update to new reaction
                 sqlx::query(
-                    "UPDATE article_reactions SET reaction = $3 WHERE article_id = $1 AND user_id = $2",
+                    "UPDATE article_reactions SET reaction = $3::reaction_type WHERE article_id = $1 AND user_id = $2",
                 )
                 .bind(article_id)
                 .bind(user_id)
@@ -466,7 +466,7 @@ impl NewsArticleRepository {
             None => {
                 // No existing reaction - add new one
                 sqlx::query(
-                    "INSERT INTO article_reactions (article_id, user_id, reaction) VALUES ($1, $2, $3)",
+                    "INSERT INTO article_reactions (article_id, user_id, reaction) VALUES ($1, $2, $3::reaction_type)",
                 )
                 .bind(article_id)
                 .bind(user_id)
@@ -520,7 +520,7 @@ impl NewsArticleRepository {
         user_id: Uuid,
     ) -> Result<Option<String>, SqlxError> {
         let result: Option<(String,)> = sqlx::query_as(
-            "SELECT reaction FROM article_reactions WHERE article_id = $1 AND user_id = $2",
+            "SELECT reaction::text FROM article_reactions WHERE article_id = $1 AND user_id = $2",
         )
         .bind(article_id)
         .bind(user_id)

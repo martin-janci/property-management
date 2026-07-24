@@ -167,7 +167,12 @@ impl AnnouncementRepository {
                 comments_enabled, acknowledgment_required
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
+            RETURNING
+                id, organization_id, author_id, title, content,
+                target_type::text as target_type, target_ids,
+                status::text as status, scheduled_at, published_at,
+                pinned, pinned_at, pinned_by, comments_enabled,
+                acknowledgment_required, created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -527,7 +532,7 @@ impl AnnouncementRepository {
             SET
                 title = COALESCE($2, title),
                 content = COALESCE($3, content),
-                target_type = COALESCE($4, target_type),
+                target_type = COALESCE($4::announcement_target_type, target_type),
                 target_ids = COALESCE($5, target_ids),
                 scheduled_at = COALESCE($6, scheduled_at),
                 comments_enabled = COALESCE($7, comments_enabled),
