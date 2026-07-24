@@ -3,10 +3,27 @@
 
 use crate::models::disputes::*;
 use crate::DbPool;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use common::errors::AppError;
 use sqlx::Row;
 use uuid::Uuid;
+
+/// Build the structural `{"from": ..., "to": ...}` payload recorded in
+/// `dispute_activities.metadata` on every `status_changed` activity (issue
+/// #2533).
+///
+/// Recording the transition structurally lets the funnel / stage-latency KPIs
+/// ask "did this dispute ever reach stage X?" with an exact
+/// `metadata->>'to' = 'X'` predicate instead of parsing the free-text
+/// `description` with a fragile `LIKE '%to ''X''%'` heuristic. `from` is `None`
+/// for transitions where the prior state is not loaded (e.g. `withdraw`), in
+/// which case only `to` is written.
+fn status_transition_metadata(from: Option<&str>, to: &str) -> serde_json::Value {
+    match from {
+        Some(from) => serde_json::json!({ "from": from, "to": to }),
+        None => serde_json::json!({ "to": to }),
+    }
+}
 
 /// Update session request.
 #[derive(Debug, Clone)]
@@ -357,7 +374,10 @@ impl DisputeRepository {
             req.updated_by,
             activity_type::STATUS_CHANGED,
             description,
-            None,
+            Some(status_transition_metadata(
+                Some(&current_status),
+                &req.status,
+            )),
         )
         .await?;
 
@@ -426,7 +446,10 @@ impl DisputeRepository {
                 "Dispute resolved: {}",
                 req.resolution_notes.chars().take(100).collect::<String>()
             ),
-            None,
+            Some(status_transition_metadata(
+                Some(&current_status),
+                dispute_status::RESOLVED,
+            )),
         )
         .await?;
 
@@ -491,12 +514,15 @@ impl DisputeRepository {
             return Err(AppError::NotFound("Dispute not found".to_string()));
         }
 
+        // `withdraw` does not load the prior status, so only `to` is recorded —
+        // still structural (retires the free-text `LIKE` heuristic for
+        // withdrawals), just without a `from` (issue #2533).
         self.record_activity(
             id,
             user_id,
             activity_type::STATUS_CHANGED,
             "Dispute withdrawn".to_string(),
-            None,
+            Some(status_transition_metadata(None, dispute_status::WITHDRAWN)),
         )
         .await?;
 
@@ -854,6 +880,133 @@ impl DisputeRepository {
             avg_resolution_days,
             pending_actions,
             overdue_actions,
+        })
+    }
+
+    /// Compute the dispute lifecycle KPIs (funnel + time-to-resolution) for the
+    /// cohort of disputes filed in `[window_start, window_end)`, scoped to the
+    /// caller's organization (issue #2533).
+    ///
+    /// This is the SQL-backed implementation of the `dispute.funnel.*` /
+    /// `dispute.ttr.*` metrics defined in `docs/data/dispute-lifecycle-kpis.md`.
+    /// It is a reporting query (not hot-path); callers should cache/schedule it.
+    ///
+    /// `reached_mediation` reads the structured
+    /// `dispute_activities.metadata->>'to'` written by `update_status` on every
+    /// `status_changed` (see [`status_transition_metadata`]), falling back to the
+    /// legacy free-text `description LIKE` match so pre-#2533 rows still count.
+    /// Rates are `None` when the cohort is empty. TTR percentiles use
+    /// `percentile_cont` and are reported in hours.
+    pub async fn get_dispute_kpis(
+        &self,
+        org_id: Uuid,
+        window_start: DateTime<Utc>,
+        window_end: DateTime<Utc>,
+    ) -> Result<DisputeKpis, AppError> {
+        // Funnel base counts (robust tier — status + resolved_at only).
+        let funnel_row = sqlx::query(
+            r#"
+            SELECT
+                COUNT(*)                                        AS filed,
+                COUNT(*) FILTER (WHERE resolved_at IS NOT NULL) AS reached_resolved,
+                COUNT(*) FILTER (WHERE status = 'mediation')    AS currently_in_mediation
+            FROM disputes
+            WHERE organization_id = $1
+              AND created_at >= $2
+              AND created_at < $3
+            "#,
+        )
+        .bind(org_id)
+        .bind(window_start)
+        .bind(window_end)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let filed: i64 = funnel_row.get("filed");
+        let reached_resolved: i64 = funnel_row.get("reached_resolved");
+        let currently_in_mediation: i64 = funnel_row.get("currently_in_mediation");
+
+        // `reached_mediation` (enriched tier) — structural `metadata->>'to'`
+        // with a legacy free-text fallback for pre-#2533 activity rows.
+        let reached_mediation: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(DISTINCT d.id)
+            FROM disputes d
+            JOIN dispute_activities a ON a.dispute_id = d.id
+            WHERE d.organization_id = $1
+              AND d.created_at >= $2
+              AND d.created_at < $3
+              AND a.activity_type = 'status_changed'
+              AND (
+                    a.metadata->>'to' = 'mediation'
+                 OR a.description LIKE '%to ''mediation''%'
+              )
+            "#,
+        )
+        .bind(org_id)
+        .bind(window_start)
+        .bind(window_end)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        // Null-denominator rule: a rate over an empty cohort is `None`, not 0.
+        let rate = |num: i64| -> Option<f64> {
+            if filed == 0 {
+                None
+            } else {
+                Some(num as f64 / filed as f64)
+            }
+        };
+
+        let funnel = DisputeFunnelKpis {
+            filed,
+            reached_mediation,
+            reached_resolved,
+            currently_in_mediation,
+            mediation_rate: rate(reached_mediation),
+            resolution_rate: rate(reached_resolved),
+        };
+
+        // Time-to-resolution percentiles (hours), resolved cohort only.
+        let ttr_row = sqlx::query(
+            r#"
+            SELECT
+                COUNT(*) AS ttr_count,
+                (EXTRACT(EPOCH FROM percentile_cont(0.50) WITHIN GROUP (ORDER BY resolved_at - created_at)) / 3600.0)::float8 AS p50_hours,
+                (EXTRACT(EPOCH FROM percentile_cont(0.90) WITHIN GROUP (ORDER BY resolved_at - created_at)) / 3600.0)::float8 AS p90_hours,
+                (EXTRACT(EPOCH FROM percentile_cont(0.95) WITHIN GROUP (ORDER BY resolved_at - created_at)) / 3600.0)::float8 AS p95_hours,
+                (EXTRACT(EPOCH FROM AVG(resolved_at - created_at)) / 3600.0)::float8 AS mean_hours,
+                (EXTRACT(EPOCH FROM MAX(resolved_at - created_at)) / 3600.0)::float8 AS max_hours
+            FROM disputes
+            WHERE organization_id = $1
+              AND resolved_at IS NOT NULL
+              AND created_at >= $2
+              AND created_at < $3
+            "#,
+        )
+        .bind(org_id)
+        .bind(window_start)
+        .bind(window_end)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let ttr = DisputeTtrKpis {
+            count: ttr_row.get("ttr_count"),
+            p50_hours: ttr_row.get("p50_hours"),
+            p90_hours: ttr_row.get("p90_hours"),
+            p95_hours: ttr_row.get("p95_hours"),
+            mean_hours: ttr_row.get("mean_hours"),
+            max_hours: ttr_row.get("max_hours"),
+        };
+
+        Ok(DisputeKpis {
+            window_start,
+            window_end,
+            funnel,
+            ttr,
         })
     }
 
@@ -1656,5 +1809,141 @@ impl DisputeRepository {
         user_id: Uuid,
     ) -> Result<PartyActionsDashboard, AppError> {
         self.get_party_actions_dashboard(user_id).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    #[test]
+    fn status_transition_metadata_records_from_and_to() {
+        // update_status / resolve_dispute path — both endpoints of the
+        // transition are recorded structurally so the funnel KPI can match on
+        // metadata->>'to' instead of parsing free text (issue #2533).
+        let meta = status_transition_metadata(Some("under_review"), "mediation");
+        assert_eq!(meta["from"], "under_review");
+        assert_eq!(meta["to"], "mediation");
+        // Exactly the two structural keys, nothing else.
+        let obj = meta.as_object().expect("metadata is a JSON object");
+        assert_eq!(obj.len(), 2);
+    }
+
+    #[test]
+    fn status_transition_metadata_omits_from_when_absent() {
+        // withdraw path — prior status not loaded, so only `to` is recorded.
+        let meta = status_transition_metadata(None, dispute_status::WITHDRAWN);
+        assert_eq!(meta["to"], "withdrawn");
+        assert!(meta.get("from").is_none());
+        let obj = meta.as_object().expect("metadata is a JSON object");
+        assert_eq!(obj.len(), 1);
+    }
+
+    #[test]
+    fn status_transition_metadata_matches_enriched_funnel_predicate() {
+        // The reached_mediation query keys on metadata->>'to' = 'mediation'.
+        // Guard that the value we write is exactly the literal that predicate
+        // (and dispute_status::MEDIATION) expects.
+        let meta = status_transition_metadata(Some("awaiting_response"), dispute_status::MEDIATION);
+        assert_eq!(meta["to"].as_str(), Some("mediation"));
+    }
+
+    /// Asserts the JSON shape returned by `get_dispute_kpis` — the contract a
+    /// dashboard / scheduled export consumes (issue #2533). The DB round-trip
+    /// itself is covered by integration tests against a live Postgres; here we
+    /// pin the serialized field names, nesting, and the null-denominator rule.
+    #[test]
+    fn dispute_kpis_serializes_to_expected_shape() {
+        let start = Utc.with_ymd_and_hms(2026, 7, 1, 0, 0, 0).unwrap();
+        let end = Utc.with_ymd_and_hms(2026, 8, 1, 0, 0, 0).unwrap();
+        let kpis = DisputeKpis {
+            window_start: start,
+            window_end: end,
+            funnel: DisputeFunnelKpis {
+                filed: 10,
+                reached_mediation: 4,
+                reached_resolved: 6,
+                currently_in_mediation: 1,
+                mediation_rate: Some(0.4),
+                resolution_rate: Some(0.6),
+            },
+            ttr: DisputeTtrKpis {
+                count: 6,
+                p50_hours: Some(12.5),
+                p90_hours: Some(48.0),
+                p95_hours: Some(72.0),
+                mean_hours: Some(20.0),
+                max_hours: Some(96.0),
+            },
+        };
+
+        let v = serde_json::to_value(&kpis).expect("serialize");
+
+        // Top-level shape.
+        assert!(v.get("window_start").is_some());
+        assert!(v.get("window_end").is_some());
+
+        // Funnel block.
+        let funnel = &v["funnel"];
+        for key in [
+            "filed",
+            "reached_mediation",
+            "reached_resolved",
+            "currently_in_mediation",
+            "mediation_rate",
+            "resolution_rate",
+        ] {
+            assert!(funnel.get(key).is_some(), "funnel missing `{key}`");
+        }
+        assert_eq!(funnel["filed"], 10);
+        assert_eq!(funnel["reached_mediation"], 4);
+
+        // TTR block.
+        let ttr = &v["ttr"];
+        for key in [
+            "count",
+            "p50_hours",
+            "p90_hours",
+            "p95_hours",
+            "mean_hours",
+            "max_hours",
+        ] {
+            assert!(ttr.get(key).is_some(), "ttr missing `{key}`");
+        }
+        assert_eq!(ttr["count"], 6);
+    }
+
+    #[test]
+    fn dispute_kpis_empty_cohort_reports_null_rates() {
+        // Null-denominator rule: an empty cohort must serialize rates as JSON
+        // null (not 0.0) so a dashboard shows "no data", not a misleading 0%.
+        let start = Utc.with_ymd_and_hms(2026, 7, 1, 0, 0, 0).unwrap();
+        let end = Utc.with_ymd_and_hms(2026, 8, 1, 0, 0, 0).unwrap();
+        let kpis = DisputeKpis {
+            window_start: start,
+            window_end: end,
+            funnel: DisputeFunnelKpis {
+                filed: 0,
+                reached_mediation: 0,
+                reached_resolved: 0,
+                currently_in_mediation: 0,
+                mediation_rate: None,
+                resolution_rate: None,
+            },
+            ttr: DisputeTtrKpis {
+                count: 0,
+                p50_hours: None,
+                p90_hours: None,
+                p95_hours: None,
+                mean_hours: None,
+                max_hours: None,
+            },
+        };
+
+        let v = serde_json::to_value(&kpis).expect("serialize");
+        assert!(v["funnel"]["mediation_rate"].is_null());
+        assert!(v["funnel"]["resolution_rate"].is_null());
+        assert!(v["ttr"]["p50_hours"].is_null());
     }
 }
