@@ -329,7 +329,7 @@ async fn test_workflow_actions_roundtrip(pool: PgPool) {
     let action_body = json!({
         "workflow_id": wf_id,
         "action_order": 1,
-        "action_type": "notify",
+        "action_type": "send_notification",
         "action_config": {}
     });
     let add_resp = app
