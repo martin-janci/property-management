@@ -315,7 +315,7 @@ async fn esg_create_metric_succeeds(pool: PgPool) {
                     "metric_name": "Q1 Electricity",
                     "value": "5000.0",
                     "unit": "kWh",
-                    "data_source": "manual"
+                    "data_source": "Manual"
                 }))
                 .build(),
         )

@@ -780,6 +780,7 @@ async fn list_vehicle_registrations_succeeds(pool: PgPool) {
     assert!(resp.json_value()["registrations"].is_array());
 }
 
+#[ignore = "BIT-622: endpoint calls external vehicle registry service FETCH_FAILED 500; not testable in isolation without service stub"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_vehicle_registration_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
