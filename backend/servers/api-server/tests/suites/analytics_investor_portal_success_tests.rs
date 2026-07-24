@@ -627,12 +627,7 @@ async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "create roi: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "create roi: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
