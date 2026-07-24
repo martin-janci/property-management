@@ -415,7 +415,13 @@ async fn organizations_mutation_happy_path(pool: PgPool) {
         )
         .await;
     resp.assert_status(StatusCode::CREATED);
-    let role_id = id_of(&resp);
+    // POST /roles returns `CreateRoleResponse { role: RoleResponse { id, .. } }`,
+    // so the id is nested under `.role`, not at the document root.
+    let role_id: Uuid = resp.json_value()["role"]["id"]
+        .as_str()
+        .expect("role create response has string role.id")
+        .parse()
+        .expect("role id is a uuid");
 
     app.execute(
         sess.get(&format!("/api/v1/organizations/{org}/roles/{role_id}"))
