@@ -199,7 +199,7 @@ async fn list_chat_sessions_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/ai/chat/sessions").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["sessions"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -258,7 +258,7 @@ async fn list_chat_messages_succeeds(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["messages"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -274,7 +274,7 @@ async fn provide_chat_feedback_succeeds(pool: PgPool) {
         .execute(
             session
                 .post(&format!("/api/v1/ai/chat/messages/{msg_id}/feedback"))
-                .json(json!({"rating": "positive", "comment": "Very helpful"}))
+                .json(json!({"rating": 5, "helpful": true, "feedback_text": "Very helpful"}))
                 .build(),
         )
         .await;
@@ -319,7 +319,7 @@ async fn list_sentiment_alerts_succeeds(pool: PgPool) {
         .execute(session.get("/api/v1/ai/sentiment/alerts").build())
         .await;
     assert_eq!(resp.status, StatusCode::OK, "body: {}", resp.text());
-    assert!(resp.json_value().is_array());
+    assert!(resp.json_value()["alerts"].is_array());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
