@@ -1,205 +1,189 @@
 {
-  "generated_at": "2026-07-24T03:05:00Z",
-  "since_iso": "2026-07-23T14:43:59Z",
+  "generated_at": "2026-07-24T20:25:21Z",
+  "since_iso": "2026-07-24T03:10:00Z",
   "counts": {
-    "merged_prs": 11,
-    "open_prs_touched": 12,
-    "issues_touched": 4,
-    "commits_on_dev": 26
+    "merged_prs": 21,
+    "open_prs_touched": 2,
+    "issues_touched": 9,
+    "commits_on_dev": 46
   },
   "phase_status": {
     "phase_1_gh_pr_list": "ok",
     "phase_1_gh_issue_list": "ok",
     "phase_1_gh_commits": "ok",
-    "phase_1_5_review": "ok (tier1d ppt-web-core slice already ran earlier today; 3 findings integrated)",
-    "phase_1_6_pm": "ok (lightweight upkeep \u2014 cursor advance + epic-10b refresh; role rotation wrap pm-integration -> pm-tech-lead)"
+    "phase_1_5_review": "skipped (previous morning run covered ppt-web-core + earlier tier1d slices covered mobile-native-kmp, reality-web, reality-server today; next: reality-web at 7d)",
+    "phase_1_6_pm": "skipped (light-tick \u2014 pm-integration already ran today; coverage_cursor left at 2; pm-tech-lead deferred to next run)"
   },
   "signals": [
     {
-      "id": "dep-update-noise-pr-2491",
-      "type": "dep-update-noise",
-      "source": "PR #2491",
+      "id": "delivery-summary-2026-07-24-pm",
+      "type": "delivery-summary",
+      "source": "PRs #2513-#2542",
       "score_delta": 0,
       "confidence": "high",
-      "candidate_vector": "dep-update",
+      "candidate_vector": "triage",
       "evidence": [
-        "PR #2491 (dependabot[bot]) \u2014 chore(deps): bump the npm-minor-patch group across 1 directory with 5 updates. Still open at run time."
+        "21 PRs merged since routine cursor (2026-07-24T03:10Z through ~20:25Z). Composition: 12 test un-quarantine (BIT-565/BIT-566/BIT-568/BIT-569/BIT-570/BIT-571/BIT-572/BIT-573/BIT-574/BIT-575/BIT-585/BIT-588/BIT-609/BIT-610/BIT-630), 5 data-analytics (data-signup-funnel, data-fault-kpi-unification x2, data-support-data-audit-def, data-audit-oauth-token-usage, data-reality-portal-listing-view-events), 1 sec (mobile layout cache tenant-scope test), 1 devops (nextest partition runbook), 1 refactor (layout-editor styles), 1 docs (verify-gate adoption).",
+        "No reverts, no closed-not-merged PRs, no dependabot noise, no hotfix-no-test candidates. Two open PRs (#2543 test un-quarantine Wave J3; #2544 draft signup-funnel followup) both < 24h old \u2014 no stalled reviews."
       ]
     },
     {
-      "id": "screen-map-drift-pr-2497-reality",
-      "type": "screen-map-drift",
-      "source": "PR #2497",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "test-gap",
+      "id": "no-churn-hotspots-2026-07-24-pm",
+      "type": "meta-observation",
+      "source": "commit-analysis",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
       "evidence": [
-        "PR #2497 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts (X-Webhook-Timestamp replay-protection hardening) without touching any docs/screens/reality/*.md \u2014 a strict-letter reality-web drift.",
-        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen. This is the false-positive class the routine's screen-map-drift heuristic explicitly warns about. Treat as review candidate, do not promote \u2014 Phase 3 readiness gate should keep this out of plans."
+        "Top-touched files this window are all backend/servers/api-server/tests/suites/*_tests.rs files \u2014 each hit exactly once per merged PR (double-counted as 2 = branch commit + squash merge). Not a hotspot: represents one-shot un-quarantine PRs restoring quarantined test suites (BIT-609/BIT-610/BIT-630 Wave C2/D2/G3 residuals). No churn-hotspot / repeated-churn / risky-churn signals emitted."
       ]
     },
     {
-      "id": "code-review-ppt-web-core-authctx-init-stale-role",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-core",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "expert": "frontend",
+      "id": "no-screen-map-drift-2026-07-24-pm",
+      "type": "meta-observation",
+      "source": "commit-file-analysis",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
       "evidence": [
-        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 \u2014 the mount-time initializeAuth effect duplicates token-refresh logic inline (calls getAuthApi().refreshToken() directly) instead of delegating to refreshTokenInternal (AuthContext.tsx:346-383). The inline path sets the new access/refresh tokens but SKIPS the deriveActiveRole re-derivation that refreshTokenInternal performs (AuthContext.tsx:366-374, the #574 multi-tenant fix). Result: on a cold app boot where the access token is absent/expired but a refresh token is present, the user's stored role is NOT re-derived from the fresh JWT \u2014 a multi-tenant user whose active tenant/role changed server-side boots with a STALE role (falls into the if (storedUser) setUser(storedUser) branch at line 408-410 using the old persisted role) until a later refreshTokenInternal call corrects it. The #574 fix is therefore incomplete on the init path. The inline path also bypasses the single-flight refresh guard (isRefreshing/refreshPromise). Fix: have initializeAuth call refreshTokenInternal() in the refresh branch so role derivation + concurrency guard apply uniformly."
+        "No merged PRs this run touched frontend/apps/ppt-web/src/{App.tsx,routes/**} or frontend/apps/reality-web/src/app/**. No screen-map drift signals emitted this run."
       ]
     },
     {
-      "id": "code-review-ppt-web-core-ws-token-rotation-stale",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-core",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "expert": "frontend",
+      "id": "no-untriaged-issues-2026-07-24-pm",
+      "type": "meta-observation",
+      "source": "gh issue list",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
       "evidence": [
-        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:246-259 \u2014 the auth-change effect re-runs on [auth.isAuthenticated, auth.accessToken] and calls service.connect() whenever the access token changes. But WebSocketService.connect() (lib/websocket.ts) short-circuits with 'if (this.socket && this.socket.readyState === WebSocket.OPEN) return; // Already connected'. AuthContext rotates BOTH tokens on every refresh (refreshTokenInternal sets a new accessToken, AuthContext.tsx:356), so on a normal token rotation the effect fires while the socket is still OPEN and connect() returns early \u2014 the live WebSocket is NEVER re-handshaked with the fresh token.",
-        "The JWT is transmitted only as the ?token=<jwt> handshake query param (lib/websocket.ts:88-94, buildWebSocketUrl) and validated by api-server once at connection time. Consequently a long-lived WS connection keeps running under the ORIGINAL access token past its TTL. Two failure modes: (a) if api-server enforces token expiry mid-connection the socket is dropped and auto-reconnect recovers, causing avoidable drop/reconnect churn plus a window where events flow on an expired token; (b) if the server does not re-validate mid-connection, a session whose token was rotated/revoked (e.g. logout-elsewhere) keeps receiving realtime push data because the WS was never re-authenticated. Fix: when the token changes and a socket is already open, force a reconnect (disconnect()+connect(), or a dedicated re-auth) rather than relying on connect()'s already-open early-return. Confidence medium: severity of (b) depends on reality/api-server WS TTL enforcement, not traced in this static frontend slice."
-      ]
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-ungated-console",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-core",
-      "score_delta": 1,
-      "confidence": "medium",
-      "candidate_vector": "refactor",
-      "expert": "frontend",
-      "evidence": [
-        "frontend/apps/ppt-web/src/lib/websocket.ts \u2014 10 console.warn/console.error calls ship to the production console with NO import.meta.env.DEV guard: lines 344, 352, 472, 484, 489, 504, 519, 559, 570, 621. Only line 203 (connection-URL logging) is DEV-gated. This is inconsistent with the codebase's own convention of gating console output on import.meta.env.DEV (lib/api.ts:199 retry-warn, hooks/usePerformanceMetrics.ts:174 logPerformanceMetrics early-return, main.tsx MSW gating). Low severity (console noise + minor internal-diagnostic leakage of message types / connection state to end-user consoles); wrap operational logs behind DEV or route through a logger that is silent in production."
+        "9 new issues since last run (#2528-#2537), all created by ppt-review-merged skill with labels [follow-up, from-merged-review]. Not 'untriaged'. Represent real security/completeness gaps (join_group/leave_group IDOR #2529, booking_push_notification webhook harden #2528, dispute KPIs backing #2533, layout publish events wiring #2532, retention prune schedule #2531, S3 orphan on failed upload #2534, screen-map extractEpics fix #2536, signup funnel full instrumentation #2530 [WIP as #2544], lease-abstraction IDOR tests #2537). All tracked as GH issues + will flow via dispatcher planner; no routine-side backlog rows created."
       ]
     }
   ],
+  "auto_fix_actions": [],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
+      "command": "test -f .research/briefs/2026-07-24.md && head -1",
       "observed": "exit 0",
-      "expected": "exit 0",
-      "command": "brief header check"
+      "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
+      "command": "jq --slurpfile prev...state advanced",
       "observed": "true",
       "expected": "true",
-      "command": "state advanced vs HEAD"
+      "note": "last_pr_seen 2512->2542; last_commit_sha advanced; seen_signals appended"
     },
     {
       "goal": "G3",
       "passed": true,
+      "command": "jq unique id count",
       "observed": "true",
-      "expected": "true",
-      "command": "backlog ids unique"
+      "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
+      "command": "no non-cumulative signal re-scored",
       "observed": "true",
       "expected": "true",
-      "command": "signal dedup"
+      "note": "no signal ids from this run already in prev seen_signals"
     },
     {
       "goal": "G5",
       "passed": true,
+      "command": "cap+decay applied",
       "observed": "true",
       "expected": "true",
-      "command": "score cap"
+      "note": "no items older than 14d among open rows; nothing exceeds score 8"
     },
     {
       "goal": "G6",
       "passed": true,
-      "observed": "n/a",
-      "expected": "n/a",
-      "command": "no plans promoted this run"
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
     },
     {
       "goal": "G7",
       "passed": true,
+      "command": "at most 2 new plans",
       "observed": "0 new plans",
-      "expected": "<=2",
-      "command": "plan count"
+      "expected": "<=2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "observed": "0 non-.research/ paths",
-      "expected": "0",
-      "command": ".research-only diff"
+      "command": "no application code touched",
+      "observed": "only .research/",
+      "expected": "0 non-.research paths"
     },
     {
       "goal": "G9",
       "passed": true,
-      "observed": "0 secret matches",
-      "expected": "0",
-      "command": "secret scan"
+      "command": "no secrets or private hostnames",
+      "observed": "0 matches in staged diff",
+      "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "observed": "diff empty",
-      "expected": "diff empty",
-      "command": "backlog.md byte-identity"
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical after regen",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "observed": "n/a",
-      "expected": "n/a",
-      "command": "no failed phases this run"
+      "command": "phase-failure honesty",
+      "observed": "no failed phases (1.5/1.6 skipped, cursors not advanced for those phases)",
+      "expected": "n/a"
     },
     {
       "goal": "G12",
       "passed": true,
-      "observed": "n/a",
-      "expected": "n/a",
-      "command": "no thrashing (no plans promoted this run)"
+      "command": "plan promotions converge",
+      "observed": "no plans deleted this run",
+      "expected": "n/a"
     },
     {
       "goal": "G13",
       "passed": true,
-      "observed": "staged=7 head=7",
-      "expected": "staged >= head",
-      "command": "archive size"
+      "command": "archive only grows",
+      "observed": "archive count unchanged (6)",
+      "expected": ">=6"
     },
     {
       "goal": "G14",
       "passed": true,
-      "observed": "diff empty",
-      "expected": "diff empty",
-      "command": "IDEAS_TRIAGE.md byte-identity"
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical after regen",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "observed": "auto_fix_actions=0",
-      "expected": "disciplined",
-      "command": "auto-fix cap + idempotency"
+      "command": "auto-fix caps",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<=3"
     },
     {
       "goal": "G16",
       "passed": true,
-      "observed": "cursors valid; CC advanced 1->2, PM advanced 7->0",
-      "expected": "valid",
-      "command": "management artifacts + cursors"
+      "command": "management artifacts valid",
+      "observed": "phase 1.6 skipped this run \u2014 no-op gate",
+      "expected": "n/a"
     },
     {
       "goal": "G17",
       "passed": true,
-      "observed": "0 telegram matches",
-      "expected": "0",
-      "command": "no telegram token"
+      "command": "no Telegram token",
+      "observed": "0 matches",
+      "expected": "0"
     }
-  ],
-  "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run (2 medium-confidence bug findings score=2, 1 medium chore score=1, 1 medium drift signal on API-only route)"
+  ]
 }

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-24T03:10:00Z",
-  "last_run_ms": 4000,
-  "last_pr_seen": 2512,
-  "last_issue_seen": 2486,
-  "last_commit_sha": "500fe1bcb564004956d9072b40850c29667d8b24",
+  "last_run_iso": "2026-07-24T20:25:21Z",
+  "last_run_ms": 4321,
+  "last_pr_seen": 2542,
+  "last_issue_seen": 2537,
+  "last_commit_sha": "9f3099d93bcd15e31a94f458e51cf06ecaee4893",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -691,7 +691,11 @@
     "screen-map-drift-pr-2497-reality",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-ws-token-rotation-stale",
-    "code-review-ppt-web-core-ws-ungated-console"
+    "code-review-ppt-web-core-ws-ungated-console",
+    "delivery-summary-2026-07-24-pm",
+    "no-churn-hotspots-2026-07-24-pm",
+    "no-screen-map-drift-2026-07-24-pm",
+    "no-untriaged-issues-2026-07-24-pm"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -705,7 +709,7 @@
     "mobile-native-kmp": "2026-07-16"
   },
   "stats": {
-    "runs": 49,
+    "runs": 50,
     "vectors_created": 208,
     "plans_created": 16,
     "quiet_days": 2,
