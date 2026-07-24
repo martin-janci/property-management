@@ -31,6 +31,7 @@ use crate::models::platform_admin::{
     AdminOrganizationDetail, OrganizationDetailMetrics, OrganizationMetrics,
 };
 use crate::models::Organization;
+use crate::repositories::fault::fault_counts_by_status;
 use crate::DbPool;
 use chrono::{DateTime, Utc};
 use sqlx::Error as SqlxError;
@@ -627,24 +628,12 @@ impl PlatformAdminRepository {
             .fetch_one(&mut *tx)
             .await?;
 
-        // 5. Fault counts per status
-        let fault_rows = sqlx::query_as::<_, (String, i64)>(
-            r#"
-            SELECT status::text, COUNT(*) AS cnt
-            FROM faults
-            GROUP BY status
-            ORDER BY cnt DESC
-            "#,
-        )
-        .fetch_all(&mut *tx)
-        .await?;
+        // 5. Fault counts per status — canonical KPI definition shared with the
+        //    owner/portfolio fault statistics (single source of truth). Platform
+        //    scope => no organisation/building filter.
+        let fault_by_status = fault_counts_by_status(&mut *tx, None, None).await?;
 
         tx.commit().await?;
-
-        let fault_by_status = fault_rows
-            .into_iter()
-            .map(|(status, count)| FaultStatusCount { status, count })
-            .collect();
 
         Ok(SupportData {
             total_orgs,
