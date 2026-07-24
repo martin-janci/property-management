@@ -112,7 +112,6 @@ async fn seed_workflow(pool: &PgPool, org_id: Uuid, creator: Uuid) -> Uuid {
 // Automation — Rules
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_automation_rules_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -126,7 +125,6 @@ async fn test_list_automation_rules_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list automation rules");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_automation_rule_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -163,7 +161,6 @@ async fn test_get_automation_rule_not_found(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_automation_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -429,7 +426,6 @@ async fn test_get_sentiment_dashboard_returns_200(pool: PgPool) {
 // AI Equipment
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_equipment_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -454,7 +450,6 @@ async fn test_create_equipment_returns_201(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED, "create ai equipment");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_equipment_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -567,7 +562,6 @@ async fn test_list_maintenance_returns_200(pool: PgPool) {
 // AI Workflows
 // ---------------------------------------------------------------------------
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_workflow_returns_201(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -590,7 +584,6 @@ async fn test_create_workflow_returns_201(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::CREATED, "create workflow");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_workflows_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -646,7 +639,6 @@ async fn test_list_workflow_executions_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list workflow executions");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -665,7 +657,6 @@ async fn test_list_workflow_templates_returns_200(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list workflow templates");
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-568)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_builtin_workflow_templates_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
