@@ -297,7 +297,6 @@ async fn esg_list_metrics_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list metrics: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn esg_create_metric_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-metric").await;
@@ -311,12 +310,12 @@ async fn esg_create_metric_succeeds(pool: PgPool) {
                 .json(serde_json::json!({
                     "period_start": "2024-01-01",
                     "period_end": "2024-03-31",
-                    "category": "environmental",
+                    "category": "Environmental",
                     "metric_type": "energy_consumption",
                     "metric_name": "Q1 Electricity",
                     "value": "5000.0",
                     "unit": "kWh",
-                    "data_source": "manual"
+                    "data_source": "Manual"
                 }))
                 .build(),
         )
@@ -418,7 +417,6 @@ async fn esg_list_carbon_footprints_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list carbon: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn esg_create_carbon_footprint_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-carbon").await;
@@ -432,7 +430,7 @@ async fn esg_create_carbon_footprint_succeeds(pool: PgPool) {
                 .json(serde_json::json!({
                     "year": 2024,
                     "month": 1,
-                    "source_type": "scope_2_indirect",
+                    "source_type": "Scope2Indirect",
                     "consumption_value": "850.0",
                     "consumption_unit": "kWh",
                     "emission_factor": "0.233"
@@ -469,7 +467,6 @@ async fn esg_get_carbon_summary_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn esg_get_carbon_footprint_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "esg-get-carbon").await;
@@ -535,7 +532,6 @@ async fn esg_list_benchmarks_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn esg_create_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-bm").await;
@@ -548,7 +544,7 @@ async fn esg_create_benchmark_succeeds(pool: PgPool) {
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
                     "name": "EU Residential Energy Benchmark",
-                    "category": "regional_average",
+                    "category": "RegionalAverage",
                     "metric_type": "energy_consumption",
                     "benchmark_value": "120.0",
                     "unit": "kWh/sqm",
@@ -608,7 +604,6 @@ async fn esg_list_targets_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list targets: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn esg_create_target_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-tgt").await;
@@ -621,7 +616,7 @@ async fn esg_create_target_succeeds(pool: PgPool) {
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
                     "name": "20% energy reduction by 2030",
-                    "category": "environmental",
+                    "category": "Environmental",
                     "metric_type": "energy_consumption",
                     "target_value": "8000.0",
                     "unit": "kWh",
@@ -721,7 +716,6 @@ async fn esg_list_reports_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list reports: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn esg_create_report_succeeds(pool: PgPool) {
     let f = setup(pool, "esg-create-rep").await;
@@ -737,7 +731,7 @@ async fn esg_create_report_succeeds(pool: PgPool) {
                     "title": "ESG Annual Report 2024",
                     "period_start": "2024-01-01",
                     "period_end": "2024-12-31",
-                    "frameworks": ["eu_taxonomy", "csrd"]
+                    "frameworks": ["EuTaxonomy", "Csrd"]
                 }))
                 .build(),
         )

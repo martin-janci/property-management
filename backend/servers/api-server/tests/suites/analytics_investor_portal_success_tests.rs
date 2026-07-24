@@ -245,7 +245,6 @@ async fn ip_list_investors_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_investor_succeeds(pool: PgPool) {
     let f = setup(pool, "ip-create-inv").await;
@@ -262,7 +261,7 @@ async fn ip_create_investor_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create investor: {}",
         resp.text()
     );
@@ -379,7 +378,6 @@ async fn ip_list_portfolios_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_portfolio_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-pf").await;
@@ -402,7 +400,7 @@ async fn ip_create_portfolio_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create portfolio: {}",
         resp.text()
     );
@@ -502,7 +500,6 @@ async fn ip_list_investor_portfolios_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_add_portfolio_property_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-add-prop").await;
@@ -528,7 +525,7 @@ async fn ip_add_portfolio_property_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "add portfolio property: {}",
         resp.text()
     );
@@ -607,7 +604,6 @@ async fn ip_list_roi_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "list roi: {}", resp.text());
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-roi").await;
@@ -631,12 +627,7 @@ async fn ip_create_roi_calculation_succeeds(pool: PgPool) {
                 .build(),
         )
         .await;
-    assert_eq!(
-        resp.status,
-        StatusCode::CREATED,
-        "create roi: {}",
-        resp.text()
-    );
+    assert_eq!(resp.status, StatusCode::OK, "create roi: {}", resp.text());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -668,7 +659,6 @@ async fn ip_get_latest_roi_succeeds(pool: PgPool) {
 // investor-portal / distributions
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_distribution_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-dist").await;
@@ -693,7 +683,7 @@ async fn ip_create_distribution_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create distribution: {}",
         resp.text()
     );
@@ -752,7 +742,6 @@ async fn ip_update_distribution_succeeds(pool: PgPool) {
 // investor-portal / reports
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_report_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-rpt").await;
@@ -766,7 +755,7 @@ async fn ip_create_report_succeeds(pool: PgPool) {
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
                     "investor_id": inv_id,
-                    "report_type": "quarterly",
+                    "report_type": "performance",
                     "title": "Q1 2024 Report",
                     "report_data": {}
                 }))
@@ -775,7 +764,7 @@ async fn ip_create_report_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create report: {}",
         resp.text()
     );
@@ -805,7 +794,6 @@ async fn ip_list_investor_reports_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_get_report_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-get-rpt").await;
@@ -814,7 +802,7 @@ async fn ip_get_report_succeeds(pool: PgPool) {
     let report_id = sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO investor_reports
                (organization_id, investor_id, portfolio_id, report_type, title, report_data)
-           VALUES ($1, $2, $3, 'quarterly', 'Q1 2024', '{}')
+           VALUES ($1, $2, $3, 'performance', 'Q1 2024', '{}')
            RETURNING id"#,
     )
     .bind(f.org_id)
@@ -840,7 +828,6 @@ async fn ip_get_report_succeeds(pool: PgPool) {
 // investor-portal / capital-calls
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_create_capital_call_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-create-cc").await;
@@ -866,7 +853,7 @@ async fn ip_create_capital_call_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "create capital call: {}",
         resp.text()
     );
@@ -947,7 +934,6 @@ async fn ip_get_investor_dashboard_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "ip-dash-metrics").await;
@@ -962,10 +948,11 @@ async fn ip_upsert_dashboard_metrics_succeeds(pool: PgPool) {
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
+                    "investor_id": inv_id,
+                    "metric_date": "2024-12-31",
                     "total_invested": "100000.00",
-                    "current_value": "108000.00",
-                    "total_distributions": "5000.00",
-                    "total_return_pct": "8.0"
+                    "total_value": "108000.00",
+                    "total_distributions": "5000.00"
                 }))
                 .build(),
         )

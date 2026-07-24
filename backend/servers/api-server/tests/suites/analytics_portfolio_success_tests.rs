@@ -169,7 +169,7 @@ async fn seed_perf_transaction(pool: &PgPool, portfolio_id: Uuid, property_id: U
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO property_transactions
                (portfolio_id, property_id, transaction_type, amount, currency, transaction_date, is_recurring)
-           VALUES ($1, $2, 'income', 1200, 'EUR', '2024-03-01', false)
+           VALUES ($1, $2, 'rental_income', 1200, 'EUR', '2024-03-01', false)
            RETURNING id"#,
     )
     .bind(portfolio_id)
@@ -258,8 +258,11 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
 // All pa_* deletions are product-level schema gaps — the analytics feature was designed
 // but the column set in the migrations never matched the repository queries.
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-622: list_comparisons repo SELECTs a `name` column that does not exist in \
+            the property_comparisons schema (migration 00091) -> 500 Database error. \
+            Needs a repositories/portfolio_analytics.rs query/model fix (source bug, \
+            not test drift)."]
 async fn pa_list_comparisons_succeeds(pool: PgPool) {
     let f = setup(pool, "pa-list-comp").await;
     let resp = f
@@ -284,7 +287,6 @@ async fn pa_list_comparisons_succeeds(pool: PgPool) {
 // portfolio-performance endpoints
 // ===========================================================================
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_create_portfolio_succeeds(pool: PgPool) {
     let f = setup(pool, "pp-create-pf").await;
@@ -301,7 +303,7 @@ async fn pp_create_portfolio_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create portfolio: {}",
         resp.text()
     );
@@ -395,7 +397,6 @@ async fn pp_delete_portfolio_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_add_property_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-add-prop").await;
@@ -419,7 +420,7 @@ async fn pp_add_property_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp add property: {}",
         resp.text()
     );
@@ -525,7 +526,6 @@ async fn pp_remove_property_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_create_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-tx").await;
@@ -542,7 +542,7 @@ async fn pp_create_transaction_succeeds(pool: PgPool) {
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
                     "property_id": prop_id,
-                    "transaction_type": "income",
+                    "transaction_type": "rental_income",
                     "amount": "1200.00",
                     "transaction_date": "2024-03-01"
                 }))
@@ -551,7 +551,7 @@ async fn pp_create_transaction_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create transaction: {}",
         resp.text()
     );
@@ -581,7 +581,6 @@ async fn pp_list_transactions_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_get_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-get-tx").await;
@@ -608,7 +607,6 @@ async fn pp_get_transaction_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_update_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-upd-tx").await;
@@ -636,7 +634,6 @@ async fn pp_update_transaction_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_delete_transaction_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-del-tx").await;
@@ -719,7 +716,6 @@ async fn pp_get_cash_flows_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_calculate_metrics_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-calc-metrics").await;
@@ -734,6 +730,7 @@ async fn pp_calculate_metrics_succeeds(pool: PgPool) {
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
                 .json(serde_json::json!({
+                    "period_type": "monthly",
                     "period_start": "2024-01-01",
                     "period_end": "2024-12-31"
                 }))
@@ -772,7 +769,7 @@ async fn pp_get_latest_metrics_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
+#[ignore = "BIT-622: 500 Portfolio not found despite seeded portfolio; server-side route lookup bug requires investigation"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-metrics-summary").await;
@@ -782,7 +779,7 @@ async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
         .execute(
             f.app
                 .get(&format!(
-                    "/api/v1/portfolio-performance/portfolios/{pf_id}/metrics/summary"
+                    "/api/v1/portfolio-performance/portfolios/{pf_id}/metrics/summary?period_start=2024-01-01&period_end=2024-12-31"
                 ))
                 .bearer(&f.token)
                 .header("X-Tenant-ID", &f.org_id.to_string())
@@ -797,7 +794,6 @@ async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_create_benchmark_succeeds(pool: PgPool) {
     let f = setup(pool, "pp-create-bench").await;
@@ -818,7 +814,7 @@ async fn pp_create_benchmark_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create benchmark: {}",
         resp.text()
     );
@@ -918,7 +914,6 @@ async fn pp_delete_benchmark_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_create_comparison_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-cmp").await;
@@ -942,7 +937,7 @@ async fn pp_create_comparison_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create comparison: {}",
         resp.text()
     );
@@ -1009,8 +1004,11 @@ async fn pp_get_comparison_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-622: PortfolioPerformanceRepository::get_dashboard_summary calls \
+            get_portfolio(portfolio_id, Uuid::nil()) (repositories/portfolio_performance.rs:1337) \
+            so the org-scoped WHERE never matches -> 500 'Portfolio not found'. \
+            Needs a source fix to thread org_id through get_dashboard_summary."]
 async fn pp_get_dashboard_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-dash-sum").await;
     let pf_id = seed_perf_portfolio(&pool, f.org_id, f.user_id).await;
@@ -1082,7 +1080,6 @@ async fn pp_get_dashboard_cash_flow_trend_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_create_alert_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-create-alert").await;
@@ -1107,7 +1104,7 @@ async fn pp_create_alert_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::CREATED,
+        StatusCode::OK,
         "pp create alert: {}",
         resp.text()
     );
@@ -1137,7 +1134,6 @@ async fn pp_list_alerts_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_mark_alert_read_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-alert-read").await;
@@ -1157,13 +1153,12 @@ async fn pp_mark_alert_read_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::NO_CONTENT,
         "pp mark alert read: {}",
         resp.text()
     );
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_resolve_alert_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-alert-resolve").await;
@@ -1184,7 +1179,7 @@ async fn pp_resolve_alert_succeeds(pool: PgPool) {
         .await;
     assert_eq!(
         resp.status,
-        StatusCode::OK,
+        StatusCode::NO_CONTENT,
         "pp resolve alert: {}",
         resp.text()
     );

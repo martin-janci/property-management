@@ -354,8 +354,10 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK);
 }
 
-#[ignore = "BIT-351 quarantine: schema/route not implemented (BIT-567)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
+#[ignore = "BIT-622: GET /owner-analytics/portfolio returns 500 for an org with no seeded \
+            portfolio/units (empty-aggregation path in owner_analytics repo). Needs a source \
+            repro + fix; re-quarantined until the handler tolerates empty portfolios."]
 async fn oa_get_portfolio_summary_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "portfolio").await;
