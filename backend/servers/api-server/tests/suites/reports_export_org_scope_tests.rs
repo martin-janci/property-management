@@ -76,7 +76,6 @@ async fn setup(pool: &PgPool, app: &TestApp) -> (String, Uuid, Uuid) {
 /// not match the caller's tenant (Org B). On dev it trusts the body and
 /// proceeds; the fix returns 403.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn export_report_for_other_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org_a, org_b) = setup(&pool, &app).await;
@@ -108,7 +107,6 @@ async fn export_report_for_other_org_is_rejected(pool: PgPool) {
 /// owned by Org A; the caller is in Org B. On dev it returns the status; the
 /// fix returns 404.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_export_job_status_for_other_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, org_a, org_b) = setup(&pool, &app).await;
@@ -133,7 +131,6 @@ async fn get_export_job_status_for_other_org_is_rejected(pool: PgPool) {
 
 /// Same-tenant export job status is readable (the guard must not over-reject).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn get_export_job_status_for_own_org_is_allowed(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _org_a, org_b) = setup(&pool, &app).await;

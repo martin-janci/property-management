@@ -131,7 +131,6 @@ fn put_schedule_req_auth(
 /// proved the outer auth gate worked. This rewrite exercises the actual
 /// RBAC predicate.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_schedule_without_manager_role_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -205,7 +204,6 @@ async fn update_schedule_without_manager_role_is_rejected(pool: PgPool) {
 /// repository UPDATE was never executed. This rewrite forces the org-scoped
 /// WHERE clause to actually fire.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_schedule_from_other_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
@@ -274,7 +272,6 @@ async fn update_schedule_from_other_org_is_rejected(pool: PgPool) {
 /// be rejected with 4xx by `AuthUser` before any DB access. This is the
 /// legitimate outer-gate test and is intentionally kept as-is.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_schedule_without_any_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
