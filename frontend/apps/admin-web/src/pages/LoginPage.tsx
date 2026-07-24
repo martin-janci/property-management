@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
+import { trackSignupLoggedIn } from '../features/onboarding/analytics';
 
 export interface LoginResponse {
   /** Empty string when `mfaRequired: true` (server defers the token until MFA passes). */
@@ -69,6 +70,10 @@ export function LoginPage({ loginFn = defaultLoginFn }: LoginPageProps) {
         return;
       }
       auth.setToken(resp.accessToken);
+      // Signup-funnel: first login is the leg between email verification and
+      // the onboarding tour (issue #2530). Fired only after a real,
+      // non-MFA-deferred token is issued.
+      trackSignupLoggedIn('email_password');
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'login failed');

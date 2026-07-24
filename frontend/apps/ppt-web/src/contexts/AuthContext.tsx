@@ -35,6 +35,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { trackSignupLoggedIn } from '../features/auth/analytics';
 import { AUTHED_QUERY_KEY_ROOTS } from '../lib/queryKeys';
 
 export type { AuthErrorCode, AuthUser };
@@ -470,6 +471,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       setUser(userWithRole);
+      // Signup-funnel: the "first login" leg between email verification and
+      // the onboarding tour (issue #2530). Fired only after tokens/user are
+      // persisted and the session is authenticated.
+      trackSignupLoggedIn('email_password');
     } finally {
       setIsLoading(false);
     }

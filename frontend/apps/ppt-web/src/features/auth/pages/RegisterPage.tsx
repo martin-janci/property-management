@@ -10,6 +10,7 @@ import type React from 'react';
 import { useCallback, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { trackRegistrationSubmitted } from '../analytics';
 import { getAuthApi } from '../authApiClient';
 import '../styles/AuthPage.css';
 
@@ -109,6 +110,9 @@ export function RegisterPage() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
         });
+        // Signup-funnel: first (and earliest) leg — fired only after the
+        // server accepts the registration (issue #2530).
+        trackRegistrationSubmitted('email_password');
         setSubmitted(true);
       } catch (error) {
         setErrors({ general: getErrorKey(error) });
