@@ -116,7 +116,8 @@ impl RegistryRepository {
         };
 
         // `units` has no `unit_number` column — the display value is `designation`.
-        let unit_info: Option<(String, String)> = sqlx::query_as(
+        // `buildings.name` is nullable, so decode as Option<String> to avoid ColumnDecode errors.
+        let unit_info: Option<(String, Option<String>)> = sqlx::query_as(
             r#"
             SELECT u.designation AS unit_number, b.name as building_name
             FROM units u
@@ -146,7 +147,7 @@ impl RegistryRepository {
         Ok(Some(PetRegistrationWithDetails {
             registration,
             unit_number: unit_info.as_ref().map(|(u, _)| u.clone()),
-            building_name: unit_info.map(|(_, b)| b),
+            building_name: unit_info.and_then(|(_, b)| b),
             owner_name,
             reviewed_by_name,
         }))

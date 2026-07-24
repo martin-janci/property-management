@@ -108,6 +108,8 @@ async fn seed_connection(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> Uuid {
 }
 
 async fn seed_template(pool: &PgPool) -> Uuid {
+    // SK_VAT_MONTHLY is seeded by migration 00062; use ON CONFLICT to handle
+    // both fresh-DB and already-seeded cases and always return the row's id.
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO regulatory_report_templates
                (template_code, template_name, portal_type, country_code,
@@ -115,6 +117,8 @@ async fn seed_template(pool: &PgPool) -> Uuid {
            VALUES ('TEST_SK_VAT_MONTHLY', 'SK VAT Monthly Report',
                    'tax_authority'::government_portal_type, 'SK',
                    '1.0', '{}', '[]', '2024-01-01')
+           ON CONFLICT (template_code) DO UPDATE
+               SET template_name = EXCLUDED.template_name
            RETURNING id"#,
     )
     .fetch_one(pool)
