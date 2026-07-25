@@ -96,3 +96,16 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-07-23, pm-data):** Layout & Content Manager pilot shipped with zero instrumentation — publish/webhook analytics event schema needs to be defined before adoption grows and retrofitting becomes costly. Sequenced as `data-layout-publish-event-tracking-2026-07-23` on action-list. Owner: pm-data + pm-backend.
 - **NEW (2026-07-23, pm-data):** Retention policy for `support_tooling_events` — carried over from 2026-05-28 open decision, still unresolved. Publishing a policy (TTL vs indefinite, PII classification) is now blocking pm-data's ability to expand the audit event pattern to disputes/OAuth/layout. Owner: pm-security + pm-data.
 - **NEW (2026-07-23, pm-data):** FaultStatusCount metric unification — also carried over from 2026-05-28. As dashboards expand, dual definitions will produce contradictory numbers. Owner: pm-data (final call).
+
+## 2026-07-25 — Should epic-10b's status field be corrected now or held until next planning cycle to avoid mid-sprint churn?
+
+Options:
+- fix now
+- defer to next sprint boundary
+
+## 2026-07-25 — Is the quarantine-restore sweep (18 PRs) considered sprint-complete, or is there a residual queue of BIT-5xx/6xx suites still quarantined?
+
+Options:
+- sweep complete — close BIT-565 epic thread
+- residual queue exists — needs explicit count from backlog
+

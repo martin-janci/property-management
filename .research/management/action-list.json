@@ -666,7 +666,108 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-reconcile-epic-10b-status-field-in-sprint-status-yaml-to-done-given-7-7-stories-",
+      "action": "Reconcile epic-10b status field in sprint-status.yaml to 'done' given 7/7 stories complete",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-scrum-master-land-draft-pr-2553-authctx-stale-role-fix-flagged-as-matching-a-code-review-risk",
+      "action": "Land draft PR #2553 (authctx stale-role fix) — flagged as matching a code-review risk vector",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-scrum-master-triage-open-issue-2528-booking-webhook-harden-only-unresolved-from-merged-review",
+      "action": "Triage open issue #2528 (booking webhook harden) — only unresolved from-merged-review follow-up besides #2532",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-scrum-master-push-2549-layout-publish-event-emission-draft-to-ready-pairs-with-open-issue-253",
+      "action": "Push #2549 (layout publish event emission, draft) to ready — pairs with open issue #2532 wiring gap",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "#2532",
+      "depends_on": [
+        "2532"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-scrum-master-age-check-2478-46h-open-layout-review-hardening-and-2491-37h-dependabot-npm-mino",
+      "action": "Age-check #2478 (46h open, layout review-hardening) and #2491 (37h, dependabot npm-minor-patch) for merge or close",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-tech-lead-commission-a-tenant-isolation-audit-across-repositories-given-3-idor-fixes-this-",
+      "action": "Commission a tenant-isolation audit across repositories given 3 IDOR fixes this window",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-tech-lead-fast-track-review-and-merge-of-draft-pr-2553-authctx-stale-role",
+      "action": "Fast-track review and merge of draft PR #2553 (authctx stale-role)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-tech-lead-confirm-bit-565-bit-658-quarantine-sweep-is-fully-closed-no-remaining-quarantine",
+      "action": "Confirm BIT-565…BIT-658 quarantine sweep is fully closed (no remaining quarantined suites) before marking test-recovery epic done",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
+    },
+    {
+      "id": "pm-tech-lead-fix-epic-10b-status-field-inconsistency-in-sprint-status-yaml",
+      "action": "Fix epic-10b status field inconsistency in sprint-status.yaml",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-25"
     }
   ],
-  "generated": "2026-07-23T14:34:52.019013Z"
+  "generated": "2026-07-25T03:12:39Z"
 }

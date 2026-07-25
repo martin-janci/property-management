@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-24 03:05 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-25 03:12 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
-| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read | ready | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
+| 3 | bug | `code-review-mobile-native-kmp-realtor-create-listing-broken` | SECURITY/UC-51.4: Android realtor CreateListingScreen always fails — Navigation.kt wires onSubmit to NotImplementedError stub, no repo call, no test | ready | 2026-07-25 | [plan](plans/code-review-mobile-native-kmp-realtor-create-listing-broken.md) |
+| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read | dropped | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
 | 3 | security | `code-review-api-handlers-community-cross-tenant-idor` | SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs | done | 2026-07-23 | [plan](plans/code-review-api-handlers-community-cross-tenant-idor.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
@@ -73,6 +74,10 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-documents-forms-batch2-2026-07-25` | Churn hotspot: documents_forms_batch2_happy_path_tests.rs — 501 lines this run (BIT-558 restore + #2551 IDOR follow-up) | open | 2026-07-25 |  |
+| 1 | refactor | `refactor-churn-hotspot-analytics-portfolio-success-2026-07-25` | Churn hotspot: analytics_portfolio_success_tests.rs — 377 lines this run (BIT-567 restore + #2540 residual) | open | 2026-07-25 |  |
+| 1 | refactor | `refactor-churn-hotspot-nextest-partition-runbook-2026-07-25` | Churn hotspot: docs/runbooks/nextest-partition-and-test-consolidation.md — 303-line new runbook (PR #2523) | open | 2026-07-25 |  |
+| 1 | bug | `code-review-mobile-native-kmp-listing-detail-phone-npe-latent` | Latent NPE: ListingDetailScreen onCallClick re-reads state.listing!!.realtor?.phone at click time, safe only by ViewModel convention | open | 2026-07-25 |  |
 | 1 | refactor | `code-review-ppt-web-core-ws-ungated-console` | 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod | open | 2026-07-24 |  |
 | 1 | refactor | `refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23` | Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill) | open | 2026-07-23 |  |
 | 1 | refactor | `refactor-churn-hotspot-org-property-authz-backfill-2026-07-23` | Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage) | open | 2026-07-23 |  |

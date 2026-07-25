@@ -4988,6 +4988,113 @@
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
       "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-documents-forms-batch2-2026-07-25",
+      "title": "Churn hotspot: documents_forms_batch2_happy_path_tests.rs — 501 lines this run (BIT-558 restore + #2551 IDOR follow-up)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2440",
+        "PR #2551"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs — 501 lines across 2 commits (b2d04ab + d7c14e1); repeat-touch suggests document-import validation surface is fragile."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs"
+      ],
+      "created_at": "2026-07-25",
+      "updated_at": "2026-07-25",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-analytics-portfolio-success-2026-07-25",
+      "title": "Churn hotspot: analytics_portfolio_success_tests.rs — 377 lines this run (BIT-567 restore + #2540 residual)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2507",
+        "PR #2540"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs — 377 lines across 2 commits (52f8023 + 8aa4039); analytics un-quarantine sweep with residual follow-up."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs"
+      ],
+      "created_at": "2026-07-25",
+      "updated_at": "2026-07-25",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-nextest-partition-runbook-2026-07-25",
+      "title": "Churn hotspot: docs/runbooks/nextest-partition-and-test-consolidation.md — 303-line new runbook (PR #2523)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2523"
+      ],
+      "evidence": [
+        "docs/runbooks/nextest-partition-and-test-consolidation.md — 303-line runbook added (a1ba006). New doc, expected churn; noted for hotspot cadence tracking."
+      ],
+      "files": [
+        "docs/runbooks/nextest-partition-and-test-consolidation.md"
+      ],
+      "created_at": "2026-07-25",
+      "updated_at": "2026-07-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-realtor-create-listing-broken",
+      "title": "SECURITY/UC-51.4: Android realtor CreateListingScreen always fails — Navigation.kt wires onSubmit to NotImplementedError stub, no repo call, no test",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-07-25"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 — Screen.CreateListing.onSubmit wired to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt — fully-built UC-51.4 form (title/description/city/price/currency/type, validation, sticky publish bar) reachable from MyListingsScreen create action.",
+        "No `CreateListingScreen*Test` / `Navigation*Test` file exists anywhere in the tree — no coverage for the broken route.",
+        "Rotating Kotlin expert review 2026-07-25 (segment: mobile-native-kmp, oldest-unreviewed since 2026-07-16)."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ],
+      "created_at": "2026-07-25",
+      "updated_at": "2026-07-25",
+      "plan": "plans/code-review-mobile-native-kmp-realtor-create-listing-broken.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-detail-phone-npe-latent",
+      "title": "Latent NPE: ListingDetailScreen onCallClick re-reads state.listing!!.realtor?.phone at click time, safe only by ViewModel convention",
+      "vector": "bug",
+      "confidence": "low",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-25"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt:132 — onCallClick lambda closes over live state delegate; the !! bypasses the composition-time null-check on line 122.",
+        "Currently safe because ListingDetailViewModel never resets listing back to null; invariant enforced by convention, not the type system — would break with any future unpublish/expire-while-viewing flow."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
+      ],
+      "created_at": "2026-07-25",
+      "updated_at": "2026-07-25",
+      "plan": null
     }
   ]
 }

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-24T03:10:00Z",
-  "last_run_ms": 4000,
-  "last_pr_seen": 2512,
-  "last_issue_seen": 2486,
-  "last_commit_sha": "500fe1bcb564004956d9072b40850c29667d8b24",
+  "last_run_iso": "2026-07-25T03:12:39Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2553,
+  "last_issue_seen": 2537,
+  "last_commit_sha": "b1f6ad562a31314719171378d6dc00d66f1b033e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -396,6 +396,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-23",
       "recent_churn": 364
+    },
+    "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-25",
+      "recent_churn": 501
+    },
+    "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-25",
+      "recent_churn": 377
+    },
+    "docs/runbooks/nextest-partition-and-test-consolidation.md": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-25",
+      "recent_churn": 303
     }
   },
   "seen_signals": [
@@ -691,7 +706,12 @@
     "screen-map-drift-pr-2497-reality",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-ws-token-rotation-stale",
-    "code-review-ppt-web-core-ws-ungated-console"
+    "code-review-ppt-web-core-ws-ungated-console",
+    "churn-hotspot-backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs",
+    "churn-hotspot-docs/runbooks/nextest-partition-and-test-consolidation.md",
+    "code-review-mobile-native-kmp-a1c3e9f2",
+    "code-review-mobile-native-kmp-7d4b1e60"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -702,12 +722,12 @@
     "ppt-web-core": "2026-07-24",
     "reality-web": "2026-07-17",
     "mobile-rn": "2026-07-22",
-    "mobile-native-kmp": "2026-07-16"
+    "mobile-native-kmp": "2026-07-25"
   },
   "stats": {
-    "runs": 49,
-    "vectors_created": 208,
-    "plans_created": 16,
+    "runs": 50,
+    "vectors_created": 213,
+    "plans_created": 17,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -722,9 +742,9 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 0,
+    "next_index": 1,
     "role_last_run": {
-      "pm-tech-lead": "2026-06-05",
+      "pm-tech-lead": "2026-07-25",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
@@ -735,6 +755,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 2
+    "next_index": 3
   }
 }

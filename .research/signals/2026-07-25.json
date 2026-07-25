@@ -1,0 +1,207 @@
+{
+  "generated": "2026-07-25T03:12:39Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit range b70fafc..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/documents_forms_batch2_happy_path_tests.rs — 501 lines / 2 commits (BIT-558 restore #2440 + IDOR follow-up #2551)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit range b70fafc..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs — 377 lines / 2 commits (BIT-567 analytics un-quarantine PR #2507 + #2540 residual)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-docs/runbooks/nextest-partition-and-test-consolidation.md",
+      "type": "churn-hotspot",
+      "source": "PR #2523",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "docs/runbooks/nextest-partition-and-test-consolidation.md — 303-line new runbook (PR #2523 devops-nextest-partition-runbook)"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-a1c3e9f2",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:476 — Screen.CreateListing.onSubmit is wired to { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, so the fully-built UC-51.4 CreateListingScreen (title/description/city/price/currency/type, publish) reachable from MyListingsScreen always fails on submit; no repository call is made and no test exercises this route."
+      ],
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-7d4b1e60",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "low",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt:132 — onCallClick closes over live state delegate; state.listing!!.realtor?.phone is re-read at click time not at the composition-time null-check on line 122; latent NPE if listing is ever reset to null (unpublish/expire-while-viewing) — safe today only by ViewModel convention."
+      ],
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-07-25.md && head -1 .research/briefs/2026-07-25.md",
+      "observed": "# 2026-07-25",
+      "expected": "# 2026-07-25"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:.research/state.json 2>/dev/null || echo '{}') '($prev[0] // {}) as $p | (.last_pr_seen != ($p.last_pr_seen // 0)) or (.last_issue_seen != ($p.last_issue_seen // 0)) or (.last_commit_sha != ($p.last_commit_sha // null)) or ((.seen_signals | length) != (($p.seen_signals // []) | length)) or ((.hotspot_history | length) != (($p.hotspot_history // {}) | length)) or (.stats.quiet_days != ($p.stats.quiet_days // 0))' .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq G4 signal-dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score>8 == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq --arg cutoff \"2026-07-11\" '[.items[] | select(.status==\"open\" and .updated_at <= $cutoff)] | length' .research/backlog.json",
+      "observed": "0",
+      "expected": "0 (no open items >14d)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for adversarial-pass annotation",
+      "observed": "[]",
+      "expected": "[]"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "count of new plans",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-quality",
+      "passed": true,
+      "command": "plan structure + files exist",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "count non-.research staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases that failed",
+      "observed": "none",
+      "expected": "none (this run)"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence check",
+      "observed": "[]",
+      "expected": "[]"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows-only",
+      "observed": "now=7 HEAD=7",
+      "expected": "now>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq '.auto_fix_actions | length <= 3 and ([.[] | select(.action_type == \"pr\")] | length) <= 1 and ([.[] | select(.action_type == \"issue\")] | length) <= 1 and ([.[] | select(.action_type == \"comment\")] | length) <= 1' .research/signals/2026-07-25.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + GC7",
+      "observed": "base=True gc7=True cc=3/13 pm_now=1 pm_head=0",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram secret grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

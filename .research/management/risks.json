@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generated": "2026-07-23T14:35:18.605457Z",
+  "generated": "2026-07-25T03:12:39Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
-      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) \u2014 a captured legitimate publish can be replayed to overwrite a newer layout",
+      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
@@ -13,7 +13,7 @@
     },
     {
       "id": "risk-mobile-layout-cache-cross-tenant-2026-07-23",
-      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) \u2014 user A's layout can leak to user B on shared device or org-switch",
+      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
@@ -22,7 +22,7 @@
     },
     {
       "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
-      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) \u2014 PR #2450 fixed 5 handlers but missed the sub-route",
+      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
       "probability": "low",
       "impact": "high",
       "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
@@ -31,7 +31,7 @@
     },
     {
       "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
-      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) \u2014 the SQL predicate could regress without the test catching it",
+      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
@@ -40,7 +40,7 @@
     },
     {
       "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
-      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation \u2014 product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
+      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
@@ -49,7 +49,7 @@
     },
     {
       "id": "risk-data-retention-policy-missing-2026-07-23",
-      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL \u2014 long-term storage/GDPR compliance risk",
+      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
@@ -58,7 +58,7 @@
     },
     {
       "id": "risk-metric-definition-drift-2026-07-23",
-      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) \u2014 dashboards will disagree with each other",
+      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
@@ -67,12 +67,42 @@
     },
     {
       "id": "risk-webhook-cross-integration-drift-2026-07-23",
-      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening \u2014 #2485 shows layout has no replay guard; unknown parity elsewhere",
+      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
       "owner_role": "pm-integration",
       "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)"
+    },
+    {
+      "id": "pm-tech-lead-tenant-isolation-idor-bugs-recurring-across-unrelated-features-groups-layout-cac",
+      "risk": "Tenant-isolation IDOR bugs recurring across unrelated features (groups, layout-cache, lease-abstraction) points to a shared root cause in how RLS/tenant context is threaded through repositories.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Commission a focused audit of all *_rls repository methods for consistent tenant-id propagation; prioritize before next feature epic starts.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-draft-pr-2553-authctx-stale-role-stays-unmerged-while-other-role-dependent-route",
+      "risk": "Draft PR #2553 (authctx stale-role) stays unmerged while other role-dependent routes ship, widening the exposure window.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Fast-track review/merge of #2553 this cycle; treat as blocking for any new RLS-gated route work.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-documents-forms-batch2-happy-path-tests-rs-repeated-churn-2-commits-501-lines-ma",
+      "risk": "documents_forms_batch2_happy_path_tests.rs repeated churn (2 commits, 501 lines) may indicate the underlying document-import code path is under-abstracted, making tests brittle.",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Schedule a short refactor pass on document-import validation once #2551 stabilizes.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
     }
   ]
 }
