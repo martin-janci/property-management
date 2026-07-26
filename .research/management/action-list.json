@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
-      "action": "Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)",
+      "action": "Churn hotspot: docs/screens/ppt/dashboard.md \u2014 3 touches this run (Layout & Content Manager pilot integration)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -21,7 +21,7 @@
     },
     {
       "id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
-      "action": "Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)",
+      "action": "Churn hotspot: docs/repo-map.md \u2014 4 touches this window (per-PR route-map refresh)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -137,7 +137,7 @@
     },
     {
       "id": "gh-issue-2366-retry1",
-      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 1/2 of failed gh-issue-2366]",
+      "action": "Follow-up: direct-to-S3 upload drops building_id \u2014 building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 1/2 of failed gh-issue-2366]",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "in-progress",
@@ -214,7 +214,7 @@
     },
     {
       "id": "data-layout-publish-event-tracking-2026-07-23",
-      "action": "Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) — Layout & Content Manager shipped end-to-end but has no KPI hooks yet",
+      "action": "Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) \u2014 Layout & Content Manager shipped end-to-end but has no KPI hooks yet",
       "owner_role": "pm-data",
       "priority": "medium",
       "status": "in-progress",
@@ -232,7 +232,7 @@
     },
     {
       "id": "data-dispute-fsm-kpi-definitions-2026-07-23",
-      "action": "Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) — Epic 80 stories all done but no analytics dashboard exists; align with SupportDataPage metric definitions",
+      "action": "Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) \u2014 Epic 80 stories all done but no analytics dashboard exists; align with SupportDataPage metric definitions",
       "owner_role": "pm-data",
       "priority": "medium",
       "status": "in-progress",
@@ -288,7 +288,7 @@
     },
     {
       "id": "data-mobile-native-analytics-parity-2026-07-23",
-      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry)",
+      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity \u2014 surface funnels missing analytics hooks (listing view, search, contact-inquiry)",
       "owner_role": "pm-data",
       "priority": "low",
       "status": "in-progress",
@@ -306,7 +306,7 @@
     },
     {
       "id": "refactor-layout-editor-styles-followthrough-2026-07-23",
-      "action": "Follow-through on #2464 LayoutEditorPage style extraction — apply same pattern to remaining layout-editor components to reduce inline-style churn",
+      "action": "Follow-through on #2464 LayoutEditorPage style extraction \u2014 apply same pattern to remaining layout-editor components to reduce inline-style churn",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "in-progress",
@@ -342,7 +342,7 @@
     },
     {
       "id": "sec-ammonia-supply-chain-audit-2026-07-23",
-      "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories",
+      "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) \u2014 run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories",
       "owner_role": "pm-security",
       "priority": "medium",
       "status": "in-progress",
@@ -360,7 +360,7 @@
     },
     {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
-      "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
+      "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity \u2014 #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
       "priority": "high",
       "status": "in-progress",
@@ -434,7 +434,7 @@
     },
     {
       "id": "sec-layout-webhook-hmac-verify-2026-07-23",
-      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) \u2014 feeds #2485 fix design",
       "owner_role": "pm-security",
       "priority": "high",
       "status": "in-progress",
@@ -454,7 +454,7 @@
     },
     {
       "id": "code-review-api-handlers-community-unauthenticated-reads",
-      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated \u2014 anonymous cross-tenant read",
       "owner_role": "pm-security",
       "priority": "medium",
       "status": "in-progress",
@@ -472,7 +472,7 @@
     },
     {
       "id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
-      "action": "Churn hotspot: infra_ops_authz_backfill_tests.rs — 364 lines this run (BIT-268 test backfill)",
+      "action": "Churn hotspot: infra_ops_authz_backfill_tests.rs \u2014 364 lines this run (BIT-268 test backfill)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -489,7 +489,7 @@
     },
     {
       "id": "refactor-churn-hotspot-org-property-authz-backfill-2026-07-23",
-      "action": "Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage)",
+      "action": "Churn hotspot: org_property_authz_backfill_tests.rs \u2014 412 lines this run (BIT-268/BIT-559 authz salvage)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -506,7 +506,7 @@
     },
     {
       "id": "refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23",
-      "action": "Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill)",
+      "action": "Churn hotspot: platform_admin_authz_batch2_tests.rs \u2014 417 lines this run (BIT-557 test backfill)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -523,7 +523,7 @@
     },
     {
       "id": "triage-closed-not-merged-pr-2489",
-      "action": "PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491",
+      "action": "PR #2489 closed unmerged: dependabot npm-minor-patch (5\u21924 update group) superseded by #2491",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -540,7 +540,7 @@
     },
     {
       "id": "code-review-ppt-web-core-authctx-init-stale-role",
-      "action": "AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap)",
+      "action": "AuthContext init bypasses refreshTokenInternal \u2192 stale role on cold-boot refresh (#574 fix gap)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -557,7 +557,7 @@
     },
     {
       "id": "code-review-ppt-web-core-ws-token-rotation-stale",
-      "action": "WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token",
+      "action": "WebSocket not re-authed on token rotation \u2014 connect() early-return leaves live socket on old token",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -631,7 +631,7 @@
       "action": "Follow-up: instrument the full signup funnel, not just the onboarding tour (PR #2515) (Closes #2530)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2530)",
       "deadline": null,
       "dependency": null,
@@ -645,7 +645,9 @@
           "from-merged-review"
         ]
       },
-      "last_updated": "2026-07-24T18:09:34Z"
+      "last_updated": "2026-07-24T18:09:34Z",
+      "resolved_at": "2026-07-26",
+      "resolution": "PR #2544 merged 2026-07-24 \u2014 signup funnel end-to-end instrumentation"
     },
     {
       "id": "gh-issue-2532",
@@ -666,7 +668,106 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-get-reviewer-sign-off-and-merge-pr-2553",
+      "action": "Get reviewer sign-off and merge PR #2553 (AuthContext cold-boot init bypassing refreshTokenInternal fix \u2014 reviewer_summary still null)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-scrum-master-merge-already-approved-pr-2549-layout-pu",
+      "action": "Merge already-approved PR #2549 (layout publish/webhook event wiring) to close issue #2532",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-scrum-master-land-the-two-in-progress-mvp-gap-closure",
+      "action": "Land the two in-progress MVP gap-closure tasks: direct-to-S3 upload wiring (84-1) and signer-facing document-sign page (84-2), both owned by pm-frontend and already the highest-ranked coverage gaps",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-backend-open-a-refactor-rfc-to-split-auth-rs-295",
+      "action": "Open a refactor RFC to split auth.rs (2950 lines, 4th repeat-churn cycle - now also touched by draft PR #2553 cold-boot fix) into session/OAuth/MFA submodules before the next auth-adjacent epic lands",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-backend-apply-the-same-review-to-reports-rs-3329",
+      "action": "Apply the same review to reports.rs (3329 lines, 3rd repeat-churn cycle, growing further via epic-6 SQL-backed dispute KPIs)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-backend-establish-a-standard-test-pattern-for-sc",
+      "action": "Establish a standard test pattern for scheduler-fired jobs (services/scheduler.rs) - retention prune (#2547), auto-unpin, favorite-alerts, notification triggers all lack a verified 'job actually fires at runtime' test",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-qa-confirm-whether-wave-j1-s-un-quarantine",
+      "action": "Confirm whether Wave J1's un-quarantine-then-re-quarantine-11 (PR #2511) reflects real flakiness vs. a one-off, before continuing to burn down the BIT-5xx/6xx quarantine backlog",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-integration-assess-booking-mod-rs-as-a-first-time-ho",
+      "action": "Assess booking/mod.rs as a first-time hot spot against the already-roadmapped cross-cutting webhook hardening audit - determine if a shared OTA-provider abstraction is needed to stop per-provider file bloat",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
+    },
+    {
+      "id": "pm-frontend-track-draft-pr-2553-authcontext-cold-boo",
+      "action": "Track draft PR #2553 (AuthContext cold-boot bypass, scope_drift=true) to merge with explicit awareness it's landing on top of the auth.rs debt, not in isolation",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-26"
     }
   ],
-  "generated": "2026-07-23T14:34:52.019013Z"
+  "generated": "2026-07-26T05:20:00Z"
 }

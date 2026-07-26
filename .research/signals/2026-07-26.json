@@ -1,0 +1,217 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-26",
+      "type": "lag_warning",
+      "source": "routine-2026-07-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "routine last ran 2026-07-24T03:10Z; lag 48h (>36h threshold, <72h \u2014 no stale_routine_alert)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-07-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "+3329 lines this window (runs_seen 2\u21923); cumulative signal re-emit \u2014 score not re-applied per Phase 1 dedup rule"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "churn-scan-2026-07-26",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen=3 after this run; reports.rs (3329 lines, api-handlers segment) repeatedly touched \u2014 pm-tech-lead flagged for refactor RFC"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-07-26",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "+3185 lines this window; first-time churn-hotspot for this file (runs_seen 1\u2192? \u2014 see hotspot_history for cross-run tally); pm-tech-lead noted booking/mod.rs hot despite 83-2 marked done"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-07-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "+2950 lines this window (runs_seen 3\u21924); cumulative re-emit \u2014 score not re-applied"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "churn-scan-2026-07-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen=4 after this run; chronic repeat, pm-tech-lead flagged for refactor RFC"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2547",
+      "type": "hotfix-no-test",
+      "source": "PR #2547",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2547 fix(api-server): schedule support_tooling_events retention prune \u2014 2 files (main.rs, scheduler.rs), zero test files; scheduler-firing behavior uncovered by CI (author flagged 'hard to test at runtime')"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-download-url-404",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs:1807 \u2014 get_execution_download_url returns url `/api/v1/reports/files/{file_key}` presented as presigned URL, but `/files/*` is not registered by routes::reports::router() (lib.rs:298 mounts /api/v1/reports; router() at reports.rs:201 has no /files route); any client following the URL from GET /api/v1/reports/executions/{id}/download hits axum's fallback 404.",
+        "backend/crates/db/src/repositories/report_schedule.rs:517 constructs the same broken URL for other callers; test at report_execution_download_retry_e2e_tests.rs:293 comment acknowledges 'no such downstream handler exists'."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-export-fake-202",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs:1240-1260 \u2014 when operations_repo.create_background_job() fails and format is 'pdf' or 'excel', export_report returns StatusCode::ACCEPTED with fabricated ExportReportResponse whose download_url is `/api/v1/reports/download/{...}` (unregistered route). Caller receives 2xx success + fake URL for a report that will never generate; only tracing::warn logs the failure \u2014 job-creation outage silently masked as queued export."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exists, first line matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true (last_pr_seen 2512\u21922552, last_issue_seen 2486\u21922537, last_commit_sha advanced, seen_signals grew by 9)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative seen-id with delta!=0",
+      "observed": "true (only churn-hotspot re-emits are cumulative + score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8",
+      "observed": "0 items",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0 new plans this run",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only non-.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present",
+      "observed": "13/13 prior plans still on disk",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls archive count",
+      "observed": "HEAD=7 \u2192 now=7 (no shrinkage)",
+      "expected": "now >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions \u22643",
+      "observed": "0 actions (no candidate)",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "all valid; pm_cursor 0\u21921 (pm-tech-lead ran), coverage_cursor 2\u21923 (epic-6 re-checked)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score\u22653 + allowlist this run"
+}

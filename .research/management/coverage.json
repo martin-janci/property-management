@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-24T03:10:00Z",
+  "generated": "2026-07-26T05:20:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -242,7 +242,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-26",
       "screen_refs": []
     },
     {
@@ -266,7 +266,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-26",
       "screen_refs": []
     },
     {
@@ -290,7 +290,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-26",
       "screen_refs": []
     },
     {
@@ -314,7 +314,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-26",
       "screen_refs": []
     },
     {
@@ -338,7 +338,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-26",
       "screen_refs": []
     },
     {
@@ -362,7 +362,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-26",
       "screen_refs": []
     },
     {

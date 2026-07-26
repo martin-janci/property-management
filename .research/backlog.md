@@ -1,10 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-24 03:05 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-26 05:20 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
-| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read | ready | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
+| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read | dropped | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
 | 3 | security | `code-review-api-handlers-community-cross-tenant-idor` | SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs | done | 2026-07-23 | [plan](plans/code-review-api-handlers-community-cross-tenant-idor.md) |
 | 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
@@ -20,6 +20,9 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | test-gap | `hotfix-no-test-pr-2547` | fix(api-server) #2547 scheduled retention prune without runtime test coverage | open | 2026-07-26 |  |
+| 2 | bug | `code-review-api-handlers-download-url-404` | reports.rs get_execution_download_url returns unregistered /files/* URL → 404 | open | 2026-07-26 |  |
+| 2 | bug | `code-review-api-handlers-export-fake-202` | reports.rs export_report fakes 202 with unregistered download URL on job-create failure | open | 2026-07-26 |  |
 | 2 | bug | `code-review-ppt-web-core-authctx-init-stale-role` | AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap) | open | 2026-07-24 |  |
 | 2 | bug | `code-review-ppt-web-core-ws-token-rotation-stale` | WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token | open | 2026-07-24 |  |
 | 2 | test-gap | `screen-map-drift-pr-2497-reality` | screen-map drift: PR #2497 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/ | open | 2026-07-24 |  |
@@ -73,6 +76,8 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-src-routes-reports-rs-2026-07-26` | Churn hotspot: reports.rs — hotspot_history.runs_seen=3 after this run; reports.rs (3329 lines, api-handlers | open | 2026-07-26 |  |
+| 1 | refactor | `refactor-churn-hotspot-src-booking-mod-rs-2026-07-26` | Churn hotspot: mod.rs — +3185 lines this window; first-time churn-hotspot for this file (runs_seen 1→? — | open | 2026-07-26 |  |
 | 1 | refactor | `code-review-ppt-web-core-ws-ungated-console` | 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod | open | 2026-07-24 |  |
 | 1 | refactor | `refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23` | Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill) | open | 2026-07-23 |  |
 | 1 | refactor | `refactor-churn-hotspot-org-property-authz-backfill-2026-07-23` | Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage) | open | 2026-07-23 |  |

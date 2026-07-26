@@ -1,25 +1,21 @@
-# PPT Risk Register
+# Risks
 
-_Generated: 2026-07-23 · 8 active risks_
+<sub>Generated: 2026-07-26T05:20:00Z</sub>
 
-| Impact | Prob | Owner | ID | Risk | Mitigation |
-|---|---|---|---|---|---|
-| high | medium | pm-security | risk-layout-webhook-replay-2026-07-23 | Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout | Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list |
-| high | medium | pm-qa | risk-announcement-fanout-test-fidelity-2026-07-23 | Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it | Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy |
-| high | medium | pm-integration | risk-webhook-cross-integration-drift-2026-07-23 | Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere | Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23 |
-| high | low | pm-security | risk-dispute-add-evidence-idor-lingers-2026-07-23 | add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route | Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern |
-| medium | high | pm-data | risk-analytics-blindspots-shipped-mvp-2026-07-23 | Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish) | Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories |
-| medium | high | pm-data | risk-metric-definition-drift-2026-07-23 | FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other | Land single-source-of-truth metric definitions in shared module; deprecate duplicates |
-| medium | medium | pm-security | risk-mobile-layout-cache-cross-tenant-2026-07-23 | Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch | Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list |
-| medium | medium | pm-data | risk-data-retention-policy-missing-2026-07-23 | Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk | Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events |
-
-## Source
-
-- `risk-layout-webhook-replay-2026-07-23` — post-merge review 2026-07-23
-- `risk-announcement-fanout-test-fidelity-2026-07-23` — post-merge review 2026-07-23 (#2484)
-- `risk-webhook-cross-integration-drift-2026-07-23` — pm-scrum-master 2026-07-23 (extrapolation from #2485)
-- `risk-dispute-add-evidence-idor-lingers-2026-07-23` — post-merge review 2026-07-23 (#2483)
-- `risk-analytics-blindspots-shipped-mvp-2026-07-23` — pm-data 2026-07-23 rotating role
-- `risk-metric-definition-drift-2026-07-23` — pm-data 2026-05-28 (reopened 2026-07-23)
-- `risk-mobile-layout-cache-cross-tenant-2026-07-23` — post-merge review 2026-07-23
-- `risk-data-retention-policy-missing-2026-07-23` — pm-data 2026-07-23
+| Status | Prob | Impact | Owner | Risk | Mitigation |
+|--------|------|--------|-------|------|------------|
+| open | high | high | pm-tech-lead | Recurring cross-tenant IDOR patches across independent domains (documents #2438/#2447, disputes #245 | Add a lint/macro or checklist gate requiring explicit org-scope proof for any new tenant-scoped hand |
+| open | high | medium | pm-tech-lead | auth.rs and reports.rs are god-files absorbing repeat cross-epic churn (OAuth, MFA, cold-boot fixes  | Bound file growth with a module-split threshold; assign clear sub-ownership |
+|  | high | medium | pm-data | Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business | Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analyti |
+|  | high | medium | pm-data | FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from  | Land single-source-of-truth metric definitions in shared module; deprecate duplicates |
+| open | medium | high | pm-tech-lead | Test-restoration wave un-quarantines then re-quarantines tests in the same PR (#2511: 48 restored, 1 | Require root-cause note per re-quarantined test, not silent re-ignore |
+|  | medium | high | pm-qa | Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (# | Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy |
+|  | medium | high | pm-security | Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can | Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in actio |
+|  | medium | high | pm-integration | Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening | Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23 |
+| open | medium | medium | pm-scrum-master | auth.rs (runs_seen 4) and reports.rs (runs_seen 3) are repeat churn hotspots with no consolidation t | Escalate the churn-hotspot refactor items for auth.rs/reports.rs from low to medium priority next sc |
+| open | medium | medium | pm-scrum-master | fix #2547 (retention-prune scheduler wiring) merged without automated test coverage — implementer no | Queue a follow-up integration/e2e test exercising the scheduler firing path before next retention wi |
+| open | medium | medium | pm-tech-lead | #2547 scheduler-firing test gap is not isolated - auto-unpin, favorite-alerts, notification-triggers | Build one reusable scheduler test harness rather than one-off fixes per job |
+| open | medium | medium | pm-tech-lead | booking/mod.rs (3185 lines) newly hot despite 83-2 marked done - could signal instability reintroduc | Fold into the already-planned cross-cutting webhook/integration audit |
+|  | medium | medium | pm-data | Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — l | Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events |
+|  | medium | medium | pm-security | Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak  | Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-lis |
+|  | low | high | pm-security | add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2 | Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern |

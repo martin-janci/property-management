@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-23T14:35:18.605457Z",
+  "generated": "2026-07-26T05:20:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -73,6 +73,76 @@
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
       "owner_role": "pm-integration",
       "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)"
+    },
+    {
+      "id": "pm-scrum-master-fix-2547-retention-prune-scheduler-wirin",
+      "risk": "fix #2547 (retention-prune scheduler wiring) merged without automated test coverage \u2014 implementer notes it's 'hard to test at runtime' \u2014 a silent scheduler failure could go undetected for a full retention cycle",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Queue a follow-up integration/e2e test exercising the scheduler firing path before next retention window",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-auth-rs-runs-seen-4-and-reports-rs-runs",
+      "risk": "auth.rs (runs_seen 4) and reports.rs (runs_seen 3) are repeat churn hotspots with no consolidation task above 'low' priority in the backlog \u2014 continued piecemeal edits risk regressions or merge conflicts",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Escalate the churn-hotspot refactor items for auth.rs/reports.rs from low to medium priority next scan",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-auth-rs-and-reports-rs-are-god-files-abs",
+      "risk": "auth.rs and reports.rs are god-files absorbing repeat cross-epic churn (OAuth, MFA, cold-boot fixes on auth.rs; dispute KPIs on reports.rs) with no refactor decision made",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Bound file growth with a module-split threshold; assign clear sub-ownership",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-booking-mod-rs-3185-lines-newly-hot-desp",
+      "risk": "booking/mod.rs (3185 lines) newly hot despite 83-2 marked done - could signal instability reintroduced into finished integration code",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Fold into the already-planned cross-cutting webhook/integration audit",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-test-restoration-wave-un-quarantines-the",
+      "risk": "Test-restoration wave un-quarantines then re-quarantines tests in the same PR (#2511: 48 restored, 11 re-quarantined) - may be masking real flakiness under a 'quarantine debt paid down' narrative",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Require root-cause note per re-quarantined test, not silent re-ignore",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-recurring-cross-tenant-idor-patches-acro",
+      "risk": "Recurring cross-tenant IDOR patches across independent domains (documents #2438/#2447, disputes #2450/#2483, groups #2548) suggest no centralized authz-enforcement check at handler registration",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add a lint/macro or checklist gate requiring explicit org-scope proof for any new tenant-scoped handler",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-2547-scheduler-firing-test-gap-is-not-is",
+      "risk": "#2547 scheduler-firing test gap is not isolated - auto-unpin, favorite-alerts, notification-triggers jobs likely share the same 'hard to test at runtime' blind spot",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Build one reusable scheduler test harness rather than one-off fixes per job",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
     }
   ]
 }
