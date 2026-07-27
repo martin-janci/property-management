@@ -1,0 +1,265 @@
+{
+  "date": "2026-07-27",
+  "generated_at": "2026-07-27T03:19:22Z",
+  "commit_range": "commits since 2026-07-24T03:10:00Z on origin/dev — 50 total (35 non-research)",
+  "notes": [
+    "Routine ran with a 3d lag (last_run_iso=2026-07-24T03:10Z). lag_warning fires; stale_routine_alert flagged in brief.",
+    "The single non-research commit 2d1b44f (PR #2511) was an unusually large 4374-file, 1.17M-insertion commit that surfaces many pre-existing TODOs in its diff. Treated as a bulk import; per-line new-TODO/FIXME derivation skipped for that commit (would be a huge noise source).",
+    "Reachability gate (dead-code filter): not triggered — no signal with score_delta >= 2 cites a backend/.../handlers/ path this run.",
+    "risky-churn check ran: fix PRs (#2546, #2547, #2548) intersected against hotspot set {reports.rs, booking/mod.rs, auth.rs} — no overlap, no signals emitted."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-27",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "72h since last_run_iso (2026-07-24T03:10Z). Threshold is 36h. 3d lag ≥ 3d — stale_routine_alert fires (cloud routine cadence).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "commit range 2026-07-24..2026-07-27 on dev — top-3 churn by lines changed",
+      "score_delta": 0,
+      "evidence": "3329 additions+deletions this window; seen_signals contains this ID from a previous run → cumulative re-emit only, no score. runs_seen 2 → 3.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "commit range 2026-07-24..2026-07-27 on dev — top-3 churn by lines changed",
+      "score_delta": 1,
+      "evidence": "3185 additions+deletions this window; new to seen_signals; hotspot_history.runs_seen 1 → 2. Post-PR-#2176 tail (previous instability item closed done 2026-07-09).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "commit range 2026-07-24..2026-07-27 on dev — top-3 churn by lines changed",
+      "score_delta": 0,
+      "evidence": "2950 additions+deletions this window; seen_signals contains this ID from previous runs → cumulative re-emit only, no score. runs_seen 3 → 4.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen was 2 before this run (>= 2 threshold)",
+      "score_delta": 1,
+      "evidence": "reports.rs re-appears in top-3 churn while hotspot_history already had runs_seen=2 before this run. First time this signal-id fires; +1 stacks on top of the base churn-hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen was 3 before this run (>= 2 threshold)",
+      "score_delta": 0,
+      "evidence": "auth.rs re-appears in top-3 churn; runs_seen 3 → 4. seen_signals contains this ID from a previous run → cumulative re-emit only, no score.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "hotfix-no-test-pr-2547",
+      "type": "hotfix-no-test",
+      "source": "PR #2547 (fix(api-server): schedule support_tooling_events retention prune)",
+      "score_delta": 2,
+      "evidence": "PR #2547 merged 2026-07-24 with 0 test files in diff — only backend/servers/api-server/src/main.rs and backend/servers/api-server/src/services/scheduler.rs. Closes #2531 but ships no regression test for the scheduler tick invoking cleanup_old_support_tooling_events.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-07-27 (segment: mobile-native-kmp, reason: oldest-unreviewed, last review 2026-07-16)",
+      "score_delta": 3,
+      "evidence": "Android SSO deep-link handler (MainActivity.kt:88-91) calls ssoService.validateAndLogin(target.token) without checking a CSRF state nonce; DeepLinkTarget.Sso (DeepLinkRouter.kt:22,126) has no state field; the SSO intent-filter is exported (AndroidManifest.xml:24-41). iOS AuthManager (AuthManager.swift:161-180 + RealityPortalApp.swift:192) matches a per-flow nonce — platform-parity gap enables session-fixation / account-takeover.",
+      "confidence": "high",
+      "severity": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-07-27 (segment: mobile-native-kmp)",
+      "score_delta": 1,
+      "evidence": "PortalListingsRepository.kt:141,151 — trend x-axis is viewsByDate.keys.sorted(); inquiriesTrend maps over that set. Days with inquiries but zero views (after-hours contact, listing removed from search) drop out of inquiriesTrend → analytics understates realtor engagement. Fix: dates = (viewsByDate.keys + inquiriesByDate.keys).sorted().",
+      "confidence": "high",
+      "severity": "low",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate this run — the sole promoted plan is vector=security requiring Android device (C5, local-only); the allowlist covers screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise (lockfile-drift) / stalled-review — none of those types have qualifying signals with confidence=high AND score >= 3.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-27.md && head -1 | grep '^# 2026-07-27$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev cursor-diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s slurpfile non-cumulative double-score check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "manual: every open item updated_at >= 2026-07-20 (>= today-14)",
+      "observed": "no items eligible for decay this run",
+      "expected": "no items exceed 14d without update"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan, grep brief for path + 'adversarial pass:'",
+      "observed": "1 plan; annotation 'adversarial pass: passed' present",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c '.md$'",
+      "observed": "1",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "grep 4 metadata fields in each new plan",
+      "observed": "all 4 present in the sole new plan",
+      "expected": "all 4 present"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "grep 11 required ## headings in each new plan",
+      "observed": "all 11 present",
+      "expected": "all 11 present"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "grep '- [x]' in each new plan",
+      "observed": "4 ticks (C1, C5, C6, C7)",
+      "expected": ">= 1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "grep '^Mode: (local-only|cloud-ok)' in each new plan",
+      "observed": "'Mode: local-only (reason: C5 — ...)' present",
+      "expected": "matches"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "for each ## Files bullet, test -e path",
+      "observed": "all 4 files exist on disk",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secrets grep (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0",
+      "note": "Initial pass flagged 1 hit — a template-copied line 'via ppt-bridge MCP at https://p.rlt.sk/mcp' inside the promoted plan. Fixed in-place by removing the URL suffix; re-check returned 0."
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11-placeholder-rot",
+      "passed": true,
+      "command": "grep TBD|FIXME|TODO-in-own-writing|... on new plan + brief",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "for each prior HEAD plan slug, assert present in working tree or _archive",
+      "observed": "all prior slugs present in plans/ or _archive/",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files .research/plans/_archive/ >= ls-tree HEAD count",
+      "observed": "7 >= 7",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length caps + idempotency vs history",
+      "observed": "0 actions (no candidate) — trivially satisfies caps",
+      "expected": "<= per-run caps AND no id in prior auto_fix_history"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list.json + risks.json + project-state.md + pm_cursor + coverage_cursor liveness (GC7)",
+      "observed": "action-list/risks parse; project-state non-empty; pm 0→1; cc 2→3; both advanced (13 epics)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached added lines vs Telegram token pattern (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
