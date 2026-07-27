@@ -4988,6 +4988,110 @@
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
       "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27",
+      "title": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3185 lines this window (post-PR-#2176 tail)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1 churn scan 2026-07-27 (commit range 2026-07-24..2026-07-27 on dev)"
+      ],
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs churned 3185 additions+deletions across the 2026-07-24..07-27 window; hotspot_history.runs_seen 1 → 2 after this run. Follow-on churn after PR #2176 split — previous instability-watch item (refactor-churn-hotspot-backend-integrations-booking-mod) closed done 2026-07-09."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-27",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-27",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window, runs_seen=3 (repeated instability)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1 churn scan 2026-07-27 (commit range 2026-07-24..2026-07-27 on dev)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports.rs churned 3329 additions+deletions this window; hotspot_history.runs_seen 2 → 3 — qualifies for repeated-churn (+1 stacks with base churn-hotspot +1). Last previously flagged 2026-07-16 in another window; then again now — the route file keeps drifting."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-27",
+      "plan": null
+    },
+    {
+      "id": "bug-hotfix-no-test-pr-2547",
+      "title": "PR #2547 shipped scheduler retention prune fix without an api-server regression test (hotfix-no-test)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2547 (merged 2026-07-24)",
+        "closes GitHub issue #2531"
+      ],
+      "evidence": [
+        "PR #2547 (fix(api-server): schedule support_tooling_events retention prune) merged with 0 test files in its diff — only backend/servers/api-server/src/main.rs and backend/servers/api-server/src/services/scheduler.rs were touched. The scheduler tick that invokes cleanup_old_support_tooling_events has no assertion; if a future refactor drops the tick, the retention gap (originally #2531, closed as fixed) would silently regress without CI catching it."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs",
+        "backend/servers/api-server/src/main.rs"
+      ],
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
+      "title": "SECURITY: Android SSO deep-link handler skips CSRF state check — reality://sso?token=... enables account takeover",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-27 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt:88-91 — handleDeepLink unconditionally calls ssoService.validateAndLogin(target.token) for any reality://sso?token=... intent. DeepLinkTarget.Sso (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt:22,126) has no state field, and the manifest exports the SSO intent-filter with exported=\"true\" (mobile-native/androidApp/src/main/AndroidManifest.xml:24-41). iOS explicitly matches state via AuthManager.consumeSsoState() (mobile-native/iosApp/iosApp/Core/AuthManager.swift:161-180 + iosApp/App/RealityPortalApp.swift:192); Android has no equivalent — parity gap enables session-fixation-via-deep-link account takeover."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt",
+        "mobile-native/androidApp/src/main/AndroidManifest.xml"
+      ],
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-27",
+      "plan": "plans/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
+      "title": "PortfolioAnalytics inquiriesTrend silently drops days with inquiries but zero views (set-difference bug)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-27 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:141,151 — trend x-axis is viewsByDate.keys.sorted() and inquiriesTrend then does dates.map { inquiriesByDate[it] ?: 0 }. Any date with inquiries but no views (weekends after-hours, listing removed from search, etc.) is absent from the axis and its inquiry count is dropped. Portfolio with 3 inquiries on a zero-view day reports 0 → analytics understates realtor engagement. Fix: build dates from (viewsByDate.keys + inquiriesByDate.keys).sorted()."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-07-27",
+      "updated_at": "2026-07-27",
+      "plan": null
     }
   ]
 }
