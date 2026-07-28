@@ -5092,6 +5092,50 @@
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inline-tenant-json-xss",
+      "title": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-28",
+        "segment:reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:189 — `__html: `window.__TENANT_CONFIG__=${tenantBootstrap};`` inlines raw JSON.stringify(tenantBootstrapObj) into inline <script>. JSON.stringify does not escape `<`/`</script>`/U+2028/U+2029; any tenant-config feature_flags key or value containing `</script>` (accidental or attacker-controlled via api-server tenant-config source) prematurely terminates the outer <script> tag.",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts:137-152 — tenantBootstrap data (feature_flags, tenant_id) populated verbatim from `response.json()` of /tenant-config, no allow-listing/escaping between fetch and inline emission. Fix: JSON.stringify(obj).replace(/</g,'\\u003c').replace(/\\u2028/g,'\\u2028').replace(/\\u2029/g,'\\u2029') or use serialize-javascript."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-viewsource-untrusted-cast",
+      "title": "reality-web listingAnalytics.ts casts untrusted ?source= query param straight to ViewSource union — pollutes listing.viewed analytics with unbounded cardinality",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-07-28",
+        "segment:reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/listingAnalytics.ts:132-133 — `const explicit = searchParams?.get('source'); const viewSource = (explicit as ViewSource) || referrerSource;` casts untrusted URL query-string value directly to strict ViewSource union. Attacker-crafted ?source=<arbitrary> lands in listing.viewed analytics payloads as view_source, polluting downstream dashboards / conversion metrics with unbounded cardinality. Fix: allow-list check `if ((VIEW_SOURCES as readonly string[]).includes(explicit)) ...` before assigning."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/listingAnalytics.ts"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
     }
   ]
 }

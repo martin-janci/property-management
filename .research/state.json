@@ -5,8 +5,8 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-27T03:19:22Z",
-  "last_run_ms": 0,
+  "last_run_iso": "2026-07-28T03:20:00Z",
+  "last_run_ms": 60000,
   "last_pr_seen": 2552,
   "last_issue_seen": 2537,
   "last_commit_sha": "b1f6ad562a31314719171378d6dc00d66f1b033e",
@@ -697,7 +697,9 @@
     "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "hotfix-no-test-pr-2547",
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
-    "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days"
+    "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
+    "code-review-reality-web-inline-tenant-json-xss",
+    "code-review-reality-web-viewsource-untrusted-cast"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -706,13 +708,13 @@
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
-    "reality-web": "2026-07-17",
+    "reality-web": "2026-07-28",
     "mobile-rn": "2026-07-22",
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 50,
-    "vectors_created": 213,
+    "runs": 51,
+    "vectors_created": 215,
     "plans_created": 17,
     "quiet_days": 2,
     "auto_fix_count": 0

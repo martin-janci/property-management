@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-07-27 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-28 03:20 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 

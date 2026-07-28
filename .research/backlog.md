@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-27 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-07-28 03:20 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -21,6 +21,7 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | security | `code-review-reality-web-inline-tenant-json-xss` | SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request | open | 2026-07-28 |  |
 | 2 | refactor | `refactor-churn-hotspot-api-server-reports-2026-07-27` | Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window, runs_seen=3 (repeated instability) | open | 2026-07-27 |  |
 | 2 | bug | `bug-hotfix-no-test-pr-2547` | PR #2547 shipped scheduler retention prune fix without an api-server regression test (hotfix-no-test) | open | 2026-07-27 |  |
 | 2 | bug | `code-review-ppt-web-core-authctx-init-stale-role` | AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap) | open | 2026-07-24 |  |
@@ -76,6 +77,7 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `code-review-reality-web-viewsource-untrusted-cast` | reality-web listingAnalytics.ts casts untrusted ?source= query param straight to ViewSource union — pollutes listing.viewed analytics with unbounded cardinality | open | 2026-07-28 |  |
 | 1 | refactor | `refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27` | Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3185 lines this window (post-PR-#2176 tail) | open | 2026-07-27 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days` | PortfolioAnalytics inquiriesTrend silently drops days with inquiries but zero views (set-difference bug) | open | 2026-07-27 |  |
 | 1 | refactor | `code-review-ppt-web-core-ws-ungated-console` | 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod | open | 2026-07-24 |  |

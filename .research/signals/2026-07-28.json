@@ -1,0 +1,194 @@
+{
+  "run_iso": "2026-07-28T03:20:00Z",
+  "trigger_text": "",
+  "phase_status": {
+    "phase-1-observe": "ok",
+    "phase-1.5-rotating-expert-review": "ok",
+    "phase-1.6-project-management": "skipped-quiet-day",
+    "phase-2-decide": "ok",
+    "phase-3-promote": "ok",
+    "phase-3.5-adversarial": "n/a",
+    "phase-4-write-artifacts": "ok",
+    "phase-5-auto-fix": "no-candidate",
+    "phase-6-stage-gate-commit": "pending"
+  },
+  "cursor_advance": {
+    "last_pr_seen": {
+      "prev": 2552,
+      "next": 2552,
+      "reason": "no PRs newer than 2552 in this window"
+    },
+    "last_issue_seen": {
+      "prev": 2537,
+      "next": 2537,
+      "reason": "no issues newer than 2537 in this window"
+    },
+    "last_commit_sha": {
+      "prev": "b1f6ad562a31314719171378d6dc00d66f1b033e",
+      "next": "b1f6ad562a31314719171378d6dc00d66f1b033e",
+      "reason": "no new commits on dev since last run (a150092 is the previous routine commit only)"
+    }
+  },
+  "observation_summary": {
+    "merged_prs": 0,
+    "open_prs_touched_in_window": 0,
+    "closed_not_merged": 0,
+    "new_issues": 0,
+    "commits_on_dev": 0,
+    "routine_lag_hours": 23,
+    "stale_routine_alert": false,
+    "lag_warning": false
+  },
+  "signals": [
+    {
+      "id": "code-review-reality-web-inline-tenant-json-xss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:189 — inline <script> emits `window.__TENANT_CONFIG__=${tenantBootstrap};` where tenantBootstrap is a raw JSON.stringify of tenant-config data. JSON.stringify does not escape `</script>` / U+2028 / U+2029; a tenant-config value containing `</script>` (accidental or attacker-controlled via the api-server tenant-config source) prematurely closes the outer <script> and opens an HTML-injection window.",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts:137-152 — tenantBootstrap populated verbatim from response.json() of /tenant-config with no escaping. Fix: JSON.stringify(obj).replace(/</g,'\\u003c').replace(/\\u2028/g,'\\u2028').replace(/\\u2029/g,'\\u2029') or use serialize-javascript."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-viewsource-untrusted-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/listingAnalytics.ts:132-133 — `const explicit = searchParams?.get('source'); const viewSource = (explicit as ViewSource) || referrerSource;` casts untrusted URL query-string value directly to the strict ViewSource union. Attacker-crafted ?source=<arbitrary> lands in listing.viewed analytics payloads as view_source, polluting downstream dashboards / conversion metrics with unbounded cardinality. Fix: allow-list check `if ((VIEW_SOURCES as readonly string[]).includes(explicit)) …` before assigning."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the 2 new signals (both medium confidence, one at score 2 security, one at score 1 refactor) do not meet the certainty bar (confidence=high AND score>=3) required by the auto-fix allowlist. No screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise / stalled-review signals fired this run.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-28.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true — seen_signals +2",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no rescored non-cumulative signals",
+      "observed": "true (all 2 signals are net-new ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8 and decay-eligible items decayed",
+      "observed": "true — no open item is >14d old",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — 0 new plans this run",
+      "observed": "vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only .research/",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff (baseline docs excluded)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "diff -q silent",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases match cursor non-advance",
+      "observed": "Phase 1.6 skipped and pm_cursor unchanged; no other failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or in _archive",
+      "observed": "missing=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "cur=7 prev=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "diff -q silent",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <=3 total; caps by type",
+      "observed": "0 actions this run",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped -> no-op",
+      "observed": "pm_cursor unchanged (HEAD=1, now=1); coverage_cursor unchanged",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
