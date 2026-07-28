@@ -137,6 +137,30 @@ impl AccInvoicingRepository {
             .await
     }
 
+    /// Cancel an unpaid document (UC-ACC-05.17). Only `issued`/`sent`/`overdue`
+    /// documents with a zero `paid_amount` can be cancelled — drafts are simply
+    /// deleted, and once any payment landed the correction path is a credit
+    /// note (UC-ACC-05.7). Returns `None` when the guard does not match, so a
+    /// concurrent payment confirmation can never race a cancellation.
+    pub async fn cancel_invoice_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<AccInvoiceExt>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let sql = format!(
+            "UPDATE invoice SET status = 'cancelled', updated_at = NOW() \
+             WHERE id = $1 AND status IN ('issued', 'sent', 'overdue') AND paid_amount = 0 \
+             RETURNING {INVOICE_EXT_COLUMNS}"
+        );
+        sqlx::query_as::<_, AccInvoiceExt>(sqlx::AssertSqlSafe(sql.as_str()))
+            .bind(id)
+            .fetch_optional(executor)
+            .await
+    }
+
     /// Set FX rate + base-currency amount on a foreign-currency invoice
     /// (UC-ACC-05.4). The handler computes `base_currency_amount` via
     /// `accounting_core::money::to_base_currency`.

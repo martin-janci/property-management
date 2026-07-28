@@ -175,6 +175,8 @@ fn cors_layer() -> CorsLayer {
         routes::invoices::update_invoice,
         routes::invoices::delete_invoice,
         routes::invoices::issue_invoice,
+        routes::invoices::mark_sent,
+        routes::invoices::cancel_invoice,
         routes::invoices::set_exchange_rate,
         routes::invoices::create_credit_note,
         routes::invoices::duplicate_invoice,
