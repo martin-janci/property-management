@@ -68,6 +68,9 @@ anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.10"
 config = "0.15"
+# PAY by square payment QR container (UC-ACC-05.8): CRC32 + raw LZMA1
+crc32fast = "1"
+lzma-rs = "0.3"
 dotenvy = "0.15"
 hex = "0.4"
 rand = "0.10"

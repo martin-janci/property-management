@@ -171,6 +171,7 @@ fn cors_layer() -> CorsLayer {
         routes::invoices::list_invoices,
         routes::invoices::get_invoice,
         routes::invoices::list_invoice_items,
+        routes::invoices::get_invoice_qr,
         routes::invoices::create_invoice,
         routes::invoices::update_invoice,
         routes::invoices::delete_invoice,
@@ -223,6 +224,7 @@ fn cors_layer() -> CorsLayer {
         db::models::acc_catalog::AccItemCategory,
         db::models::acc_catalog::AccPriceLevel,
         // EPIC-ACC-05
+        routes::invoices::PaymentQrResponse,
         routes::invoices::IssueInvoiceRequest,
         routes::invoices::CreateCreditNoteRequest,
         routes::invoices::SetExchangeRateRequest,
