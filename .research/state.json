@@ -699,7 +699,12 @@
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
     "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
     "code-review-reality-web-inline-tenant-json-xss",
-    "code-review-reality-web-viewsource-untrusted-cast"
+    "code-review-reality-web-viewsource-untrusted-cast",
+    "standing-scan-voice-webhook-alexa-signature",
+    "standing-scan-voice-webhooks-zero-tests",
+    "standing-scan-aml-review-decision-cast",
+    "standing-scan-admin-web-noop-save-paths",
+    "standing-scan-stale-todo-security-comments"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -714,7 +719,7 @@
   },
   "stats": {
     "runs": 51,
-    "vectors_created": 215,
+    "vectors_created": 221,
     "plans_created": 17,
     "quiet_days": 2,
     "auto_fix_count": 0

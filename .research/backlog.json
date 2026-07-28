@@ -5136,6 +5136,148 @@
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
       "plan": null
+    },
+    {
+      "id": "security-voice-webhook-alexa-signature-not-verified",
+      "title": "SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature",
+      "vector": "security",
+      "confidence": "high",
+      "score": 5,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:750 — verify_alexa_signature() binds the Signature header to `_signature` and never uses it. It validates only the SignatureCertChainUrl format (validate_alexa_cert_url) and the body timestamp (validate_alexa_timestamp), then returns Ok(()). The in-code comment admits steps 3 & 4 (fetch cert chain, verify signature with the cert public key) are unimplemented.",
+        "Reachable and stateful: voice_webhook_router() is mounted at lib.rs:340 under /api/v1/webhooks/voice, and alexa_webhook (voice_webhooks.rs:95) takes an `RlsConnection` — so a forged request reaches tenant data.",
+        "Exploit shape: POST /api/v1/webhooks/voice/alexa with SignatureCertChainUrl=https://s3.amazonaws.com/echo.api/x, any non-empty Signature header, and a body timestamp inside the 150s window is accepted as an authentic Alexa delivery.",
+        "Secondary: the /verify helper endpoint (voice_webhooks.rs:698) reports alexa signatures as `valid: !request.signature.is_empty()` — a self-described 'simplified check for demo'.",
+        "Fix direction: mirror the repo's existing hardened webhook convention (routes/portal_webhooks.rs::verify_timestamped_portal_webhook, routes/layout/webhook.rs::sign_timestamped_payload) or add real x509 chain validation via x509-parser; until then the route should fail closed."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/servers/api-server/src/lib.rs"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "test-gap-voice-webhooks-zero-coverage",
+      "title": "test-gap: voice_webhooks.rs (1148 lines, 6 mounted endpoints incl. OAuth token exchange) has no tests at all",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs is 1148 lines with no `#[cfg(test)]` module, and no file under backend/servers/api-server/tests/ references it.",
+        "Mounted endpoints (voice_webhooks.rs:60 voice_webhook_router): POST /alexa, /alexa/health, /google, /oauth/exchange, /oauth/refresh, /verify — the OAuth pair issues/refreshes tokens, so this is auth-adjacent surface with zero regression coverage.",
+        "Pairs with [security-voice-webhook-alexa-signature-not-verified]: a signature-verification fix needs accept/reject tests, and there is currently no harness for this module to hang them on."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
+      "title": "AmlDashboardPage casts raw window.prompt text into the review-decision union — a typo submits an invalid AML decision",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:136 reads `const decision = window.prompt('Enter decision (approve, reject, escalate):', 'approve')` and line 146 sends it as `decision: decision as 'approve' | 'reject' | 'escalate'` — an unchecked cast, no validation between prompt and mutation.",
+        "Any typo ('aprove', 'Approve') is submitted verbatim to reviewAssessment on a regulated AML/EDD compliance path; the type assertion silences the only compile-time guard.",
+        "Same untrusted-cast class as the existing backlog row `code-review-reality-web-viewsource-untrusted-cast`.",
+        "Also on this page: outcomes are reported via `alert()` (lines 152, 156) rather than the app's toast system, and handleInitiateEdd (line 107) uses window.prompt for the EDD reason."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "dx-admin-web-platform-settings-mobile-config-permanent-noop",
+      "title": "admin-web platform-settings + mobile-config Save paths are permanent no-ops — the backing endpoints do not exist",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28"
+      ],
+      "evidence": [
+        "frontend/apps/admin-web/src/pages/platform.tsx:199 and :212 — both the plain submit and the audit-reason confirm path skip the network entirely and toast 'Save not yet implemented', so every platform-settings edit is silently discarded (including the high-risk maintenance-mode toggle, which collects an audit reason and then drops it).",
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx:282 — handleFlagSubmit toasts the same message with no request at all; :238 handles a 404/405 from PATCH /api/v1/admin/mobile-config the same way.",
+        "Verified absent on the backend: `grep -rn 'platform-admin/settings' backend/servers/api-server/src` and `grep -rn 'mobile-config|mobile_config' backend/servers/api-server/src` both return no matches, so these are not transient 404s — no route is registered.",
+        "Contrast with feature-flags.tsx, whose 'not yet implemented' fallback is merely defensive: POST /api/v1/platform-admin/feature-flags/{id}/toggle DOES exist (routes/platform_admin/features.rs:352). Only the two pages above are dead ends.",
+        "Same shape as the previously-tracked `dx-portfolio-dashboard-stubs` vector: UI shipped ahead of its API."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/platform.tsx",
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-api-server-routes-auth-rs-2026-07-28",
+      "title": "auth.rs repeated-churn — runs_seen=4, 2950 lines / ~107K in one module (2nd-largest route file)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28",
+        "state.json hotspot_history"
+      ],
+      "evidence": [
+        "state.json hotspot_history: backend/servers/api-server/src/routes/auth.rs runs_seen=4 (last_seen 2026-07-27) — the highest repeat count in the map, and the only file at 4.",
+        "2950 lines / ~107K, second-largest route module after reports.rs; it carries login, refresh/rotation, MFA, sessions and OAuth-adjacent handlers in one file, so unrelated auth work keeps colliding there.",
+        "Precedent: the backlog already tracks `refactor-routes-oauth-rs-hot` and `refactor-services-oauth-rs-hot` for the same subsystem; auth.rs itself was never split out as its own vector.",
+        "Behaviour-preserving module split along the existing handler groupings (login / refresh+session / mfa) — the same treatment reports.rs is queued for under `refactor-churn-hotspot-api-server-reports-2026-07-27`."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "dx-stale-todo-security-comments-faults-critical-notifications",
+      "title": "Stale TODO(security) headers in faults.rs / critical_notifications.rs describe a hardcoded-false gate that no longer exists",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/faults.rs:133 states the is_manager branches 'have been replaced with `false` (least privilege) and need a real role lookup against the memberships table'. The lookup is in fact already wired: MembershipRepository::is_manager_in_org is called at faults.rs:194, :692, :1421 and :1470.",
+        "backend/servers/api-server/src/routes/critical_notifications.rs:478 states create_notification / get_stats are 'unreachable until a real role lookup is wired up'. Both already gate on is_manager_in_org — critical_notifications.rs:59-64 and :399-404.",
+        "Cost is agent-facing, not user-facing: these comments read as an open auth hole and will keep pulling reviewers and research runs into re-investigating settled code (this scan did exactly that). Delete or rewrite them to describe the shipped membership-role gate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs",
+        "backend/servers/api-server/src/routes/critical_notifications.rs"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
     }
   ]
 }
