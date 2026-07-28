@@ -31,6 +31,10 @@ use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 /// Create a document via the API and return its id. The org creator is an
 /// `org_admin`, which clears the manager gate on document creation.
+///
+/// `file_key` must start with the caller's own `{org_id}/` prefix — the
+/// org-scope guard added in GH #2320 (`validate_file_key_org_scope`) rejects
+/// anything else with 400 `INVALID_FILE_KEY`.
 async fn create_document(app: &TestApp, token: &str, org_id: Uuid, key: &str) -> Uuid {
     let res = app
         .execute(
@@ -39,7 +43,7 @@ async fn create_document(app: &TestApp, token: &str, org_id: Uuid, key: &str) ->
                 .json(json!({
                     "title": "Lease to sign",
                     "category": "contracts",
-                    "file_key": format!("org/contracts/{key}.pdf"),
+                    "file_key": format!("{org_id}/contracts/{key}.pdf"),
                     "file_name": format!("{key}.pdf"),
                     "mime_type": "application/pdf",
                     "size_bytes": 4096
