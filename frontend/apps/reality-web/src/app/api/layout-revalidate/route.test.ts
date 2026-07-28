@@ -7,11 +7,7 @@ vi.mock('next/cache', () => ({
 }));
 
 import { revalidateTag } from 'next/cache';
-import {
-  __clearAnalyticsSinks,
-  type AnalyticsEvent,
-  registerAnalyticsSink,
-} from '@/lib/analytics';
+import { __clearAnalyticsSinks, type AnalyticsEvent, registerAnalyticsSink } from '@/lib/analytics';
 import { isTimestampFresh, layoutTagsFor, POST, parseWebhookTimestamp } from './route';
 
 // ---------------------------------------------------------------------------
