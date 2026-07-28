@@ -887,6 +887,23 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "dx-api-validation-drift-gate-never-runs-on-dev",
+      "action": "SDK drift gate is effectively unenforced — api-validation.yml only fires on docs/api/**, so committed @ppt/api-client drift sits on dev unseen",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:23:45Z (score=3 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:23:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "dx"
+      }
     }
   ],
   "generated": "2026-07-23T14:34:52.019013Z"

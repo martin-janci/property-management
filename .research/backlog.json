@@ -5278,6 +5278,34 @@
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
       "plan": null
+    },
+    {
+      "id": "dx-api-validation-drift-gate-never-runs-on-dev",
+      "title": "SDK drift gate is effectively unenforced — api-validation.yml only fires on docs/api/**, so committed @ppt/api-client drift sits on dev unseen",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "standing-scan-2026-07-28",
+        "gh-run-30399201262"
+      ],
+      "evidence": [
+        ".github/workflows/api-validation.yml triggers only on `docs/api/**` (push and pull_request). The `generate-sdks` drift gate that compares the committed frontend/packages/api-client/src/generated tree against a fresh openapi-ts run was added 2026-07-22 in PR #2444 (7e982cf91).",
+        "docs/api/** has not changed on dev since 902110d (2026-07-19), so the gate has NEVER executed on dev with the gate present — the last green dev run predates it.",
+        "Both api-validation runs since the gate landed failed: 2026-07-23 (auto-impl/refactor-churn-hotspot-ppt-dashboard-md-1efc81ca) and 2026-07-28 (auto-impl/refactor-churn-hotspot-repo-map-md-2026-5bfbe482, run 30399201262). The failure is real committed drift — the artifact downloaded and verified its digest cleanly; the regenerated client differs from the committed one by a large export-type set.",
+        "Consequence 1: dev ships an @ppt/api-client that does not match docs/api/typespec, and no scheduled or dev-push run can catch it.",
+        "Consequence 2: unrelated docs-only PRs inherit a red required check they did not cause — currently blocking PR #2482 (a docs/repo-map.md-only change). A force-push that re-bases such a branch widens the push-event path comparison enough to trip the docs/api/** filter.",
+        "Fix direction: (a) regenerate and commit the client in its own PR to clear the standing drift, and (b) widen the trigger so the gate actually guards — add frontend/packages/api-client/** to the paths, or run generate-sdks on every push to dev (it needs the validate job's openapi-spec artifact, so keep the job dependency).",
+        "Note the workflow's own comment: @ppt/reality-api-client is explicitly NOT gated (older generator template set) — that carve-out compounds the blind spot."
+      ],
+      "files": [
+        ".github/workflows/api-validation.yml",
+        "frontend/packages/api-client/src/generated"
+      ],
+      "created_at": "2026-07-28",
+      "updated_at": "2026-07-28",
+      "plan": null
     }
   ]
 }

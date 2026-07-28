@@ -704,7 +704,8 @@
     "standing-scan-voice-webhooks-zero-tests",
     "standing-scan-aml-review-decision-cast",
     "standing-scan-admin-web-noop-save-paths",
-    "standing-scan-stale-todo-security-comments"
+    "standing-scan-stale-todo-security-comments",
+    "standing-scan-api-validation-drift-gate-blindspot"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -719,7 +720,7 @@
   },
   "stats": {
     "runs": 51,
-    "vectors_created": 221,
+    "vectors_created": 222,
     "plans_created": 17,
     "quiet_days": 2,
     "auto_fix_count": 0
