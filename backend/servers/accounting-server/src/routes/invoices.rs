@@ -1074,6 +1074,124 @@ pub async fn list_links(
     Ok(Json(links))
 }
 
+/// Render the document as a print-ready PDF (UC-ACC-05.9).
+///
+/// Works for every lifecycle state — drafts render with a visible
+/// "DRAFT — not a tax document" line so previews cannot be passed off as tax
+/// documents. All reads happen inside one RLS transaction so the PDF is a
+/// consistent snapshot (invoice + items + company + contact + bank account).
+#[utoipa::path(
+    get,
+    path = "/api/v1/invoices/{id}/pdf",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "PDF document", content_type = "application/pdf"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Render failed (e.g. fonts missing on host)")
+    ),
+    tag = "Invoices"
+)]
+pub async fn get_invoice_pdf(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+) -> Result<axum::response::Response, StatusCode> {
+    authz::require_role(rls.role(), authz::READ_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let invoice = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    let items = state
+        .accounting_repo
+        .find_invoice_items_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load items for {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    let company = state
+        .config_repo
+        .get_company_settings_rls(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load company settings: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    let contact = state
+        .accounting_repo
+        .find_contact_rls(&mut *tx, invoice.contact_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load contact: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    // The document's pinned bank account wins; otherwise the default/first
+    // active one (UC-ACC-02.10).
+    let banks = state
+        .config_repo
+        .list_bank_accounts_rls(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load bank accounts: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    // Reads only, but the tx borrows the RLS connection — close it before
+    // rendering so `rls.release()` below can re-borrow.
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let bank_account = match invoice.bank_account_id {
+        Some(bid) => banks.iter().find(|b| b.id == bid),
+        None => banks.iter().find(|b| b.is_default).or(banks.first()),
+    };
+
+    let ctx = crate::pdf::InvoiceRenderContext {
+        invoice: &invoice,
+        items: &items,
+        company: company.as_ref(),
+        contact: contact.as_ref(),
+        bank_account,
+    };
+    let bytes = crate::pdf::render_invoice_pdf(&ctx).map_err(|e| {
+        tracing::error!("PDF render for {id} failed: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    rls.release().await;
+
+    use axum::response::IntoResponse;
+    let disposition = format!(
+        "inline; filename=\"{}\"",
+        crate::pdf::pdf_filename(&invoice.number)
+    );
+    Ok((
+        StatusCode::OK,
+        [
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/pdf".to_string(),
+            ),
+            (axum::http::header::CONTENT_DISPOSITION, disposition),
+        ],
+        bytes,
+    )
+        .into_response())
+}
+
 // ---------------------------------------------------------------------------
 // Rendering / delivery / export HOOKS (UC-ACC-05.8/.9/.10/.11/.12)
 // ---------------------------------------------------------------------------

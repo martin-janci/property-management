@@ -35,6 +35,8 @@ dotenvy = { workspace = true }
 anyhow = { workspace = true }
 sqlx = { workspace = true }
 rust_decimal = { workspace = true }
+# Invoice PDF rendering (UC-ACC-05.9) — same engine api-server uses (#975.6).
+genpdf = { workspace = true }
 
 # Observability (Epic 95) — same stack as reality-server.
 opentelemetry = { workspace = true }
@@ -47,3 +49,4 @@ sentry = { workspace = true }
 
 [dev-dependencies]
 tower = { workspace = true, features = ["util"] }
+rust_decimal_macros = { workspace = true }
