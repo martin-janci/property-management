@@ -104,12 +104,14 @@ vi.mock('../dashboard/hooks/useActionQueue', () => ({
   })),
 }));
 
-// Stub ToastProvider
+// Stub ToastProvider. `showToast` is a single stable spy (not a fresh vi.fn()
+// per call) so tests can assert on what was toasted.
+const mockShowToast = vi.fn();
 vi.mock('../../components', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
-    useToast: vi.fn(() => ({ showToast: vi.fn() })),
+    useToast: vi.fn(() => ({ showToast: mockShowToast })),
   };
 });
 
