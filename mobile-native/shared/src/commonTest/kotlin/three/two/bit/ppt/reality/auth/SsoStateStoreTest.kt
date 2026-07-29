@@ -12,10 +12,10 @@ import kotlin.test.assertTrue
  * Contract for the SSO CSRF nonce store — the Kotlin counterpart of iOS
  * `AuthManager.beginSsoFlow()` / `consumeSsoState(_:)`.
  *
- * These pin the security-critical behaviour behind the Android `MainActivity` SSO deep-link handler:
- * an SSO callback token is validated ONLY when its `state` matches a nonce this app minted for a
- * pending flow. They fail to even compile on `dev` (the store does not exist there), which is the
- * regression guard for the account-takeover fix.
+ * These pin the security-critical behaviour behind the Android `MainActivity` SSO deep-link
+ * handler: an SSO callback token is validated ONLY when its `state` matches a nonce this app minted
+ * for a pending flow. They fail to even compile on `dev` (the store does not exist there), which is
+ * the regression guard for the account-takeover fix.
  */
 class SsoStateStoreTest {
 
