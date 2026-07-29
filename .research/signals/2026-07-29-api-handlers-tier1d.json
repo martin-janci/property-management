@@ -1,0 +1,52 @@
+{
+  "generated": "2026-07-29T00:00:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:950 — verify_hmac_signature() reads VOICE_WEBHOOK_SECRET via `std::env::var(...).unwrap_or_else(|_| \"default_secret\".to_string())`, so when the env var is unset the HMAC key silently becomes the string literal `default_secret` (present in the open-source tree). Any attacker can compute a valid X-Webhook-Signature and forge Google Actions webhook requests — a fail-OPEN auth bypass.",
+        "This contradicts the repo's documented fail-CLOSED convention for every other webhook secret (backend/CLAUDE.md: PORTAL_WEBHOOK_SECRET 500 CONFIG_ERROR, STRIPE_WEBHOOK_SECRET 503 NOT_CONFIGURED, AIRBNB_WEBHOOK_SECRET 500 NOT_CONFIGURED when unset).",
+        "Reachability: router mounted at backend/servers/api-server/src/lib.rs:340 (routes::voice_webhooks::voice_webhook_router()); verify_hmac_signature called on the google branch at voice_webhooks.rs:712. Fix: fail closed when VOICE_WEBHOOK_SECRET is unset (mirror portal/stripe pattern), never default the key."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-alexa-noverify",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:700-708 — the `alexa` branch of webhook verification sets `valid: !request.signature.is_empty()` with no cryptographic check whatsoever: any non-empty string is accepted as a valid Alexa signature. There is no HMAC/certificate verification (Alexa requires SignatureCertChainUrl + RSA-SHA1 validation).",
+        "This is an authentication bypass for the Alexa voice webhook path on a production-mounted router (lib.rs:340). An attacker can send arbitrary payloads with any dummy signature header and pass verification."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-timing-cmp",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — verify_hmac_signature returns `Ok(signature == expected)`, a non-constant-time byte/String comparison of the provided vs computed HMAC. This leaks timing information usable to forge a valid signature byte-by-byte.",
+        "Every sibling webhook verifier in the same segment already uses constant-time comparison: signatures.rs:679 (subtle::ConstantTimeEq ct_eq, per Issue #527(e)) and caddy_ask.rs:182/190 (constant_time_eq). voice_webhooks.rs is the outlier. Fix: use subtle::ConstantTimeEq / constant_time_eq on equal-length byte slices."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

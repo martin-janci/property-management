@@ -1,9 +1,50 @@
 {
-  "generated": "2026-07-24T12:18:05Z",
+  "generated": "2026-07-29T08:14:41Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-29T08:14:41Z",
+      "prs_scanned": 15,
+      "clean": [
+        2478,
+        2433,
+        2504,
+        2544,
+        2545,
+        2547,
+        2548,
+        2551,
+        2552,
+        2553,
+        2554,
+        2491
+      ],
+      "with_issues": [
+        {
+          "pr": 2550,
+          "issue": 2562,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "get_dispute_kpis unwired dead code \u2014 no route/export consumes the funnel/TTR KPIs"
+        },
+        {
+          "pr": 2549,
+          "issue": 2563,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "layout_change_events retention prune defined-but-unscheduled (mirror #2531/2547); revalidate_received emitted but not persisted cross-service"
+        },
+        {
+          "pr": 2546,
+          "issue": 2564,
+          "findings": 1,
+          "specialist": "pm-backend",
+          "note": "S3 direct-upload orphan mitigation only documented in a comment, not implemented/tracked"
+        }
+      ]
+    },
     {
       "run_at": "2026-07-24T12:18:05Z",
       "prs_scanned": 15,
