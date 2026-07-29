@@ -1288,6 +1288,85 @@ export type FaultsFaultPriority = 'low' | 'medium' | 'high' | 'critical';
 export type FaultsFaultStatus = 'reported' | 'acknowledged' | 'in_progress' | 'on_hold' | 'resolved' | 'closed' | 'rejected';
 
 /**
+ * Which platform's component registry to resolve against.
+ */
+export type LayoutLayoutPlatform = 'web' | 'mobile';
+
+export type LayoutPutTenantOverrideRequest = {
+    screen: string;
+    override_config: LayoutTenantLayoutOverride;
+};
+
+/**
+ * A fully resolved screen layout: base config merged with platform, tenant and kill layers.
+ */
+export type LayoutResolvedScreen = {
+    /**
+     * Screen id, e.g. ppt/dashboard
+     */
+    screen: string;
+    /**
+     * Published config version this resolution was computed from.
+     */
+    version: number;
+    sections: Array<LayoutResolvedSection>;
+};
+
+/**
+ * One resolved section, ready to render.
+ */
+export type LayoutResolvedSection = {
+    /**
+     * Versioned semantic component type, e.g. price-box.v1
+     */
+    type: string;
+    /**
+     * Display mode, guaranteed to be within the component's supported modes.
+     */
+    mode?: string;
+    /**
+     * Component props (empty for placeholders).
+     */
+    props?: {
+        [key: string]: unknown;
+    };
+    presentation: LayoutSectionPresentation;
+};
+
+/**
+ * How a resolved section renders. Required sections that are hidden or killed degrade to placeholder; optional ones are omitted entirely.
+ */
+export type LayoutSectionPresentation = 'visible' | 'placeholder';
+
+/**
+ * Sparse per-organization layout override (validated against superadmin-authored rails).
+ */
+export type LayoutTenantLayoutOverride = {
+    /**
+     * Full desired section order by type; omitted = keep base order.
+     */
+    order?: Array<string>;
+    /**
+     * Per-section patches: visible / mode / whitelisted props.
+     */
+    sections?: {
+        [key: string]: unknown;
+    };
+};
+
+export type LayoutTenantOverrideEnvelope = {
+    override: {
+        [key: string]: unknown;
+    } | null;
+    rails: {
+        [key: string]: unknown;
+    };
+    published: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
  * Inquiry from potential buyer/renter
  */
 export type ListingsInquiry = {
@@ -2123,13 +2202,6 @@ export type SharedTenantContext = {
  * User role within tenant
  */
 export type SharedTenantRole = 'super_admin' | 'org_admin' | 'manager' | 'technical_manager' | 'owner' | 'owner_delegate' | 'tenant' | 'resident' | 'property_manager' | 'real_estate_agent' | 'guest';
-
-/**
- * Unprocessable Entity - Business rule violation
- */
-export type SharedUnprocessableEntityError = {
-    body: SharedErrorResponse;
-};
 
 /**
  * Validation error detail
@@ -4964,6 +5036,91 @@ export type FaultsApiResolveResponses = {
 };
 
 export type FaultsApiResolveResponse = FaultsApiResolveResponses[keyof FaultsApiResolveResponses];
+
+export type LayoutApiGetResolvedData = {
+    body?: never;
+    path: {
+        screen: string;
+    };
+    query?: {
+        platform?: LayoutLayoutPlatform;
+    };
+    url: '/api/v1/layout/resolved/{screen}';
+};
+
+export type LayoutApiGetResolvedErrors = {
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+    /**
+     * Unprocessable Entity - Business rule violation
+     */
+    422: SharedErrorResponse;
+};
+
+export type LayoutApiGetResolvedError = LayoutApiGetResolvedErrors[keyof LayoutApiGetResolvedErrors];
+
+export type LayoutApiGetResolvedResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: LayoutResolvedScreen;
+};
+
+export type LayoutApiGetResolvedResponse = LayoutApiGetResolvedResponses[keyof LayoutApiGetResolvedResponses];
+
+export type LayoutApiGetTenantOverrideData = {
+    body?: never;
+    path?: never;
+    query: {
+        screen: string;
+    };
+    url: '/api/v1/layout/tenant-override';
+};
+
+export type LayoutApiGetTenantOverrideErrors = {
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type LayoutApiGetTenantOverrideError = LayoutApiGetTenantOverrideErrors[keyof LayoutApiGetTenantOverrideErrors];
+
+export type LayoutApiGetTenantOverrideResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: LayoutTenantOverrideEnvelope;
+};
+
+export type LayoutApiGetTenantOverrideResponse = LayoutApiGetTenantOverrideResponses[keyof LayoutApiGetTenantOverrideResponses];
+
+export type LayoutApiPutTenantOverrideData = {
+    body: LayoutPutTenantOverrideRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/layout/tenant-override';
+};
+
+export type LayoutApiPutTenantOverrideErrors = {
+    /**
+     * Unprocessable Entity - Business rule violation
+     */
+    422: SharedErrorResponse;
+};
+
+export type LayoutApiPutTenantOverrideError = LayoutApiPutTenantOverrideErrors[keyof LayoutApiPutTenantOverrideErrors];
+
+export type LayoutApiPutTenantOverrideResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: LayoutTenantOverrideEnvelope;
+};
+
+export type LayoutApiPutTenantOverrideResponse = LayoutApiPutTenantOverrideResponses[keyof LayoutApiPutTenantOverrideResponses];
 
 export type ListingsApiListData = {
     body?: never;
