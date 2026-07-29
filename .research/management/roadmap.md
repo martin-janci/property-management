@@ -1,9 +1,9 @@
-# PPT Roadmap — upkeep 2026-07-23
+# PPT Roadmap — upkeep 2026-07-29
 
 ## State of the project
 
 - Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics). Unchanged since 2026-07-15 deep scan.
-- Delta vs 2026-07-15: no story-status flips this window. Recent PRs are security hardening (dispute IDOR, document authz, OAuth test backfill, ammonia bump), test infrastructure (nextest partitioning, 206→8 test-binary consolidation), and post-merge follow-ups (#2483/#2484/#2485/#2486). Evidence entries added to 8 done stories.
+- Delta vs 2026-07-27 upkeep: no story-status flips; +1 post-merge follow-up resolved (#2532 closed by #2549 layout event emission). Evidence entries added to 79-2 (#2553 AuthContext fix), 82-4 (#2433 iOS listing detail), 84-2 (#2504 signature-request mount fix). New in-flight backend cluster: 3 accounting-server PRs opened 2026-07-28 (#2555/#2558/#2559 — invoice lifecycle + PDF + PAY-by-square QR).
 - Remaining gaps (the last 2 partial stories, both frontend slices on shipped APIs):
   1. **84-1** — ppt-web still uploads via server proxy; direct-to-S3 endpoint (#2309) has no frontend consumer.
   2. **84-2** — signer-facing document-sign page not built (screen-map planned, API complete); prior implementer attempt failed no-PR.
@@ -60,4 +60,12 @@
 - [low] docs/repo-map.md (4 touches) — owner: pm-tech-lead
 - [low] backend/crates/db/src/models/mod.rs (retry 2/2, 12 commits) — owner: pm-tech-lead
 
-Buffer: **36/36 open** · project at 47/49 — backlog genuinely converging on the 2 remaining frontend slices; the rest of the buffer is technical-debt / security-cross-cutting / analytics-KPI catch-up, not new-feature work. Treat underflow as success, not starvation.
+### pm-backend deep-dive additions (2026-07-29)
+- [high] Review + land PR #2555 (acc-05 sent/cancelled invoice lifecycle) as prerequisite for #2558/#2559 — owner: pm-backend
+- [medium] Supply-chain check on new lzma-rs + crc32fast deps from #2559 — owner: pm-backend (feed into sec-ammonia-supply-chain-audit)
+- [medium] Add integration test for layout webhook TOCTOU + replay paths hardened by #2478 — owner: pm-backend
+- [medium] Post-#2504: e2e route test for /documents/{id}/signature-requests mount — owner: pm-backend
+- [medium] Land test(backend) dev-team follow-ups from #2557 — owner: pm-backend
+- [low] Plan module-split for routes/reports.rs (3329 LOC, runs_seen=3) and auth.rs (2950 LOC, runs_seen=4) — owner: pm-backend
+
+Buffer: **41/36 open** (post-role additions; healthy — above target) · project at 47/49 — backlog genuinely converging on the 2 remaining frontend slices; the rest of the buffer is technical-debt / security-cross-cutting / analytics-KPI catch-up, not new-feature work. Treat underflow as success, not starvation.

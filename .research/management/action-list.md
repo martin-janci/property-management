@@ -1,6 +1,6 @@
 # PPT Action List
 
-_Generated: 2026-07-23 · 36 items · 36 open (target buffer: 36)_
+_Generated: 2026-07-29 · 56 items · 28 open · 27 in-progress · 1 done (target buffer: 36 open) · pm-backend rotation slot added 6 new actions this run._
 
 | Priority | Status | Owner | ID | Action | Dep | Source |
 |---|---|---|---|---|---|---|
@@ -42,6 +42,14 @@ _Generated: 2026-07-23 · 36 items · 36 open (target buffer: 36)_
 | low | in-progress | pm-tech-lead | refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry2 | Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 2/2 of failed refact... | none | dispatcher-retry-remint 2026-07-22T10:05:12Z (retry_of=refac |
 
 ## Grouped by owner
+
+### pm-backend (6, new 2026-07-29 rotation)
+- !!! `pm-backend-review-acc-05-invoice-lifecycle-2026-07-29` — Review + land PR #2555 (acc-05 sent/cancelled invoice lifecycle) as prerequisite for #2558 (PDF) and #2559 (PAY-by-square QR)
+- !! `pm-backend-acc-05-supply-chain-audit-2026-07-29` — Supply-chain check on new deps introduced by PR #2559 (crc32fast, lzma-rs); fold into pm-security cargo-audit sweep
+- !! `pm-backend-layout-hardening-post-2478-followthrough-2026-07-29` — Integration test for publish TOCTOU + webhook replay to lock in the #2478 hardening (depends: gh-issue-2485)
+- !! `pm-backend-signature-request-post-2504-e2e-2026-07-29` — Post-#2504 (BIT-313 signature-request mount fix): add e2e route test for /documents/{id}/signature-requests reachability
+- !! `pm-backend-gh-issue-2557-dev-team-followups-2026-07-29` — Land test(backend) dev-team follow-ups from #2557
+- ! `pm-backend-reports-rs-split-2026-07-29` — Plan module-split for backend/servers/api-server/src/routes/reports.rs (3329 LOC, runs_seen=3)
 
 ### pm-data (12)
 - !! `data-audit-add-evidence-idor-fix-2026-07-23` — After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern)

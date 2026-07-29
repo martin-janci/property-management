@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-27T03:11:35Z",
+  "generated": "2026-07-29T03:20:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -384,7 +384,7 @@
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-29",
       "screen_refs": []
     },
     {
@@ -400,11 +400,12 @@
       "evidence": [
         "AuthContext login/logout/refresh + concurrent-refresh guard + test",
         "LoginPage + AuthCallbackPage test; screen login buildStatus=shipped",
-        "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage"
+        "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage",
+        "PR #2553 (2026-07-29): AuthContext cold-boot init routed through refreshTokenInternal — closes ppt-web-core-authctx-init-stale-role"
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-29",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -443,7 +444,7 @@
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-29",
       "screen_refs": [
         {
           "screen_id": "ppt/accessibility-settings",
@@ -470,7 +471,7 @@
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-29",
       "screen_refs": [
         {
           "screen_id": "ppt/privacy-settings",
@@ -563,13 +564,14 @@
         "ListingDetailView + FavoritesView + FavoritesService (optimistic updates)",
         "MapKit ListingMapView with Apple Maps hand-off",
         "Full-screen photo gallery with pinch/double-tap zoom",
-        "Merged PRs: #641, #540, #1221, #1541"
+        "Merged PRs: #641, #540, #1221, #1541",
+        "PR #2433 (2026-07-29): iOS listing detail renders through shared KMP resolved layout — stale PR unblocked and merged"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-29",
       "screen_refs": []
     },
     {
@@ -1241,13 +1243,14 @@
       "evidence": [
         "backend signing URL + invitation emails implemented (signatures.rs)",
         "PR #2306: docs/screens/ppt/document-sign.md added — buildStatus: planned, apiStatus: complete",
-        "no sign-page component in ppt-web"
+        "no sign-page component in ppt-web",
+        "PR #2504 (2026-07-29): signature-request list/create route mount fix — endpoint was unreachable, now mounted as document sub-resource (BIT-313) — API surface restored, frontend consumer still pending"
       ],
       "gaps": [
         "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR — fresh attempt, scope to the shipped API)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-29",
       "screen_refs": [
         {
           "screen_id": "ppt/document-sign",

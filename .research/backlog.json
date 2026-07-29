@@ -4913,18 +4913,20 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
+        "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)",
+        "PR #2553"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 — mount-time initializeAuth duplicates refresh logic inline (getAuthApi().refreshToken() direct) instead of calling refreshTokenInternal, skipping the deriveActiveRole re-derivation from #574 and the single-flight guard. Multi-tenant users boot with stale persisted role until a later refresh corrects it."
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:394-411 — mount-time initializeAuth duplicates refresh logic inline (getAuthApi().refreshToken() direct) instead of calling refreshTokenInternal, skipping the deriveActiveRole re-derivation from #574 and the single-flight guard. Multi-tenant users boot with stale persisted role until a later refresh corrects it.",
+        "resolved: PR #2553 merged 2026-07-29 — code-review-ppt-web-core-authctx-init-stale-role: route AuthContext cold-boot init through refreshTokenInternal"
       ],
       "files": [
         "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
       ],
       "created_at": "2026-07-24",
-      "updated_at": "2026-07-24",
+      "updated_at": "2026-07-29",
       "plan": null
     },
     {
@@ -5305,6 +5307,178 @@
       ],
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-resolved-leaks-internal-errors",
+      "title": "layout/resolved.rs leaks raw sqlx/serde error text to client — hardening sweep skipped this file",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-29 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:36-41 — err500 closure embeds `msg` verbatim into the client response.",
+        "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,107,115 — .map_err(|e| err500(format!(\"db error: {e}\")))?; leaks raw sqlx::Error text.",
+        "backend/servers/api-server/src/routes/layout/resolved.rs:98,110,123 — leaks raw serde_json::Error text (e.g. \"stored published config invalid: {e}\").",
+        "Sibling admin.rs:29-37 uses internal_error() that logs server-side + returns generic message (comment: \"raw sqlx/serde error text never leaks\") — PR #2478 hardened admin.rs + tenant.rs but did not copy the defensive pattern to resolved.rs."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": "plans/code-review-api-handlers-resolved-leaks-internal-errors.md"
+    },
+    {
+      "id": "code-review-api-handlers-admin-401-coerced-403",
+      "title": "layout/admin.rs coerces extract_super_admin_token 401 into 403 across all 11 handlers — breaks SDK token-refresh",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-29 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:77-84 — .map_err(|_| (StatusCode::FORBIDDEN, ...)) discards extract_super_admin_token real status.",
+        "backend/servers/api-server/src/routes/layout/admin.rs:105,150,182,212,240,283,400,464,516,578 — same coercion repeated in all 11 admin handlers.",
+        "backend/servers/api-server/src/routes/platform_admin/mod.rs:274-289,306-311 — extract_super_admin_token returns 401 UNAUTHORIZED for missing/malformed Authorization; only the role-check branch (line 321-328) is legitimately 403.",
+        "Impact: SDK/browser clients that auto-refresh on 401 but treat 403 as terminal will fail to retry with fresh credentials on expired-token requests to any /api/v1/platform-admin/layout/* endpoint."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-resolved-unvalidated-tenant",
+      "title": "layout/resolved.rs uses unvalidated TenantExtractor for org_id + nil-org guard while sibling tenant.rs migrated to rls.tenant_id()",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-07-29 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:31,65-68 — nil-org guard and DB WHERE param use tenant.tenant_id from TenantExtractor (crates/api-core/src/extractors/tenant.rs:20-21: \"does NOT validate database membership\").",
+        "backend/servers/api-server/src/routes/layout/tenant.rs:62,118 — sibling handlers switched to rls.tenant_id() (DB-validated) as part of PR #2478 hardening.",
+        "Practically safe due to identical resolution rules and RLS fail-safe, but violates the defense-in-depth consistency PR #2478 established across layout/* handlers."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2478-reality",
+      "title": "screen-map drift: PR #2478 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2478"
+      ],
+      "evidence": [
+        "PR #2478 (layout hardening sweep) touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts without touching any docs/screens/reality/*.md.",
+        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen. Review candidate only — Phase 3 promotion gate explicitly de-prioritises this heuristic false-positive class."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2549-reality",
+      "title": "screen-map drift: PR #2549 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2549"
+      ],
+      "evidence": [
+        "PR #2549 (wire layout publish/webhook/revalidate event emission + sink) touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts without touching any docs/screens/reality/*.md.",
+        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen. Review candidate only — Phase 3 promotion gate explicitly de-prioritises this heuristic false-positive class."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-layout-tenant-rs-2026-07-29",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines changed this run (PR #2478 hardening sweep)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2478"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines added/deleted in the 2026-07-29 window (top churn file). First time as hotspot; runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-layout-admin-rs-2026-07-29",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines changed this run (PR #2478 hardening + PR #2549 delivery_id wiring)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2478",
+        "PR #2549"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs — 240 lines added/deleted in the 2026-07-29 window (#2 churn file). First time as hotspot; runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-layout-webhook-rs-2026-07-29",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/layout/webhook.rs — 217 lines changed this run (PR #2478 timestamped HMAC + PR #2549 delivery_id)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2478",
+        "PR #2549"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/webhook.rs — 217 lines added/deleted in the 2026-07-29 window (#3 churn file). First time as hotspot; runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/webhook.rs"
+      ],
+      "created_at": "2026-07-29",
+      "updated_at": "2026-07-29",
       "plan": null
     }
   ]

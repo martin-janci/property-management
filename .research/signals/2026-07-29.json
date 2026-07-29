@@ -1,0 +1,277 @@
+{
+  "run_iso": "2026-07-29T03:22:00Z",
+  "trigger_text": "",
+  "observation_summary": {
+    "merged_prs": 7,
+    "merged_pr_range": "2504,2433,2478,2491,2549,2553,2554",
+    "open_prs_touched": 4,
+    "issues_since": 3,
+    "commits": 7,
+    "lag_hours": 23
+  },
+  "phase_status": {
+    "phase-1-observe": "ok",
+    "phase-1.5-code-review": "ok (api-handlers segment, 3 findings)",
+    "phase-1.6-project-management": "ok (pm-backend rotating; coverage upkeep; PR clusters flagged)",
+    "phase-2-decide": "ok",
+    "phase-3-promote": "ok (1 plan promoted; 3 candidates blocked by open action-list stem-collision)",
+    "phase-3.5-adversarial": "ok (passed inline)",
+    "phase-4-write": "ok",
+    "phase-5-autofix": "ok (no candidate)"
+  },
+  "cursor_advance": {
+    "last_pr_seen": {
+      "from": 2552,
+      "to": 2554
+    },
+    "last_issue_seen": {
+      "from": 2537,
+      "to": 2557
+    },
+    "last_commit_sha": {
+      "from": "b1f6ad562a31314719171378d6dc00d66f1b033e",
+      "to": "f03c7c7ac7d2004803f9aa1bbd46e0fab6966508"
+    },
+    "review_cursor.api-handlers": {
+      "from": "2026-07-23",
+      "to": "2026-07-29"
+    },
+    "pm_cursor.next_index": {
+      "from": 1,
+      "to": 2
+    },
+    "coverage_cursor.next_index": {
+      "from": 3,
+      "to": 4
+    }
+  },
+  "signals": [
+    {
+      "id": "code-review-api-handlers-resolved-leaks-internal-errors",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "severity": "Medium",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:36-41 — err500 closure embeds msg verbatim into client response",
+        "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,107,115 — leaks raw sqlx::Error text",
+        "backend/servers/api-server/src/routes/layout/resolved.rs:98,110,123 — leaks raw serde_json::Error text",
+        "sibling admin.rs:29-37 uses internal_error() (PR #2478) — resolved.rs was skipped by the hardening sweep"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-admin-401-coerced-403",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "severity": "Low",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:77-84 — map_err(|_| (StatusCode::FORBIDDEN, ...)) discards extract_super_admin_token real status (401 for missing/malformed token)",
+        "backend/servers/api-server/src/routes/layout/admin.rs:105,150,182,212,240,283,400,464,516,578 — same coercion in all 11 admin handlers",
+        "SDK/browser clients auto-refreshing on 401 but treating 403 as terminal will fail to retry with fresh credentials"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-resolved-unvalidated-tenant",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "severity": "Low",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:31,65-68 — uses tenant.tenant_id from TenantExtractor (unvalidated per crates/api-core/src/extractors/tenant.rs:20-21)",
+        "backend/servers/api-server/src/routes/layout/tenant.rs:62,118 — sibling handlers migrated to rls.tenant_id() (DB-validated) in PR #2478",
+        "Practically safe due to identical resolution rules + RLS fail-safe; violates the defense-in-depth consistency PR #2478 established"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2478-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2478",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2478 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts without touching docs/screens/reality/*.md",
+        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen — heuristic false-positive class"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2549-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2549",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2549 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts + route.test.ts without touching docs/screens/reality/*.md",
+        "Best-effort caveat: the touched files are API endpoints under app/api/, not a UI screen — heuristic false-positive class"
+      ]
+    },
+    {
+      "id": "churn-hotspot-layout-tenant-rs-2026-07-29",
+      "type": "churn-hotspot",
+      "source": "PR #2478",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines churn this run (#1 file), first-time hotspot"
+      ]
+    },
+    {
+      "id": "churn-hotspot-layout-admin-rs-2026-07-29",
+      "type": "churn-hotspot",
+      "source": "PR #2478, PR #2549",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs — 240 lines churn this run (#2 file), first-time hotspot"
+      ]
+    },
+    {
+      "id": "churn-hotspot-layout-webhook-rs-2026-07-29",
+      "type": "churn-hotspot",
+      "source": "PR #2478, PR #2549",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/webhook.rs — 217 lines churn this run (#3 file), first-time hotspot"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2491",
+      "type": "dep-update-noise",
+      "source": "PR #2491",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "Dependabot npm-minor-patch merge — react/react-dom 19.2.0→19.2.8, @types/react 19.2.14→19.2.17, next-intl 4.13.3→4.13.4, react-test-renderer bump; lockfile regen was required to fix ERR_PNPM_LOCKFILE_CONFIG_MISMATCH",
+        "Signal ID was already in seen_signals (open-PR pass); merge-time re-emit is drop-by-default per dedup rule"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "brief exists with # 2026-07-29 header",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "state advanced (cursors, seen_signals, hotspots, stats.runs)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "233 items, all ids unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "no non-cumulative signal re-scored",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "no score > 8; no open item with updated_at older than 14d needed decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "1 promoted plan (resolved-leaks-internal-errors) annotated with adversarial pass: passed",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "1 new plan (≤2 cap); 4 metadata + 11 headings + Mode: cloud-ok + capability ticks + Files paths resolve",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "only .research/ paths in staged set",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "no secrets/private hostnames in staged diff",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md byte-identical to regen",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no failed phases this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "all prior plans present or archived",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count new=7 >= HEAD=7",
+      "expected": "new >= old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md byte-identical to regen",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions empty; per-run caps satisfied; kill switch not set but nothing eligible",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor=2 in 0..7; coverage_cursor=4 in [0,13) and advanced vs HEAD=3 while pm_cursor also advanced (1→2)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "no Telegram token literal in staged diff",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no signal matched allowlist + certainty bar"
+}

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-28T03:20:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 2552,
-  "last_issue_seen": 2537,
-  "last_commit_sha": "b1f6ad562a31314719171378d6dc00d66f1b033e",
+  "last_run_iso": "2026-07-29T03:22:00Z",
+  "last_run_ms": 900000,
+  "last_pr_seen": 2554,
+  "last_issue_seen": 2557,
+  "last_commit_sha": "f03c7c7ac7d2004803f9aa1bbd46e0fab6966508",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -396,6 +396,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-23",
       "recent_churn": 364
+    },
+    "backend/servers/api-server/src/routes/layout/tenant.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-29",
+      "recent_churn": 262
+    },
+    "backend/servers/api-server/src/routes/layout/admin.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-29",
+      "recent_churn": 240
+    },
+    "backend/servers/api-server/src/routes/layout/webhook.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-29",
+      "recent_churn": 217
     }
   },
   "seen_signals": [
@@ -705,11 +720,19 @@
     "standing-scan-aml-review-decision-cast",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-stale-todo-security-comments",
-    "standing-scan-api-validation-drift-gate-blindspot"
+    "standing-scan-api-validation-drift-gate-blindspot",
+    "code-review-api-handlers-resolved-leaks-internal-errors",
+    "code-review-api-handlers-admin-401-coerced-403",
+    "code-review-api-handlers-resolved-unvalidated-tenant",
+    "screen-map-drift-pr-2478-reality",
+    "screen-map-drift-pr-2549-reality",
+    "churn-hotspot-layout-tenant-rs-2026-07-29",
+    "churn-hotspot-layout-admin-rs-2026-07-29",
+    "churn-hotspot-layout-webhook-rs-2026-07-29"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-07-23",
+    "api-handlers": "2026-07-29",
     "api-core": "2026-07-20",
     "reality-server": "2026-07-18",
     "ppt-web-ui": "2026-07-21",
@@ -719,9 +742,9 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 51,
-    "vectors_created": 222,
-    "plans_created": 17,
+    "runs": 52,
+    "vectors_created": 230,
+    "plans_created": 18,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -736,10 +759,10 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
-      "pm-backend": "2026-06-06",
+      "pm-backend": "2026-07-29",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
@@ -749,6 +772,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 3
+    "next_index": 4
   }
 }

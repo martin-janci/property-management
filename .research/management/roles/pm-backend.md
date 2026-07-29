@@ -1,26 +1,31 @@
-# pm-backend — 2026-05-24
+# pm-backend — 2026-07-29
 
-**Summary:** The active sprint carries three backend risk clusters: (1) two open security/correctness issues from the PR #435 post-merge review (#438, #439) — P1-05 SSRF confirmed still open at `routes/integrations.rs:2743` and `routes/signatures.rs:628`; (2) four 10B handler stubs that are mounted routes with no real logic; and (3) a hard dependency on the un-built Epic 2B infra that blocks 8a-3 WS sync and 6-5 DM realtime. PR #437 (dead AuthHandler/BuildingHandler deletion) closed the duplicate-handler divergence risk this run.
+**Summary:** Backend delivery is dominated this window by three unreviewed accounting-server PRs (#2555 lifecycle, #2558 PDF, #2559 PAY-by-square QR — all opened 2026-07-28 by the same author, no cross-review yet) plus the layout hardening + event-emission wave (#2478 + #2549). Layout risk cluster from #2485/#2486 is being worked but the hardening changes in `routes/layout/{tenant,admin,webhook}.rs` (1535 LOC total, touched twice this run) still lack integration tests for the TOCTOU/replay paths, and #2547 shipped without an api-server regression test — the "hotfix-no-test" signal fired again this run.
 
 ## Next actions
-1. **[high]** Fix P1-05 SSRF — extract `validate_external_url`/`is_blocked_v4` from `services/actions/api_call.rs:152` into a shared module and apply it before `signatures.rs:628` `client.get(signed_url)` and `integrations.rs:2743` `client.post(&subscription.url)`. _DoD:_ URL parsed, host resolved, rejected for 127.0.0.1 / 10.x / 169.254.x / [::1]; unit test passes.
-2. **[high]** Triage and close #438/#439 — give each of the named findings (P1-01 ordering, P1-04 Debug-format hash, P0-12 cookie scope, IG3 test gap, plus the 4 from #438) a sprint slot; P0/P1 land before Epic 7A review.
-3. **[high]** Replace/guard the four 10B stub handlers (10b-4 system announcements, 10b-5 support data access, 10b-6 onboarding tour, 10b-7 contextual help) — return 501 with a documented timeline or ship real handlers with happy-path tests, so callers fail loudly rather than silently.
-4. **[high]** Implement the missing Epic 81 endpoints (`/schedules/{id}/pause`, `/resume`, `/executions`) the frontend already calls — currently 404 in production.
-5. **[medium]** Plan the module-split for documents.rs (3559), organizations.rs (4018), integrations.rs (4327) — each exceeds safe review/diff size; RLS-predicate omission risk grows with file size.
-6. **[medium]** Decide Epic 2B WebSocket infra scheduling vs. formal deferral of 8a-3 + 6-5; update sprint-status.yaml blockers.
+
+1. **[high]** Review + land PR #2555 (sent/cancelled invoice lifecycle) as prerequisite for #2558 + #2559. #2555 introduces the `InvoiceStatus::Sent`/`Cancelled` enum variants both dependent PRs consume; merging them out of order will cause rebase churn in accounting-server. _DoD:_ #2555 CI green + one cross-reviewer approval, then #2558/#2559 rebased and reviewed.
+2. **[medium]** Supply-chain check on new deps `crc32fast` + `lzma-rs` introduced by #2559 (PAY-by-square encoder). Both pure-Rust so no C-toolchain surprise, but fold into the pending `sec-ammonia-supply-chain-audit-2026-07-23` cargo-audit sweep. _DoD:_ zero open advisories, licenses reviewed.
+3. **[medium]** Add integration test for layout webhook TOCTOU + replay paths hardened by #2478 (`routes/layout/webhook.rs`, `routes/layout/tenant.rs`). Also unlocks the `sec-layout-webhook-integration-test-2026-07-23` follow-up. _DoD:_ failing-on-main test covers publish TOCTOU + replay window rejection.
+4. **[medium]** Post-#2504: add e2e route test asserting `/documents/{id}/signature-requests` list/create is reachable — the mount regression (BIT-313) had zero test coverage before this fix. _DoD:_ regression test in `signatures_tests.rs`.
+5. **[medium]** Land the `test(backend) dev-team follow-ups` from #2557 — backend hardening backlog spun out of the pre-merge dev-team review of the layout stack.
+6. **[low]** Plan module-split for `backend/servers/api-server/src/routes/reports.rs` (3329 LOC, runs_seen=3). Recurring recommendation carrying forward from 2026-05-24 pm-backend — auth.rs (2950 LOC, runs_seen=4) is now the second candidate.
 
 ## Risks
-- **SSRF (P1-05)** — `subscription.url` / `signed_url` reach `reqwest` with no private-range validation; an org member or poisoned provider can target `169.254.169.254` / internal services. Redirect-following is disabled on the webhook path but not on signatures (`reqwest::Client::new()`). probability medium · impact high.
-- **10B silent stubs** — mounted routes return 200/204 with no logic → silent data loss / wrong UI state. probability high · impact medium.
-- **RLS predicate omission in large route files** — a handler using a raw pool connection instead of `RlsConnection` silently bypasses row-level security. probability medium · impact high.
-- **#438/#439 unscheduled** — Debug-format audit hash can silently break the integrity chain on a variant rename/toolchain bump; cookie scope misconfig enables sibling-subdomain credential theft. probability high · impact high.
 
-## Decisions needed
-- Schedule Epic 2B WebSocket infra next sprint OR formally defer 8a-3 + 6-5 with owner + date — owner: pm-tech-lead.
-- Treat P0-12 cookie scope + P1-04 Debug-hash as a hotfix off dev, or batch into next release — owner: pm-tech-lead.
-- 10B stub handlers: return 501 until implemented, or remain silent no-ops — owner: pm-tech-lead.
+- **Single-author accounting-server slice (#2555/#2558/#2559)** — three cohesive slices, one author, no cross-review yet. Piecemeal merges without lifecycle-first ordering will cause rebase churn. probability high · impact medium.
+- **Layout webhook hardening without integration test** — #2478 hardened authz + publish TOCTOU + webhook replay + defensive rendering in the same window as #2549 event emission; 1535 LOC across 6 files touched twice this run with no failing-on-main test locking the hardening in. probability medium · impact high.
+- **auth.rs size-review risk** — 2950 LOC, runs_seen=4, repeatedly touched by security/2FA work. Same file-size + RLS-omission pattern that produced 10B silent-stub findings. probability medium · impact high.
+- **hotfix-no-test-pr-2547** — scheduler retention prune shipped last window without an api-server regression test; still on the open action-list (`bug-hotfix-no-test-pr-2547`). probability medium · impact medium.
+- **New lzma-rs / crc32fast deps for bysquare QR** — spec-invalid payloads possible if `lzma-rs` encoder defaults ever bump; the reference-vector round-trip test guards this but the crate isn't pinned. probability low · impact medium.
 
 ## Open questions
-- Exact file:line for P1-01 (ordering), P1-04 (Debug-format hash), P0-12 (cookie scope) — named in #438/#439 but not yet pinned in code this run.
-- Do the documents.rs RLS checks cover the share/download paths (7a-4/7a-5), or only list + get-by-id?
+
+- Is there a designated cross-reviewer for the accounting-server slice, or does it always land solo-author? (informs the #2555/#2558/#2559 merge sequencing decision)
+- Does `sec-ammonia-supply-chain-audit-2026-07-23` intend to cover new-in-window crates, or only the crate that triggered it (ammonia)?
+- Is the `pm-backend-reports-rs-split` recommendation blocking any active work, or is it purely tech-debt hygiene that can wait for a low-churn window?
+
+## Decisions needed
+
+- Merge sequencing for the three open accounting PRs: enforce #2555-first, or allow parallel review with rebase-on-demand? — owner: pm-tech-lead + pm-backend.
+- Split threshold for oversized route files (auth.rs 2950, reports.rs 3329, and older watchlist: organizations.rs 4018, integrations.rs 4327) — is there a numerical trigger, or purely reviewer discretion? — owner: pm-tech-lead.

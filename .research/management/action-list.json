@@ -652,7 +652,7 @@
       "action": "Follow-up: wire layout publish/webhook event emission (spec-only, no producers) (PR #2494) (Closes #2532)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2532)",
       "deadline": null,
       "dependency": null,
@@ -665,7 +665,9 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "resolved_by": "PR #2549 merged 2026-07-29",
+      "last_updated": "2026-07-29T03:20:00Z"
     },
     {
       "id": "security-voice-webhook-alexa-signature-not-verified",
@@ -904,7 +906,87 @@
         "score": 3,
         "vector": "dx"
       }
+    },
+    {
+      "id": "pm-backend-review-acc-05-invoice-lifecycle-2026-07-29",
+      "action": "Review + land PR #2555 (acc-05 sent/cancelled invoice lifecycle) as prerequisite for #2558 (PDF) and #2559 (PAY-by-square QR) — all three from same author, no cross-review yet; #2555 introduces InvoiceStatus enum variants the other two depend on",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-29",
+      "first_open_at": "2026-07-29T03:20:00Z"
+    },
+    {
+      "id": "pm-backend-acc-05-supply-chain-audit-2026-07-29",
+      "action": "Supply-chain check on new deps introduced by PR #2559 (crc32fast, lzma-rs) — cargo-audit + license review before landing; feed into pm-security cargo-audit sweep already queued as sec-ammonia-supply-chain-audit-2026-07-23",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "sec-ammonia-supply-chain-audit-2026-07-23",
+      "depends_on": [
+        "sec-ammonia-supply-chain-audit-2026-07-23"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-29",
+      "first_open_at": "2026-07-29T03:20:00Z"
+    },
+    {
+      "id": "pm-backend-layout-hardening-post-2478-followthrough-2026-07-29",
+      "action": "Follow-through on #2478 layout review-hardening sweep — churn concentrated in routes/layout/{tenant,admin,webhook}.rs (1535 total LOC); land integration test for publish TOCTOU + webhook replay to lock the hardening in",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "gh-issue-2485",
+      "depends_on": [
+        "gh-issue-2485"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-29",
+      "first_open_at": "2026-07-29T03:20:00Z"
+    },
+    {
+      "id": "pm-backend-signature-request-post-2504-e2e-2026-07-29",
+      "action": "Post-#2504 (signature-request mount fix — BIT-313): add end-to-end route test asserting list/create is reachable at /documents/{id}/signature-requests, so the mount regression cannot silently re-emerge",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-29",
+      "first_open_at": "2026-07-29T03:20:00Z"
+    },
+    {
+      "id": "pm-backend-gh-issue-2557-dev-team-followups-2026-07-29",
+      "action": "Land test(backend) dev-team follow-ups (#2557) — backend hardening tasks from the pre-merge dev-team review of layout stack; sequence after layout hardening close-out",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-29",
+      "first_open_at": "2026-07-29T03:20:00Z",
+      "issue_ref": {
+        "number": 2557,
+        "url": "https://github.com/martin-janci/property-management/issues/2557"
+      }
+    },
+    {
+      "id": "pm-backend-reports-rs-split-2026-07-29",
+      "action": "Plan module-split for backend/servers/api-server/src/routes/reports.rs — 3329 lines, runs_seen=3 in hotspot history; review/diff risk grows with file size (recurring pm-backend recommendation)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-29",
+      "first_open_at": "2026-07-29T03:20:00Z"
     }
   ],
-  "generated": "2026-07-23T14:34:52.019013Z"
+  "generated": "2026-07-29T03:20:00Z"
 }

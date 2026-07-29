@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-23T14:35:18.605457Z",
+  "generated": "2026-07-29T03:20:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -73,6 +73,50 @@
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
       "owner_role": "pm-integration",
       "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)"
+    },
+    {
+      "id": "pm-backend-acc-05-single-author-review-bottleneck-2026-07-29",
+      "risk": "PRs #2555 (invoice lifecycle), #2558 (invoice PDF), #2559 (PAY-by-square QR) are three cohesive accounting slices all opened same day by the same author with no cross-review yet \u2014 merging them piecemeal without dependency ordering will cause rebase churn in accounting-server + accounting-core",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Sequence #2555 (introduces InvoiceStatus::Sent/Cancelled enum) \u2192 then #2558/#2559 rebase; assign a cross-reviewer; wait on CI green on #2555 before merging its dependents",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-backend 2026-07-29"
+    },
+    {
+      "id": "pm-backend-supply-chain-new-lzma-crc32-2026-07-29",
+      "risk": "PR #2559 introduces two new backend deps (crc32fast, lzma-rs) for PAY-by-square QR encoding \u2014 both pure-Rust so no C toolchain risk, but bysquare interop relies on Base32Hex + LZMA1 framing that could produce spec-invalid payloads if the crate ever bumps encoder defaults",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Pin lzma-rs minor version; keep the encode_decode_round_trip + decodes_reference_vector_from_upstream_impl tests in CI (they'd catch spec drift); include in the workspace-wide cargo-audit sweep queued as sec-ammonia-supply-chain-audit-2026-07-23",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-backend 2026-07-29"
+    },
+    {
+      "id": "pm-backend-layout-webhook-untested-hardening-2026-07-29",
+      "risk": "#2478 hardened layout webhook (authz, publish TOCTOU, webhook replay, defensive rendering) in the same window as #2549 event emission wiring \u2014 1535 LOC across 6 files touched twice this run without an integration test for the replay/TOCTOU paths surviving future refactors",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add sqlx integration test for publish TOCTOU and webhook replay (tracked as pm-backend-layout-hardening-post-2478-followthrough-2026-07-29 and sec-layout-webhook-integration-test-2026-07-23); ties to open #2485 follow-up",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-backend 2026-07-29"
+    },
+    {
+      "id": "pm-backend-auth-rs-size-review-risk-2026-07-29",
+      "risk": "backend/servers/api-server/src/routes/auth.rs at 2950 lines and runs_seen=4 in hotspot history \u2014 repeatedly touched by security/refresh-token/2FA work; single-file review + RLS-predicate omission risk grows with size (this is the same pattern that produced 10B silent-stub findings)",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Plan module split (per pm-backend recommendation from 2026-05-24); interim: require a second reviewer with authz context on every auth.rs PR",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-backend 2026-07-29"
     }
   ]
 }
