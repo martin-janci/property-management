@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-29T16:10:49Z",
+  "generated": "2026-07-29T16:15:19Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -48,18 +48,18 @@
     {
       "task_id": "dx-api-validation-drift-gate-never-runs-on-dev",
       "branch": "auto-impl/dx-api-validation-drift-gate-never-runs-58c8fdfc",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-29T16:10:49Z",
-      "last_updated": "2026-07-29T16:10:49Z",
-      "status_changed_at": "2026-07-29T16:10:49Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-29T16:15:19Z",
+      "status_changed_at": "2026-07-29T16:15:19Z",
+      "pr_number": 2569,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2569",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=2569 status=done specialist=generic scope_drift=false code_reuse_warn=none note=broadened api-validation.yml push+PR path filters to include generated client trees + workflow self-trigger; drift gate stays a check",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
