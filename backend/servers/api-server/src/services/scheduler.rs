@@ -2070,6 +2070,87 @@ mod tests {
         );
     }
 
+    // ------------------------------------------------------------------
+    // IG3 regression: scheduler global-read RLS GUC must never ride back
+    // into the pool, even when the global-read *teardown* itself errors.
+    //
+    // Before the fix, `fire_due_report_schedules` dropped the flag with a
+    // plain `set_global_read_context(&mut *conn, false).await?`. If that
+    // disable call ITSELF errored, `?` handed the connection straight back
+    // to the pool with `app.global_read` still ON — so the next borrower
+    // that never set its own tenant context could read cross-org rows
+    // through the SELECT-only global-read policy leg (migration 00218).
+    //
+    // The test forces exactly that teardown failure by replacing
+    // `set_global_read_context(BOOLEAN)` with a version that honours the
+    // ENABLE (so the loop genuinely turns global-read on) but RAISES on the
+    // DISABLE. A `max_connections(1)` pool pins connection identity, so the
+    // scheduler's dedicated connection is the very one re-acquired
+    // afterwards. On the fixed code the release guard's un-sabotaged
+    // `clear_request_context` fallback resets the flag before the connection
+    // is pooled; on the pre-fix code the flag leaks and the assertion fails.
+    // ------------------------------------------------------------------
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn fire_due_report_schedules_does_not_leak_global_read_on_teardown_error(
+        pool_opts: sqlx::postgres::PgPoolOptions,
+        connect_opts: sqlx::postgres::PgConnectOptions,
+    ) {
+        // One physical connection: the scheduler's dedicated connection and the
+        // one we inspect afterward are guaranteed to be the SAME backend, so a
+        // leaked session GUC is observable rather than hidden by pool identity.
+        let pool = pool_opts
+            .max_connections(1)
+            .connect_with(connect_opts)
+            .await
+            .expect("build size-1 pool against the test database");
+
+        // Sabotage ONLY the disable leg: ENABLE still flips app.global_read on
+        // so the due-work SELECT runs under global-read, but DISABLE raises —
+        // the exact teardown failure whose old `?` leaked the flag.
+        sqlx::query(
+            r#"
+            CREATE OR REPLACE FUNCTION set_global_read_context(p_enabled BOOLEAN)
+            RETURNS void
+            LANGUAGE plpgsql
+            AS $fn$
+            BEGIN
+                IF p_enabled THEN
+                    PERFORM set_config('app.global_read', 'on', FALSE);
+                ELSE
+                    RAISE EXCEPTION 'simulated global-read teardown failure';
+                END IF;
+            END;
+            $fn$;
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .expect("install sabotaged set_global_read_context");
+
+        let scheduler = test_scheduler(pool.clone());
+
+        // The disable step runs before the empty-due short-circuit, so no
+        // seeded schedule is required to reach the failing teardown.
+        let result = scheduler.fire_due_report_schedules().await;
+        assert!(
+            result.is_err(),
+            "a failing global-read teardown must surface as an error"
+        );
+
+        // Re-acquire the (single) pooled connection and confirm the global-read
+        // flag did NOT ride back into the pool.
+        let mut conn = pool.acquire().await.expect("re-acquire pooled connection");
+        let leaked: bool = sqlx::query_scalar("SELECT is_global_read_context()")
+            .fetch_one(&mut *conn)
+            .await
+            .expect("read is_global_read_context()");
+        assert!(
+            !leaked,
+            "app.global_read leaked back into the pooled connection after a scheduler \
+             teardown error — the next tenant-scoped borrower could read cross-org rows"
+        );
+    }
+
     #[test]
     fn test_scheduler_config_default() {
         let config = SchedulerConfig::default();
