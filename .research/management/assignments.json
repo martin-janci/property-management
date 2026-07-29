@@ -44,6 +44,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2561",
+      "branch": "auto-impl/gh-issue-2561-1f5dff44",
+      "status": "in-progress",
+      "claimed_at": "2026-07-29T10:13:45Z",
+      "last_updated": "2026-07-29T10:13:45Z",
+      "status_changed_at": "2026-07-29T10:13:45Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
