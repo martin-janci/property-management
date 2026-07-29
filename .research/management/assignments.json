@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-29T18:25:06Z",
+  "generated": "2026-07-29T18:36:21Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2557",
       "branch": "auto-impl/gh-issue-2557-22aab369",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-29T18:13:07Z",
-      "last_updated": "2026-07-29T18:13:07Z",
-      "status_changed_at": "2026-07-29T18:13:07Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-29T18:36:21Z",
+      "status_changed_at": "2026-07-29T18:36:21Z",
+      "pr_number": 2570,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2570",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2570 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=Part1 dedupe 51 db suite files (+51/-1040) to crate::common; fmt+db clippy --all-targets green; server clippy/db tests CI-deferred (no swagger-ui net, no PG); Part2/3 deferred in PR body",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
