@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
     ActionItem, AddEvidence, CompleteActionItem, CreateActionItem, CreateEscalation, Dispute,
-    DisputeActivity, DisputeEvidence, DisputeParty, DisputeQuery, DisputeResolution,
+    DisputeActivity, DisputeEvidence, DisputeKpis, DisputeParty, DisputeQuery, DisputeResolution,
     DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
     MediationSession, PartyActionsDashboard, PartySubmission, ProposeResolution,
     RecordSessionNotes, ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation,
@@ -35,6 +35,7 @@ pub fn router() -> Router<AppState> {
         .route("/", post(file_dispute))
         .route("/", get(list_disputes))
         .route("/statistics", get(get_statistics))
+        .route("/kpis", get(get_kpis))
         .route("/{id}", get(get_dispute))
         .route("/{id}", patch(update_dispute_status))
         .route("/{id}", delete(withdraw_dispute))
@@ -150,6 +151,14 @@ fn map_dispute_err(
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct OrgQuery {
     pub organization_id: Uuid,
+}
+
+/// Dispute KPI reporting window (`[window_start, window_end)`), keyed on filing
+/// time. The organization is taken from the JWT tenant, never this query.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct KpisQuery {
+    pub window_start: DateTime<Utc>,
+    pub window_end: DateTime<Utc>,
 }
 
 /// File dispute request.
@@ -389,6 +398,35 @@ async fn get_statistics(
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to get statistics")),
+            )
+        })
+}
+
+/// Get dispute lifecycle KPIs (funnel + time-to-resolution) for a cohort.
+///
+/// Issue #2562 (follow-up to PR #2550 / #2533): exposes the SQL-backed
+/// `DisputeRepository::get_dispute_kpis` — previously orphaned — through a thin
+/// authenticated, org-scoped reporting endpoint. Like the other dispute
+/// sub-resource handlers the organization is derived from the caller's JWT
+/// tenant (never a query- or body-supplied org), so the KPIs cannot cross
+/// tenants. This is a reporting query, not hot-path; callers should
+/// cache/schedule it.
+async fn get_kpis(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Query(query): Query<KpisQuery>,
+) -> Result<Json<DisputeKpis>, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(&user)?;
+    state
+        .dispute_repo
+        .get_dispute_kpis(organization_id, query.window_start, query.window_end)
+        .await
+        .map(Json)
+        .map_err(|e| {
+            tracing::error!("Failed to get dispute KPIs: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to get dispute KPIs")),
             )
         })
 }
