@@ -2,6 +2,7 @@ package three.two.bit.ppt.reality
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.SsoService
+import three.two.bit.ppt.reality.auth.SsoStateStore
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.navigation.DeepLinkRouter
 import three.two.bit.ppt.reality.navigation.DeepLinkTarget
@@ -87,12 +89,28 @@ class MainActivity : ComponentActivity() {
 
         when (val target = DeepLinkRouter.parse(uri.toString())) {
             // SSO is handled out-of-band: validate the token instead of navigating.
+            //
+            // CSRF / session-fixation guard (parity with iOS `AuthManager.consumeSsoState`): the
+            // `reality://sso` intent-filter is `exported`, so any browser, notification, or other
+            // app can deliver this intent carrying an attacker-controlled token. Only validate the
+            // token when the callback's `state` matches the per-flow nonce this app minted (via
+            // `SsoStateStore.mint`) before starting the SSO hop. A missing/forged `state` — or an
+            // unsolicited deep link with no pending nonce at all — is rejected here, before the
+            // token ever reaches the session-creating endpoint.
             is DeepLinkTarget.Sso ->
-                lifecycleScope.launch { ssoService.validateAndLogin(target.token) }
+                if (SsoStateStore.consume(target.state)) {
+                    lifecycleScope.launch { ssoService.validateAndLogin(target.token) }
+                } else {
+                    Log.w(TAG, "Rejected SSO deep link: CSRF state mismatch or no pending flow")
+                }
             // Navigable targets are deferred until the NavHost is composed.
             null -> Unit
             else -> pendingDeepLink.value = target
         }
+    }
+
+    private companion object {
+        private const val TAG = "MainActivity"
     }
 }
 
