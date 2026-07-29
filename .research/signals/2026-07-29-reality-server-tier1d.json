@@ -1,0 +1,51 @@
+{
+  "generated": "2026-07-29T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-inquiries-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:180 send_contact_message and :298 request_viewing are public UNAUTHENTICATED endpoints (no RequestPrincipal / auth extractor in their signatures) that persist a DB row per call via reality_portal_repo.create_inquiry (:256, :429). There is no throttle, captcha, or per-IP/per-listing limit anywhere in the reality-server crate (grep for RateLimit/GovernorLayer/captcha/throttle finds only the unrelated TenantRateLimiterSet). This is an anonymous spam / DB-flooding / realtor-inbox-abuse vector.",
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:36 declares an InquiryResult::RateLimited variant, but it is NEVER constructed or returned anywhere in the codebase (grep 'RateLimited' matches only this declaration) — confirming rate limiting was designed for the inquiry flow but never wired up. Fix: add per-IP/per-listing rate limiting (or reintroduce and enforce the RateLimited path) before insert on both public inquiry endpoints."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-reality-server-sso-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info) and :743 (introspect_pm_token) each build a fresh `reqwest::Client::new()` per request with NO timeout configured. These run on the SSO auth hot path — token introspection fires on every authenticated request that misses the 60s validation cache, and code/token exchange fires on every login.",
+        "reqwest::Client::new() has no default request timeout, so a hung or slow PM OAuth server makes the outbound call (and the portal request holding it) hang indefinitely — a resource-exhaustion / cascading-stall risk. It also spins up a brand-new connection pool + TLS handshake each call, defeating keep-alive.",
+        "A shared, timeout-configured client already exists in the crate (backend/servers/reality-server/src/state.rs:756 PmApiClient uses reqwest::Client::builder().timeout(...).build()). Fix: hold one shared reqwest::Client with an explicit timeout in AppState and reuse it in these three functions."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-get-inquiry-empty-msgs",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:594 — get_inquiry unconditionally returns `messages: vec![]` with the inline comment `// Would fetch conversation messages`. The InquiryDetailResponse for a shipped, auth-scoped realtor endpoint (GET /api/v1/inquiries/{id}) therefore never returns the conversation thread, even though respond_to_inquiry (:644) writes messages. The detail view silently shows an empty conversation — incomplete implementation on a live endpoint. Fix: fetch and return the inquiry's messages."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
