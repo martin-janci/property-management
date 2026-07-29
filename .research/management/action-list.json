@@ -971,6 +971,66 @@
       "first_open_at": "2026-07-29T08:08:27Z",
       "retry_of": "dx-routine-lag-catchup-2026-07",
       "retry_round": 2
+    },
+    {
+      "id": "gh-issue-2562",
+      "action": "Follow-up: wire get_dispute_kpis into a reporting endpoint / scheduled export (PR #2550) (Closes #2562)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-29T12:05:23Z (#2562)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T12:05:23Z",
+      "issue_ref": {
+        "number": 2562,
+        "url": "https://github.com/martin-janci/property-management/issues/2562",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2563",
+      "action": "Follow-up: schedule layout_change_events retention prune + persist layout_revalidate_received (PR #2549) (Closes #2563)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-29T12:05:23Z (#2563)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T12:05:23Z",
+      "issue_ref": {
+        "number": 2563,
+        "url": "https://github.com/martin-janci/property-management/issues/2563",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2564",
+      "action": "Follow-up: actually implement/track the direct-upload orphan mitigation (PR #2546) (Closes #2564)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-29T12:05:23Z (#2564)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T12:05:23Z",
+      "issue_ref": {
+        "number": 2564,
+        "url": "https://github.com/martin-janci/property-management/issues/2564",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-07-23T14:34:52.019013Z"
