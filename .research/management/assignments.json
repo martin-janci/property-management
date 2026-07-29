@@ -1,12 +1,12 @@
 {
-  "generated": "2026-07-29T12:21:21Z",
+  "generated": "2026-07-29T14:21:00Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
       "branch": "auto-impl/refactor-churn-hotspot-repo-map-md-2026-5bfbe482",
       "status": "review",
       "claimed_at": "2026-07-23T06:07:02Z",
-      "last_updated": "2026-07-29T14:02:00Z",
+      "last_updated": "2026-07-29T14:21:00Z",
       "status_changed_at": "2026-07-23T06:17:32Z",
       "pr_number": 2482,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2482",
@@ -22,28 +22,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-24T22:17:03Z"
-    },
-    {
-      "task_id": "code-review-api-core-scheduler-rls-leak-retry1",
-      "branch": "auto-impl/code-review-api-core-scheduler-rls-leak-3d81b619",
-      "status": "review",
-      "claimed_at": "2026-07-29T12:11:20Z",
-      "last_updated": "2026-07-29T14:02:00Z",
-      "status_changed_at": "2026-07-29T12:53:10Z",
-      "pr_number": 2567,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2567",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2567 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=RLS global-read GUC teardown leak fixed via release_scheduler_conn (clear-or-detach); test:+fix: commits; fmt+clippy green, sqlx regression test deferred to CI (no local Postgres); draft PR",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
