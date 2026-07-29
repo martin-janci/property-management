@@ -66,6 +66,36 @@ class DeepLinkRouterTest {
     }
 
     @Test
+    fun parse_sso_deep_link_extracts_state_nonce() {
+        // CSRF `state` nonce must be carried through parsing so the handler can compare it against
+        // the pending flow nonce (parity with iOS `consumeSsoState`). Regression guard for the
+        // account-takeover fix.
+        val target = DeepLinkRouter.parse("reality://sso?token=tok-42&state=nonce-abc")
+        assertEquals(DeepLinkTarget.Sso("tok-42", "nonce-abc"), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_state_is_order_independent() {
+        // `state` may precede `token` in the query string.
+        val target = DeepLinkRouter.parse("reality://sso?state=nonce-abc&token=tok-42")
+        assertEquals(DeepLinkTarget.Sso("tok-42", "nonce-abc"), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_without_state_leaves_state_null() {
+        // An externally-injected link with no `state` must parse to a null state so the handler can
+        // reject it. `Sso("tok-42")` is `Sso("tok-42", null)` via the default arg.
+        val target = DeepLinkRouter.parse("reality://sso?token=tok-42")
+        assertEquals(DeepLinkTarget.Sso("tok-42", null), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_percent_decodes_state() {
+        val target = DeepLinkRouter.parse("reality://sso?token=t&state=ab%2Bcd")
+        assertEquals(DeepLinkTarget.Sso("t", "ab+cd"), target)
+    }
+
+    @Test
     fun parse_sso_deep_link_percent_decodes_token() {
         // A real JWT/opaque token may contain reserved chars that get percent-encoded in the URL.
         // The shared router must decode them so the token matches what Android's
