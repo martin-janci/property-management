@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-29T08:22:50Z",
+  "generated": "2026-07-29T10:27:41Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2561",
       "branch": "auto-impl/gh-issue-2561-1f5dff44",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-29T10:13:45Z",
-      "last_updated": "2026-07-29T10:13:45Z",
-      "status_changed_at": "2026-07-29T10:13:45Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-29T10:27:41Z",
+      "status_changed_at": "2026-07-29T10:27:41Z",
+      "pr_number": 2566,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2566",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=2566 status=done specialist=generic scope_drift=false code_reuse_warn=none note=version-bump.yml fetch+reset+recompute+push retry loop; concurrency preserved; verify green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
