@@ -1528,26 +1528,42 @@ impl Scheduler {
             .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
 
         // Global-read context for the cross-org due-work SELECT.
-        db::tenant_context::set_global_read_context(&mut *conn, true)
-            .await
-            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+        if let Err(e) = db::tenant_context::set_global_read_context(&mut *conn, true).await {
+            // Enabling failed, so the flag may be half-set; scrub before the
+            // connection returns to the pool rather than leaving it ambiguous.
+            Self::release_scheduler_conn(conn).await;
+            return Err(common::errors::AppError::Database(e.to_string()));
+        }
 
         let due = self
             .report_schedule_repo
             .get_due_schedules(&mut *conn)
             .await;
 
-        // Drop the global-read flag before any writes; the per-schedule writes
-        // below run under each schedule's own tenant context.
-        db::tenant_context::set_global_read_context(&mut *conn, false)
-            .await
-            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+        // Drop the global-read flag before ANY further work — including before
+        // propagating a failed SELECT. This clear must never be skipped by an
+        // early `?`: if `set_global_read_context(conn, false)` itself errors, a
+        // plain `?` would hand the connection back to the pool with
+        // `app.global_read` still ON, and the next borrower that never sets its
+        // own tenant context could then read cross-org rows through the
+        // SELECT-only global-read policy leg (migration 00218). Mirror the
+        // `RlsConnection::release()` guard pattern: on any teardown failure,
+        // route the connection through `release_scheduler_conn` (best-effort
+        // clear, else detach) so the flag can never ride back into the pool.
+        if let Err(e) = db::tenant_context::set_global_read_context(&mut *conn, false).await {
+            Self::release_scheduler_conn(conn).await;
+            return Err(common::errors::AppError::Database(e.to_string()));
+        }
 
-        let due = due?;
+        let due = match due {
+            Ok(due) => due,
+            Err(e) => {
+                Self::release_scheduler_conn(conn).await;
+                return Err(e);
+            }
+        };
         if due.is_empty() {
-            db::tenant_context::clear_request_context(&mut *conn)
-                .await
-                .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+            Self::release_scheduler_conn(conn).await;
             return Ok(());
         }
 
@@ -1618,11 +1634,12 @@ impl Scheduler {
             );
         }
 
-        // Defensive: reset every RLS-relevant GUC before the connection goes
-        // back to the pool so tenant context cannot bleed onto the next user.
-        db::tenant_context::clear_request_context(&mut *conn)
-            .await
-            .map_err(|e| common::errors::AppError::Database(e.to_string()))?;
+        // Defensive: reset every RLS-relevant GUC (tenant trio + global-read)
+        // before the connection goes back to the pool so neither the last
+        // schedule's tenant context nor the global-read flag can bleed onto the
+        // next borrower. Routed through the same guard so a failed clear detaches
+        // the connection instead of pooling it dirty.
+        Self::release_scheduler_conn(conn).await;
 
         if fired > 0 {
             let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
@@ -1630,6 +1647,35 @@ impl Scheduler {
         }
 
         Ok(())
+    }
+
+    /// Return the scheduler's dedicated RLS connection to the pool with its
+    /// session context guaranteed clear.
+    ///
+    /// The due-work loop runs a cross-org SELECT under `app.global_read = on`
+    /// and each schedule's writes under a per-tenant context — both are
+    /// session-local GUCs (migrations 00136 / 00218). If the connection is
+    /// handed back to the pool with either still set, the next borrower that
+    /// forgets to establish its own tenant context inherits it: `global_read`
+    /// opens the SELECT-only cross-org policy leg, and a stale tenant id scopes
+    /// reads to the wrong org.
+    ///
+    /// Mirrors [`api_core::extractors::RlsConnection::release`] + its `Drop`
+    /// fallback: attempt the synchronous `clear_request_context` (which resets
+    /// the tenant trio AND `app.global_read`), and if that fails, DETACH the
+    /// connection so a session whose state we could not reset is closed rather
+    /// than returned to the pool where it could serve cross-org rows.
+    async fn release_scheduler_conn(mut conn: sqlx::pool::PoolConnection<sqlx::Postgres>) {
+        if let Err(e) = db::tenant_context::clear_request_context(&mut *conn).await {
+            tracing::error!(
+                error = %e,
+                "SECURITY: failed to clear RLS context on scheduler connection release; \
+                 detaching it so app.global_read / tenant context cannot bleed to the next borrower"
+            );
+            // Consume and drop (close) the connection instead of returning a
+            // possibly-`global_read=on` session to the pool.
+            drop(conn.detach());
+        }
     }
 
     /// Helper to increment error count in metrics.
@@ -2067,6 +2113,87 @@ mod tests {
             targets,
             vec![resident_a],
             "only the owning org's resident is targeted"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // IG3 regression: scheduler global-read RLS GUC must never ride back
+    // into the pool, even when the global-read *teardown* itself errors.
+    //
+    // Before the fix, `fire_due_report_schedules` dropped the flag with a
+    // plain `set_global_read_context(&mut *conn, false).await?`. If that
+    // disable call ITSELF errored, `?` handed the connection straight back
+    // to the pool with `app.global_read` still ON — so the next borrower
+    // that never set its own tenant context could read cross-org rows
+    // through the SELECT-only global-read policy leg (migration 00218).
+    //
+    // The test forces exactly that teardown failure by replacing
+    // `set_global_read_context(BOOLEAN)` with a version that honours the
+    // ENABLE (so the loop genuinely turns global-read on) but RAISES on the
+    // DISABLE. A `max_connections(1)` pool pins connection identity, so the
+    // scheduler's dedicated connection is the very one re-acquired
+    // afterwards. On the fixed code the release guard's un-sabotaged
+    // `clear_request_context` fallback resets the flag before the connection
+    // is pooled; on the pre-fix code the flag leaks and the assertion fails.
+    // ------------------------------------------------------------------
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn fire_due_report_schedules_does_not_leak_global_read_on_teardown_error(
+        pool_opts: sqlx::postgres::PgPoolOptions,
+        connect_opts: sqlx::postgres::PgConnectOptions,
+    ) {
+        // One physical connection: the scheduler's dedicated connection and the
+        // one we inspect afterward are guaranteed to be the SAME backend, so a
+        // leaked session GUC is observable rather than hidden by pool identity.
+        let pool = pool_opts
+            .max_connections(1)
+            .connect_with(connect_opts)
+            .await
+            .expect("build size-1 pool against the test database");
+
+        // Sabotage ONLY the disable leg: ENABLE still flips app.global_read on
+        // so the due-work SELECT runs under global-read, but DISABLE raises —
+        // the exact teardown failure whose old `?` leaked the flag.
+        sqlx::query(
+            r#"
+            CREATE OR REPLACE FUNCTION set_global_read_context(p_enabled BOOLEAN)
+            RETURNS void
+            LANGUAGE plpgsql
+            AS $fn$
+            BEGIN
+                IF p_enabled THEN
+                    PERFORM set_config('app.global_read', 'on', FALSE);
+                ELSE
+                    RAISE EXCEPTION 'simulated global-read teardown failure';
+                END IF;
+            END;
+            $fn$;
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .expect("install sabotaged set_global_read_context");
+
+        let scheduler = test_scheduler(pool.clone());
+
+        // The disable step runs before the empty-due short-circuit, so no
+        // seeded schedule is required to reach the failing teardown.
+        let result = scheduler.fire_due_report_schedules().await;
+        assert!(
+            result.is_err(),
+            "a failing global-read teardown must surface as an error"
+        );
+
+        // Re-acquire the (single) pooled connection and confirm the global-read
+        // flag did NOT ride back into the pool.
+        let mut conn = pool.acquire().await.expect("re-acquire pooled connection");
+        let leaked: bool = sqlx::query_scalar("SELECT is_global_read_context()")
+            .fetch_one(&mut *conn)
+            .await
+            .expect("read is_global_read_context()");
+        assert!(
+            !leaked,
+            "app.global_read leaked back into the pooled connection after a scheduler \
+             teardown error — the next tenant-scoped borrower could read cross-org rows"
         );
     }
 
