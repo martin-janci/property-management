@@ -3,10 +3,20 @@ name: API Validation
 on:
   push:
     paths:
+      # TypeSpec / OpenAPI source of truth — regenerating the clients.
       - 'docs/api/**'
+      # Generated clients themselves: catch drift committed straight into the
+      # tree (hand-edits, stale regen) even when docs/api/** was untouched.
+      - 'frontend/packages/api-client/**'
+      - 'frontend/packages/reality-api-client/**'
+      # The gate workflow itself.
+      - '.github/workflows/api-validation.yml'
   pull_request:
     paths:
       - 'docs/api/**'
+      - 'frontend/packages/api-client/**'
+      - 'frontend/packages/reality-api-client/**'
+      - '.github/workflows/api-validation.yml'
 
 jobs:
   validate:
