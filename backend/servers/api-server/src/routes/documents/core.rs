@@ -384,6 +384,18 @@ pub struct CreateUploadUrlResponse {
     pub expires_at: DateTime<Utc>,
 }
 
+/// Query parameters for deleting a storage object by its `file_key` (#2564).
+///
+/// Used by the direct-to-S3 orphan-cleanup route. The `file_key` is carried as
+/// a query parameter (not a body) so the request stays a plain `DELETE` that
+/// intermediaries don't strip a body from.
+#[derive(Debug, Deserialize, ToSchema, utoipa::IntoParams)]
+pub struct DeleteByFileKeyQuery {
+    /// Storage key of the object to delete. MUST lie inside the caller's own
+    /// org namespace (`{org_id}/…`) — enforced by `validate_file_key_org_scope`.
+    pub file_key: String,
+}
+
 /// Query for listing documents.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Default, utoipa::IntoParams)]
 pub struct ListDocumentsQuery {
@@ -460,6 +472,10 @@ pub fn router() -> Router<AppState> {
         // needed — only a small JSON request/response crosses the api-server;
         // the file bytes go straight to S3.
         .route("/upload-url", post(create_upload_url))
+        // Best-effort orphan cleanup for the direct-to-S3 path (#2564): delete a
+        // bucket object by file_key when registration (step 3) failed after the
+        // bytes were already PUT (step 2). Org-scoped, no body needed.
+        .route("/by-file-key", delete(delete_by_file_key))
         // Multipart upload (Story 7A.1)
         .merge(upload_router)
 }
@@ -1739,6 +1755,88 @@ async fn create_upload_url(
         method: "PUT".to_string(),
         expires_at: presigned.expires_at,
     }))
+}
+
+/// Delete a storage object by `file_key` — direct-upload orphan cleanup (#2564).
+///
+/// Compensating action for the direct-to-S3 upload flow (gap-84-1). That flow
+/// PUTs the bytes straight to S3 (step 2) *before* registering the document
+/// record via `POST /api/v1/documents` (step 3). If registration fails, the
+/// object is left in the bucket with no `documents` row referencing it — a
+/// leaked orphan. The client calls this route best-effort in its catch block to
+/// reap the orphan immediately, rather than depending solely on the ~1-day
+/// bucket lifecycle sweep (the authorised alternative in #2534).
+///
+/// Authorization mirrors the rest of the direct-upload flow: any authenticated
+/// org member (`AuthUser` + tenant context, no extra capability gate — same
+/// posture as `create_upload_url` / `create_document`). The `file_key` MUST lie
+/// inside the caller's own org namespace: `validate_file_key_org_scope` rejects
+/// cross-org keys, `messages/…` attachments, and `..` traversal with 400, so
+/// this route cannot be used to delete another tenant's objects (the same guard
+/// `create_document` applies to a client-supplied key, #2320).
+///
+/// Returns 204 No Content on success. S3 `DeleteObject` is idempotent, so
+/// deleting an already-absent key is a no-op that still returns 204. 503 if
+/// storage is not configured.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/documents/by-file-key",
+    params(DeleteByFileKeyQuery),
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 204, description = "Object deleted (or already absent)"),
+        (status = 400, description = "Invalid file_key", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 503, description = "Storage unavailable", body = ErrorResponse),
+    ),
+    tag = "Documents"
+)]
+async fn delete_by_file_key(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    tenant: TenantExtractor,
+    Query(query): Query<DeleteByFileKeyQuery>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = tenant.tenant_id;
+
+    // Org-scope guard: the caller may only delete objects under its own
+    // `{org_id}/` prefix. Rejects cross-org keys, message attachments, and `..`
+    // traversal (400) — same guard create_document applies (#2320).
+    validate_file_key_org_scope(&query.file_key, org_id)?;
+
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — orphan cleanup unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        )
+    })?;
+
+    storage.delete(&query.file_key).await.map_err(|e| {
+        tracing::error!(
+            error = %e,
+            file_key = %query.file_key,
+            "Failed to delete object from storage (direct-upload orphan cleanup)"
+        );
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_ERROR",
+                "Unable to delete object. Please try again later.",
+            )),
+        )
+    })?;
+
+    tracing::info!(
+        file_key = %query.file_key,
+        org_id = %org_id,
+        "Deleted object by file_key (direct-upload orphan cleanup)"
+    );
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 // ============================================================================
