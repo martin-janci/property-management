@@ -214,11 +214,8 @@ describe('documents api client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('uploadDocumentDirect surfaces the orphaned file_key when registration fails (#2534)', async () => {
-    // Regression for the orphaned-S3-object leak: after the bytes are PUT to S3
-    // (step 2), a failing register (step 3) must NOT be swallowed — the caller
-    // still sees the real registration error — and the orphaned `file_key`
-    // must be logged so the lifecycle-rule sweep / ops can correlate it.
+  // Shared XHR mock that resolves the S3 PUT (step 2) successfully.
+  function stubSuccessfulS3Put(): { open: ReturnType<typeof vi.fn> } {
     const listeners: Record<string, () => void> = {};
     const xhrMock = {
       upload: { addEventListener: vi.fn() },
@@ -238,9 +235,18 @@ describe('documents api client', () => {
     vi.stubGlobal('XMLHttpRequest', function XMLHttpRequestMock() {
       return xhrMock;
     });
+    return { open: xhrMock.open };
+  }
+
+  it('uploadDocumentDirect best-effort deletes the orphan when registration fails (#2564)', async () => {
+    // Deterministic compensating delete: after the bytes are PUT to S3 (step 2),
+    // a failing register (step 3) must NOT be swallowed — the caller still sees
+    // the real registration error — and the client must fire the auth+org-scoped
+    // DELETE-by-file_key route to reap the orphan immediately.
+    const { open } = stubSuccessfulS3Put();
 
     const registrationError = new Error('registration boom (HTTP 422)');
-    // 1) upload-url succeeds  2) register document rejects
+    // 1) upload-url ok  2) register rejects  3) compensating delete → 204
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         mockOkResponse({
@@ -251,7 +257,8 @@ describe('documents api client', () => {
           expires_at: '2026-07-15T00:05:00Z',
         })
       )
-      .mockRejectedValueOnce(registrationError);
+      .mockRejectedValueOnce(registrationError)
+      .mockResolvedValueOnce(mock204Response());
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -262,7 +269,46 @@ describe('documents api client', () => {
     ).rejects.toBe(registrationError);
 
     // The S3 PUT (step 2) did happen — this is why the object is now orphaned.
-    expect(xhrMock.open).toHaveBeenCalledWith('PUT', 'https://s3.example/bucket/key?sig=abc');
+    expect(open).toHaveBeenCalledWith('PUT', 'https://s3.example/bucket/key?sig=abc');
+    // The compensating delete (step 3b) fired: DELETE to the by-file-key route
+    // with the URL-encoded file_key.
+    const [delUrl, delInit] = vi.mocked(fetch).mock.calls[2];
+    expect(delUrl).toBe('/api/v1/documents/by-file-key?file_key=org%2F2026%2F07%2Fuuid_report.pdf');
+    expect((delInit as RequestInit).method).toBe('DELETE');
+    // Cleanup succeeded, so no orphan warning was logged.
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('uploadDocumentDirect logs the orphan when the compensating delete also fails (#2564)', async () => {
+    // If the best-effort delete itself fails, the orphan must be made observable
+    // (greppable file_key) for the lifecycle-rule sweep to reconcile, and the
+    // ORIGINAL registration error must still surface.
+    stubSuccessfulS3Put();
+
+    const registrationError = new Error('registration boom (HTTP 422)');
+    // 1) upload-url ok  2) register rejects  3) compensating delete rejects
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        mockOkResponse({
+          url: 'https://s3.example/bucket/key?sig=abc',
+          file_key: 'org/2026/07/uuid_report.pdf',
+          content_type: 'application/pdf',
+          method: 'PUT',
+          expires_at: '2026-07-15T00:05:00Z',
+        })
+      )
+      .mockRejectedValueOnce(registrationError)
+      .mockRejectedValueOnce(new Error('storage unavailable (HTTP 503)'));
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const file = new File(['hello'], 'report.pdf', { type: 'application/pdf' });
+    await expect(
+      uploadDocumentDirect({ file, title: 'Report', category: 'report', organizationId: 'org-1' })
+    ).rejects.toBe(registrationError);
+
     // The orphan is observable: the warning names the exact orphaned file_key.
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warnSpy.mock.calls[0][0]).toContain('org/2026/07/uuid_report.pdf');

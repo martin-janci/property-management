@@ -324,6 +324,25 @@ export async function createUploadUrl(
 }
 
 /**
+ * Best-effort delete of a directly-uploaded S3 object by its `file_key` (#2564).
+ *
+ * Compensating action for {@link uploadDocumentDirect}: after the bytes are PUT
+ * straight to S3 but registration (`POST /api/v1/documents`) fails, the object
+ * is orphaned in the bucket. This calls the auth+org-scoped
+ * `DELETE /api/v1/documents/by-file-key` route (which wraps `StorageService`
+ * behind `validate_file_key_org_scope`) to reap it immediately.
+ *
+ * The `file_key` is passed as a URL-encoded query parameter (it contains `/`).
+ * The route replies `204 No Content`, so the shared transport resolves to
+ * `undefined`.
+ */
+export async function deleteUploadedFile(fileKey: string): Promise<void> {
+  await fetchApi(`${API_BASE}/by-file-key?file_key=${encodeURIComponent(fileKey)}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * PUT raw file bytes to a presigned S3 URL (gap-84-1).
  *
  * Uses `XMLHttpRequest` for upload-progress events. The request goes directly
@@ -425,43 +444,41 @@ export async function uploadDocumentDirect(
     size_bytes: params.file.size,
   };
 
-  // ORPHANED-OBJECT CLEANUP (#2534): by this point step 2 has already PUT the
-  // bytes into S3. If registration (step 3) throws — validation, auth, or a
+  // ORPHANED-OBJECT CLEANUP (#2534, #2564): by this point step 2 has already PUT
+  // the bytes into S3. If registration (step 3) throws — validation, auth, or a
   // dropped connection — the object is left in the bucket with no `documents`
   // row referencing it, so every failed/abandoned upload would leak storage.
   //
-  // There is NO client-reachable compensating delete today:
-  //   - `deleteDocument` operates on a document *id*, which does not exist yet
-  //     (registration is exactly what failed), and
-  //   - there is no `DELETE`-by-`file_key` endpoint on the api-server. Adding
-  //     one is a backend (pm-backend) change: it would wrap the existing
-  //     `StorageService::delete` behind an auth+org-scoped route
-  //     (`validate_file_key_org_scope` already exists) and pull the live-infra
-  //     api-server test suite into scope — out of scope for this pm-frontend
-  //     follow-up.
+  // Deterministic compensating delete (#2564): call the auth+org-scoped
+  // `DELETE /api/v1/documents/by-file-key` route (wraps `StorageService::delete`
+  // behind `validate_file_key_org_scope`) to reap the orphan immediately. This
+  // is best-effort — if the delete itself fails (network, storage unavailable,
+  // race), we fall back to making the orphan observable in logs so it is
+  // greppable and correlatable with the durable backstop below. Either way we
+  // re-throw the ORIGINAL registration error unchanged so callers still see the
+  // real failure.
   //
-  // Compensating mechanism (the authorised alternative in #2534): reap these
-  // unreferenced keys with an S3 bucket LIFECYCLE RULE on the storage bucket
-  // used by `StorageService` (the `generate_storage_key` upload namespace):
-  //
-  //   Expire objects under the org upload prefix after 1 day. This is safe
-  //   because a successful upload registers within seconds and the presigned
-  //   PUT URL itself lives only ~5 min, so any object older than a day with no
-  //   matching `documents.file_key` is a presigned-but-never-registered
-  //   orphan. Configure this once on the S3/MinIO bucket (infra/DevOps) — it is
-  //   the durable backstop for the leak described above.
-  //
-  // Client-side we can only make the orphan observable so it is greppable in
-  // logs/telemetry and correlatable with the lifecycle sweep; we re-throw the
-  // ORIGINAL registration error unchanged so callers still see the real
-  // failure.
+  // Durable backstop (the authorised alternative in #2534): an S3 bucket
+  // LIFECYCLE RULE that expires objects under the org upload prefix after ~1
+  // day still catches anything the best-effort delete misses (e.g. the client
+  // process died before the catch ran). Safe because a successful upload
+  // registers within seconds and the presigned PUT URL lives only ~5 min, so
+  // any object older than a day with no matching `documents.file_key` is a
+  // presigned-but-never-registered orphan. Configure once on the S3/MinIO
+  // bucket (infra/DevOps).
   try {
     return await createDocument(registration);
   } catch (err) {
-    console.warn(
-      `[documents] registration failed after direct-to-S3 upload; orphaned object left at file_key="${presigned.file_key}" — it will be reaped by the bucket lifecycle rule (see #2534)`,
-      err
-    );
+    try {
+      await deleteUploadedFile(presigned.file_key);
+    } catch (cleanupErr) {
+      // Best-effort delete failed — leave a greppable trail for the lifecycle
+      // sweep to reconcile. Do not mask the original registration error.
+      console.warn(
+        `[documents] registration failed after direct-to-S3 upload AND the compensating delete failed; orphaned object left at file_key="${presigned.file_key}" — it will be reaped by the bucket lifecycle rule (see #2534, #2564)`,
+        cleanupErr
+      );
+    }
     throw err;
   }
 }
