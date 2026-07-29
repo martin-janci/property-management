@@ -2679,6 +2679,28 @@
       "merge_attempted_at": "2026-07-23T18:18:07Z"
     },
     {
+      "task_id": "dx-api-validation-drift-gate-never-runs-on-dev",
+      "branch": "auto-impl/dx-api-validation-drift-gate-never-runs-58c8fdfc",
+      "status": "merged",
+      "claimed_at": "2026-07-29T16:10:49Z",
+      "last_updated": "2026-07-29T23:23:16Z",
+      "status_changed_at": "2026-07-29T23:23:16Z",
+      "pr_number": 2569,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2569",
+      "merged_at": "2026-07-29T23:23:16Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2569 status=done specialist=generic scope_drift=false code_reuse_warn=none note=broadened api-validation.yml push+PR path filters to include generated client trees + workflow self-trigger; drift gate stays a check",
+      "reviewer_summary": "verdict=approve head_oid=a02e9b5c6a41a7b5fd666ad9dcf2f23bb7ce58a2 note=prior-drift-cleared-generate-sdks-green",
+      "last_reviewed_oid": "a02e9b5c6a41a7b5fd666ad9dcf2f23bb7ce58a2",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-29T23:21:16Z"
+    },
+    {
       "task_id": "dx-closed-not-merged-pr-2385",
       "branch": "auto-impl/dx-closed-not-merged-pr-2385-f857ae5f",
       "status": "failed",
@@ -7843,6 +7865,28 @@
       "merge_attempted_at": "2026-07-24T22:19:55Z"
     },
     {
+      "task_id": "gh-issue-2557",
+      "branch": "auto-impl/gh-issue-2557-22aab369",
+      "status": "merged",
+      "claimed_at": "2026-07-29T18:13:07Z",
+      "last_updated": "2026-07-29T23:23:16Z",
+      "status_changed_at": "2026-07-29T23:23:16Z",
+      "pr_number": 2570,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2570",
+      "merged_at": "2026-07-29T23:23:16Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2570 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=Part1 dedupe 51 db suite files (+51/-1040) to crate::common; fmt+db clippy --all-targets green; server clippy/db tests CI-deferred (no swagger-ui net, no PG); Part2/3 deferred in PR body",
+      "reviewer_summary": "verdict=approve head_oid=6179b565d322bc63cb360a74409dbaefb2671911 note=clean test-only dedupe onto canonical seed_org/set_ctx; behaviour-preserving; self-approve blocked by GitHub (author==reviewer); un-draft after CI green",
+      "last_reviewed_oid": "6179b565d322bc63cb360a74409dbaefb2671911",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-29T23:21:16Z"
+    },
+    {
       "task_id": "gh-issue-2560",
       "branch": "auto-impl/gh-issue-2560-07d0d0af",
       "status": "merged",
@@ -7885,6 +7929,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-29T12:19:11Z"
+    },
+    {
+      "task_id": "gh-issue-2564",
+      "branch": "auto-impl/gh-issue-2564-13d23d06",
+      "status": "merged",
+      "claimed_at": "2026-07-29T21:20:05Z",
+      "last_updated": "2026-07-29T23:28:29Z",
+      "status_changed_at": "2026-07-29T23:28:29Z",
+      "pr_number": 2571,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2571",
+      "merged_at": "2026-07-29T23:28:29Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=1f7f605dab2b3694e43f0e394b76737d32a28997 note=hot-path-auth+org-scope-guard-verified;ci-green;self-approve-fell-back-to-comment",
+      "last_reviewed_oid": "1f7f605dab2b3694e43f0e394b76737d32a28997",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
@@ -9015,5 +9081,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-29T18:25:06Z"
+  "archived_at": "2026-07-29T23:30:16Z"
 }

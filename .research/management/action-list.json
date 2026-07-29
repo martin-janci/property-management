@@ -981,6 +981,110 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "82-1-swiftui-project-setup-retry1",
+      "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "82-1-swiftui-project-setup",
+      "retry_round": 1
+    },
+    {
+      "id": "gap-screens-link-uc-33-sub-ucs-retry2",
+      "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter [retry 2/2 of failed gap-screens-link-uc-33-sub-ucs]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gap-screens-link-uc-33-sub-ucs reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gap-screens-link-uc-33-sub-ucs",
+      "retry_round": 2
+    },
+    {
+      "id": "gh-issue-2238-retry2",
+      "action": "Follow-up: add handler-level regression test for empty-cookie-shadows-body-token (PR #2205) (Closes #2238) [retry 2/2 of failed gh-issue-2238]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2238 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2238",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2238,
+        "url": "https://github.com/martin-janci/property-management/issues/2238",
+        "labels": []
+      }
+    },
+    {
+      "id": "gh-issue-2241-retry2",
+      "action": "Follow-up: OAuth state single-use test models atomic consume but prod Redis path is non-atomic GET+DELETE (PR #2219) (Closes #2241) [retry 2/2 of failed gh-issue-2241]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2241 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2241",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2241,
+        "url": "https://github.com/martin-janci/property-management/issues/2241",
+        "labels": []
+      }
+    },
+    {
+      "id": "gh-issue-2318-retry2",
+      "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318) [retry 2/2 of failed gh-issue-2318]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2318 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2318",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2318,
+        "url": "https://github.com/martin-janci/property-management/issues/2318",
+        "labels": []
+      }
+    },
+    {
+      "id": "gh-issue-2320-retry2",
+      "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 2/2 of failed gh-issue-2320]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2320 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2320",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2320,
+        "url": "https://github.com/martin-janci/property-management/issues/2320",
+        "labels": []
+      }
     }
   ],
   "generated": "2026-07-23T14:34:52.019013Z"
