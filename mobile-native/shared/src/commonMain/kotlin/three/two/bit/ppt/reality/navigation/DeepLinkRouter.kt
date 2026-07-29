@@ -17,9 +17,17 @@ sealed class DeepLinkTarget {
     data object Inquiries : DeepLinkTarget()
 
     /**
-     * SSO callback: `reality://sso?token=…`. Handled by validating the token, not by navigation.
+     * SSO callback: `reality://sso?token=…&state=…`. Handled by validating the token, not by
+     * navigation.
+     *
+     * [state] is the per-flow CSRF nonce the app minted (via `SsoStateStore.mint`) before starting
+     * the SSO browser hop; the server echoes it back on the callback so the app can detect a forged
+     * or replayed deep link. It is nullable because a malicious/external caller can deliver a
+     * `reality://sso?token=…` intent with no `state` at all — the handler must be able to represent
+     * (and then reject) that case. Both mobile platforms require a matching `state`: iOS via
+     * `AuthManager.consumeSsoState`, Android via `SsoStateStore.consume`.
      */
-    data class Sso(val token: String) : DeepLinkTarget()
+    data class Sso(val token: String, val state: String? = null) : DeepLinkTarget()
 }
 
 /**
@@ -123,7 +131,10 @@ object DeepLinkRouter {
             "search" -> DeepLinkTarget.Search
             "favorites" -> DeepLinkTarget.Favorites
             "inquiries" -> DeepLinkTarget.Inquiries
-            "sso" -> queryParam(queryPart, "token")?.let { DeepLinkTarget.Sso(it) }
+            "sso" ->
+                queryParam(queryPart, "token")?.let { token ->
+                    DeepLinkTarget.Sso(token, queryParam(queryPart, "state"))
+                }
             else -> null
         }
     }

@@ -147,6 +147,22 @@ openapi-generator generate \
 | Android | ktor-client-android |
 | iOS | ktor-client-darwin |
 
+## SSO deep-link CSRF contract
+
+The SSO callback (`reality://sso?token=…&state=…`) is delivered through an **exported** deep-link
+intent-filter, so any app/browser/notification can hand it to us. **Both platforms MUST verify a
+per-flow `state` nonce before validating the token** — skipping it allows session fixation / account
+takeover (an attacker's token silently signs the victim in).
+
+- **Android** — `SsoStateStore` (commonMain): `mint()` before opening the SSO hop (append
+  `&state=<nonce>`); `MainActivity.handleDeepLink` calls `consume(target.state)` and validates the
+  token only on a match. Default-reject: an unsolicited callback with no pending flow is dropped.
+- **iOS** — `AuthManager.beginSsoFlow()` / `consumeSsoState(_:)` (owns its own nonce; does not use
+  the KMP store).
+
+`DeepLinkTarget.Sso` carries `state: String?`; a `null`/mismatched state is rejected. Nonces are
+single-use (cleared on every `consume`).
+
 ## Screen-Map integration
 
 When implementing or modifying a screen in this KMP app:
