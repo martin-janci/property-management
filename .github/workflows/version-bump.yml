@@ -66,23 +66,43 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Bump patch version
-        if: steps.detect.outputs.skip != 'true'
-        run: ./scripts/bump-version.sh patch
-
+      # Recompute the bump against the current tip of dev, then push, retrying
+      # on a non-fast-forward rejection. cancel-in-progress: false queues runs
+      # rather than dropping them, so by the time a queued run reaches the front
+      # of the queue `dev` has advanced — at minimum by the preceding run's own
+      # chore(version:) commit — and this run's checkout is stale. A bare push
+      # would then be non-fast-forward and the protected-branch hook declines it
+      # (GH006). Re-fetching and RECOMPUTING the bump (not replaying a stale
+      # commit) against fresh `dev` each attempt keeps the push fast-forward and
+      # avoids a double-bump.
       - name: Commit and push version bump
         if: steps.detect.outputs.skip != 'true'
         run: |
-          VERSION=$(cat VERSION | tr -d '[:space:]')
-          git add VERSION
-          git add backend/Cargo.toml 2>/dev/null || true
-          git add frontend/package.json 2>/dev/null || true
-          git add "frontend/apps/*/package.json" 2>/dev/null || true
-          git add "frontend/packages/*/package.json" 2>/dev/null || true
-          git add mobile-native/gradle.properties 2>/dev/null || true
-          git add docs/api/typespec/main.tsp 2>/dev/null || true
-          git diff --cached --quiet && echo "No version files changed" && exit 0
+          for attempt in 1 2 3; do
+            git fetch origin dev
+            git reset --hard origin/dev
 
-          git commit -m "chore(version): bump to $VERSION"
-          git push origin HEAD:dev
-          echo "Version bumped to $VERSION and pushed to dev"
+            ./scripts/bump-version.sh patch
+
+            VERSION=$(cat VERSION | tr -d '[:space:]')
+            git add VERSION
+            git add backend/Cargo.toml 2>/dev/null || true
+            git add frontend/package.json 2>/dev/null || true
+            git add "frontend/apps/*/package.json" 2>/dev/null || true
+            git add "frontend/packages/*/package.json" 2>/dev/null || true
+            git add mobile-native/gradle.properties 2>/dev/null || true
+            git add docs/api/typespec/main.tsp 2>/dev/null || true
+            if git diff --cached --quiet; then
+              echo "No version files changed"
+              exit 0
+            fi
+
+            git commit -m "chore(version): bump to $VERSION"
+            if git push origin HEAD:dev; then
+              echo "Version bumped to $VERSION and pushed to dev"
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt) — dev moved, retrying"
+          done
+          echo "ERROR: failed to push version bump after 3 attempts" >&2
+          exit 1
