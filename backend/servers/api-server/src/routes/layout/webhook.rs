@@ -35,8 +35,11 @@
 //! `warn!` only — the admin operation already succeeded.
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
+use db::repositories::{LayoutChangeEventKind, LayoutRepository};
+use db::DbPool;
 use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
+use uuid::Uuid;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -83,56 +86,136 @@ pub fn sign_timestamped_payload(secret: &str, timestamp: i64, body: &[u8]) -> St
     sign_payload(secret, &signed)
 }
 
-/// Notify an external webhook endpoint that a layout change occurred.
+/// Build the outbound webhook body bytes.
+///
+/// The body carries the correlation `delivery_id` (gap D) and the post-mutation
+/// `published_version` (gap A) in addition to `screen`/`event`, so the receiver
+/// can echo the id back on `layout_revalidate_received` and dashboards can join
+/// the three events of one mutation. The reality-web receiver validates only
+/// `screen` and tolerates extra fields, and the HMAC covers the whole body, so
+/// widening the shape is signature-safe.
+///
+/// `published_version` is `None` for `killed`/`unkilled` (which create no
+/// version row); it serialises to JSON `null`.
+pub fn build_webhook_body(
+    screen: &str,
+    event: &str,
+    published_version: Option<i32>,
+    delivery_id: Uuid,
+) -> Vec<u8> {
+    serde_json::json!({
+        "screen": screen,
+        "event": event,
+        "published_version": published_version,
+        "delivery_id": delivery_id,
+    })
+    .to_string()
+    .into_bytes()
+}
+
+/// Persist a `layout_webhook_dispatched` analytics event to the append-only
+/// sink (migration 00225). Fire-and-forget: a persistence failure is logged at
+/// `warn!` and never affects the admin mutation or the delivery.
+async fn record_dispatched(
+    pool: DbPool,
+    screen: String,
+    event: &'static str,
+    published_version: Option<i32>,
+    delivery_id: Uuid,
+    dispatch_outcome: &'static str,
+    http_status: Option<u16>,
+) {
+    let props = serde_json::json!({
+        "event": LayoutChangeEventKind::WebhookDispatched.as_str(),
+        "change_kind": event,
+        "dispatch_outcome": dispatch_outcome,
+        "http_status": http_status,
+        "published_version": published_version,
+        // target_tenant: layout config is global/platform-owned (events doc §4.3).
+        "target_tenant": "*",
+    });
+    if let Err(e) = LayoutRepository::new()
+        .record_change_event(
+            &pool,
+            LayoutChangeEventKind::WebhookDispatched,
+            Some(&screen),
+            Some(delivery_id),
+            None,
+            &props,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            screen = %screen,
+            event = %event,
+            delivery_id = %delivery_id,
+            "failed to persist layout_webhook_dispatched event"
+        );
+    }
+}
+
+/// Notify an external webhook endpoint that a layout change occurred, and record
+/// a `layout_webhook_dispatched` analytics event for the attempt.
 ///
 /// Reads `LAYOUT_WEBHOOK_URL` and `LAYOUT_WEBHOOK_SECRET` from the environment
 /// at call time (no startup plumbing needed). When either variable is absent or
-/// empty the call is a no-op (logged at `debug!` only).
+/// empty the outbound POST is skipped, but a `skipped_unconfigured` analytics
+/// event is still recorded so "webhook silently off" is observable.
 ///
-/// On success the notification is fire-and-forget (`tokio::spawn`): a non-2xx
-/// response or a network error is logged as `warn!` but does not propagate to
-/// the caller.
+/// The notification and the analytics write are fire-and-forget (`tokio::spawn`):
+/// a non-2xx response, a network error, or a failed analytics insert is logged
+/// as `warn!` but does not propagate to the caller.
 ///
 /// # Parameters
-/// - `screen` — the layout screen identifier (e.g. `"home"`)
-/// - `event`  — one of `"published"`, `"rolled_back"`, `"killed"`, `"unkilled"`
-pub fn notify_layout_change(screen: &str, event: &'static str) {
-    let url = match std::env::var("LAYOUT_WEBHOOK_URL")
-        .ok()
-        .filter(|s| !s.is_empty())
-    {
-        Some(u) => u,
-        None => {
-            tracing::debug!(
-                screen = %screen,
-                event = %event,
-                "LAYOUT_WEBHOOK_URL not set — skipping layout-change notification"
-            );
-            return;
-        }
-    };
-
-    let secret = match std::env::var("LAYOUT_WEBHOOK_SECRET")
-        .ok()
-        .filter(|s| !s.is_empty())
-    {
-        Some(s) => s,
-        None => {
-            tracing::debug!(
-                screen = %screen,
-                event = %event,
-                "LAYOUT_WEBHOOK_SECRET not set — skipping layout-change notification"
-            );
-            return;
-        }
-    };
-
-    // Owned copies so the spawned task is `'static`.
+/// - `pool`              — DB handle for the append-only analytics sink.
+/// - `screen`            — the layout screen identifier (e.g. `"home"`).
+/// - `event`             — one of `"published"`, `"rolled_back"`, `"killed"`,
+///   `"unkilled"`.
+/// - `published_version` — the post-mutation version (gap A); `None` for
+///   `killed`/`unkilled`.
+/// - `delivery_id`       — correlation id (gap D) shared with the
+///   `layout_change_published` event and echoed to the receiver.
+pub fn notify_layout_change(
+    pool: DbPool,
+    screen: &str,
+    event: &'static str,
+    published_version: Option<i32>,
+    delivery_id: Uuid,
+) {
     let screen = screen.to_owned();
 
-    let body = serde_json::json!({ "screen": screen, "event": event })
-        .to_string()
-        .into_bytes();
+    let url = std::env::var("LAYOUT_WEBHOOK_URL")
+        .ok()
+        .filter(|s| !s.is_empty());
+    let secret = std::env::var("LAYOUT_WEBHOOK_SECRET")
+        .ok()
+        .filter(|s| !s.is_empty());
+
+    let (url, secret) = match (url, secret) {
+        (Some(u), Some(s)) => (u, s),
+        _ => {
+            // Unconfigured: skip the POST but still record the event so the
+            // "webhook off" state is observable in analytics.
+            tracing::debug!(
+                screen = %screen,
+                event = %event,
+                "LAYOUT_WEBHOOK_URL/SECRET not set — skipping layout-change notification"
+            );
+            tokio::spawn(record_dispatched(
+                pool,
+                screen,
+                event,
+                published_version,
+                delivery_id,
+                "skipped_unconfigured",
+                None,
+            ));
+            return;
+        }
+    };
+
+    let body = build_webhook_body(&screen, event, published_version, delivery_id);
 
     // Replay protection (issue #2485): ship a signed unix-seconds timestamp and
     // sign over "{timestamp}.{body}" so the reality-web receiver can reject any
@@ -152,11 +235,21 @@ pub fn notify_layout_change(screen: &str, event: &'static str) {
                     error = %e,
                     "layout-change webhook: failed to build HTTP client"
                 );
+                record_dispatched(
+                    pool,
+                    screen,
+                    event,
+                    published_version,
+                    delivery_id,
+                    "transport_error",
+                    None,
+                )
+                .await;
                 return;
             }
         };
 
-        match client
+        let (outcome, http_status): (&'static str, Option<u16>) = match client
             .post(&url)
             .header("Content-Type", "application/json")
             .header(TIMESTAMP_HEADER, timestamp.to_string())
@@ -166,20 +259,24 @@ pub fn notify_layout_change(screen: &str, event: &'static str) {
             .await
         {
             Ok(resp) if resp.status().is_success() => {
+                let status = resp.status();
                 tracing::debug!(
                     screen = %screen,
                     event = %event,
-                    status = %resp.status(),
+                    status = %status,
                     "layout-change webhook delivered"
                 );
+                ("delivered", Some(status.as_u16()))
             }
             Ok(resp) => {
+                let status = resp.status();
                 tracing::warn!(
                     screen = %screen,
                     event = %event,
-                    status = %resp.status(),
+                    status = %status,
                     "layout-change webhook returned non-2xx"
                 );
+                ("non_2xx", Some(status.as_u16()))
             }
             Err(e) => {
                 tracing::warn!(
@@ -188,8 +285,20 @@ pub fn notify_layout_change(screen: &str, event: &'static str) {
                     error = %e,
                     "layout-change webhook delivery failed"
                 );
+                ("transport_error", None)
             }
-        }
+        };
+
+        record_dispatched(
+            pool,
+            screen,
+            event,
+            published_version,
+            delivery_id,
+            outcome,
+            http_status,
+        )
+        .await;
     });
 }
 
@@ -325,5 +434,37 @@ mod tests {
             sign_payload(KNOWN_SECRET, KNOWN_BODY),
             "timestamped and body-only signatures must diverge"
         );
+    }
+
+    // ------------------------------------------------------------------
+    // Webhook body shape (issue #2532): the body must carry delivery_id
+    // (gap D) and published_version (gap A) so the receiver can correlate
+    // events and dashboards can join a publish → revalidate trace. These
+    // tests fail on `dev` (the body was only {screen, event}).
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn build_webhook_body_carries_delivery_id_and_version() {
+        let delivery_id = Uuid::from_u128(0x1234_5678_9abc_def0_1122_3344_5566_7788);
+        let bytes = build_webhook_body("reality/listing-detail", "published", Some(7), delivery_id);
+        let v: serde_json::Value = serde_json::from_slice(&bytes).expect("body is valid JSON");
+
+        assert_eq!(v["screen"], "reality/listing-detail");
+        assert_eq!(v["event"], "published");
+        assert_eq!(v["published_version"], 7);
+        assert_eq!(v["delivery_id"], delivery_id.to_string());
+    }
+
+    #[test]
+    fn build_webhook_body_null_version_for_kills() {
+        let delivery_id = Uuid::nil();
+        let bytes = build_webhook_body("home", "killed", None, delivery_id);
+        let v: serde_json::Value = serde_json::from_slice(&bytes).expect("body is valid JSON");
+
+        assert!(
+            v["published_version"].is_null(),
+            "kill/unkill carry no version — must serialise as null"
+        );
+        assert_eq!(v["delivery_id"], delivery_id.to_string());
     }
 }

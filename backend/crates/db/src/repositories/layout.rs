@@ -21,6 +21,34 @@ pub enum LayoutPublishError {
     Sqlx(#[from] SqlxError),
 }
 
+/// The three layout-pipeline analytics event kinds persisted to
+/// `layout_change_events` (migration `00225_create_layout_change_events.sql`).
+///
+/// The string values are the canonical event names from
+/// `docs/data/layout-publish-event-tracking.md` §2 and MUST stay byte-for-byte
+/// aligned with the table's `event_kind` CHECK constraint.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LayoutChangeEventKind {
+    /// A layout mutation (publish/rollback/kill/unkill) succeeded in the DB.
+    Published,
+    /// The outbound webhook attempt resolved (delivered / non-2xx / transport
+    /// error / skipped-unconfigured).
+    WebhookDispatched,
+    /// The reality-web `/api/layout-revalidate` receiver returned.
+    RevalidateReceived,
+}
+
+impl LayoutChangeEventKind {
+    /// Stable wire string — matches the `layout_change_events` CHECK constraint.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            LayoutChangeEventKind::Published => "layout_change_published",
+            LayoutChangeEventKind::WebhookDispatched => "layout_webhook_dispatched",
+            LayoutChangeEventKind::RevalidateReceived => "layout_revalidate_received",
+        }
+    }
+}
+
 /// Stateless repository for the layout control plane. Global tables
 /// (configs/versions/kills/manifests) are platform-admin-owned and carry no
 /// RLS — call them with the unscoped pool. `layout_tenant_overrides` is
@@ -406,5 +434,99 @@ impl LayoutRepository {
         .bind(updated_by)
         .fetch_one(executor)
         .await
+    }
+
+    /// Append a layout-pipeline analytics event to the append-only
+    /// `layout_change_events` sink (migration `00225`), returning the new row id.
+    ///
+    /// Callers treat this as **fire-and-forget**: a failure to persist an
+    /// analytics event MUST NOT change the outcome of the layout mutation, the
+    /// webhook delivery, or the revalidation (events doc §7). Callers log the
+    /// error and continue.
+    ///
+    /// # Arguments
+    /// * `kind`         — which of the three event kinds fired.
+    /// * `screen`       — layout screen id (`None` only on the receiver's
+    ///                    invalid-body path where no screen parsed).
+    /// * `delivery_id`  — correlation id shared across the three events for one
+    ///                    mutation (gap D).
+    /// * `published_by` — acting SuperAdmin for `Published`; `None` for the
+    ///                    operational `WebhookDispatched` event.
+    /// * `props`        — structured per-event dimensions serialised to JSONB.
+    pub async fn record_change_event<'e, E>(
+        &self,
+        executor: E,
+        kind: LayoutChangeEventKind,
+        screen: Option<&str>,
+        delivery_id: Option<Uuid>,
+        published_by: Option<Uuid>,
+        props: &serde_json::Value,
+    ) -> Result<Uuid, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, Uuid>(
+            "INSERT INTO layout_change_events (event_kind, screen, delivery_id, published_by, props)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id",
+        )
+        .bind(kind.as_str())
+        .bind(screen)
+        .bind(delivery_id)
+        .bind(published_by)
+        .bind(props)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// Prune `layout_change_events` older than the retention period, returning
+    /// the number of rows deleted.
+    ///
+    /// Retention (TTL) entry point for the append-only layout analytics trail
+    /// (migration `00225`). Calls the DB-native
+    /// `cleanup_old_layout_change_events(retention_days)`, mirroring
+    /// `cleanup_old_support_tooling_events`: the function opens the sanctioned
+    /// `app.retention_prune` path so the immutability trigger permits these —
+    /// and only these — deletes; every other `UPDATE`/`DELETE` stays rejected.
+    ///
+    /// `retention_days` defaults to 730 (24 months) at the SQL layer; callers
+    /// pass an explicit value so the policy is visible at the call site.
+    pub async fn cleanup_old_layout_change_events<'e, E>(
+        &self,
+        executor: E,
+        retention_days: i32,
+    ) -> Result<i64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, i64>("SELECT cleanup_old_layout_change_events($1)")
+            .bind(retention_days)
+            .fetch_one(executor)
+            .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LayoutChangeEventKind;
+
+    /// Pin the wire strings: they are the canonical event names in
+    /// docs/data/layout-publish-event-tracking.md §2 AND the values in the
+    /// `layout_change_events` CHECK constraint (migration 00225). A drift here
+    /// silently breaks the INSERT or the doc contract.
+    #[test]
+    fn layout_change_event_kind_strings_are_stable() {
+        assert_eq!(
+            LayoutChangeEventKind::Published.as_str(),
+            "layout_change_published"
+        );
+        assert_eq!(
+            LayoutChangeEventKind::WebhookDispatched.as_str(),
+            "layout_webhook_dispatched"
+        );
+        assert_eq!(
+            LayoutChangeEventKind::RevalidateReceived.as_str(),
+            "layout_revalidate_received"
+        );
     }
 }

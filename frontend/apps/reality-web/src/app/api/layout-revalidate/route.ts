@@ -1,6 +1,54 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
+import { trackEvent } from '@/lib/analytics';
+
+// ---------------------------------------------------------------------------
+// Analytics: layout_revalidate_received (issue #2532).
+//
+// The receiver emits one operational event on every return path so the
+// layout publish → webhook → revalidate pipeline is observable end to end
+// (docs/data/layout-publish-event-tracking.md §5.3). Emission is fire-and-
+// forget via the shared `trackEvent` bus — it never throws and never changes
+// the HTTP outcome. `delivery_id` is echoed from the webhook body (gap D) when
+// present so this event joins the api-server `layout_change_published` /
+// `layout_webhook_dispatched` events for the same mutation.
+// ---------------------------------------------------------------------------
+
+/** Receiver-side revalidate outcomes (events doc §4.4). */
+type RevalidateOutcome =
+  | 'revalidated'
+  | 'disabled'
+  | 'invalid_signature'
+  | 'invalid_body'
+  | 'invalid_screen';
+
+function emitRevalidateReceived(props: {
+  outcome: RevalidateOutcome;
+  httpStatus: number;
+  targetTenant: string;
+  screen?: string | null;
+  tags?: string[];
+  deliveryId?: string | null;
+}): void {
+  trackEvent('layout_revalidate_received', {
+    revalidate_outcome: props.outcome,
+    http_status: props.httpStatus,
+    target_tenant: props.targetTenant,
+    screen: props.screen ?? null,
+    tags: props.tags ?? [],
+    delivery_id: props.deliveryId ?? null,
+  });
+}
+
+/** Extract a string `delivery_id` from an already-parsed body, else null. */
+function deliveryIdOf(body: unknown): string | null {
+  if (typeof body === 'object' && body !== null) {
+    const raw = (body as Record<string, unknown>).delivery_id;
+    if (typeof raw === 'string') return raw;
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Exported helper — maps a screen id to its cache tags.
@@ -58,9 +106,14 @@ export function isTimestampFresh(
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request): Promise<NextResponse> {
+  // Tenant scope on the receiver is expressed as the request host (events doc
+  // §4.3); fall back to the global sentinel when absent.
+  const targetTenant = request.headers.get('host') ?? '*';
+
   // 1. Secret must be configured
   const secret = process.env.LAYOUT_WEBHOOK_SECRET;
   if (!secret) {
+    emitRevalidateReceived({ outcome: 'disabled', httpStatus: 503, targetTenant });
     return NextResponse.json({ error: 'disabled' }, { status: 503 });
   }
 
@@ -75,12 +128,15 @@ export async function POST(request: Request): Promise<NextResponse> {
   // 3. Replay protection (issue #2485): require a fresh signed timestamp.
   // Reject a missing/malformed timestamp, or one outside the ±TOLERANCE_SECS
   // window, BEFORE the HMAC check — a captured delivery is only valid briefly.
+  // These auth rejections fold into the `invalid_signature` analytics outcome.
   const timestamp = parseWebhookTimestamp(request.headers.get('X-Webhook-Timestamp'));
   if (timestamp === null) {
+    emitRevalidateReceived({ outcome: 'invalid_signature', httpStatus: 401, targetTenant });
     return NextResponse.json({ error: 'missing timestamp' }, { status: 401 });
   }
   const nowSecs = Math.floor(Date.now() / 1000);
   if (!isTimestampFresh(timestamp, nowSecs)) {
+    emitRevalidateReceived({ outcome: 'invalid_signature', httpStatus: 401, targetTenant });
     return NextResponse.json({ error: 'stale timestamp' }, { status: 401 });
   }
 
@@ -95,6 +151,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // Guard unequal lengths before timingSafeEqual (it throws on length mismatch)
   if (headerBuf.length !== expectedBuf.length || !timingSafeEqual(headerBuf, expectedBuf)) {
+    emitRevalidateReceived({ outcome: 'invalid_signature', httpStatus: 401, targetTenant });
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
 
@@ -103,14 +160,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     body = JSON.parse(rawBody);
   } catch {
+    emitRevalidateReceived({ outcome: 'invalid_body', httpStatus: 422, targetTenant });
     return NextResponse.json({ error: 'invalid body' }, { status: 422 });
   }
+
+  // Echo the correlation id from the (now-verified, HMAC-covered) body when
+  // present — the api-server adds it to the webhook payload (gap D).
+  const deliveryId = deliveryIdOf(body);
 
   if (
     typeof body !== 'object' ||
     body === null ||
     typeof (body as Record<string, unknown>).screen !== 'string'
   ) {
+    emitRevalidateReceived({ outcome: 'invalid_body', httpStatus: 422, targetTenant, deliveryId });
     return NextResponse.json({ error: 'invalid body' }, { status: 422 });
   }
 
@@ -118,12 +181,26 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // 6. Validate screen contains a slash and has non-empty second segment
   if (!screen.includes('/')) {
+    emitRevalidateReceived({
+      outcome: 'invalid_screen',
+      httpStatus: 422,
+      targetTenant,
+      screen,
+      deliveryId,
+    });
     return NextResponse.json({ error: 'invalid screen' }, { status: 422 });
   }
 
   // 7. Revalidate tags
   const tags = layoutTagsFor(screen);
   if (!tags) {
+    emitRevalidateReceived({
+      outcome: 'invalid_screen',
+      httpStatus: 422,
+      targetTenant,
+      screen,
+      deliveryId,
+    });
     return NextResponse.json({ error: 'invalid screen' }, { status: 422 });
   }
 
@@ -131,5 +208,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     revalidateTag(tag, 'default');
   }
 
+  emitRevalidateReceived({
+    outcome: 'revalidated',
+    httpStatus: 200,
+    targetTenant,
+    screen,
+    tags,
+    deliveryId,
+  });
   return NextResponse.json({ revalidated: true, tags });
 }

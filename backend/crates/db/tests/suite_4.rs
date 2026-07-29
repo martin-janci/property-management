@@ -8,6 +8,8 @@
 
 mod common;
 
+#[path = "suites/layout_change_events_retention_tests.rs"]
+mod layout_change_events_retention_tests;
 #[path = "suites/report_schedule_scheduler_rls_tests.rs"]
 mod report_schedule_scheduler_rls_tests;
 #[path = "suites/repository_tests.rs"]

@@ -29,11 +29,22 @@ affected ISR cache tags. The relevant code:
 | Inbound receiver + revalidation | `frontend/apps/reality-web/src/app/api/layout-revalidate/route.ts` |
 | Host-scoped fetch tags | `frontend/apps/reality-web/src/lib/layout.ts` (`getResolvedLayout`) |
 
-Today the webhook body is only `{"screen": <string>, "event": <string>}` and
-**no analytics event is persisted** for this flow (unlike
+> **Implementation status (issue #2532).** The producers are now wired. All
+> three events are emitted, and the two api-server events are persisted to the
+> append-only `layout_change_events` sink (migration
+> `00225_create_layout_change_events.sql`). The webhook body now carries
+> `delivery_id` (gap D) and `published_version` (gap A). Gaps A, C, D and the
+> retention window (Section 7) are closed; gap B emits `target_tenant = "*"`
+> until per-tenant override-publish lands; `layout_revalidate_received` is
+> emitted from reality-web via the `trackEvent` bus (its cross-service
+> persistence to the sink remains a follow-up — reality-web SSR has no DB
+> handle). See Section 6 for the per-gap status.
+
+Historically the webhook body was only `{"screen": <string>, "event": <string>}`
+and **no analytics event was persisted** for this flow (unlike
 `support_tooling_events`, see `docs/data/support-data-retention-privacy.md`).
-The events below define what SHOULD be captured, and Section 6 lists the
-minimal plumbing each dimension needs.
+The events below define what is captured, and Section 6 tracks the status of
+each dimension.
 
 ## 2. Event taxonomy
 
@@ -185,17 +196,16 @@ return path.
 The events above are the **target contract**. Current reality and the minimal
 change to close each gap:
 
-| # | Gap | Today | To close |
-|---|-----|-------|----------|
-| A | `layout_version` not delivered | `notify_layout_change(screen, event)` drops `row.published_version` | widen the notifier signature to accept the version (and identity); handlers already hold `row` |
-| B | `target_tenant` not delivered | global publish is implicitly `"*"`; per-tenant overrides (`layout_tenant_overrides`) are not wired to any mutation handler | emit `"*"` for global changes now; add the org id when override-publish lands |
-| B' | reality-web tenant attribution | host is available via `Host` header/tag but not recorded | read the host in `route.ts` when emitting |
-| C | No event is persisted | flow emits only `tracing` logs (`debug!`/`warn!`) | add an append-only sink — reuse the `support_tooling_events` pattern (immutable table + fire-and-forget writer) rather than inventing a new mechanism |
-| D | No `delivery_id` correlation | each stage is independent | generate a uuid at publish time, include it in the webhook body, echo it back from the receiver |
+| # | Gap | Status (issue #2532) |
+|---|-----|----------------------|
+| A | `layout_version` not delivered | **Closed.** `notify_layout_change(pool, screen, event, published_version, delivery_id)` carries the version; `build_webhook_body` puts it on the wire. `null` for kill/unkill. |
+| B | `target_tenant` not delivered | **Partial.** Global changes emit `target_tenant = "*"`; a real org id follows when per-tenant override-publish lands. |
+| B' | reality-web tenant attribution | **Closed.** `route.ts` reads the `Host` header into `target_tenant` (falling back to `"*"`). |
+| C | No event is persisted | **Closed (backend).** `layout_change_published` + `layout_webhook_dispatched` persist to the append-only `layout_change_events` table (migration `00225`, `support_tooling_events` pattern). `layout_revalidate_received` emits via `trackEvent` but is **not yet** persisted cross-service — reality-web SSR has no DB handle; an ingest endpoint is a follow-up. |
+| D | No `delivery_id` correlation | **Closed.** A uuid is generated per mutation in `admin.rs`, shared with the persisted `layout_change_published`, put in the webhook body, and echoed by the receiver. |
 
-None of these gaps are required by *this* definitions task; they are the
-implementation backlog that this schema unblocks. Recording them here prevents
-a future implementer from inventing a divergent field set.
+Recording the status here prevents a future implementer from inventing a
+divergent field set.
 
 ## 7. Privacy & retention posture
 
@@ -212,10 +222,14 @@ Consistent with `docs/data/support-data-retention-privacy.md`:
   `support_tooling_events` — DB triggers reject `UPDATE`/`DELETE`,
   `published_by` FK `ON DELETE RESTRICT`/`SET NULL` so the trail survives
   account deletion (anonymised).
-- **Retention.** No retention window is defined for layout audit history today;
-  the same GDPR storage-limitation gap flagged for `audit_logs` /
-  `support_tooling_events` (Art. 5(1)(e)) applies. Define and document a
-  retention period before treating this as compliant.
+- **Retention.** Defined up front (issue #2532): the `layout_change_events`
+  sink prunes rows older than **730 days (24 months)** via the DB-native
+  `cleanup_old_layout_change_events(retention_days)` (migration `00225`),
+  matching the `support_tooling_events` window (migration `00222`) and honouring
+  GDPR storage limitation (Art. 5(1)(e)). Deletes are gated by the
+  `app.retention_prune` GUC so the append-only immutability trigger still blocks
+  every other `UPDATE`/`DELETE`. Wiring the prune into the api-server background
+  scheduler is a separate follow-up (same posture as support_tooling_events).
 
 ## 8. Open questions (verify before relying on this doc)
 

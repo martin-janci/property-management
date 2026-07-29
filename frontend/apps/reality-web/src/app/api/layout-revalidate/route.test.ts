@@ -7,6 +7,7 @@ vi.mock('next/cache', () => ({
 }));
 
 import { revalidateTag } from 'next/cache';
+import { __clearAnalyticsSinks, type AnalyticsEvent, registerAnalyticsSink } from '@/lib/analytics';
 import { isTimestampFresh, layoutTagsFor, POST, parseWebhookTimestamp } from './route';
 
 // ---------------------------------------------------------------------------
@@ -292,5 +293,92 @@ describe('POST /api/layout-revalidate', () => {
     // Verify by checking the module's exported keys directly
     const routeModule = { POST, layoutTagsFor } as Record<string, unknown>;
     expect(routeModule['GET']).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// layout_revalidate_received analytics (issue #2532)
+//
+// The receiver must emit one operational event on every return path, echoing
+// the delivery_id (gap D) when the webhook body carries it. These assertions
+// fail on `dev`, where the route emitted nothing.
+// ---------------------------------------------------------------------------
+
+describe('layout_revalidate_received emission', () => {
+  let events: AnalyticsEvent[];
+  let unregister: () => void;
+
+  beforeEach(() => {
+    vi.mocked(revalidateTag).mockClear();
+    events = [];
+    unregister = registerAnalyticsSink((e) => events.push(e));
+  });
+
+  afterEach(() => {
+    unregister();
+    __clearAnalyticsSinks();
+    vi.unstubAllEnvs();
+  });
+
+  it('emits revalidated with tags and echoed delivery_id on success', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const deliveryId = '11111111-2222-3333-4444-555555555555';
+    const body = JSON.stringify({
+      screen: 'reality/listing-detail',
+      event: 'published',
+      delivery_id: deliveryId,
+    });
+    const res = await POST(signedRequest(SECRET, body));
+    expect(res.status).toBe(200);
+
+    expect(events).toHaveLength(1);
+    expect(events[0].event).toBe('layout_revalidate_received');
+    expect(events[0].properties).toMatchObject({
+      revalidate_outcome: 'revalidated',
+      http_status: 200,
+      screen: 'reality/listing-detail',
+      tags: ['layout:listing-detail'],
+      delivery_id: deliveryId,
+    });
+  });
+
+  it('emits disabled (503) when the secret is unset', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', '');
+    const body = JSON.stringify({ screen: 'reality/listing-detail' });
+    const res = await POST(signedRequest(SECRET, body));
+    expect(res.status).toBe(503);
+    expect(events).toHaveLength(1);
+    expect(events[0].properties).toMatchObject({
+      revalidate_outcome: 'disabled',
+      http_status: 503,
+    });
+  });
+
+  it('emits invalid_signature (401) on a bad signature', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail' });
+    const req = makeRequest(body, {
+      'X-Webhook-Timestamp': String(nowTs()),
+      'X-Webhook-Signature': 'sha256=invalidsignature==',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(events).toHaveLength(1);
+    expect(events[0].properties).toMatchObject({
+      revalidate_outcome: 'invalid_signature',
+      http_status: 401,
+    });
+  });
+
+  it('emits invalid_screen (422) when the screen has no slash', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'listing-detail' });
+    const res = await POST(signedRequest(SECRET, body));
+    expect(res.status).toBe(422);
+    expect(events).toHaveLength(1);
+    expect(events[0].properties).toMatchObject({
+      revalidate_outcome: 'invalid_screen',
+      http_status: 422,
+    });
   });
 });
