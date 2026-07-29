@@ -1,0 +1,39 @@
+{
+  "generated": "2026-07-29T00:00:00Z",
+  "segment": "api-core",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned (backend/servers/api-server/src/services/scheduler.rs, main.rs recent churn); second same-day run (-2) covering the FCM push-delivery path, distinct from the earlier api-core run's voice/notification findings",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-api-core-fcm-oauth-token-not-refreshed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:233 — FcmConfig reads `FCM_OAUTH_TOKEN` once via `std::env::var(...).ok()` at construction (startup) and stores it in `oauth_token`; there is no refresh path anywhere in the file (grep 'refresh' only matches the APNs JWT comment at line 13/697).",
+        "backend/servers/api-server/src/services/push_fanout.rs:330-341 — the FCM HTTP v1 send uses that stored token directly as `bearer` and `.bearer_auth(&bearer)` on every request. Google OAuth2 access tokens for FCM HTTP v1 expire after ~1 hour, so after the first hour of uptime all FCM v1 pushes fail with 401 until the process is restarted.",
+        "Asymmetry confirming the gap: the APNs adapter DOES refresh its ES256 JWT every ~50 minutes (push_fanout.rs:13, :697 'Apple requires the JWT to be refreshed at least once per hour'), while the FCM v1 bearer is never refreshed. The inline comment at push_fanout.rs:324 even notes 'In production this would come from a service-account key file via google-cloud-auth' — i.e. the current static-env-token approach is a known stopgap."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-fcm-legacy-api-decommissioned",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:332-335 — when `oauth_token` is None the FCM v1 path falls back to `send_fcm_legacy(...)`, so the legacy path is the default whenever only `FCM_SERVER_KEY` is configured (the common minimal config; `is_configured()` at :240 returns true on server_key alone).",
+        "backend/servers/api-server/src/services/push_fanout.rs:419-424 — `send_fcm_legacy` POSTs to `{base_url}/fcm/send` with header `Authorization: key={server_key}`. This is Google's FCM *legacy* HTTP API, which Google shut down on 2024-06-20; requests now return 404/401 in production, so every push through this fallback silently fails (returns (false,false) at :433/:459).",
+        "Combined with the no-refresh finding above, a deployment configured with only FCM_SERVER_KEY (legacy) OR a static FCM_OAUTH_TOKEN has no working FCM delivery path beyond the first hour / at all. A durable fix needs service-account-based OAuth minting (google-cloud-auth) with refresh; the legacy branch should be removed."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
