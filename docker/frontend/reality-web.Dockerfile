@@ -53,9 +53,19 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 # Dockerfile sidesteps this by `COPY --from=deps /app/ ./` (whole tree);
 # reality-web keeps the selective list because next.js's standalone
 # output expects this exact layout for the runtime image.
+#
+# 2026-07-29: added `api-client` — reality-web pulls in `@ppt/api-client`
+# transitively (`@ppt/shared`'s src/index.ts re-exports it, and shared is
+# consumed at source), whose package.json declares `@tanstack/react-query`
+# and `@tanstack/query-core` as direct deps. Under pnpm's isolated layout
+# those materialize in `packages/api-client/node_modules`, which was never
+# copied here, so `next build`'s Turbopack type-check failed with 38
+# `Cannot find module '@tanstack/react-query'` errors, all in
+# `packages/api-client/src/**`. See #2560.
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/packages/ui-kit/node_modules ./packages/ui-kit/node_modules
+COPY --from=deps /app/packages/api-client/node_modules ./packages/api-client/node_modules
 COPY --from=deps /app/packages/reality-api-client/node_modules ./packages/reality-api-client/node_modules
 COPY --from=deps /app/packages/dev-panel/node_modules ./packages/dev-panel/node_modules
 COPY --from=deps /app/packages/sitemap/node_modules ./packages/sitemap/node_modules
