@@ -1567,7 +1567,8 @@
       "show": "Szakasz megjelenítése",
       "moveUp": "Felfelé mozgatás",
       "moveDown": "Lefelé mozgatás",
-      "mode": "Megjelenítési mód"
+      "mode": "Megjelenítési mód",
+      "modeDefault": "alapértelmezett"
     }
   }
 }

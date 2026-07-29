@@ -30,6 +30,8 @@ pub enum ValidationError {
     PropNotWhitelisted { section: SectionType, prop: String },
     #[error("this screen is not tenant-reorderable")]
     NotReorderable,
+    #[error("tenant override order lists section {section:?} more than once")]
+    DuplicateOrderEntry { section: SectionType },
     #[error("component {section:?} declares default_mode {mode:?} not in its supported_modes on {platform:?}")]
     InvalidDefaultMode {
         section: SectionType,
@@ -124,6 +126,21 @@ pub fn validate_tenant_override(
     let mut errs = Vec::new();
     if ov.order.is_some() && !rails.reorderable {
         errs.push(ValidationError::NotReorderable);
+    }
+    // Order contents gate: every entry must exist in the base config and appear
+    // at most once. Without this, resolve's order pass would emit one section
+    // per entry, so `order: ["a.v1" × N]` could duplicate sections N times.
+    if let Some(order) = &ov.order {
+        let mut seen = std::collections::BTreeSet::new();
+        for t in order {
+            if !seen.insert(t) {
+                errs.push(ValidationError::DuplicateOrderEntry { section: t.clone() });
+                continue;
+            }
+            if !base.sections.iter().any(|s| &s.section_type == t) {
+                errs.push(ValidationError::NotInBase { section: t.clone() });
+            }
+        }
     }
     static EMPTY: std::sync::OnceLock<std::collections::BTreeSet<String>> =
         std::sync::OnceLock::new();
@@ -387,6 +404,88 @@ mod tests {
         assert!(errs.iter().any(|e| matches!(e,
             ValidationError::NotModeEditable { section } if section.0 == "news.v1")));
     }
+    #[test]
+    fn duplicate_order_entries_are_rejected() {
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("a.v1"), section("b.v1")],
+        };
+        let rails = Rails {
+            reorderable: true,
+            ..Default::default()
+        };
+        let ov = TenantOverride {
+            order: Some(vec![
+                SectionType::from("a.v1"),
+                SectionType::from("a.v1"),
+                SectionType::from("a.v1"),
+            ]),
+            sections: BTreeMap::new(),
+        };
+        let errs = validate_tenant_override(&ov, &base, &rails);
+        assert_eq!(
+            errs,
+            vec![
+                ValidationError::DuplicateOrderEntry {
+                    section: SectionType::from("a.v1")
+                },
+                ValidationError::DuplicateOrderEntry {
+                    section: SectionType::from("a.v1")
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn order_entry_not_in_base_is_rejected() {
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("a.v1")],
+        };
+        let rails = Rails {
+            reorderable: true,
+            ..Default::default()
+        };
+        let ov = TenantOverride {
+            order: Some(vec![
+                SectionType::from("a.v1"),
+                SectionType::from("ghost.v1"),
+            ]),
+            sections: BTreeMap::new(),
+        };
+        let errs = validate_tenant_override(&ov, &base, &rails);
+        assert_eq!(
+            errs,
+            vec![ValidationError::NotInBase {
+                section: SectionType::from("ghost.v1")
+            }]
+        );
+    }
+
+    #[test]
+    fn valid_reorder_still_passes() {
+        let base = ScreenConfig {
+            screen: "s".into(),
+            version: 1,
+            sections: vec![section("a.v1"), section("b.v1"), section("c.v1")],
+        };
+        let rails = Rails {
+            reorderable: true,
+            ..Default::default()
+        };
+        let ov = TenantOverride {
+            order: Some(vec![
+                SectionType::from("c.v1"),
+                SectionType::from("a.v1"),
+                SectionType::from("b.v1"),
+            ]),
+            sections: BTreeMap::new(),
+        };
+        assert!(validate_tenant_override(&ov, &base, &rails).is_empty());
+    }
+
     #[test]
     fn invalid_default_mode_blocked_at_publish() {
         // Component declares default_mode 'grid' which is NOT in supported_modes ['list'].

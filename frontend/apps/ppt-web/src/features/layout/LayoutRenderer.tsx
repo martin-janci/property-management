@@ -33,6 +33,16 @@ export function LayoutRenderer({ layout, registry, onSectionClick }: LayoutRende
   return (
     <div className="layout-sections">
       {layout.sections.map((section) => {
+        // Element-level defense: a malformed cached/preview layout may carry
+        // null / non-object elements or a missing string type — skip them so
+        // they can't throw outside the per-section error boundary.
+        if (
+          section === null ||
+          typeof section !== 'object' ||
+          typeof (section as { type?: unknown }).type !== 'string'
+        ) {
+          return null;
+        }
         const def = registry[section.type];
         if (!def) {
           if (!warnedTypes.has(section.type)) {

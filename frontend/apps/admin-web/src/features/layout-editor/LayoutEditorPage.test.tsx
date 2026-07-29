@@ -484,4 +484,69 @@ describe('LayoutEditorPage', () => {
     const select = screen.getByRole('combobox', { name: /screen/i }) as HTMLSelectElement;
     expect(select.value).toBe('home/profile');
   });
+
+  // -------------------------------------------------------------------------
+  // Publish is disabled while a draft/rails save is in flight
+  // -------------------------------------------------------------------------
+
+  it('Publish is disabled while Save Draft is pending', async () => {
+    // Never-resolving putDraft keeps the save mutation pending
+    vi.mocked(putDraft).mockImplementation(() => new Promise(() => {}));
+    // Drop calls accumulated by earlier tests — this test asserts "not called"
+    vi.mocked(publish).mockClear();
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      const sel = screen.getByRole('combobox', { name: /screen/i });
+      if (!sel.querySelector('option[value="home/dashboard"]')) throw new Error('not loaded yet');
+    });
+    await user.selectOptions(screen.getByRole('combobox', { name: /screen/i }), 'home/dashboard');
+    await waitFor(() => screen.getByTestId('hide-btn-Hero'));
+
+    const publishBtn = screen.getByTestId('publish-btn') as HTMLButtonElement;
+    expect(publishBtn.disabled).toBe(false);
+
+    // Dirty the draft and start a save that never resolves
+    await user.click(screen.getByTestId('hide-btn-Hero'));
+    await user.click(screen.getByTestId('save-draft-btn'));
+
+    await waitFor(() => {
+      expect((screen.getByTestId('publish-btn') as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    // Clicking Publish while a save is pending must not fire the mutation
+    await user.click(screen.getByTestId('publish-btn'));
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // Queries are token-gated
+  // -------------------------------------------------------------------------
+
+  it('does not fire screens/manifests queries without a token', async () => {
+    // Drop calls accumulated by earlier tests — this test asserts "not called"
+    vi.mocked(listScreens).mockClear();
+    vi.mocked(listManifests).mockClear();
+    // Render WITHOUT seeding the session token store
+    sessionStorage.clear();
+    const qc = makeQueryClient();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <AdminAuthProvider>
+            <ToastProvider>
+              <LayoutEditorPage />
+            </ToastProvider>
+          </AdminAuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    // Give effects a tick to (not) fire
+    await new Promise((r) => setTimeout(r, 50));
+    expect(listScreens).not.toHaveBeenCalled();
+    expect(listManifests).not.toHaveBeenCalled();
+  });
 });

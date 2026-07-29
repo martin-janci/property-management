@@ -7,6 +7,35 @@
 # headers) lives in /etc/nginx/partials/*.conf and is pulled in via `include`
 # below. Only the bits that genuinely differ from admin-web stay inline here.
 
+# --- Layout-preview frame-ancestors carve-out (env-gated) -------------------
+# Mirrors reality-web's LAYOUT_PREVIEW_FRAME_ANCESTORS semantics: when the env
+# var is set (space-separated origins) AND the request carries layoutPreview=1
+# in the query string, serve `Content-Security-Policy: frame-ancestors
+# <origins>` and omit X-Frame-Options (it cannot express allowlists; CSP
+# frame-ancestors supersedes it in all modern browsers). Otherwise the
+# SAMEORIGIN / frame-ancestors 'self' policy below applies unchanged.
+#
+# `${LAYOUT_PREVIEW_FRAME_ANCESTORS}` is envsubst'd at container startup with
+# a safe empty default — unset env means the carve-out can never activate.
+
+# Query gate: origins only flow through on ?layoutPreview=1
+map $arg_layoutPreview $ppt_layout_preview_ancestors {
+    default "";
+    "1"     "${LAYOUT_PREVIEW_FRAME_ANCESTORS}";
+}
+
+# X-Frame-Options value: empty string ⇒ nginx omits the header entirely
+map $ppt_layout_preview_ancestors $ppt_xfo_value {
+    default "SAMEORIGIN";
+    "~."    "";
+}
+
+# frame-ancestors source list for the CSP header
+map $ppt_layout_preview_ancestors $ppt_frame_ancestors {
+    default "'self'";
+    "~."    $ppt_layout_preview_ancestors;
+}
+
 server {
     listen 8080;
     listen [::]:8080;
@@ -20,11 +49,14 @@ server {
 
     # Security headers
     include /etc/nginx/partials/security-headers-common.conf;
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    # CSP — was missing (#954). frame-ancestors 'self' mirrors the SAMEORIGIN
-    # policy above; connect-src is kept permissive (https:/wss:) so same-origin
+    # $ppt_xfo_value is "SAMEORIGIN" normally; empty (header omitted) only for
+    # the env-gated layoutPreview carve-out — see the map blocks above.
+    add_header X-Frame-Options $ppt_xfo_value always;
+    # CSP — was missing (#954). frame-ancestors mirrors the X-Frame-Options
+    # policy above ('self' normally, the allowlisted origins in the preview
+    # carve-out); connect-src is kept permissive (https:/wss:) so same-origin
     # /api + /ws proxying and any external uploads/telemetry keep working.
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors $ppt_frame_ancestors; base-uri 'self'; form-action 'self'; object-src 'none'" always;
 
     # Cache static assets. `add_header` in a location does NOT inherit the
     # parent's headers, so re-include the common set + re-declare X-Frame-Options.
@@ -32,7 +64,7 @@ server {
         expires 1y;
         add_header Cache-Control "public, immutable" always;
         include /etc/nginx/partials/security-headers-common.conf;
-        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Frame-Options $ppt_xfo_value always;
     }
 
     # Health check endpoint

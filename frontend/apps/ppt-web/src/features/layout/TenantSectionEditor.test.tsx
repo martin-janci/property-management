@@ -211,6 +211,60 @@ describe('Scenario 4: mode select', () => {
     const next = onChange.mock.calls[0][0] as TenantOverride;
     expect(next.sections?.feed?.mode).toBe('grid');
   });
+
+  it('renders an empty "default" option first and shows it when no override mode is set', () => {
+    render(
+      <TenantSectionEditor
+        baseSections={[{ type: 'feed', mode: 'list' }]}
+        rails={modeRails}
+        manifest={feedManifest}
+        override={emptyOverride}
+        onChange={vi.fn()}
+      />
+    );
+    const select = screen.getByRole('combobox', {
+      name: 'layout.customize.mode',
+    }) as HTMLSelectElement;
+    // First option is the empty "default" option, selected when patch has no mode
+    expect(select.options[0].value).toBe('');
+    expect(select.value).toBe('');
+  });
+
+  it('selecting the empty option removes the mode from the patch', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <TenantSectionEditor
+        baseSections={[{ type: 'feed', mode: 'list' }]}
+        rails={modeRails}
+        manifest={feedManifest}
+        override={{ sections: { feed: { mode: 'grid' } } }}
+        onChange={onChange}
+      />
+    );
+    await user.selectOptions(screen.getByRole('combobox', { name: 'layout.customize.mode' }), '');
+    expect(onChange).toHaveBeenCalledOnce();
+    const next = onChange.mock.calls[0][0] as TenantOverride;
+    // mode removed → patch pruned entirely
+    expect(next.sections?.feed).toBeUndefined();
+  });
+
+  it('does not throw on a malformed manifest missing the components map', () => {
+    const malformed = { platform: 'web' } as unknown as LayoutManifest;
+    expect(() =>
+      render(
+        <TenantSectionEditor
+          baseSections={[{ type: 'feed', mode: 'list' }]}
+          rails={modeRails}
+          manifest={malformed}
+          override={emptyOverride}
+          onChange={vi.fn()}
+        />
+      )
+    ).not.toThrow();
+    // No supported modes → no select
+    expect(screen.queryByRole('combobox')).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------

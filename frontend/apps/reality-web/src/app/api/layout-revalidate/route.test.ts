@@ -220,6 +220,17 @@ describe('POST /api/layout-revalidate', () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
+  it('returns 413 for bodies larger than 16 KiB before verifying', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    // Correctly signed, but oversized — the size cap must fire first so an
+    // unauthenticated caller cannot force unbounded HMAC/JSON work.
+    const body = JSON.stringify({ screen: 'reality/listing-detail', pad: 'x'.repeat(17 * 1024) });
+    const res = await POST(signedRequest(SECRET, body));
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: 'body too large' });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
   it('returns 200 and revalidates layout:listing-detail on a fresh signed request', async () => {
     vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
     const body = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });

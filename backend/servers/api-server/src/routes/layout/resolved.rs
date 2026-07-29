@@ -23,6 +23,7 @@ pub fn parse_platform(s: Option<&str>) -> Result<layout_core::Platform, String> 
     params(("screen" = String, Path, description = "Screen id, e.g. ppt/dashboard"),
            ("platform" = Option<String>, Query, description = "web|mobile, default web")),
     responses((status = 200, description = "Resolved section list"),
+              (status = 400, description = "Unknown platform or no organization-scoped host"),
               (status = 404, description = "Screen not published or manifest missing")))]
 pub async fn get_resolved(
     State(state): State<AppState>,
@@ -62,6 +63,17 @@ pub async fn get_resolved(
     // RLS connection whose context was bound by ValidatedTenantExtractor —
     // if the two ever disagreed, RLS returns no row (fails safe, no leak).
     let org_id = tenant.tenant_id;
+    // Nil-org sentinel (platform hosts): a tenant override keyed on Uuid::nil()
+    // would be shared across all orgs — refuse before any DB access.
+    if org_id.is_nil() {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ValidationErrorsResponse {
+                errors: vec!["layout resolution requires an organization-scoped host".into()],
+            }),
+        ));
+    }
 
     let tenant_ov_row = repo
         .get_tenant_override(&mut **rls.conn(), org_id, &screen)

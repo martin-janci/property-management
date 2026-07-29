@@ -1703,7 +1703,8 @@
       "show": "Zobraziť sekciu",
       "moveUp": "Presunúť nahor",
       "moveDown": "Presunúť nadol",
-      "mode": "Režim zobrazenia"
+      "mode": "Režim zobrazenia",
+      "modeDefault": "predvolený"
     }
   }
 }

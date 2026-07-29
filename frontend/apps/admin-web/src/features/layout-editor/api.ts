@@ -92,8 +92,8 @@ export interface ManifestRow {
 export class LayoutApiError extends Error {
   status: number;
   errors: string[];
-  constructor(status: number, errors: string[]) {
-    super(errors.join('; ') || `HTTP ${status}`);
+  constructor(status: number, errors: string[], fallbackMessage?: string) {
+    super(errors.join('; ') || fallbackMessage || `HTTP ${status}`);
     this.status = status;
     this.errors = errors;
   }
@@ -122,11 +122,27 @@ async function request<T>(
   });
   if (res.status === 404 && opts.emptyOn404 !== undefined) return opts.emptyOn404;
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    const errors = Array.isArray((body as { errors?: unknown }).errors)
-      ? (body as { errors: string[] }).errors
-      : [];
-    throw new LayoutApiError(res.status, errors);
+    // Read the raw text once, then try JSON — keeps the text available as the
+    // last-resort message when the body has no `errors: string[]`.
+    const rawText = await res.text().catch(() => '');
+    let body: unknown = {};
+    try {
+      body = JSON.parse(rawText);
+    } catch {
+      // non-JSON body — fall through to rawText
+    }
+    const record = (typeof body === 'object' && body !== null ? body : {}) as Record<
+      string,
+      unknown
+    >;
+    const errors = Array.isArray(record.errors) ? (record.errors as string[]) : [];
+    // Fallback message chain: body.message → body.detail → raw text → HTTP <status>
+    const fallback =
+      (typeof record.message === 'string' && record.message) ||
+      (typeof record.detail === 'string' && record.detail) ||
+      rawText.trim() ||
+      undefined;
+    throw new LayoutApiError(res.status, errors, fallback);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

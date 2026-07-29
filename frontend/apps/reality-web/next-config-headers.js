@@ -24,8 +24,9 @@
  *
  * - Blanket entry (first): all routes, `frame-ancestors 'none'` + `X-Frame-Options: DENY`.
  * - Carve-out entry (after blanket, only when `layoutPreviewOrigins` is non-empty):
- *   matches `?layoutPreview=1` requests and overwrites CSP frame-ancestors with the
- *   configured origins. X-Frame-Options is omitted (CSP supersedes it in modern browsers;
+ *   matches `?layoutPreview=1` requests on listing-detail routes ONLY
+ *   (`/:locale/listings/:slug` — the single screen the layout preview frames)
+ *   and overwrites CSP frame-ancestors with the configured origins. X-Frame-Options is omitted (CSP supersedes it in modern browsers;
  *   XFO cannot express allowlists). Next.js applies all matching entries cumulatively with
  *   last-wins for duplicate header keys, so placing the carve-out entry AFTER the blanket
  *   causes its CSP value to win.
@@ -90,7 +91,9 @@ function buildHeaderEntries({ isDev, connectSrcOrigins, layoutPreviewOrigins }) 
     ].join('; ');
 
     entries.push({
-      source: '/:path*',
+      // Narrowed to listing-detail routes only — allowed origins must not be
+      // able to frame arbitrary pages, just the screen the preview targets.
+      source: '/:locale/listings/:slug',
       has: [{ type: 'query', key: 'layoutPreview', value: '1' }],
       headers: [
         { key: 'Content-Security-Policy', value: previewCsp },

@@ -12,10 +12,26 @@ use super::types::{
 };
 use super::webhook;
 
+/// 422 — strictly for validation results on the *request* (unparseable request
+/// payloads, publish-gate validation errors). Infra failures go through
+/// [`internal_error`] instead.
 fn bad_request(errors: Vec<String>) -> (StatusCode, Json<ValidationErrorsResponse>) {
     (
         StatusCode::UNPROCESSABLE_ENTITY,
         Json(ValidationErrorsResponse { errors }),
+    )
+}
+
+/// 500 — infra failures (pool acquire, query errors, corrupt stored data).
+/// Logs the real error server-side; the client gets a generic message so raw
+/// sqlx/serde error text never leaks.
+fn internal_error(err: impl std::fmt::Display) -> (StatusCode, Json<ValidationErrorsResponse>) {
+    tracing::error!(error = %err, "layout admin: internal error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ValidationErrorsResponse {
+            errors: vec!["internal server error".into()],
+        }),
     )
 }
 
@@ -38,11 +54,11 @@ pub async fn list_screens(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let rows = LayoutRepository::new()
         .list_configs(&mut **conn)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     Ok(Json(serde_json::to_value(rows).unwrap_or_default()))
 }
 
@@ -66,12 +82,12 @@ pub async fn get_config(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let repo = LayoutRepository::new();
     let cfg = repo
         .get_config(&mut **conn, &q.screen)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .map_err(internal_error)?
         .ok_or((
             StatusCode::NOT_FOUND,
             Json(ValidationErrorsResponse {
@@ -81,11 +97,11 @@ pub async fn get_config(
     let versions = repo
         .list_versions(&mut **conn, &q.screen)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let kills = repo
         .list_kills(&mut **conn, &q.screen)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     Ok(Json(
         serde_json::json!({ "config": cfg, "versions": versions, "kills": kills }),
     ))
@@ -115,11 +131,11 @@ pub async fn put_draft(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let row = LayoutRepository::new()
         .upsert_draft(&mut **conn, &req.screen, &req.config, Some(admin_id))
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -146,11 +162,11 @@ pub async fn put_rails(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let row = LayoutRepository::new()
         .set_rails(&mut **conn, &req.screen, &req.rails, Some(admin_id))
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -173,11 +189,11 @@ pub async fn list_manifests(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let rows = LayoutRepository::new()
         .list_manifests(&mut **conn)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     Ok(Json(serde_json::to_value(rows).unwrap_or_default()))
 }
 
@@ -213,11 +229,11 @@ pub async fn put_manifest(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let row = LayoutRepository::new()
         .upsert_manifest(&mut **conn, &req.platform, &req.manifest, Some(admin_id))
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
 
@@ -225,7 +241,7 @@ pub async fn put_manifest(
     security(("bearer_auth" = [])), request_body = PublishRequest,
     responses((status = 200, description = "Published"),
               (status = 404, description = "Unknown screen"),
-              (status = 409, description = "No registry manifests uploaded yet"),
+              (status = 409, description = "No registry manifests uploaded yet, or draft changed during publish (retry)"),
               (status = 422, description = "Validation errors — publish blocked")))]
 pub async fn publish(
     State(state): State<AppState>,
@@ -244,13 +260,13 @@ pub async fn publish(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let repo = LayoutRepository::new();
 
     let cfg_row = repo
         .get_config(&mut **conn, &req.screen)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .map_err(internal_error)?
         .ok_or((
             StatusCode::NOT_FOUND,
             Json(ValidationErrorsResponse {
@@ -264,11 +280,13 @@ pub async fn publish(
                 "stored draft is not a valid ScreenConfig: {e}"
             )])
         })?;
+    // The exact draft value we validated — publish is guarded on it (TOCTOU).
+    let validated_draft = cfg_row.draft.clone();
 
     let manifest_rows = repo
         .list_manifests(&mut **conn)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     if manifest_rows.is_empty() {
         return Err((
             StatusCode::CONFLICT,
@@ -281,17 +299,34 @@ pub async fn publish(
         .iter()
         .map(|r| serde_json::from_value(r.manifest.clone()))
         .collect::<Result<_, _>>()
-        .map_err(|e| bad_request(vec![format!("stored manifest is invalid: {e}")]))?;
+        .map_err(internal_error)?;
 
     let errors = layout_core::validate_publish(&draft, &manifests);
     if !errors.is_empty() {
         return Err(bad_request(errors.iter().map(|e| e.to_string()).collect()));
     }
 
+    // Guarded on the validated draft: a concurrent draft PUT between the
+    // validation above and this UPDATE yields DraftChanged (409), never an
+    // unvalidated publish.
     let row = repo
-        .publish(&mut conn, &req.screen, Some(admin_id))
+        .publish(&mut conn, &req.screen, &validated_draft, Some(admin_id))
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(|e| match e {
+            db::repositories::LayoutPublishError::ScreenNotFound => (
+                StatusCode::NOT_FOUND,
+                Json(ValidationErrorsResponse {
+                    errors: vec!["unknown screen".into()],
+                }),
+            ),
+            db::repositories::LayoutPublishError::DraftChanged => (
+                StatusCode::CONFLICT,
+                Json(ValidationErrorsResponse {
+                    errors: vec!["draft changed during publish, retry".into()],
+                }),
+            ),
+            db::repositories::LayoutPublishError::Sqlx(e) => internal_error(e),
+        })?;
     webhook::notify_layout_change(&req.screen, "published");
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
 }
@@ -316,7 +351,7 @@ pub async fn rollback(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let row = LayoutRepository::new()
         .rollback(&mut conn, &req.screen, req.version, Some(admin_id))
         .await
@@ -327,7 +362,7 @@ pub async fn rollback(
                     errors: vec!["unknown screen or version".into()],
                 }),
             ),
-            other => bad_request(vec![format!("db error: {other}")]),
+            other => internal_error(other),
         })?;
     webhook::notify_layout_change(&req.screen, "rolled_back");
     Ok(Json(serde_json::to_value(row).unwrap_or_default()))
@@ -353,11 +388,11 @@ pub async fn kill(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     LayoutRepository::new()
         .kill(&mut **conn, &req.screen, &req.section_type, Some(admin_id))
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     webhook::notify_layout_change(&req.screen, "killed");
     Ok(StatusCode::NO_CONTENT)
 }
@@ -398,13 +433,13 @@ pub async fn preview_resolve(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let repo = LayoutRepository::new();
 
     let manifest_row = repo
         .get_manifest(&mut **conn, platform_key)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .map_err(internal_error)?
         .ok_or((
             StatusCode::NOT_FOUND,
             Json(ValidationErrorsResponse {
@@ -417,7 +452,7 @@ pub async fn preview_resolve(
     let kills: std::collections::BTreeSet<layout_core::SectionType> = repo
         .list_kills(&mut **conn, &config.screen)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?
+        .map_err(internal_error)?
         .into_iter()
         .map(|k| layout_core::SectionType(k.section_type))
         .collect();
@@ -446,11 +481,11 @@ pub async fn unkill(
     let mut conn = RlsPool::new(state.db.clone())
         .acquire_public()
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     let removed = LayoutRepository::new()
         .unkill(&mut **conn, &req.screen, &req.section_type)
         .await
-        .map_err(|e| bad_request(vec![format!("db error: {e}")]))?;
+        .map_err(internal_error)?;
     if removed {
         webhook::notify_layout_change(&req.screen, "unkilled");
         Ok(StatusCode::NO_CONTENT)

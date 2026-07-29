@@ -10,6 +10,28 @@ import type { ResolvedScreenLike } from '@ppt/shared';
 import { connectPreviewChild, readPreviewParams } from '@ppt/shared';
 import { useEffect, useRef, useState } from 'react';
 
+/**
+ * Allowlist gate for preview activation (unset = deny, mirroring reality-web's
+ * LAYOUT_PREVIEW_FRAME_ANCESTORS posture): the parentOrigin from the URL must
+ * exactly match one of the comma-separated origins in
+ * VITE_LAYOUT_PREVIEW_PARENT_ORIGINS. When the env var is unset/empty, preview
+ * NEVER activates.
+ */
+function readAllowedPreviewParams(search: string): { parentOrigin: string } | null {
+  const params = readPreviewParams(search);
+  if (!params) return null;
+
+  const raw = import.meta.env.VITE_LAYOUT_PREVIEW_PARENT_ORIGINS ?? '';
+  const allowed = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (allowed.length === 0) return null;
+  if (!allowed.includes(params.parentOrigin)) return null;
+
+  return params;
+}
+
 export interface PreviewLayoutResult {
   /** The layout pushed from the parent via the bridge, or null while waiting. */
   previewLayout: ResolvedScreenLike | null;
@@ -25,7 +47,7 @@ export interface PreviewLayoutResult {
  */
 export function usePreviewLayout(screen: string): PreviewLayoutResult {
   // Read params ONCE at mount — stable across re-renders
-  const [params] = useState(() => readPreviewParams(window.location.search));
+  const [params] = useState(() => readAllowedPreviewParams(window.location.search));
   const inPreview = params !== null;
 
   const [previewLayout, setPreviewLayout] = useState<ResolvedScreenLike | null>(null);

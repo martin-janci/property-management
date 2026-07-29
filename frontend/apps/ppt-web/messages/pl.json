@@ -1573,7 +1573,8 @@
       "show": "Pokaż sekcję",
       "moveUp": "Przesuń w górę",
       "moveDown": "Przesuń w dół",
-      "mode": "Tryb wyświetlania"
+      "mode": "Tryb wyświetlania",
+      "modeDefault": "domyślny"
     }
   }
 }

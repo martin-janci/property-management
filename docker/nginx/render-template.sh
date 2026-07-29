@@ -12,12 +12,15 @@ set -eu
 
 : "${BG_TARGET:=_unset_}"
 : "${BG_COLOR:=_unset_}"
+# Space-separated origins allowed to frame ppt-web when ?layoutPreview=1 is
+# present (mirrors reality-web's env). Safe empty default = carve-out disabled.
+: "${LAYOUT_PREVIEW_FRAME_ANCESTORS:=}"
 
-export BG_TARGET BG_COLOR
+export BG_TARGET BG_COLOR LAYOUT_PREVIEW_FRAME_ANCESTORS
 
-# Only the two BG_* vars are substituted. nginx's own `$host`, `$remote_addr`
+# Only these vars are substituted. nginx's own `$host`, `$remote_addr`
 # etc. must NOT be expanded — they're nginx variables, evaluated per request.
-envsubst '${BG_TARGET} ${BG_COLOR}' \
+envsubst '${BG_TARGET} ${BG_COLOR} ${LAYOUT_PREVIEW_FRAME_ANCESTORS}' \
     < /etc/nginx/conf.d/default.conf.template \
     > /etc/nginx/conf.d/default.conf
 

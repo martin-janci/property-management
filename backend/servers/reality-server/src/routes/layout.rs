@@ -23,6 +23,14 @@ pub fn router() -> Router<AppState> {
     Router::new().route("/resolved/{*screen}", get(get_resolved))
 }
 
+/// Namespace guard for the public, unauthenticated resolved endpoint: only
+/// `reality/*` screens are servable here. Internal namespaces (e.g. `ppt/*`
+/// management screens) must never leak through the public portal — they 404
+/// before any DB access.
+fn is_public_layout_screen(screen: &str) -> bool {
+    screen.starts_with("reality/")
+}
+
 #[utoipa::path(get, path = "/api/v1/layout/resolved/{screen}", tag = "Layout",
     params(("screen" = String, Path, description = "Screen id, e.g. reality/listing-detail"),
            ("platform" = Option<String>, Query, description = "web|mobile, default web")),
@@ -33,6 +41,10 @@ pub async fn get_resolved(
     Path(screen): Path<String>,
     Query(q): Query<ResolvedQuery>,
 ) -> Result<Json<layout_core::ResolvedScreen>, (StatusCode, String)> {
+    // Public namespace restriction — before any DB access.
+    if !is_public_layout_screen(&screen) {
+        return Err((StatusCode::NOT_FOUND, "unknown screen".to_string()));
+    }
     let platform = match q.platform.as_deref().unwrap_or("web") {
         "web" => layout_core::Platform::Web,
         "mobile" => layout_core::Platform::Mobile,
@@ -97,4 +109,21 @@ pub async fn get_resolved(
     // doesn't contribute on public reality screens).
     let resolved = layout_core::resolve(&base, platform, None, &kills, &manifest);
     Ok(Json(resolved))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_public_layout_screen;
+
+    #[test]
+    fn only_reality_namespace_is_public() {
+        assert!(is_public_layout_screen("reality/listing-detail"));
+        assert!(is_public_layout_screen("reality/home"));
+        // internal namespaces must not be servable on the public portal
+        assert!(!is_public_layout_screen("ppt/dashboard"));
+        assert!(!is_public_layout_screen("admin/anything"));
+        assert!(!is_public_layout_screen("reality")); // no trailing segment
+        assert!(!is_public_layout_screen(""));
+        assert!(!is_public_layout_screen("Reality/home")); // case-sensitive
+    }
 }

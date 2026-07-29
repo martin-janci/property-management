@@ -79,17 +79,32 @@ function resolveApiBase(host: string | null): string {
 // getResolvedLayout
 // ---------------------------------------------------------------------------
 
+/** Hard cap on the number of sections accepted from the server. */
+const MAX_SECTIONS = 100;
+
+/** True when `s` is an object with a string `type` — the minimum shape the
+ *  renderer can handle without throwing. */
+function isRenderableSection(s: unknown): s is ResolvedSection {
+  return s !== null && typeof s === 'object' && typeof (s as { type?: unknown }).type === 'string';
+}
+
 /**
  * Fetch the resolved layout for the listing-detail screen.
  *
  * NEVER throws and NEVER gates the page — any failure returns
- * `DEFAULT_LISTING_DETAIL_LAYOUT` (spec §4).
+ * `DEFAULT_LISTING_DETAIL_LAYOUT` (spec §4). Element-level defense: a payload
+ * like `sections: [null]` must not be able to SSR-crash the page later, so
+ * non-object elements / missing string `type` are dropped and the section
+ * list is clamped to MAX_SECTIONS.
+ *
+ * Cache tags: only the global `layout:listing-detail` tag — the per-host
+ * `host:<host>:layout:...` tag family was never revalidated by anything
+ * (the /api/layout-revalidate route only knows `layout:<segment>`), so it
+ * was dead weight in the tag index.
  */
 export async function getResolvedLayout(host: string | null): Promise<ResolvedScreen> {
   try {
-    const tags = host
-      ? [`host:${host}:layout:listing-detail`, 'layout:listing-detail']
-      : ['layout:listing-detail'];
+    const tags = ['layout:listing-detail'];
     const response = await fetch(
       `${resolveApiBase(host)}/api/v1/layout/resolved/${SCREEN}?platform=web`,
       { headers: host ? { Host: host } : {}, next: { revalidate: 60, tags } }
@@ -99,7 +114,10 @@ export async function getResolvedLayout(host: string | null): Promise<ResolvedSc
     if (!body || body.screen !== SCREEN || !Array.isArray(body.sections)) {
       return DEFAULT_LISTING_DETAIL_LAYOUT;
     }
-    return body;
+    return {
+      ...body,
+      sections: body.sections.filter(isRenderableSection).slice(0, MAX_SECTIONS),
+    };
   } catch {
     return DEFAULT_LISTING_DETAIL_LAYOUT;
   }

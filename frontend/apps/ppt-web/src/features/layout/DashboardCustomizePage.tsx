@@ -78,7 +78,9 @@ export function DashboardCustomizePage() {
         setIsDirty(true);
       }
     } catch (err) {
-      if (err instanceof TenantLayoutError && err.status === 422) {
+      // A 422 with an empty `errors` array would render an empty alert list and
+      // no other feedback — fall through to the generic toast instead.
+      if (err instanceof TenantLayoutError && err.status === 422 && err.errors.length > 0) {
         setValidationErrors(err.errors);
       } else {
         showToast({
