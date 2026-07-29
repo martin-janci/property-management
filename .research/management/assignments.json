@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-29T14:21:00Z",
+  "generated": "2026-07-29T14:33:00Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -26,18 +26,18 @@
     {
       "task_id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
       "branch": "auto-impl/code-review-mobile-native-kmp-android-ss-986efc99",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-29T14:03:00Z",
-      "last_updated": "2026-07-29T14:03:00Z",
-      "status_changed_at": "2026-07-29T14:03:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-29T14:33:00Z",
+      "status_changed_at": "2026-07-29T14:33:00Z",
+      "pr_number": 2568,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2568",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=none status=partial specialist=kotlin-mp scope_drift=true code_reuse_warn=none note=code complete+pushed; local verify unrunnable (no Android SDK, AGP unresolvable via proxy; local-only C5); regression tests added; drift=mobile-native (justified) [dispatcher opened draft PR #2568 for CI verify]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
