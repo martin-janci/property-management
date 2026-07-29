@@ -33,35 +33,10 @@
 //!      creates a `pending` row and `advance_after_run(id, None)` parks the
 //!      schedule (NULL `next_run_at`), after which it stops appearing as due.
 
+use crate::common::{seed_org, set_ctx};
 use db::repositories::ReportScheduleRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
-    sqlx::query("SELECT set_request_context($1, $2, $3)")
-        .bind(org_id)
-        .bind(user_id)
-        .bind(is_super_admin)
-        .execute(pool)
-        .await
-        .expect("set_request_context");
-}
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Reports {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@reports.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 /// Seed a due schedule directly (as superuser, RLS-exempt): active, with a
 /// `next_run_at` one hour in the past so `get_due_schedules` should return it.

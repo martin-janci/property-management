@@ -25,27 +25,12 @@
 //! directly under that superuser; the RLS test drops to a dedicated
 //! `NOSUPERUSER NOBYPASSRLS` role so `FORCE ROW LEVEL SECURITY` actually binds.
 
+use crate::common::seed_org;
 use db::models::ImportDataType;
 use db::repositories::MigrationRepository;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Org {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@migtmpl.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 /// Create `n` org-scoped templates, then flatten their `updated_at` to a single
 /// fixed instant so ordering within the page depends solely on the `id DESC`

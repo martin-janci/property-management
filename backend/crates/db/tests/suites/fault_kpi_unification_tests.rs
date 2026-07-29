@@ -20,25 +20,10 @@
 
 use std::collections::BTreeMap;
 
+use crate::common::seed_org;
 use db::repositories::{FaultRepository, PlatformAdminRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Org {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@orgs.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

@@ -14,6 +14,7 @@
 //! test runs under a dedicated NOSUPERUSER/NOBYPASSRLS role on a single pinned
 //! connection — the same technique as `accounting_rls_repo_tests.rs`.
 
+use crate::common::seed_org;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -38,19 +39,6 @@ const NEW_TABLES: &[&str] = &[
     "acc_audit_log",
     "acc_two_factor",
 ];
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"INSERT INTO organizations (name, slug, contact_email, status)
-           VALUES ($1, $2, $3, 'active') RETURNING id"#,
-    )
-    .bind(format!("Acc {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@acc.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn set_request_ctx(
     conn: &mut sqlx::PgConnection,

@@ -37,36 +37,11 @@
 //! `equipment_rls_repo_tests.rs` / `work_order_rls_repo_tests.rs` (the PAP-67
 //! precedent PAP-109 follows).
 
+use crate::common::{seed_org, set_ctx};
 use db::models::{CreateLegalDocument, LegalDocumentQuery};
 use db::repositories::LegalRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
-    sqlx::query("SELECT set_request_context($1, $2, $3)")
-        .bind(org_id)
-        .bind(user_id)
-        .bind(is_super_admin)
-        .execute(pool)
-        .await
-        .expect("set_request_context");
-}
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("LEGAL {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@legal.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

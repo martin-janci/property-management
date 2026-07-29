@@ -21,25 +21,10 @@
 //! it. `FORCE` binds that role, so the org-scoped policy is enforced. The org
 //! context (`app.current_org_id`) is a session GUC and survives `SET ROLE`.
 
+use crate::common::seed_org;
 use db::repositories::WorkOrderRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("WorkOrders {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@work-orders.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

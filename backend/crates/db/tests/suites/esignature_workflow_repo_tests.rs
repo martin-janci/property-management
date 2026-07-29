@@ -20,6 +20,7 @@
 //! not to exercise RLS enforcement (that is done via the static
 //! `check-rls-enforcement.sh --strict` scanner once the table is migrated).
 
+use crate::common::seed_org;
 use db::repositories::IntegrationRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -49,19 +50,6 @@ async fn ensure_esignature_workflows_table(pool: &PgPool) {
     .execute(pool)
     .await
     .expect("create esignature_workflows table");
-}
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        "INSERT INTO organizations (name, slug, contact_email, status) \
-         VALUES ($1, $2, $3, 'active') RETURNING id",
-    )
-    .bind(format!("ESig {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@esig.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
 }
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {

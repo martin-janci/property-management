@@ -30,6 +30,7 @@
 //! paths through the repo — no raw-SQL seeding — and asserts the enum-backed
 //! `status` / `termination_reason` decode as text.
 
+use crate::common::seed_org;
 use chrono::{Duration, Utc};
 use db::models::lease::{ApplicationListQuery, CreateLease, LeaseListQuery, TerminateLease};
 use db::repositories::LeaseRepository;
@@ -38,22 +39,6 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 const DESIGNATION: &str = "A-101-JOIN";
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Lease {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@lease.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_building(pool: &PgPool, org: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

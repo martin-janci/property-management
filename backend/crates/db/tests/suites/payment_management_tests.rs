@@ -8,6 +8,7 @@
 //! Run against a live Postgres (sqlx spins up a per-test database):
 //! `DATABASE_URL=... cargo test -p db --test payment_management_tests`.
 
+use crate::common::seed_org;
 use db::repositories::FinancialRepository;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
@@ -15,22 +16,6 @@ use uuid::Uuid;
 
 fn money(units: i64) -> Decimal {
     Decimal::new(units * 100, 2) // whole-euro helper: money(100) == 100.00
-}
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("PayMgmt {slug}"))
-    .bind(format!("pay-mgmt-{slug}"))
-    .bind(format!("{slug}@pay-mgmt.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
 }
 
 async fn seed_unit(pool: &PgPool, org: Uuid) -> Uuid {

@@ -11,28 +11,9 @@
 //!
 //! These tests must PASS on the patched branch and would FAIL on original dev.
 
+use crate::common::seed_org;
 use db::repositories::RentalRepository;
 use sqlx::PgPool;
-use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Cross-Tenant Test {slug}"))
-    .bind(format!(
-        "cross-tenant-test-{slug}-{}",
-        Uuid::new_v4().simple()
-    ))
-    .bind(format!("{slug}@cross-tenant.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 // ---------------------------------------------------------------------------
 // Airbnb cross-tenant upsert

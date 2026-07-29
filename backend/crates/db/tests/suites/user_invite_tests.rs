@@ -4,27 +4,12 @@
 //! membership → join any org"). Every invite is single-use, expiring, and
 //! email-bound; tokens are stored only as SHA-256 hashes.
 
+use crate::common::seed_org;
 use chrono::Duration;
 use db::repositories::user_invite::ConsumeInviteOutcome;
 use db::repositories::UserInviteRepository;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Phase2 Inv {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@invite.phase2.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     let row = sqlx::query(
