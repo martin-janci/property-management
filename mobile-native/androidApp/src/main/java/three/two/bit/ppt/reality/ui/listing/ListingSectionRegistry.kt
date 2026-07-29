@@ -1,5 +1,6 @@
 package three.two.bit.ppt.reality.ui.listing
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,12 @@ data class ListingSectionContext(
     val onFavoriteClick: () -> Unit,
     val onCallClick: () -> Unit,
     val onTabSelect: (Int) -> Unit,
+    /**
+     * True when the resolved layout contains a VISIBLE (non-placeholder) features.v1 section. Gates
+     * the emission of the feature chips inside description.v1's tab 0 — features.v1 itself emits
+     * nothing in-list (its content is folded into the description tab).
+     */
+    val showFeatures: Boolean = true,
 )
 
 /**
@@ -51,7 +58,8 @@ data class ListingSectionContext(
  *   ensures pixel-identical output regardless of where agent-contact.v1 appears in the server
  *   layout (e.g. last in [DEFAULT_LISTING_DETAIL_LAYOUT]). Only the placeholder case emits a card
  *   in-list.
- * - features.v1 → no-op (features are rendered inside description.v1's tab 0)
+ * - features.v1 → no-op in-list; its presence (visible, non-placeholder) gates the feature chips
+ *   rendered inside description.v1's tab 0 (see [ListingSectionContext.showFeatures])
  * - additional-info.v1 → no-op
  * - resources.v1 → no-op
  * - unknown → no-op (+ log warn)
@@ -64,6 +72,11 @@ data class ListingSectionContext(
  * list — this is a pure restructure.
  */
 object ListingSectionRegistry {
+
+    private const val TAG = "ListingSectionRegistry"
+
+    /** Unknown section types already warned about — warn once per type per process. */
+    private val warnedUnknownTypes: MutableSet<String> = mutableSetOf()
 
     /** The eight section types the registry knows about. */
     val supportedTypes: Set<String> =
@@ -79,7 +92,10 @@ object ListingSectionRegistry {
         )
 
     /**
-     * Emit LazyList items for a single [section].
+     * Emit LazyList items for a single [section]. [index] is the section's position in the resolved
+     * sections list and is suffixed into every item key so that keys stay unique even if the server
+     * (unexpectedly) sends duplicate section types — LazyColumn crashes on duplicate keys. The
+     * shared LayoutRepository already dedupes by type; this is defense-in-depth.
      *
      * The [sectionAgentContactIsActive] helper lets the caller decide whether to render
      * [StickyAgentBar] and [BottomActionBar] at their fixed visual positions (after the gallery and
@@ -91,13 +107,17 @@ object ListingSectionRegistry {
      * bar position independent of where agent-contact.v1 appears in the server-resolved layout
      * order.
      */
-    fun LazyListScope.sectionItems(section: ResolvedLayoutSection, ctx: ListingSectionContext) {
+    fun LazyListScope.sectionItems(
+        section: ResolvedLayoutSection,
+        index: Int,
+        ctx: ListingSectionContext,
+    ) {
         when (section.type) {
             "gallery.v1" -> {
                 if (section.isPlaceholder) {
-                    item(key = "placeholder-gallery") { PlaceholderSection() }
+                    item(key = "placeholder-gallery-$index") { PlaceholderSection() }
                 } else {
-                    item(key = "gallery") {
+                    item(key = "gallery-$index") {
                         HeroGallery(
                             images = ctx.listing.images,
                             isFavorite = ctx.isFavorite,
@@ -115,53 +135,61 @@ object ListingSectionRegistry {
                 // BottomActionBar at screen-bottom). Nothing is emitted in-list for the active
                 // case so that the bar position does not change with the layout order.
                 if (section.isPlaceholder) {
-                    item(key = "placeholder-agent-contact") { PlaceholderSection() }
+                    item(key = "placeholder-agent-contact-$index") { PlaceholderSection() }
                 }
                 // else: no-op — StickyAgentBar and BottomActionBar rendered by ListingContent
             }
 
             "listing-header.v1" -> {
                 if (section.isPlaceholder) {
-                    item(key = "placeholder-listing-header") { PlaceholderSection() }
+                    item(key = "placeholder-listing-header-$index") { PlaceholderSection() }
                 } else {
-                    item(key = "listing-header") { HeaderSection(listing = ctx.listing) }
+                    item(key = "listing-header-$index") { HeaderSection(listing = ctx.listing) }
                     // Pre-refactor layout had a dedicated 18dp gap after the header.
-                    item(key = "listing-header-gap") { Spacer(modifier = Modifier.height(18.dp)) }
+                    item(key = "listing-header-gap-$index") {
+                        Spacer(modifier = Modifier.height(18.dp))
+                    }
                 }
             }
 
             "key-details.v1" -> {
                 if (section.isPlaceholder) {
-                    item(key = "placeholder-key-details") { PlaceholderSection() }
+                    item(key = "placeholder-key-details-$index") { PlaceholderSection() }
                 } else {
-                    item(key = "key-details") { QuickStatsStrip(listing = ctx.listing) }
+                    item(key = "key-details-$index") { QuickStatsStrip(listing = ctx.listing) }
                 }
             }
 
             "description.v1" -> {
                 if (section.isPlaceholder) {
-                    item(key = "placeholder-description") { PlaceholderSection() }
+                    item(key = "placeholder-description-$index") { PlaceholderSection() }
                 } else {
-                    item(key = "tab-strip") {
+                    item(key = "tab-strip-$index") {
                         TabStrip(selected = ctx.selectedTab, onSelect = ctx.onTabSelect)
                     }
                     when (ctx.selectedTab) {
                         0 -> {
-                            item(key = "description-body") {
+                            item(key = "description-body-$index") {
                                 DescriptionBody(description = ctx.listing.description)
                             }
-                            if (ctx.listing.features.isNotEmpty()) {
-                                item(key = "features-chips") {
+                            // Feature chips render only when the resolved layout contains a
+                            // VISIBLE features.v1 section (features.v1 contract) AND the
+                            // listing actually has features.
+                            if (ctx.showFeatures && ctx.listing.features.isNotEmpty()) {
+                                item(key = "features-chips-$index") {
                                     FeaturesChips(features = ctx.listing.features)
                                 }
                             }
                         }
                         1 ->
-                            item(key = "building-passport") {
+                            item(key = "building-passport-$index") {
                                 BuildingPassportCard(listing = ctx.listing)
                             }
-                        2 -> item(key = "nearby-preview") { NearbyPreviewCard() }
-                        3 -> item(key = "price-history") { PriceHistoryCard(listing = ctx.listing) }
+                        2 -> item(key = "nearby-preview-$index") { NearbyPreviewCard() }
+                        3 ->
+                            item(key = "price-history-$index") {
+                                PriceHistoryCard(listing = ctx.listing)
+                            }
                     }
                 }
             }
@@ -174,10 +202,10 @@ object ListingSectionRegistry {
             }
 
             else -> {
-                // Unknown section type — log warn and no-op
-                println(
-                    "WARN ListingSectionRegistry: unknown section type '${section.type}' — skipping"
-                )
+                // Unknown section type — warn once per type, then no-op.
+                if (warnedUnknownTypes.add(section.type)) {
+                    Log.w(TAG, "unknown section type '${section.type}' — skipping")
+                }
             }
         }
     }

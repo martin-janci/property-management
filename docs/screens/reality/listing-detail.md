@@ -122,6 +122,7 @@ Single-property detail view — converts portal traffic into UC-46 inquiries (Ca
 <!-- newest entries on top -->
 
 - 2026-07-23 — agent: resolved screen-map drift for PR #2431 (`feat(layout): publish webhook`). PR added reality-web internal API route `src/app/api/layout-revalidate/route.ts` (HMAC-signed ISR revalidation the api-server calls to bust the `layout:<slug>` cache tag on CMS publish). Conclusion: internal endpoint → no standalone screen-map warranted (README rule "a screen-map describes a reachable screen"; mirrors undocumented `api/health`). Documented it here — the layout webhook is the write-side of this screen's resolved-layout rendering — under Notes > Specific. Frontmatter unchanged (no reachable screen, no route, no `@ppt/sitemap` op; `endpoints:` stays `listings_get` only). `/screens validate` green.
+- 2026-07-20 — agent: iOS listing detail renders via shared resolved layout dispatch (Swift compile pending macOS verification).
 - 2026-07-20 — agent: Android listing detail renders via shared resolved layout dispatch (iOS follow-up pending).
 - 2026-07-20 — agent: layout preview mode (postMessage bridge) added.
 - 2026-07-19 — agent: page now renders via resolved-layout section registry (defensive rendering, spec 2026-07-19-layout-content-manager-design)

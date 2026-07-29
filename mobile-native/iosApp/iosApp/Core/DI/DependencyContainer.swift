@@ -62,6 +62,14 @@ final class DependencyContainer {
         )
     }()
 
+    /// Layout repository for fetching resolved layout configurations.
+    lazy var layoutRepository: LayoutRepository = {
+        LayoutRepository(
+            baseUrl: configuration.apiBaseUrl,
+            client: HttpClientProvider.shared.client
+        )
+    }()
+
     /// SSO service for authentication.
     lazy var ssoService: SsoService = {
         SsoService()

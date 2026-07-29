@@ -311,3 +311,6 @@
 "enter_email" = "Zadajte váš e-mail";
 "enter_password" = "Zadajte vaše heslo";
 "no_account_prompt" = "Nemáte účet?";
+
+/* Layout Placeholder Section */
+"section_unavailable" = "Sekcia nie je dostupná";

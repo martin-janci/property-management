@@ -212,4 +212,17 @@ class LayoutModelsContractTest {
             types,
         )
     }
+
+    // -------------------------------------------------------------------
+    // LayoutDefaults accessor
+    // -------------------------------------------------------------------
+
+    @Test
+    fun layoutDefaults_listingDetail_equals_DEFAULT_LISTING_DETAIL_LAYOUT() {
+        assertEquals(
+            DEFAULT_LISTING_DETAIL_LAYOUT,
+            LayoutDefaults.listingDetail,
+            "LayoutDefaults.listingDetail must equal the compiled DEFAULT_LISTING_DETAIL_LAYOUT",
+        )
+    }
 }

@@ -29,6 +29,10 @@ internal fun ListingContent(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
+    // features.v1 contract: the feature chips inside description.v1's tab 0 render only when
+    // the resolved layout contains a VISIBLE (non-placeholder) features.v1 section.
+    val showFeatures = layout.sections.any { it.type == "features.v1" && !it.isPlaceholder }
+
     val ctx =
         ListingSectionContext(
             listing = listing,
@@ -39,6 +43,7 @@ internal fun ListingContent(
             onFavoriteClick = onFavoriteClick,
             onCallClick = onCallClick,
             onTabSelect = { selectedTab = it },
+            showFeatures = showFeatures,
         )
 
     // Determine whether the agent-contact section is active (visible, non-placeholder).
@@ -57,19 +62,21 @@ internal fun ListingContent(
             // When no visible gallery is present but agent bars are active, StickyAgentBar
             // renders at the very top of the list (traditional fallback position).
             if (showAgentBars && !hasVisibleGallery) {
-                item(key = "agent-contact-bar") {
+                item(key = "agent-contact-bar-top") {
                     StickyAgentBar(listing = ctx.listing, onCallClick = ctx.onCallClick)
                 }
             }
 
-            for (section in layout.sections) {
-                sectionItems(section = section, ctx = ctx)
+            for ((index, section) in layout.sections.withIndex()) {
+                sectionItems(section = section, index = index, ctx = ctx)
                 // After the gallery item, insert StickyAgentBar at its traditional fixed slot.
                 // This is position-independent: agent-contact.v1 controls visibility but NOT
                 // the render position — so the bar always appears right after the gallery
                 // regardless of where agent-contact.v1 lands in the server layout order.
+                // Index suffix keeps the key unique even if duplicate gallery sections slip
+                // through (defense-in-depth; the repository already dedupes by type).
                 if (section.type == "gallery.v1" && !section.isPlaceholder && showAgentBars) {
-                    item(key = "agent-contact-bar") {
+                    item(key = "agent-contact-bar-$index") {
                         StickyAgentBar(listing = ctx.listing, onCallClick = ctx.onCallClick)
                     }
                 }

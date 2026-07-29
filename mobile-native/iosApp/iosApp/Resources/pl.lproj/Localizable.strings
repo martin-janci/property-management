@@ -307,3 +307,6 @@
 "enter_email" = "Wprowadź swój e-mail";
 "enter_password" = "Wprowadź swoje hasło";
 "no_account_prompt" = "Nie masz konta?";
+
+/* Layout Placeholder Section */
+"section_unavailable" = "Sekcja niedostępna";

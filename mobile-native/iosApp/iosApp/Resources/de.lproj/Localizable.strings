@@ -311,3 +311,6 @@
 "enter_email" = "Geben Sie Ihre E-Mail ein";
 "enter_password" = "Geben Sie Ihr Passwort ein";
 "no_account_prompt" = "Haben Sie kein Konto?";
+
+/* Layout Placeholder Section */
+"section_unavailable" = "Abschnitt nicht verfügbar";

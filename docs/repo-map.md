@@ -62,7 +62,7 @@ over `grep -r <noun> backend/`.
   Tenant editor: `ppt-web/src/features/layout/` (/dashboard/customize, org-admin entry point).
   Editor: `admin-web/src/features/layout-editor/` (routes `/platform/layout`, `/platform/layout/manifests`).
   Preview bridge: `@ppt/shared` layout-preview (postMessage bridge) + `admin-web/src/features/layout-editor/PreviewPanel` (iframe, framed ppt-web); preview-resolve endpoint (`/api/v1/platform-admin/layout/preview-resolve`) returns resolved layout for local (unsaved) drafts.
-  Mobile: RN features/layout (dashboard, cached next-launch activation) + mobile-native shared/layout + Android registry dispatch; canonical mobile manifest in apps/mobile.
+  Mobile: RN features/layout (dashboard, cached next-launch activation) + mobile-native shared/layout + Android registry dispatch + iOS listing detail via shared resolved layout dispatch (Swift compile-unverified on Linux; run scripts/build-ios.sh on macOS before release); canonical mobile manifest in apps/mobile.
 - `api-core` — Axum extractors, auth middleware, OpenAPI (utoipa), CORS/tracing.
 - `db` — SQLx pool, models, **~101 repositories** in `src/repositories/`, migrations (~177 sql files).
 - `integrations` — external API clients (Airbnb, Booking.com, portals).

@@ -10,6 +10,11 @@ import shared
 /// toggling a favorite here is immediately reflected in `FavoritesView`
 /// without requiring a separate network call or manual refresh.
 ///
+/// Section order and visibility are driven by the shared resolved layout
+/// (`ResolvedLayoutScreen`). The layout is seeded from the compiled default
+/// (`LayoutDefaults.shared.listingDetail`) and replaced at most once
+/// during the initial load — no mid-view swaps after content renders.
+///
 /// Epic 82 - Story 82.4: Listing Detail and Favorites
 struct ListingDetailView: View {
     @Environment(NavigationCoordinator.self) private var coordinator
@@ -25,12 +30,17 @@ struct ListingDetailView: View {
     @State private var showInquirySheet = false
     @State private var errorMessage: String?
 
+    /// Resolved layout seeded from the compiled default. Replaced at most once
+    /// during `loadListing()` before `isLoading` flips to false.
+    @State private var layout: ResolvedLayoutScreen = LayoutDefaults.shared.listingDetail
+
     /// Derived from `FavoritesService` — always in sync with `FavoritesView`.
     private var isFavorite: Bool {
         favoritesService.isFavorite(listingId: listingId)
     }
 
     private let listingRepository = DependencyContainer.shared.listingRepository
+    private let layoutRepository = DependencyContainer.shared.layoutRepository
 
     var body: some View {
         Group {
@@ -86,42 +96,152 @@ struct ListingDetailView: View {
     }
 
     private func listingContent(_ listing: ListingDetailModel) -> some View {
-        ScrollView {
+        // Compute the render plan once per body evaluation and pass it down —
+        // it feeds both the divider gate and the managed section list.
+        // Kotlin List<ResolvedLayoutSection> bridges as a typed Swift array —
+        // no cast needed (see DependencyContainer's KMP consumers).
+        let plan = buildRenderPlan()
+        let gallerySection = layout.sections.first(where: { $0.type == "gallery.v1" })
+        return ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Photo header
-                photoHeader(listing)
+                // Photo header slot is structural (edge-to-edge, outside the
+                // padded content area) but its VISIBILITY is gated on the
+                // resolved gallery.v1 section, matching Android:
+                //   visible     → photoHeader
+                //   placeholder → LayoutPlaceholderSection in its place
+                //   absent      → nothing
+                if let gallery = gallerySection {
+                    if gallery.isPlaceholder {
+                        LayoutPlaceholderSection()
+                    } else {
+                        photoHeader(listing)
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 20) {
-                    // Price and title
-                    priceSection(listing)
+                    managedSections(listing, plan: plan)
 
-                    // Key features
-                    featuresRow(listing)
-
-                    Divider()
-
-                    // Description
-                    descriptionSection(listing)
-
-                    Divider()
-
-                    // Amenities
-                    amenitiesGrid(listing)
-
-                    Divider()
-
-                    // Location
+                    // locationSection (map) is UNMANAGED — always rendered after
+                    // all managed sections, regardless of layout order.
+                    // A divider precedes it only when a managed section rendered.
+                    if !plan.isEmpty {
+                        Divider()
+                    }
                     locationSection(listing)
-
-                    Divider()
-
-                    // Agent contact
-                    agentCard(listing)
-
-                    // Contact button
-                    contactButton
                 }
                 .padding()
+            }
+        }
+    }
+
+    /// Represents a single renderable slot in the managed section list.
+    ///
+    /// The render plan is computed eagerly (outside the ViewBuilder) so that
+    /// `needsDivider` can be determined without mutating local state inside the
+    /// result builder — which SwiftUI's result builder does not support.
+    private enum LayoutSlot {
+        case priceSection
+        case featuresRow
+        case descriptionSection
+        case amenitiesGrid
+        case agentContact
+        case placeholder
+    }
+
+    /// Section types this view actually maps to content in the managed list.
+    /// Placeholder presentation only renders a placeholder card for these —
+    /// no-op types (additional-info.v1, resources.v1) and unknown types render
+    /// nothing even as placeholders, matching Android/RN. gallery.v1 is
+    /// handled structurally in `listingContent` (photo header slot).
+    private static let mappedSectionTypes: Set<String> = [
+        "listing-header.v1",
+        "key-details.v1",
+        "description.v1",
+        "features.v1",
+        "agent-contact.v1",
+    ]
+
+    /// Builds the ordered render plan from the resolved layout, skipping no-ops
+    /// and computing `needsDivider` for each slot up-front.
+    private func buildRenderPlan() -> [(slot: LayoutSlot, needsDivider: Bool)] {
+        // Kotlin List<ResolvedLayoutSection> bridges as a typed Swift array —
+        // no cast needed (see DependencyContainer's KMP consumers). The @State
+        // seed guarantees this is never empty-by-accident.
+        let sections = layout.sections
+        var plan: [(slot: LayoutSlot, needsDivider: Bool)] = []
+        var didRenderManaged = false
+
+        for section in sections {
+            // gallery.v1 is structural (photo header slot in listingContent); skip.
+            if section.type == "gallery.v1" { continue }
+
+            let slot: LayoutSlot?
+            if section.isPlaceholder {
+                // Placeholder cards only for types iOS actually maps — no-op
+                // and unknown types stay invisible, matching Android/RN.
+                slot = Self.mappedSectionTypes.contains(section.type) ? .placeholder : nil
+            } else if section.isVisible {
+                switch section.type {
+                case "listing-header.v1": slot = .priceSection
+                case "key-details.v1":   slot = .featuresRow
+                case "description.v1":   slot = .descriptionSection
+                case "features.v1":      slot = .amenitiesGrid
+                case "agent-contact.v1": slot = .agentContact
+                default:                 slot = nil  // additional-info.v1, resources.v1, unknown
+                }
+            } else {
+                slot = nil  // hidden
+            }
+
+            if let resolved = slot {
+                plan.append((slot: resolved, needsDivider: didRenderManaged))
+                didRenderManaged = true
+            }
+        }
+
+        return plan
+    }
+
+    /// Renders the managed sections in layout order with dividers between adjacent visible ones.
+    ///
+    /// Section mapping (plan §Architecture):
+    ///   gallery.v1          → photoHeader  (structural — handled above; skipped here)
+    ///   listing-header.v1   → priceSection
+    ///   key-details.v1      → featuresRow
+    ///   description.v1      → descriptionSection
+    ///   features.v1         → amenitiesGrid
+    ///   agent-contact.v1    → agentCard + contactButton (both gated together)
+    ///   additional-info.v1  → no-op
+    ///   resources.v1        → no-op
+    ///   unknown             → no-op
+    ///   placeholder         → LayoutPlaceholderSection (mapped types only; no-op otherwise)
+    ///
+    /// The render plan is built once in `listingContent` (outside the
+    /// ViewBuilder closure, so imperative logic is allowed) and passed in —
+    /// avoiding a second `buildRenderPlan()` walk per body evaluation.
+    private func managedSections(
+        _ listing: ListingDetailModel,
+        plan: [(slot: LayoutSlot, needsDivider: Bool)]
+    ) -> some View {
+        ForEach(0..<plan.count, id: \.self) { index in
+            let entry = plan[index]
+            if entry.needsDivider {
+                Divider()
+            }
+            switch entry.slot {
+            case .priceSection:
+                priceSection(listing)
+            case .featuresRow:
+                featuresRow(listing)
+            case .descriptionSection:
+                descriptionSection(listing)
+            case .amenitiesGrid:
+                amenitiesGrid(listing)
+            case .agentContact:
+                agentCard(listing)
+                contactButton
+            case .placeholder:
+                LayoutPlaceholderSection()
             }
         }
     }
@@ -414,8 +534,18 @@ struct ListingDetailView: View {
         isLoading = true
         errorMessage = nil
 
-        // Load listing detail from KMP
-        let result = await listingRepository.getListingDetail(listingId: listingId)
+        // Fetch layout and listing concurrently so both settle before the
+        // managed sections appear. The layout never throws domain-wise but
+        // surfaces as `async throws` in Swift due to KMP bridging — wrap in
+        // `try?` and fall back to the already-seeded default on nil.
+        async let layoutFetch: ResolvedLayoutScreen? = try? await layoutRepository.getListingDetailLayout()
+        async let listingFetch = listingRepository.getListingDetail(listingId: listingId)
+
+        let (fetchedLayout, result) = await (layoutFetch, listingFetch)
+
+        if let resolved = fetchedLayout {
+            layout = resolved
+        }
 
         if let kmpListing = result.getOrNull() {
             listing = KMPBridge.toListingDetail(kmpListing)

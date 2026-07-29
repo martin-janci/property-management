@@ -311,3 +311,6 @@
 "enter_email" = "Adja meg e-mail címét";
 "enter_password" = "Adja meg jelszavát";
 "no_account_prompt" = "Nincs fiókja?";
+
+/* Layout Placeholder Section */
+"section_unavailable" = "A szakasz nem érhető el";
