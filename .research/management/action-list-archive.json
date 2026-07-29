@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-24T22:20:22Z",
+  "archived_at": "2026-07-29T08:12:07Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1872,6 +1872,29 @@
         "merged_pr": 1681,
         "merged_at": "2026-06-22T16:33:10Z",
         "at": "2026-06-24T00:14:14Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-init-stale-role",
+      "action": "AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-07-29T08:06:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T04:05:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "931a316da4d9296016add73e749997081e4e23b5",
+        "subject": "code-review-ppt-web-core-authctx-init-stale-role: route AuthContext cold-boot init through refreshTokenInternal (#2553)",
+        "at": "2026-07-29T08:06:29Z"
       }
     },
     {
@@ -8370,6 +8393,32 @@
         "merged_pr": 2547,
         "merged_at": "2026-07-24T22:19:55Z",
         "at": "2026-07-24T22:20:22Z"
+      }
+    },
+    {
+      "id": "gh-issue-2532",
+      "action": "Follow-up: wire layout publish/webhook event emission (spec-only, no producers) (PR #2494) (Closes #2532)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2532) | dev-reconcile 2026-07-29T08:06:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2532,
+        "url": "https://github.com/martin-janci/property-management/issues/2532",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f03c7c7ac7d2004803f9aa1bbd46e0fab6966508",
+        "subject": "gh-issue-2532: wire layout publish/webhook/revalidate event emission + sink (#2549)",
+        "at": "2026-07-29T08:06:29Z"
       }
     },
     {

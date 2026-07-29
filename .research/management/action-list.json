@@ -539,23 +539,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-authctx-init-stale-role",
-      "action": "AuthContext init bypasses refreshTokenInternal → stale role on cold-boot refresh (#574 fix gap)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T04:05:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-ws-token-rotation-stale",
       "action": "WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token",
       "owner_role": "pm-backend",
@@ -646,26 +629,6 @@
         ]
       },
       "last_updated": "2026-07-24T18:09:34Z"
-    },
-    {
-      "id": "gh-issue-2532",
-      "action": "Follow-up: wire layout publish/webhook event emission (spec-only, no producers) (PR #2494) (Closes #2532)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2532)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T14:09:59Z",
-      "issue_ref": {
-        "number": 2532,
-        "url": "https://github.com/martin-janci/property-management/issues/2532",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     },
     {
       "id": "security-voice-webhook-alexa-signature-not-verified",
@@ -904,6 +867,110 @@
         "score": 3,
         "vector": "dx"
       }
+    },
+    {
+      "id": "gh-issue-2556",
+      "action": "ci: add reality-api-client drift gate (deferred from #2487) (Closes #2556)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2556)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:07:25Z",
+      "issue_ref": {
+        "number": 2556,
+        "url": "https://github.com/martin-janci/property-management/issues/2556",
+        "labels": [
+          "ci"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2557",
+      "action": "test(backend): follow-ups from dev-team review of test-binary consolidation (#2487) (Closes #2557)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2557)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:07:25Z",
+      "issue_ref": {
+        "number": 2557,
+        "url": "https://github.com/martin-janci/property-management/issues/2557",
+        "labels": [
+          "backend"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2560",
+      "action": "ci: reality-web Docker build has failed on every run since 2026-06-17 — no frontend image published for 6 weeks (Closes #2560)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2560)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:07:25Z",
+      "issue_ref": {
+        "number": 2560,
+        "url": "https://github.com/martin-janci/property-management/issues/2560",
+        "labels": [
+          "bug"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2561",
+      "action": "ci: version-bump push has no rebase/retry — GH006 whenever two merges to dev land close together (Closes #2561)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2561)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:07:25Z",
+      "issue_ref": {
+        "number": 2561,
+        "url": "https://github.com/martin-janci/property-management/issues/2561",
+        "labels": [
+          "bug"
+        ]
+      }
+    },
+    {
+      "id": "code-review-api-core-scheduler-rls-leak-retry1",
+      "action": "Scheduler global-read RLS GUC leaks to pooled connection when set_global_read_context(conn,false) itself errors in fire_due_report_schedules (backend/servers/api-server/src/services/scheduler.rs:1416): the ? returns the connection with the session-level global-read GUC still set, so a later borrower without its own tenant context can read cross-org rows via the SELECT-only global-read policy leg (migration 00218). Clear the flag before the ? (mirror workflow_executor.rs guard.release() pattern) and add a regression test. [retry 1/2 of failed code-review-api-core-scheduler-rls-leak]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T08:08:27Z (retry_of=code-review-api-core-scheduler-rls-leak reason=failed-no-pr cooldown_ok newest_failure=2026-07-18T04:02:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:08:27Z",
+      "retry_of": "code-review-api-core-scheduler-rls-leak",
+      "retry_round": 1
+    },
+    {
+      "id": "dx-routine-lag-catchup-2026-07-retry2",
+      "action": "Cloud routine cadence recovery — reduce 3–4d gaps between runs [retry 2/2 of failed dx-routine-lag-catchup-2026-07]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-29T08:08:27Z (retry_of=dx-routine-lag-catchup-2026-07 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T08:08:17Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:08:27Z",
+      "retry_of": "dx-routine-lag-catchup-2026-07",
+      "retry_round": 2
     }
   ],
   "generated": "2026-07-23T14:34:52.019013Z"

@@ -4913,7 +4913,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
       ],
@@ -4925,7 +4925,12 @@
       ],
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-29T08:06:29Z",
+        "assignment_status": "merged",
+        "pr_number": 2553
+      }
     },
     {
       "id": "code-review-ppt-web-core-ws-token-rotation-stale",
