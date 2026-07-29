@@ -273,9 +273,7 @@ describe('documents api client', () => {
     // The compensating delete (step 3b) fired: DELETE to the by-file-key route
     // with the URL-encoded file_key.
     const [delUrl, delInit] = vi.mocked(fetch).mock.calls[2];
-    expect(delUrl).toBe(
-      '/api/v1/documents/by-file-key?file_key=org%2F2026%2F07%2Fuuid_report.pdf'
-    );
+    expect(delUrl).toBe('/api/v1/documents/by-file-key?file_key=org%2F2026%2F07%2Fuuid_report.pdf');
     expect((delInit as RequestInit).method).toBe('DELETE');
     // Cleanup succeeded, so no orphan warning was logged.
     expect(warnSpy).not.toHaveBeenCalled();
