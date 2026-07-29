@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "dx-api-validation-drift-gate-never-runs-on-dev",
-  "selected_at": "2026-07-29T16:06:06Z",
+  "epic_prefix": "gh-issue-2557",
+  "selected_at": "2026-07-29T18:08:11Z",
   "last_action": "repick",
-  "reason": "prior target 'code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state' exhausted; closest-to-done is 'dx-api-validation-drift-gate-never-runs-on-dev' (open=1 claimable=1)",
+  "reason": "prior target 'dx-api-validation-drift-gate-never-runs-on-dev' exhausted; closest-to-done is 'gh-issue-2557' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
