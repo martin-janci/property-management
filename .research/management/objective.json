@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "code-review-api-core-scheduler-rls-leak-retry1",
-  "selected_at": "2026-07-29T12:08:46Z",
+  "epic_prefix": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
+  "selected_at": "2026-07-29T14:06:26Z",
   "last_action": "repick",
-  "reason": "prior target 'gh-issue-2561' exhausted; closest-to-done is 'code-review-api-core-scheduler-rls-leak-retry1' (open=1 claimable=1)",
+  "reason": "prior target 'code-review-api-core-scheduler-rls-leak-retry1' exhausted; closest-to-done is 'code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

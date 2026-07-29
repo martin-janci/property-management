@@ -7821,6 +7821,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2561",
+      "branch": "auto-impl/gh-issue-2561-1f5dff44",
+      "status": "merged",
+      "claimed_at": "2026-07-29T10:13:45Z",
+      "last_updated": "2026-07-29T14:02:00Z",
+      "status_changed_at": "2026-07-29T14:02:00Z",
+      "pr_number": 2566,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2566",
+      "merged_at": "2026-07-29T12:22:33Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2566 status=done specialist=generic scope_drift=false code_reuse_warn=none note=version-bump.yml fetch+reset+recompute+push retry loop; concurrency preserved; verify green",
+      "reviewer_summary": "verdict=approve head_oid=386a65bf6f1def3a8234edd2c15f463eb38b1858 note=ci-retry-loop-sound; posted-as-comment (self-PR cannot formally approve); minor FETCH_HEAD nit non-blocking",
+      "last_reviewed_oid": "386a65bf6f1def3a8234edd2c15f463eb38b1858",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-29T12:19:11Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -8949,5 +8971,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-29T12:11:20Z"
+  "archived_at": "2026-07-29T14:08:58Z"
 }
