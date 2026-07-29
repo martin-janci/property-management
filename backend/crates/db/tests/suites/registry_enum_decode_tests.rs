@@ -18,6 +18,7 @@
 //! the missing column); post-fix they resolve cleanly. A second test pins the
 //! defense-in-depth tenant scope added to the vehicle-list `parking_spots` join.
 
+use crate::common::seed_org;
 use db::models::{
     registry_status, CreatePetRegistration, CreateVehicleRegistration, PetRegistrationQuery,
     ReviewRegistration, UpdatePetRegistration, VehicleRegistrationQuery,
@@ -25,22 +26,6 @@ use db::models::{
 use db::repositories::RegistryRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Registry {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@registry.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

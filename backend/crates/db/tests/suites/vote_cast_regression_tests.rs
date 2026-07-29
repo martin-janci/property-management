@@ -20,6 +20,7 @@
 //! tenant GUC (`app.current_org_id`) in scope, so each test sets the request
 //! context on the connection it hands to `cast_vote_rls`.
 
+use crate::common::seed_org;
 use db::models::vote::{audit_action, vote_status, CastVote, CreateVote, CreateVoteQuestion};
 use db::repositories::VoteRepository;
 use rust_decimal::Decimal;
@@ -29,22 +30,6 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("VoteCast {slug}"))
-    .bind(format!("vote-cast-{slug}"))
-    .bind(format!("{slug}@vote-cast.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

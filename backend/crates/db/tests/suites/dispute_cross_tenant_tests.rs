@@ -3,26 +3,11 @@
 //! able to drive the state machine of a dispute in org B by guessing its
 //! UUID. The repo enforces this with `WHERE id = $2 AND organization_id = $3`.
 
+use crate::common::seed_org;
 use db::models::{FileDispute, UpdateDisputeStatus};
 use db::repositories::DisputeRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Dispute {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@dispute.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

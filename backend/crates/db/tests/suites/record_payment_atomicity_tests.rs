@@ -40,6 +40,7 @@
 //! Run against a superuser pool (CI default) so the assertions exercise the
 //! application-level read-modify-write rather than any RLS layer.
 
+use crate::common::seed_org;
 use chrono::Utc;
 use db::models::violations::{
     CreateEnforcementAction, CreateViolation, EnforcementActionType, EnforcementStatus,
@@ -53,22 +54,6 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 // Fixtures (mirrors violations_cross_org_idor_tests.rs)
 // ---------------------------------------------------------------------------
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("PayAtomicity {slug}"))
-    .bind(format!("pay-atomicity-{slug}"))
-    .bind(format!("{slug}@pay-atomicity.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

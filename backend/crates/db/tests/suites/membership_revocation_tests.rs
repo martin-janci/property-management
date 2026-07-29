@@ -7,26 +7,11 @@
 //! equivalent — same JWT presented across the revoke — is in
 //! `backend/servers/api-server/tests/token_scope_tests.rs`.
 
+use crate::common::seed_org;
 use db::models::membership::GrantMembership;
 use db::repositories::MembershipRepository;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Phase 2 {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@phase2.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     let row = sqlx::query(

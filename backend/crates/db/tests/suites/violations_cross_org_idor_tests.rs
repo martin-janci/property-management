@@ -18,6 +18,7 @@
 //! Each test seeds two orgs (A, B) and asserts that an Org B caller cannot
 //! touch Org A's rows, while the legitimate Org A caller still can.
 
+use crate::common::seed_org;
 use chrono::Utc;
 use db::models::violations::{
     AppealStatus, CreateCommunityRule, CreateEnforcementAction, CreateViolation,
@@ -33,22 +34,6 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("ViolationsIDOR {slug}"))
-    .bind(format!("violations-idor-{slug}"))
-    .bind(format!("{slug}@violations-idor.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
