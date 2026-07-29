@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-29T08:17:50Z",
+  "generated": "2026-07-29T08:22:50Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2560",
       "branch": "auto-impl/gh-issue-2560-07d0d0af",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-29T08:11:18Z",
-      "last_updated": "2026-07-29T08:11:18Z",
-      "status_changed_at": "2026-07-29T08:11:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-29T08:22:50Z",
+      "status_changed_at": "2026-07-29T08:22:50Z",
+      "pr_number": 2565,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2565",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=2565 status=done specialist=generic scope_drift=true code_reuse_warn=none note=added missing api-client node_modules COPY to reality-web Dockerfile; fixes #2560; docker build deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
