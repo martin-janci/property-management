@@ -9,7 +9,7 @@
 
 use axum::{
     body::Body,
-    http::{header, Method, Request},
+    http::{header, request::Builder, Method, Request},
 };
 use sqlx::PgPool;
 
@@ -20,15 +20,38 @@ use crate::common::{
 const UUID: &str = "00000000-0000-0000-0000-000000000001";
 const UUID2: &str = "00000000-0000-0000-0000-000000000002";
 
-fn anon(method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
-    let b = Request::builder().method(method).uri(uri);
+/// A single endpoint probe: HTTP method, URI, and an optional JSON body.
+type Case = (Method, String, Option<&'static str>);
+
+// ---------------------------------------------------------------------------
+// Request builders
+// ---------------------------------------------------------------------------
+
+/// Attach an optional JSON body to a partially-built request. A `Some` body
+/// also sets `Content-Type: application/json`; a `None` body yields an empty
+/// body. Shared by every builder below so the body handling lives in one place.
+fn finish(builder: Builder, body: Option<&str>) -> Request<Body> {
     match body {
-        Some(j) => b
+        Some(j) => builder
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(j.to_string()))
             .unwrap(),
-        None => b.body(Body::empty()).unwrap(),
+        None => builder.body(Body::empty()).unwrap(),
     }
+}
+
+fn anon(method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
+    finish(Request::builder().method(method).uri(uri), body)
+}
+
+fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
+    finish(
+        Request::builder()
+            .method(method)
+            .uri(uri)
+            .header(header::AUTHORIZATION, format!("Bearer {token}")),
+        body,
+    )
 }
 
 fn authed_tenant(
@@ -38,31 +61,31 @@ fn authed_tenant(
     uri: &str,
     body: Option<&str>,
 ) -> Request<Body> {
-    let b = Request::builder()
-        .method(method)
-        .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {token}"))
-        .header("X-Tenant-ID", org_id);
-    match body {
-        Some(j) => b
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(j.to_string()))
-            .unwrap(),
-        None => b.body(Body::empty()).unwrap(),
-    }
+    finish(
+        Request::builder()
+            .method(method)
+            .uri(uri)
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .header("X-Tenant-ID", org_id),
+        body,
+    )
 }
 
-fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
-    let b = Request::builder()
-        .method(method)
-        .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {token}"));
-    match body {
-        Some(j) => b
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(j.to_string()))
-            .unwrap(),
-        None => b.body(Body::empty()).unwrap(),
+/// Drive every case through `build` and assert the response is a 4xx client
+/// error. `reason` is spliced into the failure message as `must {reason} (4xx)`
+/// so each caller keeps its own diagnostic wording.
+async fn assert_all_client_error<I, F>(app: &TestApp, cases: I, reason: &str, build: F)
+where
+    I: IntoIterator<Item = Case>,
+    F: Fn(Method, &str, Option<&str>) -> Request<Body>,
+{
+    for (method, uri, body) in cases {
+        let resp = app.execute(build(method.clone(), &uri, body)).await;
+        assert!(
+            resp.status.is_client_error(),
+            "{method} {uri} must {reason} (4xx), got {}",
+            resp.status
+        );
     }
 }
 
@@ -70,7 +93,7 @@ fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request
 // Case tables
 // ---------------------------------------------------------------------------
 
-fn buildings_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn buildings_cases() -> Vec<Case> {
     let base = "/api/v1/buildings";
     vec![
         (
@@ -95,7 +118,7 @@ fn buildings_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn buildings_units_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn buildings_units_cases() -> Vec<Case> {
     let building = format!("/api/v1/buildings/{UUID}");
     let unit = format!("/api/v1/buildings/{UUID}/units/{UUID2}");
     vec![
@@ -112,7 +135,7 @@ fn buildings_units_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn buildings_units_owners_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn buildings_units_owners_cases() -> Vec<Case> {
     let unit = format!("/api/v1/buildings/{UUID}/units/{UUID2}");
     vec![
         (Method::GET, format!("{unit}/owners"), None),
@@ -130,7 +153,7 @@ fn buildings_units_owners_cases() -> Vec<(Method, String, Option<&'static str>)>
     ]
 }
 
-fn buildings_units_residents_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn buildings_units_residents_cases() -> Vec<Case> {
     let unit = format!("/api/v1/buildings/{UUID}/units/{UUID2}");
     let resident = format!("{unit}/residents/{UUID}");
     vec![
@@ -148,7 +171,7 @@ fn buildings_units_residents_cases() -> Vec<(Method, String, Option<&'static str
     ]
 }
 
-fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn agencies_cases() -> Vec<Case> {
     let base = "/api/v1/agencies";
     vec![
         (
@@ -219,7 +242,7 @@ fn agencies_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn building_certifications_cases() -> Vec<Case> {
     let base = "/api/v1/building-certifications";
     let cert = format!("{base}/{UUID}");
     let credit = format!("{cert}/credits/{UUID2}");
@@ -278,7 +301,7 @@ fn building_certifications_cases() -> Vec<(Method, String, Option<&'static str>)
     ]
 }
 
-fn platform_admin_agency_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn platform_admin_agency_cases() -> Vec<Case> {
     vec![(
         Method::POST,
         "/api/v1/platform-admin/agencies".to_string(),
@@ -286,7 +309,7 @@ fn platform_admin_agency_cases() -> Vec<(Method, String, Option<&'static str>)> 
     )]
 }
 
-fn all_tenant_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn all_tenant_cases() -> Vec<Case> {
     let mut v = Vec::new();
     v.extend(buildings_cases());
     v.extend(buildings_units_cases());
@@ -296,7 +319,7 @@ fn all_tenant_cases() -> Vec<(Method, String, Option<&'static str>)> {
     v
 }
 
-fn all_non_tenant_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn all_non_tenant_cases() -> Vec<Case> {
     let mut v = Vec::new();
     v.extend(agencies_cases());
     v.extend(platform_admin_agency_cases());
@@ -311,14 +334,13 @@ fn all_non_tenant_cases() -> Vec<(Method, String, Option<&'static str>)> {
 async fn org_property_endpoints_require_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
-    for (method, uri, body) in all_tenant_cases().into_iter().chain(all_non_tenant_cases()) {
-        let resp = app.execute(anon(method.clone(), &uri, body)).await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must require auth (4xx), got {}",
-            resp.status
-        );
-    }
+    assert_all_client_error(
+        &app,
+        all_tenant_cases().into_iter().chain(all_non_tenant_cases()),
+        "require auth",
+        anon,
+    )
+    .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -330,29 +352,16 @@ async fn buildings_endpoints_reject_non_member(pool: PgPool) {
     let (outsider_token, _) = create_authenticated_user(&app, &TestUser::new()).await;
     let org_str = org_id.to_string();
 
-    let cases: Vec<(Method, String, Option<&'static str>)> = buildings_cases()
+    let cases = buildings_cases()
         .into_iter()
         .chain(buildings_units_cases())
         .chain(buildings_units_owners_cases())
-        .chain(buildings_units_residents_cases())
-        .collect();
+        .chain(buildings_units_residents_cases());
 
-    for (method, uri, body) in cases {
-        let resp = app
-            .execute(authed_tenant(
-                &outsider_token,
-                &org_str,
-                method.clone(),
-                &uri,
-                body,
-            ))
-            .await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must reject non-member (4xx), got {}",
-            resp.status
-        );
-    }
+    assert_all_client_error(&app, cases, "reject non-member", |method, uri, body| {
+        authed_tenant(&outsider_token, &org_str, method, uri, body)
+    })
+    .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -360,19 +369,15 @@ async fn agencies_endpoints_reject_unprivileged_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _) = create_authenticated_user(&app, &TestUser::new()).await;
 
-    for (method, uri, body) in agencies_cases()
-        .into_iter()
-        .chain(platform_admin_agency_cases())
-    {
-        let resp = app
-            .execute(authed(&token, method.clone(), &uri, body))
-            .await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must reject unprivileged user (4xx), got {}",
-            resp.status
-        );
-    }
+    assert_all_client_error(
+        &app,
+        agencies_cases()
+            .into_iter()
+            .chain(platform_admin_agency_cases()),
+        "reject unprivileged user",
+        |method, uri, body| authed(&token, method, uri, body),
+    )
+    .await;
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -383,20 +388,11 @@ async fn building_certifications_reject_non_member(pool: PgPool) {
     let (outsider_token, _) = create_authenticated_user(&app, &TestUser::new()).await;
     let org_str = org_id.to_string();
 
-    for (method, uri, body) in building_certifications_cases() {
-        let resp = app
-            .execute(authed_tenant(
-                &outsider_token,
-                &org_str,
-                method.clone(),
-                &uri,
-                body,
-            ))
-            .await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must reject non-member (4xx), got {}",
-            resp.status
-        );
-    }
+    assert_all_client_error(
+        &app,
+        building_certifications_cases(),
+        "reject non-member",
+        |method, uri, body| authed_tenant(&outsider_token, &org_str, method, uri, body),
+    )
+    .await;
 }
