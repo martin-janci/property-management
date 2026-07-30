@@ -2312,6 +2312,124 @@ mod tests {
         );
     }
 
+    // ------------------------------------------------------------------
+    // IG3 regression (issue #2531, PR #2547): the support_tooling_events
+    // retention prune must actually DELETE aged rows *through the scheduler*,
+    // advance its metric, and honour the daily-cadence gate — against a real
+    // database.
+    //
+    // The pure-function tests above (`support_tooling_prune_due`) only pin the
+    // in-Rust daily-gate arithmetic; like `org_scoped_target_users` they are a
+    // re-model, so they still pass if the prune is un-wired from the tick loop,
+    // the sanctioned `app.retention_prune` GUC path breaks, or the metric never
+    // advances. That un-wired state is exactly the bug PR #2547 fixed: the
+    // repository cleanup method existed but nothing invoked it, so the
+    // append-only audit trail grew without bound. This `#[sqlx::test]` drives
+    // the real `Scheduler::prune_support_tooling_events` against Postgres, so it
+    // FAILS on the pre-fix (un-wired) code and cannot be satisfied by a drifted
+    // re-model.
+    //
+    // support_tooling_events carries FORCE RLS (`USING is_super_admin()`,
+    // migration 00165) plus an append-only immutability trigger that only
+    // permits DELETE inside the sanctioned `app.retention_prune` path
+    // (migration 00222). Seed INSERTs and COUNT reads therefore run on a
+    // dedicated connection elevated to super-admin; the prune's SQL function
+    // self-elevates transaction-locally, so it stays independent of that
+    // session context.
+    // ------------------------------------------------------------------
+
+    async fn seed_support_tooling_event(
+        conn: &mut sqlx::PgConnection,
+        admin_user_id: Uuid,
+        age_days: i64,
+    ) {
+        // occurred_at is stamped explicitly so the row lands on the chosen side
+        // of the 730-day retention window. INSERT is unaffected by the
+        // immutability trigger, which guards only UPDATE/DELETE.
+        sqlx::query(
+            r#"
+            INSERT INTO support_tooling_events (event_kind, admin_user_id, occurred_at)
+            VALUES ('support_data_viewed', $1, NOW() - ($2 || ' days')::INTERVAL)
+            "#,
+        )
+        .bind(admin_user_id)
+        .bind(age_days.to_string())
+        .execute(&mut *conn)
+        .await
+        .expect("seed support_tooling_event");
+    }
+
+    async fn count_support_tooling_events(conn: &mut sqlx::PgConnection) -> i64 {
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM support_tooling_events")
+            .fetch_one(&mut *conn)
+            .await
+            .expect("count support_tooling_events")
+    }
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_scheduler_prunes_aged_support_tooling_events_and_gates_daily(pool: sqlx::PgPool) {
+        let admin = seed_user(&pool, "support-admin@fanout.test").await;
+
+        // A dedicated connection elevated to super-admin for all seeding and
+        // reads (the table's FORCE-RLS policy hides rows from an unelevated
+        // session). Session-level (`is_local = false`) so it persists for the
+        // whole test on this one connection.
+        let mut ctx = pool
+            .acquire()
+            .await
+            .expect("acquire super-admin context connection");
+        sqlx::query("SELECT set_config('app.is_super_admin', 'true', false)")
+            .execute(&mut *ctx)
+            .await
+            .expect("elevate connection to super-admin for seeding/reads");
+
+        // One row well past the 730-day retention window, one fresh row.
+        seed_support_tooling_event(&mut ctx, admin, 900).await; // aged  -> pruned
+        seed_support_tooling_event(&mut ctx, admin, 1).await; //   fresh -> survives
+        assert_eq!(count_support_tooling_events(&mut ctx).await, 2);
+
+        let scheduler = test_scheduler(pool.clone());
+
+        // First tick: prune is due (never run) → deletes only the aged row.
+        scheduler
+            .prune_support_tooling_events()
+            .await
+            .expect("prune support_tooling_events");
+
+        assert_eq!(
+            count_support_tooling_events(&mut ctx).await,
+            1,
+            "aged support_tooling_events row past the 730-day window must be \
+             pruned by the scheduler; the fresh row must survive"
+        );
+        assert_eq!(
+            scheduler.get_metrics().support_tooling_events_pruned,
+            1,
+            "the prune metric must record the single aged row deleted"
+        );
+
+        // Second tick immediately after: the daily-cadence gate must skip the
+        // prune, so a freshly-aged row inserted now is NOT deleted and the
+        // metric does not advance. This pins the REAL method's gate against the
+        // DB, distinct from the pure `support_tooling_prune_due` helper.
+        seed_support_tooling_event(&mut ctx, admin, 900).await;
+        scheduler
+            .prune_support_tooling_events()
+            .await
+            .expect("second prune within the daily window is a gated no-op");
+
+        assert_eq!(
+            count_support_tooling_events(&mut ctx).await,
+            2,
+            "second prune within 24h must be gated: the newly-aged row survives"
+        );
+        assert_eq!(
+            scheduler.get_metrics().support_tooling_events_pruned,
+            1,
+            "a gated (skipped) prune must not advance the metric"
+        );
+    }
+
     #[test]
     fn test_scheduler_config_default() {
         let config = SchedulerConfig::default();
