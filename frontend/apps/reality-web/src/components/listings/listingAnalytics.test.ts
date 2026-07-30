@@ -58,10 +58,24 @@ describe('deriveListingViewContext — view-source', () => {
     expect(deriveListingViewContext(null, '', ORIGIN).viewSource).toBe('direct');
   });
 
-  it('lets an explicit ?source= on the current URL win', () => {
-    const params = new URLSearchParams('source=newsletter');
+  it('lets a recognised explicit ?source= on the current URL win over the referrer', () => {
+    const params = new URLSearchParams('source=favorites');
     const ctx = deriveListingViewContext(params, `${ORIGIN}/sk/listings`, ORIGIN);
-    expect(ctx.viewSource).toBe('newsletter');
+    expect(ctx.viewSource).toBe('favorites');
+  });
+
+  it('maps an out-of-set ?source= to `unknown` (bounded cardinality)', () => {
+    // Untrusted visitor input must not be emitted verbatim — an arbitrary
+    // campaign slug would otherwise become a new `view_source` value.
+    const params = new URLSearchParams('source=newsletter-2026-summer-promo');
+    const ctx = deriveListingViewContext(params, `${ORIGIN}/sk/listings`, ORIGIN);
+    expect(ctx.viewSource).toBe('unknown');
+  });
+
+  it('ignores an empty ?source= and falls back to the referrer bucket', () => {
+    const params = new URLSearchParams('source=');
+    const ctx = deriveListingViewContext(params, `${ORIGIN}/sk/listings`, ORIGIN);
+    expect(ctx.viewSource).toBe('search');
   });
 });
 
