@@ -938,20 +938,6 @@
       "retry_round": 1
     },
     {
-      "id": "gap-screens-link-uc-33-sub-ucs-retry2",
-      "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter [retry 2/2 of failed gap-screens-link-uc-33-sub-ucs]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gap-screens-link-uc-33-sub-ucs reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T23:19:31Z",
-      "retry_of": "gap-screens-link-uc-33-sub-ucs",
-      "retry_round": 2
-    },
-    {
       "id": "gh-issue-2238-retry2",
       "action": "Follow-up: add handler-level regression test for empty-cookie-shadows-body-token (PR #2205) (Closes #2238) [retry 2/2 of failed gh-issue-2238]",
       "owner_role": "pm-tech-lead",

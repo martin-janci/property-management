@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-30T00:13:58Z",
+  "archived_at": "2026-07-30T00:20:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4280,6 +4280,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-22T20:02:56Z"
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-33-sub-ucs-retry2",
+      "action": "Link UC-33.1/UC-33.2/UC-33.3 (dispute sub-UCs) to the dispute screen-maps' use-cases frontmatter [retry 2/2 of failed gap-screens-link-uc-33-sub-ucs]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gap-screens-link-uc-33-sub-ucs reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z) | gc1-reconcile 2026-07-30T00:20:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gap-screens-link-uc-33-sub-ucs",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T00:20:54Z"
       }
     },
     {

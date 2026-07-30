@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-30T00:13:58Z",
+  "generated": "2026-07-30T00:20:42Z",
   "assignments": [
     {
       "task_id": "security-voice-webhook-alexa-signature-not-verified",
@@ -86,28 +86,6 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gap-screens-link-uc-33-sub-ucs-retry2",
-      "branch": "auto-impl/gap-screens-link-uc-33-sub-ucs-retry2-ec702ac2",
-      "status": "in-progress",
-      "claimed_at": "2026-07-30T00:13:37Z",
-      "last_updated": "2026-07-30T00:13:37Z",
-      "status_changed_at": "2026-07-30T00:13:37Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     }
