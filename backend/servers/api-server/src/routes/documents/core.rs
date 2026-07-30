@@ -1775,9 +1775,16 @@ async fn create_upload_url(
 /// this route cannot be used to delete another tenant's objects (the same guard
 /// `create_document` applies to a client-supplied key, #2320).
 ///
+/// The route reaps *orphaned* (never-registered) keys only. Before touching
+/// storage it asserts that no live `documents` row references the key within
+/// the caller's org and rejects with 409 `FILE_KEY_IN_USE` otherwise (#2573):
+/// without this guard any authenticated org member could pass another member's
+/// registered `file_key` (same `{org_id}/…` prefix) and delete the underlying
+/// object out from under a live document row, leaving a dangling reference.
+///
 /// Returns 204 No Content on success. S3 `DeleteObject` is idempotent, so
-/// deleting an already-absent key is a no-op that still returns 204. 503 if
-/// storage is not configured.
+/// deleting an already-absent key is a no-op that still returns 204. 409 if the
+/// key is still referenced by a live document. 503 if storage is not configured.
 #[utoipa::path(
     delete,
     path = "/api/v1/documents/by-file-key",
@@ -1787,6 +1794,7 @@ async fn create_upload_url(
         (status = 204, description = "Object deleted (or already absent)"),
         (status = 400, description = "Invalid file_key", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 409, description = "file_key still referenced by a document", body = ErrorResponse),
         (status = 503, description = "Storage unavailable", body = ErrorResponse),
     ),
     tag = "Documents"
@@ -1795,6 +1803,7 @@ async fn delete_by_file_key(
     State(state): State<AppState>,
     _auth: AuthUser,
     tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Query(query): Query<DeleteByFileKeyQuery>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let org_id = tenant.tenant_id;
@@ -1803,6 +1812,38 @@ async fn delete_by_file_key(
     // `{org_id}/` prefix. Rejects cross-org keys, message attachments, and `..`
     // traversal (400) — same guard create_document applies (#2320).
     validate_file_key_org_scope(&query.file_key, org_id)?;
+
+    // Referenced-object guard (#2573): this route reaps *orphaned* keys only.
+    // Refuse to delete an object whose bytes are still referenced by a live
+    // `documents` row — otherwise any authenticated org member could delete a
+    // registered document's underlying object and leave a dangling reference.
+    let in_use = state
+        .document_repo
+        .exists_by_file_key_rls(&mut **rls.conn(), org_id, &query.file_key)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                file_key = %query.file_key,
+                "Failed to check whether file_key is still referenced"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Unable to verify file_key state. Please try again later.",
+                )),
+            )
+        })?;
+    if in_use {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "FILE_KEY_IN_USE",
+                "Refusing to delete a file_key still referenced by a document",
+            )),
+        ));
+    }
 
     let storage = state.storage_service.as_ref().ok_or_else(|| {
         tracing::error!("Storage service not configured — orphan cleanup unavailable");

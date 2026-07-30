@@ -84,6 +84,41 @@ impl DocumentRepository {
         .await
     }
 
+    /// Check whether a live (non-deleted) document row references `file_key`
+    /// within the given org, with RLS context (#2573).
+    ///
+    /// Used by the direct-upload orphan-cleanup route to refuse deleting a
+    /// storage object whose bytes are still referenced by a registered
+    /// document. Soft-deleted rows (`deleted_at IS NOT NULL`) do not count as
+    /// live references.
+    pub async fn exists_by_file_key_rls<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        file_key: &str,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let row = sqlx::query(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM documents
+                WHERE organization_id = $1
+                  AND file_key = $2
+                  AND deleted_at IS NULL
+            ) AS "exists"
+            "#,
+        )
+        .bind(org_id)
+        .bind(file_key)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(row.get("exists"))
+    }
+
     /// Find document by ID with RLS context.
     pub async fn find_by_id_rls<'e, E>(
         &self,
