@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { Footer, Header } from '@/components/ui';
 import type { ResolvedScreen } from '@/lib/layout';
 import { DEFAULT_LISTING_DETAIL_LAYOUT } from '@/lib/layout';
+import { serializeForScript } from '@/lib/serialize-script';
 import { ContactForm } from './ContactForm';
 import { LayoutSections, Placeholder } from './LayoutSections';
 import { trackListingViewed } from './listingAnalytics';
@@ -128,8 +129,12 @@ export function ListingDetailContent({ listing, jsonLd, layout }: ListingDetailC
       {jsonLd && (
         <script
           type="application/ld+json"
+          // serializeForScript (not bare JSON.stringify): jsonLd is built from
+          // user-supplied listing data, so `</script>`/U+2028/U+2029 in any
+          // string would break out of this inline script context (XSS). The
+          // helper escapes those to `\uXXXX` while keeping the JSON-LD valid.
           // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD for SEO requires dangerouslySetInnerHTML
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeForScript(jsonLd) }}
         />
       )}
       <Header />

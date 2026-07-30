@@ -134,6 +134,32 @@ describe('ListingDetailContent', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
+  it('escapes user-supplied jsonLd before inlining it into the <script> (XSS)', () => {
+    // jsonLd is derived from listing data an attacker can influence. A raw
+    // `</script>` (plus U+2028/U+2029) in any string must be escaped to its
+    // `\uXXXX` form so it cannot break out of the inline JSON-LD script.
+    // The separators are built from code points so this source stays ASCII.
+    const LS = String.fromCharCode(0x2028); // U+2028 LINE SEPARATOR
+    const PS = String.fromCharCode(0x2029); // U+2029 PARAGRAPH SEPARATOR
+    const jsonLd = {
+      '@type': 'Product',
+      name: '</script><script>alert(1)</script>',
+      sep: `${LS}${PS}`,
+    };
+    const { container } = render(<ListingDetailContent listing={validListing} jsonLd={jsonLd} />);
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const html = script?.innerHTML ?? '';
+    // The break-out sequences must not appear raw...
+    expect(html).not.toContain('</script>');
+    expect(html).not.toContain(LS);
+    expect(html).not.toContain(PS);
+    // ...but the escaped forms must, and the JSON must still round-trip.
+    expect(html).toContain('\\u003c');
+    expect(html).toContain('\\u2028');
+    expect(JSON.parse(html)).toEqual(jsonLd);
+  });
+
   it('pushed preview layout overrides the layout prop', () => {
     // The prop has agent-contact visible; the pushed layout makes gallery a placeholder.
     // This proves previewLayout ?? layout prop is used for both mainLayout and sidebar.
