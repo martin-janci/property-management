@@ -502,7 +502,8 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23",
@@ -519,7 +520,8 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "triage-closed-not-merged-pr-2489",
@@ -536,7 +538,8 @@
         "plan": null,
         "score": 1,
         "vector": "triage"
-      }
+      },
+      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "code-review-ppt-web-core-ws-token-rotation-stale",
@@ -553,7 +556,8 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "screen-map-drift-pr-2497-reality",
@@ -570,7 +574,8 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "code-review-ppt-web-core-ws-ungated-console",
@@ -904,28 +909,6 @@
       "retry_round": 2
     },
     {
-      "id": "gh-issue-2563",
-      "action": "Follow-up: schedule layout_change_events retention prune + persist layout_revalidate_received (PR #2549) (Closes #2563)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-07-29T12:05:23Z (#2563)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T12:05:23Z",
-      "issue_ref": {
-        "number": 2563,
-        "url": "https://github.com/martin-janci/property-management/issues/2563",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-07-30T03:23:02Z",
-      "resolved_by": "PR #2576 (merged 2026-07-30)"
-    },
-    {
       "id": "82-1-swiftui-project-setup-retry1",
       "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
       "owner_role": "pm-frontend",
@@ -1123,7 +1106,7 @@
       "deadline": null,
       "source": "pm-analysis 2026-07-30",
       "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T03:23:02Z"
+      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
@@ -1163,6 +1146,108 @@
       "source": "gap-scan",
       "first_open_at": "2026-07-30T03:23:02Z",
       "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
+      "id": "code-review-api-core-resolved-rs-leaks-db-error",
+      "action": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-admin-rs-swallowed-serialize",
+      "action": "layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-scheduler-rs-silent-target-err",
+      "action": "scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-scheduler-2026-07-30",
+      "action": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

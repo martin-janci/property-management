@@ -8239,6 +8239,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
+      "branch": "auto-impl/refactor-churn-hotspot-infra-ops-authz-b-581d573a",
+      "status": "failed",
+      "claimed_at": "2026-07-29T21:20:05Z",
+      "last_updated": "2026-07-30T04:03:29Z",
+      "status_changed_at": "2026-07-30T04:03:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21",
       "branch": "auto-impl/refactor-churn-hotspot-layouteditorpage-ae6ee8e2",
       "status": "merged",
@@ -8505,6 +8527,28 @@
       "merge_attempted_at": "2026-07-24T14:09:06Z"
     },
     {
+      "task_id": "repeated-churn-api-server-routes-auth-rs-2026-07-28",
+      "branch": "auto-impl/repeated-churn-api-server-routes-auth-rs-302cc600",
+      "status": "failed",
+      "claimed_at": "2026-07-29T21:20:05Z",
+      "last_updated": "2026-07-30T04:03:29Z",
+      "status_changed_at": "2026-07-30T04:03:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "screen-map-drift-pr-1418-ppt",
       "branch": "auto-impl/screen-map-drift-pr-1418-ppt-039c63c4",
       "status": "merged",
@@ -8678,6 +8722,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "security-voice-webhook-alexa-signature-not-verified",
+      "branch": "auto-impl/security-voice-webhook-alexa-signature-n-01d1bff2",
+      "status": "failed",
+      "claimed_at": "2026-07-29T21:20:05Z",
+      "last_updated": "2026-07-30T04:03:29Z",
+      "status_changed_at": "2026-07-30T04:03:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {
@@ -9191,5 +9257,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T02:22:36Z"
+  "archived_at": "2026-07-30T04:08:19Z"
 }
