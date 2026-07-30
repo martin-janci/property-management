@@ -1,9 +1,52 @@
 {
-  "generated": "2026-07-29T08:14:41Z",
+  "generated": "2026-07-30T00:26:10Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-30T00:26:10Z",
+      "prs_scanned": 9,
+      "clean": [
+        2570,
+        2569,
+        2567,
+        2566,
+        2565,
+        2482
+      ],
+      "with_issues": [
+        {
+          "pr": 2571,
+          "issue": 2573,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "DELETE /documents/by-file-key deletes by org-scope only \u2014 no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
+        },
+        {
+          "pr": 2568,
+          "issue": 2574,
+          "findings": 2,
+          "specialist": "mobile-native",
+          "note": "Android SSO CSRF guard half-wired: SsoStateStore.mint() has no prod call site, so every reality://sso callback is rejected; nonce also lost on process death"
+        },
+        {
+          "pr": 2572,
+          "issue": 2575,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "/disputes/kpis has no window_start<=window_end validation; only test is BIT-440 quarantined (zero executing coverage)"
+        }
+      ],
+      "skipped_already_reviewed": [
+        2549,
+        2478,
+        2433,
+        2554,
+        2491,
+        2553
+      ]
+    },
     {
       "run_at": "2026-07-29T08:14:41Z",
       "prs_scanned": 15,
