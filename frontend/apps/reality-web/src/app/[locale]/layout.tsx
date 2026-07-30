@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/auth-context';
 import { ComparisonProvider } from '@/lib/comparison-context';
 import { FeatureFlags } from '@/lib/feature-flags';
 import { QueryProvider } from '@/lib/query-provider';
+import { serializeForScript } from '@/lib/serialize-script';
 import { brandingToStyleObject, getTenantConfig } from '@/lib/tenant-config';
 import { TenantProvider } from '@/providers/TenantProvider';
 import { CookieConsentBanner } from '../../components/CookieConsentBanner';
@@ -42,7 +43,11 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rlt.sk').repl
 // the JSON.stringify out of the render path so we don't re-serialize on
 // every request. (Inline `<script>` injection means no React reconcile
 // either way, but this keeps the layout render hot path clean.)
-const ORGANIZATION_LD = JSON.stringify({
+// serializeForScript (not bare JSON.stringify) so `<`/`>`/`&`/U+2028/U+2029
+// are escaped before this lands inside <script>. Values here are static, but
+// routing every inline-script payload through the same hardened primitive
+// keeps the invariant local — no reviewer has to re-audit the data source.
+const ORGANIZATION_LD = serializeForScript({
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Reality Portal',
@@ -168,7 +173,12 @@ export default async function LocaleLayout({ children, params }: Props) {
     tenant_id: tenantConfig.tenant_id,
     feature_flags: tenantConfig.feature_flags,
   };
-  const tenantBootstrap = JSON.stringify(tenantBootstrapObj);
+  // MUST be serializeForScript, not JSON.stringify: `tenant_id` and the
+  // feature-flag keys are per-request, host-derived values. A bare
+  // JSON.stringify would let a `</script>` (or U+2028/U+2029) inside any of
+  // them break out of the inline bootstrap <script> below — an HTML-injection
+  // window on every request. serializeForScript escapes those to `\uXXXX`.
+  const tenantBootstrap = serializeForScript(tenantBootstrapObj);
 
   return (
     <html

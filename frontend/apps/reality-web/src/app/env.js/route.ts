@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { serializeForScript } from '@/lib/serialize-script';
 
 // Always dynamic — this route's whole purpose is to expose runtime env vars.
 export const dynamic = 'force-dynamic';
@@ -50,9 +51,11 @@ export function GET(req: NextRequest) {
     env.NEXT_PUBLIC_SITE_URL = inferred.siteUrl;
   }
 
-  // Escape '<' to prevent '</script>' injection in case a value is embedded
-  // inside another script context (defence-in-depth; content is env vars).
-  const safeJson = JSON.stringify(env).replace(/</g, '\\u003c');
+  // Escape '<'/'>'/'&'/U+2028/U+2029 so no value can break out of the script
+  // context (defence-in-depth; content is env vars). Shares the same hardened
+  // primitive as the layout tenant bootstrap — a bare `.replace(/</g, ...)`
+  // here previously missed the two Unicode line/paragraph separators.
+  const safeJson = serializeForScript(env);
 
   return new NextResponse(`window.__ENV__=${safeJson};`, {
     headers: {
