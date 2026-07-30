@@ -5809,6 +5809,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2238-retry2",
+      "branch": "auto-impl/gh-issue-2238-retry2-ce15b36c",
+      "status": "failed",
+      "claimed_at": "2026-07-30T02:07:46Z",
+      "last_updated": "2026-07-30T02:16:29Z",
+      "status_changed_at": "2026-07-30T02:16:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=tests already on dev (commit 4893e55): empty_cookie_does_not_shadow_body_token_on_refresh + _on_logout in tests/suites/auth_tests.rs match #2238 exactly; empty diff off dev so no PR possible; issue #2238 already closed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2239",
       "branch": "auto-impl/gh-issue-2239-9729b8a7",
       "status": "merged",
@@ -7975,6 +7997,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2563",
+      "branch": "auto-impl/gh-issue-2563-f25e35df",
+      "status": "merged",
+      "claimed_at": "2026-07-29T21:20:05Z",
+      "last_updated": "2026-07-30T02:16:29Z",
+      "status_changed_at": "2026-07-30T02:16:29Z",
+      "pr_number": 2576,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2576",
+      "merged_at": "2026-07-30T02:15:24Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2576 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=item1 landed (daily layout_change_events prune, 5 new tests green); item2 deferred (optional cross-service endpoint); drift=pm-tech-lead owner vs backend files; lone suite_1 failure is pre-existing airbnb env-pollution flake, passes isolated",
+      "reviewer_summary": "verdict=approve head_oid=460739bbf970be09ea7226e2e3ad545944106d98 note=faithful-2547-port-ci-green-scopedrift-justified-item2-optional-deferred",
+      "last_reviewed_oid": "460739bbf970be09ea7226e2e3ad545944106d98",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-30T02:13:28Z"
+    },
+    {
       "task_id": "gh-issue-2564",
       "branch": "auto-impl/gh-issue-2564-13d23d06",
       "status": "merged",
@@ -9147,5 +9191,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T00:20:42Z"
+  "archived_at": "2026-07-30T02:22:36Z"
 }

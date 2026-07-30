@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-30T00:20:54Z",
+  "archived_at": "2026-07-30T02:23:01Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6414,6 +6414,26 @@
         "at": "2026-07-22T10:16:32Z",
         "evidence": "issue #2238 closed state_reason=completed 2026-07-12; retry-remint had no gh-issue-closed guard"
       }
+    },
+    {
+      "id": "gh-issue-2238-retry2",
+      "action": "Follow-up: add handler-level regression test for empty-cookie-shadows-body-token (PR #2205) (Closes #2238) [retry 2/2 of failed gh-issue-2238]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2238 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2238",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2238,
+        "url": "https://github.com/martin-janci/property-management/issues/2238",
+        "labels": []
+      },
+      "dev_reconciled": "already-on-dev commit 4893e55; issue #2238 closed; retry produced empty diff"
     },
     {
       "id": "gh-issue-2239",

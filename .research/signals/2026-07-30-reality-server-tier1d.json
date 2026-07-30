@@ -1,0 +1,39 @@
+{
+  "generated": "2026-07-30T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "RE-RAISE (unfixed at HEAD b1f6ad5, first emitted 2026-07-12, subsequently decayed out of backlog.json but the vulnerable code is unchanged): backend/servers/reality-server/src/util/url_validator.rs:145-164 — validate_fetch_url()'s Host::Ipv6 branch only rejects is_loopback(), fc00::/7 and fe80::/10. It does NOT reject IPv4-mapped IPv6 literals (::ffff:a.b.c.d) nor IPv4-compatible/unspecified forms, so https://[::ffff:169.254.169.254]/ parses as Host::Ipv6 with segments[0]==0 (no rule matches, is_loopback()==false) and passes validation — a direct SSRF bypass to the cloud metadata endpoint. The same gap lets ::ffff:127.0.0.1, ::ffff:10.x.x.x and ::ffff:192.168.x.x reach loopback/private targets that the IPv4 branch (lines 93-144) is careful to block.",
+        "backend/servers/reality-server/src/routes/agency_imports.rs:237-241 and 289-293 — test_connection and run_import (both gated only by check_agency_membership, i.e. any authenticated agency member) feed the user-supplied feed_url through validate_fetch_url as the sole SSRF guard before the import worker fetches it; the inline comment at 284-286 explicitly intends to reject 'http://169.254.169.254/', but the IPv4-mapped IPv6 form defeats that intent. Because a literal IP requires no DNS resolution, the 'worker re-validates the resolved IP' mitigation (documented in url_validator.rs:13-15) does not apply — the bypass is reachable in production.",
+        "Suggested fix: in validate_fetch_url, before the range checks, canonicalize IPv4-mapped/compatible IPv6 (ip.to_ipv4_mapped()/to_ipv4()) and run the octet checks against the embedded IPv4; also reject the IPv6/IPv4 unspecified address (:: ; 0.0.0.0/8 is already covered) and consider 100.64.0.0/10 (CGNAT) for completeness."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-reality-server-branding-color-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_branding.rs:116-131,324-325 — UpdateBrandingRequest.primary_color / secondary_color are free-form Option<String> with no format validation. update_branding() (lines 244-332) explicitly hardens the adjacent URL fields via check_optional_url_field() (H7 audit: 'These end up in <img src=> on the frontend — reject javascript:, data:, file:', lines 250-254) but binds the color strings straight into the INSERT ... ON CONFLICT (lines 324-325) unvalidated. The stored value is then served back to every visitor of the agency's public branding (get_branding, lines 146-227).",
+        "The two color fields reach the same untrusted render surface as the URL fields the H7 fix was written to protect; if reality-web interpolates them into an inline style attribute or a <style> / CSS custom-property block, an agency member can store a CSS-injection payload (e.g. primary_color = '#000;} body{background:url(...)}' or 'expression(...)'-style breakouts) that executes in every visitor's browser — a stored client-side injection. Exploitability depends on the reality-web render path (out of this segment), hence medium confidence.",
+        "Suggested fix: validate primary_color/secondary_color against a strict CSS-color allowlist (e.g. ^#[0-9a-fA-F]{3,8}$ or a named-color set) in update_branding alongside the existing check_optional_url_field calls, and reject non-conforming input with 400 before the DB write."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
