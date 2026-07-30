@@ -221,6 +221,17 @@ export class WebSocketService {
   private connectionState: ConnectionState = 'disconnected';
   private lastError: Error | null = null;
 
+  /**
+   * The auth token the current (open or in-flight) socket was opened with.
+   *
+   * Used by {@link connect} to detect token rotation: if `connect()` is called
+   * again while a socket is already live but the token has since changed, the
+   * stale socket must be torn down and re-opened with the new token — otherwise
+   * the early-return would leave a live connection authenticated with a
+   * rotated-out token, and the server may close it on the next validation.
+   */
+  private currentToken: string | null = null;
+
   // Configuration
   private readonly url: string;
   private readonly getToken: () => string | null;
@@ -289,16 +300,33 @@ export class WebSocketService {
    * Connect to the WebSocket server.
    */
   connect(): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      return; // Already connected
-    }
-
     const token = this.getToken();
     if (!token) {
       this.setConnectionState('error', new Error('No auth token available'));
       return;
     }
 
+    // Only keep the existing socket if it is live (open or still handshaking)
+    // AND was opened with the same token. If the token has rotated we must
+    // fall through and re-establish the connection with the new token — a bare
+    // `readyState === OPEN` early-return would leave a live socket bound to the
+    // stale token (the server can then drop it on the next auth check, or worse
+    // keep honouring a token that should no longer be valid).
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING) &&
+      token === this.currentToken
+    ) {
+      return; // Already connected/connecting with the current token
+    }
+
+    // Any pre-existing socket here is either bound to a rotated-out token or
+    // already closed/closing. Tear it down cleanly before opening a new one so
+    // we never run two sockets in parallel or leak the stale connection.
+    this.teardownStaleSocket();
+
+    this.currentToken = token;
     this.shouldReconnect = true;
     this.clearReconnectTimeout();
 
@@ -333,7 +361,40 @@ export class WebSocketService {
       this.socket = null;
     }
 
+    this.currentToken = null;
     this.setConnectionState('disconnected');
+  }
+
+  /**
+   * Tear down the current socket without touching reconnect intent.
+   *
+   * Unlike {@link disconnect}, this does NOT flip `shouldReconnect` or emit a
+   * `disconnected` state — it is an internal replace step used by
+   * {@link connect} when re-establishing the connection (e.g. after a token
+   * rotation) or when the previous socket is already closed. The stale socket's
+   * handlers are detached first so its imminent `close` event cannot drive a
+   * spurious reconnect or state transition on the service that is about to own
+   * a fresh socket.
+   */
+  private teardownStaleSocket(): void {
+    if (!this.socket) return;
+
+    this.stopHeartbeat();
+
+    const stale = this.socket;
+    stale.onopen = null;
+    stale.onclose = null;
+    stale.onerror = null;
+    stale.onmessage = null;
+
+    try {
+      stale.close(1000, 'Reconnecting with a new token');
+    } catch {
+      // Closing an already-closed/closing socket can throw in some engines;
+      // the socket is being discarded regardless, so the error is irrelevant.
+    }
+
+    this.socket = null;
   }
 
   /**
