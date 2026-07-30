@@ -1,0 +1,246 @@
+{
+  "generated": "2026-07-30T03:32:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-30",
+      "type": "lag_warning",
+      "source": "routine-phase1",
+      "score_delta": 0,
+      "evidence": [
+        "Phase 1 SINCE cursor is ~47h old (>36h); brief covers >1 day of activity."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576]",
+        "Rank 1/3 for the 2026-07-28..2026-07-30 window; first appearance in hotspot_history (runs_seen 0 → 1)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-tenant-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs: 262 lines changed across PRs [2478]",
+        "Rank 2/3 for the 2026-07-28..2026-07-30 window; first appearance in hotspot_history (runs_seen 0 → 1)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs: 240 lines changed across PRs [2478, 2549]",
+        "Rank 3/3 for the 2026-07-28..2026-07-30 window; first appearance in hotspot_history (runs_seen 0 → 1)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ]
+    },
+    {
+      "id": "dep-update-pr-2491",
+      "type": "dep-update-noise",
+      "source": "pr-2491",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2491 authored by dependabot[bot] — dep-update noise, no action (npm-minor-patch group)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "chore"
+    },
+    {
+      "id": "code-review-api-core-resolved-rs-leaks-db-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,98,107,110,115,123 — err500 closure returns raw internal error text to the client (`format!(\"db error: {e}\")`, `format!(\"stored published config invalid: {e}\")`, etc.), leaking sqlx/serde diagnostic strings.",
+        "Sibling handlers (tenant.rs:29-32 `internal_error`, admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic body — resolved.rs is the outlier that both fails to log and leaks the message.",
+        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-admin-rs-swallowed-serialize",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:94,171,202,229,269,389,453 — every mutation handler ends with `Ok(Json(serde_json::to_value(row).unwrap_or_default()))` — a failed serialize returns 200 OK + JSON `null` body instead of a 500.",
+        "backend/servers/api-server/src/routes/layout/tenant.rs:202 — same shape on `put_tenant_override`.",
+        "Route through `internal_error(e)` to keep semantics consistent with the module's other error branches."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-scheduler-rs-silent-target-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:385,600 — `.unwrap_or_default()` on notification-target DB queries silently produces empty target sets with no log/metric.",
+        "backend/servers/api-server/src/services/scheduler.rs:667-671 — `close_expired_votes` swallows `vote_result`/`results_result` errors via `if let Ok(Some(...))` with no `else` log.",
+        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly logs and falls back — apply the same treatment at the 3 sites above."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD (cursors/seen/hotspot/quiet_days)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | (length == (unique|length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "any non-cumulative seen signal with score_delta != 0 → count",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[] | select(.score>8)] | length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "for open items updated_at<=today-14: (prev.score-1 <= cur.score < prev.score) or dropped",
+      "observed": "vacuous (no items >14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass line",
+      "observed": "no new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans in .research/plans/ ≤ 2",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hosts in staged diff (baseline docs exempt)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed listed AND cursor unchanged for each",
+      "observed": "no failed phases",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan present in plans/ or plans/_archive/",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ archive_now >= archive_HEAD ]",
+      "observed": "equal",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "empty",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor in [0,7] + coverage_cursor advanced with pm_cursor",
+      "observed": "CC=3→4, PM=1→2, epics=13",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal telegram bot-token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

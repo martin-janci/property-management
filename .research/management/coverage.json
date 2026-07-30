@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-27T03:11:35Z",
+  "generated": "2026-07-30T03:18:50Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -384,7 +384,7 @@
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-30",
       "screen_refs": []
     },
     {
@@ -400,11 +400,12 @@
       "evidence": [
         "AuthContext login/logout/refresh + concurrent-refresh guard + test",
         "LoginPage + AuthCallbackPage test; screen login buildStatus=shipped",
-        "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage"
+        "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage",
+        "PR #2553 (2026-07-29) — routed AuthContext cold-boot init through refreshTokenInternal (fixes stale-role init)"
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-30",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -443,7 +444,7 @@
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-30",
       "screen_refs": [
         {
           "screen_id": "ppt/accessibility-settings",
@@ -470,7 +471,7 @@
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-30",
       "screen_refs": [
         {
           "screen_id": "ppt/privacy-settings",
@@ -763,13 +764,14 @@
         "document_upload_tests.rs (T1-T15) cover AC-1/AC-2/AC-3",
         "screen-map upload-document.md buildStatus=shipped",
         "PR #2447 BIT-268 (2026-07-22): document authz backfill — cross-tenant regression tests",
-        "PR #2453 (2026-07-22): import + cert-doc authz cases added"
+        "PR #2453 (2026-07-22): import + cert-doc authz cases added",
+        "PR #2571 (2026-07-29) — DELETE-by-file_key orphan cleanup complements upload/metadata lifecycle"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-07-30",
       "screen_refs": []
     },
     {
@@ -1211,13 +1213,14 @@
       "evidence": [
         "PR #2309: POST /api/v1/documents/upload-url (SigV4 PUT presigner) wired backend",
         "StorageService::generate_upload_url confirmed",
-        "no frontend consumer of the endpoint found in frontend/apps"
+        "no frontend consumer of the endpoint found in frontend/apps",
+        "PR #2571 (2026-07-29) — org-scoped DELETE-by-file_key route for direct-upload orphan cleanup (backend supports the wiring; frontend gap unchanged)"
       ],
       "gaps": [
         "ppt-web upload flow still server-proxied — wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-30",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",

@@ -908,7 +908,7 @@
       "action": "Follow-up: schedule layout_change_events retention prune + persist layout_revalidate_received (PR #2549) (Closes #2563)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-29T12:05:23Z (#2563)",
       "deadline": null,
       "dependency": null,
@@ -921,7 +921,9 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "last_updated": "2026-07-30T03:23:02Z",
+      "resolved_by": "PR #2576 (merged 2026-07-30)"
     },
     {
       "id": "82-1-swiftui-project-setup-retry1",
@@ -1081,7 +1083,87 @@
       "first_open_at": "2026-07-30T02:06:13Z",
       "retry_of": "dx-closed-not-merged-pr-2387",
       "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-review-accounting-mvp-trio",
+      "action": "Review + shepherd merge of the accounting MVP-loop trio (PRs #2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — draft-ready since 2026-07-28 with no reviewer engagement",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
+      "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
+      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "pm-backend must close #2573 reference-check gap before wiring",
+      "depends_on": [
+        "gh-issue-2573"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
+      "id": "pm-scrum-master-signer-doc-sign-page-84-2",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned to shipped; verify signature-request email delivery (84-2 partial)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
+      "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
+      "action": "Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top-churn 2 windows running) — propose extraction of retention/prune jobs to a dedicated module",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
+      "id": "gap-uc-33-1-link-dispute-screen-map",
+      "action": "Link UC-33.1 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
+      "id": "gap-uc-33-2-link-dispute-screen-map",
+      "action": "Link UC-33.2 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
     }
   ],
-  "generated": "2026-07-23T14:34:52.019013Z"
+  "generated": "2026-07-30T03:23:02Z"
 }

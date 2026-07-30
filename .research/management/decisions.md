@@ -96,3 +96,10 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-07-23, pm-data):** Layout & Content Manager pilot shipped with zero instrumentation — publish/webhook analytics event schema needs to be defined before adoption grows and retrofitting becomes costly. Sequenced as `data-layout-publish-event-tracking-2026-07-23` on action-list. Owner: pm-data + pm-backend.
 - **NEW (2026-07-23, pm-data):** Retention policy for `support_tooling_events` — carried over from 2026-05-28 open decision, still unresolved. Publishing a policy (TTL vs indefinite, PII classification) is now blocking pm-data's ability to expand the audit event pattern to disputes/OAuth/layout. Owner: pm-security + pm-data.
 - **NEW (2026-07-23, pm-data):** FaultStatusCount metric unification — also carried over from 2026-05-28. As dashboards expand, dual definitions will produce contradictory numbers. Owner: pm-data (final call).
+
+---
+
+## Decisions logged 2026-07-30 (Phase 1.6 — pm-scrum-master + pm-backend)
+
+- **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
+- **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.

@@ -1,25 +1,18 @@
 # PPT Risk Register
 
-_Generated: 2026-07-23 · 8 active risks_
+_Generated: 2026-07-30 · 12 active risks_
 
 | Impact | Prob | Owner | ID | Risk | Mitigation |
 |---|---|---|---|---|---|
+| high | high | pm-mobile | pm-scrum-master-android-sso-csrf-half-wired-2026-07-30 | PR #2568 CSRF state fix is non-functional (#2574) — SsoStateStore.mint() has no call site so every reality://sso callback is rejected | Wire mint() at the SSO deep-link entry point; add integration test for the happy-path SSO callback |
 | high | medium | pm-security | risk-layout-webhook-replay-2026-07-23 | Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout | Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list |
 | high | medium | pm-qa | risk-announcement-fanout-test-fidelity-2026-07-23 | Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it | Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy |
 | high | medium | pm-integration | risk-webhook-cross-integration-drift-2026-07-23 | Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere | Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23 |
+| high | medium | pm-backend | pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30 | PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row | Land a reference-count guard + integration test before any client wires the endpoint |
 | high | low | pm-security | risk-dispute-add-evidence-idor-lingers-2026-07-23 | add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route | Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern |
 | medium | high | pm-data | risk-analytics-blindspots-shipped-mvp-2026-07-23 | Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish) | Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories |
 | medium | high | pm-data | risk-metric-definition-drift-2026-07-23 | FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other | Land single-source-of-truth metric definitions in shared module; deprecate duplicates |
 | medium | medium | pm-security | risk-mobile-layout-cache-cross-tenant-2026-07-23 | Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch | Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list |
 | medium | medium | pm-data | risk-data-retention-policy-missing-2026-07-23 | Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk | Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events |
-
-## Source
-
-- `risk-layout-webhook-replay-2026-07-23` — post-merge review 2026-07-23
-- `risk-announcement-fanout-test-fidelity-2026-07-23` — post-merge review 2026-07-23 (#2484)
-- `risk-webhook-cross-integration-drift-2026-07-23` — pm-scrum-master 2026-07-23 (extrapolation from #2485)
-- `risk-dispute-add-evidence-idor-lingers-2026-07-23` — post-merge review 2026-07-23 (#2483)
-- `risk-analytics-blindspots-shipped-mvp-2026-07-23` — pm-data 2026-07-23 rotating role
-- `risk-metric-definition-drift-2026-07-23` — pm-data 2026-05-28 (reopened 2026-07-23)
-- `risk-mobile-layout-cache-cross-tenant-2026-07-23` — post-merge review 2026-07-23
-- `risk-data-retention-policy-missing-2026-07-23` — pm-data 2026-07-23
+| medium | medium | pm-tech-lead | pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30 | Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement — dispatcher stack is starving on reviewer capacity, not implementer capacity | Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs |
+| medium | medium | pm-backend | pm-backend-disputes-kpis-window-validation-gap-2026-07-30 | Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it | Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract |

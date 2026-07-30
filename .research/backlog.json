@@ -5326,6 +5326,136 @@
         "assignment_status": "merged",
         "pr_number": 2569
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-scheduler-2026-07-30",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2567",
+        "PR #2576"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2478"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs: 262 lines changed across PRs [2478] — Rank 2/3 for 2026-07-28..2026-07-30 window"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2478",
+        "PR #2549"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs: 240 lines changed across PRs [2478, 2549] — Rank 3/3 for 2026-07-28..2026-07-30 window"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-resolved-rs-leaks-db-error",
+      "title": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-30"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,98,107,110,115,123 — err500 closure returns raw internal error text to the client (`format!(\"db error: {e}\")`, `format!(\"stored published config invalid: {e}\")`, etc.), leaking sqlx/serde diagnostic strings (column names, JSON structural detail, connection info).",
+        "Sibling handlers in the same layout module (backend/servers/api-server/src/routes/layout/tenant.rs:29-32 `internal_error`, backend/servers/api-server/src/routes/layout/admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic 'internal server error' body — resolved.rs is the outlier that both fails to log and leaks the message.",
+        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-admin-rs-swallowed-serialize",
+      "title": "layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-30"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs:94,171,202,229,269,389,453 — every mutation handler ends with `Ok(Json(serde_json::to_value(row).unwrap_or_default()))`. If serialization ever fails, the client gets 200 OK with a JSON `null` body instead of the saved row, matching the skill's 'StatusCode::OK on an error branch' anti-pattern.",
+        "backend/servers/api-server/src/routes/layout/tenant.rs:202 — same shape on the `put_tenant_override` success path.",
+        "Route through `internal_error(e)` (already defined in both files) to keep semantics consistent with the module's other error branches."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs",
+        "backend/servers/api-server/src/routes/layout/tenant.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-rs-silent-target-err",
+      "title": "scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-07-30"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler.rs:385 — `let target_user_ids = self.get_announcement_target_users(announcement).await.unwrap_or_default();` — a DB failure in the per-target lookup silently produces an empty target set and the announcement is treated as 'nothing to notify' with no log, no metric, no retry.",
+        "backend/servers/api-server/src/services/scheduler.rs:600 — same pattern for `get_vote_eligible_users(vote.building_id).await.unwrap_or_default()` on vote activation.",
+        "backend/servers/api-server/src/services/scheduler.rs:667-671 — `close_expired_votes` swallows `vote_result` / `results_result` errors via `if let Ok(Some(vote)) = ... { if let Ok(Some(results)) = ... }` with no `else` log; a DB error on either query silently skips the close-vote notification.",
+        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly matches on `Err(e)` and emits `tracing::error!` before falling back to an empty map — the same treatment should apply."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
     }
   ]
 }
