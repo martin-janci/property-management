@@ -700,20 +700,6 @@
       "retry_round": 2
     },
     {
-      "id": "82-1-swiftui-project-setup-retry1",
-      "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T23:19:31Z",
-      "retry_of": "82-1-swiftui-project-setup",
-      "retry_round": 1
-    },
-    {
       "id": "gh-issue-2320-retry2",
       "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 2/2 of failed gh-issue-2320]",
       "owner_role": "pm-tech-lead",
@@ -873,6 +859,26 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      }
+    },
+    {
+      "id": "gh-issue-2598",
+      "action": "Pre-existing frontend test failures on `dev` block the verify gate for admin-web / reality-web PRs (Closes #2598)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-30T18:05:37Z (#2598)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T18:05:37Z",
+      "issue_ref": {
+        "number": 2598,
+        "url": "https://github.com/martin-janci/property-management/issues/2598",
+        "labels": [
+          "bug",
+          "frontend"
+        ]
       }
     }
   ],

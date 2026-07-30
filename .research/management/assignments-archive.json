@@ -2791,6 +2791,28 @@
       "merge_attempted_at": "2026-07-23T18:18:07Z"
     },
     {
+      "task_id": "dx-admin-web-platform-settings-mobile-config-permanent-noop",
+      "branch": "auto-impl/dx-admin-web-platform-settings-mobile-co-44ad1464",
+      "status": "merged",
+      "claimed_at": "2026-07-30T16:20:59Z",
+      "last_updated": "2026-07-30T18:22:22Z",
+      "status_changed_at": "2026-07-30T18:22:22Z",
+      "pr_number": 2601,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2601",
+      "merged_at": "2026-07-30T18:20:34Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=513988b1f1c992d15830fe5177a4d3cc90a411dc note=read-only-fix-correct-ci-green-self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "513988b1f1c992d15830fe5177a4d3cc90a411dc",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-30T18:19:01Z"
+    },
+    {
       "task_id": "dx-api-validation-drift-gate-never-runs-on-dev",
       "branch": "auto-impl/dx-api-validation-drift-gate-never-runs-58c8fdfc",
       "status": "merged",
@@ -8419,6 +8441,28 @@
       "merge_attempted_at": "2026-07-24T14:09:06Z"
     },
     {
+      "task_id": "refactor-churn-hotspot-api-server-reports-2026-07-27",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-report-ef42efab",
+      "status": "merged",
+      "claimed_at": "2026-07-30T16:20:59Z",
+      "last_updated": "2026-07-30T18:22:22Z",
+      "status_changed_at": "2026-07-30T18:22:22Z",
+      "pr_number": 2599,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2599",
+      "merged_at": "2026-07-30T18:20:50Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=0d3d4ec43d617829e18c4dc8da01e3ae42c370fe note=verbatim-move-confirmed-ci-green-approve-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "0d3d4ec43d617829e18c4dc8da01e3ae42c370fe",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-30T18:19:01Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-routes-auth",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-routes-345979e2",
       "status": "merged",
@@ -9687,5 +9731,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T16:34:41Z"
+  "archived_at": "2026-07-30T18:22:50Z"
 }

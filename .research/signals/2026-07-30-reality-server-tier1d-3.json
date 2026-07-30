@@ -1,0 +1,37 @@
+{
+  "generated": "2026-07-30T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-url-validator-ipv4-mapped-ipv6-ssrf",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:150 — the Host::Ipv6 arm of validate_fetch_url() only rejects is_loopback(), fc00::/7 (unique-local) and fe80::/10 (link-local). It never normalizes IPv4-mapped / IPv4-compatible IPv6 addresses, so an attacker-supplied feed/import URL like https://[::ffff:169.254.169.254]/latest/meta-data/ parses as Host::Ipv6, passes every check, and reaches the cloud metadata endpoint at fetch time. Ipv6Addr::is_loopback() is false for ::ffff:127.0.0.1, so ::ffff:10.0.0.5, ::ffff:127.0.0.1 and ::ffff:169.254.169.254 all bypass the carefully-written IPv4 private-range block above (url_validator.rs:96-146).",
+        "backend/servers/reality-server/src/util/url_validator.rs:71 — this validator is the documented SSRF gate for user-supplied server-side-fetched URLs (agency import feeds); the IPv4-mapped gap defeats its stated purpose. Fix: call ip.to_ipv4_mapped()/to_ipv4() and, when Some(v4), run the same IPv4 forbidden-range checks; also reject NAT64 64:ff9b::/96 and unspecified ::."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-reality-server-sso-redirect-backslash-openredirect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:147 — check_redirect_uri_allowed() treats any value that starts_with('/') && !starts_with(\"//\") as a trusted same-origin relative path and returns Ok() unconditionally, skipping the allowlist. It only guards the literal protocol-relative form //evil.com.",
+        "backend/servers/reality-server/src/routes/sso.rs:305 — the SSO callback feeds the stored redirect_uri straight into Redirect::temporary() (sso.rs:338). Browsers normalize backslashes to forward slashes in the authority, so a stored redirect_uri of /\\evil.com or /\\/evil.com passes the relative-path shortcut here yet the browser resolves the Location header as //evil.com -> protocol-relative navigation to attacker origin = open redirect out of the post-auth SSO flow (issue #820 class). Fix: reject any path containing a backslash before the relative-path shortcut, or parse with a trusted base and verify the resolved origin is same-origin."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

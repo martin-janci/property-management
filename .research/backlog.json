@@ -4989,7 +4989,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
       ],
@@ -5001,7 +5001,12 @@
       ],
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T18:05:13Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "screen-map-drift-pr-2497-reality",
@@ -5075,7 +5080,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2547 (merged 2026-07-24)",
         "closes GitHub issue #2531"
@@ -5089,7 +5094,12 @@
       ],
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T18:05:13Z",
+        "assignment_status": "merged",
+        "pr_number": 2594
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
@@ -5124,7 +5134,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-07-27 (mobile-native-kmp segment)"
       ],
@@ -5136,7 +5146,12 @@
       ],
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T18:05:13Z",
+        "assignment_status": "merged",
+        "pr_number": 2595
+      }
     },
     {
       "id": "code-review-reality-web-inline-tenant-json-xss",
@@ -5240,7 +5255,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "standing-scan-2026-07-28"
       ],
@@ -5255,7 +5270,12 @@
       ],
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T18:05:13Z",
+        "assignment_status": "merged",
+        "pr_number": 2596
+      }
     },
     {
       "id": "dx-admin-web-platform-settings-mobile-config-permanent-noop",
