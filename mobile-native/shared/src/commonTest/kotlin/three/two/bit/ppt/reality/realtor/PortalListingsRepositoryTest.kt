@@ -200,4 +200,46 @@ class PortalListingsRepositoryTest {
         assertEquals(listOf(10, 25), p.viewsTrend)
         assertEquals(listOf(1, 2), p.inquiriesTrend)
     }
+
+    @Test
+    fun getPortfolioAnalytics_keeps_days_with_inquiries_but_zero_views() = runTest {
+        val listBody =
+            """
+            {
+              "listings": [
+                {"id": "lst-1", "title": "A", "price": "100000.00", "currency": "EUR", "status": "active"}
+              ],
+              "total": 1
+            }
+            """
+                .trimIndent()
+        // 2026-07-02 has an inquiry but zero views. Each DailyListingAnalytics row carries both
+        // metrics, so the fold keys viewsByDate AND inquiriesByDate off the same d.date on every
+        // iteration — a zero-view day still lands in viewsByDate (value 0). The date axis therefore
+        // already retains it and its inquiry is never dropped. This test pins that behaviour so a
+        // future refactor (e.g. only inserting into viewsByDate when views > 0) can't regress it.
+        val analytics1 =
+            """
+            {"listingId":"lst-1","totalViews":10,"totalInquiries":2,"totalFavorites":0,
+             "dailyAnalytics":[{"date":"2026-07-01","views":10,"inquiries":1},
+                               {"date":"2026-07-02","views":0,"inquiries":1}]}
+            """
+                .trimIndent()
+
+        val repo = repoWithRouter { path ->
+            when {
+                path.contains("lst-1/analytics") -> HttpStatusCode.OK to analytics1
+                path.contains("/my/listings") -> HttpStatusCode.OK to listBody
+                else -> HttpStatusCode.NotFound to "{}"
+            }
+        }
+
+        val result = repo.getPortfolioAnalytics()
+
+        assertTrue(result.isSuccess, "expected success, got $result")
+        val p = result.getOrThrow()
+        // Both days retained; 2026-07-02 contributes 0 views but 1 inquiry.
+        assertEquals(listOf(10, 0), p.viewsTrend)
+        assertEquals(listOf(1, 1), p.inquiriesTrend)
+    }
 }
