@@ -471,41 +471,6 @@
       "last_updated": "2026-07-24T00:10:32Z"
     },
     {
-      "id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
-      "action": "Churn hotspot: infra_ops_authz_backfill_tests.rs — 364 lines this run (BIT-268 test backfill)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T16:07:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "refactor-churn-hotspot-org-property-authz-backfill-2026-07-23",
-      "action": "Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T16:07:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      },
-      "last_updated": "2026-07-30T04:03:29Z"
-    },
-    {
       "id": "refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23",
       "action": "Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill)",
       "owner_role": "pm-tech-lead",
@@ -520,60 +485,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      },
-      "last_updated": "2026-07-30T04:03:29Z"
-    },
-    {
-      "id": "triage-closed-not-merged-pr-2489",
-      "action": "PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=triage)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T16:07:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "triage"
-      },
-      "last_updated": "2026-07-30T04:03:29Z"
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-token-rotation-stale",
-      "action": "WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T04:05:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      },
-      "last_updated": "2026-07-30T04:03:29Z"
-    },
-    {
-      "id": "screen-map-drift-pr-2497-reality",
-      "action": "screen-map drift: PR #2497 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T04:05:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
       },
       "last_updated": "2026-07-30T04:03:29Z"
     },
@@ -634,40 +545,6 @@
         ]
       },
       "last_updated": "2026-07-24T18:09:34Z"
-    },
-    {
-      "id": "security-voice-webhook-alexa-signature-not-verified",
-      "action": "SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=5 conf=high vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 5,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "repeated-churn-api-server-routes-auth-rs-2026-07-28",
-      "action": "auth.rs repeated-churn — runs_seen=4, 2950 lines / ~107K in one module (2nd-largest route file)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=3 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "refactor"
-      }
     },
     {
       "id": "bug-hotfix-no-test-pr-2547",
@@ -1094,19 +971,6 @@
       "source": "pm-analysis 2026-07-30",
       "first_open_at": "2026-07-30T03:23:02Z",
       "last_updated": "2026-07-30T03:23:02Z"
-    },
-    {
-      "id": "pm-scrum-master-signer-doc-sign-page-84-2",
-      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned to shipped; verify signature-request email delivery (84-2 partial)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-07-30",
-      "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T04:03:29Z"
     },
     {
       "id": "pm-backend-scheduler-rs-refactor-extract-jobs",

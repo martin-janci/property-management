@@ -4797,7 +4797,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "git-log-since-2026-07-21T03:13:00Z"
       ],
@@ -4809,7 +4809,12 @@
       ],
       "created_at": "2026-07-23",
       "updated_at": "2026-07-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T08:06:04Z",
+        "assignment_status": "merged",
+        "pr_number": 2579
+      }
     },
     {
       "id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
@@ -4948,7 +4953,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-07-24 (ppt-web-core segment)"
       ],
@@ -4961,7 +4966,12 @@
       ],
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T08:06:04Z",
+        "assignment_status": "merged",
+        "pr_number": 2578
+      }
     },
     {
       "id": "code-review-ppt-web-core-ws-ungated-console",
@@ -4989,7 +4999,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2497"
       ],
@@ -5002,7 +5012,12 @@
       ],
       "created_at": "2026-07-24",
       "updated_at": "2026-07-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T08:06:04Z",
+        "assignment_status": "merged",
+        "pr_number": 2577
+      }
     },
     {
       "id": "refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27",

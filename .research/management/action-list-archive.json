@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-30T04:08:19Z",
+  "archived_at": "2026-07-30T08:11:38Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1940,6 +1940,30 @@
         "commit": "931a316da4d9296016add73e749997081e4e23b5",
         "subject": "code-review-ppt-web-core-authctx-init-stale-role: route AuthContext cold-boot init through refreshTokenInternal (#2553)",
         "at": "2026-07-29T08:06:29Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-token-rotation-stale",
+      "action": "WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-07-30T08:06:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T04:05:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "last_updated": "2026-07-30T04:03:29Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b9add75e6527ec90654ea2af6b9e6042d92cd526",
+        "subject": "code-review-ppt-web-core-ws-token-rotation-stale: re-auth WebSocket on token rotation instead of leaving a stale socket (#2578)",
+        "at": "2026-07-30T08:06:04Z"
       }
     },
     {
@@ -9203,6 +9227,26 @@
       ]
     },
     {
+      "id": "pm-scrum-master-signer-doc-sign-page-84-2",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned to shipped; verify signature-request email delivery (84-2 partial)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30 | gc1-reconcile 2026-07-30T08:11:29Z",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T04:03:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T08:11:29Z"
+      }
+    },
+    {
       "id": "pm-security-reconcile-cookie-path-565",
       "action": "Reconcile the cookie Path breaking change (#617) introduced by PR #565 session-cookie scope hardening (P0-12): confirm the new Path does not silently log existing sessions out or break the SSO /auth/callback cookie read; document the migration.",
       "owner_role": "pm-security",
@@ -9419,6 +9463,30 @@
       }
     },
     {
+      "id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
+      "action": "Churn hotspot: infra_ops_authz_backfill_tests.rs — 364 lines this run (BIT-268 test backfill)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-30T08:06:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T08:06:04Z"
+      }
+    },
+    {
       "id": "refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21",
       "action": "Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run",
       "owner_role": "pm-tech-lead",
@@ -9535,6 +9603,31 @@
       "last_updated": "2026-07-23T08:16:02Z"
     },
     {
+      "id": "refactor-churn-hotspot-org-property-authz-backfill-2026-07-23",
+      "action": "Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-30T08:11:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-07-30T04:03:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2579,
+        "merged_at": "2026-07-30T06:19:54Z",
+        "at": "2026-07-30T08:11:29Z"
+      }
+    },
+    {
       "id": "refactor-churn-hotspots-api-server-auth-2026-07-12",
       "action": "Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs",
       "owner_role": "pm-tech-lead",
@@ -9613,6 +9706,30 @@
       "gc1_closed": "merged #1118 @ 2026-06-05T05:48:05Z; closed by dispatcher 2026-06-05T12:30:29Z (archive-terminal leak, refactor-* id not caught by gc1-reconcile stem match)"
     },
     {
+      "id": "repeated-churn-api-server-routes-auth-rs-2026-07-28",
+      "action": "auth.rs repeated-churn — runs_seen=4, 2950 lines / ~107K in one module (2nd-largest route file)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=3 conf=high vector=refactor) | gc1-reconcile 2026-07-30T08:06:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:21:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T08:06:04Z"
+      }
+    },
+    {
       "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
       "action": "forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening)",
       "owner_role": "pm-backend",
@@ -9662,6 +9779,31 @@
         "merged_pr": 2462,
         "merged_at": "2026-07-23T04:05:11Z",
         "at": "2026-07-23T04:15:38Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2497-reality",
+      "action": "screen-map drift: PR #2497 touched reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-07-30T08:11:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T04:05:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "last_updated": "2026-07-30T04:03:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2577,
+        "merged_at": "2026-07-30T06:19:43Z",
+        "at": "2026-07-30T08:11:29Z"
       }
     },
     {
@@ -9740,6 +9882,30 @@
         "archive_status": "merged",
         "merged_pr": 2234,
         "at": "2026-07-12T22:04:03Z"
+      }
+    },
+    {
+      "id": "security-voice-webhook-alexa-signature-not-verified",
+      "action": "SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=5 conf=high vector=security) | gc1-reconcile 2026-07-30T08:06:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:21:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T08:06:04Z"
       }
     },
     {
@@ -10178,6 +10344,31 @@
         "merged_pr": 2520,
         "merged_at": "2026-07-24T10:26:07Z",
         "at": "2026-07-24T12:08:39Z"
+      }
+    },
+    {
+      "id": "triage-closed-not-merged-pr-2489",
+      "action": "PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=triage) | gc1-reconcile 2026-07-30T08:11:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "triage"
+      },
+      "last_updated": "2026-07-30T04:03:29Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T08:11:29Z"
       }
     },
     {
