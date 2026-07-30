@@ -1,0 +1,39 @@
+{
+  "generated": "2026-07-30T00:00:00Z",
+  "segment": "ppt-web-ui",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["frontend", "completeness"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-movefolder-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx (802 lines, a Phase-1 churn hotspot) renders its entire user-facing UI as hardcoded Slovak string literals and never calls useTranslation/t(). grep count of t() usages in the file is 0, whereas sibling document components (FolderTree.tsx, DocumentUpload.tsx) do wrap text in t(). Hardcoded strings include: line 144 aria-label=\"Umiestnenie priecinka\"; line 320 aria-label=\"Presunut dokumenty\"; line 325 <h3>Presunut do priecinka</h3>; line 326 aria-label=\"Zavriet\"; line 353 <span>Ciel:</span>; line 368 <span>Koren (bez priecinka)</span>; line 347 `${documentTitles.length} dokumentov` (also an untranslated hardcoded plural).",
+        "The app ships four locales (sk, cs, de, en per CLAUDE.md / react-i18next). Every string in this dialog is frozen to Slovak, so cs/de/en users see untranslated text and the plural form is uncountable/ungrammatical for other languages. This is a shipped, actively-churned move-documents flow, so the gap is user-visible in production.",
+        "Suggested fix: introduce useTranslation() and move all literals to the documents i18n namespace (e.g. documents.moveFolder.*), replacing the plural at line 347 with an i18n count-plural key. Note the app-wide RTL/pluralization implication -- do not just string-swap the Slovak text."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-sharepanel-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx has 0 useTranslation/t() calls and renders hardcoded ENGLISH user-facing strings: line 129 <h4>New share</h4>; line 154 placeholder=\"uuid-of-user\"; line 180 placeholder=\"e.g. manager\"; line 189 \"Password protect\"; line 209 placeholder=\"Min. 4 characters\"; line 238 \"days\"; line 292/304 \"No active shares yet.\"; line 308 \"Active shares\"; line 415 \"Share\"; line 421 \"Loading shares...\"; line 422 \"Could not load shares.\"",
+        "This is the same i18n-gap class as MoveFolderDialog but in the opposite language: the documents feature mixes hardcoded Slovak (MoveFolderDialog) and hardcoded English (DocumentSharePanel), so in a single Slovak-primary session the share panel appears entirely in English. All four supported locales (sk/cs/de/en) are affected. The placeholder \"uuid-of-user\" at line 154 is also raw dev-facing copy leaking into a shipped share form.",
+        "Suggested fix: add useTranslation() and migrate the CreateShareForm + share-list strings to the documents.share.* i18n namespace; replace the raw \"uuid-of-user\" placeholder with a localized, user-meaningful hint. The password min-length rule itself is fine (handleCreate at line 86 guards password.trim().length < 4)."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

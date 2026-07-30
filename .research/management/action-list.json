@@ -471,24 +471,6 @@
       "last_updated": "2026-07-24T00:10:32Z"
     },
     {
-      "id": "refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23",
-      "action": "Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-23T16:07:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      },
-      "last_updated": "2026-07-30T04:03:29Z"
-    },
-    {
       "id": "code-review-ppt-web-core-ws-ungated-console",
       "action": "10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod",
       "owner_role": "pm-tech-lead",

@@ -8467,6 +8467,30 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "refactor-churn-hotspot-platform-admin-authz-batch2-2026-07-23",
+      "branch": "auto-impl/refactor-churn-hotspot-platform-admin-au-938a0903",
+      "status": "merged",
+      "claimed_at": "2026-07-30T04:03:29Z",
+      "last_updated": "2026-07-30T08:18:33Z",
+      "status_changed_at": "2026-07-30T08:18:33Z",
+      "pr_number": 2580,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2580",
+      "merged_at": "2026-07-30T08:17:09Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=6d462abd6a7355173cea6e150ee786906d70c722 note=behavior-preserving test-dedup single-file; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "6d462abd6a7355173cea6e150ee786906d70c722",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-30T08:15:27Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
       "branch": "auto-impl/refactor-churn-hotspot-ppt-dashboard-md-1efc81ca",
       "status": "merged",
@@ -9377,5 +9401,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T08:11:12Z"
+  "archived_at": "2026-07-30T08:18:33Z"
 }
