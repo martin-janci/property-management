@@ -5060,18 +5060,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2599",
         "Phase 1 churn scan 2026-07-27 (commit range 2026-07-24..2026-07-27 on dev)"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/reports.rs churned 3329 additions+deletions this window; hotspot_history.runs_seen 2 → 3 — qualifies for repeated-churn (+1 stacks with base churn-hotspot +1). Last previously flagged 2026-07-16 in another window; then again now — the route file keeps drifting."
+        "backend/servers/api-server/src/routes/reports.rs churned 3329 additions+deletions this window; hotspot_history.runs_seen 2 → 3 — qualifies for repeated-churn (+1 stacks with base churn-hotspot +1). Last previously flagged 2026-07-16 in another window; then again now — the route file keeps drifting.",
+        "resolved: PR #2599 merged 2026-07-30 — extract schedule cadence/cron helpers from reports.rs (887 lines moved to new schedule_cadence.rs submodule)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/reports.rs"
       ],
       "created_at": "2026-07-27",
-      "updated_at": "2026-07-27",
+      "updated_at": "2026-07-30",
       "plan": null
     },
     {
@@ -5283,8 +5285,9 @@
       "vector": "dx",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2601",
         "standing-scan-2026-07-28"
       ],
       "evidence": [
@@ -5292,14 +5295,15 @@
         "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx:282 — handleFlagSubmit toasts the same message with no request at all; :238 handles a 404/405 from PATCH /api/v1/admin/mobile-config the same way.",
         "Verified absent on the backend: `grep -rn 'platform-admin/settings' backend/servers/api-server/src` and `grep -rn 'mobile-config|mobile_config' backend/servers/api-server/src` both return no matches, so these are not transient 404s — no route is registered.",
         "Contrast with feature-flags.tsx, whose 'not yet implemented' fallback is merely defensive: POST /api/v1/platform-admin/feature-flags/{id}/toggle DOES exist (routes/platform_admin/features.rs:352). Only the two pages above are dead ends.",
-        "Same shape as the previously-tracked `dx-portfolio-dashboard-stubs` vector: UI shipped ahead of its API."
+        "Same shape as the previously-tracked `dx-portfolio-dashboard-stubs` vector: UI shipped ahead of its API.",
+        "resolved: PR #2601 merged 2026-07-30 — fix no-op Save paths in admin-web platform-settings + mobile-config"
       ],
       "files": [
         "frontend/apps/admin-web/src/pages/platform.tsx",
         "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"
       ],
       "created_at": "2026-07-28",
-      "updated_at": "2026-07-28",
+      "updated_at": "2026-07-30",
       "plan": null
     },
     {
@@ -5396,10 +5400,12 @@
       "status": "open",
       "sources": [
         "PR #2567",
-        "PR #2576"
+        "PR #2576",
+        "PR #2594"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window"
+        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window",
+        "cumulative-update 2026-07-30 20:15Z: PR #2594 added +118 lines (DB-backed regression for support_tooling_events retention prune) — total 465 lines across PRs [2567, 2576, 2594] this window; score_delta not re-applied (cumulative-type)"
       ],
       "files": [
         "backend/servers/api-server/src/services/scheduler.rs"
@@ -5512,6 +5518,26 @@
       ],
       "files": [
         "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "bug-hotfix-no-test-pr-2592",
+      "title": "PR #2592 (fix(ppt-web) gate WebSocket console diagnostics behind import.meta.env.DEV) shipped without a regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2592"
+      ],
+      "evidence": [
+        "hotfix-no-test: PR #2592 modified frontend/apps/ppt-web/src/lib/websocket.ts (42 lines) with no *test* / *spec* file in diff; note: build-time DEV-gate for console.warn/error is testing-inconvenient (would need import.meta.env stubbing)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
       ],
       "created_at": "2026-07-30",
       "updated_at": "2026-07-30",

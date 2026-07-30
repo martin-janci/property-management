@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-30T03:32:00Z",
+  "generated": "2026-07-30T20:20:00Z",
   "signals": [
     {
       "id": "lag-warning-2026-07-30",
@@ -10,7 +10,8 @@
         "Phase 1 SINCE cursor is ~47h old (>36h); brief covers >1 day of activity."
       ],
       "confidence": "high",
-      "candidate_vector": "dx"
+      "candidate_vector": "dx",
+      "same_day_reemit_note": "already scored in morning pass at 03:32Z; score_delta zeroed on same-day rerun to avoid double-count (G4)"
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
@@ -66,14 +67,15 @@
         "PR #2491 authored by dependabot[bot] — dep-update noise, no action (npm-minor-patch group)."
       ],
       "confidence": "high",
-      "candidate_vector": "chore"
+      "candidate_vector": "chore",
+      "same_day_reemit_note": "already scored in morning pass at 03:32Z; score_delta zeroed on same-day rerun to avoid double-count (G4)"
     },
     {
       "id": "code-review-api-core-resolved-rs-leaks-db-error",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -81,14 +83,15 @@
         "Sibling handlers (tenant.rs:29-32 `internal_error`, admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic body — resolved.rs is the outlier that both fails to log and leaks the message.",
         "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability."
       ],
-      "expert": "rust"
+      "expert": "rust",
+      "same_day_reemit_note": "already scored in morning pass at 03:32Z; score_delta zeroed on same-day rerun to avoid double-count (G4)"
     },
     {
       "id": "code-review-api-core-admin-rs-swallowed-serialize",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -96,14 +99,15 @@
         "backend/servers/api-server/src/routes/layout/tenant.rs:202 — same shape on `put_tenant_override`.",
         "Route through `internal_error(e)` to keep semantics consistent with the module's other error branches."
       ],
-      "expert": "rust"
+      "expert": "rust",
+      "same_day_reemit_note": "already scored in morning pass at 03:32Z; score_delta zeroed on same-day rerun to avoid double-count (G4)"
     },
     {
       "id": "code-review-api-core-scheduler-rs-silent-target-err",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -111,136 +115,193 @@
         "backend/servers/api-server/src/services/scheduler.rs:667-671 — `close_expired_votes` swallows `vote_result`/`results_result` errors via `if let Ok(Some(...))` with no `else` log.",
         "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly logs and falls back — apply the same treatment at the 3 sites above."
       ],
-      "expert": "rust"
+      "expert": "rust",
+      "same_day_reemit_note": "already scored in morning pass at 03:32Z; score_delta zeroed on same-day rerun to avoid double-count (G4)"
+    },
+    {
+      "id": "hotfix-no-test-pr-2592",
+      "type": "hotfix-no-test",
+      "source": "pr-2592",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2592 title starts with fix(ppt-web): gate WebSocket console diagnostics behind import.meta.env.DEV — 32/10 additions/deletions in frontend/apps/ppt-web/src/lib/websocket.ts, no *test* / *spec* file in diff",
+        "note: this is a build-time DEV-gate for console.warn/error — testing branch conditionally would need import.meta.env stubbing (test-inconvenient); signal still fires per rule wording"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
     }
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "command": "test -f briefs/2026-07-30.md && head -1 matches # 2026-07-30",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare staged vs HEAD (cursors/seen/hotspot/quiet_days)",
-      "observed": "true",
+      "command": "compare staged state.json vs HEAD",
+      "observed": "true (last_pr_seen 2576→2603, last_issue_seen 2575→2598, last_commit_sha 34ac587→8faf86a, seen_signals 315→316, hotspot_history 15→17, review_cursor.api-core 2026-07-20→2026-07-30)",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq [.items[].id] | (length == (unique|length))",
+      "command": "backlog ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "any non-cumulative seen signal with score_delta != 0 → count",
-      "observed": "0",
-      "expected": "0"
+      "command": "no non-cumulative seen signal with score_delta != 0",
+      "observed": "true (after zeroing 4 same-day re-emits)",
+      "expected": "true"
     },
     {
       "goal": "G5-cap",
       "passed": true,
-      "command": "jq [.items[] | select(.score>8)] | length == 0",
-      "observed": "true",
+      "command": "no item score > 8",
+      "observed": "true (max score 6, the test-gap-inquiry-idor-regression capped-old row)",
       "expected": "true"
     },
     {
       "goal": "G5-decay",
       "passed": true,
-      "command": "for open items updated_at<=today-14: (prev.score-1 <= cur.score < prev.score) or dropped",
-      "observed": "vacuous (no items >14d)",
+      "command": "open items updated_at<=today-14 decayed or dropped",
+      "observed": "vacuous (no open items older than 2026-07-16)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
       "command": "every new plan has adversarial pass line",
-      "observed": "no new plans",
+      "observed": "vacuous (0 new plans this run)",
       "expected": "vacuous"
     },
     {
-      "goal": "G7",
+      "goal": "G7-count",
       "passed": true,
-      "command": "new plans in .research/plans/ ≤ 2",
+      "command": "new plans in staged set count",
       "observed": "0",
       "expected": "≤2"
     },
     {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "each new plan has 4 metadata + 11 headings + capability + Mode + files-on-disk",
+      "observed": "vacuous (0 new plans)",
+      "expected": "vacuous"
+    },
+    {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
-      "observed": "0",
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research paths",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secrets/hosts in staged diff (baseline docs exempt)",
-      "observed": "0",
+      "command": "secret/hostname scan (with 4-file exemption)",
+      "observed": "0 hits",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
+      "command": "backlog.md == regen(backlog.json, 2026-07-30 20:20 UTC)",
+      "observed": "diff -q exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-that-failed listed AND cursor unchanged for each",
-      "observed": "no failed phases",
+      "command": "phase-failure honesty (no phase failed, brief matches)",
+      "observed": "no failed phase",
       "expected": "vacuous"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior-run plan present in plans/ or plans/_archive/",
-      "observed": "true",
+      "command": "prior-run plans still present or archived (no silent deletes)",
+      "observed": "all prior-run plan slugs present in plans/ or plans/_archive/",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "[ archive_now >= archive_HEAD ]",
-      "observed": "equal",
-      "expected": "≥"
+      "command": "archive only grows",
+      "observed": "count(staged _archive) >= count(HEAD _archive)",
+      "expected": "exit 0"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
-      "observed": "exit 0",
+      "command": "IDEAS_TRIAGE.md == regen(vector=triage, 2026-07-30 20:20 UTC)",
+      "observed": "diff -q exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps + idempotency",
-      "observed": "empty",
-      "expected": "true"
+      "command": "auto-fix discipline (cap + idempotency + kill switch)",
+      "observed": "0 actions this run; ROUTINE_AUTOFIX_DISABLED unset; no candidate met bar (allowlist type + high + score≥3)",
+      "expected": "vacuous"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid + pm_cursor in [0,7] + coverage_cursor advanced with pm_cursor",
-      "observed": "CC=3→4, PM=1→2, epics=13",
+      "command": "management artifacts valid + pm_cursor bounds + coverage_cursor liveness",
+      "observed": "action-list.json + risks.json parse, project-state.md non-empty, pm_cursor.next_index=2 in [0,7], coverage_cursor.next_index=4 (no Phase 1.6 run this rerun so GC7 advance clause is vacuous)",
       "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no literal telegram bot-token value in staged diff",
-      "observed": "0",
+      "command": "no Telegram bot-token in staged added lines",
+      "observed": "0 matches",
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "catchup_afternoon": {
+    "since_iso": "2026-07-30T03:32:05Z",
+    "new_merged_prs": [
+      2577,
+      2578,
+      2579,
+      2580,
+      2592,
+      2593,
+      2594,
+      2595,
+      2596,
+      2597,
+      2599,
+      2601
+    ],
+    "new_open_prs": [
+      2600,
+      2602,
+      2603,
+      2581,
+      2582,
+      2583,
+      2584,
+      2585,
+      2586,
+      2587,
+      2588,
+      2589,
+      2590,
+      2591
+    ],
+    "new_issues": [
+      2598
+    ],
+    "note": "same-day rerun after buffer-low trigger — no new hotspots (top-3 unchanged), no drift, no reverts. PR #2594 (+118 lines to scheduler.rs) cumulative-updated existing scheduler hotspot signal (score not re-added)."
+  }
 }
