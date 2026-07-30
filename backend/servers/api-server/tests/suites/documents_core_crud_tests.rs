@@ -203,6 +203,121 @@ async fn delete_document_succeeds(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
+// documents/core.rs — DELETE /api/v1/documents/by-file-key (#2564, #2573)
+// ---------------------------------------------------------------------------
+
+/// Seed a document whose `file_key` lies inside the org namespace
+/// (`{org_id}/…`), so it satisfies `validate_file_key_org_scope`.
+async fn seed_document_with_file_key(
+    pool: &PgPool,
+    org_id: Uuid,
+    user_id: Uuid,
+    file_key: &str,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO documents \
+         (organization_id, title, category, file_key, file_name, mime_type, size_bytes, created_by) \
+         VALUES ($1, 'Registered Doc', 'other', $2, 'report.pdf', 'application/pdf', 1024, $3) \
+         RETURNING id",
+    )
+    .bind(org_id)
+    .bind(file_key)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed document with file_key")
+}
+
+/// #2573 regression: the orphan-cleanup route must REFUSE to delete a
+/// `file_key` still referenced by a live `documents` row (409 FILE_KEY_IN_USE).
+/// Without the guard, any authenticated org member could delete a registered
+/// document's underlying object and leave a dangling reference.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_by_file_key_rejects_referenced_key(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-reap-inuse").await;
+    let user_id = user_id_for(&pool, &user.email).await;
+
+    let file_key = format!("{org_id}/2026/07/registered_report.pdf");
+    let doc_id = seed_document_with_file_key(&pool, org_id, user_id, &file_key).await;
+
+    let resp = app
+        .execute(
+            app.session(token, org_id)
+                .delete(&format!(
+                    "/api/v1/documents/by-file-key?file_key={}",
+                    urlencoding::encode(&file_key)
+                ))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::CONFLICT,
+        "referenced file_key must not be reapable; body: {}",
+        resp.text()
+    );
+    assert!(
+        resp.text().contains("FILE_KEY_IN_USE"),
+        "body should carry FILE_KEY_IN_USE code: {}",
+        resp.text()
+    );
+
+    // The document row (and thus the storage reference) must survive.
+    let exists: bool = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND deleted_at IS NULL)",
+    )
+    .bind(doc_id)
+    .fetch_one(&pool)
+    .await
+    .expect("check doc still present");
+    assert!(
+        exists,
+        "referenced document must remain intact after refused reap"
+    );
+}
+
+/// An unreferenced (orphan) org-scoped `file_key` passes the referenced-object
+/// guard and proceeds to the storage stage. The test `AppState` has no storage
+/// service configured, so it surfaces 503 there — the point is that it is NOT
+/// 409: the guard only blocks keys backed by a live document row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn delete_by_file_key_allows_unreferenced_key(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "doc-reap-orphan").await;
+
+    // No documents row references this key — it is a genuine orphan.
+    let file_key = format!("{org_id}/2026/07/orphan_never_registered.pdf");
+
+    let resp = app
+        .execute(
+            app.session(token, org_id)
+                .delete(&format!(
+                    "/api/v1/documents/by-file-key?file_key={}",
+                    urlencoding::encode(&file_key)
+                ))
+                .build(),
+        )
+        .await;
+
+    assert_ne!(
+        resp.status,
+        StatusCode::CONFLICT,
+        "an unreferenced orphan key must NOT be blocked by the in-use guard; body: {}",
+        resp.text()
+    );
+    assert_eq!(
+        resp.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "guard passed; storage is unconfigured in tests so the storage stage returns 503; body: {}",
+        resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
 // documents/core.rs — PUT /api/v1/documents/{id}/access
 // ---------------------------------------------------------------------------
 
