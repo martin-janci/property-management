@@ -4,8 +4,8 @@
 //! and session cleanup.
 
 use db::repositories::{
-    AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, MeterRepository,
-    PlatformAdminRepository, ReportScheduleRepository, SessionRepository,
+    AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, LayoutRepository,
+    MeterRepository, PlatformAdminRepository, ReportScheduleRepository, SessionRepository,
     SignatureRequestRepository, UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
@@ -28,6 +28,13 @@ const SIGNATURE_REMINDER_MIN_INTERVAL_HOURS: i64 = 12;
 /// admin-audit prune only needs a daily cadence — this gate skips the prune
 /// until 24h have elapsed since the last successful run.
 const SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
+
+/// Minimum interval between successive `layout_change_events` retention prunes
+/// (issue #2563). Mirrors the `support_tooling_events` cadence: the scheduler
+/// ticks every ~60s, but the append-only layout-publish trail only needs a
+/// daily prune — this gate skips the prune until 24h have elapsed since the
+/// last successful run.
+const LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 
 /// Scheduler service configuration.
 #[derive(Clone)]
@@ -54,6 +61,10 @@ pub struct SchedulerConfig {
     /// admin-audit trail before the daily prune deletes aged rows (issue #2531,
     /// default: 730 — 24 months, matching the SQL-layer default).
     pub support_tooling_retention_days: i64,
+    /// Retention window (in days) for the append-only `layout_change_events`
+    /// layout-publish trail before the daily prune deletes aged rows (issue
+    /// #2563, default: 730 — 24 months, matching the SQL-layer default).
+    pub layout_change_events_retention_days: i64,
 }
 
 impl Default for SchedulerConfig {
@@ -68,6 +79,7 @@ impl Default for SchedulerConfig {
             pin_max_age_days: 30,
             overdue_grace_period_days: 0,
             support_tooling_retention_days: 730,
+            layout_change_events_retention_days: 730,
         }
     }
 }
@@ -92,6 +104,9 @@ pub struct SchedulerMetrics {
     /// Aged `support_tooling_events` rows pruned by the daily retention job
     /// (issue #2531).
     pub support_tooling_events_pruned: u64,
+    /// Aged `layout_change_events` rows pruned by the daily retention job
+    /// (issue #2563).
+    pub layout_change_events_pruned: u64,
     pub errors: u64,
 }
 
@@ -108,6 +123,7 @@ pub struct Scheduler {
     financial_repo: FinancialRepository,
     report_schedule_repo: ReportScheduleRepository,
     platform_admin_repo: PlatformAdminRepository,
+    layout_repo: LayoutRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -116,6 +132,10 @@ pub struct Scheduler {
     /// prune, used to enforce the daily cadence across the ~60s tick loop
     /// (issue #2531). `None` until the first prune runs.
     last_support_tooling_prune_at: std::sync::Mutex<Option<chrono::DateTime<chrono::Utc>>>,
+    /// Timestamp of the last successful `layout_change_events` retention prune,
+    /// used to enforce the daily cadence across the ~60s tick loop (issue
+    /// #2563). `None` until the first prune runs.
+    last_layout_change_events_prune_at: std::sync::Mutex<Option<chrono::DateTime<chrono::Utc>>>,
 }
 
 impl Scheduler {
@@ -142,6 +162,7 @@ impl Scheduler {
             financial_repo: FinancialRepository::new(pool.clone()),
             report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
+            layout_repo: LayoutRepository::new(),
             pool,
             announcement_repo,
             notification_service,
@@ -149,6 +170,7 @@ impl Scheduler {
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
             last_support_tooling_prune_at: std::sync::Mutex::new(None),
+            last_layout_change_events_prune_at: std::sync::Mutex::new(None),
         }
     }
 
@@ -170,6 +192,7 @@ impl Scheduler {
             financial_repo: FinancialRepository::new(pool.clone()),
             report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
+            layout_repo: LayoutRepository::new(),
             pool,
             announcement_repo,
             notification_service,
@@ -177,6 +200,7 @@ impl Scheduler {
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
             last_support_tooling_prune_at: std::sync::Mutex::new(None),
+            last_layout_change_events_prune_at: std::sync::Mutex::new(None),
         }
     }
 
@@ -204,6 +228,7 @@ impl Scheduler {
             login_attempts_cleaned: guard.login_attempts_cleaned,
             report_schedules_fired: guard.report_schedules_fired,
             support_tooling_events_pruned: guard.support_tooling_events_pruned,
+            layout_change_events_pruned: guard.layout_change_events_pruned,
             errors: guard.errors,
         }
     }
@@ -281,6 +306,12 @@ impl Scheduler {
         // Issue #2531: prune aged support_tooling_events on a daily cadence.
         if let Err(e) = self.prune_support_tooling_events().await {
             tracing::error!("Failed to prune support tooling events: {}", e);
+            self.increment_errors();
+        }
+
+        // Issue #2563: prune aged layout_change_events on a daily cadence.
+        if let Err(e) = self.prune_layout_change_events().await {
+            tracing::error!("Failed to prune layout change events: {}", e);
             self.increment_errors();
         }
 
@@ -984,6 +1015,74 @@ impl Scheduler {
             );
             let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.support_tooling_events_pruned += deleted as u64;
+        }
+
+        Ok(())
+    }
+
+    // ========================================================================
+    // Issue #2563: layout_change_events retention prune (daily cadence)
+    // ========================================================================
+
+    /// Prune aged rows from the append-only `layout_change_events` layout-publish
+    /// trail past the configured retention window (issue #2563).
+    ///
+    /// The prune calls `LayoutRepository::cleanup_old_layout_change_events`,
+    /// which routes through the sanctioned SQL `cleanup_old_layout_change_events`
+    /// function so the table's immutability trigger permits these — and only
+    /// these — deletes (migration `00225_create_layout_change_events.sql`). The
+    /// repository method existed but nothing invoked it, so the audit trail grew
+    /// without bound; this tick wires it into the scheduler, mirroring
+    /// [`Scheduler::prune_support_tooling_events`] (issue #2531).
+    ///
+    /// Cadence: the scheduler ticks every ~60s, but retention only needs to run
+    /// once per day. A stored last-run timestamp gates the prune to at most one
+    /// run per [`LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS`] window. The
+    /// stamp is written only after a successful prune, so a failed run retries
+    /// next tick.
+    async fn prune_layout_change_events(&self) -> Result<(), sqlx::Error> {
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+
+        // Daily gate — skip until 24h have elapsed since the last prune.
+        {
+            let last = self
+                .last_layout_change_events_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            if !layout_change_events_prune_due(*last, now, min_interval) {
+                return Ok(());
+            }
+        }
+
+        // Note: Scheduler runs in background without user context. This prune is
+        // a privileged retention job and does not need RLS context.
+        let deleted = self
+            .layout_repo
+            .cleanup_old_layout_change_events(
+                &self.pool,
+                self.config.layout_change_events_retention_days as i32,
+            )
+            .await?;
+
+        // Stamp only after a successful prune so a transient DB error retries on
+        // the next tick instead of being suppressed for a full day.
+        {
+            let mut last = self
+                .last_layout_change_events_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            *last = Some(now);
+        }
+
+        if deleted > 0 {
+            tracing::info!(
+                deleted = deleted,
+                retention_days = self.config.layout_change_events_retention_days,
+                "Pruned aged layout_change_events"
+            );
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
+            metrics.layout_change_events_pruned += deleted as u64;
         }
 
         Ok(())
@@ -1726,6 +1825,22 @@ fn support_tooling_prune_due(
     }
 }
 
+/// Decide whether the daily `layout_change_events` retention prune is due
+/// (issue #2563). Returns `true` on the first run (`last` is `None`) or once at
+/// least `min_interval` has elapsed since the last successful prune. Extracted
+/// as a pure function so the daily-cadence gate is testable without a DB or a
+/// live clock.
+fn layout_change_events_prune_due(
+    last: Option<chrono::DateTime<chrono::Utc>>,
+    now: chrono::DateTime<chrono::Utc>,
+    min_interval: chrono::Duration,
+) -> bool {
+    match last {
+        None => true,
+        Some(t) => now.signed_duration_since(t) >= min_interval,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2263,6 +2378,7 @@ mod tests {
         assert_eq!(metrics.payment_reminders_sent, 0);
         assert_eq!(metrics.invoices_transitioned_to_overdue, 0);
         assert_eq!(metrics.support_tooling_events_pruned, 0);
+        assert_eq!(metrics.layout_change_events_pruned, 0);
         assert_eq!(metrics.errors, 0);
     }
 
@@ -2318,6 +2434,72 @@ mod tests {
         let min_interval = chrono::Duration::hours(SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS);
         let last = now - min_interval;
         assert!(support_tooling_prune_due(Some(last), now, min_interval));
+    }
+
+    #[test]
+    fn test_scheduler_config_layout_change_events_retention_default() {
+        // Issue #2563: the append-only layout_change_events trail is pruned
+        // after 730 days (24 months) by default, matching the SQL-layer default
+        // of cleanup_old_layout_change_events().
+        let config = SchedulerConfig::default();
+        assert_eq!(config.layout_change_events_retention_days, 730);
+    }
+
+    // ------------------------------------------------------------------
+    // Issue #2563: daily-cadence gate for the layout_change_events prune.
+    //
+    // The scheduler ticks every ~60s but the retention prune must run at
+    // most once per day. These pin the gate that stops the ~60s tick loop
+    // from re-pruning on every tick — the behaviour that distinguishes the
+    // fix (bounded daily prune) from a naive "prune every tick" wiring.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_layout_change_events_prune_due_on_first_run() {
+        // Never pruned before → due immediately.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        assert!(layout_change_events_prune_due(None, now, min_interval));
+    }
+
+    #[test]
+    fn test_layout_change_events_prune_skipped_within_interval() {
+        // Pruned 1h ago, interval is 24h → NOT due (the every-60s tick must
+        // not re-prune).
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - chrono::Duration::hours(1);
+        assert!(!layout_change_events_prune_due(
+            Some(last),
+            now,
+            min_interval
+        ));
+    }
+
+    #[test]
+    fn test_layout_change_events_prune_due_after_interval() {
+        // Pruned 25h ago, interval is 24h → due again.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - chrono::Duration::hours(25);
+        assert!(layout_change_events_prune_due(
+            Some(last),
+            now,
+            min_interval
+        ));
+    }
+
+    #[test]
+    fn test_layout_change_events_prune_due_at_exact_boundary() {
+        // Exactly at the interval boundary → due (>= comparison).
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - min_interval;
+        assert!(layout_change_events_prune_due(
+            Some(last),
+            now,
+            min_interval
+        ));
     }
 
     #[test]
