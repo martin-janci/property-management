@@ -115,22 +115,39 @@ describe('CapabilitiesAdminPage', () => {
   });
 
   // ------------------------------------------------------------------
-  // 3. Registry view (default) → renders all 17 capability cards
+  // 3. Registry view (default) → renders a card for every capability
   // ------------------------------------------------------------------
 
-  it('renders all 17 capability cards in registry view', async () => {
-    renderPage({ initialEntries: ['/identity/capabilities'] });
+  it('renders a registry card for every capability', async () => {
+    // The registry mirrors the `admin_core::Capability` enum. Derive the
+    // expected cards from CAPABILITIES itself so the test can't drift when a
+    // capability is added on the backend (e.g. `oauth_client_write`).
+    expect(CAPABILITIES.length).toBeGreaterThan(0);
+    expect(new Set(CAPABILITIES).size).toBe(CAPABILITIES.length);
 
-    // The registry view renders CAPABILITIES.length cards
-    expect(CAPABILITIES.length).toBe(17);
+    // The registry view fetches GET /admin/capabilities/registry — return one
+    // entry per capability so the card grid renders.
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () =>
+        CAPABILITIES.map((capability) => ({
+          capability,
+          description: `desc for ${capability}`,
+          risk_level: 'low' as const,
+          holder_count: 0,
+        })),
+    } as Response);
+
+    renderPage({ initialEntries: ['/identity/capabilities'] });
 
     await waitFor(() => expect(screen.getByText('Capabilities registry')).toBeDefined());
 
-    // Check a sample of capability names
-    expect(screen.getByText('agencies_read')).toBeDefined();
-    expect(screen.getByText('tenant_purge')).toBeDefined();
-    expect(screen.getByText('audit_read')).toBeDefined();
-    expect(screen.getByText('principal_kind_escalate')).toBeDefined();
+    // Every capability in the registry enum must render a card.
+    await waitFor(() => expect(screen.getByText('agencies_read')).toBeDefined());
+    for (const capability of CAPABILITIES) {
+      expect(screen.getByText(capability)).toBeDefined();
+    }
   });
 
   // ------------------------------------------------------------------
