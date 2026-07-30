@@ -1146,3 +1146,475 @@ fn build_google_link_account_response(session_id: &str) -> GoogleActionsResponse
         }),
     }
 }
+
+// ============================================================================
+// Tests (Epic 93: Voice Assistant webhooks)
+// ============================================================================
+//
+// Scope: unit coverage for the infrastructure-free logic of the mounted voice
+// webhook endpoints — the whole signature/verification surface, the mounted
+// `/verify` handler, the OAuth error-mapping helper, and every response
+// builder. The four handlers that hold a live DB connection + `AppState` +
+// `AuthUser` (`alexa_webhook`, `google_actions_webhook`, `oauth_token_exchange`,
+// `oauth_token_refresh`) reach Postgres and the OAuth managers, so their
+// happy-paths belong in an integration harness with a seeded database rather
+// than in these pure unit tests. What is exercised here is the security-
+// relevant branch logic those handlers delegate to (`verify_alexa_signature`,
+// `verify_google_request`, `verify_hmac_signature`, `authenticate_voice_user`
+// input handling) plus the `voice_encryption_required` fail-closed mapping used
+// on the OAuth token-exchange/refresh persistence path.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::{HeaderMap, HeaderValue};
+
+    // --- helpers ---------------------------------------------------------
+
+    fn action_result(text: &str, ssml: Option<&str>, end: bool) -> VoiceActionResult {
+        VoiceActionResult {
+            success: true,
+            action_type: "test".to_string(),
+            response_text: text.to_string(),
+            ssml: ssml.map(|s| s.to_string()),
+            card: None,
+            should_end_session: end,
+            data: None,
+        }
+    }
+
+    fn action_result_with_card(text: &str) -> VoiceActionResult {
+        VoiceActionResult {
+            success: true,
+            action_type: "test".to_string(),
+            response_text: text.to_string(),
+            ssml: None,
+            card: Some(db::models::VoiceCard {
+                title: "Balance".to_string(),
+                content: "You owe 12 EUR".to_string(),
+                image_url: None,
+            }),
+            should_end_session: false,
+            data: None,
+        }
+    }
+
+    fn alexa_body_with_timestamp(ts: &str) -> Vec<u8> {
+        format!(r#"{{"request":{{"timestamp":"{ts}"}}}}"#).into_bytes()
+    }
+
+    // Compute a valid HMAC-SHA256 base64 signature for `body` under `secret`,
+    // mirroring `verify_hmac_signature`'s algorithm exactly.
+    fn hmac_sig(secret: &str, body: &str) -> String {
+        use hmac::{Hmac, KeyInit, Mac};
+        use sha2::Sha256;
+        let mut mac = <Hmac<Sha256>>::new_from_slice(secret.as_bytes()).unwrap();
+        mac.update(body.as_bytes());
+        BASE64.encode(mac.finalize().into_bytes())
+    }
+
+    // --- validate_alexa_cert_url ----------------------------------------
+
+    #[test]
+    fn cert_url_accepts_canonical_amazon_url() {
+        assert!(
+            validate_alexa_cert_url("https://s3.amazonaws.com/echo.api/echo-api-cert-12.pem")
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn cert_url_accepts_explicit_port_443() {
+        assert!(validate_alexa_cert_url("https://s3.amazonaws.com:443/echo.api/cert.pem").is_ok());
+    }
+
+    #[test]
+    fn cert_url_rejects_non_https_scheme() {
+        let err = validate_alexa_cert_url("http://s3.amazonaws.com/echo.api/cert.pem").unwrap_err();
+        assert!(err.contains("HTTPS"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn cert_url_rejects_wrong_host() {
+        let err =
+            validate_alexa_cert_url("https://evil.example.com/echo.api/cert.pem").unwrap_err();
+        assert!(err.contains("s3.amazonaws.com"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn cert_url_rejects_non_443_port() {
+        let err =
+            validate_alexa_cert_url("https://s3.amazonaws.com:8443/echo.api/cert.pem").unwrap_err();
+        assert!(err.contains("443"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn cert_url_rejects_wrong_path_prefix() {
+        let err = validate_alexa_cert_url("https://s3.amazonaws.com/evil/cert.pem").unwrap_err();
+        assert!(err.contains("/echo.api/"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn cert_url_rejects_unparseable_url() {
+        assert!(validate_alexa_cert_url("not a url").is_err());
+    }
+
+    // --- validate_alexa_timestamp ---------------------------------------
+
+    #[test]
+    fn timestamp_accepts_now() {
+        let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
+        assert!(validate_alexa_timestamp(&body).is_ok());
+    }
+
+    #[test]
+    fn timestamp_rejects_too_old() {
+        let old = (Utc::now() - Duration::seconds(600)).to_rfc3339();
+        let body = alexa_body_with_timestamp(&old);
+        let err = validate_alexa_timestamp(&body).unwrap_err();
+        assert!(err.contains("too old or too new"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn timestamp_rejects_far_future() {
+        let future = (Utc::now() + Duration::seconds(600)).to_rfc3339();
+        let body = alexa_body_with_timestamp(&future);
+        assert!(validate_alexa_timestamp(&body).is_err());
+    }
+
+    #[test]
+    fn timestamp_rejects_bad_format() {
+        let body = alexa_body_with_timestamp("not-a-timestamp");
+        let err = validate_alexa_timestamp(&body).unwrap_err();
+        assert!(
+            err.contains("Invalid timestamp format"),
+            "unexpected: {err}"
+        );
+    }
+
+    #[test]
+    fn timestamp_rejects_unparseable_json() {
+        let err = validate_alexa_timestamp(b"{ not json").unwrap_err();
+        assert!(err.contains("Failed to parse"), "unexpected: {err}");
+    }
+
+    // --- verify_alexa_signature -----------------------------------------
+
+    #[tokio::test]
+    async fn alexa_signature_rejects_missing_cert_header() {
+        let mut headers = HeaderMap::new();
+        headers.insert("signature", HeaderValue::from_static("sig"));
+        let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
+        let err = verify_alexa_signature(&headers, &body).await.unwrap_err();
+        assert!(err.contains("SignatureCertChainUrl"), "unexpected: {err}");
+    }
+
+    #[tokio::test]
+    async fn alexa_signature_rejects_missing_signature_header() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "signaturecertchainurl",
+            HeaderValue::from_static("https://s3.amazonaws.com/echo.api/cert.pem"),
+        );
+        let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
+        let err = verify_alexa_signature(&headers, &body).await.unwrap_err();
+        assert!(err.contains("Signature header"), "unexpected: {err}");
+    }
+
+    #[tokio::test]
+    async fn alexa_signature_rejects_bad_cert_url() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "signaturecertchainurl",
+            HeaderValue::from_static("https://evil.example.com/echo.api/cert.pem"),
+        );
+        headers.insert("signature", HeaderValue::from_static("sig"));
+        let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
+        assert!(verify_alexa_signature(&headers, &body).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn alexa_signature_accepts_valid_url_and_timestamp() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "signaturecertchainurl",
+            HeaderValue::from_static("https://s3.amazonaws.com/echo.api/cert.pem"),
+        );
+        headers.insert("signature", HeaderValue::from_static("sig"));
+        let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
+        assert!(verify_alexa_signature(&headers, &body).await.is_ok());
+    }
+
+    // --- verify_google_request ------------------------------------------
+    //
+    // GOOGLE_ACTIONS_PROJECT_ID is process-global; `verify_google_request` is
+    // the only reader, so confining every mutation of it to this single test
+    // keeps the assertions race-free under the parallel test runner.
+    #[test]
+    fn google_request_verification_branches() {
+        // No project configured -> always passes (both auth present and absent).
+        std::env::remove_var("GOOGLE_ACTIONS_PROJECT_ID");
+        assert!(verify_google_request(&HeaderMap::new()).is_ok());
+
+        std::env::set_var("GOOGLE_ACTIONS_PROJECT_ID", "my-project-123");
+
+        // No Authorization header still passes.
+        assert!(verify_google_request(&HeaderMap::new()).is_ok());
+
+        // Malformed Authorization (no "Bearer " prefix) is rejected.
+        let mut bad_scheme = HeaderMap::new();
+        bad_scheme.insert("authorization", HeaderValue::from_static("Basic abc"));
+        let err = verify_google_request(&bad_scheme).unwrap_err();
+        assert!(
+            err.contains("Authorization header format"),
+            "unexpected: {err}"
+        );
+
+        // Bearer token that isn't a 3-part JWT is rejected.
+        let mut bad_jwt = HeaderMap::new();
+        bad_jwt.insert("authorization", HeaderValue::from_static("Bearer only.two"));
+        let err = verify_google_request(&bad_jwt).unwrap_err();
+        assert!(err.contains("JWT token format"), "unexpected: {err}");
+
+        // Well-formed 3-part JWT carrying the project id in the payload passes.
+        let payload = BASE64.encode(br#"{"aud":"my-project-123"}"#);
+        let token = format!("Bearer header.{payload}.signature");
+        let mut good = HeaderMap::new();
+        good.insert("authorization", HeaderValue::from_str(&token).unwrap());
+        assert!(verify_google_request(&good).is_ok());
+
+        std::env::remove_var("GOOGLE_ACTIONS_PROJECT_ID");
+    }
+
+    // --- verify_hmac_signature + the mounted /verify handler ------------
+    //
+    // VOICE_WEBHOOK_SECRET is process-global and read by `verify_hmac_signature`
+    // (directly and via the `/verify` "google" branch). All of its assertions
+    // live in this one test so they run sequentially and never race.
+    #[tokio::test]
+    async fn hmac_and_verify_endpoint_google_branch() {
+        std::env::set_var("VOICE_WEBHOOK_SECRET", "unit-test-secret");
+        let body = "payload-to-sign";
+        let good = hmac_sig("unit-test-secret", body);
+
+        // Direct helper: matching signature -> true, tampered -> false.
+        assert!(verify_hmac_signature(&good, body).unwrap());
+        assert!(!verify_hmac_signature("wrong", body).unwrap());
+
+        // Mounted /verify endpoint, "google" platform: valid signature.
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "google".to_string(),
+            signature: good.clone(),
+            body: body.to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(resp.0.valid);
+        assert_eq!(resp.0.platform, "google");
+        assert!(resp.0.error.is_none());
+
+        // Mounted /verify endpoint, "google" platform: invalid signature.
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "google".to_string(),
+            signature: "bad".to_string(),
+            body: body.to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(!resp.0.valid);
+        assert_eq!(resp.0.error.as_deref(), Some("Invalid signature"));
+
+        std::env::remove_var("VOICE_WEBHOOK_SECRET");
+    }
+
+    #[tokio::test]
+    async fn verify_endpoint_alexa_branch() {
+        // Non-empty signature -> valid.
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "alexa".to_string(),
+            signature: "present".to_string(),
+            body: "b".to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(resp.0.valid);
+        assert_eq!(resp.0.platform, "alexa");
+
+        // Empty signature -> invalid with "Missing signature".
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "alexa".to_string(),
+            signature: String::new(),
+            body: "b".to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(!resp.0.valid);
+        assert_eq!(resp.0.error.as_deref(), Some("Missing signature"));
+    }
+
+    #[tokio::test]
+    async fn verify_endpoint_unknown_platform() {
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "siri".to_string(),
+            signature: "x".to_string(),
+            body: "b".to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(!resp.0.valid);
+        assert_eq!(resp.0.platform, "siri");
+        assert_eq!(resp.0.error.as_deref(), Some("Unknown platform"));
+    }
+
+    // --- alexa_health_check ---------------------------------------------
+
+    #[tokio::test]
+    async fn health_check_returns_ok() {
+        assert_eq!(alexa_health_check().await, StatusCode::OK);
+    }
+
+    // --- voice_encryption_required (OAuth persistence fail-closed) -------
+
+    #[test]
+    fn encryption_required_maps_to_500() {
+        let (status, body) =
+            voice_encryption_required(CryptoError::KeyNotConfigured("no key".to_string()));
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.code, "ENCRYPTION_REQUIRED");
+    }
+
+    // --- extract_alexa_command_text -------------------------------------
+
+    fn intent(name: &str, slots: Option<serde_json::Value>) -> AlexaIntent {
+        AlexaIntent {
+            name: name.to_string(),
+            slots,
+        }
+    }
+
+    #[test]
+    fn command_text_maps_builtin_intents() {
+        assert_eq!(
+            extract_alexa_command_text(&intent("AMAZON.HelpIntent", None)),
+            "help"
+        );
+        assert_eq!(
+            extract_alexa_command_text(&intent("AMAZON.StopIntent", None)),
+            "goodbye"
+        );
+        assert_eq!(
+            extract_alexa_command_text(&intent("AMAZON.CancelIntent", None)),
+            "goodbye"
+        );
+        assert_eq!(
+            extract_alexa_command_text(&intent("CheckBalanceIntent", None)),
+            "check my balance"
+        );
+        assert_eq!(
+            extract_alexa_command_text(&intent("CheckAnnouncementsIntent", None)),
+            "check announcements"
+        );
+        assert_eq!(
+            extract_alexa_command_text(&intent("CheckMeterIntent", None)),
+            "check meter readings"
+        );
+        assert_eq!(
+            extract_alexa_command_text(&intent("ContactManagerIntent", None)),
+            "contact manager"
+        );
+    }
+
+    #[test]
+    fn command_text_extracts_fault_description_slot() {
+        let slots = serde_json::json!({
+            "FaultDescription": { "value": "broken heating" }
+        });
+        assert_eq!(
+            extract_alexa_command_text(&intent("ReportFaultIntent", Some(slots))),
+            "report a fault with broken heating"
+        );
+    }
+
+    #[test]
+    fn command_text_fault_defaults_without_slot() {
+        assert_eq!(
+            extract_alexa_command_text(&intent("ReportFaultIntent", None)),
+            "report a fault with a fault"
+        );
+    }
+
+    #[test]
+    fn command_text_passes_through_unknown_intent() {
+        assert_eq!(
+            extract_alexa_command_text(&intent("MyCustomIntent", None)),
+            "MyCustomIntent"
+        );
+    }
+
+    // --- Alexa response builders ----------------------------------------
+
+    #[test]
+    fn build_alexa_response_plaintext() {
+        let r = build_alexa_response(&action_result("hello", None, true));
+        assert_eq!(r.response.output_speech.speech_type, "PlainText");
+        assert_eq!(r.response.output_speech.text.as_deref(), Some("hello"));
+        assert!(r.response.output_speech.ssml.is_none());
+        assert!(r.response.should_end_session);
+        assert!(r.response.card.is_none());
+    }
+
+    #[test]
+    fn build_alexa_response_ssml() {
+        let r = build_alexa_response(&action_result("hi", Some("<speak>hi</speak>"), false));
+        assert_eq!(r.response.output_speech.speech_type, "SSML");
+        assert_eq!(
+            r.response.output_speech.ssml.as_deref(),
+            Some("<speak>hi</speak>")
+        );
+        assert!(r.response.output_speech.text.is_none());
+    }
+
+    #[test]
+    fn build_alexa_response_with_card() {
+        let r = build_alexa_response(&action_result_with_card("your balance"));
+        let card = r.response.card.expect("card present");
+        assert_eq!(card.card_type, "Simple");
+        assert_eq!(card.title, "Balance");
+        assert_eq!(card.content.as_deref(), Some("You owe 12 EUR"));
+    }
+
+    #[test]
+    fn build_alexa_link_account_response_shape() {
+        let r = build_alexa_link_account_response();
+        let card = r.response.card.expect("link card present");
+        assert_eq!(card.card_type, "LinkAccount");
+        assert!(r.response.should_end_session);
+    }
+
+    // --- Google response builders ---------------------------------------
+
+    #[test]
+    fn build_google_response_ends_conversation() {
+        let r = build_google_response("sess-1", &action_result("done", None, true));
+        assert_eq!(r.session.id, "sess-1");
+        assert_eq!(r.prompt.first_simple.speech, "done");
+        let scene = r.scene.expect("end scene present");
+        assert_eq!(scene.name, "actions.scene.END_CONVERSATION");
+    }
+
+    #[test]
+    fn build_google_response_continues_without_scene() {
+        let r = build_google_response("sess-2", &action_result_with_card("balance"));
+        assert!(r.scene.is_none());
+        let content = r.prompt.content.expect("content present");
+        let card = content.card.expect("card present");
+        assert_eq!(card.title, "Balance");
+    }
+
+    #[test]
+    fn build_google_link_account_response_shape() {
+        let r = build_google_link_account_response("sess-3");
+        assert_eq!(r.session.id, "sess-3");
+        let scene = r.scene.expect("link scene present");
+        assert_eq!(scene.name, "AccountLinking");
+    }
+}
