@@ -6,13 +6,13 @@ lives* by reading one file instead of fan-out grepping the monorepo. Kept delibe
 detail, the nested `CLAUDE.md` files in each subtree are loaded on demand when you work there.
 
 > If something here is wrong, fix it in the same PR as the code change — this file is part
-> of the agent contract. Counts are approximate (snapshot 2026-06).
+> of the agent contract. Counts are approximate (snapshot 2026-07).
 
 ## Top-level layout
 
 ```
-backend/        Rust workspace (Cargo) — api-server, reality-server, deploy-server + crates
-frontend/       pnpm workspace — ppt-web, admin-web, reality-web, mobile + shared packages
+backend/        Rust workspace (Cargo) — accounting-server, api-server, deploy-server, reality-server + crates
+frontend/       pnpm workspace — accounting-web, admin-web, mobile, ppt-web, reality-web + shared packages
 mobile-native/  Kotlin Multiplatform — Reality Portal Android/iOS
 docs/           specs, use-cases, API (typespec/OpenAPI), screen-maps, this map
 scripts/        setup, version bump/sync, health-check, install-hooks
@@ -39,15 +39,19 @@ over `grep -r <noun> backend/`.
 ## backend/ (Rust workspace)
 
 **Servers** (`backend/servers/`):
-- `api-server` (port 8080) — Property Management API + OAuth provider. ~84 route modules in
-  `src/routes/` (+ subdirs `admin/ ai/ announcements/ documents/ integrations/ organizations/ platform_admin/`).
+- `accounting-server` (port 8082) — tenant-scoped accounting resource server (architecture
+  option C). Consumers: accounting-web, ppt-web.
+- `api-server` (port 8080) — Property Management API + OAuth provider. ~77 top-level route
+  modules in `src/routes/` (~194 files total, incl. subdirs
+  `accounting/ admin/ ai/ aml_dsa/ announcements/ documents/ emergency/ enhanced_tenant_screening/ forms/ integrations/ iot/ layout/ organizations/ platform_admin/ reserve_funds/ vendors/`).
   Consumers: ppt-web, admin-web, mobile.
 - `reality-server` (port 8081) — Reality Portal public API. Multi-region via `REGION` env.
   Consumers: reality-web, mobile-native.
 - `deploy-server` — deployment control plane (has its own migrations).
 
 **Crates** (`backend/crates/`):
-- `common` — `TenantContext`, `TenantRole` (11 roles), core errors/types. Used everywhere.
+- `accounting-core` — accounting domain logic backing `accounting-server`. Pure logic.
+- `common` — `TenantContext`, `TenantRole` (12 roles), core errors/types. Used everywhere.
 - `layout-core` — Layout & Content Manager contract: screen configs, merge resolver
   (base → platform → tenant → kill), publish/rails validation. Pure logic, no DB.
   Control plane: `db/src/repositories/layout.rs` + migration 00221; routes at
@@ -64,7 +68,7 @@ over `grep -r <noun> backend/`.
   Preview bridge: `@ppt/shared` layout-preview (postMessage bridge) + `admin-web/src/features/layout-editor/PreviewPanel` (iframe, framed ppt-web); preview-resolve endpoint (`/api/v1/platform-admin/layout/preview-resolve`) returns resolved layout for local (unsaved) drafts.
   Mobile: RN features/layout (dashboard, cached next-launch activation) + mobile-native shared/layout + Android registry dispatch + iOS listing detail via shared resolved layout dispatch (Swift compile-unverified on Linux; run scripts/build-ios.sh on macOS before release); canonical mobile manifest in apps/mobile.
 - `api-core` — Axum extractors, auth middleware, OpenAPI (utoipa), CORS/tracing.
-- `db` — SQLx pool, models, **~101 repositories** in `src/repositories/`, migrations (~177 sql files).
+- `db` — SQLx pool, models, **~111 repositories** in `src/repositories/`, migrations (~222 sql files).
 - `integrations` — external API clients (Airbnb, Booking.com, portals).
 - `admin-core`, `tenant-ops` — admin + tenant lifecycle logic.
 
@@ -72,27 +76,32 @@ over `grep -r <noun> backend/`.
 - Postgres **RLS** with `app.current_organization_id` GUC → `get_current_org_id()` + FORCE RLS
   (migration 00179). By-id queries MUST stay org-keyed; CI superuser pool can bypass FORCE RLS.
 - Raw-pool vs RLS-context connection: repos must route through the RLS-context connection
-  (`RlsConnection` / `&mut PgConnection` executor), not a raw pool. See `repositories/mod.rs`.
+  (`RlsConnection` / `&mut PgConnection` executor), not a raw pool.
+  `RlsConnection` is defined in `api-core/src/extractors/rls_connection.rs`.
 - `sqlx` offline data: `cargo sqlx prepare` / `.sqlx/` — regenerate on query changes.
 
-**Largest route files** (likely hot / high-churn): `auth.rs` (~93K), `aml_dsa.rs` (~87K),
-`buildings.rs` (~71K), `infrastructure.rs` (~68K), `api_ecosystem.rs` (~68K), `market_pricing.rs`,
-`marketplace.rs`, `forms.rs`. Largest repos: `document.rs`, `rental.rs`, `lease.rs`, `integration.rs`,
-`api_ecosystem.rs`, `announcement.rs`, `board_meetings.rs`, `budget.rs`.
+**Largest route files** (likely hot / high-churn): `reports.rs` (~120K), `auth.rs` (~107K),
+`financial.rs` (~80K), `api_ecosystem.rs` (~74K), `buildings.rs` (~73K), `messaging.rs` (~68K),
+`infrastructure.rs` (~68K), `faults.rs` (~66K). (`aml_dsa` is now a route subdir, not a single
+file.) Largest repos: `vote.rs` (~80K), `lease.rs` (~77K), `llm_document.rs` (~73K),
+`integration.rs` (~73K), `api_ecosystem.rs` (~71K), `dispute.rs` (~67K), `announcement.rs` (~66K),
+`board_meetings.rs` (~65K).
 
 ## frontend/ (pnpm workspace)
 
-**Apps** (`frontend/apps/`):
-- `ppt-web` (`@ppt/web`) — React 19 + Vite SPA, Property Management. Backend: api-server.
+**Apps** (`frontend/apps/`), alphabetized:
+- `accounting-web` — React + Vite, accounting console. Backend: accounting-server.
 - `admin-web` — React + Vite, super-admin console.
-- `reality-web` (`@ppt/reality-web`) — Next.js 16 SSR/ISR public portal. Backend: reality-server.
-  i18n in `messages/{en,sk,cs,de}.json`.
 - `mobile` (`@ppt/mobile`) — React Native + Expo. Backend: api-server.
+- `ppt-web` (`@ppt/web`) — React 19 + Vite SPA, Property Management. Backend: api-server.
+- `reality-web` (`@ppt/reality-web`) — Next.js 16 SSR/ISR public portal. Backend: reality-server.
+  i18n in `messages/{cs,de,en,hu,pl,sk}.json`.
 
 **Packages** (`frontend/packages/`):
-- `api-client` (`@ppt/api-client`) — **generated** from `docs/api/generated/by-service/api-server.yaml`.
-- `reality-api-client` — generated from reality-server.yaml.
-- `shared`, `ui-kit`, `admin-ui`, `dev-panel`, `screen-map`, `sitemap`, `vite-plugin-ppt-worktree`.
+- `api-client` (`@ppt/api-client`) — **generated** from `docs/api/generated/openapi.yaml`.
+- `reality-api-client` — generated (`@hey-api/openapi-ts`) from `docs/api/generated/openapi.yaml`.
+- `accounting-api-client` — generated from `docs/api/generated/accounting-openapi.json`.
+- `admin-ui`, `dev-panel`, `e2e`, `screen-map`, `shared`, `sitemap`, `ui-kit`, `vite-plugin-ppt-worktree`.
 
 > API clients are generated — change the **TypeSpec** (`docs/api/typespec/`), not the client by hand.
 
