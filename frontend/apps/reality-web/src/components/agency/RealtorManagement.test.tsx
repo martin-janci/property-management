@@ -39,14 +39,14 @@ describe('InviteRealtorModal — error handling', () => {
 
     render(<InviteRealtorModal agencyId={agencyId} onClose={onClose} />);
 
-    fireEvent.change(screen.getByLabelText(/email \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelEmail/i), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/full name \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelName/i), {
       target: { value: 'Jane Doe' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /buttonSendInvitation/i }));
 
     // Error alert should appear (mock useTranslations returns the key: "inviteError")
     await waitFor(() => {
@@ -63,14 +63,14 @@ describe('InviteRealtorModal — error handling', () => {
 
     render(<InviteRealtorModal agencyId={agencyId} onClose={onClose} />);
 
-    fireEvent.change(screen.getByLabelText(/email \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelEmail/i), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/full name \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelName/i), {
       target: { value: 'Jane Doe' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /buttonSendInvitation/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -88,14 +88,14 @@ describe('InviteRealtorModal — error handling', () => {
 
     render(<InviteRealtorModal agencyId={agencyId} onClose={onClose} />);
 
-    fireEvent.change(screen.getByLabelText(/email \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelEmail/i), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/full name \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelName/i), {
       target: { value: 'Jane Doe' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /buttonSendInvitation/i }));
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalledOnce();
@@ -116,21 +116,21 @@ describe('InviteRealtorModal — error handling', () => {
 
     render(<InviteRealtorModal agencyId={agencyId} onClose={onClose} />);
 
-    fireEvent.change(screen.getByLabelText(/email \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelEmail/i), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/full name \*/i), {
+    fireEvent.change(screen.getByLabelText(/formLabelName/i), {
       target: { value: 'Jane Doe' },
     });
 
     // First submit — should fail and show error
-    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /buttonSendInvitation/i }));
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
     // Second submit — succeeds, modal closes
-    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /buttonSendInvitation/i }));
     await waitFor(() => {
       expect(onClose).toHaveBeenCalledOnce();
     });
