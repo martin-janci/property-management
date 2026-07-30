@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-30T00:20:42Z",
+  "generated": "2026-07-30T01:17:08Z",
   "assignments": [
     {
       "task_id": "security-voice-webhook-alexa-signature-not-verified",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2563",
       "branch": "auto-impl/gh-issue-2563-f25e35df",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-07-29T21:20:05Z",
-      "last_updated": "2026-07-30T00:13:37Z",
-      "status_changed_at": "2026-07-30T00:13:37Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-07-30T01:17:08Z",
+      "status_changed_at": "2026-07-30T01:17:08Z",
+      "pr_number": 2576,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2576",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2576 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=item1 landed (daily layout_change_events prune, 5 new tests green); item2 deferred (optional cross-service endpoint); drift=pm-tech-lead owner vs backend files; lone suite_1 failure is pre-existing airbnb env-pollution flake, passes isolated",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
