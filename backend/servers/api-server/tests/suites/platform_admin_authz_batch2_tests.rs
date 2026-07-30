@@ -26,22 +26,24 @@ use crate::common::{create_authenticated_user, TestApp, TestUser};
 
 const UUID: &str = "00000000-0000-0000-0000-000000000001";
 
-fn anon(method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
-    let b = Request::builder().method(method).uri(uri);
-    match body {
-        Some(j) => b
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(j.to_string()))
-            .unwrap(),
-        None => b.body(Body::empty()).unwrap(),
-    }
-}
+/// One authz case: HTTP method, request URI, and an optional raw-JSON body.
+///
+/// Bodies are kept as raw `&str` (rather than routed through the common
+/// `RequestBuilder::json`) so the emitted bytes are exactly what the case
+/// table declares — these endpoints reject at the auth gate before any body
+/// parsing, so the payload only needs to be well-formed enough to reach it.
+type Case = (Method, String, Option<&'static str>);
 
-fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
-    let b = Request::builder()
-        .method(method)
-        .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {token}"));
+/// Build a request against an admin/infra/ops endpoint.
+///
+/// `bearer = None` produces an unauthenticated request; `Some(token)` attaches
+/// an `Authorization: Bearer …` header. A `Some(body)` payload is sent as
+/// `application/json`.
+fn request(bearer: Option<&str>, method: Method, uri: &str, body: Option<&str>) -> Request<Body> {
+    let mut b = Request::builder().method(method).uri(uri);
+    if let Some(token) = bearer {
+        b = b.header(header::AUTHORIZATION, format!("Bearer {token}"));
+    }
     match body {
         Some(j) => b
             .header(header::CONTENT_TYPE, "application/json")
@@ -57,7 +59,7 @@ fn authed(token: &str, method: Method, uri: &str, body: Option<&str>) -> Request
 
 /// Admin user-lifecycle: /api/v1/admin/users/*
 #[allow(dead_code)] // endpoints return 401 (not 403) for authed non-admins; kept for a separate targeted test
-fn admin_users_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn admin_users_cases() -> Vec<Case> {
     let base = "/api/v1/admin/users";
     vec![
         (Method::GET, base.to_string(), None),
@@ -71,7 +73,7 @@ fn admin_users_cases() -> Vec<(Method, String, Option<&'static str>)> {
 /// Admin MFA enrollment: /api/v1/admin/mfa/enroll/*
 /// Note: `/admin/mfa/verify` and `/admin/mfa/recovery/use` and `/admin/mfa/disable`
 /// are exercised by dedicated test files; only the enrollment start/verify are new here.
-fn admin_mfa_enroll_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn admin_mfa_enroll_cases() -> Vec<Case> {
     let base = "/api/v1/admin/mfa";
     vec![
         (Method::POST, format!("{base}/enroll/start"), None),
@@ -84,7 +86,7 @@ fn admin_mfa_enroll_cases() -> Vec<(Method, String, Option<&'static str>)> {
 }
 
 /// Admin notification analytics: /api/v1/admin/notifications/analytics
-fn admin_notifications_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn admin_notifications_cases() -> Vec<Case> {
     vec![(
         Method::GET,
         "/api/v1/admin/notifications/analytics".to_string(),
@@ -93,7 +95,7 @@ fn admin_notifications_cases() -> Vec<(Method, String, Option<&'static str>)> {
 }
 
 /// Tenant lifecycle ops: /api/v1/admin/tenants/{id}/export|purge + /restore
-fn tenant_lifecycle_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn tenant_lifecycle_cases() -> Vec<Case> {
     vec![
         (
             Method::POST,
@@ -118,7 +120,7 @@ fn tenant_lifecycle_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Infrastructure cases (/api/v1/infrastructure/*)
 // ---------------------------------------------------------------------------
 
-fn infra_traces_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn infra_traces_cases() -> Vec<Case> {
     let base = "/api/v1/infrastructure/traces";
     vec![
         (Method::GET, base.to_string(), None),
@@ -127,7 +129,7 @@ fn infra_traces_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn infra_feature_flags_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn infra_feature_flags_cases() -> Vec<Case> {
     let base = "/api/v1/infrastructure/feature-flags";
     vec![
         (Method::GET, base.to_string(), None),
@@ -166,7 +168,7 @@ fn infra_feature_flags_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn infra_dashboard_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn infra_dashboard_cases() -> Vec<Case> {
     vec![(
         Method::GET,
         "/api/v1/infrastructure/dashboard".to_string(),
@@ -174,7 +176,7 @@ fn infra_dashboard_cases() -> Vec<(Method, String, Option<&'static str>)> {
     )]
 }
 
-fn infra_jobs_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn infra_jobs_cases() -> Vec<Case> {
     let base = "/api/v1/infrastructure/jobs";
     vec![
         (Method::GET, base.to_string(), None),
@@ -192,7 +194,7 @@ fn infra_jobs_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn infra_health_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn infra_health_cases() -> Vec<Case> {
     let base = "/api/v1/infrastructure/health";
     vec![
         (Method::GET, format!("{base}/detailed"), None),
@@ -232,7 +234,7 @@ fn infra_health_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Operations cases (/api/v1/operations/*)
 // ---------------------------------------------------------------------------
 
-fn ops_deployments_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_deployments_cases() -> Vec<Case> {
     let base = "/api/v1/operations/deployments";
     vec![
         (Method::GET, base.to_string(), None),
@@ -255,7 +257,7 @@ fn ops_deployments_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn ops_migrations_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_migrations_cases() -> Vec<Case> {
     let base = "/api/v1/operations/migrations";
     vec![
         (Method::GET, base.to_string(), None),
@@ -276,7 +278,7 @@ fn ops_migrations_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn ops_schema_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_schema_cases() -> Vec<Case> {
     let base = "/api/v1/operations/schema";
     vec![
         (Method::GET, format!("{base}/versions"), None),
@@ -284,7 +286,7 @@ fn ops_schema_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn ops_backups_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_backups_cases() -> Vec<Case> {
     let base = "/api/v1/operations/backups";
     vec![
         (Method::GET, base.to_string(), None),
@@ -299,7 +301,7 @@ fn ops_backups_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn ops_recovery_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_recovery_cases() -> Vec<Case> {
     let base = "/api/v1/operations";
     vec![
         (
@@ -311,7 +313,7 @@ fn ops_recovery_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn ops_dr_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_dr_cases() -> Vec<Case> {
     let base = "/api/v1/operations/dr";
     vec![
         (Method::GET, format!("{base}/drills"), None),
@@ -323,7 +325,7 @@ fn ops_dr_cases() -> Vec<(Method, String, Option<&'static str>)> {
     ]
 }
 
-fn ops_costs_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn ops_costs_cases() -> Vec<Case> {
     let base = "/api/v1/operations/costs";
     vec![
         (Method::GET, base.to_string(), None),
@@ -354,7 +356,7 @@ fn ops_costs_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Flatten all cases
 // ---------------------------------------------------------------------------
 
-fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
+fn all_cases() -> Vec<Case> {
     let mut v = Vec::new();
     // Admin surface
     // admin_users endpoints return 401 (not 403) for authenticated non-admin users
@@ -383,33 +385,38 @@ fn all_cases() -> Vec<(Method, String, Option<&'static str>)> {
 // Tests
 // ---------------------------------------------------------------------------
 
-#[sqlx::test(migrator = "db::MIGRATOR")]
-async fn platform_admin_batch2_endpoints_require_auth(pool: PgPool) {
-    let app = TestApp::new(pool.clone()).await;
-
+/// Drive every case through `app` and assert each one is denied with a 4xx.
+///
+/// `bearer = None` exercises the unauthenticated path; `Some(token)` exercises
+/// an authenticated-but-unprivileged caller. Neither may ever receive a 2xx
+/// (auth bypass) or a 5xx (handler/DB touched before the gate).
+async fn assert_all_denied(app: &TestApp, bearer: Option<&str>) {
+    let mode = if bearer.is_some() {
+        "unprivileged user"
+    } else {
+        "unauthenticated caller"
+    };
     for (method, uri, body) in all_cases() {
-        let resp = app.execute(anon(method.clone(), &uri, body)).await;
+        let resp = app
+            .execute(request(bearer, method.clone(), &uri, body))
+            .await;
         assert!(
             resp.status.is_client_error(),
-            "{method} {uri} must require auth (4xx), got {}",
+            "{method} {uri} must be denied for {mode} (4xx), got {}",
             resp.status
         );
     }
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+async fn platform_admin_batch2_endpoints_require_auth(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    assert_all_denied(&app, None).await;
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_admin_batch2_endpoints_reject_unprivileged_user(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let (token, _user) = create_authenticated_user(&app, &TestUser::new()).await;
-
-    for (method, uri, body) in all_cases() {
-        let resp = app
-            .execute(authed(&token, method.clone(), &uri, body))
-            .await;
-        assert!(
-            resp.status.is_client_error(),
-            "{method} {uri} must deny unprivileged user (4xx), got {}",
-            resp.status
-        );
-    }
+    assert_all_denied(&app, Some(&token)).await;
 }
