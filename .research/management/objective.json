@@ -1,11 +1,1 @@
-{
-  "schema_version": 1,
-  "epic_prefix": "pm-scrum",
-  "selected_at": "2026-07-30T06:11:39Z",
-  "last_action": "repick",
-  "reason": "prior target 'gh-issue-2238-retry2' exhausted; closest-to-done is 'pm-scrum' (open=3 claimable=1)",
-  "stats_at_selection": {
-    "open": 3,
-    "claimable": 1
-  }
-}
+{"schema_version":1,"epic_prefix":"82-1-swiftui-project-setup-retry1","selected_at":"2026-07-30T14:11:45Z","last_action":"repick","reason":"prior target 'pm-scrum' exhausted; closest-to-done is '82-1-swiftui-project-setup-retry1' (open=1 claimable=1)","stats_at_selection":{"open":1,"claimable":1}}
