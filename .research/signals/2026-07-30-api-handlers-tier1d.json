@@ -1,0 +1,40 @@
+{
+  "generated": "2026-07-30T00:00:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-reports-csv-injection",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs:363-397 (generate_sync_csv_report, faults branch) — writes user-controlled fields (status.status, cat.category, priority.priority) into CSV cells via bare `csv.push_str(&format!(...))` with NO escaping. The voting branch (line 422) only does `v.title.replace(',', \";\")`, which mangles data and still ignores embedded newlines, double-quotes, and leading `=`/`+`/`-`/`@`.",
+        "Two concrete defects: (1) CSV/formula injection — a fault category or vote title beginning with `=`,`+`,`-`,`@` executes as a spreadsheet formula when the exported report is opened in Excel/LibreOffice/Sheets; these values are created by org members and flow straight into the export. (2) Broken quoting — a category/status containing a comma or newline shifts columns and corrupts the CSV (the faults branch does not even do the comma replacement).",
+        "The repo ALREADY has the correct pattern in sibling exporters: `escape_csv_field` at backend/servers/api-server/src/routes/organizations/settings.rs:588, `escape_csv` at backend/crates/integrations/src/accounting.rs, and `csv::Writer` at backend/servers/api-server/src/routes/admin/audit.rs:259. reports/mod.rs is the unescaped outlier. Fix: route all cells through `csv::Writer`/`escape_csv_field` and neutralize leading formula characters.",
+        "Reachability: sync export path guarded by `format == \"csv\"` at reports/mod.rs:1097; export handler is production-mounted and org-scoped (IDOR check present at :1064). Delivered base64-encoded with content_type text/csv (line ~1126)."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-layout-resolved-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/resolved.rs:36-41 — the `err500` closure embeds the raw error into the client-facing 500 body: `format!(\"db error: {e}\")` (lines 82,88,92,107,115), `format!(\"stored published config invalid: {e}\")` (98), `format!(\"stored manifest invalid: {e}\")` (110), `format!(\"stored tenant override invalid: {e}\")` (123). The raw sqlx/serde `{e}` (which can carry SQL fragments, column names, and stored-config structure) is returned to the caller AND is never logged server-side.",
+        "This directly contradicts the security pattern its own sibling files document and enforce: tenant.rs:27-32 and admin.rs:26-37 define `internal_error` specifically so that it `tracing::error!`s the real error server-side and returns a generic \"internal server error\" — the doc comment states 'raw sqlx/serde error text never leaks'. resolved.rs is the single handler in the layout module that bypasses this convention.",
+        "Impact: information disclosure of internal DB/serialization error detail to authenticated org users on a production endpoint (GET /api/v1/layout/resolved/{screen}, mounted with AuthUser), plus loss of server-side error observability. Fix: reuse the module `internal_error` helper (log server-side, return opaque message) instead of the local `err500` that interpolates `{e}`."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

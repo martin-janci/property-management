@@ -5060,7 +5060,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1 churn scan 2026-07-27 (commit range 2026-07-24..2026-07-27 on dev)"
       ],
@@ -5072,7 +5072,12 @@
       ],
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T20:06:46Z",
+        "assignment_status": "merged",
+        "pr_number": 2599
+      }
     },
     {
       "id": "bug-hotfix-no-test-pr-2547",
@@ -5159,7 +5164,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-07-28",
         "segment:reality-web"
@@ -5174,7 +5179,12 @@
       ],
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T20:18:07Z",
+        "assignment_status": "merged",
+        "pr_number": 2600
+      }
     },
     {
       "id": "code-review-reality-web-viewsource-untrusted-cast",
@@ -5182,7 +5192,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-07-28",
         "segment:reality-web"
@@ -5195,7 +5205,12 @@
       ],
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T20:18:07Z",
+        "assignment_status": "merged",
+        "pr_number": 2603
+      }
     },
     {
       "id": "security-voice-webhook-alexa-signature-not-verified",
@@ -5283,7 +5298,7 @@
       "vector": "dx",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "standing-scan-2026-07-28"
       ],
@@ -5300,7 +5315,12 @@
       ],
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T20:06:46Z",
+        "assignment_status": "merged",
+        "pr_number": 2601
+      }
     },
     {
       "id": "repeated-churn-api-server-routes-auth-rs-2026-07-28",

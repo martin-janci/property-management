@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-30T16:34:41Z",
+  "archived_at": "2026-07-30T20:18:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2122,6 +2122,30 @@
       }
     },
     {
+      "id": "code-review-reality-web-inline-tenant-json-xss",
+      "action": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=medium vector=security) | gc1-reconcile 2026-07-30T20:18:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:21:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2600,
+        "merged_at": "2026-07-30T20:17:12Z",
+        "at": "2026-07-30T20:18:07Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-listing-page-ssr-crash",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields",
       "owner_role": "pm-frontend",
@@ -2181,6 +2205,30 @@
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "code-review-reality-web-share-comparison-404",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-viewsource-untrusted-cast",
+      "action": "reality-web listingAnalytics.ts casts untrusted ?source= query param straight to ViewSource union — pollutes listing.viewed analytics with unbounded cardinality",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-07-30T20:18:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:21:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2603,
+        "merged_at": "2026-07-30T20:17:12Z",
+        "at": "2026-07-30T20:18:07Z"
+      }
     },
     {
       "id": "data-audit-add-evidence-idor-fix-2026-07-23",
@@ -2282,6 +2330,30 @@
         "merged_pr": 2515,
         "merged_at": "2026-07-24T08:15:17Z",
         "at": "2026-07-24T12:08:39Z"
+      }
+    },
+    {
+      "id": "dx-admin-web-platform-settings-mobile-config-permanent-noop",
+      "action": "admin-web platform-settings + mobile-config Save paths are permanent no-ops — the backing endpoints do not exist",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=dx) | gc1-reconcile 2026-07-30T20:06:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:21:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2601,
+        "merged_at": "2026-07-30T18:20:34Z",
+        "at": "2026-07-30T20:06:46Z"
       }
     },
     {
@@ -7474,6 +7546,32 @@
       }
     },
     {
+      "id": "gh-issue-2320-retry2",
+      "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 2/2 of failed gh-issue-2320]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2320 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z) | gc1-reconcile 2026-07-30T20:18:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2320",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2320,
+        "url": "https://github.com/martin-janci/property-management/issues/2320",
+        "labels": []
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-30T20:18:07Z"
+      }
+    },
+    {
       "id": "gh-issue-2321",
       "action": "Follow-up: rag/migrate cross-org back-fill blocked by FORCE RLS + assumed-provenance &amp; CI pgvector gaps (PR #2312) (Closes #2321)",
       "owner_role": "pm-tech-lead",
@@ -9005,6 +9103,33 @@
       }
     },
     {
+      "id": "gh-issue-2598",
+      "action": "Pre-existing frontend test failures on `dev` block the verify gate for admin-web / reality-web PRs (Closes #2598)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-30T18:05:37Z (#2598) | gc1-reconcile 2026-07-30T20:18:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T18:05:37Z",
+      "issue_ref": {
+        "number": 2598,
+        "url": "https://github.com/martin-janci/property-management/issues/2598",
+        "labels": [
+          "bug",
+          "frontend"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2602,
+        "merged_at": "2026-07-30T20:17:12Z",
+        "at": "2026-07-30T20:18:07Z"
+      }
+    },
+    {
       "id": "pm-backend-fix-ai-equipment-idor",
       "action": "Fix cross-tenant IDOR cluster in ai.rs: thread tenant_id into equipment_repo.update/delete/update_maintenance and scope the WHERE clauses (or route through the RLS connection) for update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), update_maintenance (ai.rs:1192) — all currently discard `_principal`; add a cross-tenant regression test",
       "owner_role": "pm-backend",
@@ -9604,6 +9729,30 @@
         "merged_pr": 2538,
         "merged_at": "2026-07-24T14:09:06Z",
         "at": "2026-07-24T16:04:54Z"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-27",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window, runs_seen=3 (repeated instability)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=refactor) | gc1-reconcile 2026-07-30T20:06:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:21:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2599,
+        "merged_at": "2026-07-30T18:20:50Z",
+        "at": "2026-07-30T20:06:46Z"
       }
     },
     {

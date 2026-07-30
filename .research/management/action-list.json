@@ -512,57 +512,6 @@
       "last_updated": "2026-07-24T18:09:34Z"
     },
     {
-      "id": "code-review-reality-web-inline-tenant-json-xss",
-      "action": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "dx-admin-web-platform-settings-mobile-config-permanent-noop",
-      "action": "admin-web platform-settings + mobile-config Save paths are permanent no-ops — the backing endpoints do not exist",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "dx"
-      }
-    },
-    {
-      "id": "refactor-churn-hotspot-api-server-reports-2026-07-27",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window, runs_seen=3 (repeated instability)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "test-gap-voice-webhooks-zero-coverage",
       "action": "test-gap: voice_webhooks.rs (1148 lines, 6 mounted endpoints incl. OAuth token exchange) has no tests at all",
       "owner_role": "pm-qa",
@@ -577,23 +526,6 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
-    },
-    {
-      "id": "code-review-reality-web-viewsource-untrusted-cast",
-      "action": "reality-web listingAnalytics.ts casts untrusted ?source= query param straight to ViewSource union — pollutes listing.viewed analytics with unbounded cardinality",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
       }
     },
     {
@@ -698,25 +630,6 @@
       "first_open_at": "2026-07-29T08:08:27Z",
       "retry_of": "dx-routine-lag-catchup-2026-07",
       "retry_round": 2
-    },
-    {
-      "id": "gh-issue-2320-retry2",
-      "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 2/2 of failed gh-issue-2320]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2320 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T23:19:31Z",
-      "retry_of": "gh-issue-2320",
-      "retry_round": 2,
-      "issue_ref": {
-        "number": 2320,
-        "url": "https://github.com/martin-janci/property-management/issues/2320",
-        "labels": []
-      }
     },
     {
       "id": "dx-closed-not-merged-pr-2385-retry1",
@@ -859,26 +772,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "gh-issue-2598",
-      "action": "Pre-existing frontend test failures on `dev` block the verify gate for admin-web / reality-web PRs (Closes #2598)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-30T18:05:37Z (#2598)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T18:05:37Z",
-      "issue_ref": {
-        "number": 2598,
-        "url": "https://github.com/martin-janci/property-management/issues/2598",
-        "labels": [
-          "bug",
-          "frontend"
-        ]
       }
     }
   ],

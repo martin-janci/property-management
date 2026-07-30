@@ -2351,6 +2351,28 @@
       "merge_attempted_at": "2026-07-22T22:21:44Z"
     },
     {
+      "task_id": "code-review-reality-web-inline-tenant-json-xss",
+      "branch": "auto-impl/code-review-reality-web-inline-tenant-js-ec32e1f7",
+      "status": "merged",
+      "claimed_at": "2026-07-30T16:20:59Z",
+      "last_updated": "2026-07-30T20:17:12Z",
+      "status_changed_at": "2026-07-30T20:17:12Z",
+      "pr_number": 2600,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2600",
+      "merged_at": "2026-07-30T20:17:12Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=d798ad31b5abf227461dd783e432ed27b9840b97 note=round-1-fix-confirmed-ListingDetailContent-jsonLd-now-serializeForScript+test-added-all-3-sinks-hardened-CI-green",
+      "last_reviewed_oid": "d798ad31b5abf227461dd783e432ed27b9840b97",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-30T20:16:07Z"
+    },
+    {
       "task_id": "code-review-reality-web-listing-page-ssr-crash",
       "branch": "auto-impl/code-review-reality-web-listing-page-ssr-03ad7193",
       "status": "failed",
@@ -2459,6 +2481,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-viewsource-untrusted-cast",
+      "branch": "auto-impl/code-review-reality-web-viewsource-untru-af340ce4",
+      "status": "merged",
+      "claimed_at": "2026-07-30T18:09:41Z",
+      "last_updated": "2026-07-30T20:17:12Z",
+      "status_changed_at": "2026-07-30T20:17:12Z",
+      "pr_number": 2603,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2603",
+      "merged_at": "2026-07-30T20:17:12Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=partial specialist=nextjs-web scope_drift=true code_reuse_warn=none note=VERIFY FAIL: 4 PRE-EXISTING RealtorManagement.test failures on origin/dev (unrelated, reproduced on pristine base); listingAnalytics fix itself green (13/13, tsc+biome clean); branch pushed",
+      "reviewer_summary": "verdict=approve head_oid=4445918c684bb30e7bfe05473bac6e626f7de89f note=viewsource-validated-against-bounded-set-tests-lock-cardinality-scopedrift-false-positive",
+      "last_reviewed_oid": "4445918c684bb30e7bfe05473bac6e626f7de89f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-30T20:16:07Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "data-announcement-fanout-metric-2026-07-23",
@@ -6801,6 +6847,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2320-retry2",
+      "branch": "auto-impl/gh-issue-2320-retry2-9e629c1e",
+      "status": "failed",
+      "claimed_at": "2026-07-30T12:06:00Z",
+      "last_updated": "2026-07-30T20:06:37Z",
+      "status_changed_at": "2026-07-30T20:06:37Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2321",
       "branch": "auto-impl/gh-issue-2321-8f9344fa",
       "status": "merged",
@@ -8329,6 +8397,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2598",
+      "branch": "auto-impl/gh-issue-2598-df5b806c",
+      "status": "merged",
+      "claimed_at": "2026-07-30T18:09:41Z",
+      "last_updated": "2026-07-30T20:17:12Z",
+      "status_changed_at": "2026-07-30T20:17:12Z",
+      "pr_number": 2602,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2602",
+      "merged_at": "2026-07-30T20:17:12Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=0e1603be2e9dbe3e1322276863559a72d1b8d679 note=all-3-fixes-correct-drift-proof-ci-green-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "0e1603be2e9dbe3e1322276863559a72d1b8d679",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-30T20:16:07Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -9731,5 +9823,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T18:22:50Z"
+  "archived_at": "2026-07-30T20:18:07Z"
 }
