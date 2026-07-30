@@ -134,6 +134,7 @@
     <string name="sign_in_benefits">Mentse el kedvenceit, kövesse érdeklődéseit és kapjon értesítéseket új ajánlatokról</string>
     <string name="sign_in_pm_app">Bejelentkezés PM alkalmazással</string>
     <string name="sign_in_redirect_notice">Átirányítjuk a Property Management alkalmazásba a biztonságos bejelentkezéshez.</string>
+    <string name="auth_or">VAGY</string>
     <string name="confirm_sign_out_message">Biztosan ki szeretne jelentkezni?</string>
 
     <!-- Notification preferences -->

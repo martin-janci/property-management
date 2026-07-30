@@ -154,9 +154,11 @@ intent-filter, so any app/browser/notification can hand it to us. **Both platfor
 per-flow `state` nonce before validating the token** — skipping it allows session fixation / account
 takeover (an attacker's token silently signs the victim in).
 
-- **Android** — `SsoStateStore` (commonMain): `mint()` before opening the SSO hop (append
-  `&state=<nonce>`); `MainActivity.handleDeepLink` calls `consume(target.state)` and validates the
-  token only on a match. Default-reject: an unsolicited callback with no pending flow is dropped.
+- **Android** — `SsoStateStore` (commonMain): `SsoInitiation.begin()` mints the nonce and builds the
+  outbound `propertymanagement://sso?callback=reality://sso&state=<nonce>` hop (wired to the
+  `LoginScreen` "Sign in via PM App" button in `Navigation.kt`); `MainActivity.handleDeepLink` calls
+  `consume(target.state)` and validates the token only on a match. Default-reject: an unsolicited
+  callback with no pending flow is dropped.
 - **iOS** — `AuthManager.beginSsoFlow()` / `consumeSsoState(_:)` (owns its own nonce; does not use
   the KMP store).
 
