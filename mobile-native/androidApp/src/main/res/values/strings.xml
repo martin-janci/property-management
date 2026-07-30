@@ -236,6 +236,7 @@
     <string name="sign_in_benefits">Save favorites, track inquiries, and get notified about new listings</string>
     <string name="sign_in_pm_app">Sign In via PM App</string>
     <string name="sign_in_redirect_notice">You\'ll be redirected to the Property Management app to sign in securely.</string>
+    <string name="auth_or">OR</string>
     <string name="confirm_sign_out_message">Are you sure you want to sign out?</string>
 
     <!-- Notification preferences -->

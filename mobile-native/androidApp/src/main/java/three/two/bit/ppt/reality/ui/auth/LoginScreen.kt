@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -34,10 +35,16 @@ import three.two.bit.ppt.reality.util.isNetworkError
  * 4. Primary "Sign in" button (filled).
  * 5. "OR" divider + footer "Don't have an account? Sign up".
  *
- * Social-login (Google / Apple) buttons in the mock are not wired here — the Reality Portal SSO is
- * delegated to the PPT app per UC-47, and the separate social-login flow isn't on the roadmap yet.
+ * The primary "Sign in via PM App" action mirrors iOS `LoginView.loginWithSso()`: it hands the flow
+ * to the Property Management app over the `propertymanagement://sso` deep link after minting the
+ * per-flow CSRF nonce (see [onSsoLoginClick] / `SsoInitiation.begin`). Google / Apple social-login
+ * buttons from the mock stay unwired — that flow isn't on the roadmap yet.
  *
  * UC-47.2 — Email/password login.
+ *
+ * @param onSsoLoginClick launches the SSO hop to the PM app. The caller mints the CSRF nonce via
+ *   `SsoInitiation.begin()` and fires the outbound `ACTION_VIEW` intent; this screen only surfaces
+ *   the affordance.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +54,7 @@ fun LoginScreen(
     onForgotPasswordClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onLoginSuccess: () -> Unit,
+    onSsoLoginClick: () -> Unit = {},
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -71,6 +79,34 @@ fun LoginScreen(
                     ErrorBanner(it)
                     Spacer(modifier = Modifier.height(14.dp))
                 }
+
+                // Primary SSO affordance — parity with iOS `LoginView.ssoLoginSection`. Tapping
+                // this
+                // mints a CSRF nonce and opens the Property Management app; the email/password form
+                // below is the fallback.
+                Button(
+                    onClick = onSsoLoginClick,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Login,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp).size(18.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.sign_in_pm_app),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.sign_in_redirect_notice),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OrDivider(stringResource(R.string.auth_or))
 
                 AuthFieldLabel(stringResource(R.string.email))
                 Spacer(modifier = Modifier.height(6.dp))

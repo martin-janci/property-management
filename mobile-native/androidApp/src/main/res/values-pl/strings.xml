@@ -134,6 +134,7 @@
     <string name="sign_in_benefits">Zapisuj ulubione, śledź zapytania i otrzymuj powiadomienia o nowych ofertach</string>
     <string name="sign_in_pm_app">Zaloguj przez aplikację PM</string>
     <string name="sign_in_redirect_notice">Zostaniesz przekierowany do aplikacji Property Management, aby bezpiecznie się zalogować.</string>
+    <string name="auth_or">LUB</string>
     <string name="confirm_sign_out_message">Czy na pewno chcesz się wylogować?</string>
 
     <!-- Notification preferences -->

@@ -134,6 +134,7 @@
     <string name="sign_in_benefits">Speichern Sie Favoriten, verfolgen Sie Anfragen und erhalten Sie Benachrichtigungen über neue Angebote</string>
     <string name="sign_in_pm_app">Über PM-App anmelden</string>
     <string name="sign_in_redirect_notice">Sie werden zur Property Management App weitergeleitet, um sich sicher anzumelden.</string>
+    <string name="auth_or">ODER</string>
     <string name="confirm_sign_out_message">Möchten Sie sich wirklich abmelden?</string>
 
     <!-- Notification preferences -->

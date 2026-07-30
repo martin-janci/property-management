@@ -1,5 +1,6 @@
 package three.two.bit.ppt.reality.navigation
 
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -31,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
+import three.two.bit.ppt.reality.auth.SsoInitiation
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.favorites.FavoritesRepository
 import three.two.bit.ppt.reality.favorites.SavedSearch as ApiSavedSearch
@@ -276,6 +279,7 @@ fun RealityNavHost(
 
             // Auth & profile (UC-47).
             composable(Screen.Login.route) {
+                val context = LocalContext.current
                 LoginScreen(
                     onBackClick = { navController.popBackStack() },
                     onSubmit = { email, password ->
@@ -283,6 +287,19 @@ fun RealityNavHost(
                     },
                     onForgotPasswordClick = { navController.navigate(Screen.ForgotPassword.route) },
                     onRegisterClick = { navController.navigate(Screen.Register.route) },
+                    // SSO initiation leg (parity with iOS `LoginView.loginWithSso`): mint the
+                    // per-flow CSRF nonce and hand off to the PM app. `SsoStateStore` now has a
+                    // pending nonce, so the `reality://sso` callback `MainActivity` receives passes
+                    // `consume()` instead of being default-rejected. `ACTION_VIEW` fails only when
+                    // the PM app isn't installed — swallow that so the email/password fallback
+                    // remains usable.
+                    onSsoLoginClick = {
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse(SsoInitiation.begin()))
+                            )
+                        }
+                    },
                     // On success, drop the whole auth stack and land on Home. Home (and
                     // every top-level screen) collects authState, so it re-renders signed in.
                     onLoginSuccess = {

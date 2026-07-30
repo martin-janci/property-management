@@ -231,6 +231,7 @@
     <string name="sign_in_benefits">Uložte si obľúbené, sledujte dopyty a dostávajte upozornenia na nové ponuky</string>
     <string name="sign_in_pm_app">Prihlásiť sa cez PM aplikáciu</string>
     <string name="sign_in_redirect_notice">Budete presmerovaný do aplikácie Property Management pre bezpečné prihlásenie.</string>
+    <string name="auth_or">ALEBO</string>
     <string name="confirm_sign_out_message">Naozaj sa chcete odhlásiť?</string>
 
     <!-- Notification preferences -->

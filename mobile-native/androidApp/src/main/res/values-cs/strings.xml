@@ -134,6 +134,7 @@
     <string name="sign_in_benefits">Uložte si oblíbené, sledujte dotazy a dostávejte upozornění na nové nabídky</string>
     <string name="sign_in_pm_app">Přihlásit se přes PM aplikaci</string>
     <string name="sign_in_redirect_notice">Budete přesměrováni do aplikace Property Management pro bezpečné přihlášení.</string>
+    <string name="auth_or">NEBO</string>
     <string name="confirm_sign_out_message">Opravdu se chcete odhlásit?</string>
 
     <!-- Notification preferences -->
