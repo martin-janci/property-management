@@ -5474,15 +5474,17 @@
       "title": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 4,
       "status": "open",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "tier-1d dev-review 2026-07-30 (api-handlers)"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,98,107,110,115,123 — err500 closure returns raw internal error text to the client (`format!(\"db error: {e}\")`, `format!(\"stored published config invalid: {e}\")`, etc.), leaking sqlx/serde diagnostic strings (column names, JSON structural detail, connection info).",
         "Sibling handlers in the same layout module (backend/servers/api-server/src/routes/layout/tenant.rs:29-32 `internal_error`, backend/servers/api-server/src/routes/layout/admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic 'internal server error' body — resolved.rs is the outlier that both fails to log and leaks the message.",
-        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs)."
+        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs).",
+        "backend/servers/api-server/src/routes/layout/resolved.rs:36-41 — the `err500` closure embeds the raw error into the client-facing 500 body via `format!(\"db error: {e}\")` (lines 82,88,92,107,115). Tier-1d confirmation of the existing api-core finding."
       ],
       "files": [
         "backend/servers/api-server/src/routes/layout/resolved.rs"
@@ -5532,6 +5534,254 @@
       ],
       "files": [
         "backend/servers/api-server/src/services/scheduler.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reports-csv-injection",
+      "title": "backend/servers/api-server/src/routes/reports/mod.rs:363-397 (generate_sync_csv_report, faults branch) — writes user-con",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs:363-397 (generate_sync_csv_report, faults branch) — writes user-controlled fields (status.status, cat.category, priority.priority) into CSV cells without escaping leading `=`, `+`, `-`, `@`, `\\t`, `\\r` → CSV/formula injection when opened in Excel/LibreOffice by an org admin."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-movefolder-i18n",
+      "title": "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx (802 lines, a Phase-1 churn hotspot) render",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx (802 lines, a Phase-1 churn hotspot) renders its entire user-facing UI as hardcoded Slovak string literals and never calls useTranslation/t() — breaks i18n contract for the documents module."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-sharepanel-i18n",
+      "title": "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx has 0 useTranslation/t() calls and render",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx has 0 useTranslation/t() calls and renders hardcoded ENGLISH user-facing strings: line 129 <h4>New share</h4>; line 154 placeholder='Email…'. Same i18n gap as MoveFolderDialog."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-users-login-no-rate-limit",
+      "title": "backend/servers/reality-server/src/routes/users.rs:45-47 register the PUBLIC UNAUTHENTICATED auth endpoints POST /api/v1",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server slice 2)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:45-47 register the PUBLIC UNAUTHENTICATED auth endpoints POST /api/v1/users/login (:204), POST /api/v1/users/register (:145) and POST /api/v1/users/password-reset (:437) with NO per-IP / per-account throttle. Crate-wide grep for RateLimit/Governor/tower_governor/throttle/captcha/login_attempt/lockout finds ZERO middleware or handler-level protection. Reality-server is internet-facing → credential-stuffing + brute-force + account-spam + mail-flood surfaces."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/users.rs",
+        "backend/servers/reality-server/src/handlers/users/mod.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": "plans/code-review-reality-server-users-login-no-rate-limit.md"
+    },
+    {
+      "id": "code-review-reality-server-raw-db-error-leak-multi",
+      "title": "Multiple internet-facing reality-server handlers return the RAW underlying sqlx/anyhow error string as the Axum (StatusC",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server slice 2)"
+      ],
+      "evidence": [
+        "Multiple internet-facing reality-server handlers return the RAW underlying sqlx/anyhow error string as the Axum (StatusCode, String) response body via inline `format!`, bypassing the crate's mandated error boundary `crate::util::errors::db_error()` (documented at util/errors.rs:1-33). Offenders: routes/realtors.rs:75,110,154,193,240,273,313; routes/agencies.rs:265,282,319; routes/price_map.rs:153,217; routes/layout.rs:61,67,76,87,96,103; routes/listings.rs:289,301,470. Fix: replace inline format!(...e...) map_err arms with crate::util::errors::db_error(ctx, e)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/routes/price_map.rs",
+        "backend/servers/reality-server/src/routes/layout.rs",
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/src/util/errors.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-pwreset-email-not-wired",
+      "title": "backend/servers/reality-server/src/routes/users.rs:453-486 — request_password_reset's success branch (PasswordResetReque",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server slice 2)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:453-486 — request_password_reset's success branch (PasswordResetRequestResult::Sent { plaintext_token }) has NO email-delivery step. In debug builds it logs the token (correctly gated), in release builds it just discards the token (`let _ = plaintext_token;`) and logs 'Password reset token issued' — the plaintext reset token is NEVER delivered. Inline comment at :455-457 admits: 'Email transport hasn't been wired yet for the reality server.' Net effect: account-recovery for non-SSO password accounts is silently non-functional in production."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "title": "backend/servers/reality-server/src/util/url_validator.rs:150 — the Host::Ipv6 arm of validate_fetch_url() only rejects i",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 6,
+      "status": "ready",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server slice 3)",
+        "tier-1d dev-review 2026-07-30 (reality-server original, RE-RAISE from 2026-07-12)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:150 — the Host::Ipv6 arm of validate_fetch_url() only rejects is_loopback(), fc00::/7 and fe80::/10. Never normalises IPv4-mapped IPv6 (::ffff:127.0.0.1 / ::ffff:169.254.169.254) back to v4, so all private v4 ranges reach through the IPv6 branch → SSRF.",
+        "RE-RAISE (unfixed at HEAD b1f6ad5, first emitted 2026-07-12, subsequently decayed out of backlog.json but the vulnerable code is unchanged): backend/servers/reality-server/src/util/url_validator.rs:141-158 — the Host::Ipv6 arm rejects loopback + ULA + link-local but never normalises IPv4-mapped IPv6 (::ffff:0:0/96) back to v4, so an attacker can bypass every v4 private-range check by using ::ffff:169.254.169.254 or ::ffff:127.0.0.1. 3-week-old SSRF finding still open at HEAD."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": "plans/code-review-reality-server-ssrf-ipv4-mapped-ipv6.md"
+    },
+    {
+      "id": "code-review-reality-server-sso-redirect-backslash-openredirect",
+      "title": "backend/servers/reality-server/src/routes/sso.rs:147 — check_redirect_uri_allowed() treats any value that starts_with('/",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server slice 3)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:147 — check_redirect_uri_allowed() treats any value that starts_with('/') && !starts_with('//') as a trusted same-origin relative path. Backslash is not checked — `/\\evil.com` bypasses to `//evil.com` in browsers that normalise `\\` to `/` → open-redirect."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-branding-color-unvalidated",
+      "title": "backend/servers/reality-server/src/routes/agency_branding.rs:116-131,324-325 — UpdateBrandingRequest.primary_color / sec",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server original)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_branding.rs:116-131,324-325 — UpdateBrandingRequest.primary_color / secondary_color are free-form Option<String> with no format validation. update_branding writes them straight to DB → stored strings later inlined into public CSS/JSON → open XSS/CSS-injection surface if the field is echoed into an HTML attribute."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_branding.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-imports-raw-error-leak",
+      "title": "backend/servers/reality-server/src/routes/imports.rs:134-138 (list_import_jobs) and siblings at :167-170 (get_import_job",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier-1d dev-review 2026-07-30 (reality-server original)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:134-138 (list_import_jobs) and siblings at :167-170 (get_import_job), :197-200 (create_import_job), :236-243 / :272-279 (update/cancel) leak raw sqlx error strings to authenticated users. Same pattern as raw-db-error-leak-multi but distinct file scope."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-MobileConfigPage-tsx",
+      "title": "Churn hotspot: frontend/apps/admin-web/src/pages/MobileConfigPage.tsx — 365 lines this window (PR #2601 no-op-save fix).",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2601"
+      ],
+      "evidence": [
+        "Churn hotspot: frontend/apps/admin-web/src/pages/MobileConfigPage.tsx — 365 lines this window (PR #2601 no-op-save fix)."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-07-30",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-platform-tsx",
+      "title": "Churn hotspot: frontend/apps/admin-web/src/pages/platform.tsx — 235 lines this window (PR #2601 no-op-save fix).",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2601"
+      ],
+      "evidence": [
+        "Churn hotspot: frontend/apps/admin-web/src/pages/platform.tsx — 235 lines this window (PR #2601 no-op-save fix)."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/platform.tsx"
       ],
       "created_at": "2026-07-30",
       "updated_at": "2026-07-30",

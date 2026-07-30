@@ -1,246 +1,548 @@
 {
-  "generated": "2026-07-30T03:32:00Z",
-  "signals": [
-    {
-      "id": "lag-warning-2026-07-30",
-      "type": "lag_warning",
-      "source": "routine-phase1",
-      "score_delta": 0,
-      "evidence": [
-        "Phase 1 SINCE cursor is ~47h old (>36h); brief covers >1 day of activity."
-      ],
-      "confidence": "high",
-      "candidate_vector": "dx"
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
-      "type": "churn-hotspot",
-      "source": "routine-phase1",
-      "score_delta": 1,
-      "evidence": [
-        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576]",
-        "Rank 1/3 for the 2026-07-28..2026-07-30 window; first appearance in hotspot_history (runs_seen 0 → 1)"
-      ],
-      "confidence": "high",
-      "candidate_vector": "refactor",
-      "files": [
-        "backend/servers/api-server/src/services/scheduler.rs"
-      ]
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-tenant-rs",
-      "type": "churn-hotspot",
-      "source": "routine-phase1",
-      "score_delta": 1,
-      "evidence": [
-        "backend/servers/api-server/src/routes/layout/tenant.rs: 262 lines changed across PRs [2478]",
-        "Rank 2/3 for the 2026-07-28..2026-07-30 window; first appearance in hotspot_history (runs_seen 0 → 1)"
-      ],
-      "confidence": "high",
-      "candidate_vector": "refactor",
-      "files": [
-        "backend/servers/api-server/src/routes/layout/tenant.rs"
-      ]
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
-      "type": "churn-hotspot",
-      "source": "routine-phase1",
-      "score_delta": 1,
-      "evidence": [
-        "backend/servers/api-server/src/routes/layout/admin.rs: 240 lines changed across PRs [2478, 2549]",
-        "Rank 3/3 for the 2026-07-28..2026-07-30 window; first appearance in hotspot_history (runs_seen 0 → 1)"
-      ],
-      "confidence": "high",
-      "candidate_vector": "refactor",
-      "files": [
-        "backend/servers/api-server/src/routes/layout/admin.rs"
-      ]
-    },
-    {
-      "id": "dep-update-pr-2491",
-      "type": "dep-update-noise",
-      "source": "pr-2491",
-      "score_delta": 0,
-      "evidence": [
-        "PR #2491 authored by dependabot[bot] — dep-update noise, no action (npm-minor-patch group)."
-      ],
-      "confidence": "high",
-      "candidate_vector": "chore"
-    },
-    {
-      "id": "code-review-api-core-resolved-rs-leaks-db-error",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-core",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "evidence": [
-        "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,98,107,110,115,123 — err500 closure returns raw internal error text to the client (`format!(\"db error: {e}\")`, `format!(\"stored published config invalid: {e}\")`, etc.), leaking sqlx/serde diagnostic strings.",
-        "Sibling handlers (tenant.rs:29-32 `internal_error`, admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic body — resolved.rs is the outlier that both fails to log and leaks the message.",
-        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability."
-      ],
-      "expert": "rust"
-    },
-    {
-      "id": "code-review-api-core-admin-rs-swallowed-serialize",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-core",
-      "score_delta": 1,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "evidence": [
-        "backend/servers/api-server/src/routes/layout/admin.rs:94,171,202,229,269,389,453 — every mutation handler ends with `Ok(Json(serde_json::to_value(row).unwrap_or_default()))` — a failed serialize returns 200 OK + JSON `null` body instead of a 500.",
-        "backend/servers/api-server/src/routes/layout/tenant.rs:202 — same shape on `put_tenant_override`.",
-        "Route through `internal_error(e)` to keep semantics consistent with the module's other error branches."
-      ],
-      "expert": "rust"
-    },
-    {
-      "id": "code-review-api-core-scheduler-rs-silent-target-err",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-core",
-      "score_delta": 1,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "evidence": [
-        "backend/servers/api-server/src/services/scheduler.rs:385,600 — `.unwrap_or_default()` on notification-target DB queries silently produces empty target sets with no log/metric.",
-        "backend/servers/api-server/src/services/scheduler.rs:667-671 — `close_expired_votes` swallows `vote_result`/`results_result` errors via `if let Ok(Some(...))` with no `else` log.",
-        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly logs and falls back — apply the same treatment at the 3 sites above."
-      ],
-      "expert": "rust"
-    }
-  ],
+  "generated": "2026-07-30T22:30:00Z",
+  "run": "2026-07-30-rerun-buffer-low",
+  "trigger": "buffer-low: claimable=11/72 — refill planner",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "command": "test -f briefs/2026-07-30.md && head -1 = '# 2026-07-30'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare staged vs HEAD (cursors/seen/hotspot/quiet_days)",
-      "observed": "true",
+      "command": "jq ... any cursor changed vs HEAD",
+      "observed": "true (last_pr_seen 2576→2603, last_issue_seen 2575→2598, last_commit_sha advanced, 25 new seen_signals, 3 new hotspot_history entries, review_cursor triple-advance)",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq [.items[].id] | (length == (unique|length))",
+      "command": "jq [.items[].id]|(length==(unique|length))",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "any non-cumulative seen signal with score_delta != 0 → count",
-      "observed": "0",
-      "expected": "0"
+      "command": "check non-cumulative signal IDs seen previously all have score_delta=0",
+      "observed": "true — cumulative churn-hotspot re-fires all set score_delta=0",
+      "expected": "true"
     },
     {
       "goal": "G5-cap",
       "passed": true,
-      "command": "jq [.items[] | select(.score>8)] | length == 0",
+      "command": "jq [.items[]|select(.score>8)]|length==0",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5-decay",
       "passed": true,
-      "command": "for open items updated_at<=today-14: (prev.score-1 <= cur.score < prev.score) or dropped",
-      "observed": "vacuous (no items >14d)",
+      "command": "no open items with updated_at <= 2026-07-16 to decay this run",
+      "observed": "true (0 items eligible for decay)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "every new plan has adversarial pass line",
-      "observed": "no new plans",
-      "expected": "vacuous"
+      "command": "each new plan has adversarial pass annotation in brief",
+      "observed": "true — both plans annotated `adversarial pass: passed`",
+      "expected": "true"
     },
     {
-      "goal": "G7",
+      "goal": "G7-count",
       "passed": true,
-      "command": "new plans in .research/plans/ ≤ 2",
-      "observed": "0",
+      "command": "≤2 new plans this run",
+      "observed": "2",
       "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields per new plan",
+      "observed": "both plans have Vector/Score/Source/Confidence",
+      "expected": "all 4"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 required ## headings per plan",
+      "observed": "both plans have all 11",
+      "expected": "all 11"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "≥1 [x] capability tick per plan",
+      "observed": "both plans tick C1 + C6",
+      "expected": "≥1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "Mode: local-only|cloud-ok declared",
+      "observed": "both plans declare `Mode: cloud-ok`",
+      "expected": "one match"
+    },
+    {
+      "goal": "G7-files",
+      "passed": true,
+      "command": "every Files bullet resolves on disk",
+      "observed": "all 5 file paths across both plans resolve",
+      "expected": "all resolve"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
-      "observed": "0",
-      "expected": "0"
+      "command": "git diff --cached only .research/",
+      "observed": "verified pre-commit in Phase 6",
+      "expected": "0 non-.research paths"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secrets/hosts in staged diff (baseline docs exempt)",
-      "observed": "0",
-      "expected": "0"
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "verified pre-commit in Phase 6",
+      "expected": "0 matches"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "verified in Phase 6",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-that-failed listed AND cursor unchanged for each",
-      "observed": "no failed phases",
-      "expected": "vacuous"
+      "command": "no phase failed this run",
+      "observed": "no failures",
+      "expected": "no failed phases"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior-run plan present in plans/ or plans/_archive/",
-      "observed": "true",
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "all 14 prior plans still present in plans/",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "[ archive_now >= archive_HEAD ]",
-      "observed": "equal",
+      "command": "archive count >= HEAD archive count",
+      "observed": "no archive change this run",
       "expected": "≥"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
-      "observed": "exit 0",
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "verified in Phase 6",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
       "command": "auto_fix_actions caps + idempotency",
-      "observed": "empty",
-      "expected": "true"
+      "observed": "0 actions this run (no allowlist-eligible signal met certainty bar)",
+      "expected": "≤3 total, ≤1 per type"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid + pm_cursor in [0,7] + coverage_cursor advanced with pm_cursor",
-      "observed": "CC=3→4, PM=1→2, epics=13",
-      "expected": "exit 0"
+      "command": "management artifacts valid iff Phase 1.6 ran",
+      "observed": "Phase 1.6 skipped this run — no-op gate",
+      "expected": "no-op"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no literal telegram bot-token value in staged diff",
-      "observed": "0",
-      "expected": "0"
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "verified pre-commit in Phase 6",
+      "expected": "0 matches"
     }
   ],
-  "auto_fix_actions": []
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-30",
+      "type": "lag-warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "1d 23h since previous run at 2026-07-28T03:20Z (log-only)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2567,#2576,#2594",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "scheduler.rs — 347 lines this run (03:37Z window)",
+        "cumulative re-fire 22:30Z: +118 lines from PR #2594 (score_delta=0 on re-fire per Phase 1 rule)",
+        "note: score_delta 1 was applied in the 03:37Z run; this rerun records the audit entry at score_delta=0 to satisfy G4 non-double-count rule."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-tenant-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2478",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "layout/tenant.rs — 262 lines this run",
+        "note: score_delta 1 was applied in the 03:37Z run; this rerun records the audit entry at score_delta=0 to satisfy G4 non-double-count rule."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2478,#2549",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "layout/admin.rs — 240 lines this run",
+        "note: score_delta 1 was applied in the 03:37Z run; this rerun records the audit entry at score_delta=0 to satisfy G4 non-double-count rule."
+      ]
+    },
+    {
+      "id": "dep-update-pr-2491",
+      "type": "dep-update-noise",
+      "source": "PR #2491",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot bump npm-minor-patch group /1 dir /5 updates (log-only)"
+      ]
+    },
+    {
+      "id": "code-review-api-core-resolved-rs-leaks-db-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-core 03:37Z",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "layout/resolved.rs err500 leaks raw sqlx/serde error text — 8 sites",
+        "note: score_delta 2 was applied in the 03:37Z run; this rerun records the audit entry at score_delta=0 to satisfy G4 non-double-count rule."
+      ]
+    },
+    {
+      "id": "code-review-api-core-admin-rs-swallowed-serialize",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-core 03:37Z",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "layout/admin.rs unwrap_or_default() serialize — silent 200 OK on failure",
+        "note: score_delta 1 was applied in the 03:37Z run; this rerun records the audit entry at score_delta=0 to satisfy G4 non-double-count rule."
+      ]
+    },
+    {
+      "id": "code-review-api-core-scheduler-rs-silent-target-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-core 03:37Z",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "scheduler.rs swallows DB errors on notification target lookups at 3 sites",
+        "note: score_delta 1 was applied in the 03:37Z run; this rerun records the audit entry at score_delta=0 to satisfy G4 non-double-count rule."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-reports-csv-injection",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (api-handlers)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "reports/mod.rs:363-397 CSV formula injection in faults branch"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-layout-resolved-err-leak",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (api-handlers)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "layout/resolved.rs:36-41 err500 leaks raw error string — MERGED into existing code-review-api-core-resolved-rs-leaks-db-error, bumped 2→4"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-movefolder-i18n",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (ppt-web-ui)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "MoveFolderDialog.tsx (802 lines) — 0 t() calls, hardcoded SK strings"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sharepanel-i18n",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (ppt-web-ui)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "DocumentSharePanel.tsx — 0 t() calls, hardcoded EN strings"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-users-login-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server slice 2)",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "reality-server login/register/password-reset — zero rate-limit middleware"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-raw-db-error-leak-multi",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server slice 2)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "realtors/agencies/price_map/layout/listings.rs — inline format!(...e...) bypasses db_error()"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-pwreset-email-not-wired",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server slice 2)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "users.rs:453-486 request_password_reset silently non-functional in production release builds"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-ipv4-mapped-ipv6-ssrf",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server slice 3)",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "url_validator.rs:150 Host::Ipv6 arm — MERGED into code-review-reality-server-ssrf-ipv4-mapped-ipv6 (score 6)"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-redirect-backslash-openredirect",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server slice 3)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "sso.rs:147 check_redirect_uri_allowed — `/\\evil.com` bypass"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server original, RE-RAISE from 2026-07-12)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "url_validator.rs:141-158 RE-RAISE unfixed at HEAD b1f6ad5"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-branding-color-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server original)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "agency_branding.rs:116-131 primary_color/secondary_color unvalidated stored fields"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-imports-raw-error-leak",
+      "type": "code-review-finding",
+      "source": "tier-1d dev-review 2026-07-30 (reality-server original)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "imports.rs:134-138+ leaks raw sqlx error strings"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-MobileConfigPage-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2601",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "MobileConfigPage.tsx — 365 lines this delta"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-platform-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2601",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "platform.tsx — 235 lines this delta"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2581 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2582",
+      "type": "dep-update-noise",
+      "source": "PR #2582",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2582 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2583 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2584 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2585 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2586 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2587",
+      "type": "dep-update-noise",
+      "source": "PR #2587",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2587 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2588 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2589 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2590 opened (log-only)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2591 opened (log-only)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "notes": [
+    "Same-day rerun triggered by dispatcher buffer-low payload.",
+    "Phase 1.6 skipped — pm_cursor already advanced 1→2 (pm-backend) at 03:37Z; second same-day advance would double-consume the daily rotation.",
+    "Phase 1.5 fresh expert pass skipped — 3 dispatcher tier-1d slices already covered reality-server (16:36Z+) with 12 signals folded here.",
+    "12 new backlog items created; 1 existing item bumped (code-review-api-core-resolved-rs-leaks-db-error 2→4 via merge).",
+    "2 plans promoted: code-review-reality-server-ssrf-ipv4-mapped-ipv6 (score 6), code-review-reality-server-users-login-no-rate-limit (score 3)."
+  ]
 }
