@@ -80,7 +80,8 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(14.dp))
                 }
 
-                // Primary SSO affordance — parity with iOS `LoginView.ssoLoginSection`. Tapping this
+                // Primary SSO affordance — parity with iOS `LoginView.ssoLoginSection`. Tapping
+                // this
                 // mints a CSRF nonce and opens the Property Management app; the email/password form
                 // below is the fallback.
                 Button(

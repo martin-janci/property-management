@@ -1,13 +1,13 @@
 package three.two.bit.ppt.reality.auth
 
-import three.two.bit.ppt.reality.navigation.DeepLinkRouter
-import three.two.bit.ppt.reality.navigation.DeepLinkTarget
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import three.two.bit.ppt.reality.navigation.DeepLinkRouter
+import three.two.bit.ppt.reality.navigation.DeepLinkTarget
 
 /**
  * Contract for the SSO initiation leg — the production call site for [SsoStateStore.mint] that was
