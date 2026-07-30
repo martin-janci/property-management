@@ -2195,6 +2195,28 @@
       "merge_attempted_at": "2026-07-06T06:23:31Z"
     },
     {
+      "task_id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
+      "branch": "auto-impl/code-review-ppt-web-aml-review-decision-f9251644",
+      "status": "merged",
+      "claimed_at": "2026-07-30T12:06:00Z",
+      "last_updated": "2026-07-30T16:34:41Z",
+      "status_changed_at": "2026-07-30T16:34:41Z",
+      "pr_number": 2596,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2596",
+      "merged_at": "2026-07-30T16:34:41Z",
+      "specialist": null,
+      "implementer_summary": " [approved+green logic but E2E(admin-web) flake-fail unrelated to ppt-web diff; deferred to next cycle] [ci-fail: required check failing at approved head; Phase 5.7 respawn round 1]",
+      "reviewer_summary": "verdict=approve head_oid=f81dc501b5e315fc0ab86837478fb098a8ef90bb note=guard-validates-decision-union-cast-removed-tests-green",
+      "last_reviewed_oid": "f81dc501b5e315fc0ab86837478fb098a8ef90bb",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-07-30T14:25:17Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-authctx-init-stale-role",
       "branch": "auto-impl/code-review-ppt-web-core-authctx-init-st-2676c0eb",
       "status": "merged",
@@ -9665,5 +9687,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T16:30:34Z"
+  "archived_at": "2026-07-30T16:34:41Z"
 }

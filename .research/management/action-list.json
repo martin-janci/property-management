@@ -512,23 +512,6 @@
       "last_updated": "2026-07-24T18:09:34Z"
     },
     {
-      "id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
-      "action": "AmlDashboardPage casts raw window.prompt text into the review-decision union — a typo submits an invalid AML decision",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-web-inline-tenant-json-xss",
       "action": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
       "owner_role": "pm-security",
