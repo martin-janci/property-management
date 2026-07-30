@@ -34,6 +34,20 @@
         "Suggested fix: validate primary_color/secondary_color against a strict CSS-color allowlist (e.g. ^#[0-9a-fA-F]{3,8}$ or a named-color set) in update_branding alongside the existing check_optional_url_field calls, and reject non-conforming input with 400 before the DB write."
       ],
       "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-imports-raw-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:134-138 (list_import_jobs) and the sibling handlers at :167-170 (get_import_job), :197-200 (create_import_job) and :236-243 / :272-279 (update/cancel) map repository errors with `format!(\"Failed to ...: {}\", e)` and return that string as the Axum `(StatusCode, String)` response body. The `String` in that tuple IS the HTTP response body, so the raw underlying sqlx/anyhow error text is sent verbatim to the portal client.",
+        "This directly violates the crate's own security helper: backend/servers/reality-server/src/util/errors.rs:1-33 documents `db_error(ctx, e)` as the mandated map_err boundary for every DB call precisely because 'Reality-server is internet-facing. Raw sqlx::Error / anyhow::Error strings can leak column names, constraint names, sometimes pool / TLS state - none of which a portal client should ever see.' It logs the full error server-side and returns a generic '500 Internal server error' body. favorites.rs and saved_searches.rs already route through db_error; imports.rs bypasses it and leaks the detail instead. Fix: replace the inline `format!` map_err arms in imports.rs with `crate::util::errors::db_error(\"<ctx>\", e)`."
+      ],
+      "expert": "rust"
     }
   ]
 }
