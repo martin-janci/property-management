@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-30T16:22:03Z",
+  "archived_at": "2026-07-30T16:30:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2013,6 +2013,24 @@
         "subject": "code-review-ppt-web-core-ws-token-rotation-stale: re-auth WebSocket on token rotation instead of leaving a stale socket (#2578)",
         "at": "2026-07-30T08:06:04Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-ungated-console",
+      "action": "10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T04:05:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:29:56Z"
     },
     {
       "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",
@@ -4497,6 +4515,19 @@
       }
     },
     {
+      "id": "gap-uc-33-2-link-dispute-screen-map",
+      "action": "[BAD-PREMISE: UC-33.2 is Tenant Screening not disputes] Link UC-33.2 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z"
+    },
+    {
       "id": "gh-issue-1680",
       "action": "[DROPPED: not completable in no-build cloud env / needs operator] Research dispatcher: cron environment can't run core pipeline (fire-and-forget implementers die, no DB, git-push + archive-push blocked) (Closes #1680)",
       "owner_role": "pm-tech-lead",
@@ -6621,6 +6652,26 @@
       }
     },
     {
+      "id": "gh-issue-2241-retry2",
+      "action": "Follow-up: OAuth state single-use test models atomic consume but prod Redis path is non-atomic GET+DELETE (PR #2219) (Closes #2241) [retry 2/2 of failed gh-issue-2241]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2241 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2241",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2241,
+        "url": "https://github.com/martin-janci/property-management/issues/2241",
+        "labels": []
+      },
+      "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:29:56Z"
+    },
+    {
       "id": "gh-issue-2242",
       "action": "Follow-up: report_schedules.next_run_at has no consumer + untested DST branch (PR #2220) (Closes #2242)",
       "owner_role": "pm-tech-lead",
@@ -7301,6 +7352,26 @@
         "merged_at": null,
         "at": "2026-07-22T20:02:56Z"
       }
+    },
+    {
+      "id": "gh-issue-2318-retry2",
+      "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318) [retry 2/2 of failed gh-issue-2318]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2318 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T23:19:31Z",
+      "retry_of": "gh-issue-2318",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2318,
+        "url": "https://github.com/martin-janci/property-management/issues/2318",
+        "labels": []
+      },
+      "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:30:34Z"
     },
     {
       "id": "gh-issue-2319",
@@ -9414,6 +9485,22 @@
         "merged_at": null,
         "at": "2026-07-30T08:11:29Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
+      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "pm-backend must close #2573 reference-check gap before wiring",
+      "depends_on": [
+        "gh-issue-2573"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z",
+      "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:29:56Z"
     },
     {
       "id": "pm-security-reconcile-cookie-path-565",

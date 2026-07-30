@@ -471,23 +471,6 @@
       "last_updated": "2026-07-24T00:10:32Z"
     },
     {
-      "id": "code-review-ppt-web-core-ws-ungated-console",
-      "action": "10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-24T04:05:45Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-24T04:05:45Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "gh-issue-2528",
       "action": "Follow-up: harden booking_push_notification webhook + Airbnb replay parity (PR #2499) (Closes #2528)",
       "owner_role": "pm-tech-lead",
@@ -748,44 +731,6 @@
       "retry_round": 1
     },
     {
-      "id": "gh-issue-2241-retry2",
-      "action": "Follow-up: OAuth state single-use test models atomic consume but prod Redis path is non-atomic GET+DELETE (PR #2219) (Closes #2241) [retry 2/2 of failed gh-issue-2241]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2241 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T23:19:31Z",
-      "retry_of": "gh-issue-2241",
-      "retry_round": 2,
-      "issue_ref": {
-        "number": 2241,
-        "url": "https://github.com/martin-janci/property-management/issues/2241",
-        "labels": []
-      }
-    },
-    {
-      "id": "gh-issue-2318-retry2",
-      "action": "Follow-up: report-schedule due-work consumer is an RLS no-op in prod + client/test/index gaps (PR #2313) (Closes #2318) [retry 2/2 of failed gh-issue-2318]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-29T23:19:31Z (retry_of=gh-issue-2318 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T18:25:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T23:19:31Z",
-      "retry_of": "gh-issue-2318",
-      "retry_round": 2,
-      "issue_ref": {
-        "number": 2318,
-        "url": "https://github.com/martin-janci/property-management/issues/2318",
-        "labels": []
-      }
-    },
-    {
       "id": "gh-issue-2320-retry2",
       "action": "Follow-up: harden direct-to-S3 upload flow — file_key IDOR at registration, unenforced size cap, orphan cleanup (PR #2309) (Closes #2320) [retry 2/2 of failed gh-issue-2320]",
       "owner_role": "pm-tech-lead",
@@ -833,21 +778,6 @@
       "retry_round": 1
     },
     {
-      "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
-      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "pm-backend must close #2573 reference-check gap before wiring",
-      "depends_on": [
-        "gh-issue-2573"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-07-30",
-      "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T03:23:02Z"
-    },
-    {
       "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
       "action": "Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top-churn 2 windows running) — propose extraction of retention/prune jobs to a dedicated module",
       "owner_role": "pm-backend",
@@ -857,19 +787,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-07-30",
-      "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T03:23:02Z"
-    },
-    {
-      "id": "gap-uc-33-2-link-dispute-screen-map",
-      "action": "Link UC-33.2 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "gap-scan",
       "first_open_at": "2026-07-30T03:23:02Z",
       "last_updated": "2026-07-30T03:23:02Z"
     },
