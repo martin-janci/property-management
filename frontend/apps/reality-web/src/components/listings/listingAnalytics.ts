@@ -62,7 +62,33 @@ export type ViewSource =
   | 'realtor'
   | 'internal'
   | 'external'
-  | 'direct';
+  | 'direct'
+  | 'unknown';
+
+/**
+ * The bounded set of canonical view-source buckets. An explicit `?source=`
+ * query param is untrusted visitor input, so it is validated against this set
+ * before being emitted — otherwise arbitrary URL values (e.g. per-campaign
+ * marketing slugs or crafted junk) would inflate the `view_source` analytics
+ * dimension's cardinality without bound. Keep in sync with the `ViewSource`
+ * union above and the data-team schema.
+ */
+export const VIEW_SOURCES: ReadonlySet<ViewSource> = new Set<ViewSource>([
+  'search',
+  'listing',
+  'home',
+  'favorites',
+  'realtor',
+  'internal',
+  'external',
+  'direct',
+  'unknown',
+]);
+
+/** Type guard: is an arbitrary string one of the known `ViewSource` buckets? */
+export function isViewSource(value: string | null | undefined): value is ViewSource {
+  return value != null && VIEW_SOURCES.has(value as ViewSource);
+}
 
 export interface ListingViewContext {
   viewSource: ViewSource;
@@ -101,10 +127,13 @@ function collectFilters(params: ReadableParams | null): Record<string, string> {
  * Derive `{ viewSource, filterState }` from the current page's search params,
  * the referrer URL, and the current origin. Pure — no DOM/globals touched.
  *
- * Precedence for view-source: an explicit `?source=` on the current URL wins
- * (curated/marketing links), otherwise it is inferred from the referrer.
- * Filter-state is merged from the referrer's query (the search that led here)
- * and any filters forwarded onto the current URL, with the current URL winning.
+ * Precedence for view-source: a *recognised* explicit `?source=` on the current
+ * URL wins (curated/marketing links), otherwise it is inferred from the
+ * referrer. An explicit `?source=` that is not one of the known {@link ViewSource}
+ * buckets is untrusted, unbounded-cardinality input and is mapped to `unknown`
+ * rather than emitted verbatim. Filter-state is merged from the referrer's query
+ * (the search that led here) and any filters forwarded onto the current URL,
+ * with the current URL winning.
  */
 export function deriveListingViewContext(
   searchParams: ReadableParams | null,
@@ -130,7 +159,16 @@ export function deriveListingViewContext(
   }
 
   const explicit = searchParams?.get('source');
-  const viewSource = (explicit as ViewSource) || referrerSource;
+  // An explicit `?source=` is untrusted visitor input: only honour it when it
+  // names a known bucket, map any other non-empty value to `unknown`, and fall
+  // back to the referrer-derived source when it is absent/empty. This keeps the
+  // emitted `view_source` dimension's cardinality bounded.
+  let viewSource: ViewSource;
+  if (explicit) {
+    viewSource = isViewSource(explicit) ? explicit : 'unknown';
+  } else {
+    viewSource = referrerSource;
+  }
 
   // Referrer filters first, current-URL filters override (forward-compatible
   // with links that explicitly carry the originating filters).
