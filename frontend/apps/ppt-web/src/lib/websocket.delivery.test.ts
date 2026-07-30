@@ -163,3 +163,90 @@ describe('WebSocketService — message:new delivery', () => {
     expect(service.getLastEventTimestamp()).not.toBeNull();
   });
 });
+
+/**
+ * Token-rotation re-auth (regression).
+ *
+ * The auth layer rotates the access token periodically. `WebSocketContext`
+ * reacts to the new token by calling `service.connect()` again. Before the fix,
+ * `connect()` early-returned whenever a socket was already OPEN — regardless of
+ * the token — leaving a live connection bound to the *stale* token. The server
+ * can drop that socket on its next auth check (silent realtime outage) or keep
+ * honouring a rotated-out token.
+ *
+ * The contract asserted here: a `connect()` whose token differs from the live
+ * socket's token tears the stale socket down and opens a fresh one carrying the
+ * new token — while a `connect()` with the unchanged token still no-ops.
+ */
+describe('WebSocketService — token rotation re-auth', () => {
+  function tokenParam(socket: FakeWebSocket): string | null {
+    return new URL(socket.url).searchParams.get('token');
+  }
+
+  it('tears down the stale socket and reconnects with the rotated token', () => {
+    let token = 'token-old';
+    const service = new WebSocketService({
+      url: 'ws://localhost:8080',
+      getToken: () => token,
+    });
+
+    service.connect();
+    const first = FakeWebSocket.lastInstance;
+    if (!first) throw new Error('expected the first WebSocket to be constructed');
+    first.simulateOpen();
+    expect(tokenParam(first)).toBe('token-old');
+
+    // Auth layer rotates the token, then the context re-invokes connect().
+    token = 'token-new';
+    service.connect();
+
+    const second = FakeWebSocket.lastInstance;
+    if (!second) throw new Error('expected a second WebSocket to be constructed');
+
+    // A brand-new socket carrying the rotated token must have been opened...
+    expect(second).not.toBe(first);
+    expect(tokenParam(second)).toBe('token-new');
+    // ...and the stale socket bound to the old token must have been closed.
+    expect(first.readyState).toBe(FakeWebSocket.CLOSED);
+  });
+
+  it('no-ops when connect() is called again with the unchanged token', () => {
+    const service = new WebSocketService({
+      url: 'ws://localhost:8080',
+      getToken: () => 'token-stable',
+    });
+
+    service.connect();
+    const first = FakeWebSocket.lastInstance;
+    if (!first) throw new Error('expected the first WebSocket to be constructed');
+    first.simulateOpen();
+
+    // Same token → the existing live socket is reused, no new socket created.
+    service.connect();
+    expect(FakeWebSocket.lastInstance).toBe(first);
+    expect(first.readyState).toBe(FakeWebSocket.OPEN);
+  });
+
+  it('detaches stale-socket handlers so its close does not trigger a reconnect', () => {
+    let token = 'rot-a';
+    const service = new WebSocketService({
+      url: 'ws://localhost:8080',
+      getToken: () => token,
+      minReconnectDelay: 1,
+    });
+
+    service.connect();
+    const first = FakeWebSocket.lastInstance;
+    if (!first) throw new Error('expected the first WebSocket to be constructed');
+    first.simulateOpen();
+    const firstOnClose = first.onclose;
+
+    token = 'rot-b';
+    service.connect();
+
+    // The stale socket's handlers were detached during teardown, so a late
+    // close event on it is inert and cannot drive the service's reconnect path.
+    expect(first.onclose).toBeNull();
+    expect(firstOnClose).not.toBeNull();
+  });
+});
