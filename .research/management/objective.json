@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "code-review-api-core-admin-rs-swallowed-serialize",
-  "selected_at": "2026-07-30T20:09:29Z",
+  "epic_prefix": "code-review-api-core-resolved-rs-leaks-db-error",
+  "selected_at": "2026-07-30T22:07:44Z",
   "last_action": "repick",
-  "reason": "prior target '82-1-swiftui-project-setup-retry1' exhausted; closest-to-done is 'code-review-api-core-admin-rs-swallowed-serialize' (open=1 claimable=1)",
+  "reason": "prior target 'code-review-api-core-admin-rs-swallowed-serialize' exhausted; closest-to-done is 'code-review-api-core-resolved-rs-leaks-db-error' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
