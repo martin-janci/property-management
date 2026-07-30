@@ -5295,7 +5295,7 @@
       "vector": "dx",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "done",
       "sources": [
         "standing-scan-2026-07-28",
         "gh-run-30399201262"
@@ -5315,7 +5315,12 @@
       ],
       "created_at": "2026-07-28",
       "updated_at": "2026-07-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-30T00:04:56Z",
+        "assignment_status": "merged",
+        "pr_number": 2569
+      }
     }
   ]
 }
