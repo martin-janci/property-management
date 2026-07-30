@@ -1,0 +1,38 @@
+{
+  "generated": "2026-07-30T00:00:00Z",
+  "segment": "api-core",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-api-core-workflow-regex-recompiled-uncapped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:618 — the ComparisonOperator::Matches branch takes an operator-supplied pattern (compare_value.as_str, i.e. a string stored on the workflow-condition definition) and calls regex::Regex::new(pattern) fresh on EVERY condition evaluation. There is no compiled-regex cache and no explicit RegexBuilder::size_limit / dfa_size_limit lowered from the crate default (~10 MB).",
+        "This is on the automation hot path: evaluate_condition runs for each Matches condition every time a matching trigger event fires (workflow_executor evaluate/execute path). A tenant admin can define a large or complex pattern that is recompiled per event and per matching rule, amplifying CPU/allocation across a busy tenant. Rust's regex crate is linear-time (no catastrophic backtracking), so this is a robustness/perf amplification rather than a classic ReDoS, but the pattern is attacker-influenced config with no explicit bound.",
+        "Fix: compile the regex once and cache it keyed by the condition/pattern (e.g. an LRU or per-workflow compiled cache), and build it via RegexBuilder with an explicit lowered size_limit/dfa_size_limit for defense-in-depth against pathological tenant-supplied patterns."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-accounting-decimal-literal-unwrap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:136,143,145,150 — the reconciliation-confidence scorer repeatedly does Decimal::from_str(\"0.8\").unwrap() / from_str(\"0.15\") / from_str(\"0.05\") / from_str(\"0.5\") on hard-coded literals inside the scoring path. The parses are infallible so there is no crash risk, but each call re-parses a string literal at runtime and the .unwrap() pattern is repeated across the module.",
+        "Fix: hoist these to module-level const/lazy_static Decimals (or use Decimal::new(8,1) etc.) so the weights are parsed once, are self-documenting, and drop the repeated .unwrap() smell from the production scoring path."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
