@@ -214,6 +214,28 @@ function defaultWebSocketUrl(): string {
 }
 
 /**
+ * Dev-only diagnostic logging for the WebSocket client.
+ *
+ * The connection diagnostics below (send failures, handler errors, pong
+ * timeouts, reconnect give-up) are valuable while developing but must not
+ * leak to the browser console in production builds: they surface internal
+ * connection state and add noise for end users. Gating on `import.meta.env.DEV`
+ * — the same convention `lib/api.ts` uses for its retry logging — lets Vite
+ * dead-code-eliminate these calls from the production bundle entirely.
+ */
+function wsWarn(...args: unknown[]): void {
+  if (import.meta.env.DEV) {
+    console.warn(...args);
+  }
+}
+
+function wsError(...args: unknown[]): void {
+  if (import.meta.env.DEV) {
+    console.error(...args);
+  }
+}
+
+/**
  * WebSocket service that manages connection, reconnection, and message handling.
  */
 export class WebSocketService {
@@ -402,7 +424,7 @@ export class WebSocketService {
    */
   send(message: WebSocketMessage): boolean {
     if (!this.isConnected()) {
-      console.warn('[WebSocket] Cannot send message: not connected');
+      wsWarn('[WebSocket] Cannot send message: not connected');
       return false;
     }
 
@@ -410,7 +432,7 @@ export class WebSocketService {
       this.socket!.send(JSON.stringify(message));
       return true;
     } catch (error) {
-      console.error('[WebSocket] Failed to send message:', error);
+      wsError('[WebSocket] Failed to send message:', error);
       return false;
     }
   }
@@ -530,7 +552,7 @@ export class WebSocketService {
           try {
             handler(message);
           } catch (handlerError) {
-            console.error(`[WebSocket] Handler error for ${message.type}:`, handlerError);
+            wsError(`[WebSocket] Handler error for ${message.type}:`, handlerError);
           }
         }
       }
@@ -542,12 +564,12 @@ export class WebSocketService {
           try {
             handler(message);
           } catch (handlerError) {
-            console.error('[WebSocket] Wildcard handler error:', handlerError);
+            wsError('[WebSocket] Wildcard handler error:', handlerError);
           }
         }
       }
     } catch (error) {
-      console.error('[WebSocket] Failed to parse message:', error);
+      wsError('[WebSocket] Failed to parse message:', error);
     }
   }
 
@@ -562,7 +584,7 @@ export class WebSocketService {
       try {
         handler(state, error);
       } catch (handlerError) {
-        console.error('[WebSocket] Connection state handler error:', handlerError);
+        wsError('[WebSocket] Connection state handler error:', handlerError);
       }
     }
   }
@@ -577,7 +599,7 @@ export class WebSocketService {
     // acting as a small DoS amplifier in dev.
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       this.shouldReconnect = false;
-      console.warn(
+      wsWarn(
         `[WebSocket] Giving up after ${this.reconnectAttempts} reconnect attempts. ` +
           'Call connect() to resume.'
       );
@@ -617,7 +639,7 @@ export class WebSocketService {
         try {
           handler(message);
         } catch (handlerError) {
-          console.error('[WebSocket] max-retries handler error:', handlerError);
+          wsError('[WebSocket] max-retries handler error:', handlerError);
         }
       }
     }
@@ -628,7 +650,7 @@ export class WebSocketService {
         try {
           handler(message);
         } catch (handlerError) {
-          console.error('[WebSocket] Wildcard handler error:', handlerError);
+          wsError('[WebSocket] Wildcard handler error:', handlerError);
         }
       }
     }
@@ -679,7 +701,7 @@ export class WebSocketService {
 
       this.pongTimeoutId = setTimeout(() => {
         if (this.awaitingPong) {
-          console.warn('[WebSocket] Pong timeout - closing connection');
+          wsWarn('[WebSocket] Pong timeout - closing connection');
           this.socket?.close(4000, 'Pong timeout');
         }
       }, this.pongTimeout);
