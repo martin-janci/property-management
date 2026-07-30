@@ -33,6 +33,17 @@ export interface SettingsFormProps<T extends Record<string, unknown>> {
   onSubmit: (values: T) => Promise<void> | void;
   /** Optional header. */
   header?: ReactNode;
+  /**
+   * Force the form into read-only mode regardless of capability. Use when the
+   * backing write endpoint does not exist yet, so the form can display values
+   * without presenting a Save control that silently does nothing.
+   */
+  readOnly?: boolean;
+  /**
+   * Optional persistent banner rendered above the fields — e.g. to explain why
+   * the form is read-only.
+   */
+  notice?: ReactNode;
 }
 
 export function SettingsForm<T extends Record<string, unknown>>({
@@ -41,8 +52,11 @@ export function SettingsForm<T extends Record<string, unknown>>({
   capability,
   onSubmit,
   header,
+  readOnly = false,
+  notice,
 }: SettingsFormProps<T>) {
-  const canWrite = useCapability(capability);
+  const hasCapability = useCapability(capability);
+  const canWrite = hasCapability && !readOnly;
   const [values, setValues] = useState<T>(initialValues);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +82,11 @@ export function SettingsForm<T extends Record<string, unknown>>({
   return (
     <form className="ppt-admin-settings-form" onSubmit={handleSubmit}>
       {header}
+      {notice ? (
+        <div role="status" className="ppt-admin-form-notice">
+          {notice}
+        </div>
+      ) : null}
       {fields.map((field) => (
         <FieldRow
           key={field.key}
