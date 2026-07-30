@@ -529,23 +529,6 @@
       "last_updated": "2026-07-24T18:09:34Z"
     },
     {
-      "id": "bug-hotfix-no-test-pr-2547",
-      "action": "PR #2547 shipped scheduler retention prune fix without an api-server regression test (hotfix-no-test)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
       "action": "AmlDashboardPage casts raw window.prompt text into the review-decision union — a typo submits an invalid AML decision",
       "owner_role": "pm-backend",
@@ -628,23 +611,6 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
-    },
-    {
-      "id": "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
-      "action": "PortfolioAnalytics inquiriesTrend silently drops days with inquiries but zero views (set-difference bug)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     },
     {
@@ -839,66 +805,6 @@
       }
     },
     {
-      "id": "gh-issue-2573",
-      "action": "Follow-up: DELETE /documents/by-file-key can delete a still-referenced object within the same org (PR #2571) (Closes #2573)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-30T02:05:38Z (#2573)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T02:05:38Z",
-      "issue_ref": {
-        "number": 2573,
-        "url": "https://github.com/martin-janci/property-management/issues/2573",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2574",
-      "action": "Follow-up: Android SSO CSRF guard is only half-wired — SsoStateStore.mint() has no call site (PR #2568) (Closes #2574)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-30T02:05:38Z (#2574)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T02:05:38Z",
-      "issue_ref": {
-        "number": 2574,
-        "url": "https://github.com/martin-janci/property-management/issues/2574",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2575",
-      "action": "Follow-up: /disputes/kpis has no window-ordering validation and its only test is quarantined (PR #2572) (Closes #2575)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-30T02:05:38Z (#2575)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T02:05:38Z",
-      "issue_ref": {
-        "number": 2575,
-        "url": "https://github.com/martin-janci/property-management/issues/2575",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "dx-closed-not-merged-pr-2385-retry1",
       "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup [retry 1/2 of failed dx-closed-not-merged-pr-2385]",
       "owner_role": "pm-devops",
@@ -927,19 +833,6 @@
       "retry_round": 1
     },
     {
-      "id": "pm-scrum-master-review-accounting-mvp-trio",
-      "action": "Review + shepherd merge of the accounting MVP-loop trio (PRs #2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — draft-ready since 2026-07-28 with no reviewer engagement",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-07-30",
-      "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T03:23:02Z"
-    },
-    {
       "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
       "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started)",
       "owner_role": "pm-frontend",
@@ -964,19 +857,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-07-30",
-      "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T03:23:02Z"
-    },
-    {
-      "id": "gap-uc-33-1-link-dispute-screen-map",
-      "action": "Link UC-33.1 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "gap-scan",
       "first_open_at": "2026-07-30T03:23:02Z",
       "last_updated": "2026-07-30T03:23:02Z"
     },
