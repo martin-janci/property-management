@@ -32,6 +32,13 @@ interface CountryRiskDisplay {
   fatf_status?: string;
 }
 
+type AmlReviewDecision = 'approve' | 'reject' | 'escalate';
+
+const AML_REVIEW_DECISIONS: readonly AmlReviewDecision[] = ['approve', 'reject', 'escalate'];
+
+const isAmlReviewDecision = (value: string): value is AmlReviewDecision =>
+  (AML_REVIEW_DECISIONS as readonly string[]).includes(value);
+
 export const AmlDashboardPage: React.FC = () => {
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -133,8 +140,18 @@ export const AmlDashboardPage: React.FC = () => {
     (assessmentId: string) => {
       // TODO(Phase-2): Replace window.prompt with proper modal form with validation
       // Phase 1: Basic prompts for collecting decision and notes
-      const decision = window.prompt('Enter decision (approve, reject, escalate):', 'approve');
-      if (!decision) return;
+      const decisionInput = window.prompt('Enter decision (approve, reject, escalate):', 'approve');
+      if (!decisionInput) return;
+
+      // Validate the free-text prompt against the allowed decision union before
+      // submitting — a typo (e.g. "aprove") must not reach the API as a decision.
+      const decision = decisionInput.trim().toLowerCase();
+      if (!isAmlReviewDecision(decision)) {
+        alert(
+          `Invalid decision "${decisionInput}". Please enter one of: approve, reject, escalate.`
+        );
+        return;
+      }
 
       const notes = window.prompt('Enter review notes:');
       if (!notes) return;
@@ -143,7 +160,7 @@ export const AmlDashboardPage: React.FC = () => {
         {
           assessmentId,
           request: {
-            decision: decision as 'approve' | 'reject' | 'escalate',
+            decision,
             notes,
           },
         },
