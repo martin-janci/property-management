@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-31T12:24:18Z",
-  "generated_by": "aa9cc0c2a260e00fdf46e16b2c9e7aac4d8b96d9",
+  "generated_at": "2026-07-31T14:24:38Z",
+  "generated_by": "d08a8d044a651fcc94b4ea786106b7555ac1fc32",
   "findings": [
     {
       "finding_id": "rebase-ours-takes-upstream-discards-state",
@@ -48,6 +48,22 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
+      "finding_id": "subagent-race-on-dev-push",
+      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "evidence": [
+        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
+        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
+      ],
+      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
+      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
+    },
+    {
       "finding_id": "subagent-workspace-contamination",
       "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
       "severity": "critical",
@@ -64,22 +80,6 @@
       "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
       "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "subagent-race-on-dev-push",
-      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "evidence": [
-        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
-        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
-      ],
-      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
-      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "mcp-push-cannot-inline-large-archive",
@@ -225,6 +225,23 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
+      "finding_id": "orphaned-prs-reconciliation-noise",
+      "title": "Fire-and-forget implementer spawns lose the row<->PR link, leaving orphaned PRs back-filled in Phase 2",
+      "severity": "high",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T12:28:33Z",
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
+      "evidence": [
+        "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
+        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
+        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
+      ],
+      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
+      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
       "finding_id": "dup-suffix-variant-dodges-dedup",
       "title": "Suffix-variant task_ids (-impl/-fix/-v2) bypass the dedup gate and open a second PR for the same gap",
       "severity": "high",
@@ -242,21 +259,22 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "orphaned-prs-reconciliation-noise",
-      "title": "Fire-and-forget implementer spawns lose the row<->PR link, leaving orphaned PRs back-filled in Phase 2",
+      "finding_id": "stale-in-progress-action-list-decoupled-from-assignments",
+      "first_seen": "2026-07-31T14:24:38Z",
+      "last_seen": "2026-07-31T14:24:38Z",
+      "recurrence": 1,
       "severity": "high",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T14:42:00Z",
-      "recurrence": 2,
+      "category": "claim",
+      "symptom": "action-list.json holds 31 status=in-progress rows but assignments.json has only 3 live rows; worse, the 3 truly-active assignments are marked status=open (not in-progress) in action-list — the twin status is inverted/decoupled.",
       "evidence": [
-        "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
-        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
-        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
+        "d08a8d0: 3 active assignments (layout-admin, scheduler, data-audit retry1) all status=in-progress in assignments.json but status=open in action-list.json",
+        "action-list.json: 31 in-progress / 6 open; the 31 in-progress have no backing live assignment (phantom rows)",
+        "self-test T28 WARN: layout-tenant terminal in archive yet status=open in action-list (same decoupling class)"
       ],
-      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
-      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "root_cause": "action-list item.status is not kept in lockstep with the assignments lifecycle: claim does not flip the action-list twin to in-progress, and archive/fail does not flip stale in-progress rows back. The 31 phantom in-progress rows are excluded from the claimable pool, artificially depressing the buffer below floor — this is the concrete driver of the chronic GC3 buffer-bounds FAIL that 'buffer-starved-below-floor-no-refill-path' has logged as 'refills found nothing available'.",
+      "proposed_fix": "Add a Phase-2 reconcile step (extend gc1-reconcile.sh) that: (a) for every action-list in-progress id with NO live assignment, resets status->open (or archives if terminal in archive); (b) sets action-list twin->in-progress on claim. Add self-test T32 asserting bijection between assignments.json in-progress ids and action-list in-progress ids (mismatch>threshold => FAIL). This likely resolves the chronic GC3 FAIL at its source rather than via refills.",
+      "status": "open",
+      "operator_notes": ""
     },
     {
       "finding_id": "orphan-recovery-reinserts-archived-task-id",
@@ -300,28 +318,6 @@
       "operator_notes": "Fixed inline this run. Add T21 self-test: verify ALL_ARCHIVE_IDS includes failed rows."
     },
     {
-      "finding_id": "goal-check-gc1-orphan-action-list-items",
-      "title": "goal-check GC1 referential-integrity FAILs with 105 orphan action-list items referencing nonexistent coverage entries",
-      "severity": "high",
-      "category": "goal-check",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T15:22:00Z",
-      "last_seen": "2026-05-28T15:22:00Z",
-      "recurrence": 1,
-      "symptom": "goal-check.sh GC1-referential-integrity FAIL — observed orphans=105, done_with_open_gap=10 (expected 0/0). First run where goal-check.sh actually executes (prior run it was SKIP/not-found), immediately red.",
-      "evidence": [
-        "bash .research/goal-check.sh: 'FAIL GC1-referential-integrity — observed=orphans=105 done_with_open_gap=10 expected=orphans=0 done_with_open_gap=0'",
-        "b8bf30ad Phase 7: 'goal-check: GC1-referential-integrity=FAIL'",
-        "Prior run 6bf8e883: 'goal-check: SKIP (goal-check.sh not found)' — the gate was effectively absent until this run, so accumulated coverage/action-list drift went unmeasured",
-        "done_with_open_gap=10 overlaps the reclaim-of-already-merged-task-id root cause (merged gaps still flagged open)"
-      ],
-      "root_cause": "action-list.json carries 105 items whose coverage reference no longer exists in coverage.json (coverage entries removed/renamed without cascading to action-list), plus 10 coverage gaps marked done while still open. The newly-added goal-check.sh exposes a backlog of referential drift that was never enforced before.",
-      "proposed_fix": "Add a Phase 2.6 cascade step that prunes/relinks orphan action-list items when coverage entries change, and reconciles coverage done-state against archive merges. Make goal-check.sh GC1 a Phase 6 gate (record-only first, enforcing once the 105-item backlog is drained). Triage the existing 105 orphans into prune-vs-relink as a one-time cleanup.",
-      "effort": "medium",
-      "affected_artifact": ".research/management/action-list.json + .research/management/coverage.json + .research/dispatcher-prompt.md (Phase 2.6 cascade)",
-      "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0. Landed as commit 17463444 on fix/dispatcher-postmerge-cadence-clone-mtime."
-    },
-    {
       "finding_id": "goal-check-gc3-buffer-overshoot",
       "title": "goal-check GC3 buffer-bounds FAILs — claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
       "severity": "high",
@@ -342,6 +338,28 @@
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill) + .research/goal-check.sh (shared bounds)",
       "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap. goal-check.sh now owns BUFFER_FLOOR/TARGET/CEIL (18/36/60, env-overridable) as the single source of truth; GC3 reads them. Phase 2.6 mirrors them via read_bound() and adds Tier 0 (overflow drain): when claimable>CEIL, defer the lowest-scored excess back to backlog (logged, never silent) until claimable==CEIL; Tier 1 refill capped at min(TARGET,CEIL). Does NOT auto-drain the existing 112->60 backlog in one shot — it converges over runs as Tier 0 fires. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "goal-check-gc1-orphan-action-list-items",
+      "title": "goal-check GC1 referential-integrity FAILs with 105 orphan action-list items referencing nonexistent coverage entries",
+      "severity": "high",
+      "category": "goal-check",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T15:22:00Z",
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 1,
+      "symptom": "goal-check.sh GC1-referential-integrity FAIL — observed orphans=105, done_with_open_gap=10 (expected 0/0). First run where goal-check.sh actually executes (prior run it was SKIP/not-found), immediately red.",
+      "evidence": [
+        "bash .research/goal-check.sh: 'FAIL GC1-referential-integrity — observed=orphans=105 done_with_open_gap=10 expected=orphans=0 done_with_open_gap=0'",
+        "b8bf30ad Phase 7: 'goal-check: GC1-referential-integrity=FAIL'",
+        "Prior run 6bf8e883: 'goal-check: SKIP (goal-check.sh not found)' — the gate was effectively absent until this run, so accumulated coverage/action-list drift went unmeasured",
+        "done_with_open_gap=10 overlaps the reclaim-of-already-merged-task-id root cause (merged gaps still flagged open)"
+      ],
+      "root_cause": "action-list.json carries 105 items whose coverage reference no longer exists in coverage.json (coverage entries removed/renamed without cascading to action-list), plus 10 coverage gaps marked done while still open. The newly-added goal-check.sh exposes a backlog of referential drift that was never enforced before.",
+      "proposed_fix": "Add a Phase 2.6 cascade step that prunes/relinks orphan action-list items when coverage entries change, and reconciles coverage done-state against archive merges. Make goal-check.sh GC1 a Phase 6 gate (record-only first, enforcing once the 105-item backlog is drained). Triage the existing 105 orphans into prune-vs-relink as a one-time cleanup.",
+      "effort": "medium",
+      "affected_artifact": ".research/management/action-list.json + .research/management/coverage.json + .research/dispatcher-prompt.md (Phase 2.6 cascade)",
+      "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0. Landed as commit 17463444 on fix/dispatcher-postmerge-cadence-clone-mtime."
     },
     {
       "finding_id": "archive-append-not-idempotent-duplicate-rows",
@@ -384,17 +402,17 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-07-31T12:24:18Z",
-      "recurrence": 16,
+      "last_seen": "2026-07-31T14:24:38Z",
+      "recurrence": 17,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
-        "0daef09 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) ALL run. issue-ingest=0 (3 open GH issues dedup-blocked as failed twins), backlog-refill=0 (188 rows terminal/tracked), retry-remint=0 eligible; Tier-1d generator ran (mobile-rn, 1 finding) + Tier-2 kick http=200 — neither actuates the claimable buffer.",
         "b21428a (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) across the whole day (10:13/12:15/14:08/16:09 all 0-claimed). Tier-1b avail=0, Tier-1c retry-remint cool-down (failures 2-3d old, 7d window); Tier-1d review-merged generator ran (scanned=3 clean=3 issues=0 — recent merges are clean fixes to prior findings) + Tier-2 kick http=200 routine_fire — neither lifts the claimable buffer. coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover.",
         "eba1be6 (2026-07-18T18:05 run): GC3-buffer-bounds=FAIL record-only; claimable=0/72 vs floor=36 (DEEP starvation, 0 claimed). Tier-1b avail=0, Tier-1c 0 eligible, Tier-1d dev-review generator returned NO artifacts, Tier-2 kick http=200 routine_fire — no path lifted the buffer; the lone open item is stem-blocked by its own quarantine.",
         "df1cfd7 (this run): GC3-buffer-bounds=FAIL record-only; claimable=6/open=7 vs floor=36 (starved). backlog-refill avail=0, retry-remint none-eligible; Tier-1d dev-review generator ran (1 finding, api-core) + Tier-2 kick http=200 -- neither lifts the buffer. Open pool collapsed 72->7 (backlog largely terminal/tracked), so refill paths structurally cannot recover.",
-        "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL; claimable=1/72 vs floor=36 (starved). coverage.json EXHAUSTED (47 done/2 partial, 0 not-started), backlog.json empty, no retryable failed task -- Tiers 1/1b/1c all produced 0; Tier-1d dev-review generator added 2 findings + Tier-2 kick http=200, neither actuates the claimable buffer. merged-now=1 (PR#2611 booking/mod.rs split) but no new coverage work exists to refill from."
+        "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL; claimable=1/72 vs floor=36 (starved). coverage.json EXHAUSTED (47 done/2 partial, 0 not-started), backlog.json empty, no retryable failed task -- Tiers 1/1b/1c all produced 0; Tier-1d dev-review generator added 2 findings + Tier-2 kick http=200, neither actuates the claimable buffer. merged-now=1 (PR#2611 booking/mod.rs split) but no new coverage work exists to refill from.",
+        "d08a8d0: goal-check GC3-buffer-bounds=FAIL (claimable<=6, mostly dep/assigned; effective ~2 << floor 36)"
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
@@ -554,23 +572,23 @@
       "operator_notes": ""
     },
     {
-      "finding_id": "quarantined-assignment-blocks-action-list-twin-claim",
-      "title": "An open action-list item whose stem matches a QUARANTINED assignment is permanently unclaimable for the quarantine's lifetime, so the buffer reports claimable=0 even when open>0 — self-inflicted starvation distinct from upstream supply exhaustion",
-      "first_seen": "2026-07-18T12:19:52Z",
-      "last_seen": "2026-07-18T18:14:48Z",
+      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
+      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
+      "first_seen": "2026-07-31T12:24:18Z",
+      "last_seen": "2026-07-31T14:24:38Z",
       "recurrence": 2,
       "severity": "medium",
-      "category": "claim",
-      "symptom": "Buffer claimable=0/72 despite open=1: the single open action-list item gh-issue-2360 is unclaimable because it shares its stem with the still-quarantined assignment gh-issue-2360 (PR#2377, quarantined 2026-07-16, ~1.8d, under 7d SLA). Stem-dedup counts the quarantined (non-terminal, non-active) twin as occupying the stem, so the open action-list twin cannot be claimed for the duration of quarantine.",
+      "category": "goal-check",
+      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
       "evidence": [
-        "5531f24 (this run): Phase-7 buffer note 'claimable=0/72 (open=0 usable, the single open action-list item gh-issue-2360 shares a stem with the quarantined assignment so it is unclaimable)'; assignments.json holds exactly 1 row, status=quarantined, task_id=gh-issue-2360, status_changed_at=2026-07-16T16:10:37Z.",
-        "Compounds buffer-starved-below-floor-no-refill-path: the ONLY open action-list item this run is structurally unclaimable, so even a non-empty action-list contributes 0 to claimable while the quarantine sits under its 7d SLA.",
-        "eba1be6 (2026-07-18T18:05 run): buffer open=1 but claimable=0 — the lone open item gh-issue-2360 is stem-blocked by its own quarantined assignment (PR#2377, fix_rounds=3, quarantined 2026-07-16, ~2d, under 7d SLA). Second occurrence of unusable-open depressing claimable."
+        "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL, claimable=1/72; coverage.json not-started=0 (47 done/2 partial), backlog.json empty, no retryable failed tasks; Tiers 1/1b/1c produced 0, Tier-1d generated 2 findings, Tier-2 kick http=200 -- supply is genuinely exhausted (converged), not blocked.",
+        "buffer-starved-below-floor-no-refill-path evidence already records 'coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover' (b21428a, df1cfd7) -- the condition has shifted from 'refill dead-zone bug' to 'legitimate convergence', but GC3 still emits FAIL either way.",
+        "goal-check GC3 floor is a fixed 36 with no coverage-exhaustion / not-started==0 branch, so the gate is permanently red once the project converges.",
+        "d08a8d0: goal-check GC3-buffer-bounds=FAIL (claimable<=6, mostly dep/assigned; effective ~2 << floor 36)"
       ],
-      "root_cause": "The claim-time stem-uniqueness guard treats a quarantined assignment as holding its stem (correctly preventing a duplicate active claim), but there is no carve-out for the case where the SAME stem also exists as an OPEN action-list item. While the assignment is quarantined (non-terminal, awaiting operator/SLA resolution up to 7d), its action-list twin is neither claimable nor archivable, so it shows as open-but-unusable and depresses claimable to 0.",
-      "proposed_fix": "Disambiguate quarantine in the buffer math: either (a) when an action-list item's only claim-blocker is a QUARANTINED assignment twin, drop that item from the 'open' count so GC3 buffer-bounds and the claimable metric don't credit unusable work; or (b) surface a distinct 'blocked-by-quarantine' bucket in Phase 7 and escalate quarantine resolution faster (7d is the SLA ceiling, not a target). Add self-test T<N>: assert no action-list item is simultaneously OPEN and stem-twinned to a QUARANTINED assignment without being reported as unclaimable. Files: .research/dispatcher-prompt.md (Phase 2/3 buffer/claimable computation) + .research/goal-check.sh (GC3 open-vs-claimable) + .research/dispatcher-self-test.sh.",
+      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
+      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
       "effort": "medium",
-      "affected_artifact": ".research/dispatcher-prompt.md (buffer/claimable math) + .research/goal-check.sh (GC3) + .research/dispatcher-self-test.sh",
       "status": "open",
       "operator_notes": ""
     },
@@ -592,6 +610,27 @@
       "proposed_fix": "Bound the Tier-1d generator: give the dev-review generator (and its nested Rust sub-subagent) a hard deadline and have it emit whatever partial findings it has before Phase 6 rather than blocking to completion; treat a stalled generator as avail=0 and escalate to the next refill tier (or Tier-2 planner kick) instead of silently folding nothing. dispatcher-prompt.md Phase 2.6 Tier-1d spawn (deadline + partial-return contract) + ppt-dev-review skill (non-blocking sub-subagent / timeout).",
       "effort": "medium",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 Tier-1d generator spawn) + ppt-dev-review skill",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "quarantined-assignment-blocks-action-list-twin-claim",
+      "title": "An open action-list item whose stem matches a QUARANTINED assignment is permanently unclaimable for the quarantine's lifetime, so the buffer reports claimable=0 even when open>0 — self-inflicted starvation distinct from upstream supply exhaustion",
+      "first_seen": "2026-07-18T12:19:52Z",
+      "last_seen": "2026-07-18T18:14:48Z",
+      "recurrence": 2,
+      "severity": "medium",
+      "category": "claim",
+      "symptom": "Buffer claimable=0/72 despite open=1: the single open action-list item gh-issue-2360 is unclaimable because it shares its stem with the still-quarantined assignment gh-issue-2360 (PR#2377, quarantined 2026-07-16, ~1.8d, under 7d SLA). Stem-dedup counts the quarantined (non-terminal, non-active) twin as occupying the stem, so the open action-list twin cannot be claimed for the duration of quarantine.",
+      "evidence": [
+        "5531f24 (this run): Phase-7 buffer note 'claimable=0/72 (open=0 usable, the single open action-list item gh-issue-2360 shares a stem with the quarantined assignment so it is unclaimable)'; assignments.json holds exactly 1 row, status=quarantined, task_id=gh-issue-2360, status_changed_at=2026-07-16T16:10:37Z.",
+        "Compounds buffer-starved-below-floor-no-refill-path: the ONLY open action-list item this run is structurally unclaimable, so even a non-empty action-list contributes 0 to claimable while the quarantine sits under its 7d SLA.",
+        "eba1be6 (2026-07-18T18:05 run): buffer open=1 but claimable=0 — the lone open item gh-issue-2360 is stem-blocked by its own quarantined assignment (PR#2377, fix_rounds=3, quarantined 2026-07-16, ~2d, under 7d SLA). Second occurrence of unusable-open depressing claimable."
+      ],
+      "root_cause": "The claim-time stem-uniqueness guard treats a quarantined assignment as holding its stem (correctly preventing a duplicate active claim), but there is no carve-out for the case where the SAME stem also exists as an OPEN action-list item. While the assignment is quarantined (non-terminal, awaiting operator/SLA resolution up to 7d), its action-list twin is neither claimable nor archivable, so it shows as open-but-unusable and depresses claimable to 0.",
+      "proposed_fix": "Disambiguate quarantine in the buffer math: either (a) when an action-list item's only claim-blocker is a QUARANTINED assignment twin, drop that item from the 'open' count so GC3 buffer-bounds and the claimable metric don't credit unusable work; or (b) surface a distinct 'blocked-by-quarantine' bucket in Phase 7 and escalate quarantine resolution faster (7d is the SLA ceiling, not a target). Add self-test T<N>: assert no action-list item is simultaneously OPEN and stem-twinned to a QUARANTINED assignment without being reported as unclaimable. Files: .research/dispatcher-prompt.md (Phase 2/3 buffer/claimable computation) + .research/goal-check.sh (GC3 open-vs-claimable) + .research/dispatcher-self-test.sh.",
+      "effort": "medium",
+      "affected_artifact": ".research/dispatcher-prompt.md (buffer/claimable math) + .research/goal-check.sh (GC3) + .research/dispatcher-self-test.sh",
       "status": "open",
       "operator_notes": ""
     },
@@ -656,21 +695,54 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
-      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
-      "first_seen": "2026-07-31T12:24:18Z",
-      "last_seen": "2026-07-31T12:24:18Z",
+      "finding_id": "finish-first-singleton-epic-throttles-retry-ids",
+      "first_seen": "2026-07-31T14:24:38Z",
+      "last_seen": "2026-07-31T14:24:38Z",
       "recurrence": 1,
       "severity": "medium",
-      "category": "goal-check",
-      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
+      "category": "claim",
+      "symptom": "Phase 3 finish-first claimed only 1 task despite WIP 2/8 and free_slots=6, because the candidate ids were retry ids with no gap-/pm- epic prefix and finish-first's singleton-epic grouping capped the effective claim to 1/run.",
       "evidence": [
-        "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL, claimable=1/72; coverage.json not-started=0 (47 done/2 partial), backlog.json empty, no retryable failed tasks; Tiers 1/1b/1c produced 0, Tier-1d generated 2 findings, Tier-2 kick http=200 -- supply is genuinely exhausted (converged), not blocked.",
-        "buffer-starved-below-floor-no-refill-path evidence already records 'coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover' (b21428a, df1cfd7) -- the condition has shifted from 'refill dead-zone bug' to 'legitimate convergence', but GC3 still emits FAIL either way.",
-        "goal-check GC3 floor is a fixed 36 with no coverage-exhaustion / not-started==0 branch, so the gate is permanently red once the project converges."
+        "d08a8d0: 'WIP 2/8 free_slots=6 but finish-first singleton-epic capped effective claim to 1'",
+        "d08a8d0: claimed only data-audit-...-retry1 while 5 more open slots and open candidates existed (chore-triage retry1, sec-layout retry1)"
       ],
-      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
-      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
+      "root_cause": "finish-first derives an epic key from an id prefix (gap-/pm-/epic-N); ids lacking a recognized prefix (retry re-mints, bare data-*/sec-* ids) all collapse into one synthetic singleton epic, so the 'one epic in flight at a time' rule throttles claims to 1/run regardless of free_slots.",
+      "proposed_fix": "Give unprefixed/retry ids a distinct epic key (e.g. hash of stem, or treat retry_of parent's epic) so finish-first can claim across them up to free_slots; OR exempt retry re-mints from the singleton-epic cap. Add a self-test asserting that with free_slots>1 and >=2 distinct-stem open candidates, finish-first claims >1.",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "churn-hotspot-refactor-stale-premise-no-preflight",
+      "first_seen": "2026-07-31T14:24:38Z",
+      "last_seen": "2026-07-31T14:24:38Z",
+      "recurrence": 1,
+      "severity": "medium",
+      "category": "planner",
+      "symptom": "refactor-churn-hotspot-* tasks get spawned against files whose premise has gone stale (already cohesive, DTOs already extracted, or file removed by an intervening merge) — wasting a full sandbox spawn that fails on arrival.",
+      "evidence": [
+        "d08a8d0: layout-tenant respawn returned synchronously blocked — 203-line file already cohesive, DTOs already in super::types => failed+archived",
+        "d08a8d0/context: scheduler task target backend/servers/api-server/src/services/scheduler.rs NOT FOUND on dev (removed/restructured by merged #2610) yet still in-progress, expected to fail next run",
+        "c97bd03: prior run already skipped refactor-churn-hotspot-api-server-scheduler-2026-07-30 as stale-premise (restructured by #2610) — yet the same id is live/in-progress again"
+      ],
+      "root_cause": "Churn-hotspot refactor tasks are minted with a point-in-time premise (file is a hotspot / needs splitting) but there is no preflight re-validation at claim/spawn time that the target file still exists and still matches the premise; intervening merges (e.g. #2610) invalidate the premise silently.",
+      "proposed_fix": "In the claim path for refactor-churn-hotspot-* ids, add a cheap preflight: assert the target file exists on dev HEAD and exceeds the size/complexity threshold that justified the task; if not, auto-fail with reason=stale-premise BEFORE spawning a sandbox. Also have dev-truth/backlog-reconcile drop churn-hotspot rows whose target path no longer resolves.",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "reviewer-subagent-misfires-zero-tooluse-first-spawn",
+      "first_seen": "2026-07-16T20:30:08Z",
+      "last_seen": "2026-07-16T20:30:08Z",
+      "recurrence": 1,
+      "severity": "medium",
+      "category": "review",
+      "symptom": "2 of 4 per-PR reviewer subagents (#2397, #2398) returned 0 tool uses and no verdict on first spawn; both needed a re-spawn before producing an approve verdict.",
+      "evidence": [
+        "f3f1b79 (this run): reviewer subagents for #2397 (deterministic sitemap.json) and #2398 (Booking.com push sync) misfired on first spawn — 0 tool uses, no verdict emitted — re-spawned, then both approved.",
+        "Same run reviewed 4 PRs, so misfire rate was 50% of reviewer spawns this run."
+      ],
+      "root_cause": "Per-PR reviewer subagent intermittently returns immediately with no tool calls / no structured verdict (harness spawn flake), silently wasting a merge-path cycle until the dispatcher notices the missing verdict and re-spawns.",
+      "proposed_fix": "Phase 5 guard: treat a reviewer subagent result with 0 tool uses OR no parseable verdict as a transient failure; auto-retry once (bounded) and emit a 'reviewer-misfire' Phase 7 counter for recurrence tracking. Optionally a self-test asserting the reviewer prompt requires an explicit verdict token.",
       "effort": "medium",
       "status": "open",
       "operator_notes": ""
@@ -689,24 +761,6 @@
       ],
       "root_cause": "The action-list.json / action-list-archive.json split does not enforce stem mutual-exclusion; retry re-mint (and archive append) can leave a stem in both files, and reconcile hard-aborts instead of self-healing, requiring manual cleanup each run.",
       "proposed_fix": "Make action-list-reconcile idempotent: when a stem is in both files, keep the archive (terminal) copy and drop the active one automatically instead of aborting. Add self-test T<N>: assert (stems in action-list.json) ∩ (stems in action-list-archive.json) == ∅.",
-      "effort": "medium",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
-      "finding_id": "reviewer-subagent-misfires-zero-tooluse-first-spawn",
-      "first_seen": "2026-07-16T20:30:08Z",
-      "last_seen": "2026-07-16T20:30:08Z",
-      "recurrence": 1,
-      "severity": "medium",
-      "category": "review",
-      "symptom": "2 of 4 per-PR reviewer subagents (#2397, #2398) returned 0 tool uses and no verdict on first spawn; both needed a re-spawn before producing an approve verdict.",
-      "evidence": [
-        "f3f1b79 (this run): reviewer subagents for #2397 (deterministic sitemap.json) and #2398 (Booking.com push sync) misfired on first spawn — 0 tool uses, no verdict emitted — re-spawned, then both approved.",
-        "Same run reviewed 4 PRs, so misfire rate was 50% of reviewer spawns this run."
-      ],
-      "root_cause": "Per-PR reviewer subagent intermittently returns immediately with no tool calls / no structured verdict (harness spawn flake), silently wasting a merge-path cycle until the dispatcher notices the missing verdict and re-spawns.",
-      "proposed_fix": "Phase 5 guard: treat a reviewer subagent result with 0 tool uses OR no parseable verdict as a transient failure; auto-retry once (bounded) and emit a 'reviewer-misfire' Phase 7 counter for recurrence tracking. Optionally a self-test asserting the reviewer prompt requires an explicit verdict token.",
       "effort": "medium",
       "status": "open",
       "operator_notes": ""
