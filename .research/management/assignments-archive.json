@@ -8623,6 +8623,28 @@
       "merge_attempted_at": "2026-07-24T00:21:04Z"
     },
     {
+      "task_id": "pm-backend-scheduler-rs-refactor-extract-jobs",
+      "branch": "auto-impl/pm-backend-scheduler-rs-refactor-extract-26e1fb34",
+      "status": "merged",
+      "claimed_at": "2026-07-31T08:08:59Z",
+      "last_updated": "2026-07-31T10:11:11Z",
+      "status_changed_at": "2026-07-31T10:11:11Z",
+      "pr_number": 2610,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2610",
+      "merged_at": "2026-07-31T10:11:11Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2610 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=pure move of retention/prune jobs to scheduler/retention.rs; fmt+clippy(all-targets) green, relocated unit tests pass; sqlx DB tests + swagger dl deferred to CI (sandbox: no postgres, github egress 403)",
+      "reviewer_summary": "verdict=approve head_oid=91cc0f8494651c26ced74807909856ef8a80b46c note=verbatim-extract-clean; pub(super)-visibility-minimal-correct; scope/reuse/json-case-checks-pass; posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "91cc0f8494651c26ced74807909856ef8a80b46c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-review-accounting-mvp-trio",
       "branch": "auto-impl/pm-scrum-master-review-accounting-mvp-tr-cde38fb9",
       "status": "failed",
@@ -10025,5 +10047,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T06:13:15Z"
+  "archived_at": "2026-07-31T10:11:23Z"
 }
