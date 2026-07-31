@@ -8735,6 +8735,28 @@
       "merge_attempted_at": "2026-07-24T14:09:06Z"
     },
     {
+      "task_id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-layout-1339b1aa",
+      "status": "failed",
+      "claimed_at": "2026-07-31T10:11:23Z",
+      "last_updated": "2026-07-31T14:09:17Z",
+      "status_changed_at": "2026-07-31T14:09:17Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ppt-rust-backend",
+      "implementer_summary": "pr=none status=blocked (reclaim respawn, synchronous return): stale-premise — tenant.rs is 203 lines, already cohesive (2 handlers + tiny file-local helpers; DTOs already in super::types); declined to manufacture churn",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-reports-2026-07-27",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-report-ef42efab",
       "status": "merged",
@@ -10069,5 +10091,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T12:18:17Z"
+  "archived_at": "2026-07-31T14:16:17Z"
 }

@@ -512,23 +512,6 @@
       "last_updated": "2026-07-24T18:09:34Z"
     },
     {
-      "id": "refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3185 lines this window (post-PR-#2176 tail)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "dx-api-validation-drift-gate-never-runs-on-dev",
       "action": "SDK drift gate is effectively unenforced — api-validation.yml only fires on docs/api/**, so committed @ppt/api-client drift sits on dev unseen",
       "owner_role": "pm-devops",
@@ -641,6 +624,48 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry1",
+      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 1/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=chore-triage-untriaged-issues-750s-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T12:25:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T14:09:47Z",
+      "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
+      "retry_round": 1
+    },
+    {
+      "id": "data-audit-add-evidence-idor-fix-2026-07-23-retry1",
+      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern) [retry 1/2 of failed data-audit-add-evidence-idor-fix-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=data-audit-add-evidence-idor-fix-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T14:09:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T14:09:47Z",
+      "retry_of": "data-audit-add-evidence-idor-fix-2026-07-23",
+      "retry_round": 1
+    },
+    {
+      "id": "sec-layout-webhook-integration-test-2026-07-23-retry1",
+      "action": "Add integration test for layout publish webhook replay/timestamp handling once #2485 fix lands (parity with generic integration webhook test pattern) [retry 1/2 of failed sec-layout-webhook-integration-test-2026-07-23]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=sec-layout-webhook-integration-test-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T14:09:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T14:09:47Z",
+      "retry_of": "sec-layout-webhook-integration-test-2026-07-23",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
