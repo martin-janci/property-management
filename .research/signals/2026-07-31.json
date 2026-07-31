@@ -1,0 +1,244 @@
+{
+  "signals": [
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-mod-2026-07-31",
+      "type": "churn-hotspot",
+      "source": "PR #2599 (refactor split)",
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs: 887 lines this window (PR #2599 extract). Resolution-driven churn (split of routes/reports.rs), monitor next run."
+      ]
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-schedule-cadence-2026-07-31",
+      "type": "churn-hotspot",
+      "source": "PR #2599 (new file)",
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs: 889 lines added by PR #2599 as NEW file extracted from routes/reports.rs. One-time refactor, not chronic churn."
+      ]
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-voice-webhooks-2026-07-31",
+      "type": "churn-hotspot",
+      "source": "PR #2604 (test additions)",
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs: 472 lines this window (PR #2604 unit-test backfill). Resolution-driven churn."
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-07-30-batch",
+      "type": "dep-update-noise",
+      "source": "PRs #2581-#2591 (dependabot batch opened 2026-07-30)",
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "score_delta": 0,
+      "evidence": [
+        "11 dependabot PRs opened 2026-07-30 (2 mobile-native gradle group; 5 backend cargo; 1 frontend npm-minor-patch group; 4 expo minor bumps). All open, none merged. Log-only."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-31 (reality-server tier-1d)",
+      "segment": "reality-server",
+      "candidate_vector": "security",
+      "confidence": "high",
+      "score_delta": 3,
+      "expert": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:145-165 \u2014 Host::Ipv6 branch rejects is_loopback/fc00/fe80 only; IPv4-mapped (::ffff:a.b.c.d) not canonicalized, so ::ffff:127.0.0.1 / ::ffff:169.254.169.254 / ::ffff:10.0.0.5 slip through.",
+        "Reachability: routes/agency_imports.rs:238 (test_connection) and :290 (run_import) call validate_fetch_url as the ONLY pre-fetch SSRF gate.",
+        "Fix: after Host::Ipv6 match, canonicalize via ip.to_ipv4_mapped() and re-run IPv4 blocklist; also reject unspecified ::."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-31 (reality-server tier-1d)",
+      "segment": "reality-server",
+      "candidate_vector": "security",
+      "confidence": "medium",
+      "score_delta": 2,
+      "expert": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:148-151 \u2014 /-prefixed check misses backslash variants (/\\evil.com); Chrome/Firefox normalize backslashes \u2192 open-redirect on SSO redirect_uri allowlist."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-31 (reality-server tier-1d)",
+      "segment": "reality-server",
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "score_delta": 2,
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 \u2014 create_review validates only rating; data.body binds unbounded into INSERT (line 265). Sibling public writes cap at 5000 chars \u2014 this one is the lone unbounded free-text public write."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-ss-alert-watermark-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-31 (reality-server tier-1d)",
+      "segment": "reality-server",
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "score_delta": 2,
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237 and :176 \u2014 `let _ = mark_saved_search_matched(...)`; a failing write leaves watermark stale, causing duplicate alerts or missing-baseline (never-alerting) searches. Sibling error paths use tracing::warn/error."
+      ]
+    },
+    {
+      "id": "code-review-api-core-push-fanout-reqwest-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-07-31 (api-core tier-1d)",
+      "segment": "api-core",
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "score_delta": 1,
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:280 and :773 \u2014 FCM/APNs adapters use .expect() on reqwest client build; contradicts module contract to never-crash-over-push (see CombinedPushAdapter graceful degrade at 1285-1289)."
+      ]
+    }
+  ],
+  "suppressed_candidates": [
+    {
+      "id": "screen-map-drift-pr-2600-reality-suppressed",
+      "reason": "PR #2600 touched frontend/apps/reality-web/src/app/[locale]/layout.tsx (root layout XSS hardening) and app/env.js/route.ts (technical env config route) \u2014 neither is a user-facing screen. Following 2026-07-30 precedent for internal/technical routes."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no-candidate",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-31.md and head -1 matches # 2026-07-31",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "cursors + seen_signals + hotspot_history + pm_cursor + review_cursor + coverage_cursor all advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique id length",
+      "observed": "no duplicate ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emit of non-cumulative seen signal with score_delta!=0",
+      "observed": "all new signal ids are novel this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; no open item older than 14d without -1 or drop",
+      "observed": "max score=6; no open item older than 14d (oldest open is booking hotspot 2026-07-27, 4d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass annotation in brief",
+      "observed": "ssrf plan annotated passed",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count <=2; metadata + headings + Mode + capability + Files-exist",
+      "observed": "1 new plan; validated by /tmp/plan-validator",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research/ paths staged",
+      "observed": "routine only touches .research/",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff",
+      "observed": "none",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "diff -q silent (verified pre-commit)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed match cursor-not-advanced",
+      "observed": "no phases failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or plans/_archive",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count only grows",
+      "observed": "_archive unchanged this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "diff -q silent (verified pre-commit)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps/idempotency respected",
+      "observed": "auto_fix_actions=[] (no-candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "action-list.items ok, risks.items ok, project-state.md non-empty, pm_cursor.next_index=3, coverage_cursor.next_index=5",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token committed",
+      "observed": "no matches",
+      "expected": "true"
+    }
+  ]
+}
