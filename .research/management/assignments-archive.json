@@ -3079,6 +3079,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "dx-routine-lag-catchup-2026-07-retry2",
+      "branch": "auto-impl/dx-routine-lag-catchup-2026-07-retry2-b0103a26",
+      "status": "failed",
+      "claimed_at": "2026-07-31T06:08:30Z",
+      "last_updated": "2026-07-31T06:13:15Z",
+      "status_changed_at": "2026-07-31T06:13:15Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=none status=blocked specialist=generic scope_drift=false code_reuse_warn=none note=routine cadence is a claude.ai cloud-cron/operator setting (cron_expression lives in routines UI per dispatcher-trigger-bootstrap.md + README); no in-repo cron/trigger/workflow controls it; only fix-site is .research/*-prompt.md which is off-limits; matches both prior attempts operator-scheduling-not-a-repo-change verdict",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "dx-stale-todo-security-comments-faults-critical-notifications",
       "branch": "auto-impl/dx-stale-todo-security-comments-faults-c-31500751",
       "status": "merged",
@@ -10001,5 +10025,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T04:22:38Z"
+  "archived_at": "2026-07-31T06:13:15Z"
 }

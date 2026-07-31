@@ -1,29 +1,4 @@
 {
-  "generated": "2026-07-31T06:10:34Z",
-  "assignments": [
-    {
-      "task_id": "dx-routine-lag-catchup-2026-07-retry2",
-      "branch": "auto-impl/dx-routine-lag-catchup-2026-07-retry2-b0103a26",
-      "status": "in-progress",
-      "claimed_at": "2026-07-31T06:08:30Z",
-      "last_updated": "2026-07-31T06:08:30Z",
-      "status_changed_at": "2026-07-31T06:08:30Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    }
-  ]
+  "generated": "2026-07-31T06:13:15Z",
+  "assignments": []
 }
