@@ -1,0 +1,24 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 — the public `create_review` handler validates only `rating` (1..=5, line 196) and then binds the user-controlled `data.body` straight into `INSERT INTO realtor_reviews (... body ...)` at line 265. There is NO maximum-length check and NO non-empty/trim check on `body` (grep for `body` + `len|MAX|empty|trim|valid` in the file returns nothing).",
+        "This is inconsistent with every sibling public write path in the same segment, which all enforce input bounds: routes/inquiries.rs caps message at MAX_INQUIRY_MESSAGE_LEN=5000 via validate_inquiry_lengths (lines 24-52, enforced at 188-190), and routes/reports.rs caps description at MAX_REPORT_DESCRIPTION_LEN=5000 (lines 27, 161-166). agent_reviews.rs is the lone public write endpoint with an unbounded free-text field.",
+        "Impact (missing input validation on an internet-facing, authenticated-but-public write path): an attacker with any portal account can POST an arbitrarily large `body` (bounded only by the request-body limit) and persist it — storage bloat / DB row-size pressure and unbounded payload echoed back on the public list_reviews GET (lines 80-160). Empty/whitespace-only reviews are also accepted. Fix: add a MAX_REVIEW_BODY_LEN constant (mirror the 5000 used by inquiries/reports), reject over-length and empty/whitespace-only bodies with 400 BAD_REQUEST before the INSERT, matching the existing validate_inquiry_lengths pattern."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
