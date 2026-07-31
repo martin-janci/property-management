@@ -579,20 +579,6 @@
       "retry_round": 2
     },
     {
-      "id": "dx-closed-not-merged-pr-2387-retry1",
-      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 [retry 1/2 of failed dx-closed-not-merged-pr-2387]",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-30T02:06:13Z (retry_of=dx-closed-not-merged-pr-2387 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T00:17:49Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T02:06:13Z",
-      "retry_of": "dx-closed-not-merged-pr-2387",
-      "retry_round": 1
-    },
-    {
       "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
       "action": "Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top-churn 2 windows running) — propose extraction of retention/prune jobs to a dedicated module",
       "owner_role": "pm-backend",

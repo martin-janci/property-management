@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-31T04:18:34Z",
+  "archived_at": "2026-07-31T04:22:39Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2493,6 +2493,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-23T02:05:11Z"
+      }
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2387-retry1",
+      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 [retry 1/2 of failed dx-closed-not-merged-pr-2387]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-30T02:06:13Z (retry_of=dx-closed-not-merged-pr-2387 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T00:17:49Z) | gc1-reconcile 2026-07-31T04:22:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T02:06:13Z",
+      "retry_of": "dx-closed-not-merged-pr-2387",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-31T04:22:39Z"
       }
     },
     {
