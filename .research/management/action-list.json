@@ -512,40 +512,6 @@
       "last_updated": "2026-07-24T18:09:34Z"
     },
     {
-      "id": "test-gap-voice-webhooks-zero-coverage",
-      "action": "test-gap: voice_webhooks.rs (1148 lines, 6 mounted endpoints incl. OAuth token exchange) has no tests at all",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=2 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "dx-stale-todo-security-comments-faults-critical-notifications",
-      "action": "Stale TODO(security) headers in faults.rs / critical_notifications.rs describe a hardcoded-false gate that no longer exists",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-28T21:21:11Z (score=1 conf=high vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-28T21:21:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
       "id": "refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27",
       "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3185 lines this window (post-PR-#2176 tail)",
       "owner_role": "pm-tech-lead",

@@ -2969,6 +2969,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "dx-stale-todo-security-comments-faults-critical-notifications",
+      "branch": "auto-impl/dx-stale-todo-security-comments-faults-c-31500751",
+      "status": "merged",
+      "claimed_at": "2026-07-30T18:09:41Z",
+      "last_updated": "2026-07-31T00:16:49Z",
+      "status_changed_at": "2026-07-31T00:16:49Z",
+      "pr_number": 2605,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2605",
+      "merged_at": "2026-07-31T00:13:57Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2605 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=comment-only; stale TODO(security) removed (real P0-07 role lookups confirmed); local clippy/test infra-blocked by swagger-ui egress 403, CI-gated draft",
+      "reviewer_summary": "verdict=approve head_oid=5468899ce509e7082a1459b97f3e7970bfae1e2e note=comment-only-cleanup-verified-accurate-ci-green",
+      "last_reviewed_oid": "5468899ce509e7082a1459b97f3e7970bfae1e2e",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "dx-stalled-review-pr-988",
       "branch": "auto-impl/dx-stalled-review-pr-988-0c09679d",
       "status": "failed",
@@ -9689,6 +9713,28 @@
       "merge_attempted_at": "2026-07-04T18:13:02Z"
     },
     {
+      "task_id": "test-gap-voice-webhooks-zero-coverage",
+      "branch": "auto-impl/test-gap-voice-webhooks-zero-coverage-b1e8e912",
+      "status": "merged",
+      "claimed_at": "2026-07-30T16:20:59Z",
+      "last_updated": "2026-07-31T00:16:49Z",
+      "status_changed_at": "2026-07-31T00:16:49Z",
+      "pr_number": 2604,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2604",
+      "merged_at": "2026-07-31T00:12:20Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=41eb054acaf9e46a2b466e8a86d126da470eb255 note=33 unit tests verified against source; scope clean, CI compile/lint green; approval posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "41eb054acaf9e46a2b466e8a86d126da470eb255",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "test-scheduler-target-ids-regression-2026-07-23",
       "branch": "auto-impl/test-scheduler-target-ids-regression-202-e4affd38",
       "status": "merged",
@@ -9823,5 +9869,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-30T20:18:07Z"
+  "archived_at": "2026-07-31T00:17:28Z"
 }

@@ -1,0 +1,39 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:146-165 — the `Host::Ipv6` branch of `validate_fetch_url` only rejects `is_loopback()` (::1), `fc00::/7` and `fe80::/10`. It does NOT reject IPv4-mapped IPv6 addresses (`::ffff:a.b.c.d`) or IPv4-compatible addresses. `std::net::Ipv6Addr::is_loopback` returns false for `::ffff:127.0.0.1`, and the fc00/fe80 masks never match `::ffff:...`, so a mapped address slips straight through as an allowed fetch URL.",
+        "This is a full SSRF-guard bypass: an attacker can encode any blocked IPv4 target as a mapped IPv6 literal to defeat the entire IPv4 blocklist (private ranges, 127.0.0.0/8, and crucially 169.254.169.254 cloud metadata). Example payloads: `https://[::ffff:169.254.169.254]/latest/meta-data/`, `https://[::ffff:127.0.0.1]/`, `https://[::ffff:10.0.0.5]/feed.xml`. Unlike `Host::Domain`, an IP literal is never re-resolved by the worker, so the documented 'worker re-validates resolved IP' defense does not apply here.",
+        "Reachability (traced end-to-end): user-controlled `feed_url` from agency-member requests reaches this guard at backend/servers/reality-server/src/routes/agency_imports.rs:238 (test_connection) and :290 (run_import); both call `validate_fetch_url(url)` as the only pre-fetch SSRF gate (marked SECURITY H3, round-9 audit). Fix: after matching `Host::Ipv6`, canonicalize via `ip.to_ipv4_mapped()` / `to_ipv4()` and re-run the IPv4 blocklist on the embedded address; also reject the unspecified address `::`."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:148-151 — `check_redirect_uri_allowed` treats any value starting with `/` (but not `//`) as an unconditionally-allowed same-origin relative path: `if raw.starts_with('/') && !raw.starts_with(\"//\") { return Ok(()); }`. This only blocks the protocol-relative `//evil.com` form, not the backslash variant `/\\evil.com` (or `/\\/evil.com`).",
+        "Chrome and Firefox normalize backslashes to forward slashes when resolving a Location URL, so the browser resolves `/\\evil.com` to `//evil.com` = protocol-relative → navigates to https://evil.com. This is an open-redirect bypass on the SSO redirect_uri allowlist (the value is threaded through the OAuth `state` and used as the post-login redirect target). Open redirect on an auth-callback endpoint is a common phishing / token-leak primitive.",
+        "Fix: after the leading-slash fast path, also reject values whose second character is `\\` (and normalize backslashes before the `//` check), or drop the relative-path fast path and require every redirect_uri to parse and match the allowlist explicitly."
+      ],
+      "expert": "security"
+    }
+  ]
+}
