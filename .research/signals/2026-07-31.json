@@ -1,0 +1,254 @@
+{
+  "date": "2026-07-31",
+  "run_started_iso": "2026-07-31T16:13:32Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2600",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #2600 (code-review-reality-web-inline-tenant-json-xss) touched frontend/apps/reality-web/src/app/[locale]/layout.tsx + frontend/apps/reality-web/src/app/env.js/route.ts with no updates under docs/screens/reality/*.md — screen docs drifting behind route/layout changes"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "commit window 2026-07-30T03:32Z→2026-07-31T16:13Z (git log --numstat)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/crates/integrations/src/booking/mod.rs — 3626 lines churned this window. Note: PR #2611 (refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27) merged 2026-07-31T12:17Z and SPLIT this file into OAuth + retry submodules; the extraction itself drives most of the churn. Signal is truthful but its cause is the sanctioned refactor already in-flight."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-rs",
+      "type": "churn-hotspot",
+      "source": "commit window 2026-07-30T03:32Z→2026-07-31T16:13Z (git log --numstat)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/reports.rs — 3329 lines churned. Note: PR #2599 (refactor-churn-hotspot-api-server-reports-2026-07-27) merged 2026-07-30T18:20Z and extracted schedule cadence/cron helpers; the extraction drives the churn."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "type": "churn-hotspot",
+      "source": "commit window 2026-07-30T03:32Z→2026-07-31T16:13Z (git log --numstat)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/auth.rs — 2950 lines churned this window. No dedicated refactor PR yet; runs_seen=4 across prior runs suggests genuine ongoing instability. Candidate for extraction/split."
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "auth.rs hotspot_history.runs_seen now 5 (prev 4, last_seen 2026-07-27). Persistent instability across ≥5 runs — refactor candidate."
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "reports.rs hotspot_history.runs_seen now 4 (prev 3). PR #2599 already extracted schedule helpers this run — file should stabilize; monitor next run to confirm."
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "booking/mod.rs hotspot_history.runs_seen now 3 (prev 2). PR #2611 split into OAuth+retry submodules this run — expect churn to drop next run."
+    },
+    {
+      "id": "fixme-in-merged-code-admin-web-mobile-config-patch-endpoint",
+      "type": "fixme-in-merged-code",
+      "source": "PR #2594 (commit fb09556)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "5+ admin-web files (Dashboard.ts, MobileConfigPage.ts, useMobileConfig hooks, etc.) contain 'TODO: wire to PATCH /api/v1/admin/mobile-config once implemented' — the backend endpoint that lets admin-web save mobile config is missing. Blocks the mobile-config save flow end-to-end.",
+      "files": [
+        "frontend/apps/admin-web/"
+      ]
+    },
+    {
+      "id": "fixme-in-merged-code-admin-web-platform-settings-patch-endpoint",
+      "type": "fixme-in-merged-code",
+      "source": "PR #2594 (commit fb09556)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "4+ admin-web files reference missing PATCH /api/v1/platform-admin/settings endpoint ('TODO: wire to PATCH /api/v1/platform-admin/settings once implemented'). Platform-admin settings UI cannot persist changes without it.",
+      "files": [
+        "frontend/apps/admin-web/"
+      ]
+    },
+    {
+      "id": "fixme-in-merged-code-admin-web-ui-kit-primitives-missing",
+      "type": "fixme-in-merged-code",
+      "source": "PR #2594 (commit fb09556)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "~10 admin-web components ship placeholder inline-JSX with 'TODO: replace with @ppt/ui-kit/Stepper | @ppt/ui-kit/FileUpload | @ppt/ui-kit/RadioCards | @ppt/ui-kit/StatusPill once available' — the shared UI-kit is missing these primitives, forcing inline duplicates across screens.",
+      "files": [
+        "frontend/packages/ui-kit/",
+        "frontend/apps/admin-web/"
+      ]
+    },
+    {
+      "id": "fixme-in-merged-code-api-client-generator-typescript-error-types",
+      "type": "fixme-in-merged-code",
+      "source": "PR #2607 (commit 5c604d5)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "openapi-ts generator wrapper (added in PR #2607 for reality-api-client drift gate) contains 'TODO: we probably want to return error and improve types' — the generator silently swallows errors and emits weak typings.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-2026-07-30",
+      "type": "dep-update-noise",
+      "source": "PRs #2581–#2591 (dependabot, all opened 2026-07-30)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "11 dependabot PRs opened 2026-07-30 (frontend npm-minor-patch group + individual expo-*, backend cargo bumps: validator, base64, sentry, rust_xlsxwriter, redis; gradle-minor-patch group). All open, none merged yet. Not scored, not backlogged — logged for brief context."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1 matches",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "decay (no open items >14d old)",
+      "observed": "n/a — youngest open is 3d",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial note",
+      "observed": "n/a — 0 plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in place",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE byte-identical to regen",
+      "observed": "diff -q PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions clean",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped => no-op",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op OR advance"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

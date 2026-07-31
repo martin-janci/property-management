@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-30T03:32:05Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 2576,
-  "last_issue_seen": 2575,
-  "last_commit_sha": "34ac58720df53e28382361d2331b56f1cc793046",
+  "last_run_iso": "2026-07-31T16:26:02Z",
+  "last_run_ms": 780000,
+  "last_pr_seen": 2611,
+  "last_issue_seen": 2598,
+  "last_commit_sha": "dc64271a78ccdb77333aa613dc50a9594b268716",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -143,13 +143,13 @@
       "recent_churn": 75
     },
     "backend/servers/api-server/src/routes/reports.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-27",
+      "runs_seen": 4,
+      "last_seen": "2026-07-31",
       "recent_churn": 3329
     },
     "backend/servers/api-server/src/routes/auth.rs": {
-      "runs_seen": 4,
-      "last_seen": "2026-07-27",
+      "runs_seen": 5,
+      "last_seen": "2026-07-31",
       "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-07-27",
-      "recent_churn": 3185
+      "runs_seen": 3,
+      "last_seen": "2026-07-31",
+      "recent_churn": 3626
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -433,6 +433,7 @@
     "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-layout-tenant-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-reports-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
     "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
@@ -575,6 +576,7 @@
     "dep-update-noise-2026-05-28",
     "dep-update-noise-2026-05-29",
     "dep-update-noise-2026-06-05",
+    "dep-update-noise-2026-07-30",
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
@@ -602,6 +604,10 @@
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
     "dep-update-pr-2491",
+    "fixme-in-merged-code-admin-web-mobile-config-patch-endpoint",
+    "fixme-in-merged-code-admin-web-platform-settings-patch-endpoint",
+    "fixme-in-merged-code-admin-web-ui-kit-primitives-missing",
+    "fixme-in-merged-code-api-client-generator-typescript-error-types",
     "fixme-in-merged-code-documentsbrowse-folder-preselect",
     "fixme-in-merged-code-pr-515-push-fanout-rs",
     "fixme-in-merged-code-pr-538-webhook-rs",
@@ -636,7 +642,10 @@
     "lag-warning-2026-07-23",
     "lag-warning-2026-07-27",
     "lag-warning-2026-07-30",
+    "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
@@ -653,6 +662,7 @@
     "screen-map-drift-pr-1418-ppt",
     "screen-map-drift-pr-2431-reality",
     "screen-map-drift-pr-2497-reality",
+    "screen-map-drift-pr-2600-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -742,8 +752,8 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 52,
-    "vectors_created": 228,
+    "runs": 53,
+    "vectors_created": 236,
     "plans_created": 17,
     "quiet_days": 2,
     "auto_fix_count": 0
