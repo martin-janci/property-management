@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-30T03:18:50Z",
+  "generated": "2026-07-31T00:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -765,13 +765,14 @@
         "screen-map upload-document.md buildStatus=shipped",
         "PR #2447 BIT-268 (2026-07-22): document authz backfill — cross-tenant regression tests",
         "PR #2453 (2026-07-22): import + cert-doc authz cases added",
-        "PR #2571 (2026-07-29) — DELETE-by-file_key orphan cleanup complements upload/metadata lifecycle"
+        "PR #2571 (2026-07-29) — DELETE-by-file_key orphan cleanup complements upload/metadata lifecycle",
+        "PR #2597 (2026-07-31) — DELETE-by-file-key guard closes #2573 same-org reference-check regression; direct-to-S3 orphan cleanup now safe for client wiring"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-07-31",
       "screen_refs": []
     },
     {
@@ -795,7 +796,7 @@
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-31",
       "screen_refs": []
     },
     {
@@ -822,7 +823,7 @@
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-07-31",
       "screen_refs": []
     },
     {
@@ -846,7 +847,7 @@
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-31",
       "screen_refs": []
     },
     {
@@ -871,7 +872,7 @@
         "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-07-31",
       "screen_refs": []
     },
     {

@@ -1,0 +1,212 @@
+{
+  "generated_at": "2026-07-31T06:30:00Z",
+  "run_kind": "incremental",
+  "trigger_payload_note": "buffer-low: claimable=6/72 — refill planner (dispatcher-side data, not a routine trigger)",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-schedule_cadence-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "score_delta": 1,
+      "evidence": [
+        "889 lines added/deleted this window in backend/servers/api-server/src/routes/reports/schedule_cadence.rs (PR #2599 extraction from reports.rs); first hotspot appearance."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice_webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "score_delta": 1,
+      "evidence": [
+        "472 lines added/deleted this window in backend/servers/api-server/src/routes/voice_webhooks.rs (PR #2604 added 33 unit tests around a broken security surface — see 3 co-emitted code-review-finding signals for the same file)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-mobileconfigpage-tsx",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "score_delta": 1,
+      "evidence": [
+        "365 lines added/deleted this window in frontend/apps/admin-web/src/pages/MobileConfigPage.tsx (PR #2601 refactored a permanent no-op Save into a display-only surface)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2600",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2600 touched frontend/apps/reality-web/src/app/[locale]/layout.tsx and frontend/apps/reality-web/src/app/env.js/route.ts (both in the reality trigger set) without updating any docs/screens/reality/*.md. Contract change: the shared tenant-config bootstrap now escapes </script>/U+2028/U+2029 via serializeForScript — the screen-map's write-side note should reflect the escape guarantee."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhooks-auth-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963-1008 — authenticate_voice_user binds the OAuth access token to _access_token (unused; in-code comment 'for demo, just find any active device for the platform') and runs SELECT * FROM voice_assistant_devices WHERE platform = $1 AND is_active = TRUE ORDER BY last_used_at DESC NULLS LAST LIMIT 1 — returning whichever tenant's device is most recently active. Reachable from alexa_webhook (line 127) and google_actions_webhook (line 243)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhooks-hmac-default",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 — verify_hmac_signature uses std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string()) (fails open when unset — every other webhook family in this repo fails closed), and signature == expected on line 959 is String equality, not constant-time."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhooks-alexa-nosig",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:750-784 — verify_alexa_signature extracts the Signature header into _signature (unused prefix) and only validates the cert-URL format + body timestamp; in-code comment lines 768-776 documents that steps 3 & 4 (fetch cert chain, verify signature) are unimplemented. Dedups to existing backlog item security-voice-webhook-alexa-signature-not-verified (previously dropped, now re-opened, score 5 → 7)."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches # YYYY-MM-DD",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup (non-cumulative types)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + decay for open items >14d",
+      "observed": "true (no open item >14d; no scores >8)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan referenced in brief with `adversarial pass:`",
+      "observed": "PASS (2/2)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, all 15 sections + capability + Mode + files exist",
+      "observed": "PASS (2 plans, all sections present, all bullet files resolve)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff (excluding baseline docs)",
+      "observed": "0 (initial 1 false positive on literal `Authorization: Bearer …` in plan repro-steps rewritten)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "PASS (pinned timestamp)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no placeholder rot in brief/plans",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or plans/_archive/",
+      "observed": "missing=0",
+      "expected": "missing=0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "new=7 old=7",
+      "expected": "new≥old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "PASS (pinned timestamp)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap (≤1 pr, ≤1 issue, ≤1 comment, ≤3 total)",
+      "observed": "true (auto_fix_actions=[])",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + GC7 coverage_cursor liveness",
+      "observed": "action-list/risks/project-state ok; pm_cursor.next_index=3∈[0,7]; coverage_cursor.next_index=5∈[0,13); both advanced vs HEAD",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram bot-token pattern in staged added-lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

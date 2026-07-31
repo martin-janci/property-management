@@ -5217,25 +5217,27 @@
       "title": "SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature",
       "vector": "security",
       "confidence": "high",
-      "score": 5,
-      "status": "dropped",
+      "score": 7,
+      "status": "ready",
       "sources": [
-        "standing-scan-2026-07-28"
+        "standing-scan-2026-07-28",
+        "code-review-2026-07-31"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs:750 — verify_alexa_signature() binds the Signature header to `_signature` and never uses it. It validates only the SignatureCertChainUrl format (validate_alexa_cert_url) and the body timestamp (validate_alexa_timestamp), then returns Ok(()). The in-code comment admits steps 3 & 4 (fetch cert chain, verify signature with the cert public key) are unimplemented.",
         "Reachable and stateful: voice_webhook_router() is mounted at lib.rs:340 under /api/v1/webhooks/voice, and alexa_webhook (voice_webhooks.rs:95) takes an `RlsConnection` — so a forged request reaches tenant data.",
         "Exploit shape: POST /api/v1/webhooks/voice/alexa with SignatureCertChainUrl=https://s3.amazonaws.com/echo.api/x, any non-empty Signature header, and a body timestamp inside the 150s window is accepted as an authentic Alexa delivery.",
         "Secondary: the /verify helper endpoint (voice_webhooks.rs:698) reports alexa signatures as `valid: !request.signature.is_empty()` — a self-described 'simplified check for demo'.",
-        "Fix direction: mirror the repo's existing hardened webhook convention (routes/portal_webhooks.rs::verify_timestamped_portal_webhook, routes/layout/webhook.rs::sign_timestamped_payload) or add real x509 chain validation via x509-parser; until then the route should fail closed."
+        "Fix direction: mirror the repo's existing hardened webhook convention (routes/portal_webhooks.rs::verify_timestamped_portal_webhook, routes/layout/webhook.rs::sign_timestamped_payload) or add real x509 chain validation via x509-parser; until then the route should fail closed.",
+        "re-confirmed 2026-07-31 by rotating expert review (Phase 1.5): the underlying bypass persists; PR #2604 only pinned current broken behavior in tests, no fix applied to verify_alexa_signature"
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs",
         "backend/servers/api-server/src/lib.rs"
       ],
       "created_at": "2026-07-28",
-      "updated_at": "2026-07-28",
-      "plan": null,
+      "updated_at": "2026-07-31",
+      "plan": "plans/security-voice-webhooks-signature-hardening.md",
       "reconciled": {
         "at": "2026-07-30T04:03:49Z",
         "assignment_status": "failed",
@@ -5485,20 +5487,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "PR #2609"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,98,107,110,115,123 — err500 closure returns raw internal error text to the client (`format!(\"db error: {e}\")`, `format!(\"stored published config invalid: {e}\")`, etc.), leaking sqlx/serde diagnostic strings (column names, JSON structural detail, connection info).",
         "Sibling handlers in the same layout module (backend/servers/api-server/src/routes/layout/tenant.rs:29-32 `internal_error`, backend/servers/api-server/src/routes/layout/admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic 'internal server error' body — resolved.rs is the outlier that both fails to log and leaks the message.",
-        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs)."
+        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs).",
+        "resolved: PR #2609 merged 2026-07-31 — code-review-api-core-resolved-rs-leaks-db-error: stop leaking raw sqlx/serde error text on public GET /layout/resolved"
       ],
       "files": [
         "backend/servers/api-server/src/routes/layout/resolved.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5556,6 +5560,130 @@
         "assignment_status": "merged",
         "pr_number": 2608
       }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhooks-auth-bypass",
+      "title": "SECURITY-P0: authenticate_voice_user ignores access_token — cross-tenant impersonation on every Alexa/Google voice webhook",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-2026-07-31"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963-1008 — authenticate_voice_user() binds the OAuth access token to _access_token (unused; explicit in-code comment: for demo, just find any active device for the platform) and runs SELECT * FROM voice_assistant_devices WHERE platform = $1 AND is_active = TRUE ORDER BY last_used_at DESC NULLS LAST LIMIT 1 — returning whichever tenant device happens to be most recently active.",
+        "Reachable from alexa_webhook (voice_webhooks.rs:127) and google_actions_webhook (voice_webhooks.rs:243). Any authenticated-looking webhook with any non-empty bearer/access token executes voice commands (balance checks, fault reports) against a foreign tenants data."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": "plans/security-voice-webhooks-auth-bypass.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhooks-hmac-default",
+      "title": "SECURITY-P0: verify_hmac_signature falls open to hardcoded default_secret when VOICE_WEBHOOK_SECRET unset + non-constant-time compare",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-2026-07-31"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 — std::env::var(VOICE_WEBHOOK_SECRET).unwrap_or_else(|_| default_secret.to_string()) — anyone who reads the source can forge signatures when the env var is unset; every other webhook family in this repo (portal, stripe, airbnb) fails closed on missing secret (backend/CLAUDE.md webhook-secret table).",
+        "Line 959 uses signature == expected (String equality, not subtle::ConstantTimeEq / constant_time_eq) — timing-oracle on the MAC compare."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": "plans/security-voice-webhooks-signature-hardening.md"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-schedule_cadence-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reports/schedule_cadence.rs — 889 lines this window (PR #2599 extraction)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2599"
+      ],
+      "evidence": [
+        "889 lines added/deleted in this run window (post-PR-#2599 extraction from reports.rs); first appearance as top-3 churn hotspot"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice_webhooks-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/voice_webhooks.rs — 472 lines this window (PR #2604 tests)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2604"
+      ],
+      "evidence": [
+        "472 lines added/deleted this window (PR #2604 added 33 unit tests). Same file surfaced 3 high-severity security findings this run — see security-voice-webhook-alexa-signature-not-verified, code-review-api-handlers-voice-webhooks-auth-bypass, code-review-api-handlers-voice-webhooks-hmac-default."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-mobileconfigpage-tsx",
+      "title": "Churn hotspot: frontend/apps/admin-web/src/pages/MobileConfigPage.tsx — 365 lines this window (PR #2601 no-op cleanup)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2601"
+      ],
+      "evidence": [
+        "365 lines added/deleted this window; PR #2601 refactored the permanent-no-op Save path into an honest display-only surface. First hotspot appearance."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "title": "Screen-map drift: PR #2600 (inline tenant JSON XSS fix) touched reality-web route files without updating docs/screens/reality/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2600"
+      ],
+      "evidence": [
+        "PR #2600 (code-review-reality-web-inline-tenant-json-xss) touched frontend/apps/reality-web/src/app/[locale]/layout.tsx and frontend/apps/reality-web/src/app/env.js/route.ts — both under the trigger set for the reality product — but no docs/screens/reality/*.md was updated. Behavior of the shared tenant-bootstrap script inlined into every reality-web page changed (JSON now escaped via serializeForScript); the screen-map contract note should reflect the escape guarantee. Best-effort heuristic — treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "frontend/apps/reality-web/src/app/env.js/route.ts",
+        "docs/screens/reality"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
     }
   ]
 }

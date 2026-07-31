@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-07-31T00:00:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
-      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
+      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) \u2014 a captured legitimate publish can be replayed to overwrite a newer layout",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
@@ -13,7 +13,7 @@
     },
     {
       "id": "risk-mobile-layout-cache-cross-tenant-2026-07-23",
-      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch",
+      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) \u2014 user A's layout can leak to user B on shared device or org-switch",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
@@ -22,7 +22,7 @@
     },
     {
       "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
-      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
+      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) \u2014 PR #2450 fixed 5 handlers but missed the sub-route",
       "probability": "low",
       "impact": "high",
       "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
@@ -31,7 +31,7 @@
     },
     {
       "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
-      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
+      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) \u2014 the SQL predicate could regress without the test catching it",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
@@ -40,7 +40,7 @@
     },
     {
       "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
-      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
+      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation \u2014 product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
@@ -49,7 +49,7 @@
     },
     {
       "id": "risk-data-retention-policy-missing-2026-07-23",
-      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk",
+      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL \u2014 long-term storage/GDPR compliance risk",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
@@ -58,7 +58,7 @@
     },
     {
       "id": "risk-metric-definition-drift-2026-07-23",
-      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other",
+      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) \u2014 dashboards will disagree with each other",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
@@ -67,7 +67,7 @@
     },
     {
       "id": "risk-webhook-cross-integration-drift-2026-07-23",
-      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
+      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening \u2014 #2485 shows layout has no replay guard; unknown parity elsewhere",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
@@ -76,29 +76,31 @@
     },
     {
       "id": "pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30",
-      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row",
+      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) \u2014 an active same-org file key can be deleted out from under a live document row",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Land a reference-count guard + integration test before any client wires the endpoint",
       "owner_role": "pm-backend",
       "trigger": null,
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-30 (#2573 follow-up on PR #2571)"
+      "status": "closed",
+      "source": "pm-scrum-master 2026-07-30 (#2573 follow-up on PR #2571)",
+      "closed_note": "resolved by PR #2597 (2026-07-31) \u2014 reference-check guard landed"
     },
     {
       "id": "pm-scrum-master-android-sso-csrf-half-wired-2026-07-30",
-      "risk": "PR #2568 CSRF state fix is non-functional (#2574) — SsoStateStore.mint() has no call site so every reality://sso callback is rejected",
+      "risk": "PR #2568 CSRF state fix is non-functional (#2574) \u2014 SsoStateStore.mint() has no call site so every reality://sso callback is rejected",
       "probability": "high",
       "impact": "high",
       "mitigation": "Wire mint() at the SSO deep-link entry point; add integration test for the happy-path SSO callback",
       "owner_role": "pm-mobile",
       "trigger": null,
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-30 (#2574 follow-up on PR #2568)"
+      "status": "closed",
+      "source": "pm-scrum-master 2026-07-30 (#2574 follow-up on PR #2568)",
+      "closed_note": "resolved by PR #2593 (2026-07-31) \u2014 mint() wired at deep-link entry"
     },
     {
       "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
-      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement — dispatcher stack is starving on reviewer capacity, not implementer capacity",
+      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement \u2014 dispatcher stack is starving on reviewer capacity, not implementer capacity",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs",
@@ -109,7 +111,7 @@
     },
     {
       "id": "pm-backend-disputes-kpis-window-validation-gap-2026-07-30",
-      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
+      "risk": "Dispute KPI endpoint (#2572 \u2192 #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract",
@@ -117,6 +119,50 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-scrum-master-voice-webhook-security-cluster-2026-07-31",
+      "risk": "Voice-webhook endpoints (voice_webhooks.rs) are effectively unauthenticated in production: (a) cross-tenant auth bypass in authenticate_voice_user, (b) HMAC default-secret fallback + non-constant-time compare, (c) Alexa signature never verified (_signature bound-and-ignored). Phase 1.5 static review, high severity on all 3. PR #2604 added unit tests around the broken code \u2014 the tests do NOT fix the findings.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Land a proper security PR closing all 3 findings; require the shared HMAC secret (no default); actually verify Alexa signature; enforce per-caller tenant scoping. Un-quarantine or re-write the PR #2604 tests after the fix.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-scrum-master 2026-07-31 (Phase 1.5 findings)"
+    },
+    {
+      "id": "pm-frontend-84-2-retry-pool-exhausted-2026-07-31",
+      "risk": "84-2 signer-page dispatcher retry pool is exhausted (retry_3/2 now the current row). A third failed no-PR attempt would strand the story indefinitely and pop the last MVP frontend partial off the ranker.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Spawn a dedicated frontend specialist with tight scope: shipped API contract + screen-map first, page component second. Split page-shell vs signing-flow into two smaller tasks if retry-3 fails.",
+      "owner_role": "pm-frontend",
+      "trigger": "next failed no-PR on gap-84-2-document-sign-page-*",
+      "status": "open",
+      "source": "pm-frontend 2026-07-31"
+    },
+    {
+      "id": "pm-scrum-master-schedule-cadence-behavior-drift-2026-07-31",
+      "risk": "Fresh schedule_cadence.rs extraction (PR #2599, 889 lines) has no dedicated regression test in the extraction PR \u2014 a subtle behavior drift in reports.rs cron scheduling could regress silently. reports.rs is at 3329 lines and runs_seen=3 (high churn).",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Add a targeted regression test on reports.rs \u2192 schedule_cadence.rs round-trip during next backend rotation slot (queued as pm-scrum-master-schedule-cadence-regression-test-2026-07-31).",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-scrum-master 2026-07-31 (post-#2599 hygiene)"
+    },
+    {
+      "id": "pm-scrum-master-dispatcher-throughput-buffer-low-2026-07-31",
+      "risk": "Dispatcher trigger payload reports buffer-low: claimable=6/72. Throughput is now constrained by reviewer capacity (accounting trio 3-day stall) rather than implementer capacity \u2014 dispatcher stack starves on unresolved dependencies + non-claimable rows.",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "This Phase 1.6 run refills via role next-actions + ranker; Phase 2 backlog refill supplements. Longer-term: reviewer-slot rotation policy for large-scope feature PRs.",
+      "owner_role": "pm-tech-lead",
+      "trigger": "buffer < 18 (half of 36)",
+      "status": "open",
+      "source": "pm-scrum-master 2026-07-31"
     }
   ]
 }
