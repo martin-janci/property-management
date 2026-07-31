@@ -199,5 +199,5 @@ pub async fn put_tenant_override(
         .await;
     guard.release().await;
     let saved = saved.map_err(internal_error)?;
-    Ok(Json(serde_json::to_value(saved).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(saved).map_err(internal_error)?))
 }

@@ -91,7 +91,7 @@ pub async fn list_screens(
         .list_configs(&mut **conn)
         .await
         .map_err(internal_error)?;
-    Ok(Json(serde_json::to_value(rows).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(rows).map_err(internal_error)?))
 }
 
 #[utoipa::path(get, path = "/api/v1/platform-admin/layout/config", tag = "Layout Admin",
@@ -168,7 +168,7 @@ pub async fn put_draft(
         .upsert_draft(&mut **conn, &req.screen, &req.config, Some(admin_id))
         .await
         .map_err(internal_error)?;
-    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(row).map_err(internal_error)?))
 }
 
 #[utoipa::path(put, path = "/api/v1/platform-admin/layout/rails", tag = "Layout Admin",
@@ -199,7 +199,7 @@ pub async fn put_rails(
         .set_rails(&mut **conn, &req.screen, &req.rails, Some(admin_id))
         .await
         .map_err(internal_error)?;
-    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(row).map_err(internal_error)?))
 }
 
 #[utoipa::path(get, path = "/api/v1/platform-admin/layout/manifests", tag = "Layout Admin",
@@ -226,7 +226,7 @@ pub async fn list_manifests(
         .list_manifests(&mut **conn)
         .await
         .map_err(internal_error)?;
-    Ok(Json(serde_json::to_value(rows).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(rows).map_err(internal_error)?))
 }
 
 #[utoipa::path(put, path = "/api/v1/platform-admin/layout/manifests", tag = "Layout Admin",
@@ -266,7 +266,7 @@ pub async fn put_manifest(
         .upsert_manifest(&mut **conn, &req.platform, &req.manifest, Some(admin_id))
         .await
         .map_err(internal_error)?;
-    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(row).map_err(internal_error)?))
 }
 
 #[utoipa::path(post, path = "/api/v1/platform-admin/layout/publish", tag = "Layout Admin",
@@ -386,7 +386,7 @@ pub async fn publish(
         Some(row.published_version),
         delivery_id,
     );
-    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(row).map_err(internal_error)?))
 }
 
 #[utoipa::path(post, path = "/api/v1/platform-admin/layout/rollback", tag = "Layout Admin",
@@ -450,7 +450,7 @@ pub async fn rollback(
         Some(row.published_version),
         delivery_id,
     );
-    Ok(Json(serde_json::to_value(row).unwrap_or_default()))
+    Ok(Json(serde_json::to_value(row).map_err(internal_error)?))
 }
 
 #[utoipa::path(post, path = "/api/v1/platform-admin/layout/kill", tag = "Layout Admin",
