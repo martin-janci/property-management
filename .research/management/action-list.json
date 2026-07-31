@@ -635,6 +635,162 @@
       "first_open_at": "2026-07-31T14:09:47Z",
       "retry_of": "sec-layout-webhook-integration-test-2026-07-23",
       "retry_round": 1
+    },
+    {
+      "id": "gh-issue-2612",
+      "action": "Follow-up: scheduled announcement / vote-started notifications are fire-once — a transient target-resolution error permanently drops them (PR #2608) (Closes #2612)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-07-31T18:05:09Z (#2612)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:09Z",
+      "issue_ref": {
+        "number": 2612,
+        "url": "https://github.com/martin-janci/property-management/issues/2612",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "dx-fixme-admin-web-mobile-config-patch-endpoint",
+      "action": "admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "dx-fixme-admin-web-platform-settings-patch-endpoint",
+      "action": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "dx-fixme-admin-web-ui-kit-primitives-missing",
+      "action": "@ppt/ui-kit missing primitives (Stepper, FileUpload, RadioCards, StatusPill) — admin-web ships inline duplicates",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "dx-fixme-api-client-generator-typescript-error-types",
+      "action": "openapi-ts generator wrapper swallows errors and emits weak error types",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-auth-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-integrations-booking-mod-2026-07-31",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently split by PR #2611)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2600-reality",
+      "action": "Screen-map drift: reality-web layout changed without docs/screens/reality/ update (PR #2600)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
