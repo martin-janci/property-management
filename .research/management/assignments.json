@@ -1,4 +1,27 @@
 {
   "generated": "2026-07-31T06:13:15Z",
-  "assignments": []
+  "assignments": [
+    {
+      "task_id": "pm-backend-scheduler-rs-refactor-extract-jobs",
+      "branch": "auto-impl/pm-backend-scheduler-rs-refactor-extract-26e1fb34",
+      "status": "in-progress",
+      "claimed_at": "2026-07-31T08:08:59Z",
+      "last_updated": "2026-07-31T08:08:59Z",
+      "status_changed_at": "2026-07-31T08:08:59Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    }
+  ]
 }
