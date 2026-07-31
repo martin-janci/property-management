@@ -1,0 +1,39 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-public-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "reality-server is the PUBLIC (unauthenticated) Reality Portal API, yet numerous handlers format the raw internal error `e` straight into the HTTP response body returned to the client. Confirmed reachable on anonymous endpoints: routes/listings.rs:286-291 (public GET listing search) returns `(INTERNAL_SERVER_ERROR, format!(\"Failed to search listings: {}\", e))`; listings.rs:298-303 (count) and listings.rs:470 (cities) do the same; routes/price_map.rs:150-155 (public GET /api/v1/price-map) returns `format!(\"Database error: {}\", e)`.",
+        "For a sqlx::Error the Display impl can carry SQL fragments, column/constraint names, and connection/pool detail. Because these tuples become the response body (handlers return `(StatusCode, String)` / `Result<_, (StatusCode, String)>`), any anonymous internet client that can trigger a DB error learns internal schema/infrastructure detail — an information-disclosure smell on a public surface.",
+        "Same pattern repeats across the segment: routes/realtors.rs:75,110,154,193,240,273,313; routes/imports.rs:64,137,170,200; handlers/listings/mod.rs:56,63,84,121,137; routes/health.rs:151. Fix: log the raw `e` via tracing::error!(error = %e, ...) and return a generic client-facing message (e.g. \"Internal server error\") with a correlation id, instead of interpolating `e` into the body — mirror the reusable crate::util::errors helper (used correctly at agency_imports.rs:228,280)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-drainer-stub-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 — an alert is marked permanently delivered (`mark_search_alert_notified`, sets migration-00195 `notified_at`) whenever `any_ok` is true, and `any_ok` is set to true by the EMAIL transport succeeding (line 287). The default email transport is `LogEmailTransport`, whose `send_email` unconditionally returns `Ok(())` (lines 80-94) after only writing a tracing::info! line — it never actually sends anything.",
+        "Production wiring uses the stub: main.rs:453-457 constructs the worker via `SearchAlertDrainerWorker::new(db, SearchAlertDrainerConfig::from_env())`, and `new()` injects `LogEmailTransport`/`LogPushTransport` (lines 188-195). `from_env` defaults `enabled=true` (config lines 133-141, 152-154), so the drainer starts by default. Consequently every saved-search alert row is drained and stamped `notified_at` on the first poll while zero real email/push is delivered — the queue is consumed so the alert can never be re-sent once a real transport is finally wired.",
+        "Effect: the saved-search email/push notification channel is a silent no-op in any real deployment, and the silence is unrecoverable per-alert because the watermark is advanced. The in-app feed still works (separate `status` column), so this is a partial data-loss / broken-feature bug rather than a crash. Fix options: (a) gate `enabled` to default false until a real transport is injected; (b) have the stub transports return Err (or a distinct \"not-delivered\" outcome) so `any_ok` stays false and rows are retried rather than consumed; or (c) require an explicit real transport via `with_transports` before the worker will mark rows notified."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

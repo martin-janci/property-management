@@ -575,40 +575,6 @@
       "last_updated": "2026-07-30T03:23:02Z"
     },
     {
-      "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T04:05:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "refactor-churn-hotspot-api-server-scheduler-2026-07-30",
-      "action": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T04:05:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry1",
       "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 1/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
       "owner_role": "pm-scrum-master",
@@ -620,20 +586,6 @@
       "depends_on": [],
       "first_open_at": "2026-07-31T14:09:47Z",
       "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
-      "retry_round": 1
-    },
-    {
-      "id": "sec-layout-webhook-integration-test-2026-07-23-retry1",
-      "action": "Add integration test for layout publish webhook replay/timestamp handling once #2485 fix lands (parity with generic integration webhook test pattern) [retry 1/2 of failed sec-layout-webhook-integration-test-2026-07-23]",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=sec-layout-webhook-integration-test-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T14:09:06Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-31T14:09:47Z",
-      "retry_of": "sec-layout-webhook-integration-test-2026-07-23",
       "retry_round": 1
     },
     {
