@@ -1,0 +1,25 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-ss-alert-watermark-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237 — the saved-search enqueue worker advances the per-search watermark with `let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64).await;`, silently discarding the Result. If this DB write fails AFTER a successful `enqueue_search_alert` (line 216), `last_matched_at` is not advanced, so on the next due poll `find_new_match_listing_ids(.., Some(since), ..)` recomputes the SAME window (unchanged `since`) and re-enqueues the SAME listing IDs, producing a duplicate saved-search alert email/push to the user.",
+        "Same file line 176 — the first-sighting watermark write (`let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, 0).await;`) is also swallowed; if it fails the search never establishes its baseline and will re-enter the first-sighting branch every poll, so it never starts alerting.",
+        "Observability gap / inconsistency: every sibling error path in this same file uses structured logging (tracing::error at 166, tracing::warn at 194 and 205 and 227), and the parallel workers services/search_alert_drainer.rs (run_once, tracing::error on mark_search_alert_notified failure at ~321) and services/favorite_alerts.rs (tracing::warn on every pass failure, lines 121/133) log all DB failures. saved_search_alerts.rs is the lone place that drops the mark-matched Result with no log, so a failing watermark write is invisible to operators AND causes duplicate/again-suppressed alerts.",
+        "Fix: replace both `let _ = ... mark_saved_search_matched(...).await;` with `if let Err(e) = ... { tracing::warn!(id = %search.id, error = %e, \"[#983] failed to advance saved-search watermark\"); }` (matching the enqueue-failure handling immediately above at line 227), so failures are observable and the retry semantics are intentional rather than silent."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
