@@ -2617,6 +2617,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-audit-add-evidence-idor-fix-2026-07-23-retry1",
+      "branch": "auto-impl/data-audit-add-evidence-idor-fix-2026-07-b2031558",
+      "status": "failed",
+      "claimed_at": "2026-07-31T14:16:17Z",
+      "last_updated": "2026-07-31T14:23:52Z",
+      "status_changed_at": "2026-07-31T14:23:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ppt-rust-backend",
+      "implementer_summary": "pr=none status=blocked (synchronous return): premise-false — support_tooling_events is super-admin-RLS-only (WITH CHECK is_super_admin) + 3-kind CHECK constraint; add_evidence is tenant-scoped (no admin_user_id); no audit-read parity exists; evidence-add already audited via dispute evidence_added activity log. Landing needs forbidden scaffolding (relax CHECK, bypass super-admin RLS, mis-fill admin_user_id). Retry-0 failed same way — recommend re-scope (product decision), not another retry.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "data-audit-oauth-token-usage-2026-07-23",
       "branch": "auto-impl/data-audit-oauth-token-usage-2026-07-23-00db1231",
       "status": "merged",
@@ -10091,5 +10113,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T14:16:17Z"
+  "archived_at": "2026-07-31T14:23:52Z"
 }

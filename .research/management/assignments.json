@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-31T14:20:41Z",
+  "generated": "2026-07-31T14:24:15Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
@@ -30,28 +30,6 @@
       "claimed_at": "2026-07-31T12:08:53Z",
       "last_updated": "2026-07-31T14:07:59Z",
       "status_changed_at": "2026-07-31T12:08:53Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "data-audit-add-evidence-idor-fix-2026-07-23-retry1",
-      "branch": "auto-impl/data-audit-add-evidence-idor-fix-2026-07-b2031558",
-      "status": "in-progress",
-      "claimed_at": "2026-07-31T14:16:17Z",
-      "last_updated": "2026-07-31T14:16:17Z",
-      "status_changed_at": "2026-07-31T14:16:17Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
