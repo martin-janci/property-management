@@ -378,11 +378,24 @@ impl Scheduler {
 
             // Send notifications for each published announcement
             for announcement in &published {
-                // Get target users based on target_type and target_ids
-                let target_user_ids = self
-                    .get_announcement_target_users(announcement)
-                    .await
-                    .unwrap_or_default();
+                // Get target users based on target_type and target_ids.
+                // A DB error here must be surfaced (not coerced into an empty
+                // target set) so a failed dispatch is observable instead of
+                // silently sending zero notifications — mirrors the
+                // log-and-fall-back treatment in `send_vote_reminders`.
+                let target_user_ids = match self.get_announcement_target_users(announcement).await {
+                    Ok(ids) => ids,
+                    Err(e) => {
+                        tracing::error!(
+                            announcement_id = %announcement.id,
+                            target_type = %announcement.target_type,
+                            error = %e,
+                            "Failed to resolve announcement notification targets; \
+                             skipping dispatch for this announcement"
+                        );
+                        Vec::new()
+                    }
+                };
 
                 if !target_user_ids.is_empty() {
                     match self
@@ -594,10 +607,22 @@ impl Scheduler {
 
             // Send notifications for each activated vote
             for vote in &activated {
-                let eligible_user_ids = self
-                    .get_vote_eligible_users(vote.building_id)
-                    .await
-                    .unwrap_or_default();
+                // A DB error resolving the eligible voters must be surfaced
+                // (not coerced into an empty target set) so a failed dispatch
+                // is observable — mirrors `send_vote_reminders`.
+                let eligible_user_ids = match self.get_vote_eligible_users(vote.building_id).await {
+                    Ok(ids) => ids,
+                    Err(e) => {
+                        tracing::error!(
+                            vote_id = %vote.id,
+                            building_id = %vote.building_id,
+                            error = %e,
+                            "Failed to resolve vote-started notification targets; \
+                             skipping dispatch for this vote"
+                        );
+                        Vec::new()
+                    }
+                };
 
                 if !eligible_user_ids.is_empty() {
                     match self
@@ -667,6 +692,26 @@ impl Scheduler {
                 let vote_result = self.vote_repo.find_by_id(*vote_id).await;
                 #[allow(deprecated)]
                 let results_result = self.vote_repo.get_results(*vote_id).await;
+                // Surface DB errors on the vote/result lookups instead of
+                // letting `if let Ok(Some(..))` silently drop the `Err` arm —
+                // otherwise a failed closed-vote dispatch is invisible.
+                // `Ok(None)` (vote genuinely gone) stays a silent skip.
+                if let Err(e) = &vote_result {
+                    tracing::error!(
+                        vote_id = %vote_id,
+                        error = %e,
+                        "Failed to load closed vote for result notification; \
+                         skipping dispatch for this vote"
+                    );
+                }
+                if let Err(e) = &results_result {
+                    tracing::error!(
+                        vote_id = %vote_id,
+                        error = %e,
+                        "Failed to load vote results for result notification; \
+                         skipping dispatch for this vote"
+                    );
+                }
                 if let Ok(Some(vote)) = vote_result {
                     if let Ok(Some(results)) = results_result {
                         // Participants pre-fetched by batch query above.
