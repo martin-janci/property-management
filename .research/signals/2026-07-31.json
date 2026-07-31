@@ -1,0 +1,319 @@
+{
+  "signals": [
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/scheduler.rs",
+      "type": "repeated-churn",
+      "source": "PRs merged 2026-07-30..2026-07-31 (#2608, #2609 touched scheduler)",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs: 181 lines this window, runs_seen 1\u21922 (recent PRs: #2608 silent-target-err)",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2600",
+      "score_delta": 2,
+      "confidence": "medium",
+      "evidence": "PR #2600 modified frontend/apps/reality-web/src/app/[locale]/layout.tsx and src/app/env.js/route.ts (SSR JSON-inline XSS hardening) without updating docs/screens/reality/. Note: narrow security fix, likely false-positive \u2014 no user-visible screen behaviour change.",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2581: gradle-minor-patch \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2582",
+      "type": "dep-update-noise",
+      "source": "PR #2582",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2582: redis 1.4.1\u21921.5.0 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2583: rust_xlsxwriter 0.96\u21920.97 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2584: sentry 0.48.5\u21920.49.0 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2585: base64 0.22.1\u21920.23.0 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2586: validator 0.20\u21920.21 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2587",
+      "type": "dep-update-noise",
+      "source": "PR #2587",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2587: npm-minor-patch group (19 updates) \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2588: expo-status-bar 56\u219257 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2589: @testing-library/react-native 13.3.3\u219214.0.1 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2590: expo-device 56\u219257 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dependabot PR #2591: expo-secure-store 56\u219257 \u2014 open, unreviewed",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "type": "code-review-finding",
+      "source": "review-2026-07-31 (reality-server segment, pm-backend expert)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/reality-server/src/state.rs:841 \u2014 `pub sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` PKCE-flow store: inserted on every unauth GET /api/v1/sso/login (routes/sso.rs:94) and only removed on successful matching /sso/callback (routes/sso.rs:235-244). Nothing sweeps 10-minute expiry, so abandoned logins leak forever \u2014 unauthenticated flood \u2192 memory-exhaustion DoS + global-mutex contention. Sibling SsoTokenService (state.rs:453-460) and TokenValidationCache (state.rs:679-706) already fixed this pattern; sso_sessions was missed. Fix: mirror SsoTokenService `.retain(|_,t| now - created_at < 10min)` sweep on insert + cap size."
+    },
+    {
+      "id": "code-review-reality-server-login-user-enumeration-oracle",
+      "type": "code-review-finding",
+      "source": "review-2026-07-31 (reality-server segment, pm-backend expert)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/reality-server/src/handlers/users/mod.rs:263 login() has three distinguishable outcomes on public unauth POST /api/v1/users/login: (a) unknown email \u2192 immediate `Invalid email or password` no argon2 (line 255); (b) known email + no password_hash (SSO-only) \u2192 literal `Account uses SSO login` (line 263) discloses email exists + is SSO; (c) known + password \u2192 argon2 then generic error. Two enumeration oracles: distinct SSO string + timing gap between (a)/(b) vs (c). Same handler documents anti-enumeration for password reset (mod.rs:22-24) but login is inconsistent. Fix: (1) collapse SSO branch to generic error; (2) fixed-cost dummy argon2 in unknown-email path for uniform timing."
+    },
+    {
+      "id": "code-review-reality-server-list-my-reports-total-is-page-size",
+      "type": "code-review-finding",
+      "source": "review-2026-07-31 (reality-server segment, pm-backend expert)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/reports.rs:342 `let total = reports.len()` returns MyReportsResponse.total set to CURRENT-PAGE length after LIMIT/OFFSET applied (line 307). Default limit=20 (line 290), so a user with 100 reports always sees total: 20 on page 1; clients paginating by `total` stop early. Sibling endpoints do this correctly: articles.rs:196-208 (SELECT COUNT(*) with same filter) and saved_searches.rs:323-331 (`tokio::try_join!` page + count). Fix: run `SELECT COUNT(*)` alongside the page or use `COUNT(*) OVER ()` (see articles.rs:391)."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-31.md && head -1 \u2026",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev \u2026 .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev \u2026 signals/2026-07-31.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14 days present after this run's Phase 2 decay pass (verified via /tmp/routine/phase2_summary.json: 0 decayed)",
+      "observed": "0 undecayed stale items",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan: brief contains 'plans/<slug>.md' AND 'adversarial pass:' on the same line",
+      "observed": "both plans annotated 'adversarial pass: passed'",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached \u2026 .research/plans/ | grep -c '\\.md$'",
+      "observed": "2",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "grep for **Vector:** **Score:** **Source:** **Confidence:**",
+      "observed": "4/4 present in both plans",
+      "expected": "4/4"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "grep for 11 ## headings",
+      "observed": "11/11 present in both plans",
+      "expected": "11/11"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "grep '^- [x]'",
+      "observed": "both plans tick C1 and C6",
+      "expected": "\u22651 ticked"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "grep -E '^Mode: (local-only|cloud-ok)$'",
+      "observed": "both: Mode: cloud-ok",
+      "expected": "declared"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "awk /## Files/ \u2026 | while read p; do test -e $p; done",
+      "observed": "all 4 file paths resolve on disk",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E 'sk-ant-|ANTHROPIC_API_KEY|\u2026' against staged diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run (Phase 1.6 explicitly skipped, not failed \u2014 logged in brief)",
+      "observed": "brief lists Phase 1.6 skip under Since last run, cursor unchanged",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans deleted this run (only 2 new plans added)",
+      "observed": "0 deletions",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ $(git ls-files -- .research/plans/_archive/ | wc -l) -ge $(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l) ]",
+      "observed": "staged=7 head=7",
+      "expected": "staged \u2265 head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty this run \u2014 nothing hit the allowlist \u00d7 certainty bar (see auto_fix_skipped_reason)",
+      "observed": "auto_fix_actions.length == 0",
+      "expected": "\u22643 total, \u22641 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2192 gate is a no-op (pm_cursor and coverage_cursor unchanged)",
+      "observed": "no-op",
+      "expected": "no-op-when-skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for telegram bot-token value patterns against staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 allowlist matched no signal at confidence=high + score\u22653 this run",
+  "review_segment": "reality-server",
+  "review_reason": "oldest-unreviewed",
+  "review_expert": "pm-backend",
+  "phase_1_6_skipped": true,
+  "phase_1_6_skip_reason": "token/time budget while prioritising buffer-low plan promotion",
+  "trigger_payload": "buffer-low: claimable=5/72 \u2014 refill planner"
+}
