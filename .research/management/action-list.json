@@ -546,25 +546,6 @@
       }
     },
     {
-      "id": "gh-issue-2556",
-      "action": "ci: add reality-api-client drift gate (deferred from #2487) (Closes #2556)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2556)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-29T08:07:25Z",
-      "issue_ref": {
-        "number": 2556,
-        "url": "https://github.com/martin-janci/property-management/issues/2556",
-        "labels": [
-          "ci"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2560",
       "action": "ci: reality-web Docker build has failed on every run since 2026-06-17 — no frontend image published for 6 weeks (Closes #2560)",
       "owner_role": "pm-tech-lead",
@@ -598,20 +579,6 @@
       "retry_round": 2
     },
     {
-      "id": "dx-closed-not-merged-pr-2385-retry1",
-      "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup [retry 1/2 of failed dx-closed-not-merged-pr-2385]",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-30T02:06:13Z (retry_of=dx-closed-not-merged-pr-2385 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T00:17:49Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T02:06:13Z",
-      "retry_of": "dx-closed-not-merged-pr-2385",
-      "retry_round": 1
-    },
-    {
       "id": "dx-closed-not-merged-pr-2387-retry1",
       "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 [retry 1/2 of failed dx-closed-not-merged-pr-2387]",
       "owner_role": "pm-devops",
@@ -637,57 +604,6 @@
       "source": "pm-analysis 2026-07-30",
       "first_open_at": "2026-07-30T03:23:02Z",
       "last_updated": "2026-07-30T03:23:02Z"
-    },
-    {
-      "id": "code-review-api-core-resolved-rs-leaks-db-error",
-      "action": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T04:05:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-admin-rs-swallowed-serialize",
-      "action": "layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T04:05:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-scheduler-rs-silent-target-err",
-      "action": "scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T04:05:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
     },
     {
       "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",

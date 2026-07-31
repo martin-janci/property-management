@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "dx-closed-not-merged-pr-2385-retry1",
-  "selected_at": "2026-07-31T02:06:48Z",
+  "epic_prefix": "dx-closed-not-merged-pr-2387-retry1",
+  "selected_at": "2026-07-31T04:07:28Z",
   "last_action": "repick",
-  "reason": "prior target 'code-review-api-core-resolved-rs-leaks-db-error' exhausted; closest-to-done is 'dx-closed-not-merged-pr-2385-retry1' (open=1 claimable=1)",
+  "reason": "prior target 'dx-closed-not-merged-pr-2385-retry1' exhausted; closest-to-done is 'dx-closed-not-merged-pr-2387-retry1' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

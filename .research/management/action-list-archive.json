@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-31T00:22:04Z",
+  "archived_at": "2026-07-31T04:18:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1482,6 +1482,29 @@
       }
     },
     {
+      "id": "code-review-api-core-admin-rs-swallowed-serialize",
+      "action": "layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-07-31T04:04:25Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "15e16e976fa35acc3c97de08d2bed8914b1a078d",
+        "subject": "code-review-api-core-admin-rs-swallowed-serialize: return 500 on failed layout serialize instead of null body (#2606)",
+        "at": "2026-07-31T04:04:25Z"
+      }
+    },
+    {
       "id": "code-review-api-core-osrng-expect",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential encrypt",
       "owner_role": "pm-backend",
@@ -1491,6 +1514,30 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-api-core-resolved-rs-leaks-db-error",
+      "action": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-07-31T04:18:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2609,
+        "merged_at": "2026-07-31T04:17:44Z",
+        "at": "2026-07-31T04:18:34Z"
+      }
     },
     {
       "id": "code-review-api-core-scheduler-mutex-poison",
@@ -1543,6 +1590,29 @@
         "merged_pr": 2567,
         "merged_at": "2026-07-29T14:20:08Z",
         "at": "2026-07-29T16:04:13Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-scheduler-rs-silent-target-err",
+      "action": "scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-07-31T04:04:25Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "2c261703dc45a3f4973583aea399d7d326b297b4",
+        "subject": "code-review-api-core-scheduler-rs-silent-target-err: surface DB errors on scheduler notification-target lookups (#2608)",
+        "at": "2026-07-31T04:04:25Z"
       }
     },
     {
@@ -2378,6 +2448,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-23T02:05:11Z"
+      }
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2385-retry1",
+      "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup [retry 1/2 of failed dx-closed-not-merged-pr-2385]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-30T02:06:13Z (retry_of=dx-closed-not-merged-pr-2385 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T00:17:49Z) | gc1-reconcile 2026-07-31T04:18:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T02:06:13Z",
+      "retry_of": "dx-closed-not-merged-pr-2385",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-31T04:18:34Z"
       }
     },
     {
@@ -8915,6 +9006,32 @@
         "merged_pr": 2551,
         "merged_at": "2026-07-24T22:19:55Z",
         "at": "2026-07-24T22:20:22Z"
+      }
+    },
+    {
+      "id": "gh-issue-2556",
+      "action": "ci: add reality-api-client drift gate (deferred from #2487) (Closes #2556)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2556) | gc1-reconcile 2026-07-31T04:18:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:07:25Z",
+      "issue_ref": {
+        "number": 2556,
+        "url": "https://github.com/martin-janci/property-management/issues/2556",
+        "labels": [
+          "ci"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2607,
+        "merged_at": "2026-07-31T02:25:09Z",
+        "at": "2026-07-31T04:18:34Z"
       }
     },
     {

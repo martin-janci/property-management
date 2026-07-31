@@ -1,0 +1,25 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "api-core",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-api-core-push-fanout-reqwest-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:280 and :773 — the FCM and APNs transport adapters build their reqwest client with `reqwest::Client::builder()...build().expect(\"reqwest client build should not fail\")`. `reqwest::ClientBuilder::build()` returns a `Result` precisely because it can fail (TLS backend initialization; the APNs adapter also pins `http2_prior_knowledge()`), so this `expect` is a panic path, not a guaranteed-infallible unwrap.",
+        "Reachability: `FcmHttpAdapter::new` / `ApnsHttpAdapter::new` are called at server startup via `FcmHttpAdapter::from_env` / `ApnsHttpAdapter::from_env` -> `CombinedPushAdapter::new` (push_fanout.rs:1061-1062, 1293) -> `PushFanoutWorker::new` (main.rs:695). A build failure therefore aborts the whole api-server process during boot.",
+        "Inconsistency with the module's own stated design: `CombinedPushAdapter::new` deliberately degrades gracefully when push is unconfigured — the surrounding code logs `\"neither FCM nor APNs is configured; push delivery will be skipped (no crash — set env vars to enable)\"` (push_fanout.rs:1285-1289). Panicking on a transport-client build failure contradicts that never-crash-the-server-over-push contract. Fix: make `new`/`from_env` return `Result` (or fall back to a disabled/no-op transport with a `tracing::error!`) instead of `.expect(...)`, so an infrastructure-level reqwest build error degrades push delivery rather than taking down the whole server. Low severity: build failures are rare and only at startup, but the crash path is real and avoidable.",
+        "Scope note: the rest of the reviewed api-core segment (churn hotspot services/scheduler.rs, plus services/oauth.rs, services/stripe.rs, services/jwt.rs, services/totp.rs, services/workflow_executor.rs, services/auth.rs) is robustly defended — poison-safe mutex locks (`lock().unwrap_or_else(|e| e.into_inner())`), guarded RLS/global-read context teardown via `release_scheduler_conn`, atomic OAuth code find-and-consume, mandatory S256 PKCE, Stripe webhook HMAC via constant-time `ct_eq`, no secrets in logs, and no production-path `unwrap`/`todo!`/`unsafe`. No medium/high findings in this pass."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
