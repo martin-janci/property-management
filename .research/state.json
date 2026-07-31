@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-31T16:26:02Z",
-  "last_run_ms": 780000,
-  "last_pr_seen": 2611,
+  "last_run_iso": "2026-07-31T20:16:26Z",
+  "last_run_ms": 900,
+  "last_pr_seen": 2614,
   "last_issue_seen": 2598,
-  "last_commit_sha": "dc64271a78ccdb77333aa613dc50a9594b268716",
+  "last_commit_sha": "2eea7b7a0adf6f88a894e9a21769b60a293d34a6",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -411,6 +411,11 @@
       "runs_seen": 1,
       "last_seen": "2026-07-30",
       "recent_churn": 240
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-31",
+      "recent_churn": 398
     }
   },
   "seen_signals": [
@@ -738,7 +743,8 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -752,7 +758,7 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 53,
+    "runs": 54,
     "vectors_created": 236,
     "plans_created": 17,
     "quiet_days": 2,

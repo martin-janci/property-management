@@ -5427,20 +5427,23 @@
       "title": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
         "PR #2567",
-        "PR #2576"
+        "PR #2576",
+        "PR #2610",
+        "PR #2613"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window"
+        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window",
+        "2026-07-31: PR #2610 extracted retention/prune jobs → scheduler/retention.rs; PR #2613 extracted vote-lifecycle jobs → scheduler/votes.rs. mod.rs shrunk ~2900 → 2141 lines (net −759 across the two extractions); still >2000 LOC, keep watch. Delta window churn: 398 lines in mod.rs."
       ],
       "files": [
-        "backend/servers/api-server/src/services/scheduler.rs"
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
