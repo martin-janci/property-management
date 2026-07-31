@@ -19,6 +19,8 @@ mod iot_auth_tests;
 mod iot_sensor_ws_authz_tests;
 #[path = "suites/layout_tenant_override_updated_by_tests.rs"]
 mod layout_tenant_override_updated_by_tests;
+#[path = "suites/layout_webhook_outbound_replay_tests.rs"]
+mod layout_webhook_outbound_replay_tests;
 #[path = "suites/lease_abstraction_forms_tests.rs"]
 mod lease_abstraction_forms_tests;
 #[path = "suites/lease_review_rbac_tests.rs"]
