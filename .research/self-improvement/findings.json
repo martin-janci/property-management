@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-31T04:19:34Z",
-  "generated_by": "df1cfd7bfe2080caf5459d4dc35c5f4fb2adb7ed",
+  "generated_at": "2026-07-31T12:24:18Z",
+  "generated_by": "aa9cc0c2a260e00fdf46e16b2c9e7aac4d8b96d9",
   "findings": [
     {
       "finding_id": "rebase-ours-takes-upstream-discards-state",
@@ -84,17 +84,17 @@
     {
       "finding_id": "mcp-push-cannot-inline-large-archive",
       "first_seen": "2026-06-03T15:48:48Z",
-      "last_seen": "2026-07-31T04:19:34Z",
-      "recurrence": 11,
+      "last_seen": "2026-07-31T12:24:18Z",
+      "recurrence": 12,
       "severity": "high",
       "category": "infra",
       "symptom": "Phase 6 archive-move produced a 198KB assignments-archive.json; mcp__github__push_files cannot inline a file that large (and git push is proxy-403'd), so the archive could not be pushed. The merged PR#1019 row was dropped from active (T19-clean) but its archive record was not persisted — Merged-total understated by 1.",
       "evidence": [
-        "f093812: MCP inline push-size guard TRIPPED (assignments-archive.json 227KB > 64KiB) but direct `git push` to dev WORKED this env; landed via git push (proxy-403 assumption may be stale).",
         "f3f1b79 (this run): archive files 330KB+ > 64KiB MCP inline ceiling; landed via PUSH_METHOD=git (direct git push worked; gh CLI unavailable).",
         "211f416 (2026-07-17T10:16 run): assignments-archive.json 348KB (now 321 rows) > 64KiB MCP inline ceiling; dispatcher landed via PUSH_METHOD=git -- sidesteps mcp-push-size-guard 348KB>64KB archive ceiling.",
         "0daef09 (this run): assignments-archive.json 350KB + action-list-archive.json 366KB both > 64KiB MCP inline ceiling; MCP push_files NOT viable. State landed via direct git push to origin/dev (fetch AND push both succeeded this env).",
-        "340bc98 (2026-07-31T02:31 run): assignments-archive.json 476KB > 64KiB MCP inline ceiling AND git push/fetch proxy-403'd -- ARCHIVE MOVE DEFERRED, 4 terminal rows retained in active; bd5b4e0: backlog.json 254KB > 64KiB ceiling -> backlog-reconcile deferred."
+        "340bc98 (2026-07-31T02:31 run): assignments-archive.json 476KB > 64KiB MCP inline ceiling AND git push/fetch proxy-403'd -- ARCHIVE MOVE DEFERRED, 4 terminal rows retained in active; bd5b4e0: backlog.json 254KB > 64KiB ceiling -> backlog-reconcile deferred.",
+        "aa9cc0c2 (this run): assignments-archive.json 482943 bytes (~471KiB, 451 rows) > 64KiB MCP inline ceiling; Phase-6 push fell back to PUSH_METHOD=git and direct git push to origin/dev succeeded."
       ],
       "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
       "proposed_fix": "PROVEN WORKAROUND this run: push the dispatcher state commit to a NEW branch (new-branch push is NOT proxy-blocked), open a PR via mcp__github__create_pull_request, then land it with mcp__github__merge_pull_request (squash). The server-side merge carries files of ANY size, bypassing both the dev-push-403 and the MCP push_files 64KB inline limit — lands the full assignments-archive.json with archived terminal rows. Phase 6 should adopt this PR+API-merge path as the primary push mechanism in this env (replacing PUSH_METHOD=mcp push_files for the large archive). Landed PR #1163 (sha 08ab915) this way; T19 now green on dev.",
@@ -125,17 +125,17 @@
       "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
       "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
       "first_seen": "2026-07-16T18:20:36Z",
-      "last_seen": "2026-07-31T04:19:34Z",
-      "recurrence": 7,
+      "last_seen": "2026-07-31T12:24:18Z",
+      "recurrence": 8,
       "severity": "high",
       "category": "infra",
       "symptom": "The dispatcher-prompt hard-assumes `git push` is proxy-403-blocked and derives from it (a) PUSH_METHOD defaults to MCP push_files and (b) an mcp-push-size-guard that aborts inlining any file >64KiB. In THIS env direct `git push origin dev` SUCCEEDED (only GH007 email-privacy blocked it until the commit author email was set to @users.noreply.github.com). The archive is 333782 bytes (~326KiB), so the 64KiB guard would false-positive and block a push the environment actually permits.",
       "evidence": [
-        "211f416 (2026-07-17T10:16 run): dispatcher trailer push: PUSH_METHOD=git (git transport works here; sidesteps mcp-push-size-guard 348KB>64KB archive ceiling) -- direct git push is again the reliable primary; the MCP-primary default remains obsolete in this env.",
         "0daef09 (this run): git fetch AND push to origin/dev both SUCCEEDED — the git-push-blocked-by-proxy premise is stale in this env; MCP push_files was not viable only because the 350KB/366KB archives exceed the 64KiB inline ceiling, so direct git push is again the reliable primary and the MCP-primary default remains obsolete.",
         "5531f24 (this run): git push to dev SUCCEEDED directly again; gh CLI unavailable so all GitHub I/O routed via MCP, yet the state commit still landed via direct git push — the MCP-primary push default remains obsolete in this env.",
         "b21428a (this run): Phase 6 committed + pushed via direct git to origin/dev SUCCEEDED (proxy allowed direct push this run); gh CLI unavailable so GitHub reads routed via MCP, yet the state commit landed via direct git push — the MCP-primary push default + 64KiB size-guard remain obsolete in this env.",
-        "df1cfd7 (this run): env note confirms direct git push WORKS (state landed via git); gh CLI unavailable, GitHub reads via MCP -- MCP-primary push default remains obsolete in this env."
+        "df1cfd7 (this run): env note confirms direct git push WORKS (state landed via git); gh CLI unavailable, GitHub reads via MCP -- MCP-primary push default remains obsolete in this env.",
+        "aa9cc0c2 (this run): Phase-6 fell back to PUSH_METHOD=git and direct git push to origin/dev SUCCEEDED -- the 483KB archive exceeds the 64KiB MCP inline ceiling, so the MCP-primary default + size-guard remain obsolete and direct git push is again the reliable primary in this env."
       ],
       "root_cause": "dispatcher-prompt.md treats 'git push is proxy-403-blocked' as a fixed environmental fact (see finding git-push-blocked-by-proxy) and builds the MCP-primary push default + the 64KiB inline size-guard on top of it. That premise is env-dependent and false here: pushing to dev works (modulo the GH007 email-privacy setting). So the MCP-primary contract adds latency/complexity for no benefit, and its size-guard actively blocks legitimate large-archive commits (the exact collision tracked as mcp-push-cannot-inline-large-archive). Both downstream findings dissolve if push capability is probed rather than assumed.",
       "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
@@ -384,17 +384,17 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-07-31T04:19:34Z",
-      "recurrence": 15,
+      "last_seen": "2026-07-31T12:24:18Z",
+      "recurrence": 16,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
-        "983107b (2026-07-17T22:08 cycle): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved). Tier-1 coverage all 49 stories done/partial; Tier-1b/1c/coverage refills avail=0; Tier-1d review-merged generator fired (2 issues #2417/#2418) + Tier-2 kick http=200 -- neither actuates the claimable buffer this cycle. Near-continuous 0-claimed runs across the whole 8-commit window.",
         "0daef09 (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) ALL run. issue-ingest=0 (3 open GH issues dedup-blocked as failed twins), backlog-refill=0 (188 rows terminal/tracked), retry-remint=0 eligible; Tier-1d generator ran (mobile-rn, 1 finding) + Tier-2 kick http=200 — neither actuates the claimable buffer.",
         "b21428a (this run): GC3-buffer-bounds=FAIL; claimable=0/72 vs floor=36 (fully starved) across the whole day (10:13/12:15/14:08/16:09 all 0-claimed). Tier-1b avail=0, Tier-1c retry-remint cool-down (failures 2-3d old, 7d window); Tier-1d review-merged generator ran (scanned=3 clean=3 issues=0 — recent merges are clean fixes to prior findings) + Tier-2 kick http=200 routine_fire — neither lifts the claimable buffer. coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover.",
         "eba1be6 (2026-07-18T18:05 run): GC3-buffer-bounds=FAIL record-only; claimable=0/72 vs floor=36 (DEEP starvation, 0 claimed). Tier-1b avail=0, Tier-1c 0 eligible, Tier-1d dev-review generator returned NO artifacts, Tier-2 kick http=200 routine_fire — no path lifted the buffer; the lone open item is stem-blocked by its own quarantine.",
-        "df1cfd7 (this run): GC3-buffer-bounds=FAIL record-only; claimable=6/open=7 vs floor=36 (starved). backlog-refill avail=0, retry-remint none-eligible; Tier-1d dev-review generator ran (1 finding, api-core) + Tier-2 kick http=200 -- neither lifts the buffer. Open pool collapsed 72->7 (backlog largely terminal/tracked), so refill paths structurally cannot recover."
+        "df1cfd7 (this run): GC3-buffer-bounds=FAIL record-only; claimable=6/open=7 vs floor=36 (starved). backlog-refill avail=0, retry-remint none-eligible; Tier-1d dev-review generator ran (1 finding, api-core) + Tier-2 kick http=200 -- neither lifts the buffer. Open pool collapsed 72->7 (backlog largely terminal/tracked), so refill paths structurally cannot recover.",
+        "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL; claimable=1/72 vs floor=36 (starved). coverage.json EXHAUSTED (47 done/2 partial, 0 not-started), backlog.json empty, no retryable failed task -- Tiers 1/1b/1c all produced 0; Tier-1d dev-review generator added 2 findings + Tier-2 kick http=200, neither actuates the claimable buffer. merged-now=1 (PR#2611 booking/mod.rs split) but no new coverage work exists to refill from."
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
@@ -423,6 +423,29 @@
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3.5 + Phase 6 push step)",
       "operator_notes": "Confirmed recurring 2026-05-28 (R8 run). The retry loop wastes a full backoff cycle before falling back; default to MCP push. FIXED in Phase 6 push step: PUSH_METHOD defaults to `mcp` (mcp__github__push_files); `git push` is the fallback only when MCP is unavailable, and `PUSH_METHOD=git` forces it. No more 4-attempt 403 backoff per run. (Phase 0.5 lock already uses gh REST for the same reason.) Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "temp-phase-8-past-documented-removal-deadline",
+      "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
+      "first_seen": "2026-07-18T12:19:52Z",
+      "last_seen": "2026-07-31T12:24:18Z",
+      "recurrence": 5,
+      "severity": "medium",
+      "category": "spec",
+      "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
+      "evidence": [
+        "dispatcher-prompt.md:2382-2383 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'remove by 2026-06-30 (search TEMP_PHASE_8 to find every related artifact)'; currentDate 2026-07-18 = 18 days overdue.",
+        "5531f24 (this run): Phase 8 self-review executed and produced findings — the phase is neither disabled nor removed, so the documented sunset no longer reflects intent.",
+        "b21428a (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced bumps; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present — currentDate 2026-07-18 = 18 days overdue; phase is de-facto permanent.",
+        "eba1be6 (2026-07-18T18:05 run): Phase 8 (TEMP_PHASE_8) executed again — currentDate 2026-07-18 = 18 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md markers still present, phase de-facto permanent.",
+        "aa9cc0c2 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again -- currentDate 2026-07-31 = 31 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present, phase de-facto permanent."
+      ],
+      "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
+      "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
+      "status": "open",
+      "operator_notes": ""
     },
     {
       "finding_id": "retry-remint-mints-invalid-rows",
@@ -633,6 +656,26 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
+      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
+      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
+      "first_seen": "2026-07-31T12:24:18Z",
+      "last_seen": "2026-07-31T12:24:18Z",
+      "recurrence": 1,
+      "severity": "medium",
+      "category": "goal-check",
+      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
+      "evidence": [
+        "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL, claimable=1/72; coverage.json not-started=0 (47 done/2 partial), backlog.json empty, no retryable failed tasks; Tiers 1/1b/1c produced 0, Tier-1d generated 2 findings, Tier-2 kick http=200 -- supply is genuinely exhausted (converged), not blocked.",
+        "buffer-starved-below-floor-no-refill-path evidence already records 'coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover' (b21428a, df1cfd7) -- the condition has shifted from 'refill dead-zone bug' to 'legitimate convergence', but GC3 still emits FAIL either way.",
+        "goal-check GC3 floor is a fixed 36 with no coverage-exhaustion / not-started==0 branch, so the gate is permanently red once the project converges."
+      ],
+      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
+      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "action-list-cross-file-duplicate-stems",
       "first_seen": "2026-07-16T20:30:08Z",
       "last_seen": "2026-07-16T20:30:08Z",
@@ -733,29 +776,6 @@
       "proposed_fix": "Persist last_post_merge_review_at in management state (e.g. assignments.json meta) and gate Phase 6 on that timestamp rather than file mtime — immune to clone resets.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 post-merge cadence)",
       "operator_notes": "Drafted on fix/dispatcher-postmerge-cadence-clone-mtime. Simpler than the proposed fix (no new assignments.json meta field needed): last-merged-review.txt ALREADY stores an ISO timestamp as its content — the bug was the gate reading the file's mtime instead of its content. Phase 2.5 cadence gate rewritten to parse the ISO timestamp inside the file (date -u -d) and compute age; missing/empty/unparseable/>24h => DUE=1 (fail-safe = run). Content survives a clone untouched; mtime does not. Verified against the live marker (content 16:24 vs mtime 19:07 — exactly the divergence that breaks mtime) plus fresh/ancient/garbled/empty/missing cases. The gate lives in Phase 2.5, not Phase 6 (affected_artifact said Phase 6 — corrected). Landed as commit 8b63235e (HEAD) on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
-    },
-    {
-      "finding_id": "temp-phase-8-past-documented-removal-deadline",
-      "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
-      "first_seen": "2026-07-18T12:19:52Z",
-      "last_seen": "2026-07-18T18:14:48Z",
-      "recurrence": 4,
-      "severity": "low",
-      "category": "spec",
-      "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
-      "evidence": [
-        "8c5d49b985a03701b4613d7f66a3723cfc5706c7 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced findings; dispatcher-prompt.md:2382 \"REMOVE BY 2026-06-30\" and :2521 \"remove by 2026-06-30\" still present — currentDate 2026-07-18 = 18 days overdue. Deadline marker stale, phase de-facto permanent.",
-        "dispatcher-prompt.md:2382-2383 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'remove by 2026-06-30 (search TEMP_PHASE_8 to find every related artifact)'; currentDate 2026-07-18 = 18 days overdue.",
-        "5531f24 (this run): Phase 8 self-review executed and produced findings — the phase is neither disabled nor removed, so the documented sunset no longer reflects intent.",
-        "b21428a (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced bumps; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present — currentDate 2026-07-18 = 18 days overdue; phase is de-facto permanent.",
-        "eba1be6 (2026-07-18T18:05 run): Phase 8 (TEMP_PHASE_8) executed again — currentDate 2026-07-18 = 18 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md markers still present, phase de-facto permanent."
-      ],
-      "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
-      "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
-      "status": "open",
-      "operator_notes": ""
     },
     {
       "finding_id": "review-merge-conversion-bursty",
