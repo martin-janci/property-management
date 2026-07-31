@@ -22,6 +22,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "chore-triage-untriaged-issues-750s-2026-07-23-retry1",
+      "branch": "auto-impl/chore-triage-untriaged-issues-750s-2026-edfe0470",
+      "status": "in-progress",
+      "claimed_at": "2026-07-31T20:08:32Z",
+      "last_updated": "2026-07-31T20:08:32Z",
+      "status_changed_at": "2026-07-31T20:08:32Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
