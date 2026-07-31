@@ -1,0 +1,306 @@
+{
+  "date": "2026-07-31",
+  "trigger_payload": "buffer-low: claimable=1/72 — refill planner",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-07-31.md && head -1 == '# 2026-07-31'",
+      "observed": "brief written this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors changed vs HEAD",
+      "observed": "last_pr_seen 2576 -> 2610, last_issue_seen 2575 -> 2598, last_commit_sha 34ac587 -> c97bd03, +12 seen_signals, +4 hotspot_history keys, pm_cursor 2 -> 3, coverage_cursor 4 -> 5",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true (238 unique ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal-id novelty vs prev seen_signals; cumulative types exempt from delta re-application",
+      "observed": "no non-cumulative id from today is in previous seen_signals with non-zero score_delta",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json",
+      "observed": "true (max score is 6)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open item is older than 14 days (all open items updated 2026-07-27 or later, today=2026-07-31 → gap ≤4d)",
+      "observed": "no items eligible for decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has a brief annotation with 'adversarial pass:' on same line as 'plans/<slug>.md'",
+      "observed": "single new plan code-review-reality-server-ssrf-ipv4-mapped-ipv6.md annotated 'adversarial pass: passed' in brief",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c .md",
+      "observed": "1 new plan (≤2)",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "grep for **Vector:** **Score:** **Source:** **Confidence:** at top of new plan",
+      "observed": "all 4 metadata fields present",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "grep -E '^## ' plans/code-review-reality-server-ssrf-ipv4-mapped-ipv6.md",
+      "observed": "12 ## headings — 11 required + 1 optional Dependencies",
+      "expected": "all 11 required present"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "grep -c '^- \\[x\\]' plans/code-review-reality-server-ssrf-ipv4-mapped-ipv6.md",
+      "observed": "2 capability checkboxes ticked (C1, C6)",
+      "expected": "≥1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "grep -E '^Mode: (local-only|cloud-ok)$' plans/code-review-reality-server-ssrf-ipv4-mapped-ipv6.md",
+      "observed": "Mode: cloud-ok",
+      "expected": "≥1 match"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "resolve each ## Files bullet on disk",
+      "observed": "backend/servers/reality-server/src/util/url_validator.rs OK; backend/servers/reality-server/src/routes/agency_imports.rs OK",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0 (routine only touched .research/*)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged diff outside baseline docs",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md (rendered from backlog.json)",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase reported failure this run; brief 'Phases that failed' = none",
+      "observed": "all phases green",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug appears in plans/ or plans/_archive/",
+      "observed": "12 plans moved plans/->plans/_archive/ this run; all HEAD-tracked slugs still resolve",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD",
+      "observed": "6 -> 18 (grew by 12)",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length ≤3; no signal id in prior auto_fix_history reprocessed",
+      "observed": "auto_fix_actions=[] (no candidate met allowlist + certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM artifacts parse; pm_cursor advanced 2->3; coverage_cursor advanced 4->5",
+      "observed": "management/action-list.json + risks.json parse; project-state.md non-empty; pm_cursor.next_index in 0..7; coverage_cursor.next_index within [0,#epics)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-07-31",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-07-30T03:32:05Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-07-30T03:32Z — this run at ~2026-07-31T12:20Z is ~32h later, under the 36h lag_warning threshold. Recording as informational only; no lag_warning signal actually fires. (Sub-threshold — kept in signals for audit.)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2604 (test-gap-voice-webhooks-zero-coverage)",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs: 472 lines this window (test additions + verification unit tests), Rank 1/3 organic churn 2026-07-30..2026-07-31."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-admin-web-src-pages-mobileconfigpage-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2601 (dx-admin-web-platform-settings-mobile-config-permanent-noop)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx: 365 lines this window (dead-code removal — the backing PATCH endpoint doesn't exist). Rank 2/3 organic churn 2026-07-30..2026-07-31."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-schedule-cadence-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2599 (refactor-churn-hotspot-api-server-reports-2026-07-27)",
+      "score_delta": 0,
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs: 889 lines this window — extraction from reports.rs by the previously-promoted refactor plan (PR #2599). Refactor artefact, not organic instability — score-0 log only.",
+        "reports.rs (old path) removed as a hotspot from tracking; hotspot_history for reports.rs closes out — the churn root has been resolved by the extraction."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-retention-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2610 (pm-backend-scheduler-rs-refactor-extract-jobs)",
+      "score_delta": 0,
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/retention.rs: 299 lines this window — extraction from scheduler.rs by PR #2610. Refactor artefact, not organic instability — score-0 log only.",
+        "scheduler.rs renamed to scheduler/mod.rs; the item refactor-churn-hotspot-api-server-scheduler-2026-07-30 transitions to done via evidence-gone (cited file no longer resolves)."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-2026-07-31",
+      "type": "dep-update-noise",
+      "source": "PRs #2581..#2591 (11 dependabot PRs opened 2026-07-30)",
+      "score_delta": 0,
+      "evidence": [
+        "11 dependabot PRs open (#2581 gradle-minor-patch group; #2582 redis; #2583 rust_xlsxwriter; #2584 sentry; #2585 base64; #2586 validator; #2587 npm-minor-patch group; #2588 expo-status-bar; #2589 @testing-library/react-native; #2590 expo-device; #2591 expo-secure-store). Log-only per rule."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "dispatcher tier-1d review 2026-07-31 (reality-server); ingested into routine signal set this run",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:145-165 — Host::Ipv6 arm only rejects is_loopback()/fc00::/7/fe80::/10; IPv4-mapped IPv6 (::ffff:a.b.c.d) slips through the v4 blocklist since Ipv6Addr::is_loopback matches ::1 only and fc00/fe80 masks never match mapped addrs. Two SSRF sinks depend on this validator (agency_imports.rs:238, :290). PROMOTED to plan this run.",
+        "verified during Phase 3.5 adversarial pass: file+line references resolve; no existing test covers ::ffff:127.0.0.1 or ::ffff:169.254.169.254 (would fail on main)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "type": "code-review-finding",
+      "source": "dispatcher tier-1d review 2026-07-31 (reality-server)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:148-151 — check_redirect_uri_allowed treats raw.starts_with(\"/\") && !raw.starts_with(\"//\") as unconditionally allowed; the backslash variant /\\evil.com bypasses the protocol-relative check even though browsers normalize \\ to /."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-push-fanout-reqwest-expect",
+      "type": "code-review-finding",
+      "source": "dispatcher tier-1d review 2026-07-31 (api-core)",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:280,773 — reqwest::Client::builder()...build().expect(...) on a Result that can fail (TLS init). Panics the fanout worker on transient TLS backend startup failure."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "dispatcher tier-1d review 2026-07-31 (reality-server)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 — create_review validates only rating (1..=5) then binds data.body into INSERT with no length/trim/non-empty check. Enables arbitrary-size review persistence + empty-body reviews from any authenticated caller."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-ss-alert-watermark-swallow",
+      "type": "code-review-finding",
+      "source": "dispatcher tier-1d review 2026-07-31 (reality-server)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237 — mark_saved_search_matched result silently discarded via `let _ =`. If DB fails AFTER enqueue succeeds, last_matched_at is not advanced → next poll re-enqueues the same window → duplicate email/push."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "resolution-refactor-churn-hotspot-api-server-scheduler-2026-07-30",
+      "type": "resolution",
+      "source": "PR #2610 (pm-backend-scheduler-rs-refactor-extract-jobs)",
+      "score_delta": 0,
+      "evidence": [
+        "scheduler.rs renamed to scheduler/mod.rs by PR #2610; retention/prune jobs extracted to scheduler/retention.rs. Cited file `backend/servers/api-server/src/services/scheduler.rs` no longer resolves — evidence-gone. Backlog row flipped open -> done."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met the certainty bar (score>=3 + confidence=high + allowlist type). The SSRF finding is high-confidence + score>=3 but the fix shape (add IPv4-mapped-IPv6 rejection in a URL validator) is code, not one of the auto-fix allowlist actions (screen-map-stub, orphan-remove, fixme-issue, lockfile-bump, stalled-review comment). Delegated to manual implementer via the promoted plan."
+}
