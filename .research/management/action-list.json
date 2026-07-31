@@ -592,23 +592,6 @@
       }
     },
     {
-      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-30T04:05:09Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "refactor-churn-hotspot-api-server-scheduler-2026-07-30",
       "action": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576)",
       "owner_role": "pm-tech-lead",
@@ -637,20 +620,6 @@
       "depends_on": [],
       "first_open_at": "2026-07-31T14:09:47Z",
       "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
-      "retry_round": 1
-    },
-    {
-      "id": "data-audit-add-evidence-idor-fix-2026-07-23-retry1",
-      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern) [retry 1/2 of failed data-audit-add-evidence-idor-fix-2026-07-23]",
-      "owner_role": "pm-data",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=data-audit-add-evidence-idor-fix-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T14:09:06Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-31T14:09:47Z",
-      "retry_of": "data-audit-add-evidence-idor-fix-2026-07-23",
       "retry_round": 1
     },
     {

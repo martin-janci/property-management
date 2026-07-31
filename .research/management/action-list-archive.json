@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-07-31T14:16:17Z",
+  "archived_at": "2026-07-31T16:10:37Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2325,6 +2325,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-24T16:04:54Z"
+      }
+    },
+    {
+      "id": "data-audit-add-evidence-idor-fix-2026-07-23-retry1",
+      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern) [retry 1/2 of failed data-audit-add-evidence-idor-fix-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=data-audit-add-evidence-idor-fix-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T14:09:06Z) | gc1-reconcile 2026-07-31T16:04:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T14:09:47Z",
+      "retry_of": "data-audit-add-evidence-idor-fix-2026-07-23",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-31T16:04:41Z"
       }
     },
     {
@@ -9891,6 +9912,30 @@
         "merged_pr": 2538,
         "merged_at": "2026-07-24T14:09:06Z",
         "at": "2026-07-24T16:04:54Z"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-30T04:05:09Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-07-31T16:04:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-30T04:05:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-07-31T16:04:41Z"
       }
     },
     {

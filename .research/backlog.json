@@ -5449,7 +5449,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2478"
       ],
@@ -5461,7 +5461,12 @@
       ],
       "created_at": "2026-07-30",
       "updated_at": "2026-07-30",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-31T16:04:41Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
