@@ -1,0 +1,231 @@
+{
+  "date": "2026-07-31",
+  "trigger_payload": "buffer-low: claimable=7/72 — refill planner",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-schedule-cadence-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs: 889 lines this run (PR #2599 refactor split — new file extracted from reports.rs)",
+        "Rank 1/3 for the 2026-07-30..2026-07-31 window; first appearance in hotspot_history (runs_seen 0 → 1)",
+        "Mechanical churn (single refactor PR), not repeated instability"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "score_delta": 1
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-mod-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs: 887 lines this run (PR #2599 refactor split — deletions moved to schedule_cadence.rs)",
+        "Rank 2/3 for the 2026-07-30..2026-07-31 window; first appearance in hotspot_history",
+        "Related to prior reports.rs runs_seen=3 (last_seen 2026-07-27) — rename via refactor, not a repeated-churn re-fire"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "score_delta": 1
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "routine-phase1",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs: 472 lines this run (PR #2604 test coverage + testability refactor)",
+        "Rank 3/3 for the 2026-07-30..2026-07-31 window; first appearance in hotspot_history",
+        "Test-driven churn (closing the test-gap-voice-webhooks-zero-coverage backlog item), not instability"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "score_delta": 1
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-dos",
+      "type": "code-review-finding",
+      "source": "phase-1.5-static-review",
+      "evidence": [
+        "sso.rs:94 inserts a PendingSsoSession into state.sso_sessions on every unauthenticated /api/v1/sso/login call; sso.rs:247 TTL check runs ONLY at callback time (filters late reads, does not evict abandoned entries).",
+        "state.rs:841/896 declares sso_sessions as Arc<Mutex<HashMap<...>>> with no reaper, no capacity cap, no retain/prune. Public unauthenticated memory-DoS surface.",
+        "severity=High → score_delta=+3; vector=security; confidence=medium (static analysis only)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "score_delta": 3
+    },
+    {
+      "id": "code-review-reality-server-record-view-unauth-noverify",
+      "type": "code-review-finding",
+      "source": "phase-1.5-static-review",
+      "evidence": [
+        "listings.rs:863 — POST /api/v1/listings/{id}/view is unauthenticated, does not verify the listing exists, and swallows track_view errors as tracing::warn!; returns 204 unconditionally.",
+        "Analytics counter abuse: views/unique_views/source_* can be inflated for any known UUID; non-existent IDs are indistinguishable from real ones.",
+        "severity=Low → score_delta=+1; vector=security; confidence=medium (static analysis)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "score_delta": 1
+    }
+  ],
+  "resolutions_applied": [
+    {
+      "pr": 2604,
+      "item": "test-gap-voice-webhooks-zero-coverage"
+    },
+    {
+      "pr": 2605,
+      "item": "dx-stale-todo-security-comments-faults-critical-notifications"
+    },
+    {
+      "pr": 2606,
+      "item": "code-review-api-core-admin-rs-swallowed-serialize"
+    },
+    {
+      "pr": 2608,
+      "item": "code-review-api-core-scheduler-rs-silent-target-err"
+    },
+    {
+      "pr": 2609,
+      "item": "code-review-api-core-resolved-rs-leaks-db-error"
+    }
+  ],
+  "plans_promoted": [
+    "plans/code-review-reality-server-sso-sessions-unbounded-dos.md"
+  ],
+  "notes": [
+    "Buffer-low priority run (trigger payload: claimable=7/72). Phase 1.6 (PM role rotation + coverage upkeep) skipped this run — pm_cursor and coverage_cursor unchanged; G16 is a no-op when Phase 1.6 was skipped.",
+    "Phase 1.5 reviewed the reality-server segment (oldest at 13 days, last=2026-07-18). review_cursor.reality-server advances to 2026-07-31.",
+    "Phase 3 promoted 1 plan (cap=2/run; only 1 candidate met readiness gates)."
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && first-line matches # YYYY-MM-DD",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "staged state.json vs HEAD state.json cursors/seen_signals/hotspot_history diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id]|(length == (unique|length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal ids from today not in prev seen_signals with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[]|select(.score>8)]|length==0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "Python: every open item age>14d had score decayed >=1 or moved to dropped (jq fromdateiso8601 doesn't parse date-only strings, so verified in Python)",
+      "observed": "pass (no items >14d)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'plans/<slug>.md.*adversarial pass:' brief for each new plan",
+      "observed": "1/1 annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "metadata(4) + headings(11) + capability + mode + files-exist for new plan",
+      "observed": "all subchecks pass; 1 new plan (<=2 cap)",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep in staged diff (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md from backlog.json byte-diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' line + failed-phase cursor unchanged",
+      "observed": "'none' — no failed phase",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs must still exist in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-file count now >= count at HEAD",
+      "observed": "7 >= 7",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md from vector=='triage' rows byte-diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency vs prev auto_fix_history",
+      "observed": "true (empty)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — G16 is a no-op",
+      "observed": "pm_cursor unchanged; skip → no-op",
+      "expected": "no-op OR all subchecks pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token grep in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

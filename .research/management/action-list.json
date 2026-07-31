@@ -739,6 +739,91 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-dos",
+      "action": "SECURITY: reality-server sso_sessions HashMap unbounded — /api/v1/sso/login memory-DoS on abandoned flows (no reaper, no cap)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T04:32:18Z (score=3 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T04:32:18Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-reality-server-sso-sessions-unbounded-dos.md",
+        "score": 3,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-reality-server-record-view-unauth-noverify",
+      "action": "reality-server record_view (POST /listings/{id}/view) unauth + swallows track_view errors — analytics abuse surface",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T04:32:18Z (score=1 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T04:32:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-mod-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports/mod.rs — 887 lines this window (PR #2599 refactor split)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T04:32:18Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T04:32:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-schedule-cadence-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports/schedule_cadence.rs — 889 lines this window (PR #2599 refactor split)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T04:32:18Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T04:32:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-voice-webhooks-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/voice_webhooks.rs — 472 lines this window (PR #2604 test-gap fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-07-31T04:32:18Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T04:32:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -5248,20 +5248,22 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "standing-scan-2026-07-28"
+        "standing-scan-2026-07-28",
+        "PR #2604"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs is 1148 lines with no `#[cfg(test)]` module, and no file under backend/servers/api-server/tests/ references it.",
         "Mounted endpoints (voice_webhooks.rs:60 voice_webhook_router): POST /alexa, /alexa/health, /google, /oauth/exchange, /oauth/refresh, /verify — the OAuth pair issues/refreshes tokens, so this is auth-adjacent surface with zero regression coverage.",
-        "Pairs with [security-voice-webhook-alexa-signature-not-verified]: a signature-verification fix needs accept/reject tests, and there is currently no harness for this module to hang them on."
+        "Pairs with [security-voice-webhook-alexa-signature-not-verified]: a signature-verification fix needs accept/reject tests, and there is currently no harness for this module to hang them on.",
+        "resolved: PR #2604 merged 2026-07-31 — test(api-server) add voice webhook signature/verification unit tests"
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
       ],
       "created_at": "2026-07-28",
-      "updated_at": "2026-07-28",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5357,21 +5359,23 @@
       "vector": "dx",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "standing-scan-2026-07-28"
+        "standing-scan-2026-07-28",
+        "PR #2605"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/faults.rs:133 states the is_manager branches 'have been replaced with `false` (least privilege) and need a real role lookup against the memberships table'. The lookup is in fact already wired: MembershipRepository::is_manager_in_org is called at faults.rs:194, :692, :1421 and :1470.",
         "backend/servers/api-server/src/routes/critical_notifications.rs:478 states create_notification / get_stats are 'unreachable until a real role lookup is wired up'. Both already gate on is_manager_in_org — critical_notifications.rs:59-64 and :399-404.",
-        "Cost is agent-facing, not user-facing: these comments read as an open auth hole and will keep pulling reviewers and research runs into re-investigating settled code (this scan did exactly that). Delete or rewrite them to describe the shipped membership-role gate."
+        "Cost is agent-facing, not user-facing: these comments read as an open auth hole and will keep pulling reviewers and research runs into re-investigating settled code (this scan did exactly that). Delete or rewrite them to describe the shipped membership-role gate.",
+        "resolved: PR #2605 merged 2026-07-31 — docs(api-server) remove stale TODO(security) headers in faults/critical_notifications"
       ],
       "files": [
         "backend/servers/api-server/src/routes/faults.rs",
         "backend/servers/api-server/src/routes/critical_notifications.rs"
       ],
       "created_at": "2026-07-28",
-      "updated_at": "2026-07-28",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5475,20 +5479,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "PR #2609"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/layout/resolved.rs:82,88,92,98,107,110,115,123 — err500 closure returns raw internal error text to the client (`format!(\"db error: {e}\")`, `format!(\"stored published config invalid: {e}\")`, etc.), leaking sqlx/serde diagnostic strings (column names, JSON structural detail, connection info).",
         "Sibling handlers in the same layout module (backend/servers/api-server/src/routes/layout/tenant.rs:29-32 `internal_error`, backend/servers/api-server/src/routes/layout/admin.rs:29-37 `internal_error`) log the real error server-side via `tracing::error!` and return a generic 'internal server error' body — resolved.rs is the outlier that both fails to log and leaks the message.",
-        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs)."
+        "Impact: information disclosure on the public GET /api/v1/layout/resolved/{screen} path, plus loss of server-side observability (error text goes only to the client, never to logs).",
+        "resolved: PR #2609 merged 2026-07-31 — stop leaking raw sqlx/serde error text on public GET /layout/resolved (module-level internal_error helper + regression test)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/layout/resolved.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5497,21 +5503,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "PR #2606"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/layout/admin.rs:94,171,202,229,269,389,453 — every mutation handler ends with `Ok(Json(serde_json::to_value(row).unwrap_or_default()))`. If serialization ever fails, the client gets 200 OK with a JSON `null` body instead of the saved row, matching the skill's 'StatusCode::OK on an error branch' anti-pattern.",
         "backend/servers/api-server/src/routes/layout/tenant.rs:202 — same shape on the `put_tenant_override` success path.",
-        "Route through `internal_error(e)` (already defined in both files) to keep semantics consistent with the module's other error branches."
+        "Route through `internal_error(e)` (already defined in both files) to keep semantics consistent with the module's other error branches.",
+        "resolved: PR #2606 merged 2026-07-31 — return 500 on failed layout serialize instead of null body"
       ],
       "files": [
         "backend/servers/api-server/src/routes/layout/admin.rs",
         "backend/servers/api-server/src/routes/layout/tenant.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5520,21 +5528,132 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "PR #2608"
       ],
       "evidence": [
         "backend/servers/api-server/src/services/scheduler.rs:385 — `let target_user_ids = self.get_announcement_target_users(announcement).await.unwrap_or_default();` — a DB failure in the per-target lookup silently produces an empty target set and the announcement is treated as 'nothing to notify' with no log, no metric, no retry.",
         "backend/servers/api-server/src/services/scheduler.rs:600 — same pattern for `get_vote_eligible_users(vote.building_id).await.unwrap_or_default()` on vote activation.",
         "backend/servers/api-server/src/services/scheduler.rs:667-671 — `close_expired_votes` swallows `vote_result` / `results_result` errors via `if let Ok(Some(vote)) = ... { if let Ok(Some(results)) = ... }` with no `else` log; a DB error on either query silently skips the close-vote notification.",
-        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly matches on `Err(e)` and emits `tracing::error!` before falling back to an empty map — the same treatment should apply."
+        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly matches on `Err(e)` and emits `tracing::error!` before falling back to an empty map — the same treatment should apply.",
+        "resolved: PR #2608 merged 2026-07-31 — surface DB errors on scheduler notification-target lookups"
       ],
       "files": [
         "backend/servers/api-server/src/services/scheduler.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-schedule-cadence-2026-07-31",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reports/schedule_cadence.rs — 889 lines this window (PR #2599 refactor split)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2599"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs: 889 lines this run (PR #2599 refactor split — new file extracted from reports.rs)",
+        "Rank 1/3 for the 2026-07-30..2026-07-31 window; first appearance in hotspot_history",
+        "Mechanical churn (single refactor PR), not repeated instability — score reflects raw churn ranking only"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-mod-2026-07-31",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reports/mod.rs — 887 lines this window (PR #2599 refactor split)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2599"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs: 887 lines this run (PR #2599 refactor split — deletions moved to schedule_cadence.rs)",
+        "Rank 2/3 for the 2026-07-30..2026-07-31 window; first appearance in hotspot_history",
+        "Mechanical churn (single refactor PR extracting helpers), not repeated instability — score reflects raw churn ranking only"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-voice-webhooks-2026-07-31",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/voice_webhooks.rs — 472 lines this window (PR #2604 test-gap fix)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2604"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs: 472 lines this run (PR #2604 unit-test coverage + testability refactor)",
+        "Rank 3/3 for the 2026-07-30..2026-07-31 window; first appearance in hotspot_history",
+        "Test-driven churn (adding coverage where none existed), not instability — score reflects raw churn ranking only"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-dos",
+      "title": "SECURITY: reality-server sso_sessions HashMap unbounded — /api/v1/sso/login memory-DoS on abandoned flows (no reaper, no cap)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review 2026-07-31 reality-server"
+      ],
+      "evidence": [
+        "sso.rs:94 — sso_login inserts a PendingSsoSession into state.sso_sessions on every unauthenticated call; only sso_callback removes it. The 10-minute check at sso.rs:247 only runs at callback time (filters late arrivals) and does not evict abandoned entries. state.rs:841/896 declares sso_sessions as an unbounded Arc<Mutex<HashMap<...>>> with no reaper task, no capacity cap, and no retain/prune anywhere in the segment — public /api/v1/sso/login is a memory-DoS vector.",
+        "Signal: code-review-finding, severity=High → score_delta=+3, confidence=medium (static analysis, no runtime confirmation)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": "plans/code-review-reality-server-sso-sessions-unbounded-dos.md"
+    },
+    {
+      "id": "code-review-reality-server-record-view-unauth-noverify",
+      "title": "reality-server record_view (POST /listings/{id}/view) unauth + swallows track_view errors — analytics abuse surface",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-07-31 reality-server"
+      ],
+      "evidence": [
+        "listings.rs:863 — POST /api/v1/listings/{id}/view is unauthenticated, does not verify the listing exists, and swallows track_view errors as tracing::warn! while returning 204 unconditionally. Analytics counters (views, unique_views, source_*) can be inflated for any known UUID with no rate limit visible at the route layer, and non-existent IDs are indistinguishable from real ones — no bounded impact but a design smell for a metric that later drives the analytics dashboard.",
+        "Signal: code-review-finding, severity=Low → score_delta=+1, confidence=medium (static analysis)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
       "plan": null
     }
   ]
