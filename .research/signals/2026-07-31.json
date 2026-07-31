@@ -1,0 +1,455 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports/schedule_cadence.rs",
+      "type": "churn-hotspot",
+      "source": "Phase 1 churn scan 2026-07-31 (2026-07-30T03:32Z..2026-07-31T14:14Z on dev)",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/reports/schedule_cadence.rs churned 889 additions+deletions across 2026-07-30..2026-07-31 window; hotspot_history.runs_seen 0 \u2192 1.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/reports/schedule_cadence.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "Phase 1 churn scan 2026-07-31 (2026-07-30T03:32Z..2026-07-31T14:14Z on dev)",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs churned 472 additions+deletions across 2026-07-30..2026-07-31 window; hotspot_history.runs_seen 0 \u2192 1.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "Phase 1 churn scan 2026-07-31 (2026-07-30T03:32Z..2026-07-31T14:14Z on dev)",
+      "score_delta": 0,
+      "evidence": "backend/crates/integrations/src/booking/mod.rs churned 441 additions+deletions across 2026-07-30..2026-07-31 window; hotspot_history.runs_seen 2 \u2192 3. (re-emit \u2014 cumulative type; no score_delta re-applied.)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking/mod.rs",
+      "type": "repeated-churn",
+      "source": "Phase 1 churn scan 2026-07-31",
+      "score_delta": 0,
+      "evidence": "booking/mod.rs: runs_seen 2 \u2192 3, but the split refactor plan (PR #2611 merged 2026-07-31) is the driver of this window's churn (441 lines: the split itself). Suppress score to avoid thrashing the just-resolved plan.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2600",
+      "score_delta": 2,
+      "evidence": "PR #2600 (code-review-reality-web-inline-tenant-json-xss) touched frontend/apps/reality-web/src/app/[locale]/layout.tsx + frontend/apps/reality-web/src/app/env.js/route.ts without updating docs/screens/reality/*.md. Heuristic \u2014 layout.tsx is a shared shell (arguably not a user-facing screen), route.ts is env-config JSON. Review candidate, not promotable.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "frontend/apps/reality-web/src/app/env.js/route.ts"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2601",
+      "type": "hotfix-no-test",
+      "source": "PR #2601",
+      "score_delta": 2,
+      "evidence": "PR #2601 (fix no-op Save paths) touches 3 admin-web frontend files (MobileConfigPage.tsx, platform.tsx, SettingsForm.tsx) with no test-file changes.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx",
+        "frontend/apps/admin-web/src/pages/platform.tsx",
+        "frontend/packages/admin-ui/src/components/SettingsForm/SettingsForm.tsx"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2592",
+      "type": "hotfix-no-test",
+      "source": "PR #2592",
+      "score_delta": 2,
+      "evidence": "PR #2592 (fix(ppt-web): gate WebSocket console diagnostics behind import.meta.env.DEV) touches only frontend/apps/ppt-web/src/lib/websocket.ts with no test file. Low-severity DEV-only change; a Vitest guard could pin behaviour but priority is minor.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2581 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2582",
+      "type": "dep-update-noise",
+      "source": "PR #2582",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2582 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2583 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2584 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2585 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2586 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2587",
+      "type": "dep-update-noise",
+      "source": "PR #2587",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2587 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2588 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2589 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2590 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2591 opened 2026-07-30 \u2014 logged, no vector created.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-core-push-fanout-reqwest-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:280 and :773 \u2014 the FCM and APNs transport adapters build their reqwest client with `reqwest::Client::builder()...build().expect(\"reqwest client build should not fail\")`. `reqwest::ClientBuilder::build()` returns a `Result` precisely because it can fail (TLS backend initialization; the APNs adapter also pins `http2_prior_knowledge()`), so this `expect` is a panic path, not a guaranteed-infallible unwrap.",
+        "Reachability: `FcmHttpAdapter::new` / `ApnsHttpAdapter::new` are called at server startup via `FcmHttpAdapter::from_env` / `ApnsHttpAdapter::from_env` -> `CombinedPushAdapter::new` (push_fanout.rs:1061-1062, 1293) -> `PushFanoutWorker::new` (main.rs:695). A build failure therefore aborts the whole api-server process during boot.",
+        "Inconsistency with the module's own stated design: `CombinedPushAdapter::new` deliberately degrades gracefully when push is unconfigured \u2014 the surrounding code logs `\"neither FCM nor APNs is configured; push delivery will be skipped (no crash \u2014 set env vars to enable)\"` (push_fanout.rs:1285-1289). Panicking on a transport-client build failure contradicts that never-crash-the-server-over-push contract. Fix: make `new`/`from_env` return `Result` (or fall back to a disabled/no-op transport with a `tracing::error!`) instead of `.expect(...)`, so an infrastructure-level reqwest build error degrades push delivery rather than taking down the whole server. Low severity: build failures are rare and only at startup, but the crash path is real and avoidable.",
+        "Scope note: the rest of the reviewed api-core segment (churn hotspot services/scheduler.rs, plus services/oauth.rs, services/stripe.rs, services/jwt.rs, services/totp.rs, services/workflow_executor.rs, services/auth.rs) is robustly defended \u2014 poison-safe mutex locks (`lock().unwrap_or_else(|e| e.into_inner())`), guarded RLS/global-read context teardown via `release_scheduler_conn`, atomic OAuth code find-and-consume, mandatory S256 PKCE, Stripe webhook HMAC via constant-time `ct_eq`, no secrets in logs, and no production-path `unwrap`/`todo!`/`unsafe`. No medium/high findings in this pass."
+      ],
+      "expert": "rust",
+      "_origin": "2026-07-31-api-core-tier1d.json"
+    },
+    {
+      "id": "code-review-api-handlers-install-empty-cred-default",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:1061 and :1065 (fn sync_booking, line 1007) \u2014 Booking.com OTA credentials are read as `integrations::decrypt_if_available(crypto.as_ref(), &connection.access_token.clone().unwrap_or_default())` for the username and `refresh_token.clone().unwrap_or_default()` for the password. When the connection row has NULL access/refresh tokens, `unwrap_or_default()` yields an empty string, so a `BookingCredentials::new(hotel_id, \"\", \"\")` is built and a live OTA API call is made with blank credentials.",
+        "Inconsistency in the same handler: the required `external_property_id` immediately above (line 1045) is handled correctly with `.ok_or_else(|| (StatusCode::BAD_REQUEST, ErrorResponse::new(\"NOT_CONFIGURED\", \"Hotel ID not configured\")))`. Missing OTA credentials should surface the same clean 400 NOT_CONFIGURED, but instead they fall through to an opaque upstream auth failure (or a generic 500) that hides the real 'credentials not configured' cause from the manager triggering the sync.",
+        "Repeated in two sibling Booking OTA handlers: install.rs:1381/:1385 (fn push_booking_availability, line 1318) and install.rs:1529 (fn push_booking_rates, line 1466) use the identical `access_token.clone().unwrap_or_default()` / `refresh_token.clone().unwrap_or_default()` pattern. Fix: replace the three `unwrap_or_default()` credential reads with an `ok_or_else(... NOT_CONFIGURED ...)` guard mirroring the hotel_id check, so a partially-configured connection fails fast with a clear 400 instead of attempting an OTA call with empty credentials."
+      ],
+      "expert": "rust",
+      "_origin": "2026-07-31-api-handlers-tier1d.json"
+    },
+    {
+      "id": "code-review-api-handlers-auth-2fa-flag-fail-false",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:~2324 (GET /me) and :~2416 (profile update response) compute the response flag as `two_factor_enabled = state.two_factor_repo.get_by_user_id(user.id).await.ok().flatten().map(|r| r.enabled).unwrap_or(false)`. The `.ok()` swallows any DB error and the `.unwrap_or(false)` then reports 2FA as DISABLED whenever the lookup transiently fails, even for a user who actually has 2FA enabled.",
+        "This is a display/state-reporting flag only (login-time enforcement reads the record independently and fails closed at auth.rs:~800 where TOTP `verify_code(...).unwrap_or(false)` denies on error), so it is NOT a security bypass \u2014 but on a transient DB blip the account page and the profile-update response can tell the user 2FA is off when it is on, which is misleading and could prompt a redundant/erroneous re-enrollment. Low severity. Fix: distinguish a genuine `Ok(None)` (no record -> false) from an `Err(_)` (DB failure -> propagate 500 or retain last-known state) instead of collapsing both to `false`.",
+        "Scope note: the rest of the reviewed api-handlers churn hotspots are robustly defended. Document public-share access (routes/documents/shares.rs access_shared_document/access_protected_share) enforces expiry + revocation in SQL (`revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())` in find_share_by_token_rls), share passwords are argon2-hashed (repositories/document/internal.rs hash_password), revoke is IDOR-hardened with a document_id predicate (#2197), integrations/sync.rs releases the RLS connection on every early-return branch, and integrations/webhook.rs verifies Stripe HMAC signatures and its `Ok(StatusCode::OK)` early returns are all intentional, commented webhook-ack paths. No security or crash-path findings in this pass."
+      ],
+      "expert": "rust",
+      "_origin": "2026-07-31-api-handlers-tier1d.json"
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 \u2014 the public `create_review` handler validates only `rating` (1..=5, line 196) and then binds the user-controlled `data.body` straight into `INSERT INTO realtor_reviews (... body ...)` at line 265. There is NO maximum-length check and NO non-empty/trim check on `body` (grep for `body` + `len|MAX|empty|trim|valid` in the file returns nothing).",
+        "This is inconsistent with every sibling public write path in the same segment, which all enforce input bounds: routes/inquiries.rs caps message at MAX_INQUIRY_MESSAGE_LEN=5000 via validate_inquiry_lengths (lines 24-52, enforced at 188-190), and routes/reports.rs caps description at MAX_REPORT_DESCRIPTION_LEN=5000 (lines 27, 161-166). agent_reviews.rs is the lone public write endpoint with an unbounded free-text field.",
+        "Impact (missing input validation on an internet-facing, authenticated-but-public write path): an attacker with any portal account can POST an arbitrarily large `body` (bounded only by the request-body limit) and persist it \u2014 storage bloat / DB row-size pressure and unbounded payload echoed back on the public list_reviews GET (lines 80-160). Empty/whitespace-only reviews are also accepted. Fix: add a MAX_REVIEW_BODY_LEN constant (mirror the 5000 used by inquiries/reports), reject over-length and empty/whitespace-only bodies with 400 BAD_REQUEST before the INSERT, matching the existing validate_inquiry_lengths pattern."
+      ],
+      "expert": "rust",
+      "_origin": "2026-07-31-reality-server-tier1d-2.json"
+    },
+    {
+      "id": "code-review-reality-server-ss-alert-watermark-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237 \u2014 the saved-search enqueue worker advances the per-search watermark with `let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64).await;`, silently discarding the Result. If this DB write fails AFTER a successful `enqueue_search_alert` (line 216), `last_matched_at` is not advanced, so on the next due poll `find_new_match_listing_ids(.., Some(since), ..)` recomputes the SAME window (unchanged `since`) and re-enqueues the SAME listing IDs, producing a duplicate saved-search alert email/push to the user.",
+        "Same file line 176 \u2014 the first-sighting watermark write (`let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, 0).await;`) is also swallowed; if it fails the search never establishes its baseline and will re-enter the first-sighting branch every poll, so it never starts alerting.",
+        "Observability gap / inconsistency: every sibling error path in this same file uses structured logging (tracing::error at 166, tracing::warn at 194 and 205 and 227), and the parallel workers services/search_alert_drainer.rs (run_once, tracing::error on mark_search_alert_notified failure at ~321) and services/favorite_alerts.rs (tracing::warn on every pass failure, lines 121/133) log all DB failures. saved_search_alerts.rs is the lone place that drops the mark-matched Result with no log, so a failing watermark write is invisible to operators AND causes duplicate/again-suppressed alerts.",
+        "Fix: replace both `let _ = ... mark_saved_search_matched(...).await;` with `if let Err(e) = ... { tracing::warn!(id = %search.id, error = %e, \"[#983] failed to advance saved-search watermark\"); }` (matching the enqueue-failure handling immediately above at line 227), so failures are observable and the retry semantics are intentional rather than silent."
+      ],
+      "expert": "rust",
+      "_origin": "2026-07-31-reality-server-tier1d-3.json"
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:146-165 \u2014 the `Host::Ipv6` branch of `validate_fetch_url` only rejects `is_loopback()` (::1), `fc00::/7` and `fe80::/10`. It does NOT reject IPv4-mapped IPv6 addresses (`::ffff:a.b.c.d`) or IPv4-compatible addresses. `std::net::Ipv6Addr::is_loopback` returns false for `::ffff:127.0.0.1`, and the fc00/fe80 masks never match `::ffff:...`, so a mapped address slips straight through as an allowed fetch URL.",
+        "This is a full SSRF-guard bypass: an attacker can encode any blocked IPv4 target as a mapped IPv6 literal to defeat the entire IPv4 blocklist (private ranges, 127.0.0.0/8, and crucially 169.254.169.254 cloud metadata). Example payloads: `https://[::ffff:169.254.169.254]/latest/meta-data/`, `https://[::ffff:127.0.0.1]/`, `https://[::ffff:10.0.0.5]/feed.xml`. Unlike `Host::Domain`, an IP literal is never re-resolved by the worker, so the documented 'worker re-validates resolved IP' defense does not apply here.",
+        "Reachability (traced end-to-end): user-controlled `feed_url` from agency-member requests reaches this guard at backend/servers/reality-server/src/routes/agency_imports.rs:238 (test_connection) and :290 (run_import); both call `validate_fetch_url(url)` as the only pre-fetch SSRF gate (marked SECURITY H3, round-9 audit). Fix: after matching `Host::Ipv6`, canonicalize via `ip.to_ipv4_mapped()` / `to_ipv4()` and re-run the IPv4 blocklist on the embedded address; also reject the unspecified address `::`."
+      ],
+      "expert": "security",
+      "_origin": "2026-07-31-reality-server-tier1d.json"
+    },
+    {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:148-151 \u2014 `check_redirect_uri_allowed` treats any value starting with `/` (but not `//`) as an unconditionally-allowed same-origin relative path: `if raw.starts_with('/') && !raw.starts_with(\"//\") { return Ok(()); }`. This only blocks the protocol-relative `//evil.com` form, not the backslash variant `/\\evil.com` (or `/\\/evil.com`).",
+        "Chrome and Firefox normalize backslashes to forward slashes when resolving a Location URL, so the browser resolves `/\\evil.com` to `//evil.com` = protocol-relative \u2192 navigates to https://evil.com. This is an open-redirect bypass on the SSO redirect_uri allowlist (the value is threaded through the OAuth `state` and used as the post-login redirect target). Open redirect on an auth-callback endpoint is a common phishing / token-leak primitive.",
+        "Fix: after the leading-slash fast path, also reject values whose second character is `\\` (and normalize backslashes before the `//` check), or drop the relative-path fast path and require every redirect_uri to parse and match the allowlist explicitly."
+      ],
+      "expert": "security",
+      "_origin": "2026-07-31-reality-server-tier1d.json"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches ^# YYYY-MM-DD$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD:state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative dup signal with delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items > 14d lost >=1 or dropped",
+      "observed": "no open items > 14d cutoff",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated 'adversarial pass:' in brief",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "count new plans staged",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata+headings",
+      "passed": true,
+      "command": "grep 4 metadata + 11 headings + Mode + capability tick + files-exist",
+      "observed": "all present, capability=2 ticks, Mode=cloud-ok, file resolves",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed line honest + cursors advanced",
+      "observed": "brief says 'none', cursors advanced",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still resolve",
+      "observed": "all resolve in plans/ or _archive/",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "7 >= 7",
+      "expected": ">= 7"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15-cap",
+      "passed": true,
+      "command": "auto_fix_actions cap check",
+      "observed": "true (empty)",
+      "expected": "true"
+    },
+    {
+      "goal": "G15-idempotency",
+      "passed": true,
+      "command": "no signal_id already in auto_fix_history",
+      "observed": "true (empty)",
+      "expected": "true"
+    },
+    {
+      "goal": "G15-kill-switch",
+      "passed": true,
+      "command": "ROUTINE_AUTOFIX_DISABLED unset -> can auto-fix; no actions taken -> no violation",
+      "observed": "no actions",
+      "expected": "no violation"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor 0-7 + coverage_cursor advanced",
+      "observed": "action-list.items OK, risks.items OK, project-state non-empty, pm_cursor=3, coverage_cursor=5<13, advanced vs HEAD (2->3, 4->5)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in staged added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate \u2014 none of this run's signals matched confidence=high + score>=3 + allowlist type"
+}
