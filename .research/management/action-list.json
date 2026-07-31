@@ -569,7 +569,7 @@
       "action": "Cloud routine cadence recovery — reduce 3–4d gaps between runs [retry 2/2 of failed dx-routine-lag-catchup-2026-07]",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-07-29T08:08:27Z (retry_of=dx-routine-lag-catchup-2026-07 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T08:08:17Z)",
       "deadline": null,
       "dependency": null,

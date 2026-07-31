@@ -5485,7 +5485,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review api-core 2026-07-30"
       ],
@@ -5499,7 +5499,12 @@
       ],
       "created_at": "2026-07-30",
       "updated_at": "2026-07-30",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-07-31T06:04:24Z",
+        "assignment_status": "merged",
+        "pr_number": 2609
+      }
     },
     {
       "id": "code-review-api-core-admin-rs-swallowed-serialize",
