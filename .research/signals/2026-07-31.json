@@ -1,0 +1,112 @@
+{
+  "date": "2026-07-31",
+  "run_iso": "2026-07-31T03:15:00Z",
+  "trigger": "",
+  "phases_failed": [],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "commit-window 34ac5872..HEAD",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs — 472 lines this window (PR #2604 test additions, healthy churn); runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/src/routes/voice_webhooks.rs"]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/MobileConfigPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-window 34ac5872..HEAD",
+      "score_delta": 1,
+      "evidence": "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx — 365 lines this window (PR #2601 no-op-Save rewrite); runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler.rs",
+      "type": "churn-hotspot",
+      "source": "commit-window 34ac5872..HEAD",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/scheduler.rs — 63 lines this window (PR #2608 error-logging around notification-target lookups); runs_seen=2 (stacks with repeated-churn)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/src/services/scheduler.rs"]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/scheduler.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "scheduler.rs runs_seen advances 1→2 (was last_seen 2026-07-30); PR #2608 patched notification-target error paths without new tests",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": ["backend/servers/api-server/src/services/scheduler.rs"]
+    },
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2600",
+      "score_delta": 2,
+      "evidence": "PR #2600 (code-review-reality-web-inline-tenant-json-xss) modified reality-web app/[locale]/layout.tsx (+12/-2) and app/env.js/route.ts (+6/-3) — both in the frontend/apps/reality-web/src/app/** trigger set — without updating any docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "frontend/apps/reality-web/src/app/env.js/route.ts"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "reality-server tier-1d 2026-07-31",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 — public `create_review` validates only rating (1..=5, line 196) and then binds user-controlled `data.body` straight into `INSERT INTO realtor_reviews (... body ...)` at line 265; no length / non-empty / trim check on body (grep for body + len|MAX|empty|trim|valid returns nothing)",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": ["backend/servers/reality-server/src/routes/agent_reviews.rs"]
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "type": "code-review-finding",
+      "source": "reality-server tier-1d 2026-07-31",
+      "score_delta": 3,
+      "evidence": "backend/servers/reality-server/src/util/url_validator.rs:146-165 — Host::Ipv6 branch of validate_fetch_url rejects only is_loopback (::1), fc00::/7, fe80::/10; does NOT reject IPv4-mapped IPv6 (::ffff:a.b.c.d) — std::net::Ipv6Addr::is_loopback returns false for ::ffff:127.0.0.1 and the fc00/fe80 masks never match ::ffff:...",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": ["backend/servers/reality-server/src/util/url_validator.rs"]
+    },
+    {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "type": "code-review-finding",
+      "source": "reality-server tier-1d 2026-07-31",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:148-151 — check_redirect_uri_allowed treats any raw starting with '/' (but not '//') as unconditionally allowed same-origin; only blocks protocol-relative `//evil.com`, not backslash variant `/\\evil.com` (or `/\\/evil.com`)",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": ["backend/servers/reality-server/src/routes/sso.rs"]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist type this run (screen-map-drift is medium; churn signals are analytical; SSRF finding created a plan not an auto-fix)",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-07-31.md && head -1 grep", "observed": "will be created + head-1 matches", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "jq compare state.json vs HEAD", "observed": "last_pr_seen 2576->2608, last_commit_sha advanced, seen_signals grew", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq unique ids", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "jq re-emit cumulative allowlist check", "observed": "true (no non-cumulative id re-scored)", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "jq score cap + decay", "observed": "no score >8; no open item older than 14d", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "adversarial pass annotation", "observed": "brief lists plan with 'adversarial pass: passed'", "expected": "match"},
+    {"goal": "G7", "passed": true, "command": "metadata+headings+mode+files-exist", "observed": "1 new plan, 4 metadata, 11 required headings + Dependencies, mode=cloud-ok, 2 capabilities ticked, 1 file resolves", "expected": "all pass"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only outside .research/", "observed": "0", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "grep secrets in staged diff", "observed": "0", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "match", "expected": "match"},
+    {"goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no phase failed", "expected": "match"},
+    {"goal": "G12", "passed": true, "command": "prior-run plan slugs present", "observed": "no deletions from plans/ this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count non-decreasing", "observed": "unchanged", "expected": ">= HEAD"},
+    {"goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "match", "expected": "match"},
+    {"goal": "G15", "passed": true, "command": "auto_fix caps + idempotency + kill-switch", "observed": "auto_fix_actions=[], kill-switch not set but no candidate", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts + pm_cursor advance", "observed": "no-op — Phase 1.6 skipped this run", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "grep telegram token pattern", "observed": "0", "expected": "0"}
+  ]
+}

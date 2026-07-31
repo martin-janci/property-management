@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-30T03:32:05Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 2576,
-  "last_issue_seen": 2575,
-  "last_commit_sha": "34ac58720df53e28382361d2331b56f1cc793046",
+  "last_run_iso": "2026-07-31T03:15:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2608,
+  "last_issue_seen": 2598,
+  "last_commit_sha": "340bc98b217c4978ff4c624ab74ba3bfc1811796",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -398,9 +398,9 @@
       "recent_churn": 364
     },
     "backend/servers/api-server/src/services/scheduler.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-30",
-      "recent_churn": 347
+      "runs_seen": 2,
+      "last_seen": "2026-07-31",
+      "recent_churn": 63
     },
     "backend/servers/api-server/src/routes/layout/tenant.rs": {
       "runs_seen": 1,
@@ -411,6 +411,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-30",
       "recent_churn": 240
+    },
+    "backend/servers/api-server/src/routes/voice_webhooks.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-31",
+      "recent_churn": 472
+    },
+    "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-07-31",
+      "recent_churn": 365
     }
   },
   "seen_signals": [
@@ -728,13 +738,21 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/MobileConfigPage.tsx",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler.rs",
+    "repeated-churn-backend/servers/api-server/src/services/scheduler.rs",
+    "screen-map-drift-pr-2600-reality",
+    "code-review-reality-server-agent-review-body-unbounded",
+    "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+    "code-review-reality-server-redirect-backslash-bypass"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-07-29",
     "api-core": "2026-07-20",
-    "reality-server": "2026-07-18",
+    "reality-server": "2026-07-31",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
     "reality-web": "2026-07-28",
@@ -742,9 +760,9 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 52,
-    "vectors_created": 228,
-    "plans_created": 17,
+    "runs": 53,
+    "vectors_created": 234,
+    "plans_created": 18,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

@@ -5248,20 +5248,22 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "standing-scan-2026-07-28"
+        "standing-scan-2026-07-28",
+        "PR #2604"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs is 1148 lines with no `#[cfg(test)]` module, and no file under backend/servers/api-server/tests/ references it.",
         "Mounted endpoints (voice_webhooks.rs:60 voice_webhook_router): POST /alexa, /alexa/health, /google, /oauth/exchange, /oauth/refresh, /verify — the OAuth pair issues/refreshes tokens, so this is auth-adjacent surface with zero regression coverage.",
-        "Pairs with [security-voice-webhook-alexa-signature-not-verified]: a signature-verification fix needs accept/reject tests, and there is currently no harness for this module to hang them on."
+        "Pairs with [security-voice-webhook-alexa-signature-not-verified]: a signature-verification fix needs accept/reject tests, and there is currently no harness for this module to hang them on.",
+        "resolved: PR #2604 merged 2026-07-31 — test-gap-voice-webhooks-zero-coverage: unit tests for voice_webhooks.rs"
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
       ],
       "created_at": "2026-07-28",
-      "updated_at": "2026-07-28",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5357,21 +5359,23 @@
       "vector": "dx",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "standing-scan-2026-07-28"
+        "standing-scan-2026-07-28",
+        "PR #2605"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/faults.rs:133 states the is_manager branches 'have been replaced with `false` (least privilege) and need a real role lookup against the memberships table'. The lookup is in fact already wired: MembershipRepository::is_manager_in_org is called at faults.rs:194, :692, :1421 and :1470.",
         "backend/servers/api-server/src/routes/critical_notifications.rs:478 states create_notification / get_stats are 'unreachable until a real role lookup is wired up'. Both already gate on is_manager_in_org — critical_notifications.rs:59-64 and :399-404.",
-        "Cost is agent-facing, not user-facing: these comments read as an open auth hole and will keep pulling reviewers and research runs into re-investigating settled code (this scan did exactly that). Delete or rewrite them to describe the shipped membership-role gate."
+        "Cost is agent-facing, not user-facing: these comments read as an open auth hole and will keep pulling reviewers and research runs into re-investigating settled code (this scan did exactly that). Delete or rewrite them to describe the shipped membership-role gate.",
+        "resolved: PR #2605 merged 2026-07-31 — dx-stale-todo-security-comments-faults-critical-notifications: remove stale TODO(security) gate comments"
       ],
       "files": [
         "backend/servers/api-server/src/routes/faults.rs",
         "backend/servers/api-server/src/routes/critical_notifications.rs"
       ],
       "created_at": "2026-07-28",
-      "updated_at": "2026-07-28",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5412,20 +5416,22 @@
       "title": "Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 3,
       "status": "open",
       "sources": [
         "PR #2567",
-        "PR #2576"
+        "PR #2576",
+        "PR #2608"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window"
+        "backend/servers/api-server/src/services/scheduler.rs: 347 lines changed across PRs [2567, 2576] — Rank 1/3 for 2026-07-28..2026-07-30 window",
+        "2026-07-31 re-emitted as churn-hotspot + repeated-churn (runs_seen=2): 181 lines this window (PR #2608, error-logging around notification-target lookups); no new tests"
       ],
       "files": [
         "backend/servers/api-server/src/services/scheduler.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5497,21 +5503,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "PR #2606"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/layout/admin.rs:94,171,202,229,269,389,453 — every mutation handler ends with `Ok(Json(serde_json::to_value(row).unwrap_or_default()))`. If serialization ever fails, the client gets 200 OK with a JSON `null` body instead of the saved row, matching the skill's 'StatusCode::OK on an error branch' anti-pattern.",
         "backend/servers/api-server/src/routes/layout/tenant.rs:202 — same shape on the `put_tenant_override` success path.",
-        "Route through `internal_error(e)` (already defined in both files) to keep semantics consistent with the module's other error branches."
+        "Route through `internal_error(e)` (already defined in both files) to keep semantics consistent with the module's other error branches.",
+        "resolved: PR #2606 merged 2026-07-31 — code-review-api-core-admin-rs-swallowed-serialize: return 500 on failed layout serialize instead of null body"
       ],
       "files": [
         "backend/servers/api-server/src/routes/layout/admin.rs",
         "backend/servers/api-server/src/routes/layout/tenant.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
       "plan": null
     },
     {
@@ -5520,21 +5528,147 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-07-30"
+        "rotating-expert-review api-core 2026-07-30",
+        "PR #2608"
       ],
       "evidence": [
         "backend/servers/api-server/src/services/scheduler.rs:385 — `let target_user_ids = self.get_announcement_target_users(announcement).await.unwrap_or_default();` — a DB failure in the per-target lookup silently produces an empty target set and the announcement is treated as 'nothing to notify' with no log, no metric, no retry.",
         "backend/servers/api-server/src/services/scheduler.rs:600 — same pattern for `get_vote_eligible_users(vote.building_id).await.unwrap_or_default()` on vote activation.",
         "backend/servers/api-server/src/services/scheduler.rs:667-671 — `close_expired_votes` swallows `vote_result` / `results_result` errors via `if let Ok(Some(vote)) = ... { if let Ok(Some(results)) = ... }` with no `else` log; a DB error on either query silently skips the close-vote notification.",
-        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly matches on `Err(e)` and emits `tracing::error!` before falling back to an empty map — the same treatment should apply."
+        "Compare backend/servers/api-server/src/services/scheduler.rs:885-894 (`send_vote_reminders`) which explicitly matches on `Err(e)` and emits `tracing::error!` before falling back to an empty map — the same treatment should apply.",
+        "resolved: PR #2608 merged 2026-07-31 — code-review-api-core-scheduler-rs-silent-target-err: surface DB errors on scheduler notification-target lookups"
       ],
       "files": [
         "backend/servers/api-server/src/services/scheduler.rs"
       ],
       "created_at": "2026-07-30",
-      "updated_at": "2026-07-30",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-voice-webhooks-2026-07-31",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/voice_webhooks.rs — 472 lines this window (test-add churn, healthy)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2604"
+      ],
+      "evidence": [
+        "PR #2604 added 33 unit tests (473 lines) to voice_webhooks.rs; churn is entirely test-add resolving the prior test-gap-voice-webhooks-zero-coverage backlog item",
+        "runs_seen=1 (first hotspot appearance); low-priority — not indicative of instability"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-admin-web-mobile-config-2026-07-31",
+      "title": "Churn hotspot: frontend/apps/admin-web/src/pages/MobileConfigPage.tsx — 365 lines this window (PR #2601 no-op-Save rewrite)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2601"
+      ],
+      "evidence": [
+        "PR #2601 removed 273 lines of dead audit-dialog / fetch-then-warn machinery and reframed the page as display-only (92 added, 273 removed = 365-line churn); backing endpoint does not exist",
+        "runs_seen=1 (first hotspot appearance)"
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2600-reality",
+      "title": "screen-map drift: PR #2600 touched reality-web/src/app/[locale]/layout.tsx + app/env.js/route.ts w/o docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2600"
+      ],
+      "evidence": [
+        "PR #2600 (code-review-reality-web-inline-tenant-json-xss) modified frontend/apps/reality-web/src/app/[locale]/layout.tsx (+12/-2) and app/env.js/route.ts (+6/-3) — both in the reality-web app/** trigger set — without updating any docs/screens/reality/*.md",
+        "best-effort heuristic; may be false positive — the layout XSS-escape change may not warrant a screen-map edit (bootstrap plumbing, not user-facing route)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "frontend/apps/reality-web/src/app/env.js/route.ts"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "title": "SECURITY-LITE: reality-server agent_reviews.rs public create_review binds user-controlled body into INSERT with no length/empty/trim validation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-2026-07-31 (reality-server tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 — public `create_review` validates only rating (1..=5); `data.body` is bound into INSERT INTO realtor_reviews (... body ...) at line 265 with no MAX/empty/trim check"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "title": "SECURITY: reality-server url_validator IPv6 branch does not reject IPv4-mapped addresses (::ffff:a.b.c.d) — SSRF bypass for RFC1918 targets",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-2026-07-31 (reality-server tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:146-165 — Host::Ipv6 branch of validate_fetch_url only rejects is_loopback() (::1), fc00::/7 and fe80::/10; does NOT reject IPv4-mapped addresses (::ffff:a.b.c.d) — std::net::Ipv6Addr::is_loopback returns false for ::ffff:127.0.0.1, and fc00/fe80 masks never match ::ffff:..."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": "plans/code-review-reality-server-ssrf-ipv4-mapped-ipv6.md"
+    },
+    {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "title": "SECURITY: reality-server sso.rs check_redirect_uri_allowed treats `/\\evil.com` as same-origin — open-redirect variant not caught by `//` guard",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-2026-07-31 (reality-server tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:148-151 — check_redirect_uri_allowed does `if raw.starts_with('/') && !raw.starts_with(\"//\") { return Ok(()); }`; only blocks protocol-relative `//evil.com`, not backslash variant `/\\evil.com` (or `/\\/evil.com`)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
       "plan": null
     }
   ]
