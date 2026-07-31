@@ -585,7 +585,7 @@
       "priority": "low",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-07-30",
       "first_open_at": "2026-07-30T03:23:02Z",
