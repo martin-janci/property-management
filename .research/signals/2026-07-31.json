@@ -4,19 +4,21 @@
       "id": "repeated-churn-backend/servers/api-server/src/services/scheduler.rs",
       "type": "repeated-churn",
       "source": "PRs merged 2026-07-30..2026-07-31 (#2608, #2609 touched scheduler)",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "high",
       "evidence": "backend/servers/api-server/src/services/scheduler.rs: 181 lines this window, runs_seen 1\u21922 (recent PRs: #2608 silent-target-err)",
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "_score_delta_original": 1
     },
     {
       "id": "screen-map-drift-pr-2600-reality",
       "type": "screen-map-drift",
       "source": "PR #2600",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "evidence": "PR #2600 modified frontend/apps/reality-web/src/app/[locale]/layout.tsx and src/app/env.js/route.ts (SSR JSON-inline XSS hardening) without updating docs/screens/reality/. Note: narrow security fix, likely false-positive \u2014 no user-visible screen behaviour change.",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "_score_delta_original": 2
     },
     {
       "id": "dep-update-noise-pr-2581",
@@ -121,28 +123,31 @@
       "id": "code-review-reality-server-sso-sessions-unbounded-map",
       "type": "code-review-finding",
       "source": "review-2026-07-31 (reality-server segment, pm-backend expert)",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "security",
-      "evidence": "backend/servers/reality-server/src/state.rs:841 \u2014 `pub sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` PKCE-flow store: inserted on every unauth GET /api/v1/sso/login (routes/sso.rs:94) and only removed on successful matching /sso/callback (routes/sso.rs:235-244). Nothing sweeps 10-minute expiry, so abandoned logins leak forever \u2014 unauthenticated flood \u2192 memory-exhaustion DoS + global-mutex contention. Sibling SsoTokenService (state.rs:453-460) and TokenValidationCache (state.rs:679-706) already fixed this pattern; sso_sessions was missed. Fix: mirror SsoTokenService `.retain(|_,t| now - created_at < 10min)` sweep on insert + cap size."
+      "evidence": "backend/servers/reality-server/src/state.rs:841 \u2014 `pub sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` PKCE-flow store: inserted on every unauth GET /api/v1/sso/login (routes/sso.rs:94) and only removed on successful matching /sso/callback (routes/sso.rs:235-244). Nothing sweeps 10-minute expiry, so abandoned logins leak forever \u2014 unauthenticated flood \u2192 memory-exhaustion DoS + global-mutex contention. Sibling SsoTokenService (state.rs:453-460) and TokenValidationCache (state.rs:679-706) already fixed this pattern; sso_sessions was missed. Fix: mirror SsoTokenService `.retain(|_,t| now - created_at < 10min)` sweep on insert + cap size.",
+      "_score_delta_original": 3
     },
     {
       "id": "code-review-reality-server-login-user-enumeration-oracle",
       "type": "code-review-finding",
       "source": "review-2026-07-31 (reality-server segment, pm-backend expert)",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "security",
-      "evidence": "backend/servers/reality-server/src/handlers/users/mod.rs:263 login() has three distinguishable outcomes on public unauth POST /api/v1/users/login: (a) unknown email \u2192 immediate `Invalid email or password` no argon2 (line 255); (b) known email + no password_hash (SSO-only) \u2192 literal `Account uses SSO login` (line 263) discloses email exists + is SSO; (c) known + password \u2192 argon2 then generic error. Two enumeration oracles: distinct SSO string + timing gap between (a)/(b) vs (c). Same handler documents anti-enumeration for password reset (mod.rs:22-24) but login is inconsistent. Fix: (1) collapse SSO branch to generic error; (2) fixed-cost dummy argon2 in unknown-email path for uniform timing."
+      "evidence": "backend/servers/reality-server/src/handlers/users/mod.rs:263 login() has three distinguishable outcomes on public unauth POST /api/v1/users/login: (a) unknown email \u2192 immediate `Invalid email or password` no argon2 (line 255); (b) known email + no password_hash (SSO-only) \u2192 literal `Account uses SSO login` (line 263) discloses email exists + is SSO; (c) known + password \u2192 argon2 then generic error. Two enumeration oracles: distinct SSO string + timing gap between (a)/(b) vs (c). Same handler documents anti-enumeration for password reset (mod.rs:22-24) but login is inconsistent. Fix: (1) collapse SSO branch to generic error; (2) fixed-cost dummy argon2 in unknown-email path for uniform timing.",
+      "_score_delta_original": 2
     },
     {
       "id": "code-review-reality-server-list-my-reports-total-is-page-size",
       "type": "code-review-finding",
       "source": "review-2026-07-31 (reality-server segment, pm-backend expert)",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
-      "evidence": "backend/servers/reality-server/src/routes/reports.rs:342 `let total = reports.len()` returns MyReportsResponse.total set to CURRENT-PAGE length after LIMIT/OFFSET applied (line 307). Default limit=20 (line 290), so a user with 100 reports always sees total: 20 on page 1; clients paginating by `total` stop early. Sibling endpoints do this correctly: articles.rs:196-208 (SELECT COUNT(*) with same filter) and saved_searches.rs:323-331 (`tokio::try_join!` page + count). Fix: run `SELECT COUNT(*)` alongside the page or use `COUNT(*) OVER ()` (see articles.rs:391)."
+      "evidence": "backend/servers/reality-server/src/routes/reports.rs:342 `let total = reports.len()` returns MyReportsResponse.total set to CURRENT-PAGE length after LIMIT/OFFSET applied (line 307). Default limit=20 (line 290), so a user with 100 reports always sees total: 20 on page 1; clients paginating by `total` stop early. Sibling endpoints do this correctly: articles.rs:196-208 (SELECT COUNT(*) with same filter) and saved_searches.rs:323-331 (`tokio::try_join!` page + count). Fix: run `SELECT COUNT(*)` alongside the page or use `COUNT(*) OVER ()` (see articles.rs:391).",
+      "_score_delta_original": 2
     }
   ],
   "goal_checks": [
@@ -315,5 +320,10 @@
   "review_expert": "pm-backend",
   "phase_1_6_skipped": true,
   "phase_1_6_skip_reason": "token/time budget while prioritising buffer-low plan promotion",
-  "trigger_payload": "buffer-low: claimable=5/72 \u2014 refill planner"
+  "trigger_payload": "buffer-low: claimable=5/72 \u2014 refill planner",
+  "note": "Same-day rerun at 08:45 UTC. Signals[] and goal_checks[] preserved from the 08:30 UTC fire (canonical) \u2014 this rerun added no fresh signals and re-checked the same set of gates against the current staged index (all passed).",
+  "fire_index_today": 2,
+  "fire_2_at": "2026-07-31T08:45:00Z",
+  "fire_2_note": "Quiet rerun \u2014 0 new PRs, 0 new issues, only 3 dispatcher chore commits observed on origin/dev. Rebased session branch on origin/dev, overwrote today's brief (idempotent-rewrite), bumped last_commit_sha to d7ff470, incremented stats.quiet_days.",
+  "fire_2_g4_note": "Zeroed score_delta on 5 signals to satisfy G4: they were fully counted in the 08:30 UTC fire (see state.seen_signals and backlog.json for the landed effect). The original deltas are preserved under _score_delta_original for audit."
 }
