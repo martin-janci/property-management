@@ -1,0 +1,54 @@
+{
+  "generated": "2026-07-31T14:10:00Z",
+  "segment": "ppt-web-ui",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "completeness"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-templatelibrary-silent-mutation-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx:53-60 handleUseTemplate does `const result = await createFromTemplate.mutateAsync(template.id)` with NO try/catch. On mutation rejection (network error / 4xx / 5xx) the await throws, so the subsequent navigate() never runs and the promise rejects unhandled.",
+        "Unlike the list query — whose error IS surfaced at line 153 (`{error && (` from useAutomationTemplates at line 43) — the createFromTemplate mutation has no error rendering anywhere in the file: grep shows only `createFromTemplate.isPending` at line 235 (a spinner) and no `createFromTemplate.error`. Result: clicking 'Use Template' on a failing request produces a silent no-op — the spinner clears, nothing navigates, and the user gets zero feedback, plus an unhandled promise rejection in the console.",
+        "Contrast with the sibling CreateRulePage.tsx which at least renders `{createRule.error && (` at line 62. Suggested fix: wrap the mutateAsync in try/catch and render createFromTemplate.error (or a toast) so the failed 'Use Template' action is visible to the user."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-unsafe-double-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 does `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` — a double `as unknown as` cast that crosses the API boundary and fully disables TypeScript's structural check between the generated API session type and the local SessionRow view type.",
+        "Immediately after, line 85 does `sessions.some((s) => !s.isCurrent)` and the render maps over `s.isCurrent`. If the API payload's field naming diverges from SessionRow (e.g. snake_case is_current vs camelCase isCurrent, or the field is renamed server-side), the double-cast means TS reports no error, `s.isCurrent` is silently undefined, `!undefined` is always true, and the 'this is your current session' / 'revoke all other sessions' logic misbehaves with no compile-time signal.",
+        "Suggested fix: replace the `as unknown as SessionRow[]` with an explicit mapping function (API type -> SessionRow) or align SessionRow to the generated @ppt/api-client type so the compiler validates the shape. A double-cast on an auth/session surface is exactly where a silent shape drift is most costly."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The workflow-automation feature ships hardcoded English user-facing copy instead of react-i18next t(). Only 3 of 15 .tsx files in frontend/apps/ppt-web/src/features/workflow-automation call useTranslation/t() (RuleCard.tsx, TriggerSelector.tsx, ExecutionMonitoringPage.tsx). The page shells do not.",
+        "CreateRulePage.tsx has zero useTranslation calls and hardcodes: line ~52 'Back to Rules', line ~53 <h1>'Create Automation Rule'</h1>, line ~55 'Set up a new automated workflow for your property management tasks.' TemplateLibraryPage.tsx likewise hardcodes 'Template Library' and its subtitle. The app ships four locales (sk, cs, de, en per CLAUDE.md), so cs/de/sk users see untranslated English across the entire automation-rules builder flow.",
+        "Suggested fix: add useTranslation() to the workflow-automation page shells and migrate literals to an automations.* i18n namespace, matching the pattern already used by RuleCard/TriggerSelector in the same feature."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}
