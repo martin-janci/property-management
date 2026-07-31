@@ -1,9 +1,41 @@
 {
-  "generated": "2026-07-30T00:26:10Z",
+  "generated": "2026-07-31T16:18:37Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-07-31T16:18:37Z",
+      "prs_scanned": 9,
+      "clean": [
+        2611,
+        2610,
+        2609,
+        2607,
+        2606,
+        2578,
+        2577,
+        2576
+      ],
+      "with_issues": [
+        {
+          "pr": 2608,
+          "issue": 2612,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification — it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
+        }
+      ],
+      "skipped_already_reviewed": [
+        2571,
+        2568,
+        2572,
+        2567,
+        2570,
+        2569
+      ],
+      "note": "Fresh window sweep. Re-surfaced PRs 2567/2568/2569/2570/2571/2572 were already reviewed in the 2026-07-30 run (issues #2573/#2574/#2575 filed there) but never carried the post-merge-reviewed label, so they reappeared in the unlabeled search; re-verified and skipped. #2573 subsequently closed by merged PR #2597, #2574 by #2593. Only genuinely-new PR with an actionable gap this run is #2608 -> #2612."
+    },
     {
       "run_at": "2026-07-30T00:26:10Z",
       "prs_scanned": 9,
