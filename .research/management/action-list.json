@@ -575,20 +575,6 @@
       "last_updated": "2026-07-30T03:23:02Z"
     },
     {
-      "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry1",
-      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 1/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-07-31T14:09:47Z (retry_of=chore-triage-untriaged-issues-750s-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T12:25:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-07-31T14:09:47Z",
-      "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
-      "retry_round": 1
-    },
-    {
       "id": "gh-issue-2612",
       "action": "Follow-up: scheduled announcement / vote-started notifications are fire-once — a transient target-resolution error permanently drops them (PR #2608) (Closes #2612)",
       "owner_role": "pm-tech-lead",
@@ -743,6 +729,20 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "data-pgvector-rag-observability-2026-07-23-retry1",
+      "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows [retry 1/2 of failed data-pgvector-rag-observability-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-07-31T22:03:49Z (retry_of=data-pgvector-rag-observability-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T20:08:23Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T22:03:49Z",
+      "retry_of": "data-pgvector-rag-observability-2026-07-23",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
