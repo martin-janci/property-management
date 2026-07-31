@@ -8845,6 +8845,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-api-server-scheduler-2026-07-30",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-schedu-397da92e",
+      "status": "merged",
+      "claimed_at": "2026-07-31T12:08:53Z",
+      "last_updated": "2026-07-31T18:16:33Z",
+      "status_changed_at": "2026-07-31T18:16:33Z",
+      "pr_number": 2613,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2613",
+      "merged_at": "2026-07-31T18:15:56Z",
+      "specialist": null,
+      "implementer_summary": "sandbox-reclaim: re-spawned implementer (attempt 1) after sandbox-timeout",
+      "reviewer_summary": "verdict=approve head_oid=07dac9e74abc459d50f9280740c56242c00eabef note=clean-behavior-preserving-move-ci-green",
+      "last_reviewed_oid": "07dac9e74abc459d50f9280740c56242c00eabef",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-31T18:15:46Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-backend-cargo-toml-2026-07-20",
       "branch": "auto-impl/refactor-churn-hotspot-backend-cargo-tom-85f7a001",
       "status": "merged",
@@ -9491,6 +9513,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "sec-layout-webhook-integration-test-2026-07-23-retry1",
+      "branch": "auto-impl/sec-layout-webhook-integration-test-2026-f45ec14e",
+      "status": "merged",
+      "claimed_at": "2026-07-31T16:10:15Z",
+      "last_updated": "2026-07-31T18:16:33Z",
+      "status_changed_at": "2026-07-31T18:16:33Z",
+      "pr_number": 2614,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2614",
+      "merged_at": "2026-07-31T18:16:07Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=a21432f3dc5a6913030eeb9c82761db7cb52deaf note=meaningful-integration-test-4-load-bearing-asserts-ci-green",
+      "last_reviewed_oid": "a21432f3dc5a6913030eeb9c82761db7cb52deaf",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-31T18:15:46Z"
+    },
+    {
       "task_id": "sec-mobile-layout-cache-tenant-scope-test-2026-07-23",
       "branch": "auto-impl/sec-mobile-layout-cache-tenant-scope-tes-dd79de09",
       "status": "merged",
@@ -10135,5 +10179,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T18:07:58Z"
+  "archived_at": "2026-07-31T18:16:48Z"
 }

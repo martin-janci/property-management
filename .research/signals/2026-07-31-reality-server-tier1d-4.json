@@ -1,0 +1,54 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-get-inquiry-empty-messages",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:594 (fn get_inquiry, line 566) — the wired `GET /api/v1/inquiries/{id}` handler builds `InquiryDetailResponse { inquiry, messages: vec![] }` with the conversation thread hardcoded to an empty vector and a `// Would fetch conversation messages` comment. The endpoint is registered at routes/inquiries.rs:68 `.route(\"/{id}\", get(get_inquiry))`, so it is reachable in production, not dead code.",
+        "Impact: a realtor opening any inquiry detail via this endpoint always receives an empty `messages` array regardless of how many messages the inquiry actually has. The reply/conversation feature that the response schema advertises can never surface data through this route — a silent functional gap on a user-facing (realtor dashboard) path, not merely a stub label.",
+        "The surrounding code is otherwise correct: the inquiry itself is ownership-scoped via `get_inquiry_for_realtor(id, principal.user_id)` and 404s cleanly. Fix: fetch the conversation messages for the inquiry (repo method) and populate `messages`, or if the message model is intentionally deferred, remove the field from `InquiryDetailResponse` so the OpenAPI contract does not advertise data the endpoint never returns."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-listing-detail-dead-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/listings/mod.rs:88-110 (PublicListingServiceImpl::get_listing_detail) constructs a `PublicListingDetail` with hardcoded placeholder values: `is_negotiable: false // Would need to be fetched from DB`, `bathrooms: None`, `floor: None`, `total_floors: None`, `street: String::new()`, `postal_code: String::new()`, `country: String::new()`, `latitude: None`, `longitude: None`, `features: vec![]`, `view_count: 0`. It only maps the handful of fields present on the list-summary row.",
+        "This method has ZERO callers (grep for `get_listing_detail(` across the crate returns only the definition). The real, wired public detail path is `routes/listings.rs::get_listing` (route `.route(\"/{id}\", get(get_listing))`, listings.rs:62), which runs a full `SELECT ... l.bathrooms, l.floor, l.total_floors, l.street, l.postal_code, l.country, l.latitude, l.longitude, l.features ...` query and returns complete data. So the placeholders never reach production — but the handler is a live trap for future devs.",
+        "Risk: a future contributor wiring `get_listing_detail` (it has the more \"service-shaped\" name) would silently ship a public listing detail page with no address, no bathrooms/floor, no coordinates, no features and a permanently-zero view count. Fix: delete the dead `get_listing_detail` stub (and its `PublicListingDetail` placeholder path) or make it delegate to the same complete query `get_listing` uses, so the two detail code paths cannot diverge. Note main.rs:11 `#[allow(dead_code)]` for stubs is what currently hides this from the compiler."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-schedule-viewing-dead-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:292-337 (schedule_viewing) runs full input validation (future date, within 90 days, duration 15-120 min) and then unconditionally returns `ViewingResult::ValidationFailed([{ field: \"viewing\", message: \"Viewing scheduling not yet implemented\" }])` with a `// For now, return a placeholder since we don't have the full viewing scheduling in repo` comment — the success branch does not exist, so the method can never succeed.",
+        "This method has ZERO callers (grep for `schedule_viewing(` returns only the definition). The real viewing path is `routes/inquiries.rs::request_viewing` (route `.route(\"/viewing/{listing_id}\", post(request_viewing))`, inquiries.rs:62), which validates length caps and actually persists the request. So `schedule_viewing` is dead code duplicating a feature that already works elsewhere.",
+        "Risk / smell: the stub reports validation success for good input then fails with a generic 'not implemented' error — a future dev wiring it would surface a misleading always-fail endpoint. Fix: remove `schedule_viewing` (dead) or fold its extra domain validation (90-day window, duration bounds) into the live `request_viewing` path and delete the duplicate. Low severity — not reachable today, but it is duplicated-and-diverging logic behind an `#[allow(dead_code)]`."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
