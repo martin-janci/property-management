@@ -5571,6 +5571,188 @@
         "assignment_status": "merged",
         "pr_number": 2608
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-integrations-booking-mod-2026-07-31",
+      "title": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently split by PR #2611)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2611",
+        "commit window 2026-07-30→2026-07-31"
+      ],
+      "evidence": [
+        "3626 additions+deletions in booking/mod.rs across the 36-hour window; hotspot_history.runs_seen advanced to 3",
+        "PR #2611 (merged 2026-07-31T12:17Z) split OAuth + retry into submodules — the extraction itself drives most of this run's churn; expected to stabilize next run"
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/mod.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2599",
+        "commit window 2026-07-30→2026-07-31"
+      ],
+      "evidence": [
+        "3329 additions+deletions in reports.rs; hotspot_history.runs_seen advanced to 4",
+        "PR #2599 (merged 2026-07-30T18:20Z) extracted schedule cadence/cron helpers — expected to stabilize; monitor next run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-auth-2026-07-31",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit window 2026-07-30→2026-07-31"
+      ],
+      "evidence": [
+        "2950 additions+deletions in auth.rs across 36-hour window; hotspot_history.runs_seen advanced to 5 — persistent instability across ≥5 runs",
+        "No dedicated refactor PR yet — file remains monolithic. Split candidate: login/refresh/oauth callback paths could move to submodules similar to booking/scheduler/reports pattern used this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2600-reality",
+      "title": "Screen-map drift: reality-web layout changed without docs/screens/reality/ update (PR #2600)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2600"
+      ],
+      "evidence": [
+        "PR #2600 (code-review-reality-web-inline-tenant-json-xss) touched frontend/apps/reality-web/src/app/[locale]/layout.tsx + env.js/route.ts with no changes under docs/screens/reality/*.md",
+        "heuristic-caveat: matching screen-doc slugs against route file basenames is fragile; verify the specific screen doc that should have been touched before promoting to a plan"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "frontend/apps/reality-web/src/app/env.js/route.ts",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "dx-fixme-admin-web-mobile-config-patch-endpoint",
+      "title": "admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2594 (commit fb09556)",
+        "PR #2601"
+      ],
+      "evidence": [
+        "5+ admin-web files (Dashboard.ts, MobileConfigPage.ts, useMobileConfig hooks) contain 'TODO: wire to PATCH /api/v1/admin/mobile-config once implemented' — the admin-web Save-mobile-config UI has no backend endpoint to call",
+        "backend api-server has no PATCH handler at /api/v1/admin/mobile-config today; needs handler + typespec/openapi + repository method + tests",
+        "PR #2601 (merged 2026-07-30T18:20Z) hardened MobileConfigPage.tsx into a read-only surface — the symptom (silent no-op Save) is fixed, but the missing backend endpoint tracked here remains open follow-up work"
+      ],
+      "files": [
+        "frontend/apps/admin-web/",
+        "backend/servers/api-server/src/routes/",
+        "docs/api/typespec/"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "dx-fixme-admin-web-platform-settings-patch-endpoint",
+      "title": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2594 (commit fb09556)",
+        "PR #2601"
+      ],
+      "evidence": [
+        "4+ admin-web files reference 'TODO: wire to PATCH /api/v1/platform-admin/settings once implemented'; the platform-admin settings UI cannot persist changes without it",
+        "companion to admin-web-mobile-config-patch — same pattern, different endpoint; could be batched into one 'admin-web PATCH endpoints' plan",
+        "PR #2601 (merged 2026-07-30T18:20Z) hardened platform.tsx into a read-only surface — the symptom (silent no-op Save) is fixed, but the missing backend endpoint tracked here remains open follow-up work"
+      ],
+      "files": [
+        "frontend/apps/admin-web/",
+        "backend/servers/api-server/src/routes/",
+        "docs/api/typespec/"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "dx-fixme-admin-web-ui-kit-primitives-missing",
+      "title": "@ppt/ui-kit missing primitives (Stepper, FileUpload, RadioCards, StatusPill) — admin-web ships inline duplicates",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2594 (commit fb09556)"
+      ],
+      "evidence": [
+        "~10 admin-web components ship inline JSX with 'TODO: replace with @ppt/ui-kit/Stepper | FileUpload | RadioCards | StatusPill once available'",
+        "shared UI-kit primitives don't exist yet — every consumer duplicates. Adding the 4 primitives to frontend/packages/ui-kit/ would deduplicate ~10 admin-web call sites"
+      ],
+      "files": [
+        "frontend/packages/ui-kit/",
+        "frontend/apps/admin-web/"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
+    },
+    {
+      "id": "dx-fixme-api-client-generator-typescript-error-types",
+      "title": "openapi-ts generator wrapper swallows errors and emits weak error types",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2607 (commit 5c604d5)"
+      ],
+      "evidence": [
+        "PR #2607 added a reality-api-client drift gate with the note 'TODO: we probably want to return error and improve types' in the generator wrapper — errors currently swallowed, generated error type surface is weak",
+        "improving the wrapper improves failure diagnostics for CI drift gates and consumer error handling"
+      ],
+      "files": [
+        "frontend/packages/reality-api-client/",
+        "frontend/packages/api-client/"
+      ],
+      "created_at": "2026-07-31",
+      "updated_at": "2026-07-31",
+      "plan": null
     }
   ]
 }
