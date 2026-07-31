@@ -130,11 +130,9 @@ pub fn manager_recipients(
 // forge tenancy. That helper has been deleted; every handler now goes
 // through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 //
-// TODO(security): the `is_manager` branches below previously trusted the
-// client-supplied role. They have been replaced with `false` (least
-// privilege) and need a real role lookup against the `memberships` table —
-// see `routes/organizations.rs` for the canonical pattern. Closing the
-// auth-bypass takes priority over reinstating the role distinction.
+// The `is_manager` branches below now perform a real role lookup against
+// `user_memberships` via `MembershipRepository::is_manager_in_org` (P0-07);
+// no client-supplied role is trusted.
 
 /// Resolve the effective tenant id from a verified [`RequestPrincipal`].
 fn require_tenant_id(

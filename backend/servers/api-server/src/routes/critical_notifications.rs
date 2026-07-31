@@ -475,11 +475,10 @@ pub async fn get_stats(
 // deleted; every handler now goes through `RequestPrincipal` (verified
 // bearer JWT + host-resolved tenant).
 //
-// TODO(security): the `is_admin` branches below previously trusted the
-// client-supplied role and gated `create_notification` / `get_stats` on it.
-// They have been replaced with `false` (least privilege), which makes those
-// endpoints unreachable until a real role lookup is wired up (see
-// `routes/organizations.rs` for the canonical membership-role pattern).
+// The `is_admin` branches gating `create_notification` / `get_stats` now
+// perform a real admin role lookup — platform principals always pass, others
+// go through `MembershipRepository::is_manager_in_org` (P0-07); no
+// client-supplied role is trusted.
 
 /// Resolve the effective tenant id from a verified [`RequestPrincipal`].
 fn require_tenant_id(
