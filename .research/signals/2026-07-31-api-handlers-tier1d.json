@@ -1,0 +1,39 @@
+{
+  "generated": "2026-07-31T00:00:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-install-empty-cred-default",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:1061 and :1065 (fn sync_booking, line 1007) — Booking.com OTA credentials are read as `integrations::decrypt_if_available(crypto.as_ref(), &connection.access_token.clone().unwrap_or_default())` for the username and `refresh_token.clone().unwrap_or_default()` for the password. When the connection row has NULL access/refresh tokens, `unwrap_or_default()` yields an empty string, so a `BookingCredentials::new(hotel_id, \"\", \"\")` is built and a live OTA API call is made with blank credentials.",
+        "Inconsistency in the same handler: the required `external_property_id` immediately above (line 1045) is handled correctly with `.ok_or_else(|| (StatusCode::BAD_REQUEST, ErrorResponse::new(\"NOT_CONFIGURED\", \"Hotel ID not configured\")))`. Missing OTA credentials should surface the same clean 400 NOT_CONFIGURED, but instead they fall through to an opaque upstream auth failure (or a generic 500) that hides the real 'credentials not configured' cause from the manager triggering the sync.",
+        "Repeated in two sibling Booking OTA handlers: install.rs:1381/:1385 (fn push_booking_availability, line 1318) and install.rs:1529 (fn push_booking_rates, line 1466) use the identical `access_token.clone().unwrap_or_default()` / `refresh_token.clone().unwrap_or_default()` pattern. Fix: replace the three `unwrap_or_default()` credential reads with an `ok_or_else(... NOT_CONFIGURED ...)` guard mirroring the hotel_id check, so a partially-configured connection fails fast with a clear 400 instead of attempting an OTA call with empty credentials."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-auth-2fa-flag-fail-false",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth.rs:~2324 (GET /me) and :~2416 (profile update response) compute the response flag as `two_factor_enabled = state.two_factor_repo.get_by_user_id(user.id).await.ok().flatten().map(|r| r.enabled).unwrap_or(false)`. The `.ok()` swallows any DB error and the `.unwrap_or(false)` then reports 2FA as DISABLED whenever the lookup transiently fails, even for a user who actually has 2FA enabled.",
+        "This is a display/state-reporting flag only (login-time enforcement reads the record independently and fails closed at auth.rs:~800 where TOTP `verify_code(...).unwrap_or(false)` denies on error), so it is NOT a security bypass — but on a transient DB blip the account page and the profile-update response can tell the user 2FA is off when it is on, which is misleading and could prompt a redundant/erroneous re-enrollment. Low severity. Fix: distinguish a genuine `Ok(None)` (no record -> false) from an `Err(_)` (DB failure -> propagate 500 or retain last-known state) instead of collapsing both to `false`.",
+        "Scope note: the rest of the reviewed api-handlers churn hotspots are robustly defended. Document public-share access (routes/documents/shares.rs access_shared_document/access_protected_share) enforces expiry + revocation in SQL (`revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())` in find_share_by_token_rls), share passwords are argon2-hashed (repositories/document/internal.rs hash_password), revoke is IDOR-hardened with a document_id predicate (#2197), integrations/sync.rs releases the RLS connection on every early-return branch, and integrations/webhook.rs verifies Stripe HMAC signatures and its `Ok(StatusCode::OK)` early returns are all intentional, commented webhook-ack paths. No security or crash-path findings in this pass."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

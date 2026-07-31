@@ -8933,6 +8933,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27",
+      "branch": "auto-impl/refactor-churn-hotspot-integrations-book-c027b4b2",
+      "status": "merged",
+      "claimed_at": "2026-07-31T10:11:23Z",
+      "last_updated": "2026-07-31T12:18:11Z",
+      "status_changed_at": "2026-07-31T12:18:11Z",
+      "pr_number": 2611,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2611",
+      "merged_at": "2026-07-31T12:17:07Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=d9a3a93022a26fd039a988fb5b3c9350d081d907 note=pure-move-refactor-verified-CI-green-approve-posted-as-comment-self-authored-PR",
+      "last_reviewed_oid": "d9a3a93022a26fd039a988fb5b3c9350d081d907",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-07-31T12:15:38Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-layouteditorpage-tsx-2026-07-21",
       "branch": "auto-impl/refactor-churn-hotspot-layouteditorpage-ae6ee8e2",
       "status": "merged",
@@ -10047,5 +10069,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T10:11:23Z"
+  "archived_at": "2026-07-31T12:18:17Z"
 }
