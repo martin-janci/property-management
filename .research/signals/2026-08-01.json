@@ -1,0 +1,203 @@
+{
+  "date": "2026-08-01",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "top-1 raw churn 2026-07-31..2026-08-01",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "1490 lines this run \u2014 PR #2619 decomposition (mod.rs shrunk, code moved to messages.rs/client.rs/models.rs/error.rs). Cumulative re-emit \u2014 score_delta suppressed; already scored on 2026-07-31.",
+      "cumulative_reemit": true
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/messages.rs",
+      "type": "churn-hotspot",
+      "source": "top-2 raw churn 2026-07-31..2026-08-01",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "605 lines \u2014 new submodule created by PR #2619 decomposition of booking/mod.rs. Not organic churn; instability signal is bounded to the split PR."
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/client.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn 2026-07-31..2026-08-01",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "552 lines \u2014 new submodule created by PR #2619 decomposition of booking/mod.rs. Not organic churn; instability signal is bounded to the split PR."
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking/mod.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 3 -> 4",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "4th run seen. PR #2619 was the decomposition \u2014 the file has now shrunk. Cumulative re-emit \u2014 score_delta suppressed; the historical +1 remains, no compounding.",
+      "cumulative_reemit": true
+    },
+    {
+      "id": "code-review-reality-server-agency-invitation-idor",
+      "type": "code-review-finding",
+      "source": "reality-server:src/routes/agencies.rs:373",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "src/routes/agencies.rs:373 create_invitation handler calls state.reality_portal_repo.create_invitation(agency_id, principal.user_id, data) with NO agency-membership check (compare update_agency at line 253 which calls super::agency_imports::check_agency_membership); repo (crates/db/src/repositories/reality_portal/agencies.rs:228) also lacks the check. accept_invitation at line 421 uses the token+principal.user_id but never verifies the invited email matches the principal, so any authenticated portal user can POST to /api/v1/agencies/{arbitrary_id}/invitations with {email: attacker@x, role: 'owner'}, receive the invitation token in the response, then POST /api/v1/agencies/invitations/{token}/accept to join any agency at any role (role: Option<String> in CreateAgencyInvitation is unvalidated).",
+      "severity": "high"
+    },
+    {
+      "id": "code-review-reality-server-paginated-total-truncated",
+      "type": "code-review-finding",
+      "source": "reality-server:src/routes/reports.rs:342",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "src/routes/reports.rs:342 let total = reports.len(); returns the page size, not the full row count \u2014 the underlying query (line 298-316) already applied LIMIT $2 OFFSET $3 derived from query.limit.unwrap_or(20).clamp(1,100). Clients that trust MyReportsResponse.total for pagination will believe there is only one page. Same pattern in src/routes/imports.rs:141 (let total = jobs.len() as i64; after list_import_jobs(..., limit, offset)) and src/routes/agency_imports.rs:183 (LIMIT 100 hard cap \u2192 total capped at 100).",
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-reality-server-invitation-idor-test-gap",
+      "type": "code-review-finding",
+      "source": "reality-server:tests/suites/agencies_authz_tests.rs:175",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "tests/suites/agencies_authz_tests.rs only exercises 401 paths for create_invitation (line 178 create_invitation_unauthenticated_returns_401, line 196 create_invitation_authenticated_unknown_agency_returns_non_401) and accept_invitation (line 218/234). No test asserts that a non-member cannot create an invitation for someone else's agency, and no test asserts that a user whose email differs from the invitation.email cannot redeem a valid token \u2014 exactly the two gaps that leave the IDOR above (finding #1) unnoticed.",
+      "severity": "medium"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met certainty bar (all Phase 1.5 findings need code changes, not on the safe-shape allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/... && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs current",
+      "observed": "true",
+      "expected": "true",
+      "note": "state advanced: cursors + seen_signals + hotspot_history + stats.runs all changed"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative re-emit score_delta==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score>8 none, no open items to decay this run",
+      "observed": "true",
+      "expected": "true",
+      "note": "backlog had 0 open items pre-run; decay is vacuously satisfied. Cap holds."
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'plans/<slug>.md' + 'adversarial pass:' on same line",
+      "observed": "1/1 new plan matched",
+      "expected": "1/1"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count + metadata + headings + capability + mode + files-exist",
+      "observed": "1 new plan; 4 metadata + 11 headings + 2 caps ticked + Mode: cloud-ok + 3/3 files exist",
+      "expected": "\u22642 count, all headings, \u22651 cap, mode declared, files exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "paths outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures listed in brief",
+      "observed": "'Phases that failed: none' present; no cursor stayed unadvanced due to failure",
+      "expected": "honest report"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in active or archive",
+      "observed": "no silent deletes",
+      "expected": "all slugs present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "7 == 7",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap check",
+      "observed": "0 actions",
+      "expected": "\u22643 total, \u22641 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor unchanged (phase 1.6 skipped) \u2192 GC7 no-op",
+      "observed": "pm=2 head_pm=2 (unchanged); coverage=4 head_coverage=4 (unchanged); mgmt jsons still parse",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token literal scan",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "notes": {
+    "phase_1_6_skipped_reason": "quiet run + token discipline; pm_cursor + coverage_cursor left unchanged (G16 no-op per spec)",
+    "phase_1_5_segment_reviewed": "reality-server",
+    "phase_1_5_next_segment": "api-core (last reviewed 2026-07-20, next oldest)"
+  }
+}

@@ -5803,6 +5803,115 @@
         "assignment_status": "merged",
         "pr_number": 2615
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-booking-messages-2026-08-01",
+      "title": "booking/messages.rs — new 605-line submodule from PR #2619 decomposition; monitor for stability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2619"
+      ],
+      "evidence": [
+        "First-time churn signal for backend/crates/integrations/src/booking/messages.rs (605 lines) — not organic instability; created by the mod.rs decomposition PR #2619. Will decay in 14 days if no further churn."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/messages.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-booking-client-2026-08-01",
+      "title": "booking/client.rs — new 552-line submodule from PR #2619 decomposition; monitor for stability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2619"
+      ],
+      "evidence": [
+        "First-time churn signal for backend/crates/integrations/src/booking/client.rs (552 lines) — not organic instability; created by the mod.rs decomposition PR #2619. Will decay in 14 days if no further churn."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking/client.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-agency-invitation-idor",
+      "title": "SECURITY: reality-server create_invitation + accept_invitation lack membership + email checks — any auth'd user joins any agency at any role",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-reality-server 2026-08-01"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373 — create_invitation handler goes to repo without check_agency_membership (contrast update_agency at :268 which does call it).",
+        "backend/servers/reality-server/src/routes/agencies.rs:421 — accept_invitation never compares principal.email vs invitation.email; inserts (agency_id, principal.user_id, invitation.role) into reality_agency_members.",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:228,256 — repo layer has no defensive check either.",
+        "tests/suites/agencies_authz_tests.rs:175+ covers only 401-unauth paths; no non-member-create or email-mismatch-accept test."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs",
+        "backend/servers/reality-server/tests/suites/agencies_authz_tests.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": "plans/security-reality-server-agency-invitation-idor.md"
+    },
+    {
+      "id": "code-review-reality-server-paginated-total-truncated",
+      "title": "BUG: reality-server /reports/mine + /imports return .len() as total after LIMIT/OFFSET — pagination lies",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-reality-server 2026-08-01"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/reports.rs:342 — 'let total = reports.len();' after query at :298-316 already applied LIMIT  OFFSET  (limit clamped 1..100). MyReportsResponse.total is capped at the page size, not the full row count.",
+        "backend/servers/reality-server/src/routes/imports.rs:141 — 'let total = jobs.len() as i64;' after list_import_jobs(..., limit, offset).",
+        "backend/servers/reality-server/src/routes/agency_imports.rs:183 — LIMIT 100 hard cap → total capped at 100."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs",
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-invitation-idor-test-gap",
+      "title": "TEST-GAP: agencies_authz_tests only covers 401 paths for create/accept invitation — missing IDOR + email-mismatch regressions",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-reality-server 2026-08-01"
+      ],
+      "evidence": [
+        "tests/suites/agencies_authz_tests.rs:178 create_invitation_unauthenticated_returns_401 and :218 accept_invitation_unauthenticated_returns_401 exist but no test asserts non-member cannot create, or that email-mismatch accept fails. This is the coverage gap that let the IDOR (companion row code-review-reality-server-agency-invitation-idor) slip through."
+      ],
+      "files": [
+        "backend/servers/reality-server/tests/suites/agencies_authz_tests.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
     }
   ]
 }

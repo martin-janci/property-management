@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-31T16:26:02Z",
-  "last_run_ms": 780000,
-  "last_pr_seen": 2611,
-  "last_issue_seen": 2598,
-  "last_commit_sha": "dc64271a78ccdb77333aa613dc50a9594b268716",
+  "last_run_iso": "2026-08-01T08:24:48Z",
+  "last_run_ms": 900000,
+  "last_pr_seen": 2622,
+  "last_issue_seen": 2621,
+  "last_commit_sha": "37b7f8579ee45fe6e7d0c3833a95e14b62e20ea8",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-31",
-      "recent_churn": 3626
+      "runs_seen": 4,
+      "last_seen": "2026-08-01",
+      "recent_churn": 1490
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -411,6 +411,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-30",
       "recent_churn": 240
+    },
+    "backend/crates/integrations/src/booking/messages.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-01",
+      "recent_churn": 605
+    },
+    "backend/crates/integrations/src/booking/client.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-01",
+      "recent_churn": 552
     }
   },
   "seen_signals": [
@@ -442,6 +452,8 @@
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+    "churn-hotspot-backend/crates/integrations/src/booking/client.rs",
+    "churn-hotspot-backend/crates/integrations/src/booking/messages.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
@@ -561,7 +573,10 @@
     "code-review-ppt-web-ui-role-gate-fail-open",
     "code-review-ppt-web-ui-savedirty-stale-closure",
     "code-review-ppt-web-ui-untranslated-strings",
+    "code-review-reality-server-agency-invitation-idor",
     "code-review-reality-server-inquiry-read-idor",
+    "code-review-reality-server-invitation-idor-test-gap",
+    "code-review-reality-server-paginated-total-truncated",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-inline-tenant-json-xss",
@@ -744,7 +759,7 @@
   "review_cursor": {
     "api-handlers": "2026-07-29",
     "api-core": "2026-07-20",
-    "reality-server": "2026-07-18",
+    "reality-server": "2026-08-01",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
     "reality-web": "2026-07-28",
@@ -752,9 +767,9 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 53,
-    "vectors_created": 236,
-    "plans_created": 17,
+    "runs": 54,
+    "vectors_created": 241,
+    "plans_created": 18,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
