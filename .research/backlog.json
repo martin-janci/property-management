@@ -5588,20 +5588,22 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2611",
+        "PR #2619",
         "commit window 2026-07-30→2026-07-31"
       ],
       "evidence": [
         "3626 additions+deletions in booking/mod.rs across the 36-hour window; hotspot_history.runs_seen advanced to 3",
-        "PR #2611 (merged 2026-07-31T12:17Z) split OAuth + retry into submodules — the extraction itself drives most of this run's churn; expected to stabilize next run"
+        "PR #2611 (merged 2026-07-31T12:17Z) split OAuth + retry into submodules — the extraction itself drives most of this run's churn; expected to stabilize next run",
+        "resolved: PR #2619 merged 2026-08-01 — refactor-churn-hotspot-integrations-booking-mod-2026-07-31: reduce churn in booking/mod.rs; 2786-line mod.rs split into error.rs/models.rs/messages.rs/client.rs (mod.rs shrunk to 43 lines of re-exports); pure behavior-preserving refactor"
       ],
       "files": [
         "backend/crates/integrations/src/booking/mod.rs"
       ],
       "created_at": "2026-07-31",
-      "updated_at": "2026-07-31",
+      "updated_at": "2026-08-01",
       "plan": null
     },
     {
@@ -5653,13 +5655,15 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2600"
+        "PR #2600",
+        "PR #2618"
       ],
       "evidence": [
         "PR #2600 (code-review-reality-web-inline-tenant-json-xss) touched frontend/apps/reality-web/src/app/[locale]/layout.tsx + env.js/route.ts with no changes under docs/screens/reality/*.md",
-        "heuristic-caveat: matching screen-doc slugs against route file basenames is fragile; verify the specific screen doc that should have been touched before promoting to a plan"
+        "heuristic-caveat: matching screen-doc slugs against route file basenames is fragile; verify the specific screen doc that should have been touched before promoting to a plan",
+        "resolved: PR #2618 merged 2026-08-01 — test-gap-screen-map-drift-pr-2600-reality: reconcile reality-web screen-maps with PR #2600 inline-script XSS hardening; docs-only, /screens validate green"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
@@ -5667,7 +5671,7 @@
         "docs/screens/reality/"
       ],
       "created_at": "2026-07-31",
-      "updated_at": "2026-07-31",
+      "updated_at": "2026-08-01",
       "plan": null
     },
     {
@@ -5773,6 +5777,26 @@
         "assignment_status": "merged",
         "pr_number": 2615
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-scheduler-mod-2026-08-01",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/scheduler/mod.rs — 398 lines this run (PR #2613 extracted vote-lifecycle to submodule)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2613"
+      ],
+      "evidence": [
+        "PR #2613 churn-reduction refactor extracted vote-lifecycle jobs (activate_scheduled_votes/close_expired_votes/send_vote_reminders + private helpers) to services/scheduler/votes.rs (-391 +7 in mod.rs; mod.rs shrunk 2525→2134 lines); behavior-preserving"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
     }
   ]
 }

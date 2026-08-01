@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-07-31 16:30 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-01 04:18 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -24,14 +24,14 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | refactor | `refactor-churn-hotspot-integrations-booking-mod-2026-07-31` | Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently split by PR #2611) | done | 2026-08-01 |  |
+| 2 | test-gap | `test-gap-screen-map-drift-pr-2600-reality` | Screen-map drift: reality-web layout changed without docs/screens/reality/ update (PR #2600) | done | 2026-08-01 |  |
 | 2 | dx | `dx-fixme-admin-web-mobile-config-patch-endpoint` | admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing | open | 2026-07-31 |  |
 | 2 | dx | `dx-fixme-admin-web-platform-settings-patch-endpoint` | admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing | open | 2026-07-31 |  |
-| 2 | dx | `dx-fixme-admin-web-ui-kit-primitives-missing` | @ppt/ui-kit missing primitives (Stepper, FileUpload, RadioCards, StatusPill) — admin-web ships inline duplicates | open | 2026-07-31 |  |
-| 2 | dx | `dx-fixme-api-client-generator-typescript-error-types` | openapi-ts generator wrapper swallows errors and emits weak error types | open | 2026-07-31 |  |
+| 2 | dx | `dx-fixme-admin-web-ui-kit-primitives-missing` | @ppt/ui-kit missing primitives (Stepper, FileUpload, RadioCards, StatusPill) — admin-web ships inline duplicates | done | 2026-07-31 |  |
+| 2 | dx | `dx-fixme-api-client-generator-typescript-error-types` | openapi-ts generator wrapper swallows errors and emits weak error types | done | 2026-07-31 |  |
 | 2 | refactor | `refactor-churn-hotspot-api-server-auth-2026-07-31` | Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet) | open | 2026-07-31 |  |
 | 2 | refactor | `refactor-churn-hotspot-api-server-reports-2026-07-31` | Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers) | open | 2026-07-31 |  |
-| 2 | refactor | `refactor-churn-hotspot-integrations-booking-mod-2026-07-31` | Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently split by PR #2611) | open | 2026-07-31 |  |
-| 2 | test-gap | `test-gap-screen-map-drift-pr-2600-reality` | Screen-map drift: reality-web layout changed without docs/screens/reality/ update (PR #2600) | open | 2026-07-31 |  |
 | 2 | bug | `code-review-api-core-resolved-rs-leaks-db-error` | SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log | done | 2026-07-30 |  |
 | 2 | bug | `code-review-ppt-web-aml-review-decision-untrusted-cast` | AmlDashboardPage casts raw window.prompt text into the review-decision union — a typo submits an invalid AML decision | done | 2026-07-28 |  |
 | 2 | security | `code-review-reality-web-inline-tenant-json-xss` | SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request | done | 2026-07-28 |  |
@@ -92,11 +92,12 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | refactor | `refactor-churn-hotspot-api-server-scheduler-mod-2026-08-01` | Churn hotspot: backend/servers/api-server/src/services/scheduler/mod.rs — 398 lines this run (PR #2613 extracted vote-lifecycle to submodule) | open | 2026-08-01 |  |
 | 1 | bug | `code-review-api-core-admin-rs-swallowed-serialize` | layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500 | done | 2026-07-30 |  |
 | 1 | bug | `code-review-api-core-scheduler-rs-silent-target-err` | scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric | done | 2026-07-30 |  |
-| 1 | refactor | `refactor-churn-hotspot-api-server-layout-admin-2026-07-30` | Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549) | open | 2026-07-30 |  |
+| 1 | refactor | `refactor-churn-hotspot-api-server-layout-admin-2026-07-30` | Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549) | dropped | 2026-07-30 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-layout-tenant-2026-07-30` | Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) | dropped | 2026-07-30 |  |
-| 1 | refactor | `refactor-churn-hotspot-api-server-scheduler-2026-07-30` | Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576) | open | 2026-07-30 |  |
+| 1 | refactor | `refactor-churn-hotspot-api-server-scheduler-2026-07-30` | Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576) | done | 2026-07-30 |  |
 | 1 | refactor | `code-review-reality-web-viewsource-untrusted-cast` | reality-web listingAnalytics.ts casts untrusted ?source= query param straight to ViewSource union — pollutes listing.viewed analytics with unbounded cardinality | done | 2026-07-28 |  |
 | 1 | dx | `dx-stale-todo-security-comments-faults-critical-notifications` | Stale TODO(security) headers in faults.rs / critical_notifications.rs describe a hardcoded-false gate that no longer exists | done | 2026-07-28 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days` | PortfolioAnalytics inquiriesTrend silently drops days with inquiries but zero views (set-difference bug) | done | 2026-07-27 |  |

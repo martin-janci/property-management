@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-08-01T04:21:12Z",
+  "since_iso": "2026-07-31T16:26:02Z",
+  "cursors_before": { "last_pr_seen": 2611, "last_issue_seen": 2598, "last_commit_sha": "dc64271a78ccdb77333aa613dc50a9594b268716" },
+  "cursors_after":  { "last_pr_seen": 2619, "last_issue_seen": 2617, "last_commit_sha": "4a7e9bead6a9d5fa890b0eeec8f4d46c63c697e1" },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2619",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: PR #2619 churn-reduction refactor split mod.rs (2786 lines) into error.rs/models.rs/messages.rs/client.rs — mod.rs shrunk to 43 lines of re-exports; -1447 +43. Behavior-preserving. Existing backlog row 'refactor-churn-hotspot-integrations-booking-mod-2026-07-31' is being marked done by this run.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "note": "score_delta=0 per cumulative-type re-emit rule"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking/mod.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: hotspot runs_seen 3 -> 4 with PR #2619's refactor; refactor already applied — no new work",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "note": "score_delta=0 per cumulative-type re-emit rule"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2613",
+      "score_delta": 1,
+      "evidence": "NEW hotspot this run: PR #2613 refactor extracted vote-lifecycle jobs to services/scheduler/votes.rs (-391 +7 in mod.rs; mod.rs shrunk 2525->2134 lines). Behavior-preserving churn-reduction refactor. Item created at score=1 with evidence noting refactor already applied.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": []
+}
