@@ -1,0 +1,51 @@
+{
+  "date": "2026-08-01",
+  "run_started_iso": "2026-08-01T12:17:29Z",
+  "trigger": "buffer-low: claimable=0/72 — refill planner (coverage 47/49 done, backlog avail=0, retry avail=0)",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "commit window 2026-07-31T16:26Z→2026-08-01T12:17Z (git log --numstat, 4fac084..b625324)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit (hotspot_history.runs_seen advances to 4, prev 3). booking/mod.rs churned 1490 lines this window because PR #2619 (refactor-churn-hotspot-integrations-booking-mod-2026-07-31) extracted error.rs (39L)/models.rs (270L)/messages.rs (605L)/client.rs (552L) submodules — the sanctioned churn-reduction split planned by PR #2611. score_delta=0 per the cumulative-type rule; the earlier score was already applied. Expect the file to stabilize next run."
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit. runs_seen=4 (prev 3). PR #2619 completed the extraction into 4 focused submodules — no fresh instability, score_delta=0."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible signal type on the allowlist this run (only cumulative churn-hotspot re-emits, which are analytical, not actionable)",
+  "phase_skips": {
+    "phase_1_5_dev_review": "buffer-low trigger — lean incremental run. Segment map + expert grep is heavy; deferring to the next full daily routine invocation. state.review_cursor unchanged.",
+    "phase_1_6_project_management": "buffer-low trigger — lean incremental run. PM rotation + coverage upkeep is heavy; deferring to the next full daily routine invocation. state.pm_cursor + state.coverage_cursor unchanged. G16 becomes a no-op this run."
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-01.md && head -1 …", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq … staged vs HEAD state.json", "observed": "last_pr_seen 2611→2622; last_issue_seen 2598→2621; last_commit_sha advanced", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "non-cumulative-type re-emit with score_delta≠0 check", "observed": "true (both re-emits are cumulative-type churn-hotspot / repeated-churn, score_delta=0)", "expected": "true" },
+    { "goal": "G5-cap", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "no open items → no decay work", "observed": "0 open items in backlog (all rows terminal: 164 done / 74 dropped / 1 closed)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "0 new plans this run — vacuously passes", "observed": "0 plans/", "expected": "≤2, each with adversarial-pass annotation" },
+    { "goal": "G7", "passed": true, "command": "0 new plans this run — vacuously passes", "observed": "0 plans/", "expected": "≤2, each meeting readiness gates" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached … secret/hostname grep", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "identical (only timestamp changed; regenerator reproduces staged file)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief lists no failed phases", "observed": "no failed phases; phases 1.5/1.6 explicitly skipped with reason, cursors correctly unchanged", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present in plans/ or _archive/", "observed": "no prior-run plan silently deleted", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "[ archive_now >= archive_head ]", "observed": "archive count unchanged (grows-or-equal)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (only timestamp changed)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency + kill-switch checks", "observed": "auto_fix_actions=[]; kill switch not set; no branch pushed", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "no-op — Phase 1.6 skipped this run", "observed": "state.pm_cursor.next_index unchanged (2), state.coverage_cursor.next_index unchanged (4)", "expected": "no-op when Phase 1.6 skipped" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached … telegram token pattern grep", "observed": "0", "expected": "0" }
+  ]
+}
