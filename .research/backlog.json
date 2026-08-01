@@ -5726,7 +5726,7 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2594 (commit fb09556)"
       ],
@@ -5740,7 +5740,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T02:07:31Z",
+        "assignment_status": "merged",
+        "pr_number": 2616
+      }
     },
     {
       "id": "dx-fixme-api-client-generator-typescript-error-types",
@@ -5748,7 +5753,7 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2607 (commit 5c604d5)"
       ],
@@ -5762,7 +5767,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T02:07:31Z",
+        "assignment_status": "merged",
+        "pr_number": 2615
+      }
     }
   ]
 }

@@ -10089,6 +10089,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "test-gap-screen-map-drift-pr-2600-reality",
+      "branch": "auto-impl/test-gap-screen-map-drift-pr-2600-realit-74537d2e",
+      "status": "merged",
+      "claimed_at": "2026-08-01T00:05:00Z",
+      "last_updated": "2026-08-01T02:18:43Z",
+      "status_changed_at": "2026-08-01T02:18:43Z",
+      "pr_number": 2618,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2618",
+      "merged_at": "2026-08-01T02:17:25Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=6ade89152e6b08f45fbde7c6ef73cb2d0bc0194e note=docs-only screen-map drift reconcile for PR #2600; claims verified against source, CI green",
+      "last_reviewed_oid": "6ade89152e6b08f45fbde7c6ef73cb2d0bc0194e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-01T02:17:00Z"
+    },
+    {
       "task_id": "test-gap-screen-map-drift-pr-922-ppt",
       "branch": "auto-impl/test-gap-screen-map-drift-pr-922-ppt-8b56e416",
       "status": "merged",
@@ -10267,5 +10289,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-01T00:20:22Z"
+  "archived_at": "2026-08-01T02:18:57Z"
 }

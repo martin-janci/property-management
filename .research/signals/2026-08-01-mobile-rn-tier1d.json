@@ -1,0 +1,54 @@
+{
+  "generated": "2026-08-01T00:00:00Z",
+  "segment": "mobile-rn",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed (saturation-skip: reality-server/api-core/ppt-web-ui all covered on 07-30/07-31 with reality-server carrying ~29 recent open findings; mobile-rn is the oldest genuinely-fresh segment with no recent coverage)",
+  "experts_used": ["frontend", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode/getQRCodeAction/parsePPTPayload/parseVCard) and frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts (292 lines, exports parseDeepLink/createDeepLink/DeepLinkManager) have NO dedicated test files anywhere in the repo — `find . -name 'QRCodeScanner.test.*'` and `DeepLinkHandler.test.*` both return zero hits. The only related tests are deepLinkRouting.test.ts / useDeepLinkRouting.test.tsx (the routing hook pipeline) and universalLinks.test.ts (the URL normalizer) — none exercise parseQRCode or parseDeepLink directly.",
+        "These are exactly the functions that ingest attacker-controllable input: parseQRCode(content: string) at QRCodeScanner.ts:29 dispatches raw scanned QR payloads across four parsers (ppt:// deep links, {\"ppt\":...} JSON, BEGIN:VCARD vCards, http(s) URLs) and getQRCodeAction routes the result to app navigation. A scanned QR code / opened deep link is untrusted external input, so a parsing bug here is a crash or mis-navigation path (e.g. an auth-required route reached via a crafted link), not a cosmetic issue.",
+        "Suggested fix: add unit tests covering malformed / adversarial inputs for parseQRCode (empty string, oversized payload, malformed JSON with \"ppt\": key, truncated vCard, ppt:// links to requiresAuth routes, javascript:/data: schemes) and parseDeepLink (unknown host, path traversal in :id params, extra query params). This is the highest-value untested surface in the segment."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English user-facing copy instead of react-i18next t(), even though the app is i18n-enabled (23 screens already call useTranslation and the app ships sk/cs/de/en). 7 of the 15 have ZERO useTranslation/t() references — fully unlocalized: screens/settings/WidgetSettingsScreen.tsx, screens/faults/FaultsListScreen.tsx, screens/buildings/BuildingsScreen.tsx, screens/meters/MetersScreen.tsx, screens/meters/MeterDetailScreen.tsx, screens/messages/MessagesScreen.tsx, screens/messages/ThreadDetailScreen.tsx.",
+        "Concrete literals: FaultsListScreen.tsx:195-196 <Text>'No faults found'</Text> / 'All issues have been addressed'; BuildingsScreen.tsx:136 'No buildings'; MetersScreen.tsx:156 'No unit linked', :171 'No meters'; MeterDetailScreen.tsx:166 'Latest reading', :179 'Reading history', :203 'Submit new reading'; MessagesScreen.tsx:141 'Try again', :147 'No conversations'; WidgetSettingsScreen.tsx renders 'Widget Settings' / 'Widgets Not Available' / 'How to Add Widgets' across :87-192 with no t(). cs/de/sk users see English empty-states, buttons, and section titles across these screens.",
+        "Suggested fix: add useTranslation() to the 7 fully-unlocalized screens (and the empty-state/button literals in the other 8) and migrate the strings into the existing i18n namespaces, matching the pattern already used by the 23 localized screens (e.g. MeterReadingScreen already uses t('meters.*'))."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-untested-nfc-credentials",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines, class NFCAccessController) and frontend/apps/mobile/src/nfc/NFCCredentialManager.ts (321 lines, class NFCCredentialManager) have NO test files in the repo — the entire nfc/ directory is untested. These classes manage building-access credentials: NFCCredentialManager handles fetch/cache of encrypted credentials with corruption-recovery branches (NFCCredentialManager.ts:72 'Failed to fetch credentials, using cached', :272 'Stored credentials corrupted; discarding', :285 'Legacy credentials corrupted'), and NFCAccessController.ts:376 gates a wallet-add on 'credential has no encrypted data'.",
+        "Credential storage/decryption and corruption-fallback logic is security-sensitive and full of easy-to-regress edge cases (corrupted blob, legacy-format migration, empty encrypted payload). With zero unit coverage, any refactor of the credential cache or the encrypted-data guard ships unverified.",
+        "Suggested fix: add unit tests for NFCCredentialManager covering the corrupted-stored, corrupted-legacy, and cache-fallback paths, and for NFCAccessController's no-encrypted-data guard, so the credential lifecycle is pinned before the next change."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
