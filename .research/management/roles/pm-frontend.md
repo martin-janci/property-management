@@ -1,35 +1,31 @@
-# pm-frontend — 2026-05-25
+# pm-frontend — 2026-08-01 rotation slot
 
-_Frontend/mobile delivery lens. Daily PM rotation (rotation index 2). Static, read-only analysis._
+**Rotation:** idx 2 of 8 · role_last_run: 2026-06-10 (52 days stale — longest rotation gap on the wheel this cycle)
+**Scope this run:** active-sprint UI stories + this-window frontend PRs (#2616, #2618) + the two remaining `partial` frontend slices (84-1, 84-2).
 
-## Summary
+## summary
 
-The biggest frontend delivery burst of the sprint landed this run — document sharing/permission UI (web+mobile), OAuth client-management + user-grants UI, MFA frontend+e2e, neighbor listing, and direct-messaging screens with WebSocket realtime sync all merged (PRs #441–#473). The active frontend front is now the Epic 6 announcement web UI, split across three unmerged draft PRs (#474/#475/#479) on a shared AnnouncementsPage — sequencing them is the near-term priority, alongside the #480–#487 follow-up test-gap batch.
+The two `partial` frontend slices are the only thing between the project and 49/49, but both are stuck for different reasons — 84-1 is backend-blocked (gh-issue-2573 unclaimed for 3 days), 84-2 has failed 3x as a single squash. This window's PR #2616 (admin-web ui-kit consolidation) is a directly transferable pattern for ppt-web's duplicated primitives, and PR #2618 cleaned the last reality-web screen-map drift on our books.
 
-## Next actions
+## next_actions
 
-| Priority | Action | Dependency | Definition of done |
-|---|---|---|---|
-| high | Sequence + land Epic 6 announcement web UI drafts in order #474 (viewing/ack) → #475 (comments) → #479 (pin) | none | 6-2/6-3/6-4 apiStatus → integrated; 3 PRs merged without AnnouncementsPage conflicts; stories promote from partial |
-| high | Verify Epic 81 schedule/execution UI e2e as PRs #488/#489 land | pm-backend (endpoints) | EditScheduleModal pause/resume + ExecutionHistory no longer 404; 81-1/81-2 promoted |
-| medium | Slot follow-up issues #480–#487 into one test-hardening batch | pm-scrum-master | Each issue closed or explicitly deferred before its parent story promotes to done |
-| medium | Build dedicated folder-tree UI page for document organization (7a-2) | none | Folder hierarchy CRUD UI wired to backend 5-level tree; mobile slice scoped |
-| medium | Wire AnnouncementsPage/FaultsPage to @ppt/api-client hooks (79-1) | none | Both pages off mocks, using real query hooks; loading/empty/error states present |
-| low | Mobile document download/preview slice (7a-4 mobile) + RN env config (85-1) | none | DocumentPreviewScreen calls get_preview_url; Expo app.config.ts + iOS Info.plist keys added |
+1. **Split 84-2 signer sign page into 3 mergeable slices** — (1) `/sign/:token` route + fetch signer manifest, (2) canvas signature capture + PATCH signature-request, (3) verification & delivery-confirmation UI. Priority: **high**. Dependency: none. Definition of done: three merged PRs, each flipping its own screen-map subsection; overall `ppt/document-sign` buildStatus planned -> shipped.
+2. **Re-open 84-1 wiring the moment gh-issue-2573 lands** — swap XHR-to-proxy for POST /api/v1/documents/upload-url + PUT presigned URL, cover building_id + folder_id metadata, add EvidenceUploader-style progress test. Priority: **high**. Dependency: pm-backend (gh-issue-2573). Definition of done: 84-1 flips coverage status -> done with a merged PR.
+3. **Extend #2616's ui-kit consolidation pattern to ppt-web** — audit top-10 duplicated Spinner/EmptyState/Button variants (per code-review-ppt-web-ui-duplicated-spinner-markup) and land as one deprecation PR. Priority: **medium**. Dependency: none. Definition of done: PR merged; code-review-ppt-web-ui-duplicated-spinner-markup marked resolved.
+4. **Close the UC-33.x wave** — link UC-33.3 to a dispute screen-map (UC-33.1 and UC-33.2 already queued 2026-07-30). Priority: **medium**. Dependency: none. Definition of done: `docs/screens/ppt/disputes*.md` frontmatter includes all three UC codes; `screen_gaps.missing_use_cases` empty at next scan.
+5. **Follow-through on layout-editor style extraction** (in-progress carry-over from 2026-07-23) — apply the #2464 pattern to remaining LayoutEditor components to reduce inline-style churn on LayoutEditorPage.tsx (900-line hotspot). Priority: **low**. Dependency: none. Definition of done: inline-style count on LayoutEditorPage.tsx drops >=50%.
 
-## Risks
+## risks
 
-| Risk | Prob | Impact | Mitigation |
-|---|---|---|---|
-| Epic 6 announcement web UI split across 3 unmerged drafts (#474/#475/#479) on shared AnnouncementsPage — review-queue stall + merge conflicts | medium | medium | Land in dependency order #474 → #475 → #479; promote out of draft once apiStatus verified against the now-live notification pipeline |
-| Follow-up test gaps (#480–#487) on merged messaging/share/OAuth/MFA features — done-count outruns regression coverage | high | medium | Schedule as a single hardening batch; gate done-promotion on the follow-up closing |
-| `ai.rs` cross-tenant IDOR cluster (update/delete equipment + update_maintenance discard principal) — not a frontend file but the equipment UI consumes these endpoints | high | high | Flagged for pm-backend (`pm-backend-fix-ai-equipment-idor`); frontend should not surface delete/update equipment actions until backend scopes by tenant |
+1. **84-2 retry3 single-squash pattern will fail again** — three attempts have burned without a PR; each retry rebases against a moving ppt-web routing surface. probability: **high**, impact: medium. mitigation: split into 3 mergeable slices per next_action #1.
+2. **84-1 blocked-chain drift** — 84-1 blocked on backend #2573 which has had zero churn for 3 days; the frontend fix is trivial but can't ship. probability: medium, impact: **high**. mitigation: pm-scrum-master to explicitly hand #2573 to a backend owner this window.
+3. **ppt-web primitive drift compounds** — the same duplicated Spinner/EmptyState pattern that #2616 fixed for admin-web is still fragmenting in ppt-web; every new dispute/document PR adds another variant. probability: medium, impact: medium. mitigation: land next_action #3 as a single sweep before more feature PRs land.
 
-## Open questions
+## open_questions
 
-- Does the messaging realtime sync (PR #472) cover optimistic UI / reconnection on the web client, or only server push? (relevant to 6-5 e2e coverage in #480–#487)
-- Are the OAuth user-grants and admin client-management UIs (#468/#469/#471) covered by any frontend tests, or are those part of the #480–#487 gap set?
+- Should 84-2 slice-1 (route + manifest fetch) ship behind a feature flag while slices 2-3 land, or land dark under `/sign/:token`?
+- For the ppt-web ui-kit sweep, do we deprecate old exports immediately or keep a 1-sprint transitional re-export?
 
-## Decisions needed
+## decisions_needed
 
-- Epic 6 announcement web UI: single squashed PR vs. incremental #474 → #475 → #479 — owner: pm-frontend / pm-scrum-master.
+- **Slice-vs-squash policy for retry-3+ stories** — when an implementer attempt fails 2+ times as a single squash, should the routine automatically re-plan as a 3-slice sequence? Owner: pm-tech-lead + pm-scrum-master. (raised 2026-08-01 by pm-frontend, prompted by 84-2 retry3.)

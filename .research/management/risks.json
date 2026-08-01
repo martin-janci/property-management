@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-01T03:15:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -117,6 +117,39 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-frontend-84-2-retry3-single-squash-2026-08-01",
+      "risk": "Story 84-2 (signer document-sign page) has now failed 3 implementer attempts as a single squash — each retry rebases against a moving ppt-web routing surface and gets abandoned. Continuing the retry pattern will burn a 4th slot without improving the odds.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Split 84-2 into 3 mergeable slices (route/manifest, capture, verify+delivery) — see action-list pm-frontend-84-2-signer-page-scoped-2026-08-01. Each slice ≤400 LOC, each flips its own screen-map subsection.",
+      "owner_role": "pm-frontend",
+      "trigger": "retry3 fails without a PR by 2026-08-05",
+      "status": "open",
+      "source": "pm-frontend 2026-08-01"
+    },
+    {
+      "id": "pm-frontend-84-1-blocked-drift-2026-08-01",
+      "risk": "Story 84-1 (ppt-web direct-to-S3 upload wiring) has been blocked on #2573 for 3 days; #2573 itself was already carried on gh-issue-2573 for 3 days with no owner-role churn on backend/routes/documents/. Backend blocker is stalling the last mvp partial closer.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "pm-scrum-master to explicitly hand #2573 to pm-backend as the unblock action-of-record this window; if not claimed within 48h, promote to a plan and let dispatcher assign.",
+      "owner_role": "pm-frontend",
+      "trigger": "gh-issue-2573 still open on 2026-08-03 morning",
+      "status": "open",
+      "source": "pm-frontend 2026-08-01"
+    },
+    {
+      "id": "pm-scrum-master-accounting-trio-drift-2026-08-01",
+      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has now sat 4 days without reviewer engagement (2 days when raised 2026-07-30, still starving today). Each additional day increases rebase surface against dev churn (auth.rs, integrations/booking split, layout webhook test).",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Escalate under the 2026-07-30 reviewer-slot decision — assign a named reviewer this window or split the trio into two smaller PRs and re-request review.",
+      "owner_role": "pm-tech-lead",
+      "trigger": "no reviewer comment by 2026-08-02",
+      "status": "open",
+      "source": "pm-scrum-master 2026-08-01"
     }
   ]
 }

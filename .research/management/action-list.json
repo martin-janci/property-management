@@ -98,7 +98,7 @@
       "action": "Follow-up: layout publish webhook has no timestamp/replay protection (PR #2431) (Closes #2485)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2485)",
       "deadline": null,
       "dependency": null,
@@ -112,7 +112,8 @@
           "from-merged-review"
         ]
       },
-      "last_updated": "2026-07-23T14:11:48Z"
+      "last_updated": "2026-08-01T03:15:00Z",
+      "resolved_by": "PR #2614 (test: integration test for outbound layout webhook replay/timestamp)"
     },
     {
       "id": "gh-issue-2486",
@@ -568,11 +569,12 @@
       "priority": "low",
       "dependency": "none",
       "depends_on": [],
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-07-30",
       "first_open_at": "2026-07-30T03:23:02Z",
-      "last_updated": "2026-07-30T03:23:02Z"
+      "last_updated": "2026-08-01T03:15:00Z",
+      "resolved_by": "PR #2613 (refactor(api-server): extract scheduler vote-lifecycle jobs to submodule) — retention/prune extraction still open under repeated-churn slot"
     },
     {
       "id": "dx-fixme-admin-web-mobile-config-patch-endpoint",
@@ -665,7 +667,7 @@
       "action": "Screen-map drift: reality-web layout changed without docs/screens/reality/ update (PR #2600)",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -676,7 +678,8 @@
         "score": 2,
         "vector": "test-gap"
       },
-      "last_updated": "2026-08-01T00:05:00Z"
+      "last_updated": "2026-08-01T03:15:00Z",
+      "resolved_by": "PR #2618 (test-gap: reconcile reality-web screen-maps with PR #2600 inline-script hardening)"
     },
     {
       "id": "data-pgvector-rag-observability-2026-07-23-retry1",
@@ -692,7 +695,81 @@
       "retry_of": "data-pgvector-rag-observability-2026-07-23",
       "retry_round": 1,
       "last_updated": "2026-08-01T00:05:00Z"
+    },
+    {
+      "id": "pm-frontend-84-1-unblock-after-2573-2026-08-01",
+      "action": "Re-open ppt-web direct-to-S3 upload wiring the moment #2573 reference-check guard lands: swap XHR-to-proxy for POST /api/v1/documents/upload-url + PUT presigned URL, cover building_id + folder_id metadata, add EvidenceUploader-style progress test",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "gh-issue-2573",
+      "depends_on": [
+        "gh-issue-2573"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-01",
+      "first_open_at": "2026-08-01T03:15:00Z"
+    },
+    {
+      "id": "pm-frontend-84-2-signer-page-scoped-2026-08-01",
+      "action": "Signer sign-page: split into 3 mergeable slices — (1) /sign/:token route + fetch signer manifest, (2) canvas signature capture + PATCH signature-request, (3) verification & delivery-confirmation UI. Retry3 attempt failed as a single squash — go incremental with a per-slice screen-map flip",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-01",
+      "first_open_at": "2026-08-01T03:15:00Z"
+    },
+    {
+      "id": "pm-frontend-ui-kit-primitives-rollout-2026-08-01",
+      "action": "Extend #2616's admin-web inline-primitives→@ppt/ui-kit consolidation to ppt-web: audit the top-10 duplicated Spinner/EmptyState/Button variants (per code-review-ppt-web-ui-duplicated-spinner-markup) and land as a single deprecation PR",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-01 (leverage #2616)",
+      "first_open_at": "2026-08-01T03:15:00Z"
+    },
+    {
+      "id": "pm-scrum-master-fire-once-notifications-triage-2026-08-01",
+      "action": "Triage new open follow-up issue #2612 (fire-once notifications) — decide owner_role (pm-backend vs pm-mobile depending on where the double-fire lives), scope, and whether it blocks the 8A extended-scope closure",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-01 (issue #2612)",
+      "first_open_at": "2026-08-01T03:15:00Z"
+    },
+    {
+      "id": "pm-scrum-master-accounting-trio-still-starved-2026-08-01",
+      "action": "Accounting MVP-loop trio (#2555 / #2558 / #2559) is now 4 days without reviewer engagement — apply the DEC-107 reviewer-slot policy (or escalate) before the branches drift further from dev",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-01",
+      "first_open_at": "2026-08-01T03:15:00Z"
+    },
+    {
+      "id": "pm-frontend-uc-33-3-link-dispute-screen-map-2026-08-01",
+      "action": "Link UC-33.3 to a dispute screen-map (last remaining missing_use_cases entry from coverage) — completes the UC-33.x wave started 2026-07-30",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-01 (from coverage.screen_gaps.missing_use_cases)",
+      "first_open_at": "2026-08-01T03:15:00Z"
     }
   ],
-  "generated": "2026-07-30T03:23:02Z"
+  "generated": "2026-08-01T03:15:00Z"
 }

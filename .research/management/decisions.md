@@ -101,5 +101,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 ## Decisions logged 2026-07-30 (Phase 1.6 — pm-scrum-master + pm-backend)
 
-- **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
+- **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine. **[DEC-107]** _(escalated 2026-08-01 — trio still starving at 4 days.)_
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-01 (Phase 1.6 — pm-scrum-master + pm-frontend)
+
+- **NEW (2026-08-01, pm-scrum-master):** DEC-107 (2026-07-30 reviewer-slot policy) escalated — the accounting MVP-loop trio (#2555 / #2558 / #2559) has now sat 4 days without reviewer engagement, up from 2 days when the policy was first raised. Each additional day increases rebase surface against dev churn (auth.rs, integrations/booking split, layout webhook test). Owner: pm-tech-lead — either resolve the policy this window or explicitly split the trio into two smaller PRs and re-request review.
+- **NEW (2026-08-01, pm-frontend + pm-scrum-master, joint):** Slice-vs-squash policy for retry-3+ stories — when an implementer attempt fails 2+ times as a single squash (currently 84-2 signer sign page at retry3, previously gh-issue-2318 report-schedule at retry2), the routine should automatically re-plan as a 3-slice sequence rather than mint another single-squash retry. Owner: pm-tech-lead + pm-scrum-master to decide whether this becomes a dispatcher rule or a per-story planner decision.
+- **NEW (2026-08-01, pm-frontend):** Frontend consolidation cascade — PR #2616 landed admin-web ui-kit primitives consolidation; the same duplicated Spinner/EmptyState/Button pattern still fragments ppt-web (per code-review-ppt-web-ui-duplicated-spinner-markup). Sequenced as pm-frontend-ui-kit-primitives-rollout-2026-08-01 on action-list. Owner: pm-frontend (advisory) — pm-tech-lead to confirm the cascade sequence.

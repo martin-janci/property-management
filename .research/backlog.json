@@ -5653,13 +5653,15 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2600"
+        "PR #2600",
+        "PR #2618"
       ],
       "evidence": [
         "PR #2600 (code-review-reality-web-inline-tenant-json-xss) touched frontend/apps/reality-web/src/app/[locale]/layout.tsx + env.js/route.ts with no changes under docs/screens/reality/*.md",
-        "heuristic-caveat: matching screen-doc slugs against route file basenames is fragile; verify the specific screen doc that should have been touched before promoting to a plan"
+        "heuristic-caveat: matching screen-doc slugs against route file basenames is fragile; verify the specific screen doc that should have been touched before promoting to a plan",
+        "resolved: PR #2618 merged 2026-08-01 — reality-web screen-maps for home + listing-detail reconciled with PR #2600 inline-script XSS hardening"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
@@ -5667,7 +5669,7 @@
         "docs/screens/reality/"
       ],
       "created_at": "2026-07-31",
-      "updated_at": "2026-07-31",
+      "updated_at": "2026-08-01",
       "plan": null
     },
     {
@@ -5773,6 +5775,68 @@
         "assignment_status": "merged",
         "pr_number": 2615
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-admin-web-tenant-lifecycle-page-2026-08-01",
+      "title": "Churn hotspot: frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx — 117 lines this window (PR #2616 @ppt/ui-kit primitive migration)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2616"
+      ],
+      "evidence": [
+        "churn-hotspot: 117 lines this window (PR #2616 migrated inline Stepper/FileUpload/StepPill primitives onto @ppt/ui-kit; runs_seen=1)"
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-dev-email-baked",
+      "title": "SECURITY-LITE: Scheduler EmailService baked to development() at construction — scheduler-triggered email notifications silently no-op in prod (announcements, votes, payment-due)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review 2026-08-01"
+      ],
+      "evidence": [
+        "Scheduler::new bakes EmailService::development() (enabled=false) into the inner NotificationService; with_email_service() swaps only self.email_service, so scheduler-triggered Email-channel notifications (notify_announcement_published, notify_vote_started, notify_vote_closed, notify_payment_due) silently no-op in prod despite main.rs chaining with_email_service — the SECURITY #527-9 fix only reaches the direct signature-reminder path."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:149",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:209",
+        "backend/servers/api-server/src/main.rs:686"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": "plans/code-review-api-core-scheduler-dev-email-baked.md"
+    },
+    {
+      "id": "code-review-api-core-votes-reminder-spam",
+      "title": "Bug: send_vote_reminders has no persistent per-tick dedup — every ~60s scheduler tick re-fires notify_vote_reminder for every non-voter within the reminder window",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-08-01"
+      ],
+      "evidence": [
+        "send_vote_reminders has no persistent per-tick dedup (no last_reminder_at on votes/unit_residents); every ~60s tick within the reminder window re-fires notify_vote_reminder for every non-voter, gated only by NotificationService's 5-min in-memory dedup cache (~288 InApp notifications/day per non-voter per vote). Sister reminders have explicit stamps (SIGNATURE_REMINDER_MIN_INTERVAL_HOURS, mark_payment_reminder_sent); vote reminders don't and it isn't documented as a known limitation."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:339"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
     }
   ]
 }

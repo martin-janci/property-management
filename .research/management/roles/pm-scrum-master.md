@@ -1,54 +1,52 @@
-# Role: pm-scrum-master — 2026-07-30
+# Role: pm-scrum-master — 2026-08-01
 
 > Delivery lead / coordinator. Always runs. Static read-only.
 
 ## Summary
-Very productive 2-day window: 17 PRs merged (post-merge-review batch of 2026-07-28 is now fully closed except #2528 booking-webhook parity), plus 3 fresh follow-up issues opened on this window's own PRs (#2573 DELETE-by-file-key regression, #2574 Android SSO CSRF half-wired, #2575 dispute KPI window validation). Coverage still at 47/49 done; the two long-standing 84-x frontend partials are unchanged.
 
-## Sprint progress
-- Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth**
-- epics_done: **3 / 5**
+5 PRs merged in the 2026-07-31 -> 2026-08-01 window, all post-merge hygiene resolving in-progress items. Composition unchanged at 47/49 done + 2 partial; the two `partial` frontend stories (84-1, 84-2) are the only thing between the project and 49/49. Accounting MVP-loop trio (#2555 / #2558 / #2559) reviewer-starvation extended from 2 days to 4 days — DEC-107 (reviewer-slot policy, raised 2026-07-30) is now overdue for resolution.
 
-## Shipped since last run (17 PRs)
-- PR #2576 gh-issue-2563: schedule layout_change_events retention prune
-- PR #2572 gh-issue-2562: wire get_dispute_kpis into a reporting endpoint
-- PR #2571 gh-issue-2564: org-scoped DELETE-by-file_key for direct-upload orphan cleanup
-- PR #2570 gh-issue-2557: dedupe private seed_org/set_ctx in db test suites
-- PR #2569 dx: run SDK drift gate on client + workflow changes
-- PR #2568 code-review mobile-native-kmp: Android SSO CSRF state verification
-- PR #2567 code-review api-core: clear scheduler global-read RLS GUC before pool return (retry1)
-- PR #2566 gh-issue-2561: version-bump rebase+retry to fix GH006 on concurrent dev merges
-- PR #2565 gh-issue-2560: reality-web Docker build fix (api-client node_modules in builder stage)
-- PR #2554 chore(research): refill starved dispatcher stack (7 new vectors, 14 promoted)
-- PR #2553 code-review ppt-web-core: AuthContext cold-boot routes through refreshTokenInternal (stale-role fix)
-- PR #2549 gh-issue-2532: layout publish/webhook/revalidate event emission + sink
-- PR #2504 fix(api-server): signature-request list/create — mount as document sub-resource (BIT-313)
-- PR #2491 chore(deps): npm-minor-patch group (5 updates)
-- PR #2482 refactor: reconcile docs/repo-map.md with current tree
-- PR #2478 fix(layout): review-hardening sweep (authz, publish TOCTOU, webhook replay, defensive rendering)
-- PR #2433 feat(mobile-native): iOS listing detail renders through the shared resolved layout
+## shipped_since_last_run
 
-## Next actions
-1. **[high]** Address #2573 — DELETE /documents/by-file-key can delete a still-referenced object within the same org (regression from PR #2571) — owner: pm-backend — DoD: reference-check added before delete; regression test covering shared-file-key same-org case.
-2. **[high]** Address #2574 — Android SSO CSRF guard half-wired (SsoStateStore.mint() has no call site so every reality://sso callback is rejected) — owner: pm-mobile / react-native — DoD: mint() wired at deep-link entry; integration test covers the happy path.
-3. **[medium]** Address #2575 — /disputes/kpis has no window-ordering validation, only test is quarantined (PR #2572) — owner: pm-backend — DoD: reject window_end < window_start with 400; un-quarantine the KPIs test.
-4. **[medium]** Merge or triage the accounting MVP-loop trio (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — all draft-ready since 2026-07-28 — owner: pm-backend / pm-tech-lead — DoD: reviewed + green + merged, or explicitly re-scoped.
-5. **[high]** Finish long-standing 84-1 direct-to-S3 wiring in ppt-web (POST /documents/upload-url consumer) — owner: pm-frontend — DoD: api-client binding + UploadDocument integration + regression test.
-6. **[high]** Finish long-standing 84-2 signer-facing document-sign page (screen-map planned→shipped, API complete) — owner: pm-frontend — DoD: page shipped, signature-request email delivery verified end-to-end.
+- **#2613** — refactor(api-server): extract scheduler vote-lifecycle jobs to submodule
+- **#2614** — test(api-server): integration test for outbound layout webhook replay/timestamp (closes gh-issue-2485)
+- **#2615** — chore(api-validation): harden openapi-ts drift-gate generator steps
+- **#2616** — dx-fixme(admin-web): consolidate admin-web inline primitives onto @ppt/ui-kit
+- **#2618** — test-gap(reality-web): reconcile reality-web screen-maps with PR #2600 inline-script hardening
 
-## Risks
-- **[med prob / high impact]** PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row — mitigation: land a reference-count guard + integration test before any client wires the endpoint.
-- **[high prob / high impact]** PR #2568 CSRF state fix is non-functional (#2574) — mint() has no call site so every SSO deep-link is rejected — mitigation: wire mint() at the SSO deep-link entry point (fresh subagent on the mobile-native slice).
-- **[med prob / med impact]** Accounting MVP-loop trio (3 open PRs) has been sitting 2 days with no reviewer engagement — dispatcher stack starving on reviewer capacity, not implementer capacity — mitigation: explicit reviewer slot for the trio next 24h; document reviewer-slot rotation for large-scope PRs.
+## sprint_progress
 
-## Open questions
-- Should the accounting MVP-loop epic be added to coverage.json (currently outside the 13-epic set)?
-- Should the layout epic (scheduler.rs + tenant.rs + admin.rs are top churn this window) be promoted to its own coverage epic entry?
+- sprint: "Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth"
+- epics_done: 3
+- epics_total: 5
 
-## Decisions needed
-- Reviewer-slot policy for large-scope feature PRs (accounting trio blocking) — owner: pm-tech-lead.
+## next_actions
 
-## Blockers
-- **#2574 Android SSO CSRF half-wired** — the freshly-merged CSRF fix (#2568) has no call site — every reality://sso callback is now rejected; blocks any Android SSO usage until re-wired — owner: pm-mobile.
-- **#2573 DELETE-by-file-key same-org reference gap** — new endpoint can delete a still-referenced S3 object within the same org (regression from PR #2571); blocks safe client wiring for 84-1 direct-to-S3 — owner: pm-backend.
-- **Accounting trio (#2555 / #2558 / #2559)** — no reviewer engagement in 2 days; dispatcher can't advance the MVP-loop — owner: pm-tech-lead.
+1. **Split 84-2 signer sign page into 3 mergeable slices** — retry3 single-squash pattern has failed; go incremental (route/manifest -> capture -> verify+delivery). Priority: **high**. Dependency: pm-frontend. DoD: three merged PRs, 84-2 flips to done.
+2. **Escalate gh-issue-2573 to a named pm-backend owner** — 3 days stalled with zero churn; it's the blocker for 84-1 which is the last mvp partial. Priority: **high**. Dependency: pm-backend. DoD: #2573 has an owner and a claim event within 48h.
+3. **Resolve DEC-107 reviewer-slot policy for the accounting trio** — now 4 days without reviewer engagement; either assign a named reviewer or split the trio. Priority: **high**. Dependency: pm-tech-lead. DoD: trio has reviewer engagement or is re-scoped as multiple smaller PRs.
+4. **Triage new open follow-up issue #2612 (fire-once notifications)** — decide owner_role (pm-backend vs pm-mobile), scope, whether it blocks 8A extended-scope closure. Priority: **medium**. Dependency: pm-tech-lead. DoD: #2612 labeled + owner-role assigned + action-list slot updated.
+5. **Extend the #2616 ui-kit consolidation pattern to ppt-web** — leverage this window's admin-web win to sweep ppt-web's duplicated primitives. Priority: **medium**. Dependency: pm-frontend. DoD: one PR merged addressing top-10 duplications.
+
+## risks
+
+1. **Accounting trio drift compounds daily** — 4 days without reviewer, will start conflicting with dev churn (auth.rs, integrations/booking split, layout webhook test) — probability high, impact medium. mitigation: DEC-107 must resolve this window.
+2. **84-1 blocked chain (frontend blocked on backend blocked on nothing)** — coordination gap, not implementer capacity — probability medium, impact high. mitigation: explicit hand-off of #2573 this window.
+3. **84-2 retry pattern will burn a 4th slot** without a slice-split — probability high, impact medium. mitigation: pm-frontend #1 above.
+4. **Fresh-open buffer at 10/36** — the dispatcher may starve for genuinely-open work in the next 6-12 hours unless a `scan` refresh is triggered — probability medium, impact medium. mitigation: consider `/ppt-project-management scan` on next run.
+
+## open_questions
+
+- Is #2612 (fire-once notifications) a regression of shipped 8A code or a gap surfaced by a new consumer? (Affects owner_role assignment.)
+- Should the reviewer-slot policy (DEC-107) apply retroactively to already-starving trio, or only to new large-scope PRs?
+
+## decisions_needed
+
+- **DEC-107 (2026-07-30, reviewer-slot policy) is now overdue** — the accounting trio going from 2 days -> 4 days reviewer-starved is direct evidence the policy is needed. Owner: pm-tech-lead. (raised 2026-07-30; escalated 2026-08-01 by pm-scrum-master.)
+- **Slice-vs-squash policy for retry-3+ stories** — see pm-frontend's decisions_needed; supported here — the 84-2 pattern is the second retry-3+ single-squash failure in a month (first was gh-issue-2318). Owner: pm-tech-lead + pm-scrum-master.
+
+## blockers
+
+- **gh-issue-2573** — DELETE /documents/by-file-key same-org reference gap; 3 days unclaimed; blocks 84-1. Owner: pm-backend.
+- **Accounting MVP-loop trio (#2555 / #2558 / #2559)** — 4 days without reviewer. Owner: pm-tech-lead.
+- **84-2 retry loop** — 3 failed single-squash attempts; pattern itself is the blocker. Owner: pm-frontend.

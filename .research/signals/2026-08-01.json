@@ -1,0 +1,180 @@
+{
+  "date": "2026-08-01",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2616",
+      "score_delta": 1,
+      "evidence": "117 lines changed this window (PR #2616 migrated inline Stepper/FileUpload/StepPill primitives onto @ppt/ui-kit)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2613",
+      "score_delta": 1,
+      "evidence": "398 lines changed this window (PR #2613 refactor: extracted vote-lifecycle jobs to services/scheduler/votes.rs — most churn is a delete, structural not behavioural)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/votes.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2613",
+      "score_delta": 1,
+      "evidence": "412 lines added (new file, extracted from scheduler/mod.rs by PR #2613)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-scheduler-dev-email-baked",
+      "type": "code-review-finding",
+      "source": "code-review 2026-08-01",
+      "score_delta": 3,
+      "evidence": "Scheduler::new bakes EmailService::development() (enabled=false) into the inner NotificationService; with_email_service() swaps only self.email_service, so scheduler-triggered Email-channel notifications (notify_announcement_published, notify_vote_started, notify_vote_closed, notify_payment_due) silently no-op in prod despite main.rs chaining with_email_service — the SECURITY #527-9 fix only reaches the direct signature-reminder path.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:149",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:209",
+        "backend/servers/api-server/src/main.rs:686"
+      ]
+    },
+    {
+      "id": "code-review-api-core-votes-reminder-spam",
+      "type": "code-review-finding",
+      "source": "code-review 2026-08-01",
+      "score_delta": 2,
+      "evidence": "send_vote_reminders has no persistent per-tick dedup (no last_reminder_at on votes/unit_residents); every ~60s tick within the reminder window re-fires notify_vote_reminder for every non-voter, gated only by NotificationService's 5-min in-memory dedup cache (~288 InApp notifications/day per non-voter per vote). Sister reminders have explicit stamps (SIGNATURE_REMINDER_MIN_INTERVAL_HOURS, mark_payment_reminder_sent); vote reminders don't and it isn't documented as a known limitation.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:339"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-01.md && head -1 matches # 2026-08-01",
+      "observed": "PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq .last_pr_seen changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "dedup against seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; no open item older than 14 days needing decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md adversarial pass in brief",
+      "observed": "passed",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, all metadata+headings+capability+mode+files present",
+      "observed": "1 plan, all fields OK",
+      "expected": "≤2 plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed",
+      "observed": "none",
+      "expected": "empty"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive_now (7) >= archive_head (7)",
+      "observed": "7>=7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length 0, no auto-fix this run",
+      "observed": "0",
+      "expected": "≤3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; coverage_cursor advanced 4→5; pm_cursor advanced 2→3",
+      "observed": "all OK",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-token pattern scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
