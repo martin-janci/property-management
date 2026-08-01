@@ -65,6 +65,17 @@ jobs:
           name: openapi-spec
           path: docs/api/generated/openapi.yaml
 
+  # Regenerates the committed TypeScript SDKs over their in-tree copies and
+  # fails on drift. The generator steps below are hardened so a generation
+  # failure or silent no-op can't slip past the drift gates as a false green.
+  #
+  # NOTE (weak error types): the generated request wrapper in each
+  # */src/generated/client/client.gen.ts returns `{ error: unknown }` on a
+  # non-throwing failure ("TODO: we probably want to return error and improve
+  # types"). That surface is emitted from the upstream @hey-api/openapi-ts
+  # template and is byte-compared by the drift gates, so it cannot be hardened
+  # by hand here — improving it needs a custom openapi-ts template/plugin in the
+  # frontend client packages, tracked separately.
   generate-sdks:
     needs: validate
     runs-on: ubuntu-latest
@@ -85,6 +96,7 @@ jobs:
 
       - name: Generate TypeScript SDK
         run: |
+          set -euo pipefail
           # Pin @hey-api/openapi-ts and co-install its `typescript` peer so the
           # generator can initialize. An unpinned `npm install -g` pulled a
           # newer release without typescript present, crashing at init with
@@ -92,7 +104,24 @@ jobs:
           # Versions mirror frontend/packages/api-client (openapi-ts ^0.99.0,
           # typescript ^5.3 -> resolved 5.9.3 in pnpm-lock).
           npm install --no-save @hey-api/openapi-ts@0.99.0 typescript@5.9.3
-          npx openapi-ts -i docs/api/generated/openapi.yaml -o frontend/packages/api-client/src/generated
+
+          # Wrapper hardening (#dx-fixme-api-client-generator): don't swallow
+          # generator failures. Surface a clear ::error:: annotation instead of
+          # a bare non-zero exit, and — critically — guard against a SILENT
+          # no-op. If openapi-ts exits 0 but writes nothing (an ignored flag, an
+          # empty spec, output landing in the wrong dir), the committed tree is
+          # unchanged and the drift gate below would pass as a FALSE GREEN over
+          # stale output. Asserting the client entrypoint exists closes that hole.
+          sdk_path=frontend/packages/api-client/src/generated
+          if ! npx openapi-ts -i docs/api/generated/openapi.yaml -o "$sdk_path"; then
+            echo "::error::openapi-ts failed to generate the TypeScript SDK ($sdk_path). See generator output above."
+            exit 1
+          fi
+          entrypoint="$sdk_path/client/client.gen.ts"
+          if [ ! -s "$entrypoint" ]; then
+            echo "::error::openapi-ts exited 0 but produced no client entrypoint ($entrypoint) — generation was a no-op. Refusing to let the drift gate pass on stale output."
+            exit 1
+          fi
 
       # Drift gate (2026-07-22): the step above regenerates the SDK directly
       # over the COMMITTED tree (frontend/packages/api-client/src/generated),
@@ -127,11 +156,25 @@ jobs:
 
       - name: Generate Reality TypeScript SDK
         run: |
+          set -euo pipefail
           # @ppt/reality-api-client is generated from the SAME openapi.yaml with
           # the SAME `openapi-ts` invocation as @ppt/api-client (see each
           # package's `generate` script), so we reuse the generator installed
           # above and regenerate directly over the committed reality tree.
-          npx openapi-ts -i docs/api/generated/openapi.yaml -o frontend/packages/reality-api-client/src/generated
+          #
+          # Same wrapper hardening as the @ppt/api-client step above: fail loudly
+          # on generator error and refuse a silent no-op so the reality drift
+          # gate below can't return a FALSE GREEN over a stale committed tree.
+          sdk_path=frontend/packages/reality-api-client/src/generated
+          if ! npx openapi-ts -i docs/api/generated/openapi.yaml -o "$sdk_path"; then
+            echo "::error::openapi-ts failed to generate the Reality TypeScript SDK ($sdk_path). See generator output above."
+            exit 1
+          fi
+          entrypoint="$sdk_path/client/client.gen.ts"
+          if [ ! -s "$entrypoint" ]; then
+            echo "::error::openapi-ts exited 0 but produced no Reality client entrypoint ($entrypoint) — generation was a no-op. Refusing to let the drift gate pass on stale output."
+            exit 1
+          fi
 
       # Drift gate (#2556): mirror of the @ppt/api-client gate above. The step
       # above regenerates over the COMMITTED reality tree, so a plain `git diff`
