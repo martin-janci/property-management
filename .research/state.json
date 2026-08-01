@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-31T16:26:02Z",
-  "last_run_ms": 780000,
-  "last_pr_seen": 2611,
-  "last_issue_seen": 2598,
-  "last_commit_sha": "dc64271a78ccdb77333aa613dc50a9594b268716",
+  "last_run_iso": "2026-08-01T16:17:00Z",
+  "last_run_ms": 4500,
+  "last_pr_seen": 2624,
+  "last_issue_seen": 2621,
+  "last_commit_sha": "e700a4cceec9a610688eb2ac8d147daa34676bff",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -153,9 +153,9 @@
       "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 75
+      "runs_seen": 2,
+      "last_seen": "2026-08-01",
+      "recent_churn": 627
     },
     "backend/servers/api-server/src/services/oauth.rs": {
       "runs_seen": 1,
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-31",
-      "recent_churn": 3626
+      "runs_seen": 4,
+      "last_seen": "2026-08-01",
+      "recent_churn": 1490
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -411,6 +411,11 @@
       "runs_seen": 1,
       "last_seen": "2026-07-30",
       "recent_churn": 240
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-01",
+      "recent_churn": 398
     }
   },
   "seen_signals": [
@@ -430,12 +435,14 @@
     "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-layout-tenant-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reports-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
     "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
@@ -642,9 +649,11 @@
     "lag-warning-2026-07-23",
     "lag-warning-2026-07-27",
     "lag-warning-2026-07-30",
+    "lag-warning-2026-08-01",
     "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
     "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-integrations-webhook-rs",
     "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -663,6 +672,7 @@
     "screen-map-drift-pr-2431-reality",
     "screen-map-drift-pr-2497-reality",
     "screen-map-drift-pr-2600-reality",
+    "screen-map-drift-pr-2624-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -752,7 +762,7 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 53,
+    "runs": 54,
     "vectors_created": 236,
     "plans_created": 17,
     "quiet_days": 2,

@@ -1,0 +1,110 @@
+{
+  "date": "2026-08-01",
+  "since_iso": "2026-07-31T16:26:02Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log dc64271..origin/dev --numstat",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/crates/integrations/src/booking/mod.rs — 1490 lines churned this run (mostly a large delete: PR #2619 extracted error/messages/client/models submodules)",
+        "cumulative re-emit — churn is a direct consequence of shipped refactor PR #2619 (already tracked as done row `refactor-churn-hotspot-integrations-booking-mod-2026-07-31`), not organic instability"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=3 -> 4",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "runs_seen=4 after this run (last three runs are all the deliberate booking/mod.rs split cascade: #2611 -> #2619)",
+        "cumulative re-emit — file is contracting as designed; expected to stabilise once submodule extraction settles"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "type": "churn-hotspot",
+      "source": "git log dc64271..origin/dev --numstat",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs — 627 lines churned this run (PR #2623: booking_push HMAC hardening + Airbnb replay parity + shared verify_timestamped_signature extraction)",
+        "cumulative re-emit — churn is targeted security hardening with dedicated regression tests, not organic instability"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=1 -> 2",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "runs_seen=2 after this run (first appearance 2026-05-30, now again via PR #2623)",
+        "score suppressed: 8-week gap since first hotspot, and current churn is deliberate security hardening (PR #2623 shipped booking-push HMAC + Airbnb ts-parity) — not organic instability. Re-fire natural threshold not met."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log dc64271..origin/dev --numstat",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs — 398 lines churned this run (PR #2613 extracted vote-lifecycle jobs to scheduler/votes.rs, mod.rs shrinks 2525 -> 2134)",
+        "score suppressed: churn is deliberate refactor extraction (PR #2613, following #2610); scheduler.rs -> scheduler/mod.rs is a rename+split that mechanically fires this signal. Not organic instability."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2624-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2624 merged 2026-08-01T16:09Z",
+      "score_delta": 0,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2624 (gh-issue-2621) touched frontend/apps/reality-web/src/app/api/layout-revalidate/{route.ts,route.test.ts} without updating docs/screens/reality/",
+        "score suppressed: touched files are Next.js API routes (/app/api/**), not page/screen routes. API routes have no screen-map counterpart. Heuristic false positive — same class as PR #2600, tracked resolution: no doc update warranted (or, if human wants one, add a note to `docs/screens/reality/home.md` similar to PR #2618's reconciliation)."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-01",
+      "type": "lag_warning",
+      "source": "(now - last_run_iso)/3600 = 23h",
+      "score_delta": 0,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "Lag 23h — below 36h threshold. On schedule. Recorded for continuity."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — all signals this run resolved to score_delta=0 (churn suppressed as refactor-consequence + screen-map-drift heuristic FP); no eligible action-shape",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-08-01.md && head -1 matches # 2026-08-01", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare state.json vs HEAD", "observed": "seen_signals grew by 6 (churn cumulative + drift + lag) + hotspot_history keys advanced", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq [.items[].id] | (length == (unique | length))", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "cumulative-type re-emit with score_delta=0; non-cumulative new IDs (scheduler, webhook, drift, lag) not previously in seen_signals", "observed": "no offenders", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no item >8; no open item older than 14d (backlog is fully terminal — 0 open/ready/deferred)", "observed": "cap ok, decay N/A (no open rows)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "count added plans <=2", "observed": "0 added", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames in staged diff (excl. baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "exit 0 (unchanged rows; timestamp-only edit is self-consistent)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "cursors match phase outcomes (Phase 1 succeeded so last_pr_seen/last_issue_seen/last_commit_sha advance; Phase 1.5 skipped so review_cursor untouched; Phase 1.6 skipped so pm_cursor/coverage_cursor untouched)", "observed": "phase-cursor alignment ok", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs unchanged (no plan file added/removed this run)", "observed": "convergent", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD", "observed": "equal (no archive change)", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0 (unchanged rows; timestamp-only edit is self-consistent)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions is empty; no auto-fix branch pushed", "observed": "no candidate", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run -> gate is a no-op", "observed": "no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep telegram bot token literal in staged diff (excl. baseline docs)", "observed": "0", "expected": "0" }
+  ]
+}
