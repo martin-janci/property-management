@@ -3079,6 +3079,50 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "dx-fixme-admin-web-ui-kit-primitives-missing",
+      "branch": "auto-impl/dx-fixme-admin-web-ui-kit-primitives-mis-e18f2b8f",
+      "status": "merged",
+      "claimed_at": "2026-07-31T22:02:00Z",
+      "last_updated": "2026-08-01T00:18:30Z",
+      "status_changed_at": "2026-08-01T00:18:30Z",
+      "pr_number": 2616,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2616",
+      "merged_at": "2026-08-01T00:18:14Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=bbcf66b8fb34d2488c85efa895325ef34e9ed9cd note=clean-uikit-consolidation-ci-green-self-approve-blocked-posted-comment",
+      "last_reviewed_oid": "bbcf66b8fb34d2488c85efa895325ef34e9ed9cd",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-01T00:16:00Z"
+    },
+    {
+      "task_id": "dx-fixme-api-client-generator-typescript-error-types",
+      "branch": "auto-impl/dx-fixme-api-client-generator-typescript-08cdd192",
+      "status": "merged",
+      "claimed_at": "2026-07-31T22:02:00Z",
+      "last_updated": "2026-08-01T00:20:00Z",
+      "status_changed_at": "2026-08-01T00:20:00Z",
+      "pr_number": 2615,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2615",
+      "merged_at": "2026-08-01T00:19:06Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=6eacc15cb36713adc76d941f3297161880a07a5b note=clean-scoped-ci-hardening-ci-green-self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "6eacc15cb36713adc76d941f3297161880a07a5b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-01T00:16:00Z"
+    },
+    {
       "task_id": "dx-routine-lag-catchup-2026-07",
       "branch": "auto-impl/dx-routine-lag-catchup-2026-07-2a7a3130",
       "status": "failed",
@@ -8645,6 +8689,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2612",
+      "branch": "auto-impl/gh-issue-2612-5190a264",
+      "status": "failed",
+      "claimed_at": "2026-07-31T18:08:12Z",
+      "last_updated": "2026-08-01T00:04:00Z",
+      "status_changed_at": "2026-08-01T00:04:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " [sandbox-reclaim: respawned implementer (attempt 1)] sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -10201,5 +10267,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-07-31T20:13:32Z"
+  "archived_at": "2026-08-01T00:20:22Z"
 }
