@@ -8,7 +8,13 @@ vi.mock('next/cache', () => ({
 
 import { revalidateTag } from 'next/cache';
 import { __clearAnalyticsSinks, type AnalyticsEvent, registerAnalyticsSink } from '@/lib/analytics';
-import { isTimestampFresh, layoutTagsFor, POST, parseWebhookTimestamp } from './route';
+import {
+  authenticatedTargetTenant,
+  isTimestampFresh,
+  layoutTagsFor,
+  POST,
+  parseWebhookTimestamp,
+} from './route';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -110,6 +116,37 @@ describe('isTimestampFresh', () => {
   it('rejects just outside the window in the past and future', () => {
     expect(isTimestampFresh(NOW - 301, NOW)).toBe(false);
     expect(isTimestampFresh(NOW + 301, NOW)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// authenticatedTargetTenant helper (issue #2621)
+// ---------------------------------------------------------------------------
+
+describe('authenticatedTargetTenant', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('normalizes host: trims, lowercases, strips port', () => {
+    expect(authenticatedTargetTenant('  Tenant.RLT.sk:3001 ')).toBe('tenant.rlt.sk');
+  });
+
+  it('maps an absent/empty host to the * sentinel', () => {
+    expect(authenticatedTargetTenant(null)).toBe('*');
+    expect(authenticatedTargetTenant('   ')).toBe('*');
+  });
+
+  it('records the host verbatim when no allow-list is configured', () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_ALLOWED_HOSTS', '');
+    expect(authenticatedTargetTenant('unknown.example.com')).toBe('unknown.example.com');
+  });
+
+  it('collapses an unknown host to * when an allow-list is configured', () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_ALLOWED_HOSTS', 'a.rlt.sk, b.rlt.sk');
+    expect(authenticatedTargetTenant('a.rlt.sk')).toBe('a.rlt.sk');
+    expect(authenticatedTargetTenant('B.RLT.sk:443')).toBe('b.rlt.sk');
+    expect(authenticatedTargetTenant('evil.example.com')).toBe('*');
   });
 });
 
@@ -368,6 +405,48 @@ describe('layout_revalidate_received emission', () => {
       revalidate_outcome: 'invalid_signature',
       http_status: 401,
     });
+  });
+
+  // --- issue #2621: pre-auth paths must NOT record an attacker-chosen Host ---
+
+  it('records the * sentinel (not the injected Host) on the pre-auth disabled path', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', '');
+    const body = JSON.stringify({ screen: 'reality/listing-detail' });
+    // Unauthenticated caller injects an arbitrary Host header.
+    const req = makeRequest(body, { host: 'attacker-controlled.evil.example.com' });
+    const res = await POST(req);
+    expect(res.status).toBe(503);
+    expect(events).toHaveLength(1);
+    expect(events[0].properties.target_tenant).toBe('*');
+    expect(events[0].properties.target_tenant).not.toBe('attacker-controlled.evil.example.com');
+  });
+
+  it('records the * sentinel (not the injected Host) on the pre-auth invalid_signature path', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail' });
+    const req = makeRequest(body, {
+      host: 'attacker-controlled.evil.example.com',
+      'X-Webhook-Timestamp': String(nowTs()),
+      'X-Webhook-Signature': 'sha256=invalidsignature==',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(events).toHaveLength(1);
+    expect(events[0].properties.target_tenant).toBe('*');
+    expect(events[0].properties.target_tenant).not.toBe('attacker-controlled.evil.example.com');
+  });
+
+  it('records the (normalized) Host on the authenticated revalidated path', async () => {
+    vi.stubEnv('LAYOUT_WEBHOOK_SECRET', SECRET);
+    const body = JSON.stringify({ screen: 'reality/listing-detail', event: 'published' });
+    // Authenticated (correctly signed) delivery — the host is trusted here.
+    const req = signedRequest(SECRET, body, {
+      extraHeaders: { host: 'Tenant-A.RLT.sk:443' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(events).toHaveLength(1);
+    expect(events[0].properties.target_tenant).toBe('tenant-a.rlt.sk');
   });
 
   it('emits invalid_screen (422) when the screen has no slash', async () => {
