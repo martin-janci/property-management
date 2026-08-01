@@ -8909,6 +8909,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2621",
+      "branch": "auto-impl/gh-issue-2621-50d47ce6",
+      "status": "merged",
+      "claimed_at": "2026-08-01T10:12:41Z",
+      "last_updated": "2026-08-01T16:10:40Z",
+      "status_changed_at": "2026-08-01T16:10:40Z",
+      "pr_number": 2624,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2624",
+      "merged_at": "2026-08-01T16:09:14Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2624 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=pre-auth paths record '*' sentinel; authenticatedTargetTenant helper + optional LAYOUT_WEBHOOK_ALLOWED_HOSTS allow-list; verify green (235 tests)",
+      "reviewer_summary": "verdict=approve head_oid=97dbefbad397f30c5326e948207dd6d6d387d8a2 note=pre-auth paths record * sentinel; CI green (33 checks); approval posted as comment (self-review blocked)",
+      "last_reviewed_oid": "97dbefbad397f30c5326e948207dd6d6d387d8a2",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-01T16:09:05Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -9821,6 +9843,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "sec-ammonia-supply-chain-audit-2026-07-23-retry1",
+      "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-419e8cfe",
+      "status": "merged",
+      "claimed_at": "2026-08-01T10:12:41Z",
+      "last_updated": "2026-08-01T16:10:40Z",
+      "status_changed_at": "2026-08-01T16:10:40Z",
+      "pr_number": 2625,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2625",
+      "merged_at": "2026-08-01T16:09:08Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2625 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=quinn-proto 0.11.14->0.11.15 clears RUSTSEC-2026-0185 (lockfile-only); other advisories already in deny.toml; local verify egress-blocked on utoipa-swagger-ui swagger-ui download (403), CI authoritative; drift=Cargo.lock",
+      "reviewer_summary": "verdict=approve head_oid=85438b6250f2c889e34189631591440c9520350f note=clean quinn-proto 0.11.14->0.11.15 lockfile bump clears RUSTSEC-2026-0185; scope_drift(Cargo.lock) expected; CI+cargo-deny green (26 checks); approval blocked by GitHub self-approval rule",
+      "last_reviewed_oid": "85438b6250f2c889e34189631591440c9520350f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-01T16:09:05Z"
+    },
+    {
       "task_id": "sec-layout-webhook-hmac-verify-2026-07-23",
       "branch": "auto-impl/sec-layout-webhook-hmac-verify-2026-07-2-53a3b544",
       "status": "failed",
@@ -10575,5 +10619,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-01T14:17:43Z"
+  "archived_at": "2026-08-01T16:12:43Z"
 }

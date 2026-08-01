@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "refactor-churn-hotspot-integrations-booking-mod-2026-07-31",
-      "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs \u2014 3626 lines this window (recently split by PR #2611)",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently split by PR #2611)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
@@ -21,7 +21,7 @@
     },
     {
       "id": "data-pgvector-rag-observability-2026-07-23-retry1",
-      "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) \u2014 retrieval latency, top-k relevance, empty-result rate \u2014 before feature adoption grows [retry 1/2 of failed data-pgvector-rag-observability-2026-07-23]",
+      "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows [retry 1/2 of failed data-pgvector-rag-observability-2026-07-23]",
       "owner_role": "pm-data",
       "priority": "low",
       "status": "in-progress",
@@ -36,7 +36,7 @@
     },
     {
       "id": "gh-issue-2366-retry2",
-      "action": "Follow-up: direct-to-S3 upload drops building_id \u2014 building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 2/2 of failed gh-issue-2366]",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 2/2 of failed gh-issue-2366]",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "in-progress",
@@ -72,7 +72,7 @@
     },
     {
       "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry1",
-      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) \u2014 feeds #2485 fix design [retry 1/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 1/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
       "owner_role": "pm-security",
       "priority": "high",
       "status": "in-progress",
@@ -86,7 +86,7 @@
     },
     {
       "id": "code-review-api-handlers-community-unauthenticated-reads-retry1",
-      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated \u2014 anonymous cross-tenant read [retry 1/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read [retry 1/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
       "owner_role": "pm-security",
       "priority": "medium",
       "status": "in-progress",
@@ -114,7 +114,7 @@
     },
     {
       "id": "data-mobile-native-analytics-parity-2026-07-23-retry1",
-      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity \u2014 surface funnels missing analytics hooks (listing view, search, contact-inquiry) [retry 1/2 of failed data-mobile-native-analytics-parity-2026-07-23]",
+      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry) [retry 1/2 of failed data-mobile-native-analytics-parity-2026-07-23]",
       "owner_role": "pm-data",
       "priority": "low",
       "status": "in-progress",
@@ -125,42 +125,6 @@
       "first_open_at": "2026-08-01T06:04:15Z",
       "retry_of": "data-mobile-native-analytics-parity-2026-07-23",
       "retry_round": 1
-    },
-    {
-      "id": "gh-issue-2621",
-      "action": "Follow-up: reality-web layout-revalidate receiver records untrusted Host as target_tenant on pre-auth paths (PR #2549) (Closes #2621)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-08-01T08:08:13Z (#2621)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-01T08:08:13Z",
-      "issue_ref": {
-        "number": 2621,
-        "url": "https://github.com/martin-janci/property-management/issues/2621",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-08-01T10:12:41Z"
-    },
-    {
-      "id": "sec-ammonia-supply-chain-audit-2026-07-23-retry1",
-      "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) \u2014 run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories [retry 1/2 of failed sec-ammonia-supply-chain-audit-2026-07-23]",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-08-01T08:08:56Z (retry_of=sec-ammonia-supply-chain-audit-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T18:06:11Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-01T08:08:56Z",
-      "retry_of": "sec-ammonia-supply-chain-audit-2026-07-23",
-      "retry_round": 1,
-      "last_updated": "2026-08-01T10:12:41Z"
     },
     {
       "id": "gh-issue-2528-retry1",

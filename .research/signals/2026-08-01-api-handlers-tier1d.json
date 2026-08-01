@@ -1,0 +1,28 @@
+{
+  "generated": "2026-08-01T00:00:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": [
+    "rust",
+    "completeness"
+  ],
+  "signals": [
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes document (Slovak 'zapisnica' under §14 z. 182/1993 Z.z. / Czech SVJ 'usneseni' under §1206 z. 89/2012 Sb.) but populate nearly every legally-material field with hardcoded placeholder constants instead of the actual vote's data.",
+        "Fabricated fields returned to the caller: meeting_date = NaiveDate 2024-01-15 (constant), meeting_location = 'Spolocenska miestnost, Hlavna 1, Bratislava' / 'Spolecenska mistnost, Hlavni 1, Praha' (constant), Czech svj_name = 'SVJ Hlavni 1' and ico = '12345678' (constant), total_ownership_shares = 10000, participating_shares = 7500, participation_percentage = 75.00, votes_for = 6000, votes_against = 1000, abstentions = 500, quorum_met = true, result_approved = true, participants = [] and questions = [] (empty). Only vote_id, building_id, title and the quorum_rule lookup reflect real data.",
+        "Impact: the endpoint emits a document that asserts a specific quorum was met and the motion was APPROVED with fabricated tallies (6000 for / 1000 against) for ANY vote id the caller can read — regardless of the vote's real outcome. This is a correctness/compliance defect on a legal artifact, not a cosmetic stub: a rejected or quorum-failed vote would still render as approved. Reachable in production (registered routes GET /api/v1/regional-compliance/slovak|czech vote minutes; vote lookup is RLS-scoped so the handler is live, only the body is fake).",
+        "Fix direction: derive meeting_date/location, ownership shares, participation, and the votes_for/against/abstentions tallies plus quorum_met/result_approved from the real poll + its cast votes (the same repo already loads the poll via vote_repo.find_poll_by_id_rls); do not hardcode the outcome. Same remediation applies verbatim to both the Slovak and Czech handlers."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

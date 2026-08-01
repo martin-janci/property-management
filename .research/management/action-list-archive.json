@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-01T04:15:52Z",
+  "archived_at": "2026-08-01T16:12:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9883,6 +9883,27 @@
       "last_updated": "2026-08-01T00:20:00Z"
     },
     {
+      "id": "gh-issue-2621",
+      "action": "Follow-up: reality-web layout-revalidate receiver records untrusted Host as target_tenant on pre-auth paths (PR #2549) (Closes #2621)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-01T08:08:13Z (#2621)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T08:08:13Z",
+      "issue_ref": {
+        "number": 2621,
+        "url": "https://github.com/martin-janci/property-management/issues/2621",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-08-01T16:11:08Z"
+    },
+    {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
       "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
@@ -11264,6 +11285,21 @@
       },
       "last_updated": "",
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "sec-ammonia-supply-chain-audit-2026-07-23-retry1",
+      "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories [retry 1/2 of failed sec-ammonia-supply-chain-audit-2026-07-23]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-01T08:08:56Z (retry_of=sec-ammonia-supply-chain-audit-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T18:06:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T08:08:56Z",
+      "retry_of": "sec-ammonia-supply-chain-audit-2026-07-23",
+      "retry_round": 1,
+      "last_updated": "2026-08-01T16:11:08Z"
     },
     {
       "id": "sec-layout-webhook-hmac-verify-2026-07-23",
