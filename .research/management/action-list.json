@@ -33,6 +33,98 @@
       "retry_of": "data-pgvector-rag-observability-2026-07-23",
       "retry_round": 1,
       "last_updated": "2026-08-01T00:05:00Z"
+    },
+    {
+      "id": "gh-issue-2366-retry2",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 2/2 of failed gh-issue-2366]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=gh-issue-2366 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T16:04:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "gh-issue-2366",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2366,
+        "url": "https://github.com/martin-janci/property-management/issues/2366",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gap-84-2-document-sign-page-2026-07-23-retry1",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery (84-2 partial; prior attempt failed no-PR) [retry 1/2 of failed gap-84-2-document-sign-page-2026-07-23-retry3]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=gap-84-2-document-sign-page-2026-07-23-retry3 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T22:15:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "gap-84-2-document-sign-page-2026-07-23-retry3",
+      "retry_round": 1
+    },
+    {
+      "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry1",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 1/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=sec-layout-webhook-hmac-verify-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T22:15:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "sec-layout-webhook-hmac-verify-2026-07-23",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-api-handlers-community-unauthenticated-reads-retry1",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read [retry 1/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=code-review-api-handlers-community-unauthenticated-reads reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T04:04:21Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "code-review-api-handlers-community-unauthenticated-reads",
+      "retry_round": 1
+    },
+    {
+      "id": "data-announcement-fanout-metric-2026-07-23-retry1",
+      "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model) [retry 1/2 of failed data-announcement-fanout-metric-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=data-announcement-fanout-metric-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T10:06:46Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "data-announcement-fanout-metric-2026-07-23",
+      "retry_round": 1
+    },
+    {
+      "id": "data-mobile-native-analytics-parity-2026-07-23-retry1",
+      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry) [retry 1/2 of failed data-mobile-native-analytics-parity-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=data-mobile-native-analytics-parity-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T18:06:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "data-mobile-native-analytics-parity-2026-07-23",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

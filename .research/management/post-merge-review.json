@@ -1,9 +1,33 @@
 {
-  "generated": "2026-08-01T00:30:49Z",
+  "generated": "2026-08-01T06:15:42Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-01T06:15:42Z",
+      "prs_scanned": 10,
+      "clean": [
+        2567,
+        2571,
+        2619,
+        2566,
+        2565,
+        2569,
+        2570,
+        2482,
+        2618
+      ],
+      "with_issues": [
+        {
+          "pr": 2549,
+          "issue": 2621,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "reality-web layout-revalidate records untrusted Host as target_tenant on pre-auth (503/401) paths"
+        }
+      ]
+    },
     {
       "run_at": "2026-08-01T00:30:49Z",
       "prs_scanned": 15,
@@ -870,27 +894,6 @@
           "findings": 3,
           "specialist": "react-native",
           "note": "env resolution now deterministic; getAppEnv() NODE_ENV/invalid-APP_ENV fallback uncovered, duplicates plugin resolveAppEnv(), dotenv mock precedence contradicts documented CI sentinel-override"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-08T00:31:14Z",
-      "prs_scanned": 2,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2150,
-          "issue": 2169,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "lease enum-decode fix incomplete: get_lease_with_details_rls (GET /leases/{id} +3 routes) still SELECT *; lease mutations still RETURNING * -> 500"
-        },
-        {
-          "pr": 2164,
-          "issue": 2170,
-          "findings": 1,
-          "specialist": "react-web",
-          "note": "admin-web Org dashboard: reuse DestructiveConfirmDialog (audit-reason+a11y); gate usePlatformStats on capability"
         }
       ]
     }

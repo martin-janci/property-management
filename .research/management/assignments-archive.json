@@ -4029,6 +4029,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-84-2-document-sign-page-2026-07-23-retry1",
+      "branch": "auto-impl/gap-84-2-document-sign-page-2026-07-23-r-f45b9754",
+      "status": "failed",
+      "claimed_at": "2026-08-01T06:06:29Z",
+      "last_updated": "2026-08-01T06:14:40Z",
+      "status_changed_at": "2026-08-01T06:14:40Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=duplicate/already-shipped via #2347 (+fix #2408); DocumentSignPage+/sign route+esignature client+screen-map shipped=true on dev; zero diff, no PR needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-84-2-document-sign-page-2026-07-23-retry3",
       "branch": "auto-impl/gap-84-2-document-sign-page-2026-07-23-r-585b3ef4",
       "status": "failed",
@@ -9689,6 +9711,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "sec-layout-webhook-hmac-verify-2026-07-23-retry1",
+      "branch": "auto-impl/sec-layout-webhook-hmac-verify-2026-07-2-b952224a",
+      "status": "failed",
+      "claimed_at": "2026-08-01T06:06:29Z",
+      "last_updated": "2026-08-01T06:14:40Z",
+      "status_changed_at": "2026-08-01T06:14:40Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false note=verify-PASS: #2485 layout webhook HMAC already implemented+tested end-to-end (sender signs {ts}.{body}; reality-web receiver constant-time+300s window); parity with esignature confirmed; no code change warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "sec-layout-webhook-integration-test-2026-07-23",
       "branch": "auto-impl/sec-layout-webhook-integration-test-2026-64f0f687",
       "status": "failed",
@@ -10399,5 +10443,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-01T04:15:40Z"
+  "archived_at": "2026-08-01T06:16:47Z"
 }
