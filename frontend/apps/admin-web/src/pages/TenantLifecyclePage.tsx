@@ -12,6 +12,7 @@
  */
 
 import { useCapability } from '@ppt/admin-ui';
+import { FileUpload, Stepper } from '@ppt/ui-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
@@ -171,23 +172,8 @@ function ensureStyles() {
     /* Countdown hint */
     .lc-btn-hint { font-size: 12px; color: var(--ppt-fg-muted, #6b7280); margin: 0; }
 
-    /* File restore */
-    .lc-file-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border-radius: var(--ppt-radius-md, 8px);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      background: var(--ppt-bg-surface, #fff);
-      border: 1px solid var(--ppt-border-default, #e5e7eb);
-      color: var(--ppt-fg-secondary, #374151);
-      transition: background 120ms ease;
-    }
-    .lc-file-label:hover { background: var(--ppt-bg-hover, #f3f4f6); }
-    .lc-file-selected { font-size: 12px; color: var(--ppt-fg-muted, #6b7280); margin: 0; }
+    /* File restore — dropzone provided by @ppt/ui-kit <FileUpload>; only the submit button margin remains */
+    .lc-restore-actions { margin-top: 12px; }
 
     /* ──── Purge wizard ──── */
     .lc-wizard {
@@ -199,30 +185,8 @@ function ensureStyles() {
     }
     .lc-wizard-title { font-size: 14px; font-weight: 600; color: var(--ppt-danger-800, #991b1b); margin: 0 0 16px; }
 
-    /* Step indicator */
-    .lc-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-    .lc-step-arrow { color: var(--ppt-fg-muted, #9ca3af); font-size: 14px; }
-    .lc-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .lc-pill--done {
-      background: var(--ppt-success-100, #dcfce7);
-      color: var(--ppt-success-800, #166534);
-    }
-    .lc-pill--current {
-      background: var(--ppt-brand-100, #dbeafe);
-      color: var(--ppt-brand-800, #1e40af);
-    }
-    .lc-pill--pending {
-      background: var(--ppt-neutral-100, #f3f4f6);
-      color: var(--ppt-neutral-600, #4b5563);
-    }
+    /* Step indicator — rendered by @ppt/ui-kit <Stepper>; only spacing remains here */
+    .lc-stepper { margin-bottom: 24px; }
 
     /* Step body */
     .lc-step-body { display: flex; flex-direction: column; gap: 14px; }
@@ -281,21 +245,6 @@ function ensureStyles() {
 }
 
 // ---------------------------------------------------------------------------
-// Step pill component
-// ---------------------------------------------------------------------------
-
-type PillState = 'done' | 'current' | 'pending';
-
-function StepPill({ label, state }: { label: string; state: PillState }) {
-  return (
-    <span className={`lc-pill lc-pill--${state}`}>
-      {state === 'done' && '✓ '}
-      {label}
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Purge wizard (inline, below the grid)
 // ---------------------------------------------------------------------------
 
@@ -335,12 +284,6 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
       setStep(2);
     }
   }, [step, exportOk]);
-
-  const pillState = (forStep: 1 | 2 | 3): PillState => {
-    if (forStep < step) return 'done';
-    if (forStep === step) return 'current';
-    return 'pending';
-  };
 
   // TOTP digit input handler with auto-advance
   const handleTotpChange = (idx: number, val: string) => {
@@ -407,18 +350,12 @@ export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
     <div className="lc-wizard" role="region" aria-label="Purge wizard">
       <p className="lc-wizard-title">Purge wizard — proceed carefully</p>
 
-      {/* Step indicator */}
-      <div className="lc-steps" aria-label="Wizard steps">
-        <StepPill label="1. Confirm export" state={pillState(1)} />
-        <span className="lc-step-arrow" aria-hidden="true">
-          →
-        </span>
-        <StepPill label="2. Type slug" state={pillState(2)} />
-        <span className="lc-step-arrow" aria-hidden="true">
-          →
-        </span>
-        <StepPill label="3. MFA + reason" state={pillState(3)} />
-      </div>
+      {/* Step indicator — shared @ppt/ui-kit primitive (step is 1-based, Stepper is 0-based) */}
+      <Stepper
+        className="lc-stepper"
+        steps={['Confirm export', 'Type slug', 'MFA + reason']}
+        current={step - 1}
+      />
 
       <div className="lc-step-body">
         {/* Step 1 */}
@@ -818,22 +755,26 @@ export default function TenantLifecyclePage() {
           </p>
           {canRestore && (
             <>
-              <label className="lc-file-label" htmlFor="lc-restore-file">
-                Choose file…
-              </label>
-              <input
-                id="lc-restore-file"
-                type="file"
+              <FileUpload
                 accept=".tar.gz"
-                style={{ display: 'none' }}
-                onChange={(e) => setRestoreFile(e.target.files?.[0] ?? null)}
+                multiple={false}
+                onFiles={(files) => setRestoreFile(files[0] ?? null)}
+                onRemove={() => setRestoreFile(null)}
+                files={
+                  restoreFile
+                    ? [
+                        {
+                          id: restoreFile.name,
+                          file: restoreFile,
+                          progress: isUploading ? 50 : 0,
+                          status: isUploading ? 'uploading' : 'idle',
+                        },
+                      ]
+                    : []
+                }
               />
               {restoreFile && (
-                <>
-                  <p className="lc-file-selected">
-                    Selected: {restoreFile.name} ({(restoreFile.size / 1_073_741_824).toFixed(1)}{' '}
-                    GB)
-                  </p>
+                <div className="lc-restore-actions">
                   <button
                     type="button"
                     className="lc-btn lc-btn--primary"
@@ -843,7 +784,7 @@ export default function TenantLifecyclePage() {
                     {isUploading && <span className="lc-spinner" aria-hidden="true" />}
                     {isUploading ? 'Uploading…' : 'Upload'}
                   </button>
-                </>
+                </div>
               )}
             </>
           )}
