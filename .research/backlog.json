@@ -5803,6 +5803,75 @@
         "assignment_status": "merged",
         "pr_number": 2615
       }
+    },
+    {
+      "id": "code-review-reality-server-sso-session-invalidate-swallowed",
+      "title": "reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-08-01"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:1043 — sync_session: when the introspected PM token is inactive, the portal session is revoked via `let _ = state.session_service.invalidate_session(portal_session).await;` which discards the Result; if invalidation errors (Redis/DB), the session is NOT invalidated",
+        "sso.rs:1047 then unconditionally logs 'Invalidated portal session due to inactive PM token' and returns 401 pm_session_expired — the log asserts a revocation that may never have happened",
+        "Security control (drop the portal session when the upstream PM session dies) can silently no-op, leaving a usable portal_session cookie after the PM session is dead — a stale-session weakness; fix: propagate the invalidate error or at minimum log/retry on failure"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-db-error-leak-to-client",
+      "title": "reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-08-01"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:289,301,470 — unauthenticated public search/count/suggestions handlers return `format!(\"Failed to ...: {}\", e)` as the 500 response body, leaking raw sqlx::Error (column/constraint names, pool/TLS state) to portal clients",
+        "backend/servers/reality-server/src/util/errors.rs:1-32 — db_error() exists precisely for this ('Reality-server is internet-facing. Raw sqlx::Error ... can leak column names, constraint names') and returns a generic 'Internal server error'; the offending sites bypass it",
+        "Same raw-error-to-client pattern in realtors.rs (75,110,154,193,240,273,313), layout.rs (61,67,87,103), health.rs:151 — ~23 map_err sites across routes/ interpolate the error into the client String; fix: route all through util::errors::db_error"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/layout.rs",
+        "backend/servers/reality-server/src/util/errors.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-password-reset-no-transport",
+      "title": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-08-01"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:453-471 — request_password_reset: in release builds (cfg(not(debug_assertions))) the plaintext reset token is discarded via `let _ = plaintext_token;` with no email/SMS transport ('Email transport hasn't been wired yet for the reality server')",
+        "users.rs:485-487 — endpoint still returns 200 'If an account exists for this email, a reset link has been sent.'; the message is false in production, no reset link is ever delivered, so portal password reset cannot complete in prod",
+        "Token is only surfaced in debug builds via tracing at INFO (users.rs:458-463); acknowledged TODO but the endpoint advertises a working flow"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
     }
   ]
 }
