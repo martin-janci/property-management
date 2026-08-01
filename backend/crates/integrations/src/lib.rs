@@ -73,11 +73,12 @@ pub use booking::{
 
 // Story 83.3: Portal Webhooks
 pub use portals::{
-    compute_hmac_sha256, get_parser, parse_webhook, verify_webhook_signature,
-    BezrealitkyInquiryData, BezrealitkyParser, BezrealitkyWebhook, GenericParser, GenericWebhook,
-    ImmoweltContact, ImmoweltParser, ImmoweltWebhook, InquiryStatus, ParseError, ParsedInquiry,
-    PortalClient, PortalConnection, PortalError, PortalInquiry, PortalParser, PortalType,
-    SrealityContact, SrealityParser, SrealityWebhook,
+    compute_hmac_sha256, get_parser, parse_webhook, verify_timestamped_signature,
+    verify_webhook_signature, BezrealitkyInquiryData, BezrealitkyParser, BezrealitkyWebhook,
+    GenericParser, GenericWebhook, ImmoweltContact, ImmoweltParser, ImmoweltWebhook, InquiryStatus,
+    ParseError, ParsedInquiry, PortalClient, PortalConnection, PortalError, PortalInquiry,
+    PortalParser, PortalType, SrealityContact, SrealityParser, SrealityWebhook,
+    TimestampedSignatureError,
 };
 
 // Story 61.2: Accounting System Export

@@ -585,6 +585,75 @@ pub fn timestamp_within_tolerance(now_unix: i64, timestamp: i64, tolerance_secs:
     }
 }
 
+/// Why an inbound timestamped webhook signature failed to verify.
+///
+/// Both variants fail closed. Receivers map every variant to an opaque
+/// `401 INVALID_SIGNATURE` (the discriminant is logged, never leaked to the
+/// caller) so an attacker cannot distinguish "stale" from "bad key".
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TimestampedSignatureError {
+    /// The signed timestamp is outside the freshness window — a stale capture
+    /// being replayed, or an absurd future-dated delivery.
+    StaleTimestamp,
+    /// The HMAC over `"{timestamp}.{body}"` did not match, the signature was
+    /// malformed, or the signing secret was empty.
+    BadSignature,
+}
+
+/// Verify an inbound webhook that binds a unix-seconds `timestamp` into its
+/// HMAC-SHA256 signature as `"{timestamp}.{body}"`, enforcing **authenticity**
+/// (the shared `secret` produced `signature`) and **freshness** (`timestamp`
+/// within `tolerance_secs` of `now_unix`).
+///
+/// This is the single reviewed implementation of the `"{ts}.{body}"` inbound
+/// scheme shared by the hex-signature receivers (the connection-scoped portal,
+/// Airbnb, and Booking.com push receivers in `api-server`) — the R4 follow-up
+/// of the 2026-07 webhook-hardening audit. It mirrors, in one place, the
+/// construction the Stripe receiver (`services::stripe::verify_signature`) and
+/// the per-portal base64 receiver implement in their provider-specific
+/// encodings (those keep bespoke verifiers because their signature encodings —
+/// Stripe's compound `t=/v1=` header, per-portal base64 — differ from the plain
+/// hex handled here).
+///
+/// Fail-closed properties:
+/// * an empty `secret` is rejected (`verify_webhook_signature` would otherwise
+///   compute a valid HMAC under the empty key, so an unset secret must never
+///   verify);
+/// * a `timestamp` outside the window is rejected before the HMAC is checked,
+///   using the overflow-proof [`timestamp_within_tolerance`] (an adversarial
+///   `i64::MIN`/`MAX` cannot panic or wrap the gate);
+/// * folding the timestamp into the signed material means a captured signature
+///   cannot be re-presented with a refreshed timestamp header — the swap
+///   invalidates the HMAC.
+///
+/// An optional `sha256=` prefix on `signature` is tolerated. The HMAC compare
+/// is constant-time (delegated to [`verify_webhook_signature`]).
+///
+/// `now_unix` / `tolerance_secs` are injected so the freshness window is
+/// unit-testable without wall-clock dependence.
+pub fn verify_timestamped_signature(
+    secret: &str,
+    timestamp: i64,
+    body: &str,
+    signature: &str,
+    now_unix: i64,
+    tolerance_secs: i64,
+) -> Result<(), TimestampedSignatureError> {
+    if secret.is_empty() {
+        return Err(TimestampedSignatureError::BadSignature);
+    }
+    if !timestamp_within_tolerance(now_unix, timestamp, tolerance_secs) {
+        return Err(TimestampedSignatureError::StaleTimestamp);
+    }
+    let signature = signature.trim_start_matches("sha256=");
+    let signed_payload = format!("{timestamp}.{body}");
+    if verify_webhook_signature(secret, &signed_payload, signature) {
+        Ok(())
+    } else {
+        Err(TimestampedSignatureError::BadSignature)
+    }
+}
+
 /// Compute HMAC-SHA256 signature for a payload.
 ///
 /// # Arguments
@@ -892,6 +961,113 @@ mod tests {
         assert_eq!(
             url,
             "https://api.example.com/api/v1/webhooks/portal/550e8400-e29b-41d4-a716-446655440000"
+        );
+    }
+
+    // ---- verify_timestamped_signature (audit R4 shared helper) ----
+
+    const TS_SECRET: &str = "shared_ts_secret";
+    const TS_BODY: &str = r#"{"event":"reservation.created","id":"r1"}"#;
+    const TS_NOW: i64 = 1_700_000_000;
+    const TS_TOL: i64 = 300;
+
+    fn ts_sign(secret: &str, ts: i64, body: &str) -> String {
+        compute_hmac_sha256(secret, &format!("{ts}.{body}"))
+    }
+
+    #[test]
+    fn timestamped_sig_accepts_valid() {
+        let sig = ts_sign(TS_SECRET, TS_NOW, TS_BODY);
+        assert_eq!(
+            verify_timestamped_signature(TS_SECRET, TS_NOW, TS_BODY, &sig, TS_NOW, TS_TOL),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn timestamped_sig_accepts_sha256_prefix() {
+        let sig = format!("sha256={}", ts_sign(TS_SECRET, TS_NOW, TS_BODY));
+        assert_eq!(
+            verify_timestamped_signature(TS_SECRET, TS_NOW, TS_BODY, &sig, TS_NOW, TS_TOL),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn timestamped_sig_rejects_empty_secret() {
+        // An unset secret must never verify, even under a syntactically valid
+        // signature computed with the empty key.
+        let sig = ts_sign("", TS_NOW, TS_BODY);
+        assert_eq!(
+            verify_timestamped_signature("", TS_NOW, TS_BODY, &sig, TS_NOW, TS_TOL),
+            Err(TimestampedSignatureError::BadSignature)
+        );
+    }
+
+    #[test]
+    fn timestamped_sig_rejects_wrong_secret() {
+        let sig = ts_sign("attacker", TS_NOW, TS_BODY);
+        assert_eq!(
+            verify_timestamped_signature(TS_SECRET, TS_NOW, TS_BODY, &sig, TS_NOW, TS_TOL),
+            Err(TimestampedSignatureError::BadSignature)
+        );
+    }
+
+    #[test]
+    fn timestamped_sig_rejects_tampered_body() {
+        let sig = ts_sign(TS_SECRET, TS_NOW, TS_BODY);
+        let tampered = r#"{"event":"reservation.created","id":"evil"}"#;
+        assert_eq!(
+            verify_timestamped_signature(TS_SECRET, TS_NOW, tampered, &sig, TS_NOW, TS_TOL),
+            Err(TimestampedSignatureError::BadSignature)
+        );
+    }
+
+    #[test]
+    fn timestamped_sig_rejects_stale_and_future() {
+        for ts in [TS_NOW - TS_TOL - 1, TS_NOW + TS_TOL + 1] {
+            let sig = ts_sign(TS_SECRET, ts, TS_BODY);
+            assert_eq!(
+                verify_timestamped_signature(TS_SECRET, ts, TS_BODY, &sig, TS_NOW, TS_TOL),
+                Err(TimestampedSignatureError::StaleTimestamp),
+                "timestamp {ts} must be rejected as stale"
+            );
+        }
+    }
+
+    #[test]
+    fn timestamped_sig_accepts_exact_boundary() {
+        for ts in [TS_NOW - TS_TOL, TS_NOW + TS_TOL] {
+            let sig = ts_sign(TS_SECRET, ts, TS_BODY);
+            assert_eq!(
+                verify_timestamped_signature(TS_SECRET, ts, TS_BODY, &sig, TS_NOW, TS_TOL),
+                Ok(())
+            );
+        }
+    }
+
+    #[test]
+    fn timestamped_sig_rejects_adversarial_overflow_without_panic() {
+        // Regression for issue #2330: an adversarial timestamp near i64::MIN/MAX
+        // must reject as stale, never panic under overflow-checks builds.
+        for ts in [i64::MIN, i64::MIN + 1, i64::MAX, i64::MAX - 1] {
+            let sig = ts_sign(TS_SECRET, ts, TS_BODY);
+            assert_eq!(
+                verify_timestamped_signature(TS_SECRET, ts, TS_BODY, &sig, TS_NOW, TS_TOL),
+                Err(TimestampedSignatureError::StaleTimestamp)
+            );
+        }
+    }
+
+    #[test]
+    fn timestamped_sig_rejects_timestamp_swap_on_captured_signature() {
+        // Core replay defense: a captured (old_ts, sig) pair re-presented with a
+        // fresh timestamp is rejected because ts is folded into the HMAC.
+        let old_ts = TS_NOW - 10_000;
+        let sig = ts_sign(TS_SECRET, old_ts, TS_BODY);
+        assert_eq!(
+            verify_timestamped_signature(TS_SECRET, TS_NOW, TS_BODY, &sig, TS_NOW, TS_TOL),
+            Err(TimestampedSignatureError::BadSignature)
         );
     }
 }

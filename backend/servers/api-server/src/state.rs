@@ -112,6 +112,12 @@ pub struct BookingOAuthAppConfig {
     pub client_secret: String,
     /// `BOOKING_REDIRECT_URI` — the registered OAuth callback URI.
     pub redirect_uri: String,
+    /// `BOOKING_WEBHOOK_SECRET` — HMAC-SHA256 signing secret for the inbound
+    /// push receiver (`X-Booking-Signature` over `"{X-Booking-Timestamp}.{body}"`).
+    /// Required to accept a Booking.com push (audit F1/R1); empty ⇒ the receiver
+    /// fails closed with `503 NOT_CONFIGURED` so an unverified, attacker-forged
+    /// OTA payload is never processed.
+    pub webhook_secret: String,
 }
 
 impl BookingOAuthAppConfig {
@@ -122,6 +128,7 @@ impl BookingOAuthAppConfig {
             client_id: std::env::var("BOOKING_CLIENT_ID").unwrap_or_default(),
             client_secret: std::env::var("BOOKING_CLIENT_SECRET").unwrap_or_default(),
             redirect_uri: std::env::var("BOOKING_REDIRECT_URI").unwrap_or_default(),
+            webhook_secret: std::env::var("BOOKING_WEBHOOK_SECRET").unwrap_or_default(),
         }
     }
 }
