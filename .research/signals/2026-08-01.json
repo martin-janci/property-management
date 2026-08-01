@@ -1,0 +1,69 @@
+{
+  "generated": "2026-08-01T14:18:48Z",
+  "signals": [
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking/mod.rs",
+      "type": "repeated-churn",
+      "source": "commits since 2026-07-31T16:26:02Z",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2619 split booking/mod.rs into client/messages/models/error submodules (+43/-1447 lines = 1490 churn); runs_seen=4 in hotspot_history — the churn IS the resolving refactor, so score_delta suppressed to 0 per cumulative-signal rule. File now ~99% smaller; expected to drop off hotspot list next run."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-07-31T16:26:02Z",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2613 extracted 8 vote-lifecycle methods to services/scheduler/votes.rs (+7/-391 = 398 churn); resolves the previously-tracked scheduler.rs hotspot (runs_seen=1 for scheduler.rs). New file path scheduler/mod.rs; score_delta suppressed to 0 — churn is the split, not real instability."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-07-31T16:26:02Z",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2616 replaced inline StepPill+.lc-file-* CSS with @ppt/ui-kit Stepper+FileUpload primitives (+29/-88 = 117 churn). Marginal — only makes top-3 because overall churn was low this window. Consolidation reduces future churn potential; score_delta suppressed to 0."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-2026-08-01",
+      "type": "dep-update-noise",
+      "source": "gh pr list --state open",
+      "score_delta": 0,
+      "evidence": [
+        "12 dependabot PRs open (#2581-#2591): expo-secure-store, expo-device, expo-status-bar, @testing-library/react-native, npm-minor-patch group (19 updates), validator, base64, sentry, rust_xlsxwriter, redis, gradle-minor-patch group. Log-only per rules."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-01.md && head -1 …", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json diff vs HEAD", "observed": "cursors advanced (last_pr_seen 2611→2622)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "backlog.json id uniqueness", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal re-emitted with score>0", "observed": "all re-emits or non-cumulative fresh — score_delta=0 on cumulative types, ok", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "backlog score cap + decay", "observed": "no open items to decay; no score>8", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "new plans → adversarial pass annotation", "observed": "no plans promoted this run", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans + readiness gates", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "staged diff outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep for secrets/hostnames in staged diff", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identity vs regen", "observed": "regenerated in-place", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no phases failed; Phase 1.6 intentionally skipped (not a failure)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present", "observed": "12 plans unchanged in plans/; 2 in _archive/", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count ≥ HEAD", "observed": "2 == 2", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identity vs regen", "observed": "regenerated in-place", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "0 actions this run — no candidate met the certainty bar", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management-artifacts + pm/coverage cursors", "observed": "Phase 1.6 skipped this run → gate is a no-op", "expected": "no-op when skipped" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal in staged diff", "observed": "0", "expected": "0" }
+  ]
+}

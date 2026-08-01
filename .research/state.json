@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-07-31T16:26:02Z",
-  "last_run_ms": 780000,
-  "last_pr_seen": 2611,
-  "last_issue_seen": 2598,
-  "last_commit_sha": "dc64271a78ccdb77333aa613dc50a9594b268716",
+  "last_run_iso": "2026-08-01T14:18:48Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2622,
+  "last_issue_seen": 2621,
+  "last_commit_sha": "fb495a07058577c455faafac2759e3262402690c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -333,9 +333,9 @@
       "recent_churn": 11
     },
     "backend/crates/integrations/src/booking/mod.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-07-31",
-      "recent_churn": 3626
+      "runs_seen": 4,
+      "last_seen": "2026-08-01",
+      "recent_churn": 1490
     },
     "backend/servers/api-server/tests/auth_tests.rs": {
       "runs_seen": 1,
@@ -411,6 +411,16 @@
       "runs_seen": 1,
       "last_seen": "2026-07-30",
       "recent_churn": 240
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-01",
+      "recent_churn": 398
+    },
+    "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-01",
+      "recent_churn": 117
     }
   },
   "seen_signals": [
@@ -458,6 +468,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
@@ -481,6 +492,7 @@
     "churn-hotspot-frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SupportDataPage.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx",
     "churn-hotspot-frontend/apps/mobile/package.json",
     "churn-hotspot-frontend/apps/mobile/src/App.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts",
@@ -577,6 +589,7 @@
     "dep-update-noise-2026-05-29",
     "dep-update-noise-2026-06-05",
     "dep-update-noise-2026-07-30",
+    "dep-update-noise-2026-08-01",
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
@@ -647,6 +660,7 @@
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "repeated-churn-backend/crates/integrations/src/booking/mod.rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
@@ -752,7 +766,7 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 53,
+    "runs": 54,
     "vectors_created": 236,
     "plans_created": 17,
     "quiet_days": 2,
