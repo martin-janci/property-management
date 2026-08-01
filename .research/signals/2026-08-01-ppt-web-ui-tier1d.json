@@ -1,0 +1,54 @@
+{
+  "generated": "2026-08-01T00:00:00Z",
+  "segment": "ppt-web-ui",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed (cursor: ppt-web-ui@2026-07-21 is the oldest segment not already carrying fresh signals today; reality-server/api-core/api-handlers/mobile-rn all already have 2026-08-01 tier1d files). Churn hotspots pointed at features/disputes/* but that area was found clean on inspection; the real findings surfaced in the financial feature under pages+components.",
+  "experts_used": ["frontend", "completeness"],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-135 — FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) but destructures ONLY `isLoading` from each (arLoading/overdueLoading/invoicesLoading); it never reads `isError`/`error`. FinancialDashboardPage (features/financial/pages/FinancialDashboardPage.tsx) has no `error` prop at all (props end at `isLoading?`).",
+        "On any query failure the fallbacks kick in silently: `totals = arReportData?.totals ?? {current:0,...,total:0}` (line ~87), `invoices = invoicesData?.invoices ?? []` (~95), `overdueInvoices = overdueData ?? []` (~96), and `isLoading` resolves to false. The dashboard then renders totalBalance=0, totalOutstanding=0, totalOverdue=0 and an empty invoice/overdue list — i.e. it presents FALSE '€0 / no overdue' financial data to a manager instead of an error state. Misleading zeroed data on a money path, not a cosmetic gap.",
+        "This is an inconsistency within the same file: the sibling FinancialReportsPageRoute at financial.tsx:437-438 already threads `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}` into its child, so the correct pattern exists here and only the dashboard route omits it. Suggested fix: capture `isError`/`error` from the three dashboard queries, add an `error` prop to FinancialDashboardPage, and render an error/retry state instead of zeroed metrics when any query fails."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-128 — the editable Budget Categories list is rendered with `categories.map((category, index) => (<div key={index} ...>`, where each row holds two controlled inputs (category.name text input and category.amount number input).",
+        "The list is mutable: addCategory (BudgetForm.tsx:81) appends and removeCategory (:85) deletes with `setCategories(categories.filter((_, i) => i !== index))`, which re-indexes every subsequent element. Combined with `key={index}`, removing (or reordering) a non-last row makes React reconcile controlled inputs by position, so the deleted row's DOM/input state is reused for the following category — the classic index-key-on-editable-list bug: values appear to shift onto the wrong row, and in-progress edits/focus land on the wrong field after a mid-list delete.",
+        "Suggested fix: give each category a stable id at creation time (e.g. crypto.randomUUID() in addCategory and in the initial useState seed) and key the row by that id instead of the array index, keeping updateCategory/removeCategory index-based against the current array."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx under frontend/apps/ppt-web/src/features/financial/{components,pages} contain no useTranslation()/i18n reference at all, even though ppt-web ships react-i18next with sk/cs/de/en and the rest of the app (e.g. features/disputes/*) is fully localized. Un-i18n'd files include BudgetForm.tsx, InvoiceForm.tsx, InvoiceList.tsx, PaymentForm.tsx, InvoiceDetail.tsx, ARAgingTable.tsx, BalanceSheetView.tsx, IncomeStatementView.tsx, CashFlowView.tsx, ReconciliationTable.tsx, and the pages FinancialDashboardPage.tsx + FinancialReportsPage.tsx.",
+        "Concrete hardcoded English literals in BudgetForm.tsx: :115 'Budget Categories', :121 '+ Add Category', :133 placeholder=\"Category name\", :148 placeholder=\"0.00'. cs/de/sk managers see English labels, buttons, and placeholders across budgeting, invoicing, payments, and financial reports.",
+        "Suggested fix: add useTranslation() to the 21 financial components/pages and migrate the visible strings into the existing i18n namespaces, matching the pattern already used elsewhere in ppt-web. This is a broad-but-shallow migration best tracked as one localization task for the financial module."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}
