@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-30T03:18:50Z",
+  "generated": "2026-08-01T02:15:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -10,7 +10,7 @@
       "UC-33.3"
     ],
     "screen_validation_errors": [],
-    "note": "checker's orphan_epics [79,7a,80] contradicted by known shipped screens — matcher artifact, not queued"
+    "note": "checker's orphan_epics [79,7a,80] contradicted by known shipped screens \u2014 matcher artifact, not queued"
   },
   "stories": [
     {
@@ -239,7 +239,7 @@
         "Screen-maps announcement-new/announcement-edit buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-15",
@@ -263,7 +263,7 @@
         "Mobile AnnouncementDetailScreen ships auto-read + acknowledge"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-15",
@@ -287,7 +287,7 @@
         "Frontend: AnnouncementComments with nested replies + tombstones"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-15",
@@ -311,7 +311,7 @@
         "Frontend: PinnedAnnouncementsBand + Pin/Unpin button"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-15",
@@ -335,7 +335,7 @@
         "Frontend: MessagesPage, ThreadDetailPage, NewMessagePage; screen-maps shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-15",
@@ -359,7 +359,7 @@
         "Screen-map ppt/neighbors.md buildStatus=shipped; mobile shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
       "last_checked": "2026-07-15",
@@ -381,7 +381,7 @@
         "All five ACs verified: announcements/faults/documents/voting/error-handling wired"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-79",
       "last_checked": "2026-07-30",
@@ -401,7 +401,7 @@
         "AuthContext login/logout/refresh + concurrent-refresh guard + test",
         "LoginPage + AuthCallbackPage test; screen login buildStatus=shipped",
         "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage",
-        "PR #2553 (2026-07-29) — routed AuthContext cold-boot init through refreshTokenInternal (fixes stale-role init)"
+        "PR #2553 (2026-07-29) \u2014 routed AuthContext cold-boot init through refreshTokenInternal (fixes stale-role init)"
       ],
       "gaps": [],
       "epic": "epic-79",
@@ -498,7 +498,7 @@
         "Merged PRs: #1123, #501, #1514/#1515"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-15",
@@ -521,7 +521,7 @@
         "Merged PRs: #1516, #1256, #1298"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-15",
@@ -544,7 +544,7 @@
         "Merged PRs: #533, #1391, #1401, #1357; coverage verified 2026-06-23"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-15",
@@ -567,7 +567,7 @@
         "Merged PRs: #641, #540, #1221, #1541"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-15",
@@ -592,7 +592,7 @@
       "gaps": [
         "screen-map buildStatus not synced: inquiries.md and account.md still in-progress despite code shipped",
         "iOS builds unverifiable in CI (no macOS runner)",
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
       "last_checked": "2026-07-15",
@@ -615,7 +615,7 @@
         "RN Expo app.config.ts with .env.{development,staging,production,example}"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-85",
       "last_checked": "2026-07-15",
@@ -639,7 +639,7 @@
       ],
       "gaps": [
         "Per-flavor app-icon artwork pending (icon sets scaffolded, no badge images)",
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-85",
       "last_checked": "2026-07-15",
@@ -663,7 +663,7 @@
         "NotificationSettingsPage shipped; screen-map buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
       "last_checked": "2026-07-15",
@@ -687,7 +687,7 @@
       ],
       "gaps": [
         "mobile UI for critical notifications not implemented (design out-of-scope for MVP)",
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
       "last_checked": "2026-07-15",
@@ -704,7 +704,7 @@
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "sprint-status: done — WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25)",
+        "sprint-status: done \u2014 WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25)",
         "handler publishes preference.updated to Redis notifications:{user_id}",
         "notification_preference_realtime_sync_tests.rs S1-S13 matrix",
         "PreferenceEventRecorder for CI-executable publish contract (issue #1376)"
@@ -712,7 +712,7 @@
       "gaps": [
         "mobile OS integration (FCM/APNs) deferred per sprint-status",
         "test-hardening issues #480/#484 open but non-blocking",
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
       "last_checked": "2026-07-15",
@@ -730,7 +730,7 @@
       ],
       "owner_role": "pm-security",
       "evidence": [
-        "RFC-6238 TOTP crypto in accounting-core/src/crypto.rs (HMAC-SHA1, ±1 window)",
+        "RFC-6238 TOTP crypto in accounting-core/src/crypto.rs (HMAC-SHA1, \u00b11 window)",
         "/api/v1/platform/2fa/enroll + /confirm wired (PR #1946 merged 2026-06-29)",
         "MfaChallengeModal + MfaEnrollmentScreen + TwoFactorAuthPage wired to all hooks",
         "Screen-map ppt/settings-two-factor buildStatus=shipped + apiStatus=complete; recovery codes SHA-256-hashed"
@@ -763,15 +763,15 @@
         "POST /api/v1/documents/upload in routes/documents/core.rs",
         "document_upload_tests.rs (T1-T15) cover AC-1/AC-2/AC-3",
         "screen-map upload-document.md buildStatus=shipped",
-        "PR #2447 BIT-268 (2026-07-22): document authz backfill — cross-tenant regression tests",
+        "PR #2447 BIT-268 (2026-07-22): document authz backfill \u2014 cross-tenant regression tests",
         "PR #2453 (2026-07-22): import + cert-doc authz cases added",
-        "PR #2571 (2026-07-29) — DELETE-by-file_key orphan cleanup complements upload/metadata lifecycle"
+        "PR #2571 (2026-07-29) \u2014 DELETE-by-file_key orphan cleanup complements upload/metadata lifecycle"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-08-01",
       "screen_refs": []
     },
     {
@@ -792,10 +792,10 @@
         "frontend FolderTreePage shipped; screen-map buildStatus=shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-01",
       "screen_refs": []
     },
     {
@@ -814,15 +814,15 @@
         "routes/documents/core.rs gates list/download/preview",
         "all five access scopes implemented",
         "document_access_test.rs (217 lines)",
-        "PR #2438 (2026-07-21): get_document org-scoping fix (closes #2422) — cross-org read prevented at handler layer",
+        "PR #2438 (2026-07-21): get_document org-scoping fix (closes #2422) \u2014 cross-org read prevented at handler layer",
         "PR #2447 BIT-268 (2026-07-22): document authz backfill wave"
       ],
       "gaps": [
         "frontend permission authoring UI (AccessScopeSelector/RoleSelector/UserSelector) not shipped - tracked separately",
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-01",
       "screen_refs": []
     },
     {
@@ -843,10 +843,10 @@
         "DocumentDetail.tsx + DocumentPreviewModal shipped"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-01",
       "screen_refs": []
     },
     {
@@ -868,10 +868,10 @@
         "mobile DocumentShareSheet via PR #2003; story gate #485 cleared"
       ],
       "gaps": [
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-7a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-01",
       "screen_refs": []
     },
     {
@@ -890,12 +890,12 @@
         "test_revoked_refresh_token_rejected_at_token_endpoint + comprehensive oauth test files",
         "Issue #481 CLOSED 2026-05-26 (revoked-filtering + family-reuse detection paths)",
         "Issue #487 CLOSED: test_mfa_verify_rate_limited present (#[ignore] pending middleware), mod-common fix applied",
-        "PR #2465 (2026-07-22): OAuth handler test backfill — additional regression coverage on authorize/token endpoints",
-        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21→07-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
+        "PR #2465 (2026-07-22): OAuth handler test backfill \u2014 additional regression coverage on authorize/token endpoints",
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
       ],
       "gaps": [
-        "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed — reconcile gate note",
-        "no screen-map match (epic-id frontmatter drift — see screen_gaps)"
+        "Sprint-status still lists 10a-1 as ready-for-dev despite gates #481/#487 closed \u2014 reconcile gate note",
+        "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-10a",
       "last_checked": "2026-07-23",
@@ -918,10 +918,10 @@
         "Issue #482 CLOSED: ProtectedRoute.test.tsx covers deny-missing-role/allow-correct/deny-wrong",
         "screen-map admin-oauth-clients buildStatus=shipped apiStatus=complete",
         "PR #2465 (2026-07-22): OAuth handler backfill covers client-facing endpoints",
-        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21→07-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
       ],
       "gaps": [
-        "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed — reconcile gate note"
+        "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
       "last_checked": "2026-07-23",
@@ -951,10 +951,10 @@
         "oauth_token_introspection_rotation_test.rs",
         "Issue #481 CLOSED 2026-05-26",
         "PR #2465 (2026-07-22): OAuth token-management endpoint tests refreshed",
-        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21→07-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
+        "Re-check 2026-07-23 (cursor idx 0): OAuth surface stable; oauth.rs unchanged in 07-21\u219207-23 window aside from test backfill (#2465); admin-web OAuthClientsPage/OAuthGrantsPage screen-maps still shipped."
       ],
       "gaps": [
-        "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed — reconcile gate note"
+        "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
       "last_checked": "2026-07-23",
@@ -1021,7 +1021,7 @@
       "owner_role": "pm-frontend",
       "evidence": [
         "screen-map ppt/file-dispute.md shipped/complete, AC-4 noted SHIPPED",
-        "useDraftStorage imported+called in FileDisputePage.tsx (lines 20,124) — 07-13 'unwired' finding was a false positive (route wrapper delegates)",
+        "useDraftStorage imported+called in FileDisputePage.tsx (lines 20,124) \u2014 07-13 'unwired' finding was a false positive (route wrapper delegates)",
         "gap-80-2 task archived already-satisfied 2026-07-13, 37 tests pass",
         "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers used by filing flow"
       ],
@@ -1214,10 +1214,10 @@
         "PR #2309: POST /api/v1/documents/upload-url (SigV4 PUT presigner) wired backend",
         "StorageService::generate_upload_url confirmed",
         "no frontend consumer of the endpoint found in frontend/apps",
-        "PR #2571 (2026-07-29) — org-scoped DELETE-by-file_key route for direct-upload orphan cleanup (backend supports the wiring; frontend gap unchanged)"
+        "PR #2571 (2026-07-29) \u2014 org-scoped DELETE-by-file_key route for direct-upload orphan cleanup (backend supports the wiring; frontend gap unchanged)"
       ],
       "gaps": [
-        "ppt-web upload flow still server-proxied — wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
+        "ppt-web upload flow still server-proxied \u2014 wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
       ],
       "epic": "epic-84",
       "last_checked": "2026-07-30",
@@ -1243,11 +1243,11 @@
       "owner_role": "pm-frontend",
       "evidence": [
         "backend signing URL + invitation emails implemented (signatures.rs)",
-        "PR #2306: docs/screens/ppt/document-sign.md added — buildStatus: planned, apiStatus: complete",
+        "PR #2306: docs/screens/ppt/document-sign.md added \u2014 buildStatus: planned, apiStatus: complete",
         "no sign-page component in ppt-web"
       ],
       "gaps": [
-        "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR — fresh attempt, scope to the shipped API)"
+        "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned\u2192shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR \u2014 fresh attempt, scope to the shipped API)"
       ],
       "epic": "epic-84",
       "last_checked": "2026-07-15",

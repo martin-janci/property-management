@@ -1,0 +1,160 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2613",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/scheduler/mod.rs \u2014 398 lines this run (391 del, 7 add) via #2613 pure-extract of vote-lifecycle jobs into scheduler/votes.rs. Intentional churn-reduction refactor \u2014 not instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2616",
+      "score_delta": 1,
+      "evidence": "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx \u2014 117 lines this run (29 add, 88 del) via #2616 consolidation onto @ppt/ui-kit primitives (Stepper, FileUpload).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-.github/workflows/api-validation.yml",
+      "type": "churn-hotspot",
+      "source": "PR #2615",
+      "score_delta": 1,
+      "evidence": ".github/workflows/api-validation.yml \u2014 47 lines this run (45 add, 2 del) via #2615 openapi-ts wrapper hardening (silent-no-op guard, ::error:: annotation).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test brief + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal id x score_delta check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq decay pipeline",
+      "observed": "true (no items >14d old)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed: none'",
+      "observed": "none",
+      "expected": "matches cursor advances"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-plan slugs present",
+      "observed": "no prior plans this run (n=0 new)",
+      "expected": "carry-over"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grows",
+      "observed": "new=7 >= old=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidates)",
+      "observed": "[]",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "action-list/risks jq-ok, project-state non-empty, CC 5<13 and advanced 4->5",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
