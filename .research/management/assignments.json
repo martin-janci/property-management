@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-01T08:12:42Z",
+  "generated": "2026-08-01T08:33:25Z",
   "assignments": [
     {
       "task_id": "gh-issue-2366-retry2",
@@ -70,18 +70,18 @@
     {
       "task_id": "gh-issue-2528-retry1",
       "branch": "auto-impl/gh-issue-2528-retry1-583ab8ff",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-01T08:11:40Z",
-      "last_updated": "2026-08-01T08:11:40Z",
-      "status_changed_at": "2026-08-01T08:11:40Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-01T08:33:25Z",
+      "status_changed_at": "2026-08-01T08:33:25Z",
+      "pr_number": 2623,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2623",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2623 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=integrations crate verify green; api-server crate-band clippy/test blocked by documented utoipa-swagger-ui github.com egress 403 (same as #2620), draft PR relies on CI backend.yml as authoritative",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
