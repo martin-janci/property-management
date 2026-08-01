@@ -5610,7 +5610,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2599",
         "commit window 2026-07-30→2026-07-31"
@@ -5624,7 +5624,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T04:05:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "refactor-churn-hotspot-api-server-auth-2026-07-31",
@@ -5632,7 +5637,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "commit window 2026-07-30→2026-07-31"
       ],
@@ -5645,7 +5650,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T04:05:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "test-gap-screen-map-drift-pr-2600-reality",
@@ -5653,7 +5663,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2600"
       ],
@@ -5668,7 +5678,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T04:05:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2618
+      }
     },
     {
       "id": "dx-fixme-admin-web-mobile-config-patch-endpoint",
@@ -5676,7 +5691,7 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2594 (commit fb09556)",
         "PR #2601"
@@ -5693,7 +5708,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T04:05:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "dx-fixme-admin-web-platform-settings-patch-endpoint",
@@ -5701,7 +5721,7 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2594 (commit fb09556)",
         "PR #2601"
@@ -5718,7 +5738,12 @@
       ],
       "created_at": "2026-07-31",
       "updated_at": "2026-07-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-01T04:05:09Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "dx-fixme-admin-web-ui-kit-primitives-missing",

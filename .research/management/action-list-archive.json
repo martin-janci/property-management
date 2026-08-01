@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-01T00:20:38Z",
+  "archived_at": "2026-08-01T04:15:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1709,6 +1709,25 @@
       }
     },
     {
+      "id": "code-review-api-handlers-community-unauthenticated-reads",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-23T16:07:09Z (score=3 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T16:07:09Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-api-handlers-community-unauthenticated-reads.md",
+        "score": 3,
+        "vector": "security"
+      },
+      "last_updated": "2026-07-24T00:10:32Z",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "action": "security (broken access control / IDOR): backend/servers/api-server/src/routes/documents/shares.rs revoke_share checks authorization (created_by/is_manager) against the document from the path `id`, but then looks up + revokes the share purely by `share_id` (find_share_by_id_rls result discarded at :349; revoke_share_rls at :370) with no check that `share.document_id == id`. RLS only scopes to tenant, so a non-manager who created any document A can pass A's id (passing the creator check) plus a share_id belonging to another creator's document B in the same tenant and revoke B's share. Add a `share.document_id == id` guard before revoking.",
       "owner_role": "pm-backend",
@@ -2322,6 +2341,27 @@
       }
     },
     {
+      "id": "data-announcement-fanout-metric-2026-07-23",
+      "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model)",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "pm-data 2026-07-23 (score=5: KPI gap on Epic 6 + data-integrity follow-up on #2484)",
+      "deadline": null,
+      "dependency": "gh-issue-2484",
+      "depends_on": [
+        "gh-issue-2484"
+      ],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "data-audit-add-evidence-idor-fix-2026-07-23",
       "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern)",
       "owner_role": "pm-data",
@@ -2370,6 +2410,101 @@
       }
     },
     {
+      "id": "data-audit-oauth-token-usage-2026-07-23",
+      "action": "Add analytics tracking for OAuth token issuance/refresh/revocation events per client (Epic 10A shipped; needed for platform-admin ecosystem health dashboard)",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=4: KPI gap; developer-ecosystem visibility)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 4,
+        "vector": "data"
+      },
+      "last_updated": "",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "data-dispute-fsm-kpi-definitions-2026-07-23",
+      "action": "Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) — Epic 80 stories all done but no analytics dashboard exists; align with SupportDataPage metric definitions",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=5: KPI gap on shipped MVP epic)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "data-fault-kpi-unification-2026-07-23",
+      "action": "Unify FaultStatusCount metric with owner/portfolio fault KPIs into one shared definition (open decision from 2026-05-28)",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=5: metric-consistency)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "data-layout-publish-event-tracking-2026-07-23",
+      "action": "Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) — Layout & Content Manager shipped end-to-end but has no KPI hooks yet",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=5: KPI gap on newly-shipped feature)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "data-mobile-native-analytics-parity-2026-07-23",
+      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry)",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "dropped",
+      "source": "pm-data 2026-07-23 (score=4: mobile-parity KPI gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 4,
+        "vector": "data"
+      },
+      "last_updated": "",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "data-pgvector-rag-observability-2026-07-23",
       "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows",
       "owner_role": "pm-data",
@@ -2393,6 +2528,25 @@
         "merged_at": null,
         "at": "2026-07-24T20:12:21Z"
       }
+    },
+    {
+      "id": "data-privacy-retention-policy-2026-07-23",
+      "action": "Publish data-retention policy for support-data / analytics events / audit trail (append-only support_tooling_events has no TTL yet)",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=5: privacy/GDPR)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "2026-07-24T02:15:24Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "data-reality-portal-listing-view-events-2026-07-23",
@@ -2445,6 +2599,63 @@
       }
     },
     {
+      "id": "data-support-data-audit-event-def-2026-07-23",
+      "action": "Formalize support-staff read audit event schema (who viewed which tenant's diagnostics, who revoked sessions) separate from audit_read capability gate (open decision from 2026-05-28)",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-data 2026-07-23 (score=5: reopens 2026-05-28 pm-data decision)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "data"
+      },
+      "last_updated": "",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "devops-nextest-partition-runbook-2026-07-23",
+      "action": "Document the nextest archive + per-test partition workflow (#2459) and the 206->8 test-binary consolidation (#2461/#2487) as a contributor runbook so future test files land in the consolidated crates",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=3: docs + follow-through on shipped work)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "docs"
+      },
+      "last_updated": "",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "docs-screen-map-frontmatter-epics-2026-07-23",
+      "action": "Backfill screen-map frontmatter epics: field so epic->screen linkage stops manufacturing orphans in coverage scan (systemic finding from 2026-06-23 deep scan; still present)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=5: screen-gap + high-leverage; unblocks future deep scans)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "docs"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "dx-admin-web-platform-settings-mobile-config-permanent-noop",
       "action": "admin-web platform-settings + mobile-config Save paths are permanent no-ops — the backing endpoints do not exist",
       "owner_role": "pm-devops",
@@ -2467,6 +2678,24 @@
         "merged_at": "2026-07-30T18:20:34Z",
         "at": "2026-07-30T20:06:46Z"
       }
+    },
+    {
+      "id": "dx-api-validation-drift-gate-never-runs-on-dev",
+      "action": "SDK drift gate is effectively unenforced — api-validation.yml only fires on docs/api/**, so committed @ppt/api-client drift sits on dev unseen",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-28T21:23:45Z (score=3 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-28T21:23:45Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "dx"
+      },
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "dx-closed-not-merged-pr-2385",
@@ -2570,6 +2799,42 @@
       "depends_on": []
     },
     {
+      "id": "dx-fixme-admin-web-mobile-config-patch-endpoint",
+      "action": "admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      },
+      "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
+    },
+    {
+      "id": "dx-fixme-admin-web-platform-settings-patch-endpoint",
+      "action": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "dx"
+      },
+      "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
+    },
+    {
       "id": "dx-fixme-admin-web-ui-kit-primitives-missing",
       "action": "@ppt/ui-kit missing primitives (Stepper, FileUpload, RadioCards, StatusPill) — admin-web ships inline duplicates",
       "owner_role": "pm-devops",
@@ -2628,6 +2893,21 @@
         "merged_at": null,
         "at": "2026-07-11T20:04:38Z"
       }
+    },
+    {
+      "id": "dx-routine-lag-catchup-2026-07-retry2",
+      "action": "Cloud routine cadence recovery — reduce 3–4d gaps between runs [retry 2/2 of failed dx-routine-lag-catchup-2026-07]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-29T08:08:27Z (retry_of=dx-routine-lag-catchup-2026-07 reason=failed-no-pr cooldown_ok newest_failure=2026-07-22T08:08:17Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:08:27Z",
+      "retry_of": "dx-routine-lag-catchup-2026-07",
+      "retry_round": 2,
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
       "id": "dx-stale-todo-security-comments-faults-critical-notifications",
@@ -4293,6 +4573,25 @@
       }
     },
     {
+      "id": "gap-84-1-wire-ppt-web-direct-to-s3-upload-2026-07-23",
+      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url: api-client binding + UploadDocument integration + screen-map note (84-1 partial; backend #2309 shipped)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=8: mvp*2 + partial*2 + finish-what's-started*2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 8,
+        "vector": "feat"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "gap-84-2-build-document-sign-page",
       "action": "Build the signer-facing document-sign page in ppt-web against the shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery. NOTE: prior attempt (gap-84-2-no-frontend-ui-component-consuming-the) failed with no PR — fresh scoped attempt (84-2 E-Signature Email Integration)",
       "owner_role": "pm-frontend",
@@ -4310,6 +4609,25 @@
         "merged_at": "2026-07-15T18:18:30Z",
         "at": "2026-07-15T20:07:26Z"
       }
+    },
+    {
+      "id": "gap-84-2-document-sign-page-2026-07-23-retry3",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery (84-2 partial; prior attempt failed no-PR)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "dropped",
+      "source": "pm-scrum-master 2026-07-23 (score=8: mvp*2 + partial*2 + finish-what's-started*2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 8,
+        "vector": "feat"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
       "id": "gap-84-2-esignature-email-backend",
@@ -8428,6 +8746,30 @@
       }
     },
     {
+      "id": "gh-issue-2366-retry1",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 1/2 of failed gh-issue-2366]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-23T10:07:50Z (retry_of=gh-issue-2366 reason=failed-no-pr cooldown_ok newest_failure=2026-07-16T08:15:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T10:07:50Z",
+      "retry_of": "gh-issue-2366",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2366,
+        "url": "https://github.com/martin-janci/property-management/issues/2366",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-23T12:15:00Z",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "gh-issue-2367",
       "action": "Follow-up: validate every synthesized candidate id against IdSchema in scanCandidates (PR #2344) (Closes #2367)",
       "owner_role": "pm-tech-lead",
@@ -8920,6 +9262,114 @@
       }
     },
     {
+      "id": "gh-issue-2483",
+      "action": "Follow-up: add_evidence dispute sub-resource is still cross-tenant-writable (missed by #2441/PR #2450) (Closes #2483)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2483)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T08:02:32Z",
+      "issue_ref": {
+        "number": 2483,
+        "url": "https://github.com/martin-janci/property-management/issues/2483",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "gh-issue-2484",
+      "action": "Follow-up: announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (PR #2455) (Closes #2484)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2484)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T08:02:32Z",
+      "issue_ref": {
+        "number": 2484,
+        "url": "https://github.com/martin-janci/property-management/issues/2484",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-23T14:11:48Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "gh-issue-2485",
+      "action": "Follow-up: layout publish webhook has no timestamp/replay protection (PR #2431) (Closes #2485)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2485)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T08:02:32Z",
+      "issue_ref": {
+        "number": 2485,
+        "url": "https://github.com/martin-janci/property-management/issues/2485",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-23T14:11:48Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "gh-issue-2486",
+      "action": "Follow-up: mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (PR #2432) (Closes #2486)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-23T08:02:32Z (#2486)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T08:02:32Z",
+      "issue_ref": {
+        "number": 2486,
+        "url": "https://github.com/martin-janci/property-management/issues/2486",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-23T14:11:48Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "gh-issue-2528",
+      "action": "Follow-up: harden booking_push_notification webhook + Airbnb replay parity (PR #2499) (Closes #2528)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2528)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2528,
+        "url": "https://github.com/martin-janci/property-management/issues/2528",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "gh-issue-2529",
       "action": "Follow-up: close join_group/leave_group cross-tenant IDOR (PR #2498) (Closes #2529)",
       "owner_role": "pm-tech-lead",
@@ -8945,6 +9395,28 @@
         "merged_at": "2026-07-24T22:19:55Z",
         "at": "2026-07-24T22:20:22Z"
       }
+    },
+    {
+      "id": "gh-issue-2530",
+      "action": "Follow-up: instrument the full signup funnel, not just the onboarding tour (PR #2515) (Closes #2530)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-24T14:09:59Z (#2530)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-24T14:09:59Z",
+      "issue_ref": {
+        "number": 2530,
+        "url": "https://github.com/martin-janci/property-management/issues/2530",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-07-24T18:09:34Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "gh-issue-2531",
@@ -9158,6 +9630,26 @@
         "merged_at": "2026-07-29T23:23:16Z",
         "at": "2026-07-30T00:04:55Z"
       }
+    },
+    {
+      "id": "gh-issue-2560",
+      "action": "ci: reality-web Docker build has failed on every run since 2026-06-17 — no frontend image published for 6 weeks (Closes #2560)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-07-29T08:07:25Z (#2560)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-29T08:07:25Z",
+      "issue_ref": {
+        "number": 2560,
+        "url": "https://github.com/martin-janci/property-management/issues/2560",
+        "labels": [
+          "bug"
+        ]
+      },
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "gh-issue-2561",
@@ -9391,6 +9883,27 @@
       "last_updated": "2026-08-01T00:20:00Z"
     },
     {
+      "id": "integrations-webhook-hardening-audit-2026-07-23",
+      "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
+      "owner_role": "pm-integration",
+      "priority": "high",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=7: security*2 + cross-cutting + dep-blocker)",
+      "deadline": null,
+      "dependency": "gh-issue-2485",
+      "depends_on": [
+        "gh-issue-2485"
+      ],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 7,
+        "vector": "sec"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "pm-backend-fix-ai-equipment-idor",
       "action": "Fix cross-tenant IDOR cluster in ai.rs: thread tenant_id into equipment_repo.update/delete/update_maintenance and scope the WHERE clauses (or route through the RLS connection) for update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), update_maintenance (ai.rs:1192) — all currently discard `_principal`; add a cross-tenant regression test",
       "owner_role": "pm-backend",
@@ -9413,6 +9926,20 @@
       "source": "pm-analysis 2026-05-24",
       "resolved": "2026-05-25 — PR #450 merged (SSRF outbound URL validation)",
       "depends_on": []
+    },
+    {
+      "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
+      "action": "Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top-churn 2 windows running) — propose extraction of retention/prune jobs to a dedicated module",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-07-30",
+      "first_open_at": "2026-07-30T03:23:02Z",
+      "last_updated": "2026-07-30T03:23:02Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "pm-devops-app-tsx-merge-queue-confirm",
@@ -9993,6 +10520,24 @@
       }
     },
     {
+      "id": "refactor-churn-hotspot-api-server-auth-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      },
+      "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
+    },
+    {
       "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549)",
       "owner_role": "pm-tech-lead",
@@ -10063,6 +10608,24 @@
         "merged_at": "2026-07-30T18:20:50Z",
         "at": "2026-07-30T20:06:46Z"
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      },
+      "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
     },
     {
       "id": "refactor-churn-hotspot-api-server-routes-auth",
@@ -10168,6 +10731,22 @@
       "retry_of": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
       "retry_round": 1,
       "last_updated": "2026-07-12T18:24:00Z"
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs-retry2",
+      "action": "Churn hotspot: backend/crates/db/src/models/mod.rs (12 commits in 19-day catch-up) [retry 2/2 of failed refactor-churn-hotspot-backend-crates-db-src-models-mod-rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-07-22T10:05:12Z (retry_of=refactor-churn-hotspot-backend-crates-db-src-models-mod-rs reason=failed-no-pr cooldown_ok newest_failure=2026-07-12T18:24:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T10:05:12Z",
+      "retry_of": "refactor-churn-hotspot-backend-crates-db-src-models-mod-rs",
+      "retry_round": 2,
+      "last_updated": "2026-07-23T06:07:02Z",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
       "id": "refactor-churn-hotspot-backend-crates-db-src-repositories-rental-rs",
@@ -10432,6 +11011,44 @@
       }
     },
     {
+      "id": "refactor-churn-hotspot-ppt-dashboard-md-2026-07-21",
+      "action": "Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-07-23T06:07:02Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "refactor-churn-hotspot-repo-map-md-2026-07-20",
+      "action": "Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-22T08:10:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-22T08:10:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-07-23T06:07:02Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
       "id": "refactor-churn-hotspots-api-server-auth-2026-07-12",
       "action": "Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server routes/sso.rs",
       "owner_role": "pm-tech-lead",
@@ -10496,6 +11113,25 @@
         "merged_at": "2026-07-16T20:19:42Z",
         "at": "2026-07-16T20:22:46Z"
       }
+    },
+    {
+      "id": "refactor-layout-editor-styles-followthrough-2026-07-23",
+      "action": "Follow-through on #2464 LayoutEditorPage style extraction — apply same pattern to remaining layout-editor components to reduce inline-style churn",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "pm-scrum-master 2026-07-23 (score=3: refactor; follows shipped PR)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "refactor"
+      },
+      "last_updated": "",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "refactor-mediation-duplicated-spinner",
@@ -10609,6 +11245,46 @@
         "merged_at": "2026-07-30T06:19:43Z",
         "at": "2026-07-30T08:11:29Z"
       }
+    },
+    {
+      "id": "sec-ammonia-supply-chain-audit-2026-07-23",
+      "action": "Post-#2446 (RUSTSEC-2026-0213 ammonia bump) — run a cargo-audit sweep against the workspace to catch any other pinned crates with open advisories",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "pm-scrum-master 2026-07-23 (score=5: security-hygiene follow-through)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 5,
+        "vector": "sec"
+      },
+      "last_updated": "",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "sec-layout-webhook-hmac-verify-2026-07-23",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "dropped",
+      "source": "pm-security 2026-07-23 (score=7: sec*2 + dep-blocker + arch-review)",
+      "deadline": null,
+      "dependency": "gh-issue-2485",
+      "depends_on": [
+        "gh-issue-2485"
+      ],
+      "first_open_at": "2026-07-23T14:34:52.019013Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 7,
+        "vector": "sec"
+      },
+      "last_updated": "2026-07-23T14:34:52.019013Z",
+      "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
       "id": "sec-layout-webhook-integration-test-2026-07-23",
@@ -11103,6 +11779,25 @@
         "at": "2026-07-16T12:13:26Z",
         "reason": "reconciled-done ghost: RECONCILED-DONE marker + stem terminal in archive; retry row evades gc1/dev-reconcile (stem-only archive match). Closed to avoid no-op implementer spawn."
       }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2600-reality",
+      "action": "Screen-map drift: reality-web layout changed without docs/screens/reality/ update (PR #2600)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "last_updated": "2026-08-01T00:05:00Z",
+      "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
       "id": "test-gap-screen-map-drift-pr-839-ppt",
