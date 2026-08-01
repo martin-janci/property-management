@@ -148,6 +148,96 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "bug-scheduler-notifications-fire-once",
+      "action": "Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": "plans/bug-scheduler-notifications-fire-once.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-01T20:11:15Z"
+    },
+    {
+      "id": "code-review-reality-server-sso-session-invalidate-swallowed",
+      "action": "reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=3 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security"
+      },
+      "last_updated": "2026-08-01T20:11:15Z"
+    },
+    {
+      "id": "code-review-reality-server-db-error-leak-to-client",
+      "action": "reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=2 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "last_updated": "2026-08-01T20:11:15Z"
+    },
+    {
+      "id": "test-gap-disputes-kpis-window-validation",
+      "action": "/disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=2 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "last_updated": "2026-08-01T20:11:15Z"
+    },
+    {
+      "id": "code-review-reality-server-password-reset-no-transport",
+      "action": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-01T20:11:15Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
