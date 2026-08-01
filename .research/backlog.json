@@ -5872,6 +5872,84 @@
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
       "plan": null
+    },
+    {
+      "id": "bug-scheduler-notifications-fire-once",
+      "title": "Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2612",
+        "PR #2608"
+      ],
+      "evidence": [
+        "publish_scheduled_announcements at scheduler/mod.rs:361 flips announcements to published via announcement_repo.publish_scheduled() (line 365), then per-announcement resolves targets (line 387) and dispatches — PR #2608 upgraded the dispatch-error paths to logged Vec::new() fallback but the announcement stays published, so a single transient DB/HTTP blip loses the notification with no retry",
+        "Same fire-once shape applies to vote-started and vote-result dispatch loops in scheduler/votes.rs (activation/close committed before dispatch)",
+        "Fix pattern: add nullable notified_at timestamp on announcements + votes; scheduler pass selects published AND notified_at IS NULL, stamps only on successful dispatch (mirroring retention prunes' last_*_prune_at pattern)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs",
+        "backend/servers/api-server/src/services/scheduler/votes.rs",
+        "backend/crates/db/src/repositories/announcement.rs",
+        "backend/crates/db/src/repositories/vote.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": "plans/bug-scheduler-notifications-fire-once.md"
+    },
+    {
+      "id": "bug-direct-upload-drops-building-id",
+      "title": "uploadDocumentDirect() silently drops building_id — building-scoped document uploads lose association vs legacy multipart path",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "dropped",
+      "sources": [
+        "Issue #2366",
+        "PR #2345"
+      ],
+      "evidence": [
+        "Legacy uploadDocument() forwards params.buildingId into multipart form (documents/api.ts:240); new uploadDocumentDirect() accepts UploadDocumentParams (including buildingId) but never sends it in the CreateDocumentRequest registration (documents/api.ts:407+)",
+        "CreateDocumentRequest type (documents/types.ts:204) has no building_id field, while Document (types.ts:21) and list/search queries do — cannot be added at the frontend contract alone",
+        "documents/api.ts:423-434 carries an inline NOTE (#2366) acknowledging the drop is deliberate pending backend contract fix — fix must land at typespec + backend POST /documents handler + regenerated client + uploadDocumentDirect forwarding + api.test.ts regression",
+        "[SUPERSEDED by gh-issue-2366-retry2] dispatcher action-list.json already carries an in-progress task for this same issue (#2366); leaving as evidence-only to avoid duplicate work per Phase-3 slug-stem invariant"
+      ],
+      "files": [
+        "docs/api/typespec/documents.tsp",
+        "backend/servers/api-server/src/routes/documents.rs",
+        "frontend/packages/api-client/src/documents/api.ts",
+        "frontend/packages/api-client/src/documents/types.ts",
+        "frontend/packages/api-client/src/documents/api.test.ts"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-disputes-kpis-window-validation",
+      "title": "/disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2575",
+        "PR #2572"
+      ],
+      "evidence": [
+        "KpisQuery (routes/disputes.rs:159-162) deserializes window_start / window_end with no assertion that window_start < window_end — inverted window silently returns degenerate DisputeKpis with 200 status",
+        "Only coverage dispute_kpis_happy_path (tests/suites/disputes_happy_path_tests.rs) is #[ignore = 'BIT-440: quarantined — fails on dev'] — new public reporting endpoint ships with zero executing contract assertion",
+        "Cheap fix: reject window_start >= window_end (and optionally cap span) with 400 VALIDATION_ERROR before calling repo (routes/disputes.rs already uses VALIDATION_ERROR on lines 603, 668); add non-sqlx::test handler-level test outside BIT-440 scope"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/disputes.rs",
+        "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs"
+      ],
+      "created_at": "2026-08-01",
+      "updated_at": "2026-08-01",
+      "plan": null
     }
   ]
 }

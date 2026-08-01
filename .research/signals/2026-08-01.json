@@ -1,0 +1,163 @@
+{
+  "signals": [
+    {
+      "id": "merged-review-followup-issue-2612",
+      "type": "merged-review-followup",
+      "source": "Issue #2612",
+      "score_delta": 3,
+      "evidence": "Post-merge review of PR #2608 raised issue #2612: scheduler `publish_scheduled_announcements` and vote-lifecycle siblings commit terminal state before dispatching notifications; a single logged-fallback drop permanently loses the notification. Verified via read of backend/servers/api-server/src/services/scheduler/mod.rs:361-434 — publish flips at :365, targets resolve at :387 with `Vec::new()` fallback at :397.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "merged-review-followup-issue-2575",
+      "type": "merged-review-followup",
+      "source": "Issue #2575",
+      "score_delta": 2,
+      "evidence": "Post-merge review of PR #2572 raised issue #2575: /disputes/kpis accepts window_start/window_end with no `window_start <= window_end` assertion; single test `dispute_kpis_happy_path` is BIT-440 quarantined. Verified via read of backend/servers/api-server/src/routes/disputes.rs:156-162 (KpisQuery has no validation) and grep of BIT-440 quarantines in tests/suites/.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "merged-review-followup-issue-2366",
+      "type": "merged-review-followup",
+      "source": "Issue #2366",
+      "score_delta": 3,
+      "evidence": "Post-merge review of PR #2345 raised issue #2366: uploadDocumentDirect drops params.buildingId — CreateDocumentRequest has no building_id field. Verified via grep of frontend/packages/api-client/src/documents/api.ts:423-434 which carries an inline NOTE (#2366) explicitly documenting the drop. Deduped: dispatcher already has `gh-issue-2366-retry2` in-progress on the action-list — supersede this backlog row.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "dep-update-noise-pr-2625",
+      "type": "dep-update-noise",
+      "source": "PR #2625",
+      "score_delta": 0,
+      "evidence": "PR #2625 (sec-ammonia-supply-chain-audit-2026-07-23-retry1) bumped quinn-proto 0.11.14→0.11.15 to close RUSTSEC-2026-0185; touches backend/Cargo.lock only. Recorded for visibility; not scored per rule.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-01.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal reuse check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay checks (no open item > 14d)",
+      "observed": "cap true; decay: 0 stale open items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for 'adversarial pass:' next to each new plan",
+      "observed": "1/1 annotated (bug-scheduler-notifications-fire-once.md — passed)",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans + metadata + heading + capability + mode + files-exist",
+      "observed": "count=1; 4/4 metadata; 11/11 headings; capability C1,C2,C6 ticked; Mode: cloud-ok; 4/4 files exist",
+      "expected": "count<=2; 4/4 metadata; 11/11 headings; ≥1 capability; mode declared; all files exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' honesty",
+      "observed": "none",
+      "expected": "none or listed with cursor unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior HEAD plans still present in plans/ or _archive/",
+      "observed": "MISS count=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "cur=7 head=7",
+      "expected": "cur>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency + kill-switch",
+      "observed": "length=0",
+      "expected": "length<=3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run (gate no-op); pm_cursor.next_index in 0..7",
+      "observed": "skipped; next_index=2",
+      "expected": "no-op or valid artifacts"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged +lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
