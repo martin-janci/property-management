@@ -1,0 +1,39 @@
+{
+  "generated": "2026-08-01T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-server = 2026-07-18, the oldest cursor of all 8 segments; backlog.json carries 0 OPEN code-review-finding rows tagged segment=reality-server, so no saturation-skip applies). Both findings below were cross-checked against every prior reality-server signal file (07-12/07-18/07-30/07-31) and are net-new — they do not duplicate the existing error-leak / SSRF / redirect-bypass / dead-stub / authz findings.",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:120-132 — list_import_jobs (wired GET /api/v1/imports/jobs, PortalPrincipal-authenticated) forwards pagination straight to the repo with NO clamping: query.limit.unwrap_or(20) at :130 and query.offset.unwrap_or(0) at :131. ImportJobsQuery (imports.rs:90-94) types both as Option<i32>, so an attacker-supplied ?limit=2000000000 reaches the SQL LIMIT (unbounded result set / memory-amplification DoS) and ?offset=-1 reaches a Postgres OFFSET, which rejects negatives and surfaces as a 500.",
+        "This handler is the ONLY list endpoint in the reality-server routes that omits the clamp. Every sibling applies the exact guard it is missing: portal_listings.rs:431 `.clamp(1, 100)` + :432 `.max(0)`, reports.rs:290-291, agent_reviews.rs:85-86, realtors.rs:217-218, inquiries.rs:475/527, agencies.rs:124-125 `.clamp(1, 200)`, plus favorites.rs:275-279, saved_searches.rs:317-321 and articles.rs:355-359 which all do `.unwrap_or(DEFAULT).clamp(1, MAX)` on limit and `.max(0)` on offset. list_import_jobs is a straightforward oversight against an established, uniform repo convention.",
+        "Suggested fix: mirror the sibling handlers — `let limit = query.limit.unwrap_or(20).clamp(1, 100); let offset = query.offset.unwrap_or(0).max(0);` and pass the clamped values into list_import_jobs, so a hostile ?limit/?offset can neither exhaust memory nor trigger a negative-OFFSET 500."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:97-131 — get_price_map is PUBLIC and unauthenticated (handler takes only State + Query, no principal). Its process-global cache PRICE_MAP_CACHE (static HashMap<String, CacheEntry>, price_map.rs:32-38) is keyed on `format!(\"{}:{}:{}:{}\", mode, time_window, property_type, city)` at :125-131, where `city` (:53) and `property_type` (:55) are free-form, unvalidated user strings echoed straight into the key.",
+        "The only eviction is expiry-based: on each miss the write path does `cache.retain(|_, v| Instant::now() < v.expires_at)` (price_map.rs:236) then inserts an entry with a 1-hour TTL (:237-243, CACHE_TTL = 3600s at :41). There is NO size cap / LRU. Within any 1-hour window an attacker who varies `?city=` / `?property_type=` across unbounded distinct values inserts an unbounded number of live entries — retain never culls them because none have expired — giving a memory-exhaustion DoS on a public endpoint. Each distinct key is also a guaranteed cache miss, so every request additionally runs the heavy AVG(price/size_sqm) GROUP BY aggregation over the listings table (SQL at :158-213): a second, DB-amplification DoS axis.",
+        "Suggested fix: bound the cache (max entry count with LRU/random eviction, or an off-the-shelf bounded cache) AND validate `city`/`property_type` against the known set (or normalize/reject unknown values) before they become a cache key, so an unauthenticated caller cannot mint unbounded distinct keys or force unbounded uncached aggregations."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
