@@ -1080,6 +1080,7 @@ fn booking_dedup_key(body: &str, res_ids: &[String]) -> String {
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/booking/push",
+    request_body(content = String, content_type = "application/xml", description = "Raw signed OTA_HotelResNotifRQ webhook payload (HMAC-SHA256 verified over \"{X-Booking-Timestamp}.{body}\" before parsing)"),
     params(
         ("X-Booking-Timestamp" = String, Header,
          description = "Unix-seconds timestamp of the delivery. Signed as part of \"{timestamp}.{body}\"; deliveries outside ±300s of server time are rejected 401 (replay defense)."),
