@@ -1,9 +1,52 @@
 {
-  "generated": "2026-07-31T16:18:37Z",
+  "generated": "2026-08-01T00:30:49Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-01T00:30:49Z",
+      "prs_scanned": 15,
+      "clean": [
+        2616,
+        2615,
+        2614,
+        2613,
+        2611,
+        2610,
+        2609,
+        2607,
+        2606,
+        2578,
+        2577,
+        2576
+      ],
+      "with_issues": [
+        {
+          "pr": 2608,
+          "issue": 2612,
+          "findings": 0,
+          "specialist": "rust-backend",
+          "note": "Pre-existing open follow-up #2612 (durability of scheduler dispatch) still covers this; re-verified error-handling fix, no NEW gap. Labeled post-merge-reviewed."
+        },
+        {
+          "pr": 2572,
+          "issue": 2575,
+          "findings": 0,
+          "specialist": "rust-backend",
+          "note": "Re-derived the window-validation + BIT-440-quarantined-test gap and opened #2617, then closed #2617 as duplicate of the still-open #2575. Labeled post-merge-reviewed."
+        },
+        {
+          "pr": 2568,
+          "issue": 2574,
+          "findings": 0,
+          "specialist": "mobile-native",
+          "note": "Pre-existing open follow-up #2574 (SSO nonce lost on process death) still covers this; mint site wired by merged #2593. No NEW gap. Labeled post-merge-reviewed."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 \u2014 the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
+    },
     {
       "run_at": "2026-07-31T16:18:37Z",
       "prs_scanned": 9,
@@ -23,7 +66,7 @@
           "issue": 2612,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification — it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
+          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification \u2014 it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
         }
       ],
       "skipped_already_reviewed": [
@@ -848,34 +891,6 @@
           "findings": 1,
           "specialist": "react-web",
           "note": "admin-web Org dashboard: reuse DestructiveConfirmDialog (audit-reason+a11y); gate usePlatformStats on capability"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-14T02:12:58Z",
-      "prs_scanned": 3,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2290,
-          "issue": 2301,
-          "findings": 1,
-          "specialist": "pm-backend",
-          "note": "mobile OS push (FCM/APNs) transport merge review \u2014 follow-up filed as #2301"
-        },
-        {
-          "pr": 2297,
-          "issue": 2302,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "core normalization correct but epic-extractor regex cannot represent 10A/10B/7B suffixes it canonicalized"
-        },
-        {
-          "pr": 2295,
-          "issue": 2303,
-          "findings": 2,
-          "specialist": "pm-backend",
-          "note": "recompute-on-edit correct+tested, but report_schedules.next_run_at still write-only (no due-consumer/post-fire advance; cf workflow.rs/automation.rs); create=legacy freq/time vs edit=cron dual model unreconciled"
         }
       ]
     }
