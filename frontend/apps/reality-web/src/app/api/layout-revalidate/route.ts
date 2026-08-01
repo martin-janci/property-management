@@ -102,18 +102,78 @@ export function isTimestampFresh(
 }
 
 // ---------------------------------------------------------------------------
+// target_tenant derivation (issue #2621, hardening follow-up to #2532).
+//
+// The request `Host` header is client-controlled and is NOT validated against
+// any known-tenant set. Recording it verbatim as the `target_tenant` analytics
+// dimension is only safe *after* the HMAC signature has been verified — i.e. on
+// deliveries proven to come from the trusted webhook sender.
+//
+// On the two pre-authentication emit paths (`disabled`, `invalid_signature`)
+// the caller has NOT proven possession of the shared secret, so an
+// unauthenticated attacker could otherwise drive unbounded, high-cardinality
+// `layout_revalidate_received` events carrying an arbitrary attacker-chosen
+// host. Those paths record the `'*'` sentinel instead — the same global
+// sentinel api-server writes for `target_tenant` — so pre-auth callers cannot
+// inject cardinality into the dimension. See the events doc §4.3 and, once the
+// append-only cross-service sink lands, gate the persisted write on successful
+// signature verification too (issue #2621, improvement 3).
+// ---------------------------------------------------------------------------
+
+/** Global sentinel recorded when the tenant is unknown / not authenticated. */
+const GLOBAL_TENANT = '*';
+
+/** Normalize a host for comparison/recording: trim, lowercase, drop any port. */
+function normalizeHost(host: string): string {
+  return host.trim().toLowerCase().replace(/:\d+$/, '');
+}
+
+/**
+ * Optional comma-separated allow-list of known tenant hosts
+ * (`LAYOUT_WEBHOOK_ALLOWED_HOSTS`). When configured, an authenticated
+ * delivery's host must appear here to be recorded verbatim; otherwise it
+ * collapses to the `'*'` sentinel. When unset, the normalized host is recorded
+ * as-is (legacy behaviour) — the delivery is already HMAC-authenticated.
+ */
+function allowedTenantHosts(): Set<string> | null {
+  const raw = process.env.LAYOUT_WEBHOOK_ALLOWED_HOSTS;
+  if (!raw) return null;
+  const hosts = raw
+    .split(',')
+    .map(normalizeHost)
+    .filter((h) => h.length > 0);
+  return hosts.length > 0 ? new Set(hosts) : null;
+}
+
+/**
+ * The `target_tenant` to record on an authenticated (post-HMAC) path. The host
+ * is normalized; when an allow-list is configured, an unknown host collapses to
+ * the `'*'` sentinel so even a trusted-but-misbehaving sender cannot inflate
+ * cardinality. An absent host also maps to the sentinel.
+ */
+export function authenticatedTargetTenant(rawHost: string | null): string {
+  const host = normalizeHost(rawHost ?? '');
+  if (!host) return GLOBAL_TENANT;
+  const allow = allowedTenantHosts();
+  if (allow && !allow.has(host)) return GLOBAL_TENANT;
+  return host;
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/layout-revalidate
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request): Promise<NextResponse> {
   // Tenant scope on the receiver is expressed as the request host (events doc
-  // §4.3); fall back to the global sentinel when absent.
-  const targetTenant = request.headers.get('host') ?? '*';
+  // §4.3), but the host is client-controlled: it is only trusted AFTER the HMAC
+  // signature is verified. Every pre-authentication emit path records the '*'
+  // sentinel so an unauthenticated caller cannot inject arbitrary cardinality
+  // into the `target_tenant` dimension (issue #2621).
 
-  // 1. Secret must be configured
+  // 1. Secret must be configured (pre-auth — record the sentinel, not the host).
   const secret = process.env.LAYOUT_WEBHOOK_SECRET;
   if (!secret) {
-    emitRevalidateReceived({ outcome: 'disabled', httpStatus: 503, targetTenant });
+    emitRevalidateReceived({ outcome: 'disabled', httpStatus: 503, targetTenant: GLOBAL_TENANT });
     return NextResponse.json({ error: 'disabled' }, { status: 503 });
   }
 
@@ -131,12 +191,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   // These auth rejections fold into the `invalid_signature` analytics outcome.
   const timestamp = parseWebhookTimestamp(request.headers.get('X-Webhook-Timestamp'));
   if (timestamp === null) {
-    emitRevalidateReceived({ outcome: 'invalid_signature', httpStatus: 401, targetTenant });
+    emitRevalidateReceived({
+      outcome: 'invalid_signature',
+      httpStatus: 401,
+      targetTenant: GLOBAL_TENANT,
+    });
     return NextResponse.json({ error: 'missing timestamp' }, { status: 401 });
   }
   const nowSecs = Math.floor(Date.now() / 1000);
   if (!isTimestampFresh(timestamp, nowSecs)) {
-    emitRevalidateReceived({ outcome: 'invalid_signature', httpStatus: 401, targetTenant });
+    emitRevalidateReceived({
+      outcome: 'invalid_signature',
+      httpStatus: 401,
+      targetTenant: GLOBAL_TENANT,
+    });
     return NextResponse.json({ error: 'stale timestamp' }, { status: 401 });
   }
 
@@ -151,9 +219,18 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // Guard unequal lengths before timingSafeEqual (it throws on length mismatch)
   if (headerBuf.length !== expectedBuf.length || !timingSafeEqual(headerBuf, expectedBuf)) {
-    emitRevalidateReceived({ outcome: 'invalid_signature', httpStatus: 401, targetTenant });
+    emitRevalidateReceived({
+      outcome: 'invalid_signature',
+      httpStatus: 401,
+      targetTenant: GLOBAL_TENANT,
+    });
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
+
+  // Signature verified — the delivery is proven to come from the trusted
+  // webhook sender, so the host may now be recorded (normalized + optionally
+  // allow-list validated) as the tenant on the remaining emit paths.
+  const targetTenant = authenticatedTargetTenant(request.headers.get('host'));
 
   // 5. Parse body and validate shape
   let body: unknown;
