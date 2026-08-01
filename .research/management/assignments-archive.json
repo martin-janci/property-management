@@ -1839,6 +1839,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-community-unauthenticated-reads-retry1",
+      "branch": "auto-impl/code-review-api-handlers-community-unaut-cfec66bd",
+      "status": "failed",
+      "claimed_at": "2026-08-01T06:06:29Z",
+      "last_updated": "2026-08-01T14:08:29Z",
+      "status_changed_at": "2026-08-01T14:08:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "[sandbox-failure-after-reclaim: no branch pushed after 1 reclaim; reclaim cap reached]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "branch": "auto-impl/code-review-api-handlers-shares-revoke-d-658489f1",
       "status": "merged",
@@ -2611,6 +2633,28 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "data-announcement-fanout-metric-2026-07-23-retry1",
+      "branch": "auto-impl/data-announcement-fanout-metric-2026-07-6ec97acd",
+      "status": "failed",
+      "claimed_at": "2026-08-01T06:06:29Z",
+      "last_updated": "2026-08-01T14:08:29Z",
+      "status_changed_at": "2026-08-01T14:08:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "[sandbox-failure-after-reclaim: no branch pushed after 1 reclaim; reclaim cap reached]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
@@ -7797,6 +7841,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-2366-retry2",
+      "branch": "auto-impl/gh-issue-2366-retry2-f18d7623",
+      "status": "failed",
+      "claimed_at": "2026-08-01T06:06:29Z",
+      "last_updated": "2026-08-01T14:08:29Z",
+      "status_changed_at": "2026-08-01T14:08:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "[sandbox-failure-after-reclaim: no branch pushed after 1 reclaim; reclaim cap reached]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2367",
       "branch": "auto-impl/gh-issue-2367-fcc8c533",
       "status": "merged",
@@ -8377,6 +8443,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2528-retry1",
+      "branch": "auto-impl/gh-issue-2528-retry1-583ab8ff",
+      "status": "merged",
+      "claimed_at": "2026-08-01T08:11:40Z",
+      "last_updated": "2026-08-01T14:14:46Z",
+      "status_changed_at": "2026-08-01T14:14:46Z",
+      "pr_number": 2623,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2623",
+      "merged_at": "2026-08-01T14:14:27Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2623 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=integrations crate verify green; api-server crate-band clippy/test blocked by documented utoipa-swagger-ui github.com egress 403 (same as #2620), draft PR relies on CI backend.yml as authoritative [ci-fail: api-server utoipa ToSchema(Bytes) compile error; fix-round 1 spawned]",
+      "reviewer_summary": "verdict=approve head_oid=0e1a45f8c016b30d10f2ee638e12163e69c31465 note=hot-path-webhook-hmac-sound;ToSchema(Bytes)-compile-resolved(request_body=String,CI-fmt-clippy+tests-green);scope-clean;dedup-2xtolerance-gap-nonblocking-no-side-effects",
+      "last_reviewed_oid": "0e1a45f8c016b30d10f2ee638e12163e69c31465",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-01T14:14:22Z"
     },
     {
       "task_id": "gh-issue-2529",
@@ -10487,5 +10575,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-01T08:11:47Z"
+  "archived_at": "2026-08-01T14:17:43Z"
 }

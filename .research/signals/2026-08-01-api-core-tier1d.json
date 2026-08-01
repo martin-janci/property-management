@@ -1,0 +1,26 @@
+{
+  "generated": "2026-08-01T00:00:00Z",
+  "segment": "api-core",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "reality-server (oldest cursor, 2026-07-18) and mobile-rn (2026-07-22) were already reviewed earlier today (signal files 2026-08-01-reality-server-tier1d.json / 2026-08-01-mobile-rn-tier1d.json exist), so both are skipped. Next candidate is api-core (review_cursor.api-core = 2026-07-20, the oldest remaining unreviewed segment) which ALSO aligns with the Phase-1 churn hotspots: the most-churned code files in the last 20 commits are backend/crates/db/src/repositories/{rag_metrics,llm_document}.rs and backend/crates/integrations/src/booking/* (all Rust backend business-logic). backlog.json carries 0 OPEN code-review-finding rows tagged segment=api-core, so no saturation-skip applies. Actual repo layout uses backend/servers/ + backend/crates/ (not the skill's stale backend/api-server/ paths); api-core is mapped to the api-server binary business logic plus the db/integrations crates it consumes.",
+  "experts_used": [
+    "rust"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_request (:96, `SELECT * FROM llm_generation_requests WHERE id = $1`, no org filter), publish_description (:622, `UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *`, no org filter), plus find_prompt_template (:336), find_listing_description (:531), update_edited_description (:594) and find_photo_enhancement (:1514). Their safe replacements sit right beside them (find_generation_request_for_org :113 and publish_description_for_org :640, both carrying `AND organization_id = $2` with the doc-comment 'a caller in org B cannot read/publish org A's ...').",
+        "The live routes were correctly migrated to the safe variants (backend/servers/api-server/src/routes/ai/llm.rs:1442 calls find_generation_request_for_org, :1085 calls publish_description_for_org), and a grep across all of backend/ (excluding llm_document.rs itself and *_test.rs / tests/) returns ZERO non-test callers for all six un-scoped read/publish methods — so nothing is exploitable today. But the methods remain `pub` with a generic `E: Executor<'e, Database = Postgres>` bound, meaning a future caller can invoke them on the raw non-RLS `&state.db` pool (not an `acquire_with_rls(...)` guard), which reintroduces the exact cross-tenant read/mutate IDOR that #766/#816 closed — a latent security regression footgun. (Contrast update_generation_status at :205, also un-scoped `WHERE id = $1` but genuinely safe: its 3 live callers in llm.rs:619/669/975 all run on an org-context RlsPool guard where the Postgres RLS policy enforces isolation.)",
+        "Suggested fix: delete the six now-orphan un-scoped methods (they have no remaining callers), or, if an internal non-RLS use is still intended, gate them behind a narrower non-`pub` visibility / `#[doc(hidden)]` + rename (e.g. `*_unscoped_internal`) so a future route author cannot accidentally pick the IDOR-prone twin over the `_for_org` one. Cross-checked as net-new: no OPEN code-review-finding row currently tags segment=api-core, and the #766/#816 IDOR items in backlog.json cover the ROUTE-level fix, not this leftover-dead-repo-method footgun."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
