@@ -2039,6 +2039,7 @@ dependencies = [
  "genpdf",
  "hex",
  "integrations",
+ "metrics 0.24.6",
  "password-hash",
  "rand 0.10.2",
  "rust_decimal",

@@ -264,6 +264,8 @@ pub use energy::EnergyRepository;
 
 // Epic 64: Advanced AI & LLM Capabilities
 pub mod llm_document;
+// Story 84.5: pgvector RAG retrieval-quality observability.
+pub mod rag_metrics;
 
 pub use llm_document::LlmDocumentRepository;
 

@@ -27,6 +27,7 @@ use crate::models::llm_document::{
     ProviderStats, RagStatistics, RequestTypeStats, UpdateEscalationConfig, VoiceAssistantDevice,
     VoiceCommandHistory,
 };
+use crate::repositories::rag_metrics;
 use chrono::{DateTime, Utc};
 use sqlx::{Error as SqlxError, Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
@@ -1036,6 +1037,11 @@ impl LlmDocumentRepository {
         min_similarity: Option<f64>,
         model_filter: Option<&str>,
     ) -> Result<Vec<(DocumentEmbedding, f64)>, SqlxError> {
+        // Story 84.5: observe retrieval quality (latency, top-k relevance,
+        // empty-result rate). Timed from here so the histogram covers the whole
+        // retrieval — including the pgvector-availability probe and the
+        // provenance post-filter — not just the SQL round-trip.
+        let started = std::time::Instant::now();
         let min_sim = min_similarity.unwrap_or(0.5);
         // Over-fetch when a provenance filter is active so post-filtering still
         // returns up to `limit` compatible rows (capped to avoid unbounded scans).
@@ -1093,11 +1099,9 @@ impl LlmDocumentRepository {
                 embeddings.push((emb, similarity));
             }
 
-            return Ok(Self::filter_by_embedding_model(
-                embeddings,
-                model_filter,
-                limit,
-            ));
+            let out = Self::filter_by_embedding_model(embeddings, model_filter, limit);
+            Self::observe_retrieval(rag_metrics::BACKEND_PGVECTOR, started.elapsed(), &out);
+            return Ok(out);
         }
 
         // Fallback to the existing application-level search
@@ -1110,11 +1114,19 @@ impl LlmDocumentRepository {
                 min_similarity,
             )
             .await?;
-        Ok(Self::filter_by_embedding_model(
-            fallback,
-            model_filter,
-            limit,
-        ))
+        let out = Self::filter_by_embedding_model(fallback, model_filter, limit);
+        Self::observe_retrieval(rag_metrics::BACKEND_FALLBACK, started.elapsed(), &out);
+        Ok(out)
+    }
+
+    /// Emit RAG retrieval-quality metrics for one search (Story 84.5).
+    fn observe_retrieval(
+        backend: &'static str,
+        elapsed: std::time::Duration,
+        results: &[(DocumentEmbedding, f64)],
+    ) {
+        let scores: Vec<f64> = results.iter().map(|(_, score)| *score).collect();
+        rag_metrics::record_retrieval(backend, elapsed, &scores);
     }
 
     /// Drop rows whose stored `metadata.embedding_model` is known to differ from
