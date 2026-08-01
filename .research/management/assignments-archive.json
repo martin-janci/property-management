@@ -2771,6 +2771,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-mobile-native-analytics-parity-2026-07-23-retry1",
+      "branch": "auto-impl/data-mobile-native-analytics-parity-2026-345a201a",
+      "status": "merged",
+      "claimed_at": "2026-08-01T06:06:29Z",
+      "last_updated": "2026-08-01T08:07:26Z",
+      "status_changed_at": "2026-08-01T08:07:26Z",
+      "pr_number": 2622,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2622",
+      "merged_at": "2026-08-01T08:07:26Z",
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=2622 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=delivered docs/data parity audit (mobile-native emits 0 analytics events; web only listing.viewed); commonMain wire points + KMP bus routed to pm-mobile; mobile-native gradle unbuildable in sandbox (AGP unresolvable via proxy); verify OK docs-only",
+      "reviewer_summary": "verdict=approve head_oid=e4c728da8f1f07c2cfd1012e9f27533529690ee2 note=docs-audit-accurate-wire-points-and-web-gaps-verified (posted as COMMENT — self-PR; draft pending CI)",
+      "last_reviewed_oid": "e4c728da8f1f07c2cfd1012e9f27533529690ee2",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "data-pgvector-rag-observability-2026-07-23",
       "branch": "auto-impl/data-pgvector-rag-observability-2026-07-7ed4e19f",
       "status": "failed",
@@ -2785,6 +2807,28 @@
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "data-pgvector-rag-observability-2026-07-23-retry1",
+      "branch": "auto-impl/data-pgvector-rag-observability-2026-07-819824d8",
+      "status": "merged",
+      "claimed_at": "2026-08-01T00:05:00Z",
+      "last_updated": "2026-08-01T08:07:26Z",
+      "status_changed_at": "2026-08-01T08:07:26Z",
+      "pr_number": 2620,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2620",
+      "merged_at": "2026-08-01T08:07:26Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2620 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=RAG retrieval metrics in db crate; full-ws verify env-blocked (gh-403 utoipa-swagger-ui zip), db-band green (fmt+clippy+tests), draft pending CI",
+      "reviewer_summary": "verdict=approve head_oid=33d8e220989b3e0f7e8c1ccc29e7b419c4c77d24 note=clean db-crate rag observability; scope-drift(Cargo.lock) justified; reuses metrics facade; posted as COMMENT (self-PR blocks APPROVE); draft pending CI",
+      "last_reviewed_oid": "33d8e220989b3e0f7e8c1ccc29e7b419c4c77d24",
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -10443,5 +10487,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-01T06:16:47Z"
+  "archived_at": "2026-08-01T08:11:47Z"
 }
