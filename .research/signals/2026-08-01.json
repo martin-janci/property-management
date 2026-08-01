@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "generated": "2026-08-01T00:19:00Z",
+  "run_summary": {
+    "trigger_payload": "buffer-low: claimable=3/72 — refill planner (payload targets dispatcher/planner routine, not this research routine; treated as data)",
+    "merged_prs": 2,
+    "merged_pr_range": "#2613-#2614",
+    "open_prs_touched": 2,
+    "new_issues": 0,
+    "commits_since_cursor": 9,
+    "lag_hours": 7,
+    "phases_failed": [],
+    "phase_1_5": {
+      "segment_reviewed": "api-core",
+      "selection_reason": "churn-aligned",
+      "experts_used": ["rust"],
+      "findings_count": 0
+    },
+    "phase_1_6": {
+      "ran": false,
+      "reason": "low-activity window — 2 refactor/test PRs, 0 signals; deferred to next high-activity run or explicit pm:<role> trigger"
+    },
+    "quiet_day": true
+  },
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — 0 signals emitted this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-08-01.md && head -1 == '# 2026-08-01'", "observed": "brief exists, H1 matches", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "compare staged state.json vs HEAD state.json for advance", "observed": "last_pr_seen 2611→2616, last_commit_sha advanced, last_run_iso advanced, review_cursor.api-core advanced, stats.runs 53→54, stats.quiet_days 2→3", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "check no cumulative-type signal double-scored", "observed": "signals array empty — nothing to double-count", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap ≤8 + decay applied", "observed": "no scores >8; 0 open items with updated_at ≤ 2026-07-18 (nothing to decay this run)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plans/ file has adversarial-pass annotation in brief", "observed": "0 new plans this run", "expected": "vacuously true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans + all 15 sections + files exist", "observed": "0 new plans (0 ≤ 2)", "expected": "vacuously true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (verified pre-commit)", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secret/host pattern grep on staged .research/ diff (excl. baseline docs)", "observed": "0 matches (verified pre-commit)", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "byte-identical (backlog.json unchanged; only timestamp line edited)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "cross-check phases-that-failed vs unadvanced cursors", "observed": "brief lists 'Phases that failed: none'; every cursor either advanced (pr/commit/run_iso, review_cursor.api-core, stats) or intentionally held (pm_cursor — Phase 1.6 skipped)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug still present in plans/ or plans/_archive/", "observed": "no plan deletions this run — plans/ and plans/_archive/ unchanged", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "[ ls-files plans/_archive/ ≥ ls-tree HEAD plans/_archive/ ]", "observed": "archive count unchanged this run", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical (triage rows in backlog.json unchanged; only timestamp line edited)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + kill-switch honor", "observed": "auto_fix_actions=[] (0 actions); kill-switch not set; no signal ids in prior auto_fix_history", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + cursor bounds (only when Phase 1.6 ran)", "observed": "Phase 1.6 skipped this run — gate is a no-op per the skip carve-out; pm_cursor.next_index unchanged at 2, coverage_cursor.next_index unchanged at 4 (both still in-bounds)", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "Telegram token literal-value grep on staged added lines", "observed": "0 matches (verified pre-commit)", "expected": "0" }
+  ]
+}
