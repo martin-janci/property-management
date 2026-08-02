@@ -5984,7 +5984,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review",
         "segment:reality-server",
@@ -6000,7 +6000,12 @@
       ],
       "created_at": "2026-08-02",
       "updated_at": "2026-08-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-02T12:04:10Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-api-core-ssrf-validator-drift",
@@ -6031,7 +6036,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review api-core 2026-08-02"
       ],
@@ -6045,7 +6050,12 @@
       ],
       "created_at": "2026-08-02",
       "updated_at": "2026-08-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-02T12:04:10Z",
+        "assignment_status": "merged",
+        "pr_number": 2626
+      }
     }
   ]
 }

@@ -1,9 +1,31 @@
 {
-  "generated": "2026-08-02T08:16:55Z",
+  "generated": "2026-08-02T12:20:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-02T12:20:00Z",
+      "prs_scanned": 6,
+      "clean": [
+        2627,
+        2626,
+        2541,
+        2521,
+        2524
+      ],
+      "with_issues": [
+        {
+          "pr": 2526,
+          "issue": 2628,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "OAuth token-usage analytics data layer (migration 00224 + models + OAuthTokenEventRepository record/usage_per_client/totals/cleanup_before, well-tested) is never wired: tree-wide grep shows the only refs are the 4 data-layer files + repositories/mod.rs export. No producer calls record() on oauth.rs token()/revoke() paths (table stays empty -> dashboard reads zeros), no platform-admin read route exposes usage_per_client/totals, cleanup_before unscheduled. Same class as #2531/#2532/#2533."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d demand-driven refill (claim buffer starved: 0 honest-claimable). The 2 genuinely-new PRs since the 08:16 run are 2627 (workflow api_call.rs SSRF validator drift -> delegates to shared common::url_validation; multicast regression test) and 2626 (idempotency middleware tenant_scope drops the client X-Tenant-ID header fallback for a server-side 'global' sentinel; cross-tenant no-collide + spoofed-header tests) -- both exemplary security self-fixes, clean. To generate fresh actionable work, also reviewed 4 substantive never-reviewed in-window PRs from the 2026-07-23 data-audit wave (the 08-02/08-01 runs only ever reviewed the 15 newest by number; the older data-* wave was never labeled, so 100+ remain unlabeled but most are test-un-quarantine/docs noise). 2521 (fault KPI unification: single-source fault_counts_by_status, global==sum-of-per-org regression test) clean; 2541 (reality-web listing.viewed analytics bus+session+instrumentation, unit-tested, dataLayer/tag-manager transport is the documented design) clean; 2524 (support-audit-event docs-only definitions doc, self-declares gaps A-D) clean; 2526 -> NET-NEW #2628 (data layer unwired end-to-end). NET-NEW actionable issues: 1. Did not label PRs (mcp label-add not in scope; DISPATCHER_OWNED_COMMIT single-writer)."
+    },
     {
       "run_at": "2026-08-02T08:16:55Z",
       "prs_scanned": 15,
@@ -817,24 +839,6 @@
           "findings": 4,
           "specialist": "generic",
           "note": "CI backend shard structure sound but bundled a real common --lib assertion fix (13->19); test-rest shard still unsharded bottleneck; api-server doctests dropped; ~4-5x compile minutes"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-10T18:22:01Z",
-      "prs_scanned": 4,
-      "clean": [
-        2193,
-        2194,
-        2216
-      ],
-      "with_issues": [
-        {
-          "pr": 2217,
-          "issue": 2224,
-          "findings": 1,
-          "specialist": "react-web",
-          "note": "integrations discoverability + Airbnb OAuth reconcile correct; i18n extraction landed keys in en.json only - sk/cs/de/hu/pl missing settings.integrations.*/nav.integrations/command-palette keys (iotAlerts precedent covered all 6); graceful English fallback so CI green"
         }
       ]
     }
