@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-02T14:23:07Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 2627,
+  "last_run_iso": "2026-08-02T20:22:00Z",
+  "last_run_ms": 300000,
+  "last_pr_seen": 2629,
   "last_issue_seen": 2628,
-  "last_commit_sha": "21a036ee30abfbdb7efac5261c9472f5973c22ea",
+  "last_commit_sha": "3709344ec0b140dd91fb2e5d1dc2e2fee7359d87",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -745,7 +745,16 @@
     "dep-update-noise-pr-2625",
     "code-review-reality-server-agency-members-unauth-idor",
     "code-review-api-core-ssrf-validator-drift",
-    "code-review-api-core-idempotency-client-tenant"
+    "code-review-api-core-idempotency-client-tenant",
+    "code-review-regional-compliance-vote-validation-fabricated-pass",
+    "code-review-mobile-native-kmp-create-listing-notimpl",
+    "code-review-mobile-rn-useapi-no-refresh-retry",
+    "code-review-mobile-rn-nfc-device-clock-expiry",
+    "code-review-mobile-rn-nfc-modules-no-tests",
+    "code-review-ppt-web-core-perf-listener-leak",
+    "code-review-ppt-web-ui-portfolio-dash-mock",
+    "code-review-ppt-web-ui-moderation-prompt-cast",
+    "code-review-ppt-web-ui-dialog-i18n-gap"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -759,8 +768,8 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 56,
-    "vectors_created": 241,
+    "runs": 57,
+    "vectors_created": 250,
     "plans_created": 20,
     "quiet_days": 2,
     "auto_fix_count": 0

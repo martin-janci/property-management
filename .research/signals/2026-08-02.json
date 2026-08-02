@@ -1,26 +1,153 @@
 {
-  "generated": "2026-08-02T14:25:38Z",
-  "run_note": "same-day rerun (04:25Z was the first run) triggered by 'buffer-low: claimable=0/72 — pipeline drained; refill planner'. Phases 1.5/1.6 already consumed slots at 04:25Z; this rerun derived NO new signals. Actual Phase 2 work: resolution check marked 2 items 'done' via merged PRs #2626/#2627 and appended those PRs to sources. Earlier signals (code-review-api-core-{ssrf-validator-drift,idempotency-client-tenant}) remain in state.seen_signals from run 1.",
-  "signals": [],
+  "generated": "2026-08-02T20:22:00Z",
+  "run_note": "Second same-day rerun triggered by buffer-low payload ('claimable=0/72 — planned coverage exhausted; backlog.json all done/dropped, coverage.json 47 done/2 partial'). Refills backlog with 9 previously-unabsorbed dispatcher Tier 1d code-review findings. Coverage refill is out of routine scope and must come from a human running /ppt-project-management scan locally.",
+  "signals": [
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "api-handlers",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 validate_slovak_vote and :799-805 validate_czech_vote fall back to hardcoded 75% participation when eligible_count is NULL/0 — a fabricated legal-validity pass, not derived from real data. Full 5-line evidence in .research/signals/2026-08-02-api-handlers-tier1d.json.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 08:19Z — not previously ingested by the routine."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-native-kmp",
+      "expert": "kotlin",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit={ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }; the entire UC-51.4 create-listing flow is a production dead-end on the Reality Portal Android app.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 18:13Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-mobile-native-kmp-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — apiRequest reads the bearer from SecureStore once (:66) and never refreshes; any 401 propagates as an error rather than triggering a refresh + retry.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 06:16Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-mobile-rn-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 — validateAccess decides credential expiry (new Date(credential.validUntil) < now :275) and time-of-day access windows (:299-336) entirely from device Date; a spoofed/skewed clock bypasses expiry and window enforcement.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 06:16Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-mobile-rn-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and NFCCredentialManager.ts (321 lines) have ZERO test files — find frontend/apps/mobile -name '*.test.*' returns no nfc/ entry.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 06:16Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-mobile-rn-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — effect cleanup only disconnects PerformanceObservers; the visibilitychange/load window listeners registered above are never removed, leaking on every hook remount.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 16:13Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-ppt-web-core-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "ppt-web-ui",
+      "expert": "completeness",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing dashboard renders from hardcoded mock constants (mockDashboardSummary/mockPropertyCards/mockCashFlowTrend/mockBenchmark/mockAlerts/mockMetrics). No useQuery/useMutation anywhere; alert mark-read/resolve and property navigation are // TODO no-ops; 'View All Properties' has no onClick.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 10:20Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-ppt-web-ui-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 and :169-181 plus AmlDashboardPage.tsx:143 — window.prompt() text is cast straight to a typed enum (`as 'remove' | 'restrict' | 'warn' | 'approve'` etc.) with no runtime validation before being POSTed to the moderation/AML API. Legally-significant compliance write paths take arbitrary strings.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 10:20Z — not previously ingested by the routine. Full 5-line evidence in .research/signals/2026-08-02-ppt-web-ui-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Numerous user-facing browser-dialog strings across ppt-web (RegistryPage.tsx, AccountingInvoiceManagementPage.tsx, NewsListPage.tsx, VoteDetailPage.tsx, AccountingInvoiceForm.tsx, ContentModerationPage.tsx, AmlDashboardPage.tsx, DsaReportsPage.tsx) are hardcoded English window.prompt/alert/confirm strings, bypassing react-i18next despite the surrounding pages using useTranslation.",
+        "Origin: dispatcher Tier 1d review on 2026-08-02 10:20Z — not previously ingested by the routine. `i18n` isn't a valid backlog vector per the routine spec; the finding is mapped to `refactor` (mechanical replacement of string literals with t()) in backlog.json. Full 5-line evidence in .research/signals/2026-08-02-ppt-web-ui-tier1d.json."
+      ]
+    }
+  ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — 0 signals derived this rerun",
+  "auto_fix_skipped_reason": "no candidate — all 9 new signals are score 1-2 (below the score>=3 bar); the one high-confidence signal is a `bug` needing real KMP work, not an allowlist shape (doc-stub/orphan-remove/lockfile-bump/fixme-issue/stalled-review comment)",
   "goal_checks": [
-    {"goal":"G1","passed":true,"command":"test -f briefs/2026-08-02.md && head -1 matches","observed":"exit 0","expected":"exit 0"},
-    {"goal":"G2","passed":true,"command":"state.json advanced vs HEAD","observed":"true","expected":"true","remediation":"last_pr_seen 2625→2627, last_issue_seen 2612→2628, last_commit_sha updated"},
-    {"goal":"G3","passed":true,"command":"unique backlog ids","observed":"true","expected":"true"},
-    {"goal":"G4","passed":true,"command":"non-cumulative dedup (signals=[])","observed":"true","expected":"true"},
-    {"goal":"G5","passed":true,"command":"score cap + 14d decay","observed":"true","expected":"true"},
-    {"goal":"G6","passed":true,"command":"adversarial pass annotation for each new plan","observed":"0/0 (no new plans)","expected":"all plans annotated"},
-    {"goal":"G7","passed":true,"command":"<=2 new plans, headings, ticks, mode, files","observed":"0 new plans","expected":"all pass"},
-    {"goal":"G8","passed":true,"command":"only .research/ paths staged","observed":"0 non-.research paths","expected":"0"},
-    {"goal":"G9","passed":true,"command":"grep secrets/hostnames (excl baseline docs)","observed":"0 matches","expected":"0"},
-    {"goal":"G10","passed":true,"command":"diff backlog.md vs regen","observed":"identical","expected":"identical"},
-    {"goal":"G11","passed":true,"command":"phases-failed line == none","observed":"none","expected":"none"},
-    {"goal":"G12","passed":true,"command":"prior plan slugs converge","observed":"all present","expected":"all present"},
-    {"goal":"G13","passed":true,"command":"archive tracked >= HEAD tracked","observed":"7 >= 7","expected":">= HEAD"},
-    {"goal":"G14","passed":true,"command":"diff IDEAS_TRIAGE.md vs regen","observed":"identical","expected":"identical"},
-    {"goal":"G15","passed":true,"command":"auto_fix_actions=[]; ROUTINE_AUTOFIX_DISABLED unset","observed":"[]","expected":"cap satisfied"},
-    {"goal":"G16","passed":true,"command":"management artifacts valid; pm_cursor stayed at 2 (Phase 1.6 skipped)","observed":"pm_now=2 pm_head=2 cc_now=4 cc_head=4 epics=13","expected":"pass"},
-    {"goal":"G17","passed":true,"command":"grep Telegram token literal in staged +lines","observed":"0","expected":"0"}
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/<today>.md && head -1 == '# <today>'", "observed": "PASS", "expected": "PASS" },
+    { "goal": "G2",  "passed": true,  "command": "jq state advanced vs HEAD",                             "observed": "true",  "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq unique-id count == item count",                       "observed": "true",  "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "no double-scoring of non-cumulative signal ids",          "observed": "true",  "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "score cap <=8 AND no open>14d rows to decay this run",   "observed": "cap ok; 0 open rows older than 14d",  "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "adversarial-pass annotations on new plans",              "observed": "no new plans this run — trivially pass", "expected": "true" },
+    { "goal": "G7",  "passed": true,  "command": "<=2 new plans, all readiness gates",                     "observed": "0 new plans this run",  "expected": "<=2" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "grep secret/private-hostname patterns in staged diff",    "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff -q backlog.md /tmp/backlog.regen.md",                "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true,  "command": "no failed phases OR each recorded",                       "observed": "no failed phases", "expected": "consistent" },
+    { "goal": "G12", "passed": true,  "command": "every prior plan slug still in plans/ or _archive/",      "observed": "no plan slugs deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count now >= HEAD count",                         "observed": "equal (no archive changes this run)", "expected": ">=" },
+    { "goal": "G14", "passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",      "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions caps + idempotency + kill switch",       "observed": "auto_fix_actions=[]",  "expected": "<=3 total, <=1 per type" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 no-op path (pm_cursor unchanged vs HEAD)",      "observed": "pm_cursor.next_index=2 both sides — 1.6 skipped this rerun", "expected": "no-op" },
+    { "goal": "G17", "passed": true,  "command": "no Telegram bot-token literals in staged diff",           "observed": "0", "expected": "0" }
   ]
 }

@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-02 14:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-02 20:21 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -30,7 +30,14 @@
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
 | 2 | security | `code-review-api-core-idempotency-client-tenant` | Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass | done | 2026-08-02 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-notimpl` | Reality Portal Android CreateListing route returns NotImplementedError | open | 2026-08-02 |  |
+| 2 | bug | `code-review-mobile-rn-nfc-device-clock-expiry` | NFCAccessController trusts device clock for credential expiry + access windows | open | 2026-08-02 |  |
+| 2 | bug | `code-review-mobile-rn-useapi-no-refresh-retry` | mobile useApi bearer token cached at import — no refresh/retry on 401 | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-core-perf-listener-leak` | usePerformanceMetrics leaks window visibilitychange/load listeners on unmount | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-prompt-cast` | Moderation/AML compliance pages cast window.prompt() output to typed enum unchecked | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-ui-portfolio-dash-mock` | PortfolioDashboardPage ships hardcoded mock KPIs + no-op alert/property handlers | open | 2026-08-02 |  |
 | 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-db-error-leak-to-client.md) |
+| 2 | bug | `code-review-regional-compliance-vote-validation-fabricated-pass` | regional_compliance vote validators fabricate 75% turnout on NULL eligible_count | open | 2026-08-02 |  |
 | 2 | test-gap | `test-gap-disputes-kpis-window-validation` | /disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined | dropped | 2026-08-01 |  |
 | 2 | dx | `dx-fixme-admin-web-mobile-config-patch-endpoint` | admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing | dropped | 2026-07-31 |  |
 | 2 | dx | `dx-fixme-admin-web-platform-settings-patch-endpoint` | admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing | dropped | 2026-07-31 |  |
@@ -100,6 +107,8 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | test-gap | `code-review-mobile-rn-nfc-modules-no-tests` | NFC access + credential modules (~800 LOC) ship with zero test files | open | 2026-08-02 |  |
+| 1 | refactor | `code-review-ppt-web-ui-dialog-i18n-gap` | PPT-web dialog/prompt/alert copy hardcoded English — bypasses react-i18next | open | 2026-08-02 |  |
 | 1 | bug | `code-review-reality-server-password-reset-no-transport` | reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent | dropped | 2026-08-01 |  |
 | 1 | bug | `code-review-api-core-admin-rs-swallowed-serialize` | layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500 | done | 2026-07-30 |  |
 | 1 | bug | `code-review-api-core-scheduler-rs-silent-target-err` | scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric | done | 2026-07-30 |  |
