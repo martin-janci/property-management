@@ -6013,15 +6013,17 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2627",
         "rotating-expert-review api-core 2026-08-02"
       ],
       "evidence": [
         "backend/servers/api-server/src/services/actions/api_call.rs:150-209 defines a private validate_external_url that shadows the canonical common::url_validation::validate_external_url used by routes/signatures.rs, routes/integrations/webhook.rs, integrations/workflow_executor.rs",
         "The private impl uses starts_with(\"http://\") at line 243 but never enforces the canonical rule that plain http:// is rejected outside RUST_ENV=development (common/url_validation.rs:94-101); ApiCall workflow actions can exfiltrate over unencrypted HTTP in prod, bypassing hardened SSRF defence",
         "Case-sensitivity drift: blocked_hosts uses eq_ignore_ascii_case at line 169 but the .local/.internal TLD check at line 204 is case-sensitive; canonical lowercases first at url_validation.rs:116-118 — future tightening of the canonical validator will silently miss this path",
-        "Fix: delete ApiCallExecutor::validate_external_url and is_blocked_v4; call common::url_validation::validate_external_url(&url) at line 251, mapping UrlValidationError to ActionError::ConfigurationError"
+        "Fix: delete ApiCallExecutor::validate_external_url and is_blocked_v4; call common::url_validation::validate_external_url(&url) at line 251, mapping UrlValidationError to ActionError::ConfigurationError",
+        "resolved: PR #2627 merged 2026-08-02 — delegated to common::url_validation::validate_external_url (private duplicate + is_blocked_v4 removed); regression test execute_rejects_multicast_via_shared_validator added"
       ],
       "files": [
         "backend/servers/api-server/src/services/actions/api_call.rs"
@@ -6038,12 +6040,14 @@
       "score": 2,
       "status": "done",
       "sources": [
+        "PR #2626",
         "rotating-expert-review api-core 2026-08-02"
       ],
       "evidence": [
         "backend/crates/api-core/src/middleware/idempotency.rs:167-183 tenant_scope() prefers ResolvedTenant request extension, but falls back to raw X-Tenant-ID request header (client-controlled) before the final \"global\" default; the resulting string is the key that partitions the idempotency ledger (advisory_lock_id at line 195, load/store_response calls)",
         "Any route that reaches this middleware without host_tenant middleware having populated ResolvedTenant (tenant-agnostic surfaces mounted with idempotency) lets a caller spoof X-Tenant-ID: <other-org-uuid> to place their idempotency row under another tenants namespace — replay collision (same key + body = cached response from other tenant) or bypass (retries hash to different scopes)",
-        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header"
+        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header",
+        "resolved: PR #2626 merged 2026-08-02 — tenant_scope() now derives from server-side ResolvedTenant; header fallback removed (\"global\" sentinel used when no tenant); tests different_authenticated_tenants_do_not_collide + spoofed_tenant_header_cannot_change_scope added"
       ],
       "files": [
         "backend/crates/api-core/src/middleware/idempotency.rs"
