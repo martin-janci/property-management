@@ -1,26 +1,66 @@
 {
-  "generated": "2026-08-02T14:25:38Z",
-  "run_note": "same-day rerun (04:25Z was the first run) triggered by 'buffer-low: claimable=0/72 — pipeline drained; refill planner'. Phases 1.5/1.6 already consumed slots at 04:25Z; this rerun derived NO new signals. Actual Phase 2 work: resolution check marked 2 items 'done' via merged PRs #2626/#2627 and appended those PRs to sources. Earlier signals (code-review-api-core-{ssrf-validator-drift,idempotency-client-tenant}) remain in state.seen_signals from run 1.",
-  "signals": [],
+  "generated": "2026-08-02T18:14:35Z",
+  "run_note": "Third same-day rerun (04:25Z first, 14:23Z second, 17:14Z now — this file). Buffer-low trigger fired again with claimable=0/72 — refill planner. Since 14:23Z rerun: 0 merged app-code PRs (only dispatcher chore commits + this morning's research rerun), 0 new issues (last was #2628 at 12:16Z). Cursor #2627/#2628 unchanged. Phase 1.5 rotated to ppt-web-ui (oldest unreviewed at 2026-07-21, 12d) and surfaced 2 findings — this is the mechanism explicitly designed to refill the drained buffer when there's no code-merge activity to observe. Both findings score=2 open (non-security, so neither hits the ready threshold ≥3) — they compound with future signals or a manual score bump.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-untranslated-shared-components",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-ui 2026-08-02",
+      "score_delta": 2,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — literal 'You are offline. Some features may be unavailable.' rendered to users; no useTranslation call in file",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:89 — literal 'Connection restored' on reconnect banner",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105-106 — hardcoded 'Checking authentication' aria-label + 'Loading...' shown on every protected-route hydration (all pages behind auth)",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:125-126 — hardcoded 'Access Denied' / 'You do not have permission...' role-denial screen",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:37-38,138 — default confirmLabel='Confirm', cancelLabel='Cancel' and 'Processing...' — falls back to English when callers (EmergencyContactDirectoryPage, DocumentSharePanel) omit labels",
+        "matches prior finding code-review-reality-web-realtor-mgmt-untranslated (fixed via similar sweep)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-auth-callback-double-decode",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-ui 2026-08-02",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:93 — errorDescription = searchParams.get('error_description'); URLSearchParams already returns the URL-decoded value",
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:100 — decodeURIComponent(errorDescription) applies a SECOND decode",
+        "any error_description whose original value contains a literal '%' (e.g. '100% failure' encoded as '100%25 failure') decodes at line 93 to '100% failure', then throws URIError: 'URI malformed' at line 100",
+        "the throw happens synchronously inside the effect before setErrorMessage — friendly 'Sign-in failed' UI never renders; callback route drops to ErrorBoundary (opposite of the branch's stated intent to surface the provider's error message)",
+        "regression test candidate: pages/AuthCallbackPage.test.tsx — callback with ?error=access_denied&error_description=100%25%20failure should render setErrorMessage('100% failure'), not ErrorBoundary"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ]
+    }
+  ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — 0 signals derived this rerun",
+  "auto_fix_skipped_reason": "no candidate — neither code-review-finding matches the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise-lockfile, stalled-review)",
   "goal_checks": [
-    {"goal":"G1","passed":true,"command":"test -f briefs/2026-08-02.md && head -1 matches","observed":"exit 0","expected":"exit 0"},
-    {"goal":"G2","passed":true,"command":"state.json advanced vs HEAD","observed":"true","expected":"true","remediation":"last_pr_seen 2625→2627, last_issue_seen 2612→2628, last_commit_sha updated"},
-    {"goal":"G3","passed":true,"command":"unique backlog ids","observed":"true","expected":"true"},
-    {"goal":"G4","passed":true,"command":"non-cumulative dedup (signals=[])","observed":"true","expected":"true"},
-    {"goal":"G5","passed":true,"command":"score cap + 14d decay","observed":"true","expected":"true"},
-    {"goal":"G6","passed":true,"command":"adversarial pass annotation for each new plan","observed":"0/0 (no new plans)","expected":"all plans annotated"},
-    {"goal":"G7","passed":true,"command":"<=2 new plans, headings, ticks, mode, files","observed":"0 new plans","expected":"all pass"},
+    {"goal":"G1","passed":true,"command":"test -f briefs/2026-08-02.md && head -1 matches YYYY-MM-DD","observed":"exit 0","expected":"exit 0"},
+    {"goal":"G2","passed":true,"command":"state advanced vs HEAD (last_commit_sha, seen_signals grew by 2)","observed":"true","expected":"true","remediation":"last_commit_sha 21a036ee→4e322f66; seen_signals +2 (both ppt-web-ui findings)"},
+    {"goal":"G3","passed":true,"command":"[.items[].id] | length == unique | length","observed":"true","expected":"true"},
+    {"goal":"G4","passed":true,"command":"non-cumulative dedup (new ids only)","observed":"true","expected":"true","remediation":"both new ids code-review-ppt-web-ui-* were not in prior seen_signals"},
+    {"goal":"G5","passed":true,"command":"score cap 8 + 14d decay","observed":"true","expected":"true","remediation":"no open items had updated_at older than 14d BEFORE this run (all 2 pre-run active were done today or later); the 2 new items are score=2 fresh"},
+    {"goal":"G6","passed":true,"command":"adversarial pass annotation per new plan","observed":"0/0 (no new plans this run)","expected":"all annotated"},
+    {"goal":"G7","passed":true,"command":"<=2 new plans; sections; ticks; files","observed":"0 new plans","expected":"all pass"},
     {"goal":"G8","passed":true,"command":"only .research/ paths staged","observed":"0 non-.research paths","expected":"0"},
-    {"goal":"G9","passed":true,"command":"grep secrets/hostnames (excl baseline docs)","observed":"0 matches","expected":"0"},
-    {"goal":"G10","passed":true,"command":"diff backlog.md vs regen","observed":"identical","expected":"identical"},
+    {"goal":"G9","passed":true,"command":"grep secrets/hostnames in staged diff (excl baseline docs)","observed":"0 matches","expected":"0"},
+    {"goal":"G10","passed":true,"command":"backlog.md == regen from backlog.json","observed":"identical","expected":"identical"},
     {"goal":"G11","passed":true,"command":"phases-failed line == none","observed":"none","expected":"none"},
-    {"goal":"G12","passed":true,"command":"prior plan slugs converge","observed":"all present","expected":"all present"},
-    {"goal":"G13","passed":true,"command":"archive tracked >= HEAD tracked","observed":"7 >= 7","expected":">= HEAD"},
-    {"goal":"G14","passed":true,"command":"diff IDEAS_TRIAGE.md vs regen","observed":"identical","expected":"identical"},
-    {"goal":"G15","passed":true,"command":"auto_fix_actions=[]; ROUTINE_AUTOFIX_DISABLED unset","observed":"[]","expected":"cap satisfied"},
-    {"goal":"G16","passed":true,"command":"management artifacts valid; pm_cursor stayed at 2 (Phase 1.6 skipped)","observed":"pm_now=2 pm_head=2 cc_now=4 cc_head=4 epics=13","expected":"pass"},
+    {"goal":"G12","passed":true,"command":"prior plan slugs converge (all present in plans/ or plans/_archive/)","observed":"17 plans + 6 archived; all prior slugs accounted for","expected":"all present"},
+    {"goal":"G13","passed":true,"command":"archive tracked count >= HEAD tracked count","observed":"7 >= 7","expected":">= HEAD"},
+    {"goal":"G14","passed":true,"command":"IDEAS_TRIAGE.md == regen from vector=triage rows","observed":"identical","expected":"identical"},
+    {"goal":"G15","passed":true,"command":"auto_fix_actions len<=3, PR<=1, issue<=1, comment<=1","observed":"len=0","expected":"cap satisfied"},
+    {"goal":"G16","passed":true,"command":"management artifacts (Phase 1.6 skipped this rerun — no-op check)","observed":"pm_cursor.next_index=2 unchanged; coverage_cursor=4 unchanged; skip-mode no-op","expected":"pass"},
     {"goal":"G17","passed":true,"command":"grep Telegram token literal in staged +lines","observed":"0","expected":"0"}
   ]
 }

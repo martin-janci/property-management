@@ -6060,6 +6060,57 @@
         "assignment_status": "merged",
         "pr_number": 2626
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-untranslated-shared-components",
+      "title": "ppt-web shared components (OfflineIndicator/ProtectedRoute/ConfirmationDialog) render hardcoded English strings — no useTranslation, no i18n keys",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-08-02"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — literal 'You are offline. Some features may be unavailable.' rendered to users; no useTranslation call in file",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:89 — literal 'Connection restored' on reconnect banner",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105-106 — hardcoded 'Checking authentication' aria-label + 'Loading...' shown on every protected-route hydration (all pages behind auth)",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:125-126 — hardcoded 'Access Denied' / 'You do not have permission…' role-denial screen",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:37-38,138 — default confirmLabel='Confirm', cancelLabel='Cancel' and 'Processing…' — falls back to English when callers (EmergencyContactDirectoryPage, DocumentSharePanel) omit labels",
+        "matches prior finding code-review-reality-web-realtor-mgmt-untranslated (fixed via similar sweep)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-auth-callback-double-decode",
+      "title": "AuthCallbackPage double-decodes error_description — URIError on any '%' throws before setErrorMessage, breaking SSO error UI",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-08-02"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:93 — errorDescription = searchParams.get('error_description'); URLSearchParams already returns the URL-decoded value",
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:100 — decodeURIComponent(errorDescription) applies a SECOND decode",
+        "any error_description whose original value contains a literal '%' (e.g. '100% failure' encoded as '100%25 failure') decodes at line 93 to '100% failure', then throws URIError: 'URI malformed' at line 100",
+        "the throw happens synchronously inside the effect before setErrorMessage — friendly 'Sign-in failed' UI never renders; callback route drops to ErrorBoundary (opposite of the branch's stated intent to surface the provider's error message)",
+        "regression test candidate: pages/AuthCallbackPage.test.tsx — callback with ?error=access_denied&error_description=100%25%20failure should render setErrorMessage('100% failure'), not ErrorBoundary"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
     }
   ]
 }
