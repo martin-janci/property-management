@@ -1,152 +1,153 @@
 {
-  "generated": "2026-08-02T04:25:00Z",
+  "generated": "2026-08-02T12:20:00Z",
+  "run_kind": "buffer-low-refill",
+  "trigger_payload": "buffer-low: claimable=1/72 — refill planner (backlog+coverage drained)",
   "signals": [
     {
-      "id": "code-review-api-core-ssrf-validator-drift",
+      "id": "code-review-ppt-web-ui-offline-indicator-no-i18n",
       "type": "code-review-finding",
-      "source": "rotating-expert-review api-core 2026-08-02",
-      "score_delta": 3,
-      "confidence": "high",
-      "candidate_vector": "security",
-      "evidence": [
-        "backend/servers/api-server/src/services/actions/api_call.rs:150-209 defines a private validate_external_url that shadows common::url_validation::validate_external_url",
-        "starts_with(\"http://\") at line 243 never enforces the canonical rule rejecting plain http:// outside RUST_ENV=development (common/url_validation.rs:94-101)",
-        "Case-sensitivity drift on .local/.internal TLD check at line 204 vs canonical lowercase-first at url_validation.rs:116-118"
-      ]
-    },
-    {
-      "id": "code-review-api-core-idempotency-client-tenant",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review api-core 2026-08-02",
+      "source": "rotating-expert-review ppt-web-ui 2026-08-02",
+      "segment": "ppt-web-ui",
       "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "security",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "completeness",
       "evidence": [
-        "backend/crates/api-core/src/middleware/idempotency.rs:167-183 tenant_scope() falls back to client-controlled X-Tenant-ID header before the \"global\" default",
-        "Any route reaching this middleware without ResolvedTenant populated lets a caller spoof X-Tenant-ID for cross-tenant idempotency namespace collision"
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — hardcoded 'You are offline. Some features may be unavailable.' with no useTranslation import (grep-verified: 0 useTranslation calls in file)",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:89 — hardcoded 'Connection restored' string",
+        "frontend/apps/ppt-web/src/App.tsx:222 — <OfflineIndicator /> mounted at app root, rendered on every route for every user (sk/cs/de/en all supported); reachability traced by expert"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx"
       ]
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate",
+  "auto_fix_skipped_reason": "no candidate — only new signal is a code-review-finding (not on allowlist); no screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, or stalled-review fired this run",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/2026-08-02.md && head -1 | grep '# 2026-08-02'",
+      "command": "test -f .research/briefs/2026-08-02.md && head -1 | grep \"^# 2026-08-02$\"",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq state.json vs HEAD",
-      "observed": "true",
-      "expected": "true",
-      "remediation": "state advanced via seen_signals+2 review_cursor api-core stats.runs bump"
+      "command": "jq state-vs-HEAD diff",
+      "observed": "true (last_pr_seen 2625→2627, last_commit_sha 92cf75c→fda80bf, seen_signals 332→333)",
+      "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "unique ids",
+      "command": "jq [.items[].id] | (length == (unique | length))",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "non-cumulative dedup",
+      "command": "non-cumulative signal id ∩ prev.seen_signals with score_delta != 0",
+      "observed": "[] (offline-indicator is new — not in prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "[.items[] | select(.score > 8)] | length == 0",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G5",
+      "goal": "G5-decay",
       "passed": true,
-      "command": "score cap + 14d decay",
-      "observed": "true",
+      "command": "open items with updated_at older than 14d without decay applied",
+      "observed": "[] (no open items older than 2026-07-19)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "adversarial pass annotation for each new plan",
-      "observed": "2/2 annotated",
-      "expected": "all plans annotated"
+      "command": "grep each new plan slug + adversarial pass: in brief",
+      "observed": "no new plans this run",
+      "expected": "true"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "<=2 plans, all 15 sections, capability tick, mode, files exist",
-      "observed": "2 plans; both pass metadata+headings+ticks+mode+files",
-      "expected": "all pass"
+      "command": "count of new plans ≤ 2",
+      "observed": "0 new plans",
+      "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "only .research/ paths staged",
-      "observed": "0 non-.research paths",
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secrets/hostnames (excl baseline docs)",
-      "observed": "0 matches",
+      "command": "git diff --cached grep secrets/hostnames (with baseline exclusions)",
+      "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md vs regen",
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
       "observed": "identical",
-      "expected": "identical"
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-failed line == none",
-      "observed": "none",
-      "expected": "none"
+      "command": "grep placeholder-rot patterns in brief + new plans",
+      "observed": "no matches",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plan slugs converge",
-      "observed": "all present",
-      "expected": "all present"
+      "command": "every prior-run plan slug exists in plans/ or plans/_archive/",
+      "observed": "all 17 prior plan slugs still present",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive tracked >= HEAD tracked",
-      "observed": "7 >= 7",
-      "expected": ">= HEAD"
+      "command": "archive count: staged ≥ HEAD",
+      "observed": "7 ≥ 7",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
       "observed": "identical",
-      "expected": "identical"
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions empty (no eligible candidate)",
-      "observed": "[]",
-      "expected": "cap satisfied"
+      "command": "auto_fix_actions caps + no signal_id in prior auto_fix_history",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid; Phase 1.6 skipped this run (no-op)",
-      "observed": "artifacts parse; pm_cursor.next_index=2 in [0,7]",
-      "expected": "pass"
+      "command": "Phase 1.6 skipped this run — no-op gate; pm_cursor.next_index in 0..7",
+      "observed": "pm_cursor.next_index=2, coverage_cursor.next_index=4 (unchanged, Phase 1.6 not invoked)",
+      "expected": "true"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep Telegram token literal in staged +lines",
+      "command": "git diff --cached grep telegram-token patterns",
       "observed": "0",
       "expected": "0"
     }

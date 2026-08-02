@@ -6031,17 +6031,41 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review api-core 2026-08-02"
+        "rotating-expert-review api-core 2026-08-02",
+        "PR #2626"
       ],
       "evidence": [
         "backend/crates/api-core/src/middleware/idempotency.rs:167-183 tenant_scope() prefers ResolvedTenant request extension, but falls back to raw X-Tenant-ID request header (client-controlled) before the final \"global\" default; the resulting string is the key that partitions the idempotency ledger (advisory_lock_id at line 195, load/store_response calls)",
         "Any route that reaches this middleware without host_tenant middleware having populated ResolvedTenant (tenant-agnostic surfaces mounted with idempotency) lets a caller spoof X-Tenant-ID: <other-org-uuid> to place their idempotency row under another tenants namespace — replay collision (same key + body = cached response from other tenant) or bypass (retries hash to different scopes)",
-        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header"
+        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header",
+        "resolved 2026-08-02: PR #2626 merged — tenant_scope() now derives cache-scope solely from server-side ResolvedTenant (X-Tenant-ID header read removed); +2 sqlx tests prove no cross-tenant collision & no header-driven scope change"
       ],
       "files": [
         "backend/crates/api-core/src/middleware/idempotency.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-offline-indicator-no-i18n",
+      "title": "ppt-web OfflineIndicator (mounted app-wide) has no useTranslation — hardcoded English shown to sk/cs/de users on every offline event",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-08-02"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — hardcoded 'You are offline. Some features may be unavailable.' with no useTranslation import (confirmed: grep shows 0 useTranslation calls in file)",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:89 — hardcoded 'Connection restored' string",
+        "frontend/apps/ppt-web/src/App.tsx:222 — <OfflineIndicator /> mounted at app root, rendered on every route for every user (sk/cs/de/en all supported); reachability traced by expert"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx"
       ],
       "created_at": "2026-08-02",
       "updated_at": "2026-08-02",
