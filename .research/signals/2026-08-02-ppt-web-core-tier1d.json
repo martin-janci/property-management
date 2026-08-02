@@ -1,0 +1,27 @@
+{
+  "generated": "2026-08-02",
+  "segment": "ppt-web-core",
+  "source": "rotating-expert-review",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "cursor lists ppt-web-ui (2026-07-21) oldest, but ppt-web-ui/mobile-rn/api-handlers already have tier1d signal files dated 2026-08-02 this run; ppt-web-core (cursor 2026-07-24) is the oldest segment not yet covered today. Prior ppt-web-core findings (authctx-init, errorhandler-i18n, ws-token-rotation, api-retry, ws-console, sessions-cast) were de-duplicated against.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup ONLY disconnects the PerformanceObservers (`for (const observer of observers) observer.disconnect()`). It never removes the two window event listeners the same effect registers: the `'load'` listener (`collectNavigationTiming`, :142) and, more importantly, the `'visibilitychange'` listener added at :153.",
+        "The `'visibilitychange'` handler at :153-157 is an inline anonymous arrow (`window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') reportMetrics(); })`) — it has no stored reference, so it can NEVER be removed via removeEventListener even if a cleanup tried. `reportOnUnload` defaults to `true` (:45), so this listener is attached on every normal mount.",
+        "Effect deps are `[onReport, reportOnUnload]` (:165). A consumer that passes an inline/unstable `onReport` callback (the common React pattern) re-runs the effect on every render; each run stacks a brand-new anonymous `visibilitychange` listener on `window` that is never cleaned up. Over the lifetime of a long-lived SPA session this leaks listeners unboundedly, and every one of them fires `reportMetrics()` on each tab-hide — duplicating reports and holding closures over stale `metricsRef`/`onReport`.",
+        "Impact: memory / listener leak + duplicated metric reports on a hook that is intended to run app-wide (LCP/FID/CLS/TTFB web-vitals). Fix: store the visibilitychange handler in a named const and remove both it and the `'load'` listener in the cleanup return; and/or stabilise `onReport` with useCallback / a ref so the effect binds once. Note: distinct from the prior 2026-07-07 `perf-console-logs` finding (which was about dev console output in this same file), and not covered by any earlier ppt-web-core signal."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
