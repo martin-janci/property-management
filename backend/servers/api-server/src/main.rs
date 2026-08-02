@@ -675,6 +675,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(730),
+        oauth_token_events_retention_days: std::env::var("OAUTH_TOKEN_EVENTS_RETENTION_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(90),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());

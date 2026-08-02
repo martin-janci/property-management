@@ -5,8 +5,8 @@
 
 use db::repositories::{
     AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, LayoutRepository,
-    MeterRepository, PlatformAdminRepository, ReportScheduleRepository, SessionRepository,
-    SignatureRequestRepository, UnitResidentRepository, VoteRepository,
+    MeterRepository, OAuthTokenEventRepository, PlatformAdminRepository, ReportScheduleRepository,
+    SessionRepository, SignatureRequestRepository, UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -66,6 +66,13 @@ pub struct SchedulerConfig {
     /// layout-publish trail before the daily prune deletes aged rows (issue
     /// #2563, default: 730 — 24 months, matching the SQL-layer default).
     pub layout_change_events_retention_days: i64,
+    /// Retention window (in days) for the `oauth_token_events` token-usage
+    /// analytics table before the daily prune deletes aged rows (Epic 10A,
+    /// #2628, default: 90). Shorter than the audit-trail windows above: these
+    /// rows back a rolling ecosystem-health dashboard (typically a 30-day
+    /// look-back), so 90 days keeps a comfortable margin while bounding growth
+    /// on the hot OAuth issuance path.
+    pub oauth_token_events_retention_days: i64,
 }
 
 impl Default for SchedulerConfig {
@@ -81,6 +88,7 @@ impl Default for SchedulerConfig {
             overdue_grace_period_days: 0,
             support_tooling_retention_days: 730,
             layout_change_events_retention_days: 730,
+            oauth_token_events_retention_days: 90,
         }
     }
 }
@@ -108,6 +116,9 @@ pub struct SchedulerMetrics {
     /// Aged `layout_change_events` rows pruned by the daily retention job
     /// (issue #2563).
     pub layout_change_events_pruned: u64,
+    /// Aged `oauth_token_events` rows pruned by the daily retention job
+    /// (Epic 10A, #2628).
+    pub oauth_token_events_pruned: u64,
     pub errors: u64,
 }
 
@@ -125,6 +136,7 @@ pub struct Scheduler {
     report_schedule_repo: ReportScheduleRepository,
     platform_admin_repo: PlatformAdminRepository,
     layout_repo: LayoutRepository,
+    oauth_token_event_repo: OAuthTokenEventRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -137,6 +149,10 @@ pub struct Scheduler {
     /// used to enforce the daily cadence across the ~60s tick loop (issue
     /// #2563). `None` until the first prune runs.
     last_layout_change_events_prune_at: std::sync::Mutex<Option<chrono::DateTime<chrono::Utc>>>,
+    /// Timestamp of the last successful `oauth_token_events` retention prune,
+    /// used to enforce the daily cadence across the ~60s tick loop (Epic 10A,
+    /// #2628). `None` until the first prune runs.
+    last_oauth_token_events_prune_at: std::sync::Mutex<Option<chrono::DateTime<chrono::Utc>>>,
 }
 
 impl Scheduler {
@@ -164,6 +180,7 @@ impl Scheduler {
             report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             layout_repo: LayoutRepository::new(),
+            oauth_token_event_repo: OAuthTokenEventRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -172,6 +189,7 @@ impl Scheduler {
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
             last_support_tooling_prune_at: std::sync::Mutex::new(None),
             last_layout_change_events_prune_at: std::sync::Mutex::new(None),
+            last_oauth_token_events_prune_at: std::sync::Mutex::new(None),
         }
     }
 
@@ -194,6 +212,7 @@ impl Scheduler {
             report_schedule_repo: ReportScheduleRepository::new(pool.clone()),
             platform_admin_repo: PlatformAdminRepository::new(pool.clone()),
             layout_repo: LayoutRepository::new(),
+            oauth_token_event_repo: OAuthTokenEventRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -202,6 +221,7 @@ impl Scheduler {
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
             last_support_tooling_prune_at: std::sync::Mutex::new(None),
             last_layout_change_events_prune_at: std::sync::Mutex::new(None),
+            last_oauth_token_events_prune_at: std::sync::Mutex::new(None),
         }
     }
 
@@ -230,6 +250,7 @@ impl Scheduler {
             report_schedules_fired: guard.report_schedules_fired,
             support_tooling_events_pruned: guard.support_tooling_events_pruned,
             layout_change_events_pruned: guard.layout_change_events_pruned,
+            oauth_token_events_pruned: guard.oauth_token_events_pruned,
             errors: guard.errors,
         }
     }
@@ -313,6 +334,12 @@ impl Scheduler {
         // Issue #2563: prune aged layout_change_events on a daily cadence.
         if let Err(e) = self.prune_layout_change_events().await {
             tracing::error!("Failed to prune layout change events: {}", e);
+            self.increment_errors();
+        }
+
+        // Epic 10A (#2628): prune aged oauth_token_events on a daily cadence.
+        if let Err(e) = self.prune_oauth_token_events().await {
+            tracing::error!("Failed to prune oauth token events: {}", e);
             self.increment_errors();
         }
 

@@ -26,11 +26,11 @@ use db::{
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
         ListingRepository, LlmDocumentRepository, MarketPricingRepository, MarketplaceRepository,
         MeterRepository, MigrationRepository, MultiCurrencyRepository,
-        NotificationPreferenceRepository, OAuthRepository, OnboardingRepository,
-        OperationsRepository, OrganizationMemberRepository, OrganizationRepository,
-        OutageRepository, OwnerAnalyticsRepository, PackageVisitorRepository,
-        PasswordResetRepository, PersonMonthRepository, PlatformAdminRepository,
-        PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
+        NotificationPreferenceRepository, OAuthRepository, OAuthTokenEventRepository,
+        OnboardingRepository, OperationsRepository, OrganizationMemberRepository,
+        OrganizationRepository, OutageRepository, OwnerAnalyticsRepository,
+        PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
+        PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
         PredictiveMaintenanceRepository, PropertyValuationRepository, RegionalComplianceRepository,
         RegistryRepository, RentalRepository, ReportScheduleRepository, ReserveFundRepository,
         RoleRepository, SensorRepository, SentimentRepository, SessionRepository,
@@ -299,6 +299,10 @@ pub struct AppState {
     pub data_export_repo: DataExportRepository,
     pub data_residency_repo: DataResidencyRepository,
     pub oauth_repo: OAuthRepository,
+    /// Epic 10A (data audit, #2628): OAuth token-usage analytics. Written
+    /// best-effort by the token lifecycle path (`oauth_service`), read by the
+    /// platform-admin token-usage endpoint, pruned daily by the scheduler.
+    pub oauth_token_event_repo: OAuthTokenEventRepository,
     pub platform_admin_repo: PlatformAdminRepository,
     pub feature_flag_repo: FeatureFlagRepository,
     pub granular_notification_repo: GranularNotificationRepository,
@@ -514,6 +518,7 @@ impl AppState {
         let data_export_repo = DataExportRepository::new(db.clone());
         let data_residency_repo = DataResidencyRepository::new(db.clone());
         let oauth_repo = OAuthRepository::new(db.clone());
+        let oauth_token_event_repo = OAuthTokenEventRepository::new(db.clone());
         let platform_admin_repo = PlatformAdminRepository::new(db.clone());
         let feature_flag_repo = FeatureFlagRepository::new(db.clone());
         let granular_notification_repo = GranularNotificationRepository::new(db.clone());
@@ -635,8 +640,12 @@ impl AppState {
         let auth_service = AuthService::new();
         let accounting_service = AccountingService::new(accounting_repo.clone());
         let totp_service = TotpService::new("Property Management".to_string());
+        // Wire the token-usage analytics recorder into the OAuth service so the
+        // issuance / refresh / revocation paths emit best-effort events
+        // (Epic 10A, #2628). Recording never fails the token flow.
         let oauth_service =
-            OAuthService::new(oauth_repo.clone(), user_repo.clone(), auth_service.clone());
+            OAuthService::new(oauth_repo.clone(), user_repo.clone(), auth_service.clone())
+                .with_token_event_repo(oauth_token_event_repo.clone());
 
         // Epic 2B: build the notification pipeline from shared resources.
         // `pubsub` is `None` here — Redis is wired post-construction (see
@@ -680,6 +689,7 @@ impl AppState {
             data_export_repo,
             data_residency_repo,
             oauth_repo,
+            oauth_token_event_repo,
             platform_admin_repo,
             feature_flag_repo,
             granular_notification_repo,

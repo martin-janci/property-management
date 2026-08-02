@@ -11,7 +11,8 @@ use db::models::oauth::{
     OAuthClientSummary, OAuthError, OAuthScope, RegisterClientRequest, RegisterClientResponse,
     ScopeDisplay, TokenRequest, TokenResponse, UpdateOAuthClient, UserGrantWithClient,
 };
-use db::repositories::{OAuthRepository, UserRepository};
+use db::models::oauth_token_event::{CreateOAuthTokenEvent, OAuthTokenKind};
+use db::repositories::{OAuthRepository, OAuthTokenEventRepository, UserRepository};
 use rand::TryRng;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -141,6 +142,12 @@ pub struct OAuthService {
     user_repo: UserRepository,
     auth_service: AuthService,
     config: OAuthConfig,
+    /// Best-effort token-usage analytics sink (Epic 10A, #2628). `None` leaves
+    /// the issuance / refresh / revocation paths untouched; when wired (see
+    /// [`OAuthService::with_token_event_repo`]) each lifecycle transition
+    /// records an event. A recording failure only `warn!`s — it never alters
+    /// the token response.
+    token_event_repo: Option<OAuthTokenEventRepository>,
 }
 
 impl OAuthService {
@@ -155,6 +162,7 @@ impl OAuthService {
             user_repo,
             auth_service,
             config: OAuthConfig::default(),
+            token_event_repo: None,
         }
     }
 
@@ -170,6 +178,34 @@ impl OAuthService {
             user_repo,
             auth_service,
             config,
+            token_event_repo: None,
+        }
+    }
+
+    /// Attach the token-usage analytics recorder (Epic 10A, #2628).
+    ///
+    /// Production wires this in [`crate::state::AppState::new`]; tests that don't
+    /// care about analytics can skip it and the lifecycle paths simply won't
+    /// emit events.
+    pub fn with_token_event_repo(mut self, repo: OAuthTokenEventRepository) -> Self {
+        self.token_event_repo = Some(repo);
+        self
+    }
+
+    /// Best-effort record of an OAuth token lifecycle event (Epic 10A, #2628).
+    ///
+    /// Deliberately swallows every error: token issuance / refresh / revocation
+    /// must never fail because analytics could not be persisted. A failure is
+    /// logged at `warn!` and otherwise ignored, matching the repository's
+    /// documented "log-and-ignore" contract.
+    async fn record_token_event(&self, event: CreateOAuthTokenEvent) {
+        if let Some(repo) = &self.token_event_repo {
+            if let Err(e) = repo.record(event).await {
+                tracing::warn!(
+                    error = %e,
+                    "Failed to record OAuth token-usage event (analytics only, ignored)"
+                );
+            }
         }
     }
 
@@ -474,6 +510,15 @@ impl OAuthService {
             )
             .await?;
 
+        // Best-effort token-usage analytics (Epic 10A, #2628): record the
+        // issuance from the already-resolved grant. Never fails the exchange.
+        self.record_token_event(CreateOAuthTokenEvent::issued(
+            auth_code.client_id.clone(),
+            Some(auth_code.user_id),
+            auth_code.scopes.0.clone(),
+        ))
+        .await;
+
         Ok(TokenResponse {
             access_token,
             token_type: "Bearer".to_string(),
@@ -553,6 +598,15 @@ impl OAuthService {
                 client.is_confidential,
             )
             .await?;
+
+        // Best-effort token-usage analytics (Epic 10A, #2628): record the
+        // refresh from the already-resolved grant. Never fails the refresh.
+        self.record_token_event(CreateOAuthTokenEvent::refreshed(
+            client_id,
+            Some(refresh_token.user_id),
+            refresh_token.scopes.0.clone(),
+        ))
+        .await;
 
         Ok(TokenResponse {
             access_token,
@@ -643,6 +697,15 @@ impl OAuthService {
         if let Some(access_token) = self.repo.find_access_token_by_hash(&token_hash).await? {
             if access_token.client_id == authenticated_client_id {
                 self.repo.revoke_access_token_by_hash(&token_hash).await?;
+                // Best-effort token-usage analytics (Epic 10A, #2628): record
+                // the revocation from the resolved token row. Never fails the
+                // revoke (RFC 7009 must still return 200).
+                self.record_token_event(CreateOAuthTokenEvent::revoked(
+                    access_token.client_id.clone(),
+                    Some(access_token.user_id),
+                    OAuthTokenKind::Access,
+                ))
+                .await;
             }
             return Ok(());
         }
@@ -651,6 +714,13 @@ impl OAuthService {
         if let Some(refresh_token) = self.repo.find_refresh_token_by_hash(&token_hash).await? {
             if refresh_token.client_id == authenticated_client_id {
                 self.repo.revoke_refresh_token_by_hash(&token_hash).await?;
+                // Best-effort token-usage analytics (Epic 10A, #2628).
+                self.record_token_event(CreateOAuthTokenEvent::revoked(
+                    refresh_token.client_id.clone(),
+                    Some(refresh_token.user_id),
+                    OAuthTokenKind::Refresh,
+                ))
+                .await;
             }
             return Ok(());
         }
