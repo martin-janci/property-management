@@ -1,0 +1,57 @@
+{
+  "date": "2026-08-02",
+  "signals": [
+    {
+      "id": "code-review-api-core-api-call-ssrf-redirect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106-113 — ApiCallExecutor::new() builds reqwest::Client without .redirect(reqwest::redirect::Policy::none()); default Policy::limited(10) follows redirects",
+        "validate_external_url() at :152 checks only the initial URL — a workflow pointed at an attacker-controlled host that returns 302 Location: http://169.254.169.254/... or http://127.0.0.1 has the client silently follow and hit the internal service, returning the body to the workflow",
+        "Sibling backend/servers/api-server/src/routes/integrations/webhook.rs:512 uses .redirect(reqwest::redirect::Policy::none()) — known pattern the team applies elsewhere, omitted here"
+      ],
+      "files": ["backend/servers/api-server/src/services/actions/api_call.rs"],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-agencies-rs-raw-db-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/agencies.rs:75,105,147,183,212,251,269,284,346,385,422,467,506,542,579,615,657,684,711,743,762 — every agency handler returns Result<Json<T>, (StatusCode, String)> with error branch doing format!(\"Failed to ...: {}\", e) — raw sqlx::Error / repository error interpolated into the response body String (~25 sites)",
+        "backend/servers/api-server/src/routes/agencies.rs:67 signature confirms the raw String is the entire response body; no JSON ErrorResponse envelope, no tracing::error! next to the map_err arms — DB error is exposed to the client instead of being logged and hidden",
+        "Same class as already-fixed code-review-api-core-resolved-rs-leaks-db-error (PR #2609) but in a completely separate file with much broader surface (agency CRUD, member management, invitations, import jobs, listing history/visibility)"
+      ],
+      "files": ["backend/servers/api-server/src/routes/agencies.rs"],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-02.md && head -1 matches",  "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json cursor/signal/hotspot/stats deltas vs HEAD", "observed": "true",   "expected": "true", "notes": "advanced: last_issue_seen 2612→2621, last_commit_sha, seen_signals +2, review_cursor.api-core, stats.runs+1, stats.vectors_created+2, stats.plans_created+1" },
+    { "goal": "G3", "passed": true,  "command": "jq unique ids on backlog",                              "observed": "true",   "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no re-emit of seen non-cumulative signals with score_delta!=0", "observed": "true", "expected": "true", "notes": "both new signals are fresh ids (not in prior seen_signals)" },
+    { "goal": "G5", "passed": true,  "command": "cap 8 and decay applied",                                "observed": "true",   "expected": "true", "notes": "no open items updated_at <= today-14 — no decay needed; cap holds (max score 6)" },
+    { "goal": "G6", "passed": true,  "command": "new plan slug -> brief adversarial pass line",           "observed": "1/1",    "expected": "match", "notes": "plans/code-review-api-core-api-call-ssrf-redirect.md — adversarial pass: passed" },
+    { "goal": "G7", "passed": true,  "command": "count new plans <=2, metadata + 11 headings + files exist", "observed": "1 new plan, all checks pass", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached only .research/",                       "observed": "true",   "expected": "true" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/hostnames in staged diff",                     "observed": "true",   "expected": "true" },
+    { "goal": "G10", "passed": true, "command": "backlog.md == regen(backlog.json)",                       "observed": "byte-identical", "expected": "match" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — no phases failed",                "observed": "no failures", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still present",                      "observed": "true",   "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count non-decreasing",                            "observed": "true",   "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md == regen(backlog.json)",                  "observed": "byte-identical", "expected": "match" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps + idempotency + kill switch honored",       "observed": "no actions this run", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran",           "observed": "n/a — Phase 1.6 skipped this run", "expected": "no-op when skipped" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff",              "observed": "true",   "expected": "true" }
+  ]
+}

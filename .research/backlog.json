@@ -5950,6 +5950,50 @@
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-redirect",
+      "title": "SECURITY: api_call.rs reqwest::Client follows redirects (default Policy::limited(10)) — validate_external_url only checks initial URL, SSRF via 302 to metadata / internal",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review api-core 2026-08-02"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:106-113 — ApiCallExecutor::new() builds reqwest::Client without .redirect(reqwest::redirect::Policy::none()); default Policy::limited(10) follows redirects",
+        "validate_external_url() at :152 checks only the initial URL — a workflow pointed at an attacker-controlled host that returns 302 Location: http://169.254.169.254/... or http://127.0.0.1 has the client silently follow and hit the internal service, returning the body to the workflow — SSRF bypass despite the guard",
+        "Sibling backend/servers/api-server/src/routes/integrations/webhook.rs:512 uses .redirect(reqwest::redirect::Policy::none()) — known pattern the team applies elsewhere, omitted here"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": "plans/code-review-api-core-api-call-ssrf-redirect.md"
+    },
+    {
+      "id": "code-review-api-core-agencies-rs-raw-db-err-leak",
+      "title": "reality-adjacent: api-server routes/agencies.rs leaks raw sqlx::Error strings to authenticated clients across ~25 map_err sites — mirrors already-fixed resolved.rs pattern",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-08-02"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/agencies.rs:75,105,147,183,212,251,269,284,346,385,422,467,506,542,579,615,657,684,711,743,762 — every handler returns Result<Json<T>, (StatusCode, String)> and its error branch does format!(\"Failed to ...: {}\", e) with raw sqlx::Error / repository error interpolated into the response body String (~25 sites)",
+        "backend/servers/api-server/src/routes/agencies.rs:67 signature confirms the raw String is the entire response body — no JSON ErrorResponse envelope with a stable code; also no tracing::error! next to these map_err arms so the DB error is exposed to the client instead of being logged and hidden",
+        "Same class as the already-fixed code-review-api-core-resolved-rs-leaks-db-error (PR #2609) but in a completely separate file with much broader surface: agency CRUD, member management, invitations, import jobs, listing history/visibility"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/agencies.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
     }
   ]
 }

@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-01 18:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-02 00:30 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature | dropped | 2026-07-28 |  |
+| 3 | security | `code-review-api-core-api-call-ssrf-redirect` | SECURITY: api_call.rs reqwest::Client follows redirects (default Policy::limited(10)) — validate_external_url only checks initial URL, SSRF via 302 to metadata / internal | ready | 2026-08-02 | [plan](plans/code-review-api-core-api-call-ssrf-redirect.md) |
 | 3 | bug | `bug-direct-upload-drops-building-id` | uploadDocumentDirect() silently drops building_id — building-scoped document uploads lose association vs legacy multipart path | dropped | 2026-08-01 |  |
 | 3 | bug | `bug-scheduler-notifications-fire-once` | Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications | ready | 2026-08-01 | [plan](plans/bug-scheduler-notifications-fire-once.md) |
 | 3 | security | `code-review-reality-server-sso-session-invalidate-swallowed` | reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive | open | 2026-08-01 |  |
@@ -27,6 +28,7 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | security | `code-review-api-core-agencies-rs-raw-db-err-leak` | reality-adjacent: api-server routes/agencies.rs leaks raw sqlx::Error strings to authenticated clients across ~25 map_err sites — mirrors already-fixed resolved.rs pattern | open | 2026-08-02 |  |
 | 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error | open | 2026-08-01 |  |
 | 2 | test-gap | `test-gap-disputes-kpis-window-validation` | /disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined | open | 2026-08-01 |  |
 | 2 | dx | `dx-fixme-admin-web-mobile-config-patch-endpoint` | admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing | dropped | 2026-07-31 |  |
