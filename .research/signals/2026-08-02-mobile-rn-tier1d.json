@@ -1,0 +1,56 @@
+{
+  "generated": "2026-08-02T00:00:00Z",
+  "segment": "mobile-rn",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 3,
+  "note": "ppt-web-ui (the literal oldest cursor, 2026-07-21) already has a today-dated tier1d signals file at the 3-finding cap; advanced to the next oldest-unreviewed segment mobile-rn (2026-07-22) to avoid clobbering prior work and to produce net-new candidates.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — the central `apiRequest` helper (backing every useQuery/useMutation in the app) reads the bearer token from SecureStore once (:66) and, on any non-ok response, just `throw new Error(message)` (:91). There is NO 401 branch, NO token-refresh attempt, and NO single-retry after refresh. A 401 from an expired access token is surfaced to the UI as a generic error identical to any other HTTP failure.",
+        "The recovery capability EXISTS but is never wired in: contexts/AuthContext.tsx defines `refreshToken()` (:209) that reads `ppt_refresh_token` from SecureStore and POSTs `/api/v1/auth/refresh` (:217-222). Grep across the whole app confirms `refreshToken()` is invoked ONLY from tests (test/integration/auth.integration.test.tsx:405,433,460) — never from production code. There is no `setInterval`/`setTimeout` proactive refresh and no 401 interceptor in AuthContext or useApi.",
+        "Impact: the backend uses short-lived access tokens with refresh-token rotation (docs/api/README.md). Once the access-token TTL lapses — which is guaranteed to happen in any normal session — every authenticated query and mutation fails with a spurious error, even though the client holds a valid refresh token that would transparently restore the session. The user is effectively soft-logged-out until they manually kill and re-login. Fix: in `apiRequest`, on a 401, call `AuthContext.refreshToken()` (or a shared refresh routine) once and retry the request; or add a proactive refresh timer keyed off the access-token `exp` claim (the code already decodes JWT claims via utils/jwt in getTenantId). Confidence medium: the missing-wiring is unambiguous from source; exact TTL-triggered timing is not runtime-confirmed."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 — `validateAccess` decides credential expiry (`new Date(credential.validUntil) < now`, :275) and time-of-day access windows (:299-336) entirely from device-local `new Date()` (:250, `now.getHours()`/`now.getDay()` :301-303). Device wall-clock is user-controllable; a holder of an expired or time-restricted credential can roll the phone clock back to make `validateAccess` return `granted: true`.",
+        "That client-side `granted` result is not merely advisory display: it GATES the physical transmit — `NativeNFC.transmitCredential(credential.encryptedData)` is only reached when `validationResult.granted` (NFCAccessController.ts:190-196). So clock tampering directly changes whether the credential is presented to the reader.",
+        "Impact: if the door reader / backend does NOT independently re-validate expiry and time-restrictions server-side, this is a physical-access bypass; if it does, this is still a defense-in-depth gap that lets revoked/expired credentials be transmitted. Fix: derive `now` from a trusted/monotonic or server-synced time source for the expiry + time-restriction checks (or make the reader authoritative and treat the client gate as UX-only). Confidence medium: exploitability depends on reader-side enforcement which is out of this segment's scope, but relying solely on device clock for credential expiry is a confirmed anti-pattern in the source."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files — `find frontend/apps/mobile -name '*.test.*'` returns no nfc/ entry, and the covered-module list spans components/, config/, hooks/, navigation/, qrcode/, services/, utils/ and screens/{announcements,buildings,dashboard,documents,faults,forms,leases,messages,meters,neighbors,voting} but not nfc/.",
+        "These are the app's most security- and correctness-sensitive modules yet the non-trivial logic is untested: validateAccess's midnight-crossing time-window arithmetic (NFCAccessController.ts:318-321 `if (endMinutes < startMinutes) return currentMinutes >= startMinutes || currentMinutes <= endMinutes`), the status→denial-reason mapping (:256-262), and NFCCredentialManager's one-time SecureStore migration from the legacy AsyncStorage key with corrupt-data discard (NFCCredentialManager.ts:266-293).",
+        "Impact: a regression in the time-window or expiry logic silently grants or denies physical access with no failing test to catch it. Fix: add unit tests for validateAccess (each denial reason, expiry boundary, normal + midnight-crossing time windows) and for the credential-manager load/migrate/corrupt-discard paths. Low severity (test-coverage gap) but on a security-critical module."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
