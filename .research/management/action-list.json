@@ -240,37 +240,23 @@
       "last_updated": "2026-08-01T20:11:15Z"
     },
     {
-      "id": "code-review-reality-server-agency-members-unauth-idor",
-      "action": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR)",
-      "owner_role": "pm-backend",
+      "id": "gh-issue-2628",
+      "action": "Follow-up: OAuth token-usage analytics data layer is never wired — no producer, no read route, no scheduled cleanup (PR #2526) (Closes #2628)",
+      "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-02T04:09:42Z (score=3 conf=high vector=bug)",
+      "source": "dispatcher-issue-ingest 2026-08-02T14:05:05Z (#2628)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-02T04:09:42Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-ssrf-validator-drift",
-      "action": "api-server workflow api_call.rs has a duplicate SSRF validator that drifts from common::url_validation — plain HTTP is allowed in prod",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-02T06:05:28Z (score=3 conf=high vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-02T06:05:28Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "security"
+      "first_open_at": "2026-08-02T14:05:05Z",
+      "issue_ref": {
+        "number": 2628,
+        "url": "https://github.com/martin-janci/property-management/issues/2628",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],

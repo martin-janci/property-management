@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-02T10:18:03Z",
+  "archived_at": "2026-08-02T14:09:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1709,6 +1709,30 @@
       }
     },
     {
+      "id": "code-review-api-core-ssrf-validator-drift",
+      "action": "api-server workflow api_call.rs has a duplicate SSRF validator that drifts from common::url_validation — plain HTTP is allowed in prod",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-02T06:05:28Z (score=3 conf=high vector=security) | gc1-reconcile 2026-08-02T14:04:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-02T06:05:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2627,
+        "merged_at": "2026-08-02T12:11:30Z",
+        "at": "2026-08-02T14:04:00Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-community-cross-tenant-idor",
       "action": "SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs",
       "owner_role": "pm-security",
@@ -2253,6 +2277,30 @@
         "merged_pr": 2457,
         "merged_at": "2026-07-22T22:23:38Z",
         "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-agency-members-unauth-idor",
+      "action": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-02T04:09:42Z (score=3 conf=high vector=bug) | gc1-reconcile 2026-08-02T14:04:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-02T04:09:42Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-02T14:04:00Z"
       }
     },
     {
