@@ -6031,14 +6031,16 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2626",
         "rotating-expert-review api-core 2026-08-02"
       ],
       "evidence": [
         "backend/crates/api-core/src/middleware/idempotency.rs:167-183 tenant_scope() prefers ResolvedTenant request extension, but falls back to raw X-Tenant-ID request header (client-controlled) before the final \"global\" default; the resulting string is the key that partitions the idempotency ledger (advisory_lock_id at line 195, load/store_response calls)",
         "Any route that reaches this middleware without host_tenant middleware having populated ResolvedTenant (tenant-agnostic surfaces mounted with idempotency) lets a caller spoof X-Tenant-ID: <other-org-uuid> to place their idempotency row under another tenants namespace — replay collision (same key + body = cached response from other tenant) or bypass (retries hash to different scopes)",
-        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header"
+        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header",
+        "resolved: PR #2626 merged 2026-08-02 — scope idempotency cache by server-side tenant, not client header"
       ],
       "files": [
         "backend/crates/api-core/src/middleware/idempotency.rs"

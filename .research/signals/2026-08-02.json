@@ -1,154 +1,29 @@
 {
-  "generated": "2026-08-02T04:25:00Z",
-  "signals": [
-    {
-      "id": "code-review-api-core-ssrf-validator-drift",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review api-core 2026-08-02",
-      "score_delta": 3,
-      "confidence": "high",
-      "candidate_vector": "security",
-      "evidence": [
-        "backend/servers/api-server/src/services/actions/api_call.rs:150-209 defines a private validate_external_url that shadows common::url_validation::validate_external_url",
-        "starts_with(\"http://\") at line 243 never enforces the canonical rule rejecting plain http:// outside RUST_ENV=development (common/url_validation.rs:94-101)",
-        "Case-sensitivity drift on .local/.internal TLD check at line 204 vs canonical lowercase-first at url_validation.rs:116-118"
-      ]
-    },
-    {
-      "id": "code-review-api-core-idempotency-client-tenant",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review api-core 2026-08-02",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "security",
-      "evidence": [
-        "backend/crates/api-core/src/middleware/idempotency.rs:167-183 tenant_scope() falls back to client-controlled X-Tenant-ID header before the \"global\" default",
-        "Any route reaching this middleware without ResolvedTenant populated lets a caller spoof X-Tenant-ID for cross-tenant idempotency namespace collision"
-      ]
-    }
-  ],
+  "date": "2026-08-02",
+  "run_ordinal": 2,
+  "generated": "2026-08-02T10:14:17Z",
+  "trigger_payload": "buffer-low: claimable=0/72 — refill planner",
+  "note": "Second same-day run. First run at 04:25Z derived 2 code-review-finding signals (SSRF drift, idempotency client-tenant) and promoted 2 plans; both signals + promotions committed on that run. This rerun observed 6 new dispatcher commits + PR #2626 merged at 10:15Z (resolves `code-review-api-core-idempotency-client-tenant`). Phase 1 produced 0 new derivation signals — the merge was handled via Phase 2 PR-body-match resolution, not as a new signal.",
+  "signals": [],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate",
+  "auto_fix_skipped_reason": "no candidate (Phase 1 produced 0 new signals this run)",
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f .research/briefs/2026-08-02.md && head -1 | grep '# 2026-08-02'",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq state.json vs HEAD",
-      "observed": "true",
-      "expected": "true",
-      "remediation": "state advanced via seen_signals+2 review_cursor api-core stats.runs bump"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "unique ids",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "non-cumulative dedup",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "score cap + 14d decay",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "adversarial pass annotation for each new plan",
-      "observed": "2/2 annotated",
-      "expected": "all plans annotated"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "<=2 plans, all 15 sections, capability tick, mode, files exist",
-      "observed": "2 plans; both pass metadata+headings+ticks+mode+files",
-      "expected": "all pass"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "only .research/ paths staged",
-      "observed": "0 non-.research paths",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "grep secrets/hostnames (excl baseline docs)",
-      "observed": "0 matches",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff backlog.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "phases-failed line == none",
-      "observed": "none",
-      "expected": "none"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "prior plan slugs converge",
-      "observed": "all present",
-      "expected": "all present"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive tracked >= HEAD tracked",
-      "observed": "7 >= 7",
-      "expected": ">= HEAD"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix_actions empty (no eligible candidate)",
-      "observed": "[]",
-      "expected": "cap satisfied"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "management artifacts valid; Phase 1.6 skipped this run (no-op)",
-      "observed": "artifacts parse; pm_cursor.next_index=2 in [0,7]",
-      "expected": "pass"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "grep Telegram token literal in staged +lines",
-      "observed": "0",
-      "expected": "0"
-    }
+    { "goal": "G1", "passed": true, "command": "test -f briefs/$today.md && head -1 == today", "observed": "briefs/2026-08-02.md exists, H1 == '# 2026-08-02'", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "staged state.json diff vs HEAD (last_pr_seen / last_commit_sha / seen_signals.length / hotspot_history / stats.quiet_days)", "observed": "last_pr_seen 2625->2626; last_commit_sha 92cf75cc->4feb0911; last_run_iso advanced; stats.runs 55->56", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "248 items, all ids unique", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "signal ids vs prior seen_signals for non-cumulative types with score_delta!=0", "observed": "signals[] is empty this run - no re-emitted IDs", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap <=8; decay -1/run for open items with updated_at > 14d", "observed": "no scores > 8; the 2 remaining open items have updated_at=2026-08-02 (0d old); decay N/A this run", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plans/*.md has adversarial-pass annotation in brief", "observed": "0 new plans this run - check is a no-op", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "<=2 new plans + 15-section + on-disk file existence for each new plan", "observed": "0 new plans this run - check is a no-op", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 non-.research paths staged", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep -E secret patterns in staged .research/ minus baseline docs", "observed": "0 matches in staged diff (baseline docs excluded)", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md /tmp/backlog.regen.md", "observed": "byte-identical (regenerated via Python from backlog.json this run)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' vs cursor advancement", "observed": "brief reports 'Phases that failed: none'; all attempted cursors advanced with observations", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still in plans/ or plans/_archive/", "observed": "no plan additions/removals this run; all 17 active plans remain in plans/", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "wc -l plans/_archive/ staged >= HEAD", "observed": "archive unchanged (0 additions, 0 removals)", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical (regenerated via Python from backlog.json this run)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency vs history + kill-switch honor", "observed": "0 auto-fix actions this run; no auto-fix branch pushed; ROUTINE_AUTOFIX_DISABLED not set but no candidate matched allowlist", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran; no-op otherwise", "observed": "Phase 1.6 skipped this run (pm_cursor.next_index unchanged at 2); artifacts on disk still parse cleanly (action-list.json/risks.json parse; project-state.md non-empty); no-op check", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "grep telegram bot-token value pattern in staged + lines minus baseline docs", "observed": "0 matches", "expected": "0" }
   ]
 }
