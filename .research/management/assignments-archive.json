@@ -9085,6 +9085,28 @@
       "merge_attempted_at": "2026-08-01T16:09:05Z"
     },
     {
+      "task_id": "gh-issue-2628",
+      "branch": "auto-impl/gh-issue-2628-c72c3399",
+      "status": "merged",
+      "claimed_at": "2026-08-02T14:09:28Z",
+      "last_updated": "2026-08-02T20:13:53Z",
+      "status_changed_at": "2026-08-02T20:13:53Z",
+      "pr_number": 2629,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2629",
+      "merged_at": "2026-08-02T20:07:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2629 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=wired oauth_token_events producer(oauth svc)+read route(platform-admin)+daily prune; clippy/fmt/new tests green; sole cargo-test red is pre-existing airbnb global-env-race flake (passes isolated, unrelated); local verify used file:// swagger asset (github egress-blocked 403) + local pg16",
+      "reviewer_summary": "verdict=approve head_oid=aacaefa01b79c9e9dd2d7d8e3e04d26543bae5ee note=wires-oauth-token-analytics-producer+route+prune; best-effort-nonblocking; camelCase-consistent; scope-drift-benign(all api-server); flake-unrelated(no airbnb); approve-posted-as-comment(self-PR)",
+      "last_reviewed_oid": "aacaefa01b79c9e9dd2d7d8e3e04d26543bae5ee",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-02T20:13:53Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -10795,5 +10817,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-02T12:13:34Z"
+  "archived_at": "2026-08-02T20:14:01Z"
 }

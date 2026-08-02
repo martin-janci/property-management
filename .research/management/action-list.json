@@ -238,26 +238,6 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-01T20:11:15Z"
-    },
-    {
-      "id": "gh-issue-2628",
-      "action": "Follow-up: OAuth token-usage analytics data layer is never wired — no producer, no read route, no scheduled cleanup (PR #2526) (Closes #2628)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-02T14:05:05Z (#2628)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-02T14:05:05Z",
-      "issue_ref": {
-        "number": 2628,
-        "url": "https://github.com/martin-janci/property-management/issues/2628",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
