@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-01T18:19:51Z",
-  "last_run_ms": 720000,
+  "last_run_iso": "2026-08-02T04:25:00Z",
+  "last_run_ms": 5200,
   "last_pr_seen": 2625,
   "last_issue_seen": 2612,
-  "last_commit_sha": "4fde35c5c1b198c0dcc276e811f17b5bb5ff7bda",
+  "last_commit_sha": "92cf75ccafd034b3bfa5d682d498d64c34886aad",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -743,12 +743,14 @@
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2366",
     "dep-update-noise-pr-2625",
-    "code-review-reality-server-agency-members-unauth-idor"
+    "code-review-reality-server-agency-members-unauth-idor",
+    "code-review-api-core-ssrf-validator-drift",
+    "code-review-api-core-idempotency-client-tenant"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-07-29",
-    "api-core": "2026-07-20",
+    "api-core": "2026-08-02",
     "reality-server": "2026-08-02",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
@@ -757,9 +759,9 @@
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 54,
-    "vectors_created": 239,
-    "plans_created": 18,
+    "runs": 55,
+    "vectors_created": 241,
+    "plans_created": 20,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

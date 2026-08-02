@@ -5808,23 +5808,24 @@
       "id": "code-review-reality-server-sso-session-invalidate-swallowed",
       "title": "reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive",
       "vector": "security",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review reality-server 2026-08-01"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/sso.rs:1043 — sync_session: when the introspected PM token is inactive, the portal session is revoked via `let _ = state.session_service.invalidate_session(portal_session).await;` which discards the Result; if invalidation errors (Redis/DB), the session is NOT invalidated",
         "sso.rs:1047 then unconditionally logs 'Invalidated portal session due to inactive PM token' and returns 401 pm_session_expired — the log asserts a revocation that may never have happened",
-        "Security control (drop the portal session when the upstream PM session dies) can silently no-op, leaving a usable portal_session cookie after the PM session is dead — a stale-session weakness; fix: propagate the invalidate error or at minimum log/retry on failure"
+        "Security control (drop the portal session when the upstream PM session dies) can silently no-op, leaving a usable portal_session cookie after the PM session is dead — a stale-session weakness; fix: propagate the invalidate error or at minimum log/retry on failure",
+        "promoted 2026-08-02: opened sso.rs:1043 during this run — confirmed `let _ =` swallow pattern; confidence upgraded medium→high; plan written with reproducible failing test"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/sso.rs"
       ],
       "created_at": "2026-08-01",
-      "updated_at": "2026-08-01",
-      "plan": null
+      "updated_at": "2026-08-02",
+      "plan": "plans/code-review-reality-server-sso-session-invalidate-swallowed.md"
     },
     {
       "id": "code-review-reality-server-db-error-leak-to-client",
@@ -5832,14 +5833,15 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review reality-server 2026-08-01"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/listings.rs:289,301,470 — unauthenticated public search/count/suggestions handlers return `format!(\"Failed to ...: {}\", e)` as the 500 response body, leaking raw sqlx::Error (column/constraint names, pool/TLS state) to portal clients",
         "backend/servers/reality-server/src/util/errors.rs:1-32 — db_error() exists precisely for this ('Reality-server is internet-facing. Raw sqlx::Error ... can leak column names, constraint names') and returns a generic 'Internal server error'; the offending sites bypass it",
-        "Same raw-error-to-client pattern in realtors.rs (75,110,154,193,240,273,313), layout.rs (61,67,87,103), health.rs:151 — ~23 map_err sites across routes/ interpolate the error into the client String; fix: route all through util::errors::db_error"
+        "Same raw-error-to-client pattern in realtors.rs (75,110,154,193,240,273,313), layout.rs (61,67,87,103), health.rs:151 — ~23 map_err sites across routes/ interpolate the error into the client String; fix: route all through util::errors::db_error",
+        "promoted 2026-08-02 via security fast-track (vector=security, confidence=high, score>=2); opened listings.rs:286/298 and realtors.rs:72 during this run — format! leak pattern confirmed"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs",
@@ -5848,8 +5850,8 @@
         "backend/servers/reality-server/src/util/errors.rs"
       ],
       "created_at": "2026-08-01",
-      "updated_at": "2026-08-01",
-      "plan": null
+      "updated_at": "2026-08-02",
+      "plan": "plans/code-review-reality-server-db-error-leak-to-client.md"
     },
     {
       "id": "code-review-reality-server-password-reset-no-transport",
@@ -5970,6 +5972,51 @@
       ],
       "files": [
         "backend/servers/reality-server/src/routes/agencies.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-ssrf-validator-drift",
+      "title": "api-server workflow api_call.rs has a duplicate SSRF validator that drifts from common::url_validation — plain HTTP is allowed in prod",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-08-02"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:150-209 defines a private validate_external_url that shadows the canonical common::url_validation::validate_external_url used by routes/signatures.rs, routes/integrations/webhook.rs, integrations/workflow_executor.rs",
+        "The private impl uses starts_with(\"http://\") at line 243 but never enforces the canonical rule that plain http:// is rejected outside RUST_ENV=development (common/url_validation.rs:94-101); ApiCall workflow actions can exfiltrate over unencrypted HTTP in prod, bypassing hardened SSRF defence",
+        "Case-sensitivity drift: blocked_hosts uses eq_ignore_ascii_case at line 169 but the .local/.internal TLD check at line 204 is case-sensitive; canonical lowercases first at url_validation.rs:116-118 — future tightening of the canonical validator will silently miss this path",
+        "Fix: delete ApiCallExecutor::validate_external_url and is_blocked_v4; call common::url_validation::validate_external_url(&url) at line 251, mapping UrlValidationError to ActionError::ConfigurationError"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-idempotency-client-tenant",
+      "title": "Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-08-02"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:167-183 tenant_scope() prefers ResolvedTenant request extension, but falls back to raw X-Tenant-ID request header (client-controlled) before the final \"global\" default; the resulting string is the key that partitions the idempotency ledger (advisory_lock_id at line 195, load/store_response calls)",
+        "Any route that reaches this middleware without host_tenant middleware having populated ResolvedTenant (tenant-agnostic surfaces mounted with idempotency) lets a caller spoof X-Tenant-ID: <other-org-uuid> to place their idempotency row under another tenants namespace — replay collision (same key + body = cached response from other tenant) or bypass (retries hash to different scopes)",
+        "Fix: remove the header fallback; if ResolvedTenant is absent either 500 or use a fixed non-client-controlled sentinel (e.g. authenticated principal id) — never a raw client header"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/idempotency.rs"
       ],
       "created_at": "2026-08-02",
       "updated_at": "2026-08-02",
