@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-02T10:25:16Z",
-  "generated_by": "549a2a4951df9052223dfe751abcefdd5d73e03b",
+  "generated_at": "2026-08-02T12:21:17Z",
+  "generated_by": "2b041059b8929f0923b98a131aa4620750f161dd",
   "findings": [
     {
       "finding_id": "mcp-push-cannot-inline-large-archive",
@@ -30,14 +30,14 @@
       "severity": "high",
       "status": "acknowledged",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-07-31T04:19:34Z",
-      "recurrence": 10,
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 11,
       "evidence": [
-        "ce9a2cb6a: Phase 0.5 run-lock sanctioned-skipped - gh CLI unavailable this run; no run-level mutex held.",
         "cff7ea1: Phase 0.5 run-lock skipped-gh-unavailable — gh CLI 403/unavailable, and the lock is gh-REST-dependent, so NO run-level mutex was held. git push + GitHub MCP both worked this env (PUSH_METHOD=git); the lock is inert precisely when gh is the thing that is down.",
         "6ea41b3b (this run): lock=skipped-gh-unavailable — gh CLI not installed, so the Phase 0.5 lock CAS (drafted as `gh api POST /git/refs`) cannot acquire in exactly the gh-absent condition. Yet GitHub MCP AND direct `git push origin dev` both worked this env — the drafted gh-CLI lock fix is defeated by its own dependency. Fix should CAS via mcp__github__* (or a git-ref push) which are available when gh CLI is not.",
         "f3f1b79 (this run): Lock=skipped-gh-unavailable again — gh CLI absent so the gh-dependent run-lock CAS could not acquire; run proceeded lockless. Recurs the lock inert precisely when gh is down pattern.",
-        "df1cfd7 (this run): lock=skipped-gh-unavailable -- Phase 0.5 lock sanctioned-skipped (gh CLI unavailable, lock CAS is gh-dependent); GitHub I/O via MCP worked, so the gh-dependent lock is again inert exactly when gh is down."
+        "df1cfd7 (this run): lock=skipped-gh-unavailable -- Phase 0.5 lock sanctioned-skipped (gh CLI unavailable, lock CAS is gh-dependent); GitHub I/O via MCP worked, so the gh-dependent lock is again inert exactly when gh is down.",
+        "2b04105 (12:16 run): run lock skipped-gh-unavailable — gh CLI absent, the gh-dependent lock CAS cannot acquire exactly when gh is down; run proceeded lockless while git push + GitHub MCP both worked."
       ],
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
@@ -47,17 +47,17 @@
       "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
       "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
       "first_seen": "2026-07-16T18:20:36Z",
-      "last_seen": "2026-08-02T02:12:00Z",
-      "recurrence": 9,
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 10,
       "severity": "high",
       "category": "infra",
       "symptom": "The dispatcher-prompt hard-assumes `git push` is proxy-403-blocked and derives from it (a) PUSH_METHOD defaults to MCP push_files and (b) an mcp-push-size-guard that aborts inlining any file >64KiB. In THIS env direct `git push origin dev` SUCCEEDED (only GH007 email-privacy blocked it until the commit author email was set to @users.noreply.github.com). The archive is 333782 bytes (~326KiB), so the 64KiB guard would false-positive and block a push the environment actually permits.",
       "evidence": [
-        "5531f24 (this run): git push to dev SUCCEEDED directly again; gh CLI unavailable so all GitHub I/O routed via MCP, yet the state commit still landed via direct git push — the MCP-primary push default remains obsolete in this env.",
         "b21428a (this run): Phase 6 committed + pushed via direct git to origin/dev SUCCEEDED (proxy allowed direct push this run); gh CLI unavailable so GitHub reads routed via MCP, yet the state commit landed via direct git push — the MCP-primary push default + 64KiB size-guard remain obsolete in this env.",
         "df1cfd7 (this run): env note confirms direct git push WORKS (state landed via git); gh CLI unavailable, GitHub reads via MCP -- MCP-primary push default remains obsolete in this env.",
         "aa9cc0c2 (this run): Phase-6 fell back to PUSH_METHOD=git and direct git push to origin/dev SUCCEEDED -- the 483KB archive exceeds the 64KiB MCP inline ceiling, so the MCP-primary default + size-guard remain obsolete and direct git push is again the reliable primary in this env.",
-        "0cceb68 (2026-08-02 run): operator confirms direct git-to-dev WORKS in this env (NOT proxy-403'd); only GH007 email-privacy blocks commits authored as the user private address -- commit as <user>@users.noreply.github.com and it lands. MCP push_files still truncates >64KB. The MCP-primary default remains obsolete; direct git is the reliable primary."
+        "0cceb68 (2026-08-02 run): operator confirms direct git-to-dev WORKS in this env (NOT proxy-403'd); only GH007 email-privacy blocks commits authored as the user private address -- commit as <user>@users.noreply.github.com and it lands. MCP push_files still truncates >64KB. The MCP-primary default remains obsolete; direct git is the reliable primary.",
+        "2b04105 (12:16 run): git fetch/push worked through local proxy (state landed via direct git); gh CLI unavailable so reads/merges routed via GitHub MCP — MCP-primary push default remains obsolete in this env."
       ],
       "root_cause": "dispatcher-prompt.md treats 'git push is proxy-403-blocked' as a fixed environmental fact (see finding git-push-blocked-by-proxy) and builds the MCP-primary push default + the 64KiB inline size-guard on top of it. That premise is env-dependent and false here: pushing to dev works (modulo the GH007 email-privacy setting). So the MCP-primary contract adds latency/complexity for no benefit, and its size-guard actively blocks legitimate large-archive commits (the exact collision tracked as mcp-push-cannot-inline-large-archive). Both downstream findings dissolve if push capability is probed rather than assumed.",
       "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
@@ -69,20 +69,41 @@
     {
       "finding_id": "stale-in-progress-action-list-decoupled-from-assignments",
       "first_seen": "2026-07-31T14:24:38Z",
-      "last_seen": "2026-08-02T10:25:16Z",
-      "recurrence": 3,
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 4,
       "severity": "high",
       "category": "claim",
       "symptom": "action-list.json holds 31 status=in-progress rows but assignments.json has only 3 live rows; worse, the 3 truly-active assignments are marked status=open (not in-progress) in action-list — the twin status is inverted/decoupled.",
       "evidence": [
-        "d08a8d0: 3 active assignments (layout-admin, scheduler, data-audit retry1) all status=in-progress in assignments.json but status=open in action-list.json",
         "action-list.json: 31 in-progress / 6 open; the 31 in-progress have no backing live assignment (phantom rows)",
         "self-test T28 WARN: layout-tenant terminal in archive yet status=open in action-list (same decoupling class)",
         "0cceb68 (2026-08-02 run): operator confirms 9 action-list rows stuck status=in-progress whose assignments are TERMINAL in archive (4 merged, 5 failed); gc1-reconcile only flips OPEN items, so no reconciler ever closes an in-progress twin after its assignment goes terminal -- the class accumulates (self-test T28 checks only OPEN rows, so it stays green).",
-        "549a2a4 (2026-08-02 10:20 run): 14 action-list items stuck status=in-progress while their assignments are TERMINAL (merged/failed); gc1/dev/backlog reconcilers only touch open/backlog rows, none flips in-progress action-list rows -> honest_claimable suppressed (0/72), systemic leak feeding chronic GC3 FAIL."
+        "549a2a4 (2026-08-02 10:20 run): 14 action-list items stuck status=in-progress while their assignments are TERMINAL (merged/failed); gc1/dev/backlog reconcilers only touch open/backlog rows, none flips in-progress action-list rows -> honest_claimable suppressed (0/72), systemic leak feeding chronic GC3 FAIL.",
+        "2b04105 (12:16 run): self-test T28 WARN — 2 open action-list items terminal in archive (agency-members-idor failed, ssrf-validator-drift merged #2627) unreconciled; needs gc1-reconcile --apply."
       ],
       "root_cause": "action-list item.status is not kept in lockstep with the assignments lifecycle: claim does not flip the action-list twin to in-progress, and archive/fail does not flip stale in-progress rows back. The 31 phantom in-progress rows are excluded from the claimable pool, artificially depressing the buffer below floor — this is the concrete driver of the chronic GC3 buffer-bounds FAIL that 'buffer-starved-below-floor-no-refill-path' has logged as 'refills found nothing available'.",
       "proposed_fix": "Add a Phase-2 reconcile step (extend gc1-reconcile.sh) that: (a) for every action-list in-progress id with NO live assignment, resets status->open (or archives if terminal in archive); (b) sets action-list twin->in-progress on claim. Add self-test T32 asserting bijection between assignments.json in-progress ids and action-list in-progress ids (mismatch>threshold => FAIL). This likely resolves the chronic GC3 FAIL at its source rather than via refills.",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "implementer-sandbox-zero-pushed-branch-multigen",
+      "first_seen": "2026-08-02T02:12:00Z",
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 3,
+      "severity": "high",
+      "category": "infra",
+      "symptom": "5 in-progress rows claimed 2026-08-01T20:10Z produced ZERO branches on origin across TWO implementer generations: reclaimed once at 00:12Z (attempts 0->1), respawned, and at 02:12Z still branchless on origin (~6h elapsed, still in sandbox grace 110m/120m). Every recorded auto-impl/* branch in assignments.json has no counterpart on origin. Throughput this run: 0 claimed, 0 reviewed, 0 merged.",
+      "evidence": [
+        "0cceb68 (2026-08-02 02:12 run): 5 in-progress rows, all branchless on origin, reclaim_attempts=1, in sandbox grace (110m/120m) -> sandbox-reclaim verdict action=wait for all 5, no transitions.",
+        "fb76fa6 (2026-08-02 00:12 run): same 5 rows sandbox-timed-out (no branch after ~4h, attempts 0->1); implementers respawned -- the respawn also produced no origin branch by 02:12.",
+        "assignments.json: all 5 rows carry an auto-impl/<task>-<hash> branch name but none exists on origin/dev; claimed_at=2026-08-01T20:10:33Z unchanged across both generations.",
+        "92cf75c (2026-08-02 04:13 run): the 5 branchless in-progress rows finally failed after sandbox grace expired (>120m, branches never appeared, reclaim_attempts=1); archived as sandbox-failure-after-reclaim -- confirms the zero-branch-across-generations stall terminates only via a full ~6h grace burn.",
+        "2b04105 (12:16 run): code-review-reality-server-agency-members-unauth-idor failed sandbox-failure-after-reclaim (reclaim_attempts already 1, branch never pushed) — zero-pushed-branch stall terminated only after grace burn."
+      ],
+      "root_cause": "Implementer subagents spawned for these 5 tasks exit (or are reclaimed) without ever landing their auto-impl branch on origin. Two independent generations (original + one reclaim respawn) both produced zero origin branches for the SAME task set, so this is not a one-off subagent crash but a systemic implementer-progress stall: sandbox grace + single reclaim burns ~6h per task with no artifact and no failure signal, silently zeroing throughput while the buffer reads 'active' (5 in-progress) rather than stalled.",
+      "proposed_fix": "Add an implementer-liveness escalation: on reclaim, if reclaim_attempts>=1 AND still branchless AND elapsed>Nh, escalate the row to status=failed (sandbox-no-branch-after-Ngen) instead of granting another full sandbox grace window, so the slot frees and the task re-mints instead of occupying an 'active' slot indefinitely. Add self-test T33 asserting no in-progress row has reclaim_attempts>=1 AND age>threshold AND no branch on origin. Files: .research/dispatcher-prompt.md (Phase 2 sandbox-reclaim verdict: branchless-after-reclaim -> fail path) + dispatcher-self-test.sh (T33).",
+      "effort": "medium",
       "status": "open",
       "operator_notes": ""
     },
@@ -122,26 +143,6 @@
       "proposed_fix": "Per-blocker routing in Phase 5.5: ci-fail -> Phase 5.7 respawn; needs-human-review -> explicit human-escalation tag + stop; dirty -> auto-rebase; ci-unknown/0-checks -> re-trigger CI or wait, don't strand.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "implementer-sandbox-zero-pushed-branch-multigen",
-      "first_seen": "2026-08-02T02:12:00Z",
-      "last_seen": "2026-08-02T10:25:16Z",
-      "recurrence": 2,
-      "severity": "high",
-      "category": "infra",
-      "symptom": "5 in-progress rows claimed 2026-08-01T20:10Z produced ZERO branches on origin across TWO implementer generations: reclaimed once at 00:12Z (attempts 0->1), respawned, and at 02:12Z still branchless on origin (~6h elapsed, still in sandbox grace 110m/120m). Every recorded auto-impl/* branch in assignments.json has no counterpart on origin. Throughput this run: 0 claimed, 0 reviewed, 0 merged.",
-      "evidence": [
-        "0cceb68 (2026-08-02 02:12 run): 5 in-progress rows, all branchless on origin, reclaim_attempts=1, in sandbox grace (110m/120m) -> sandbox-reclaim verdict action=wait for all 5, no transitions.",
-        "fb76fa6 (2026-08-02 00:12 run): same 5 rows sandbox-timed-out (no branch after ~4h, attempts 0->1); implementers respawned -- the respawn also produced no origin branch by 02:12.",
-        "assignments.json: all 5 rows carry an auto-impl/<task>-<hash> branch name but none exists on origin/dev; claimed_at=2026-08-01T20:10:33Z unchanged across both generations.",
-        "92cf75c (2026-08-02 04:13 run): the 5 branchless in-progress rows finally failed after sandbox grace expired (>120m, branches never appeared, reclaim_attempts=1); archived as sandbox-failure-after-reclaim -- confirms the zero-branch-across-generations stall terminates only via a full ~6h grace burn."
-      ],
-      "root_cause": "Implementer subagents spawned for these 5 tasks exit (or are reclaimed) without ever landing their auto-impl branch on origin. Two independent generations (original + one reclaim respawn) both produced zero origin branches for the SAME task set, so this is not a one-off subagent crash but a systemic implementer-progress stall: sandbox grace + single reclaim burns ~6h per task with no artifact and no failure signal, silently zeroing throughput while the buffer reads 'active' (5 in-progress) rather than stalled.",
-      "proposed_fix": "Add an implementer-liveness escalation: on reclaim, if reclaim_attempts>=1 AND still branchless AND elapsed>Nh, escalate the row to status=failed (sandbox-no-branch-after-Ngen) instead of granting another full sandbox grace window, so the slot frees and the task re-mints instead of occupying an 'active' slot indefinitely. Add self-test T33 asserting no in-progress row has reclaim_attempts>=1 AND age>threshold AND no branch on origin. Files: .research/dispatcher-prompt.md (Phase 2 sandbox-reclaim verdict: branchless-after-reclaim -> fail path) + dispatcher-self-test.sh (T33).",
-      "effort": "medium",
-      "status": "open",
-      "operator_notes": ""
     },
     {
       "finding_id": "tier2-planner-kick-auth-401",
@@ -346,22 +347,45 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-08-02T10:25:16Z",
-      "recurrence": 19,
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 20,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
-        "df1cfd7 (this run): GC3-buffer-bounds=FAIL record-only; claimable=6/open=7 vs floor=36 (starved). backlog-refill avail=0, retry-remint none-eligible; Tier-1d dev-review generator ran (1 finding, api-core) + Tier-2 kick http=200 -- neither lifts the buffer. Open pool collapsed 72->7 (backlog largely terminal/tracked), so refill paths structurally cannot recover.",
         "aa9cc0c2 (this run): GC3-buffer-bounds=FAIL; claimable=1/72 vs floor=36 (starved). coverage.json EXHAUSTED (47 done/2 partial, 0 not-started), backlog.json empty, no retryable failed task -- Tiers 1/1b/1c all produced 0; Tier-1d dev-review generator added 2 findings + Tier-2 kick http=200, neither actuates the claimable buffer. merged-now=1 (PR#2611 booking/mod.rs split) but no new coverage work exists to refill from.",
         "d08a8d0: goal-check GC3-buffer-bounds=FAIL (claimable<=6, mostly dep/assigned; effective ~2 << floor 36)",
         "0cceb68 (2026-08-02 run): GC3-buffer-bounds=FAIL; open_claimable=0 (buffer starved). Tier-1b backlog-refill avail=0 (only open/ready backlog rows ARE the 5 in-flight tasks), Tier-1c retry-remint 0 eligible, Tier-1d generator fired (1 High reality-server finding), Tier-2 planner kick http=200 -- no path lifts the claimable buffer.",
-        "549a2a4 (2026-08-02 10:20 run): GC3-buffer-bounds=FAIL; honest_claimable=0/72 vs floor 36 (DEEP starvation). Tier1b avail=0, Tier1c retry avail=0, Tier1d dev-review generator added 1 finding, Tier2 kick http=200 -- no path lifted the claimable buffer."
+        "549a2a4 (2026-08-02 10:20 run): GC3-buffer-bounds=FAIL; honest_claimable=0/72 vs floor 36 (DEEP starvation). Tier1b avail=0, Tier1c retry avail=0, Tier1d dev-review generator added 1 finding, Tier2 kick http=200 -- no path lifted the claimable buffer.",
+        "2b04105 (12:16 run): GC3-buffer-bounds=FAIL (enforce rc=0); claimable~0/open=2, backlog.json + retry-remint both dry, Tier1b avail=0/Tier1c none-eligible; Tier1d(review-merged) opened issue #2628 + Tier2 kick http=200 — neither lifts the claimable buffer."
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
       "effort": "medium",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 Tier-1b/Tier-2 refill gating) + .research/goal-check.sh",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "temp-phase-8-past-documented-removal-deadline",
+      "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
+      "first_seen": "2026-07-18T12:19:52Z",
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 7,
+      "severity": "medium",
+      "category": "spec",
+      "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
+      "evidence": [
+        "b21428a (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced bumps; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present — currentDate 2026-07-18 = 18 days overdue; phase is de-facto permanent.",
+        "eba1be6 (2026-07-18T18:05 run): Phase 8 (TEMP_PHASE_8) executed again — currentDate 2026-07-18 = 18 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md markers still present, phase de-facto permanent.",
+        "aa9cc0c2 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again -- currentDate 2026-07-31 = 31 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present, phase de-facto permanent.",
+        "549a2a4 (2026-08-02 10:20 run): Phase 8 (TEMP_PHASE_8) self-review executed again -- currentDate 2026-08-02 = 33 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present, phase de-facto permanent.",
+        "2b04105 (12:16 run): Phase 8 self-review ran again via extracted reviewer-prompt.md (TEMP_PHASE_8); currentDate 2026-08-02 = 33 days past documented 2026-06-30 removal deadline; phase de-facto permanent."
+      ],
+      "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
+      "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
       "status": "open",
       "operator_notes": ""
     },
@@ -387,25 +411,24 @@
       "operator_notes": "Confirmed recurring 2026-05-28 (R8 run). The retry loop wastes a full backoff cycle before falling back; default to MCP push. FIXED in Phase 6 push step: PUSH_METHOD defaults to `mcp` (mcp__github__push_files); `git push` is the fallback only when MCP is unavailable, and `PUSH_METHOD=git` forces it. No more 4-attempt 403 backoff per run. (Phase 0.5 lock already uses gh REST for the same reason.) Awaiting next dispatcher run to confirm."
     },
     {
-      "finding_id": "temp-phase-8-past-documented-removal-deadline",
-      "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
-      "first_seen": "2026-07-18T12:19:52Z",
-      "last_seen": "2026-08-02T10:25:16Z",
-      "recurrence": 6,
+      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
+      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
+      "first_seen": "2026-07-31T12:24:18Z",
+      "last_seen": "2026-08-02T12:21:17Z",
+      "recurrence": 5,
       "severity": "medium",
-      "category": "spec",
-      "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
+      "category": "goal-check",
+      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
       "evidence": [
-        "5531f24 (this run): Phase 8 self-review executed and produced findings — the phase is neither disabled nor removed, so the documented sunset no longer reflects intent.",
-        "b21428a (this run): Phase 8 (TEMP_PHASE_8) self-review executed again and produced bumps; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present — currentDate 2026-07-18 = 18 days overdue; phase is de-facto permanent.",
-        "eba1be6 (2026-07-18T18:05 run): Phase 8 (TEMP_PHASE_8) executed again — currentDate 2026-07-18 = 18 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md markers still present, phase de-facto permanent.",
-        "aa9cc0c2 (this run): Phase 8 (TEMP_PHASE_8) self-review executed again -- currentDate 2026-07-31 = 31 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present, phase de-facto permanent.",
-        "549a2a4 (2026-08-02 10:20 run): Phase 8 (TEMP_PHASE_8) self-review executed again -- currentDate 2026-08-02 = 33 days past the documented 2026-06-30 removal deadline; dispatcher-prompt.md 'REMOVE BY 2026-06-30' markers still present, phase de-facto permanent."
+        "goal-check GC3 floor is a fixed 36 with no coverage-exhaustion / not-started==0 branch, so the gate is permanently red once the project converges.",
+        "d08a8d0: goal-check GC3-buffer-bounds=FAIL (claimable<=6, mostly dep/assigned; effective ~2 << floor 36)",
+        "0cceb68 (2026-08-02 run): GC3-buffer-bounds=FAIL (record-only, expected under starvation) while backlog is legitimately exhausted (only open rows are the 5 in-flight tasks); refill machinery healthy (Tier-1d 1 finding, Tier-2 http=200) -- same hard FAIL as a genuine refill defect.",
+        "549a2a4 (2026-08-02 10:20 run): GC3-buffer-bounds=FAIL record-only; honest_claimable=0/72. Tier1 coverage exhausted (47/49 done, 2 partial, no open stories); Tier1b avail=0, Tier1c retry avail=0; Tier1d generator emitted 1 finding; Tier2 kick http=200 -- legitimate backlog exhaustion, not a bug, but GC3 still reports FAIL.",
+        "2b04105 (12:16 run): GC3-buffer-bounds=FAIL enforce rc=0 while backlog legitimately dry (backlog.json + retry-remint both empty) — same hard FAIL as a genuine refill defect."
       ],
-      "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
-      "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
+      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
+      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
+      "effort": "medium",
       "status": "open",
       "operator_notes": ""
     },
@@ -429,28 +452,6 @@
       "proposed_fix": "In .research/retry-remint.sh: (1) when minting gh-issue-<N>-retryK, copy issue_ref (number/url) from the source gh-issue-<N> row so T30 passes on first write; (2) before minting, check the source issue/task_id against assignments-archive.json terminal ids AND live issue state (closed) -> skip the remint if already landed/closed (prevents ghost retries and T31 near-misses). Add/extend a self-test asserting every freshly-minted retry row carries issue_ref and has no terminal archive twin.",
       "effort": "small",
       "affected_artifact": ".research/retry-remint.sh + .research/dispatcher-self-test.sh (T30/T31)",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
-      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
-      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
-      "first_seen": "2026-07-31T12:24:18Z",
-      "last_seen": "2026-08-02T10:25:16Z",
-      "recurrence": 4,
-      "severity": "medium",
-      "category": "goal-check",
-      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
-      "evidence": [
-        "buffer-starved-below-floor-no-refill-path evidence already records 'coverage 47 done/2 partial, backlog terminal, so refill paths structurally cannot recover' (b21428a, df1cfd7) -- the condition has shifted from 'refill dead-zone bug' to 'legitimate convergence', but GC3 still emits FAIL either way.",
-        "goal-check GC3 floor is a fixed 36 with no coverage-exhaustion / not-started==0 branch, so the gate is permanently red once the project converges.",
-        "d08a8d0: goal-check GC3-buffer-bounds=FAIL (claimable<=6, mostly dep/assigned; effective ~2 << floor 36)",
-        "0cceb68 (2026-08-02 run): GC3-buffer-bounds=FAIL (record-only, expected under starvation) while backlog is legitimately exhausted (only open rows are the 5 in-flight tasks); refill machinery healthy (Tier-1d 1 finding, Tier-2 http=200) -- same hard FAIL as a genuine refill defect.",
-        "549a2a4 (2026-08-02 10:20 run): GC3-buffer-bounds=FAIL record-only; honest_claimable=0/72. Tier1 coverage exhausted (47/49 done, 2 partial, no open stories); Tier1b avail=0, Tier1c retry avail=0; Tier1d generator emitted 1 finding; Tier2 kick http=200 -- legitimate backlog exhaustion, not a bug, but GC3 still reports FAIL."
-      ],
-      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
-      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
-      "effort": "medium",
       "status": "open",
       "operator_notes": ""
     },
