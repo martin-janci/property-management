@@ -1,0 +1,29 @@
+{
+  "generated": "2026-08-02T00:00:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "signals": [
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_slovak_vote, wired POST /api/v1/regional-compliance/slovak/voting/validate) and :799-805 (validate_czech_vote, wired POST /api/v1/regional-compliance/czech/svj/vote/validate) — the legal-validity endpoints fall back to a HARDCODED 75.00% participation (`Decimal::new(7500, 2)`) whenever `vote.eligible_count` resolves to 0 (`eligible_count.unwrap_or(0)` at :249-250 / :795-796). A vote whose eligible-voter count was never recorded (NULL/0) is therefore treated as having 75% turnout — a fabricated value, not derived from any real data.",
+        "Same handlers, :261-279 / :807-825 — `approval_percentage` defaults to a hardcoded 80.00% (`Decimal::new(8000, 2)`, and an inline `unwrap_or(80.0)`) whenever `vote.results` fails to deserialize into `VoteResults`, or has no questions, or the first question has no options. So an unparseable / empty results blob is scored as 80% approval.",
+        "Impact: `quorum_met = actual_participation >= required_quorum` and `is_valid = quorum_met && approval_percentage >= required_quorum` (:281-282) are computed FROM these fabricated defaults. With required_quorum <= 75/80% (simple_majority seeds 50.01%), a vote that has NO eligible-count and NO parseable results returns `quorum_met=true, is_valid=true` — a false 'legally valid' verdict emitted from placeholder numbers, on a production compliance endpoint. The validation_notes still assert 'Vote validation computed against seeded database jurisdiction rules', giving false assurance the tallies were real.",
+        "Contrast confirms it is a defect, not intent: the same handler already reads the REAL participation_count/eligible_count and parses vote.results when present, so the data path exists; the fallbacks silently substitute passing constants instead of surfacing INSUFFICIENT_DATA / 422. Fix direction: when eligible_count == 0 or results are unparseable/empty, return a determinate 'cannot validate — missing tally data' outcome (or is_valid=false with an explicit note) rather than defaulting to 75% / 80%. Applies verbatim to both the Slovak and Czech validators.",
+        "Distinct from the already-tracked `code-review-api-handlers-regional-compliance-fabricated-minutes` (2026-07-23) / `code-review-regional-compliance-hardcoded-vote-minutes` (2026-08-01): those cover the get_slovak_vote_minutes / get_czech_usneseni document builders returning all-constant bodies. THIS finding is the separate validate_* quorum/approval logic returning a fabricated PASS from fallback defaults."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

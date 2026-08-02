@@ -272,23 +272,6 @@
         "score": 3,
         "vector": "security"
       }
-    },
-    {
-      "id": "code-review-api-core-idempotency-client-tenant",
-      "action": "Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-02T06:05:28Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-02T06:05:28Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

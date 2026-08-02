@@ -1641,6 +1641,28 @@
       "merge_attempted_at": "2026-07-31T02:31:15Z"
     },
     {
+      "task_id": "code-review-api-core-idempotency-client-tenant",
+      "branch": "auto-impl/code-review-api-core-idempotency-client-a4d3d7f7",
+      "status": "merged",
+      "claimed_at": "2026-08-02T08:09:45Z",
+      "last_updated": "2026-08-02T10:17:09Z",
+      "status_changed_at": "2026-08-02T10:17:09Z",
+      "pr_number": 2626,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2626",
+      "merged_at": "2026-08-02T10:15:13Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2626 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=idempotency scope now from server-side ResolvedTenant; fmt+clippy(-Dwarnings,all-targets) green; sqlx DB tests deferred to CI (no local Postgres)",
+      "reviewer_summary": "verdict=approve head_oid=cdf26cfdce79425ec2175c20549815a67b19f82e note=scope-from-resolved-tenant-verified; ordering-ok; tests-strong; CI-green; drift-justified; approve-via-comment (self-approve blocked)",
+      "last_reviewed_oid": "cdf26cfdce79425ec2175c20549815a67b19f82e",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-02T10:12:56Z"
+    },
+    {
       "task_id": "code-review-api-core-osrng-expect",
       "branch": "auto-impl/code-review-api-core-osrng-expect-ad4b72ce",
       "status": "merged",
@@ -10729,5 +10751,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-02T04:10:56Z"
+  "archived_at": "2026-08-02T10:17:18Z"
 }
