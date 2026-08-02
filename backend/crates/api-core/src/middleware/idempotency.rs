@@ -164,22 +164,26 @@ pub async fn handle_idempotent_request(
     response
 }
 
+/// Derive the idempotency cache-scope tenant.
+///
+/// SECURITY: the scope MUST come from the server-side [`ResolvedTenant`]
+/// injected by `host_tenant_middleware` — the exact same source RLS/tenant
+/// extraction uses — and NEVER from a client-supplied header. The middleware
+/// previously fell back to the raw `X-Tenant-ID` request header when no
+/// `ResolvedTenant` was present; a caller could set that header to another
+/// organization's id and land in its cache scope, enabling cross-tenant
+/// idempotency-key collision (poisoning another tenant's replay) or bypass.
+/// This function no longer reads any request header.
 fn tenant_scope(request: &Request<Body>) -> String {
-    if let Some(resolved) = request.extensions().get::<ResolvedTenant>() {
-        if resolved.is_platform_host() {
-            return "platform-host".to_string();
-        }
-        return resolved.organization_id.to_string();
+    match request.extensions().get::<ResolvedTenant>() {
+        Some(resolved) if resolved.is_platform_host() => "platform-host".to_string(),
+        Some(resolved) => resolved.organization_id.to_string(),
+        // No resolved tenant means the request reached us without
+        // `host_tenant_middleware` running (e.g. a public/allowlisted path).
+        // Fall back to a fixed server-side sentinel that no client input can
+        // influence — deliberately NOT the `X-Tenant-ID` header.
+        None => "global".to_string(),
     }
-
-    request
-        .headers()
-        .get("X-Tenant-ID")
-        .and_then(|value| value.to_str().ok())
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .unwrap_or("global")
-        .to_string()
 }
 
 fn request_hash(method: &str, path: &str, body: &[u8]) -> String {
