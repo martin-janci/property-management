@@ -15,6 +15,7 @@
 
 pub mod audit;
 pub mod features;
+pub mod oauth;
 pub mod ops;
 pub mod tenants;
 
@@ -41,6 +42,7 @@ pub use features::{
     delete_feature_flag_override, get_feature_flag, get_resolved_feature_flags, list_feature_flags,
     toggle_feature_flag, update_feature_flag,
 };
+pub use oauth::get_oauth_token_usage;
 pub use ops::{
     acknowledge_alert, acknowledge_announcement, create_system_announcement,
     delete_scheduled_maintenance, delete_system_announcement, get_active_announcements,
@@ -81,6 +83,11 @@ pub fn router() -> Router<AppState> {
         .route(
             "/stats",
             get(get_platform_stats).layer(require_capability(Capability::AuditRead)),
+        )
+        // OAuth token-usage analytics (Epic 10A — data audit, follow-up #2628)
+        .route(
+            "/oauth/token-usage",
+            get(get_oauth_token_usage).layer(require_capability(Capability::AuditRead)),
         )
         // Feature flag management (Story 10B.2)
         .route(

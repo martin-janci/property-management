@@ -153,6 +153,24 @@ async fn count_audit_rows(pool: &PgPool, user_id: Uuid, action: &str) -> i64 {
     .unwrap_or(0)
 }
 
+/// Count `oauth_token_events` rows for a given client + event_type (Epic 10A,
+/// #2628). Used to assert the token-lifecycle producer actually writes analytics
+/// rows — on `dev` before the producer was wired this table stayed empty for
+/// every flow.
+async fn count_token_events(pool: &PgPool, client_id: &str, event_type: &str) -> i64 {
+    sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM oauth_token_events
+        WHERE client_id = $1 AND event_type = $2
+        "#,
+    )
+    .bind(client_id)
+    .bind(event_type)
+    .fetch_one(pool)
+    .await
+    .unwrap_or(0)
+}
+
 /// Run the full PKCE S256 authorization-code flow for a **confidential** client
 /// and return `(access_token, refresh_token)`.
 ///
@@ -2906,6 +2924,149 @@ mod admin_client_audit {
             row.1,
             Some(id),
             "audit resource_id must reference the updated client UUID"
+        );
+    }
+}
+
+// ─── module: token_usage_analytics ───────────────────────────────────────────
+//
+// Epic 10A (data audit) follow-up #2628. PR #2526 landed the
+// `oauth_token_events` data layer (model + repository + migration) but nothing
+// on the running token path called it, so the table stayed permanently empty
+// and the ecosystem-health dashboard rendered all-zeros. These tests pin the
+// producer wired into `OAuthService`: every issuance / refresh / revocation on
+// the real `/api/v1/oauth/*` router must persist a corresponding analytics row.
+// On `dev` (no producer) each assertion below fails with an observed count of 0.
+
+#[cfg(test)]
+mod token_usage_analytics {
+    use super::*;
+
+    /// A full lifecycle — authorization_code issuance, refresh, then access-token
+    /// revocation — must write exactly one `issued`, one `refreshed`, and one
+    /// `revoked` row for the client, and the per-client rollup must reflect them.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_token_lifecycle_writes_analytics_events(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // 1) authorization_code exchange → one `issued` event.
+        let (access_token, refresh_token) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        assert_eq!(
+            count_token_events(&pool, &client_id, "issued").await,
+            1,
+            "authorization_code exchange must record an `issued` token-usage event"
+        );
+
+        // 2) refresh_token grant → one `refreshed` event.
+        let refresh_body = form_body(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", &refresh_token),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let refresh_resp = app
+            .execute(form_request("/api/v1/oauth/token", &refresh_body))
+            .await;
+        assert_eq!(
+            refresh_resp.status,
+            StatusCode::OK,
+            "refresh must succeed. body={}",
+            refresh_resp.text()
+        );
+        assert_eq!(
+            count_token_events(&pool, &client_id, "refreshed").await,
+            1,
+            "refresh_token grant must record a `refreshed` token-usage event"
+        );
+
+        // 3) RFC 7009 revocation of the access token → one `revoked` event.
+        let revoke_status = revoke_rfc7009(
+            &app,
+            &access_token,
+            "access_token",
+            &client_id,
+            &client_secret,
+        )
+        .await;
+        assert_eq!(
+            revoke_status,
+            StatusCode::OK,
+            "revoke must succeed per RFC 7009"
+        );
+        assert_eq!(
+            count_token_events(&pool, &client_id, "revoked").await,
+            1,
+            "revocation must record a `revoked` token-usage event"
+        );
+
+        // The per-client rollup the dashboard reads must now be non-empty and
+        // consistent with the three lifecycle transitions above.
+        let repo = db::repositories::OAuthTokenEventRepository::new(pool.clone());
+        let since = chrono::Utc::now() - chrono::Duration::hours(1);
+        let usage = repo
+            .usage_per_client(since)
+            .await
+            .expect("usage_per_client");
+        let row = usage
+            .iter()
+            .find(|u| u.client_id == client_id)
+            .expect("client must appear in the per-client rollup");
+        assert_eq!(row.issued_count, 1, "rollup issued_count");
+        assert_eq!(row.refreshed_count, 1, "rollup refreshed_count");
+        assert_eq!(row.revoked_count, 1, "rollup revoked_count");
+
+        let totals = repo.totals(since).await.expect("totals");
+        assert_eq!(totals.issued_count, 1);
+        assert_eq!(totals.refreshed_count, 1);
+        assert_eq!(totals.revoked_count, 1);
+        assert_eq!(totals.active_clients, 1);
+    }
+
+    /// A best-effort recording failure must never break the OAuth flow: the
+    /// issuance path still returns tokens even though we assert the analytics
+    /// row is present on the happy path. This test focuses on the happy-path
+    /// contract; the log-and-ignore behaviour is unit-covered by the service.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_public_client_issuance_records_event(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+
+        let (verifier, challenge) = pkce_pair();
+        let code = consent_and_get_code(
+            &app,
+            &user_at,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
+        let token_form = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("code_verifier", &verifier),
+        ]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &token_form))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::OK,
+            "public client token exchange must succeed. body={}",
+            resp.text()
+        );
+        assert_eq!(
+            count_token_events(&pool, &client_id, "issued").await,
+            1,
+            "public client authorization_code exchange must record an `issued` event"
         );
     }
 }

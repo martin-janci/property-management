@@ -26,6 +26,13 @@ const SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 /// last successful run.
 const LAYOUT_CHANGE_EVENTS_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
 
+/// Minimum interval between successive `oauth_token_events` retention prunes
+/// (Epic 10A, #2628). Mirrors the audit-trail cadence above: the scheduler
+/// ticks every ~60s, but the token-usage analytics table only needs a daily
+/// prune — this gate skips the prune until 24h have elapsed since the last
+/// successful run.
+const OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS: i64 = 24;
+
 impl Scheduler {
     // ========================================================================
     // Issue #2531: support_tooling_events retention prune (daily cadence)
@@ -157,6 +164,73 @@ impl Scheduler {
 
         Ok(())
     }
+
+    // ========================================================================
+    // Epic 10A (#2628): oauth_token_events retention prune (daily cadence)
+    // ========================================================================
+
+    /// Prune aged rows from the `oauth_token_events` token-usage analytics table
+    /// past the configured retention window (Epic 10A, #2628).
+    ///
+    /// The prune calls [`OAuthTokenEventRepository::cleanup_before`], which
+    /// existed and was tested since PR #2526 but was never invoked, so the
+    /// analytics table (now fed by the OAuth issuance/refresh/revocation path)
+    /// would grow without bound. This tick wires it into the scheduler,
+    /// mirroring [`Scheduler::prune_support_tooling_events`] (issue #2531) and
+    /// [`Scheduler::prune_layout_change_events`] (issue #2563).
+    ///
+    /// The repository takes an absolute cutoff timestamp rather than a day
+    /// count, so the retention window is converted to a `now - N days` cutoff
+    /// here.
+    ///
+    /// Cadence: the scheduler ticks every ~60s, but retention only needs to run
+    /// once per day. A stored last-run timestamp gates the prune to at most one
+    /// run per [`OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS`] window. The stamp
+    /// is written only after a successful prune, so a failed run retries next
+    /// tick.
+    pub(super) async fn prune_oauth_token_events(&self) -> Result<(), sqlx::Error> {
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+
+        // Daily gate — skip until 24h have elapsed since the last prune.
+        {
+            let last = self
+                .last_oauth_token_events_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            if !oauth_token_events_prune_due(*last, now, min_interval) {
+                return Ok(());
+            }
+        }
+
+        // Note: Scheduler runs in background without user context. The
+        // oauth_token_events table is system-scoped (no org / RLS), so this
+        // privileged retention job needs no tenant context.
+        let cutoff = now - chrono::Duration::days(self.config.oauth_token_events_retention_days);
+        let deleted = self.oauth_token_event_repo.cleanup_before(cutoff).await?;
+
+        // Stamp only after a successful prune so a transient DB error retries on
+        // the next tick instead of being suppressed for a full day.
+        {
+            let mut last = self
+                .last_oauth_token_events_prune_at
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            *last = Some(now);
+        }
+
+        if deleted > 0 {
+            tracing::info!(
+                deleted = deleted,
+                retention_days = self.config.oauth_token_events_retention_days,
+                "Pruned aged oauth_token_events"
+            );
+            let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
+            metrics.oauth_token_events_pruned += deleted;
+        }
+
+        Ok(())
+    }
 }
 
 /// Decide whether the daily `support_tooling_events` retention prune is due
@@ -181,6 +255,22 @@ fn support_tooling_prune_due(
 /// as a pure function so the daily-cadence gate is testable without a DB or a
 /// live clock.
 fn layout_change_events_prune_due(
+    last: Option<chrono::DateTime<chrono::Utc>>,
+    now: chrono::DateTime<chrono::Utc>,
+    min_interval: chrono::Duration,
+) -> bool {
+    match last {
+        None => true,
+        Some(t) => now.signed_duration_since(t) >= min_interval,
+    }
+}
+
+/// Decide whether the daily `oauth_token_events` retention prune is due (Epic
+/// 10A, #2628). Returns `true` on the first run (`last` is `None`) or once at
+/// least `min_interval` has elapsed since the last successful prune. Extracted
+/// as a pure function so the daily-cadence gate is testable without a DB or a
+/// live clock.
+fn oauth_token_events_prune_due(
     last: Option<chrono::DateTime<chrono::Utc>>,
     now: chrono::DateTime<chrono::Utc>,
     min_interval: chrono::Duration,
@@ -295,5 +385,50 @@ mod tests {
             now,
             min_interval
         ));
+    }
+
+    // ------------------------------------------------------------------
+    // Epic 10A (#2628): daily-cadence gate for the oauth_token_events prune.
+    //
+    // The scheduler ticks every ~60s but the retention prune must run at
+    // most once per day. These pin the gate that stops the ~60s tick loop
+    // from re-pruning on every tick — the behaviour that distinguishes the
+    // fix (bounded daily prune) from a naive "prune every tick" wiring.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_oauth_token_events_prune_due_on_first_run() {
+        // Never pruned before → due immediately.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        assert!(oauth_token_events_prune_due(None, now, min_interval));
+    }
+
+    #[test]
+    fn test_oauth_token_events_prune_skipped_within_interval() {
+        // Pruned 1h ago, interval is 24h → NOT due (the every-60s tick must
+        // not re-prune).
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - chrono::Duration::hours(1);
+        assert!(!oauth_token_events_prune_due(Some(last), now, min_interval));
+    }
+
+    #[test]
+    fn test_oauth_token_events_prune_due_after_interval() {
+        // Pruned 25h ago, interval is 24h → due again.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - chrono::Duration::hours(25);
+        assert!(oauth_token_events_prune_due(Some(last), now, min_interval));
+    }
+
+    #[test]
+    fn test_oauth_token_events_prune_due_at_exact_boundary() {
+        // Exactly at the interval boundary → due (>= comparison).
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(OAUTH_TOKEN_EVENTS_PRUNE_MIN_INTERVAL_HOURS);
+        let last = now - min_interval;
+        assert!(oauth_token_events_prune_due(Some(last), now, min_interval));
     }
 }
