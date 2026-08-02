@@ -5810,7 +5810,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review reality-server 2026-08-01"
       ],
@@ -5825,7 +5825,12 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-02",
-      "plan": "plans/code-review-reality-server-sso-session-invalidate-swallowed.md"
+      "plan": "plans/code-review-reality-server-sso-session-invalidate-swallowed.md",
+      "reconciled": {
+        "at": "2026-08-02T06:04:24Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-reality-server-db-error-leak-to-client",
@@ -5833,7 +5838,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review reality-server 2026-08-01"
       ],
@@ -5851,7 +5856,12 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-02",
-      "plan": "plans/code-review-reality-server-db-error-leak-to-client.md"
+      "plan": "plans/code-review-reality-server-db-error-leak-to-client.md",
+      "reconciled": {
+        "at": "2026-08-02T06:04:24Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-reality-server-password-reset-no-transport",
@@ -5859,7 +5869,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review reality-server 2026-08-01"
       ],
@@ -5873,7 +5883,12 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-02T06:04:24Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "bug-scheduler-notifications-fire-once",
@@ -5881,7 +5896,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "dropped",
       "sources": [
         "Issue #2612",
         "PR #2608"
@@ -5899,7 +5914,12 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
-      "plan": "plans/bug-scheduler-notifications-fire-once.md"
+      "plan": "plans/bug-scheduler-notifications-fire-once.md",
+      "reconciled": {
+        "at": "2026-08-02T06:04:24Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "bug-direct-upload-drops-building-id",
@@ -5935,7 +5955,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "Issue #2575",
         "PR #2572"
@@ -5951,7 +5971,12 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-02T06:04:24Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-reality-server-agency-members-unauth-idor",

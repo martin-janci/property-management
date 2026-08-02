@@ -1,0 +1,57 @@
+{
+  "generated": "2026-08-02",
+  "segment": "ppt-web-ui",
+  "source": "rotating-expert-review",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing dashboard renders from hardcoded module-level mock constants: mockDashboardSummary (:17), mockPropertyCards (:30), mockCashFlowTrend (:78), mockBenchmark (:135), mockAlerts (:182), mockMetrics (:208). There is no useQuery/useMutation and no API call anywhere in the file — every KPI tile, cash-flow chart, benchmark card, alert, property card and financial-metrics table shows fabricated numbers to the user.",
+        "All interactive controls in the page are no-op stubs: PerformanceAlert onMarkRead (:328) and onResolve (:331) are empty `// TODO: wire to alerts API` bodies; PropertyCard onClick (:365) is `// TODO: navigate to property detail route`; the 'View All Properties' button (:356-358) has no onClick handler at all. A user can click these and nothing happens.",
+        "Impact: a manager viewing the Portfolio Performance dashboard is shown plausible-but-fake portfolio value / equity / NOI / cash-flow / LTV figures with no loading/error/empty states and no live data, which is misleading for a financial screen. Fix: wire the page to the portfolio-performance API (query hooks + real mutations for alert mark-read/resolve and property navigation), or gate the route behind a feature flag / 'coming soon' state until the API is integrated.",
+        "Scope note: this is the only fully-mocked page found in the segment; sibling pages (disputes MediationWorkspacePage, documents MoveFolderDialog, compliance pages) do call real API hooks."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() text is cast straight to a typed enum with no validation before being POSTed to the moderation API: `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (:143). A typo or unexpected casing ('Remove', 'ban', anything) passes the `if (!actionType) return` guard and is sent verbatim to takeAction.mutate — the union cast is a compile-time lie, TypeScript does not narrow it at runtime.",
+        "Same pattern at ContentModerationPage.tsx:169-181 — `decision: decision as 'uphold' | 'overturn'` from window.prompt for appeal decisions; and frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:143 — `decisionInput` window.prompt cast to the AML decision union ('approve','reject','escalate') then sent to review-assessment.",
+        "Impact: these are compliance / AML / content-moderation write paths (legally significant actions). An invalid enum reaches the backend and either 400s with a raw 'Failed to take action' alert (poor UX, no field-level feedback) or, if the backend is lenient, records a malformed action_type. The `as <union>` casts across the API boundary are exactly the unsafe-cast smell flagged for this segment. Fix: validate the prompt result against the allowed set (or replace window.prompt with a select/modal — already tracked as the Phase-2 TODO on the adjacent lines) before calling mutate."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "Numerous user-facing browser-dialog strings are hardcoded English instead of going through react-i18next `t(...)`, even though the surrounding pages import and use useTranslation for other text. Confirm/prompt/alert examples: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,114,157,171 ('Are you sure you want to delete this pet registration?', 'Approve this pet registration?', vehicle variants); accounting/pages/AccountingInvoiceManagementPage.tsx:89 ('Are you sure you want to delete this invoice?'); news/pages/NewsListPage.tsx:73 ('Are you sure you want to delete this article?'); voting/pages/VoteDetailPage.tsx:131 ('Reason for cancelling this vote?'); accounting/components/AccountingInvoiceForm.tsx:76 ('Please fill all required fields').",
+        "Also all compliance dialog + alert copy: ContentModerationPage.tsx:119,130,136,151,169,172,186 and AmlDashboardPage.tsx:116,127,131,143,150,156,169,173 and DsaReportsPage.tsx:108,112,124 use raw English window.prompt/alert strings.",
+        "Contrast with correctly-localized peers that prove the codebase convention: disputes/pages/MediationWorkspacePage.tsx:176 `window.confirm(t('disputes.mediation.sessions.cancelConfirm'))`, layout/DashboardCustomizePage.tsx:95 `t('layout.customize.resetConfirm')`, ai-chat/components/ChatInterface.tsx:79 `t('aiChat.confirmDelete')`.",
+        "Impact: low — these strings are invisible to sk/cs/de users of ppt-web (the app ships react-i18next; reality-web carries sk/cs/de/en). Fix: wrap each dialog/alert message in `t('<feature>.<key>')` and add the keys to the locale bundles. Note these dialogs are also flagged elsewhere as Phase-2 window.prompt→modal replacements, at which point the copy should be localized."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
