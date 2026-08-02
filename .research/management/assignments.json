@@ -1,13 +1,13 @@
 {
-  "generated": "2026-08-02T16:08:01Z",
+  "generated": "2026-08-02T18:13:16Z",
   "assignments": [
     {
       "task_id": "gh-issue-2628",
       "branch": "auto-impl/gh-issue-2628-c72c3399",
       "status": "in-progress",
       "claimed_at": "2026-08-02T14:09:28Z",
-      "last_updated": "2026-08-02T16:08:01Z",
-      "status_changed_at": "2026-08-02T14:09:28Z",
+      "last_updated": "2026-08-02T18:08:01Z",
+      "status_changed_at": "2026-08-02T18:08:01Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -19,7 +19,7 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
     }

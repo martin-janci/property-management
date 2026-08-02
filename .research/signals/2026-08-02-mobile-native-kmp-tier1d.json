@@ -1,0 +1,25 @@
+{
+  "generated": "2026-08-02",
+  "segment": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "findings_count": 1,
+  "source": "dispatcher-tier1d",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, so every publish attempt fails.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:107-126 — the screen is fully built (validation, submit spinner, success->onCreated navigation) and invokes onSubmit in scope.launch; the NotImplementedError is caught by result.fold(onFailure) and surfaced as the generic 'publish failed' banner, making the entire create-listing flow (UC-51.4) a reachable production dead-end.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:22-155 — the realtor repository exposes only listMyListings + analytics; there is no create/POST method, confirming the create-listing surface was never wired to reality-server and no test covers the submit path."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}
