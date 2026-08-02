@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-08-02T03:35:00Z",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true, "observed": "brief exists, H1 matches # 2026-08-02", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true, "observed": "true (last_commit_sha advanced 4fde35c5→c9c05b9; quiet_days 2→3)", "expected": "true" },
+    { "goal": "G3",  "passed": true, "observed": "true (all 246 ids unique)", "expected": "true" },
+    { "goal": "G4",  "passed": true, "observed": "true (signals[] empty this run)", "expected": "true" },
+    { "goal": "G5",  "passed": true, "observed": "cap: true (max score 6); decay: no aged-open items to check", "expected": "true" },
+    { "goal": "G6",  "passed": true, "observed": "no new plans this run", "expected": "no new plans OR each has adversarial-pass annotation" },
+    { "goal": "G7",  "passed": true, "observed": "0 new plans (≤2)", "expected": "≤2" },
+    { "goal": "G8",  "passed": true, "observed": "0 non-.research files staged", "expected": "0" },
+    { "goal": "G9",  "passed": true, "observed": "0 leak-pattern hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "observed": "diff exit 0", "expected": "diff exit 0" },
+    { "goal": "G11", "passed": true, "observed": "phase-failure honesty: no failed phases; brief lists 'none' correctly" },
+    { "goal": "G12", "passed": true, "observed": "all HEAD-committed plans still resolve (plans/ or _archive/)" },
+    { "goal": "G13", "passed": true, "observed": "archive: staged=7, HEAD=7 — non-shrinking" },
+    { "goal": "G14", "passed": true, "observed": "diff exit 0" },
+    { "goal": "G15", "passed": true, "observed": "auto_fix_actions=[] — trivially passes cap + idempotency + kill-switch" },
+    { "goal": "G16", "passed": true, "observed": "Phase 1.6 skipped this run → no-op; pm_cursor.next_index=2 within [0,7]" },
+    { "goal": "G17", "passed": true, "observed": "0 telegram token hits in diff", "expected": "0" }
+  ],
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — 0 signals emitted this run; the one backlog delta was an adversarial-pass status downgrade (`code-review-reality-server-agency-members-unauth-idor` → needs-human-judgement) which is not on the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile, stalled-review). Kill switch not set."
+}
