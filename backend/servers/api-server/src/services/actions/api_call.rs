@@ -147,83 +147,6 @@ impl Default for ApiCallExecutor {
     }
 }
 
-impl ApiCallExecutor {
-    /// Validate that a URL points to an external resource (SSRF protection).
-    fn validate_external_url(url: &str) -> Result<(), String> {
-        // Parse URL to extract host
-        let parsed = reqwest::Url::parse(url).map_err(|e| format!("Invalid URL: {}", e))?;
-
-        let host = parsed.host_str().ok_or("URL has no host")?;
-
-        // Block localhost and common internal hostnames
-        let blocked_hosts = [
-            "localhost",
-            "127.0.0.1",
-            "0.0.0.0",
-            "::1",
-            "[::1]",
-            "metadata.google.internal", // GCP metadata
-            "169.254.169.254",          // AWS/Azure/GCP metadata endpoint
-        ];
-
-        if blocked_hosts.iter().any(|&h| host.eq_ignore_ascii_case(h)) {
-            return Err(format!("Blocked host: {}", host));
-        }
-
-        // Check for private IP ranges. P1-06: the IPv6 branch previously
-        // accepted unique-local (fc00::/7), link-local (fe80::/10), and
-        // IPv4-mapped IPv6 (::ffff:10.0.0.1) — all of which let
-        // cloud-metadata / internal-network exfiltration through. Mirror
-        // the IPv4 checks for IPv6 too, and unwrap IPv4-mapped addresses
-        // before checking.
-        if let Ok(ip) = host.parse::<std::net::IpAddr>() {
-            let is_private = match ip {
-                std::net::IpAddr::V4(ipv4) => is_blocked_v4(ipv4),
-                std::net::IpAddr::V6(ipv6) => {
-                    if let Some(v4) = ipv6.to_ipv4_mapped() {
-                        is_blocked_v4(v4)
-                    } else {
-                        // unique-local fc00::/7
-                        let segs = ipv6.segments();
-                        let is_ula = (segs[0] & 0xfe00) == 0xfc00;
-                        // link-local fe80::/10
-                        let is_ll = (segs[0] & 0xffc0) == 0xfe80;
-                        // multicast
-                        let is_mc = (segs[0] & 0xff00) == 0xff00;
-                        ipv6.is_loopback() || ipv6.is_unspecified() || is_ula || is_ll || is_mc
-                    }
-                }
-            };
-
-            if is_private {
-                return Err(format!("Private/internal IP address not allowed: {}", ip));
-            }
-        }
-
-        // Block .local and .internal TLDs
-        if host.ends_with(".local") || host.ends_with(".internal") {
-            return Err(format!("Internal domain not allowed: {}", host));
-        }
-
-        Ok(())
-    }
-}
-
-fn is_blocked_v4(ipv4: std::net::Ipv4Addr) -> bool {
-    ipv4.is_private()
-        || ipv4.is_loopback()
-        || ipv4.is_link_local()
-        || ipv4.is_broadcast()
-        || ipv4.is_documentation()
-        || ipv4.is_unspecified()
-        // 169.254.x.x link-local (incl. cloud-metadata 169.254.169.254)
-        || (ipv4.octets()[0] == 169 && ipv4.octets()[1] == 254)
-        // 0.0.0.0/8
-        || ipv4.octets()[0] == 0
-        // CGNAT 100.64.0.0/10
-        || (ipv4.octets()[0] == 100 && (ipv4.octets()[1] & 0xc0) == 0x40)
-}
-
 #[async_trait]
 impl ActionExecutor for ApiCallExecutor {
     async fn execute(
@@ -239,17 +162,15 @@ impl ActionExecutor for ApiCallExecutor {
         // Substitute template variables in URL
         let url = context.substitute_template(&api_config.url);
 
-        // Validate URL - prevent SSRF attacks
-        if !url.starts_with("http://") && !url.starts_with("https://") {
-            return Err(ActionError::ConfigurationError(format!(
-                "Invalid URL: {}. Must start with http:// or https://",
-                url
-            )));
-        }
-
-        // Block requests to internal/private networks (SSRF protection)
-        if let Err(e) = Self::validate_external_url(&url) {
-            return Err(ActionError::ConfigurationError(e));
+        // Validate URL — SSRF defence via the shared, single-source-of-truth
+        // validator (`common::url_validation`). This replaces a private copy
+        // that had drifted from the canonical policy: it never rejected plain
+        // `http://` in production and missed IPv4 multicast / TEST-NET
+        // documentation ranges. Delegating keeps scheme allowlisting
+        // (http(s) only, plain-http gated to `RUST_ENV=development`), blocked
+        // hosts/TLDs, and private/reserved IP checks in lock-step everywhere.
+        if let Err(e) = common::url_validation::validate_external_url(&url) {
+            return Err(ActionError::ConfigurationError(e.to_string()));
         }
 
         // Build request
@@ -468,5 +389,37 @@ mod tests {
         assert_eq!(substituted["id"], "123");
         assert_eq!(substituted["name"], "Test Fault");
         assert_eq!(substituted["nested"]["value"], "123");
+    }
+
+    /// Regression: this executor used to carry a private SSRF validator that
+    /// had drifted from `common::url_validation`. Among its gaps, it accepted
+    /// IPv4 multicast (`224.0.0.0/4`) — the canonical validator rejects it.
+    /// This is an environment-independent proof that the executor now
+    /// delegates to the shared validator (the repo convention forbids
+    /// `std::env::set_var` in unit tests, so we avoid asserting the
+    /// `RUST_ENV`-gated plain-`http://` path here — that policy lives in and
+    /// is tested by `common::url_validation`). Fails on `dev` (old validator
+    /// let the request through to the network); passes here (rejected before
+    /// any request is issued).
+    #[tokio::test]
+    async fn execute_rejects_multicast_via_shared_validator() {
+        let executor = ApiCallExecutor::new();
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        // https:// keeps the scheme check environment-independent; the drift
+        // being exercised is purely the private/reserved IP-range coverage.
+        let config = serde_json::json!({ "url": "https://224.0.0.1/latest" });
+
+        match executor.execute(&config, &context).await {
+            Err(ActionError::ConfigurationError(_)) => {}
+            other => panic!(
+                "expected ConfigurationError (SSRF rejection) for a multicast \
+                 address, got: {other:?}"
+            ),
+        }
     }
 }
