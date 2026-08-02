@@ -238,6 +238,23 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-01T20:11:15Z"
+    },
+    {
+      "id": "code-review-reality-server-agency-members-unauth-idor",
+      "action": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-02T04:09:42Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-02T04:09:42Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
