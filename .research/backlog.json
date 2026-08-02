@@ -5950,6 +5950,30 @@
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-server-agency-members-unauth-idor",
+      "title": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review",
+        "segment:reality-server",
+        "expert:rust"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:345 list_members(State, Path(id)) takes NO RequestPrincipal extractor and performs NO check_agency_membership — it calls reality_portal_repo.get_agency_members(id) for any agency UUID and returns the full RealityAgencyMember roster (user_id, role, is_active, joined_at).",
+        "Auth on reality-server is per-handler via the RequestPrincipal/PortalPrincipal extractors, NOT global middleware: main.rs layers only security_headers, TraceLayer, host_tenant_middleware and DefaultBodyLimit (main.rs:527-569) — no route requires auth by default. Sibling handlers update_agency (agencies.rs:268) and update_branding (agencies.rs:322) explicitly call super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id); list_members omits both the extractor and the check.",
+        "Route is mounted and reachable: agencies.rs router() line 37 `.route(\"/{id}/members\", get(list_members))`, nested at main.rs:487 `.nest(\"/api/v1/agencies\", routes::agencies::router())`. Any anonymous caller can iterate agency UUIDs to enumerate every agency's member user_ids and role structure. Fix: add `principal: RequestPrincipal` + `check_agency_membership(id, principal.user_id)` before get_agency_members, matching the sibling handlers."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
     }
   ]
 }

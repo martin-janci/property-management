@@ -742,13 +742,14 @@
     "merged-review-followup-issue-2612",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2366",
-    "dep-update-noise-pr-2625"
+    "dep-update-noise-pr-2625",
+    "code-review-reality-server-agency-members-unauth-idor"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-07-29",
     "api-core": "2026-07-20",
-    "reality-server": "2026-07-18",
+    "reality-server": "2026-08-02",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
     "reality-web": "2026-07-28",
