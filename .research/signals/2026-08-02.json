@@ -1,26 +1,402 @@
 {
-  "generated": "2026-08-02T14:25:38Z",
-  "run_note": "same-day rerun (04:25Z was the first run) triggered by 'buffer-low: claimable=0/72 — pipeline drained; refill planner'. Phases 1.5/1.6 already consumed slots at 04:25Z; this rerun derived NO new signals. Actual Phase 2 work: resolution check marked 2 items 'done' via merged PRs #2626/#2627 and appended those PRs to sources. Earlier signals (code-review-api-core-{ssrf-validator-drift,idempotency-client-tenant}) remain in state.seen_signals from run 1.",
-  "signals": [],
+  "generated": "2026-08-02T22:21:50Z",
+  "run_note": "same-day rerun triggered by buffer-low: claimable=0/72 (backlog+retry pool exhausted, coverage 47/49 done). Backlog was drained (0 open items) — refill executed by folding 19 unseen dispatcher-generated tier1d code-review signals from 2026-08-01 + 2026-08-02 signal files into backlog.json. Advances last_pr_seen 2627→2629 (PR #2629 merged 20:07Z: OAuth token-usage analytics, no independent code-review signals). Promoted 1 plan (regional-compliance-hardcoded-vote-minutes, score 3/high). Other 18 new items stay open for future evidence to stack.",
+  "signals": [
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_request (:96, `SELECT * FROM llm_generation_requests WHERE id = $1`, no org filter), publish_description (:622, `UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *`, no org filter), plus find_prompt_template (:336), find_listing_description (:531), update_edited_description (:594) and find_photo_enhancement (:1514). Their safe replacements sit right beside them (find_generation_request_for_org :113 and publish_description_for_org :640, both carrying `AND organization_id = $2` with the doc-comment 'a caller in org B cannot read/publish org A's ...').",
+        "The live routes were correctly migrated to the safe variants (backend/servers/api-server/src/routes/ai/llm.rs:1442 calls find_generation_request_for_org, :1085 calls publish_description_for_org), and a grep across all of backend/ (excluding llm_document.rs itself and *_test.rs / tests/) returns ZERO non-test callers for all six un-scoped read/publish methods — so nothing is exploitable today. But the methods remain `pub` with a generic `E: Executor<'e, Database = Postgres>` bound, meaning a future caller can invoke them on the raw non-RLS `&state.db` pool (not an `acquire_with_rls(...)` guard), which reintroduces the exact cross-tenant read/mutate IDOR that #766/#816 closed — a latent security regression footgun. (Contrast update_generation_status at :205, also un-scoped `WHERE id = $1` but genuinely safe: its 3 live callers in llm.rs:619/669/975 all run on an org-context RlsPool guard where the Postgres RLS policy enforces isolation.)",
+        "Suggested fix: delete the six now-orphan un-scoped methods (they have no remaining callers), or, if an internal non-RLS use is still intended, gate them behind a narrower non-`pub` visibility / `#[doc(hidden)]` + rename (e.g. `*_unscoped_internal`) so a future route author cannot accidentally pick the IDOR-prone twin over the `_for_org` one. Cross-checked as net-new: no OPEN code-review-finding row currently tags segment=api-core, and the #766/#816 IDOR items in backlog.json cover the ROUTE-level fix, not this leftover-dead-repo-method footgun."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes document (Slovak 'zapisnica' under §14 z. 182/1993 Z.z. / Czech SVJ 'usneseni' under §1206 z. 89/2012 Sb.) but populate nearly every legally-material field with hardcoded placeholder constants instead of the actual vote's data.",
+        "Fabricated fields returned to the caller: meeting_date = NaiveDate 2024-01-15 (constant), meeting_location = 'Spolocenska miestnost, Hlavna 1, Bratislava' / 'Spolecenska mistnost, Hlavni 1, Praha' (constant), Czech svj_name = 'SVJ Hlavni 1' and ico = '12345678' (constant), total_ownership_shares = 10000, participating_shares = 7500, participation_percentage = 75.00, votes_for = 6000, votes_against = 1000, abstentions = 500, quorum_met = true, result_approved = true, participants = [] and questions = [] (empty). Only vote_id, building_id, title and the quorum_rule lookup reflect real data.",
+        "Impact: the endpoint emits a document that asserts a specific quorum was met and the motion was APPROVED with fabricated tallies (6000 for / 1000 against) for ANY vote id the caller can read — regardless of the vote's real outcome. This is a correctness/compliance defect on a legal artifact, not a cosmetic stub: a rejected or quorum-failed vote would still render as approved. Reachable in production (registered routes GET /api/v1/regional-compliance/slovak|czech vote minutes; vote lookup is RLS-scoped so the handler is live, only the body is fake).",
+        "Fix direction: derive meeting_date/location, ownership shares, participation, and the votes_for/against/abstentions tallies plus quorum_met/result_approved from the real poll + its cast votes (the same repo already loads the poll via vote_repo.find_poll_by_id_rls); do not hardcode the outcome. Same remediation applies verbatim to both the Slovak and Czech handlers."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode/getQRCodeAction/parsePPTPayload/parseVCard) and frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts (292 lines, exports parseDeepLink/createDeepLink/DeepLinkManager) have NO dedicated test files anywhere in the repo — `find . -name 'QRCodeScanner.test.*'` and `DeepLinkHandler.test.*` both return zero hits. The only related tests are deepLinkRouting.test.ts / useDeepLinkRouting.test.tsx (the routing hook pipeline) and universalLinks.test.ts (the URL normalizer) — none exercise parseQRCode or parseDeepLink directly.",
+        "These are exactly the functions that ingest attacker-controllable input: parseQRCode(content: string) at QRCodeScanner.ts:29 dispatches raw scanned QR payloads across four parsers (ppt:// deep links, {\"ppt\":...} JSON, BEGIN:VCARD vCards, http(s) URLs) and getQRCodeAction routes the result to app navigation. A scanned QR code / opened deep link is untrusted external input, so a parsing bug here is a crash or mis-navigation path (e.g. an auth-required route reached via a crafted link), not a cosmetic issue.",
+        "Suggested fix: add unit tests covering malformed / adversarial inputs for parseQRCode (empty string, oversized payload, malformed JSON with \"ppt\": key, truncated vCard, ppt:// links to requiresAuth routes, javascript:/data: schemes) and parseDeepLink (unknown host, path traversal in :id params, extra query params). This is the highest-value untested surface in the segment."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English user-facing copy instead of react-i18next t(), even though the app is i18n-enabled (23 screens already call useTranslation and the app ships sk/cs/de/en). 7 of the 15 have ZERO useTranslation/t() references — fully unlocalized: screens/settings/WidgetSettingsScreen.tsx, screens/faults/FaultsListScreen.tsx, screens/buildings/BuildingsScreen.tsx, screens/meters/MetersScreen.tsx, screens/meters/MeterDetailScreen.tsx, screens/messages/MessagesScreen.tsx, screens/messages/ThreadDetailScreen.tsx.",
+        "Concrete literals: FaultsListScreen.tsx:195-196 <Text>'No faults found'</Text> / 'All issues have been addressed'; BuildingsScreen.tsx:136 'No buildings'; MetersScreen.tsx:156 'No unit linked', :171 'No meters'; MeterDetailScreen.tsx:166 'Latest reading', :179 'Reading history', :203 'Submit new reading'; MessagesScreen.tsx:141 'Try again', :147 'No conversations'; WidgetSettingsScreen.tsx renders 'Widget Settings' / 'Widgets Not Available' / 'How to Add Widgets' across :87-192 with no t(). cs/de/sk users see English empty-states, buttons, and section titles across these screens.",
+        "Suggested fix: add useTranslation() to the 7 fully-unlocalized screens (and the empty-state/button literals in the other 8) and migrate the strings into the existing i18n namespaces, matching the pattern already used by the 23 localized screens (e.g. MeterReadingScreen already uses t('meters.*'))."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-untested-nfc-credentials",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines, class NFCAccessController) and frontend/apps/mobile/src/nfc/NFCCredentialManager.ts (321 lines, class NFCCredentialManager) have NO test files in the repo — the entire nfc/ directory is untested. These classes manage building-access credentials: NFCCredentialManager handles fetch/cache of encrypted credentials with corruption-recovery branches (NFCCredentialManager.ts:72 'Failed to fetch credentials, using cached', :272 'Stored credentials corrupted; discarding', :285 'Legacy credentials corrupted'), and NFCAccessController.ts:376 gates a wallet-add on 'credential has no encrypted data'.",
+        "Credential storage/decryption and corruption-fallback logic is security-sensitive and full of easy-to-regress edge cases (corrupted blob, legacy-format migration, empty encrypted payload). With zero unit coverage, any refactor of the credential cache or the encrypted-data guard ships unverified.",
+        "Suggested fix: add unit tests for NFCCredentialManager covering the corrupted-stored, corrupted-legacy, and cache-fallback paths, and for NFCAccessController's no-encrypted-data guard, so the credential lifecycle is pinned before the next change."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-135 — FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) but destructures ONLY `isLoading` from each (arLoading/overdueLoading/invoicesLoading); it never reads `isError`/`error`. FinancialDashboardPage (features/financial/pages/FinancialDashboardPage.tsx) has no `error` prop at all (props end at `isLoading?`).",
+        "On any query failure the fallbacks kick in silently: `totals = arReportData?.totals ?? {current:0,...,total:0}` (line ~87), `invoices = invoicesData?.invoices ?? []` (~95), `overdueInvoices = overdueData ?? []` (~96), and `isLoading` resolves to false. The dashboard then renders totalBalance=0, totalOutstanding=0, totalOverdue=0 and an empty invoice/overdue list — i.e. it presents FALSE '€0 / no overdue' financial data to a manager instead of an error state. Misleading zeroed data on a money path, not a cosmetic gap.",
+        "This is an inconsistency within the same file: the sibling FinancialReportsPageRoute at financial.tsx:437-438 already threads `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}` into its child, so the correct pattern exists here and only the dashboard route omits it. Suggested fix: capture `isError`/`error` from the three dashboard queries, add an `error` prop to FinancialDashboardPage, and render an error/retry state instead of zeroed metrics when any query fails."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-128 — the editable Budget Categories list is rendered with `categories.map((category, index) => (<div key={index} ...>`, where each row holds two controlled inputs (category.name text input and category.amount number input).",
+        "The list is mutable: addCategory (BudgetForm.tsx:81) appends and removeCategory (:85) deletes with `setCategories(categories.filter((_, i) => i !== index))`, which re-indexes every subsequent element. Combined with `key={index}`, removing (or reordering) a non-last row makes React reconcile controlled inputs by position, so the deleted row's DOM/input state is reused for the following category — the classic index-key-on-editable-list bug: values appear to shift onto the wrong row, and in-progress edits/focus land on the wrong field after a mid-list delete.",
+        "Suggested fix: give each category a stable id at creation time (e.g. crypto.randomUUID() in addCategory and in the initial useState seed) and key the row by that id instead of the array index, keeping updateCategory/removeCategory index-based against the current array."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx under frontend/apps/ppt-web/src/features/financial/{components,pages} contain no useTranslation()/i18n reference at all, even though ppt-web ships react-i18next with sk/cs/de/en and the rest of the app (e.g. features/disputes/*) is fully localized. Un-i18n'd files include BudgetForm.tsx, InvoiceForm.tsx, InvoiceList.tsx, PaymentForm.tsx, InvoiceDetail.tsx, ARAgingTable.tsx, BalanceSheetView.tsx, IncomeStatementView.tsx, CashFlowView.tsx, ReconciliationTable.tsx, and the pages FinancialDashboardPage.tsx + FinancialReportsPage.tsx.",
+        "Concrete hardcoded English literals in BudgetForm.tsx: :115 'Budget Categories', :121 '+ Add Category', :133 placeholder=\"Category name\", :148 placeholder=\"0.00'. cs/de/sk managers see English labels, buttons, and placeholders across budgeting, invoicing, payments, and financial reports.",
+        "Suggested fix: add useTranslation() to the 21 financial components/pages and migrate the visible strings into the existing i18n namespaces, matching the pattern already used elsewhere in ppt-web. This is a broad-but-shallow migration best tracked as one localization task for the financial module."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:120-132 — list_import_jobs (wired GET /api/v1/imports/jobs, PortalPrincipal-authenticated) forwards pagination straight to the repo with NO clamping: query.limit.unwrap_or(20) at :130 and query.offset.unwrap_or(0) at :131. ImportJobsQuery (imports.rs:90-94) types both as Option<i32>, so an attacker-supplied ?limit=2000000000 reaches the SQL LIMIT (unbounded result set / memory-amplification DoS) and ?offset=-1 reaches a Postgres OFFSET, which rejects negatives and surfaces as a 500.",
+        "This handler is the ONLY list endpoint in the reality-server routes that omits the clamp. Every sibling applies the exact guard it is missing: portal_listings.rs:431 `.clamp(1, 100)` + :432 `.max(0)`, reports.rs:290-291, agent_reviews.rs:85-86, realtors.rs:217-218, inquiries.rs:475/527, agencies.rs:124-125 `.clamp(1, 200)`, plus favorites.rs:275-279, saved_searches.rs:317-321 and articles.rs:355-359 which all do `.unwrap_or(DEFAULT).clamp(1, MAX)` on limit and `.max(0)` on offset. list_import_jobs is a straightforward oversight against an established, uniform repo convention.",
+        "Suggested fix: mirror the sibling handlers — `let limit = query.limit.unwrap_or(20).clamp(1, 100); let offset = query.offset.unwrap_or(0).max(0);` and pass the clamped values into list_import_jobs, so a hostile ?limit/?offset can neither exhaust memory nor trigger a negative-OFFSET 500."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:97-131 — get_price_map is PUBLIC and unauthenticated (handler takes only State + Query, no principal). Its process-global cache PRICE_MAP_CACHE (static HashMap<String, CacheEntry>, price_map.rs:32-38) is keyed on `format!(\"{}:{}:{}:{}\", mode, time_window, property_type, city)` at :125-131, where `city` (:53) and `property_type` (:55) are free-form, unvalidated user strings echoed straight into the key.",
+        "The only eviction is expiry-based: on each miss the write path does `cache.retain(|_, v| Instant::now() < v.expires_at)` (price_map.rs:236) then inserts an entry with a 1-hour TTL (:237-243, CACHE_TTL = 3600s at :41). There is NO size cap / LRU. Within any 1-hour window an attacker who varies `?city=` / `?property_type=` across unbounded distinct values inserts an unbounded number of live entries — retain never culls them because none have expired — giving a memory-exhaustion DoS on a public endpoint. Each distinct key is also a guaranteed cache miss, so every request additionally runs the heavy AVG(price/size_sqm) GROUP BY aggregation over the listings table (SQL at :158-213): a second, DB-amplification DoS axis.",
+        "Suggested fix: bound the cache (max entry count with LRU/random eviction, or an off-the-shelf bounded cache) AND validate `city`/`property_type` against the known set (or normalize/reject unknown values) before they become a cache key, so an unauthenticated caller cannot mint unbounded distinct keys or force unbounded uncached aggregations."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_slovak_vote, wired POST /api/v1/regional-compliance/slovak/voting/validate) and :799-805 (validate_czech_vote, wired POST /api/v1/regional-compliance/czech/svj/vote/validate) — the legal-validity endpoints fall back to a HARDCODED 75.00% participation (`Decimal::new(7500, 2)`) whenever `vote.eligible_count` resolves to 0 (`eligible_count.unwrap_or(0)` at :249-250 / :795-796). A vote whose eligible-voter count was never recorded (NULL/0) is therefore treated as having 75% turnout — a fabricated value, not derived from any real data.",
+        "Same handlers, :261-279 / :807-825 — `approval_percentage` defaults to a hardcoded 80.00% (`Decimal::new(8000, 2)`, and an inline `unwrap_or(80.0)`) whenever `vote.results` fails to deserialize into `VoteResults`, or has no questions, or the first question has no options. So an unparseable / empty results blob is scored as 80% approval.",
+        "Impact: `quorum_met = actual_participation >= required_quorum` and `is_valid = quorum_met && approval_percentage >= required_quorum` (:281-282) are computed FROM these fabricated defaults. With required_quorum <= 75/80% (simple_majority seeds 50.01%), a vote that has NO eligible-count and NO parseable results returns `quorum_met=true, is_valid=true` — a false 'legally valid' verdict emitted from placeholder numbers, on a production compliance endpoint. The validation_notes still assert 'Vote validation computed against seeded database jurisdiction rules', giving false assurance the tallies were real.",
+        "Contrast confirms it is a defect, not intent: the same handler already reads the REAL participation_count/eligible_count and parses vote.results when present, so the data path exists; the fallbacks silently substitute passing constants instead of surfacing INSUFFICIENT_DATA / 422. Fix direction: when eligible_count == 0 or results are unparseable/empty, return a determinate 'cannot validate — missing tally data' outcome (or is_valid=false with an explicit note) rather than defaulting to 75% / 80%. Applies verbatim to both the Slovak and Czech validators.",
+        "Distinct from the already-tracked `code-review-api-handlers-regional-compliance-fabricated-minutes` (2026-07-23) / `code-review-regional-compliance-hardcoded-vote-minutes` (2026-08-01): those cover the get_slovak_vote_minutes / get_czech_usneseni document builders returning all-constant bodies. THIS finding is the separate validate_* quorum/approval logic returning a fabricated PASS from fallback defaults."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, so every publish attempt fails.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:107-126 — the screen is fully built (validation, submit spinner, success->onCreated navigation) and invokes onSubmit in scope.launch; the NotImplementedError is caught by result.fold(onFailure) and surfaced as the generic 'publish failed' banner, making the entire create-listing flow (UC-51.4) a reachable production dead-end.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:22-155 — the realtor repository exposes only listMyListings + analytics; there is no create/POST method, confirming the create-listing surface was never wired to reality-server and no test covers the submit path."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — the central `apiRequest` helper (backing every useQuery/useMutation in the app) reads the bearer token from SecureStore once (:66) and, on any non-ok response, just `throw new Error(message)` (:91). There is NO 401 branch, NO token-refresh attempt, and NO single-retry after refresh. A 401 from an expired access token is surfaced to the UI as a generic error identical to any other HTTP failure.",
+        "The recovery capability EXISTS but is never wired in: contexts/AuthContext.tsx defines `refreshToken()` (:209) that reads `ppt_refresh_token` from SecureStore and POSTs `/api/v1/auth/refresh` (:217-222). Grep across the whole app confirms `refreshToken()` is invoked ONLY from tests (test/integration/auth.integration.test.tsx:405,433,460) — never from production code. There is no `setInterval`/`setTimeout` proactive refresh and no 401 interceptor in AuthContext or useApi.",
+        "Impact: the backend uses short-lived access tokens with refresh-token rotation (docs/api/README.md). Once the access-token TTL lapses — which is guaranteed to happen in any normal session — every authenticated query and mutation fails with a spurious error, even though the client holds a valid refresh token that would transparently restore the session. The user is effectively soft-logged-out until they manually kill and re-login. Fix: in `apiRequest`, on a 401, call `AuthContext.refreshToken()` (or a shared refresh routine) once and retry the request; or add a proactive refresh timer keyed off the access-token `exp` claim (the code already decodes JWT claims via utils/jwt in getTenantId). Confidence medium: the missing-wiring is unambiguous from source; exact TTL-triggered timing is not runtime-confirmed."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 — `validateAccess` decides credential expiry (`new Date(credential.validUntil) < now`, :275) and time-of-day access windows (:299-336) entirely from device-local `new Date()` (:250, `now.getHours()`/`now.getDay()` :301-303). Device wall-clock is user-controllable; a holder of an expired or time-restricted credential can roll the phone clock back to make `validateAccess` return `granted: true`.",
+        "That client-side `granted` result is not merely advisory display: it GATES the physical transmit — `NativeNFC.transmitCredential(credential.encryptedData)` is only reached when `validationResult.granted` (NFCAccessController.ts:190-196). So clock tampering directly changes whether the credential is presented to the reader.",
+        "Impact: if the door reader / backend does NOT independently re-validate expiry and time-restrictions server-side, this is a physical-access bypass; if it does, this is still a defense-in-depth gap that lets revoked/expired credentials be transmitted. Fix: derive `now` from a trusted/monotonic or server-synced time source for the expiry + time-restriction checks (or make the reader authoritative and treat the client gate as UX-only). Confidence medium: exploitability depends on reader-side enforcement which is out of this segment's scope, but relying solely on device clock for credential expiry is a confirmed anti-pattern in the source."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files — `find frontend/apps/mobile -name '*.test.*'` returns no nfc/ entry, and the covered-module list spans components/, config/, hooks/, navigation/, qrcode/, services/, utils/ and screens/{announcements,buildings,dashboard,documents,faults,forms,leases,messages,meters,neighbors,voting} but not nfc/.",
+        "These are the app's most security- and correctness-sensitive modules yet the non-trivial logic is untested: validateAccess's midnight-crossing time-window arithmetic (NFCAccessController.ts:318-321 `if (endMinutes < startMinutes) return currentMinutes >= startMinutes || currentMinutes <= endMinutes`), the status→denial-reason mapping (:256-262), and NFCCredentialManager's one-time SecureStore migration from the legacy AsyncStorage key with corrupt-data discard (NFCCredentialManager.ts:266-293).",
+        "Impact: a regression in the time-window or expiry logic silently grants or denies physical access with no failing test to catch it. Fix: add unit tests for validateAccess (each denial reason, expiry boundary, normal + midnight-crossing time windows) and for the credential-manager load/migrate/corrupt-discard paths. Low severity (test-coverage gap) but on a security-critical module."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup ONLY disconnects the PerformanceObservers (`for (const observer of observers) observer.disconnect()`). It never removes the two window event listeners the same effect registers: the `'load'` listener (`collectNavigationTiming`, :142) and, more importantly, the `'visibilitychange'` listener added at :153.",
+        "The `'visibilitychange'` handler at :153-157 is an inline anonymous arrow (`window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') reportMetrics(); })`) — it has no stored reference, so it can NEVER be removed via removeEventListener even if a cleanup tried. `reportOnUnload` defaults to `true` (:45), so this listener is attached on every normal mount.",
+        "Effect deps are `[onReport, reportOnUnload]` (:165). A consumer that passes an inline/unstable `onReport` callback (the common React pattern) re-runs the effect on every render; each run stacks a brand-new anonymous `visibilitychange` listener on `window` that is never cleaned up. Over the lifetime of a long-lived SPA session this leaks listeners unboundedly, and every one of them fires `reportMetrics()` on each tab-hide — duplicating reports and holding closures over stale `metricsRef`/`onReport`.",
+        "Impact: memory / listener leak + duplicated metric reports on a hook that is intended to run app-wide (LCP/FID/CLS/TTFB web-vitals). Fix: store the visibilitychange handler in a named const and remove both it and the `'load'` listener in the cleanup return; and/or stabilise `onReport` with useCallback / a ref so the effect binds once. Note: distinct from the prior 2026-07-07 `perf-console-logs` finding (which was about dev console output in this same file), and not covered by any earlier ppt-web-core signal."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing dashboard renders from hardcoded module-level mock constants: mockDashboardSummary (:17), mockPropertyCards (:30), mockCashFlowTrend (:78), mockBenchmark (:135), mockAlerts (:182), mockMetrics (:208). There is no useQuery/useMutation and no API call anywhere in the file — every KPI tile, cash-flow chart, benchmark card, alert, property card and financial-metrics table shows fabricated numbers to the user.",
+        "All interactive controls in the page are no-op stubs: PerformanceAlert onMarkRead (:328) and onResolve (:331) are empty `// TODO: wire to alerts API` bodies; PropertyCard onClick (:365) is `// TODO: navigate to property detail route`; the 'View All Properties' button (:356-358) has no onClick handler at all. A user can click these and nothing happens.",
+        "Impact: a manager viewing the Portfolio Performance dashboard is shown plausible-but-fake portfolio value / equity / NOI / cash-flow / LTV figures with no loading/error/empty states and no live data, which is misleading for a financial screen. Fix: wire the page to the portfolio-performance API (query hooks + real mutations for alert mark-read/resolve and property navigation), or gate the route behind a feature flag / 'coming soon' state until the API is integrated.",
+        "Scope note: this is the only fully-mocked page found in the segment; sibling pages (disputes MediationWorkspacePage, documents MoveFolderDialog, compliance pages) do call real API hooks."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() text is cast straight to a typed enum with no validation before being POSTed to the moderation API: `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (:143). A typo or unexpected casing ('Remove', 'ban', anything) passes the `if (!actionType) return` guard and is sent verbatim to takeAction.mutate — the union cast is a compile-time lie, TypeScript does not narrow it at runtime.",
+        "Same pattern at ContentModerationPage.tsx:169-181 — `decision: decision as 'uphold' | 'overturn'` from window.prompt for appeal decisions; and frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:143 — `decisionInput` window.prompt cast to the AML decision union ('approve','reject','escalate') then sent to review-assessment.",
+        "Impact: these are compliance / AML / content-moderation write paths (legally significant actions). An invalid enum reaches the backend and either 400s with a raw 'Failed to take action' alert (poor UX, no field-level feedback) or, if the backend is lenient, records a malformed action_type. The `as <union>` casts across the API boundary are exactly the unsafe-cast smell flagged for this segment. Fix: validate the prompt result against the allowed set (or replace window.prompt with a select/modal — already tracked as the Phase-2 TODO on the adjacent lines) before calling mutate."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "Numerous user-facing browser-dialog strings are hardcoded English instead of going through react-i18next `t(...)`, even though the surrounding pages import and use useTranslation for other text. Confirm/prompt/alert examples: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,114,157,171 ('Are you sure you want to delete this pet registration?', 'Approve this pet registration?', vehicle variants); accounting/pages/AccountingInvoiceManagementPage.tsx:89 ('Are you sure you want to delete this invoice?'); news/pages/NewsListPage.tsx:73 ('Are you sure you want to delete this article?'); voting/pages/VoteDetailPage.tsx:131 ('Reason for cancelling this vote?'); accounting/components/AccountingInvoiceForm.tsx:76 ('Please fill all required fields').",
+        "Also all compliance dialog + alert copy: ContentModerationPage.tsx:119,130,136,151,169,172,186 and AmlDashboardPage.tsx:116,127,131,143,150,156,169,173 and DsaReportsPage.tsx:108,112,124 use raw English window.prompt/alert strings.",
+        "Contrast with correctly-localized peers that prove the codebase convention: disputes/pages/MediationWorkspacePage.tsx:176 `window.confirm(t('disputes.mediation.sessions.cancelConfirm'))`, layout/DashboardCustomizePage.tsx:95 `t('layout.customize.resetConfirm')`, ai-chat/components/ChatInterface.tsx:79 `t('aiChat.confirmDelete')`.",
+        "Impact: low — these strings are invisible to sk/cs/de users of ppt-web (the app ships react-i18next; reality-web carries sk/cs/de/en). Fix: wrap each dialog/alert message in `t('<feature>.<key>')` and add the keys to the locale bundles. Note these dialogs are also flagged elsewhere as Phase-2 window.prompt→modal replacements, at which point the copy should be localized."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "segment": "ppt-web-ui"
+    }
+  ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — 0 signals derived this rerun",
+  "auto_fix_skipped_reason": "no candidate — only actionable score>=3 vector this run is a schema/logic change (regional-compliance-hardcoded-vote-minutes), not on the Phase 5 allowlist (screen-map-drift, orphan, fixme-in-merged-code, dep-update lockfile-drift, stalled-review). Kill switch ROUTINE_AUTOFIX_DISABLED not observed.",
   "goal_checks": [
-    {"goal":"G1","passed":true,"command":"test -f briefs/2026-08-02.md && head -1 matches","observed":"exit 0","expected":"exit 0"},
-    {"goal":"G2","passed":true,"command":"state.json advanced vs HEAD","observed":"true","expected":"true","remediation":"last_pr_seen 2625→2627, last_issue_seen 2612→2628, last_commit_sha updated"},
-    {"goal":"G3","passed":true,"command":"unique backlog ids","observed":"true","expected":"true"},
-    {"goal":"G4","passed":true,"command":"non-cumulative dedup (signals=[])","observed":"true","expected":"true"},
-    {"goal":"G5","passed":true,"command":"score cap + 14d decay","observed":"true","expected":"true"},
-    {"goal":"G6","passed":true,"command":"adversarial pass annotation for each new plan","observed":"0/0 (no new plans)","expected":"all plans annotated"},
-    {"goal":"G7","passed":true,"command":"<=2 new plans, headings, ticks, mode, files","observed":"0 new plans","expected":"all pass"},
-    {"goal":"G8","passed":true,"command":"only .research/ paths staged","observed":"0 non-.research paths","expected":"0"},
-    {"goal":"G9","passed":true,"command":"grep secrets/hostnames (excl baseline docs)","observed":"0 matches","expected":"0"},
-    {"goal":"G10","passed":true,"command":"diff backlog.md vs regen","observed":"identical","expected":"identical"},
-    {"goal":"G11","passed":true,"command":"phases-failed line == none","observed":"none","expected":"none"},
-    {"goal":"G12","passed":true,"command":"prior plan slugs converge","observed":"all present","expected":"all present"},
-    {"goal":"G13","passed":true,"command":"archive tracked >= HEAD tracked","observed":"7 >= 7","expected":">= HEAD"},
-    {"goal":"G14","passed":true,"command":"diff IDEAS_TRIAGE.md vs regen","observed":"identical","expected":"identical"},
-    {"goal":"G15","passed":true,"command":"auto_fix_actions=[]; ROUTINE_AUTOFIX_DISABLED unset","observed":"[]","expected":"cap satisfied"},
-    {"goal":"G16","passed":true,"command":"management artifacts valid; pm_cursor stayed at 2 (Phase 1.6 skipped)","observed":"pm_now=2 pm_head=2 cc_now=4 cc_head=4 epics=13","expected":"pass"},
-    {"goal":"G17","passed":true,"command":"grep Telegram token literal in staged +lines","observed":"0","expected":"0"}
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-02.md && head -1 matches ^# 2026-08-02$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "last_pr_seen 2627→2629, last_commit_sha updated to 375fcc1, seen_signals grew 332→351 (+19 tier1d)"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup vs prior seen_signals",
+      "observed": "true (all 19 new IDs)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8 + 14d decay applied",
+      "observed": "true (no items >8; 0 open items were older than 14d at run start — new items are today)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation for each new plan",
+      "observed": "1/1 annotated (passed)",
+      "expected": "all plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, 4 metadata + 11 headings + cap + mode + files",
+      "observed": "1 new plan, all sections present, mode=cloud-ok, 3/3 files resolve",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames (excl baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed line == none",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs converge",
+      "observed": "all present in plans/ or plans/_archive/",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive tracked >= HEAD tracked",
+      "observed": "7 >= 7",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions=[]; ROUTINE_AUTOFIX_DISABLED unset",
+      "observed": "[]",
+      "expected": "cap satisfied"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor stayed at 2 (Phase 1.6 skipped)",
+      "observed": "pm_now=2 pm_head=2 cc_now=4 cc_head=4 epics=13",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token literal in staged +lines",
+      "observed": "0",
+      "expected": "0"
+    }
   ]
 }

@@ -6060,6 +6060,408 @@
         "assignment_status": "merged",
         "pr_number": 2626
       }
+    },
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "title": "Remove SIX un-tenant-scoped llm_document.rs public methods (IDOR footguns)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 api-core tier1d"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_request (:96), publish_description (:622), find_prompt_template (:336), find_listing_description (:531), update_edited_description (:594), find_photo_enhancement (:1514). Safe replacements sit right beside them (find_generation_request_for_org :113 carries `AND organization_id = $2`).",
+        "score-2, confidence=medium: risk is 'a future handler grabs the unscoped variant by autocomplete'; not a live IDOR today (call sites need audit)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/llm_document.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "title": "Slovak zapisnica / Czech usneseni return fabricated participation + vote counts",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "dispatcher signal 2026-08-01 api-handlers tier1d"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes document (Slovak 'zapisnica' under §14 z. 182/1993 Z.z. / Czech SVJ 'usneseni' under §1206 z. 89/2012 Sb.) but populate nearly every legally-material field with hardcoded placeholder constants (`Decimal::new(7500, 2)` participation, 60/10/5 vote split, `NaiveDate::from_ymd_opt(2024, 1, 15)` meeting date, hardcoded meeting location + SVJ name + ICO) instead of the actual vote's data.",
+        "confirmed on disk 2026-08-02: identical literals in place"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341",
+        "backend/servers/api-server/src/routes/regional_compliance.rs:893",
+        "backend/servers/api-server/tests/suites/regional_compliance_tests.rs"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": "plans/code-review-regional-compliance-hardcoded-vote-minutes.md"
+    },
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "title": "mobile QRCodeScanner + DeepLinkHandler parsers have no tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 mobile-rn tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode/getQRCodeAction/parsePPTPayload/parseVCard) and frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts (292 lines, exports parseDeepLink/createDeepLink/DeepLinkManager) have NO dedicated test files anywhere in the repo. Related tests (deepLinkRouting.test.ts, universalLinks.test.ts) exercise the routing pipeline and URL normalizer but not the parsers themselves."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts",
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "title": "15 mobile-RN screens ship hardcoded English strings (7 have zero t() references)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 mobile-rn tier1d"
+      ],
+      "evidence": [
+        "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English user-facing copy instead of react-i18next t(), even though the app is i18n-enabled (23 screens already call useTranslation and the app ships sk/cs/de/en). 7 of the 15 have ZERO useTranslation/t() references: settings/WidgetSettingsScreen.tsx, faults/FaultsListScreen.tsx, buildings/BuildingsScreen.tsx, meters/MetersScreen.tsx, meters/MeterDetailScreen.tsx, messages/MessagesScreen.tsx, messages/ThreadDetailScreen.tsx."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx",
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx",
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-untested-nfc-credentials",
+      "title": "mobile NFCAccessController + NFCCredentialManager have no tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 mobile-rn tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and NFCCredentialManager.ts (321 lines) have NO test files. Classes manage building-access credentials: NFCCredentialManager handles fetch/cache of encrypted credentials with corruption-recovery branches, and NFCAccessController.ts:376 gates a wallet-add on 'credential has no encrypted data'. Related to code-review-mobile-rn-nfc-modules-no-tests (2026-08-02 re-emit)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "title": "Financial dashboard useQuery calls swallow isError/error — UX shows empty state on failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 ppt-web-ui tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-135 — FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) but destructures ONLY `isLoading` from each; it never reads `isError`/`error`. FinancialDashboardPage has no `error` prop at all."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/features/financial/pages/FinancialDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "title": "BudgetForm editable Categories list uses index as React key — reorder/delete data-loss bug",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 ppt-web-ui tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-128 — the editable Budget Categories list is rendered with `categories.map((category, index) => (<div key={index} ...>`, where each row holds two controlled inputs (category.name text input and category.amount number input). React reconciliation on delete/reorder cascades input state to the wrong row."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-feature-no-i18n",
+      "title": "21 of 24 financial-feature .tsx files skip react-i18next entirely",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 ppt-web-ui tier1d"
+      ],
+      "evidence": [
+        "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx under frontend/apps/ppt-web/src/features/financial/{components,pages} contain no useTranslation()/i18n reference at all, even though ppt-web ships react-i18next with sk/cs/de/en. Un-i18n'd files include BudgetForm.tsx, InvoiceForm.tsx, InvoiceList.tsx, PaymentForm.tsx, InvoiceDetail.tsx, ARAgingTable.tsx, and 15 more."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx",
+        "frontend/apps/ppt-web/src/features/financial/components/InvoiceForm.tsx",
+        "frontend/apps/ppt-web/src/features/financial/components/InvoiceList.tsx",
+        "frontend/apps/ppt-web/src/features/financial/pages/FinancialDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "title": "list_import_jobs forwards unclamped limit/offset — DoS + 500 on negative offset",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 reality-server tier1d"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:120-132 — list_import_jobs (GET /api/v1/imports/jobs, PortalPrincipal-authenticated) forwards pagination straight to the repo with NO clamping: query.limit.unwrap_or(20) at :130 and query.offset.unwrap_or(0) at :131. ImportJobsQuery types both as Option<i32>, so ?limit=2000000000 reaches SQL LIMIT (unbounded result / memory-amplification DoS) and ?offset=-1 crashes with a 500."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs:120"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "title": "Public price_map cache keyed on unvalidated user strings — unauthenticated cache-flood DoS",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-01 reality-server tier1d"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:97-131 — get_price_map is PUBLIC and unauthenticated. Its process-global cache PRICE_MAP_CACHE (static HashMap<String, CacheEntry>) is keyed on `format!({}:{}:{}:{}, mode, time_window, property_type, city)` where `city` and `property_type` are free-form, unvalidated user strings. Anyone can flood the cache to arbitrary size."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs:97"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "title": "Slovak/Czech vote-validation endpoints hardcode 75% participation on missing eligible_count",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 api-handlers tier1d"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_slovak_vote, POST /api/v1/regional-compliance/slovak/voting/validate) and :799-805 (validate_czech_vote) — the legal-validity endpoints fall back to a HARDCODED 75.00% participation (`Decimal::new(7500, 2)`) whenever `vote.eligible_count` resolves to 0 (`eligible_count.unwrap_or(0)` at :249-250 / :795-796). A vote whose eligible-voter count was never recorded (NULL/0) is therefore treated as having 75% turnout — a fabricated value, not derived from any real data.",
+        "related to code-review-regional-compliance-hardcoded-vote-minutes (same file, adjacent methods)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "title": "Android CreateListing route wires onSubmit to NotImplementedError — every publish fails",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 mobile-native-kmp tier1d"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, so every publish attempt fails at UI level."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "title": "mobile useApi central helper has no 401 refresh-retry path — expired tokens surface as generic errors",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 mobile-rn tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — the central `apiRequest` helper (backing every useQuery/useMutation in the app) reads the bearer token from SecureStore once and, on any non-ok response, just `throw new Error(message)`. There is NO 401 branch, NO token-refresh attempt, and NO single-retry after refresh. A 401 from an expired access token is surfaced to the UI as a generic error identical to any other HTTP failure."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "title": "NFCAccessController.validateAccess trusts device wall-clock — expired credentials pass if clock is rolled back",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 mobile-rn tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 — `validateAccess` decides credential expiry (`new Date(credential.validUntil) < now`, :275) and time-of-day access windows (:299-336) entirely from device-local `new Date()`. Device wall-clock is user-controllable; a holder of an expired or time-restricted credential can roll the phone clock back to make `validateAccess` return `granted: true`. Physical-access security bypass, not just correctness."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "title": "NFC access-controller + credential-manager (799 lines) have zero tests (re-emit of 2026-08-01 finding)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 mobile-rn tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files. Covered-module list spans components/, hooks/, screens/{announcements,buildings,dashboard,...} but not nfc/. Second emit; supersedes 2026-08-01 code-review-mobile-rn-untested-nfc-credentials in terms of ID but content is materially the same."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "title": "usePerformanceMetrics leaks window listeners on every re-run of the effect",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 ppt-web-core tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup ONLY disconnects the PerformanceObservers. It never removes the two window event listeners the same effect registers: the `'load'` listener at :142 and, more importantly, the anonymous `'visibilitychange'` listener at :153 (has no stored reference, so removeEventListener cannot target it even if a cleanup tried). Effect deps `[onReport, reportOnUnload]` re-run on every render if `onReport` is inline, stacking listeners on `window`."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "title": "PortfolioDashboardPage ships hardcoded module-level mocks — every KPI/tile/chart is fabricated",
+      "vector": "completeness",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 ppt-web-ui tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing dashboard renders from hardcoded module-level mock constants: mockDashboardSummary (:17), mockPropertyCards (:30), mockCashFlowTrend (:78), mockBenchmark (:135), mockAlerts (:182), mockMetrics (:208). There is no useQuery/useMutation and no API call anywhere in the file."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "title": "ContentModerationPage casts window.prompt() text to typed enum with no validation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 ppt-web-ui tier1d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() text is cast straight to a typed enum with no validation: `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'`. A typo or unexpected casing ('Remove', 'ban') passes the `if (!actionType) return` guard and is sent verbatim to takeAction.mutate. The cast is a compile-time lie; TypeScript does not narrow it at runtime."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "title": "Confirm/prompt/alert dialog strings hardcoded English across 5+ ppt-web pages",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher signal 2026-08-02 ppt-web-ui tier1d"
+      ],
+      "evidence": [
+        "Numerous user-facing browser-dialog strings are hardcoded English instead of going through react-i18next `t(...)`, even though the surrounding pages import and use useTranslation for other text: registry/pages/RegistryPage.tsx:100,114,157,171; accounting/pages/AccountingInvoiceManagementPage.tsx:89; news/pages/NewsListPage.tsx:73; voting/pages/VoteDetailPage.tsx:131; accounting/components/AccountingInvoiceForm.tsx:76."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx",
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx",
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-08-02",
+      "updated_at": "2026-08-02",
+      "plan": null
     }
   ]
 }

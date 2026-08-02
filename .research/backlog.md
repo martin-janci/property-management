@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-02 14:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-02 22:20 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -8,6 +8,7 @@
 | 3 | security | `code-review-api-core-ssrf-validator-drift` | api-server workflow api_call.rs has a duplicate SSRF validator that drifts from common::url_validation — plain HTTP is allowed in prod | done | 2026-08-02 |  |
 | 3 | bug | `code-review-reality-server-agency-members-unauth-idor` | reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR) | dropped | 2026-08-02 |  |
 | 3 | security | `code-review-reality-server-sso-session-invalidate-swallowed` | reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-sso-session-invalidate-swallowed.md) |
+| 3 | bug | `code-review-regional-compliance-hardcoded-vote-minutes` | Slovak zapisnica / Czech usneseni return fabricated participation + vote counts | ready | 2026-08-02 | [plan](plans/code-review-regional-compliance-hardcoded-vote-minutes.md) |
 | 3 | bug | `bug-direct-upload-drops-building-id` | uploadDocumentDirect() silently drops building_id — building-scoped document uploads lose association vs legacy multipart path | dropped | 2026-08-01 |  |
 | 3 | bug | `bug-scheduler-notifications-fire-once` | Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications | dropped | 2026-08-01 | [plan](plans/bug-scheduler-notifications-fire-once.md) |
 | 3 | dx | `dx-api-validation-drift-gate-never-runs-on-dev` | SDK drift gate is effectively unenforced — api-validation.yml only fires on docs/api/**, so committed @ppt/api-client drift sits on dev unseen | done | 2026-07-28 |  |
@@ -30,7 +31,20 @@
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
 | 2 | security | `code-review-api-core-idempotency-client-tenant` | Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass | done | 2026-08-02 |  |
+| 2 | security | `code-review-api-core-llm-unscoped-idor-footguns` | Remove SIX un-tenant-scoped llm_document.rs public methods (IDOR footguns) | open | 2026-08-02 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-notimpl` | Android CreateListing route wires onSubmit to NotImplementedError — every publish fails | open | 2026-08-02 |  |
+| 2 | security | `code-review-mobile-rn-nfc-device-clock-expiry` | NFCAccessController.validateAccess trusts device wall-clock — expired credentials pass if clock is rolled back | open | 2026-08-02 |  |
+| 2 | test-gap | `code-review-mobile-rn-untested-qr-deeplink-parsers` | mobile QRCodeScanner + DeepLinkHandler parsers have no tests | open | 2026-08-02 |  |
+| 2 | bug | `code-review-mobile-rn-useapi-no-refresh-retry` | mobile useApi central helper has no 401 refresh-retry path — expired tokens surface as generic errors | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-core-perf-listener-leak` | usePerformanceMetrics leaks window listeners on every re-run of the effect | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-ui-budgetform-index-key-editable-list` | BudgetForm editable Categories list uses index as React key — reorder/delete data-loss bug | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-ui-financial-dash-swallows-query-errors` | Financial dashboard useQuery calls swallow isError/error — UX shows empty state on failure | open | 2026-08-02 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-prompt-cast` | ContentModerationPage casts window.prompt() text to typed enum with no validation | open | 2026-08-02 |  |
+| 2 | completeness | `code-review-ppt-web-ui-portfolio-dash-mock` | PortfolioDashboardPage ships hardcoded module-level mocks — every KPI/tile/chart is fabricated | open | 2026-08-02 |  |
 | 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-db-error-leak-to-client.md) |
+| 2 | bug | `code-review-reality-server-imports-unclamped-limit` | list_import_jobs forwards unclamped limit/offset — DoS + 500 on negative offset | open | 2026-08-02 |  |
+| 2 | bug | `code-review-reality-server-pricemap-unbounded-cache-dos` | Public price_map cache keyed on unvalidated user strings — unauthenticated cache-flood DoS | open | 2026-08-02 |  |
+| 2 | bug | `code-review-regional-compliance-vote-validation-fabricated-pass` | Slovak/Czech vote-validation endpoints hardcode 75% participation on missing eligible_count | open | 2026-08-02 |  |
 | 2 | test-gap | `test-gap-disputes-kpis-window-validation` | /disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined | dropped | 2026-08-01 |  |
 | 2 | dx | `dx-fixme-admin-web-mobile-config-patch-endpoint` | admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing | dropped | 2026-07-31 |  |
 | 2 | dx | `dx-fixme-admin-web-platform-settings-patch-endpoint` | admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing | dropped | 2026-07-31 |  |
@@ -100,6 +114,11 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
+| 1 | bug | `code-review-mobile-rn-hardcoded-i18n-screens` | 15 mobile-RN screens ship hardcoded English strings (7 have zero t() references) | open | 2026-08-02 |  |
+| 1 | test-gap | `code-review-mobile-rn-nfc-modules-no-tests` | NFC access-controller + credential-manager (799 lines) have zero tests (re-emit of 2026-08-01 finding) | open | 2026-08-02 |  |
+| 1 | test-gap | `code-review-mobile-rn-untested-nfc-credentials` | mobile NFCAccessController + NFCCredentialManager have no tests | open | 2026-08-02 |  |
+| 1 | bug | `code-review-ppt-web-ui-dialog-i18n-gap` | Confirm/prompt/alert dialog strings hardcoded English across 5+ ppt-web pages | open | 2026-08-02 |  |
+| 1 | bug | `code-review-ppt-web-ui-financial-feature-no-i18n` | 21 of 24 financial-feature .tsx files skip react-i18next entirely | open | 2026-08-02 |  |
 | 1 | bug | `code-review-reality-server-password-reset-no-transport` | reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent | dropped | 2026-08-01 |  |
 | 1 | bug | `code-review-api-core-admin-rs-swallowed-serialize` | layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500 | done | 2026-07-30 |  |
 | 1 | bug | `code-review-api-core-scheduler-rs-silent-target-err` | scheduler.rs silently swallows DB errors on notification target lookups at 3 sites — failed dispatches show as empty target sets, no log/metric | done | 2026-07-30 |  |
