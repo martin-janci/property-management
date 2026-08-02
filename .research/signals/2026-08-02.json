@@ -1,0 +1,27 @@
+{
+  "date": "2026-08-02",
+  "generated_at": "2026-08-02T02:12:38Z",
+  "trigger_payload": "buffer-low: claimable=0/72 — refill planner",
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — signal list is empty (no eligible unchecked-todo/revert/stalled-review/churn signals this run)",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/<today>.md && head -1 | grep '^# <today>$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "jq staged-vs-HEAD state.json advance check", "observed": "true", "expected": "true", "advanced_via": "last_commit_sha + stats.quiet_days" },
+    { "goal": "G3",  "passed": true,  "command": "jq backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "signals seen_signals cumulative-carve-out check", "observed": "true (no signals this run)", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "jq cap (all scores ≤ 8); decay applies only for updated_at ≤ today-14", "observed": "cap:true; no open items >14d old", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "adversarial pass annotation for each new plan", "observed": "0 new plans this run", "expected": "true (vacuous)" },
+    { "goal": "G7",  "passed": true,  "command": "≤2 new plans + each has 15 sections + files exist", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/'", "observed": "0 non-research paths", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "grep -E 'sk-ant-|ANTHROPIC_API_KEY|...' on staged diff", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff -q backlog.md regenerated", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "phase-failure honesty (all phases succeeded or explicitly skipped)", "observed": "no cursor advanced for skipped phases", "expected": "true" },
+    { "goal": "G12", "passed": true,  "command": "prior-run plans still present (none removed this run)", "observed": "no plan add/remove this run", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count ≥ HEAD archive count", "observed": "staged=7 head=7", "expected": "≥" },
+    { "goal": "G14", "passed": true,  "command": "diff -q IDEAS_TRIAGE.md regenerated", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto-fix caps + idempotency + kill-switch + verify-all gating", "observed": "auto_fix_actions=[]", "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "management artifacts + pm_cursor + coverage_cursor liveness", "observed": "Phase 1.6 skipped — no-op", "expected": "true (no-op)" },
+    { "goal": "G17", "passed": true,  "command": "grep telegram bot-token pattern on staged diff added-lines", "observed": "0 matches", "expected": "0" }
+  ]
+}
