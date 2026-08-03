@@ -27,7 +27,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
-import { useAuth } from '../../contexts';
+import { AuthError, type AuthErrorCode, useAuth } from '../../contexts';
 import type {
   BookingListParams,
   BookingWithGuests,
@@ -166,11 +166,60 @@ function mapApiGuestToUi(guest: RentalsGuestRegistration): RentalGuest {
  * ShortTermRentalsService methods. Returns null when either is missing so
  * the calling query stays disabled.
  */
-function useRentalsAuth(): { authorization: string; xTenantId: string } | null {
+function useRentalsAuth(): RentalsAuth | null {
   const { user } = useAuth();
   const token = getToken();
   if (!token || !user?.organizationId) return null;
   return { authorization: `Bearer ${token}`, xTenantId: user.organizationId };
+}
+
+type RentalsAuth = { authorization: string; xTenantId: string };
+type RentalsAuthHeaders = { Authorization: string; 'X-Tenant-ID': string };
+
+/**
+ * Build the auth headers the generated ShortTermRentalsService methods require,
+ * or throw a typed {@link AuthError} when the session was lost mid-flight.
+ *
+ * Queries gate on `enabled: !!auth`, so their `queryFn` never runs while auth is
+ * null. Mutations have no such gate — TanStack Query invokes a `mutationFn`
+ * unconditionally on `.mutate()`. Previously the mutations dereferenced
+ * `auth!.authorization`, so a mid-session token loss surfaced as an opaque
+ * `TypeError: Cannot read properties of null` with no auth semantics. Throwing
+ * an `AuthError('SESSION_EXPIRED')` instead routes through TanStack Query's
+ * rejected-promise path, so the mutation lands in a handled error state and
+ * `onError` (see {@link handleRentalsAuthError}) can surface the app's
+ * session-expired UX (redirect to /login) instead of an uncaught crash.
+ */
+export function requireRentalsAuthHeaders(auth: RentalsAuth | null): RentalsAuthHeaders {
+  if (!auth) {
+    throw new AuthError('Your session has expired. Please sign in again.', 'SESSION_EXPIRED');
+  }
+  return { Authorization: auth.authorization, 'X-Tenant-ID': auth.xTenantId };
+}
+
+/**
+ * Auth-error codes that mean "the session is gone" — a failed rentals mutation
+ * carrying one of these should trigger the logout/redirect flow.
+ */
+const SESSION_LOST_CODES: ReadonlySet<AuthErrorCode> = new Set<AuthErrorCode>([
+  'SESSION_EXPIRED',
+  'TOKEN_EXPIRED',
+  'TOKEN_INVALID',
+]);
+
+/**
+ * Shared `onError` logic for the rentals mutations: when a mutation fails
+ * because the session was lost, clear it and redirect to /login (via the
+ * AuthContext `logout`), matching how the rest of the app handles a dropped
+ * session. Non-auth errors are left for the caller to surface. Returns whether
+ * the error was handled as a session loss.
+ */
+export function handleRentalsAuthError(error: unknown, logout: () => void): boolean {
+  if (error instanceof AuthError && SESSION_LOST_CODES.has(error.code)) {
+    logout();
+    return true;
+  }
+  return false;
 }
 
 /** Route wrapper for the rentals dashboard. */
@@ -182,10 +231,7 @@ function RentalsDashboardPageRoute() {
     queryKey: ['rentals', 'reservations', auth?.xTenantId],
     queryFn: () =>
       rentalsApiListReservations({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
       }),
     enabled: !!auth,
   });
@@ -193,10 +239,7 @@ function RentalsDashboardPageRoute() {
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () =>
       rentalsApiListConnections({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
       }),
     enabled: !!auth,
   });
@@ -241,16 +284,14 @@ function RentalsDashboardPageRoute() {
 function PlatformConnectionsPageRoute() {
   const navigate = useNavigate();
   const auth = useRentalsAuth();
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () =>
       rentalsApiListConnections({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
       }),
     enabled: !!auth,
   });
@@ -258,29 +299,25 @@ function PlatformConnectionsPageRoute() {
   const createConnection = useMutation({
     mutationFn: (vars: { unitId: string; platform: RentalPlatformType }) =>
       rentalsApiCreateConnection({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
         body: { unitId: vars.unitId, platform: vars.platform as RentalsRentalPlatform },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
+    onError: (error) => handleRentalsAuthError(error, logout),
   });
 
   const syncPlatforms = useMutation({
     mutationFn: (unitId: string) =>
       rentalsApiSyncPlatforms({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
         query: { unitId },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
+    onError: (error) => handleRentalsAuthError(error, logout),
   });
 
   const connections = (data?.data ?? []).map(mapApiConnectionToUi);
@@ -313,10 +350,7 @@ function BookingsPageRoute() {
     queryKey: ['rentals', 'reservations', auth?.xTenantId, filters],
     queryFn: () =>
       rentalsApiListReservations({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
         query: {
           unitId: filters.unitId,
           status: filters.status as RentalsReservation['status'],
@@ -355,16 +389,14 @@ function BookingDetailPageRoute() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const auth = useRentalsAuth();
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
     queryFn: () =>
       rentalsApiGetReservation({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
         path: { id: bookingId! },
       }),
     enabled: !!auth && !!bookingId,
@@ -373,26 +405,22 @@ function BookingDetailPageRoute() {
   const checkIn = useMutation({
     mutationFn: () =>
       rentalsApiCheckIn({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
         path: { id: bookingId! },
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
+    onError: (error) => handleRentalsAuthError(error, logout),
   });
   const checkOut = useMutation({
     mutationFn: () =>
       rentalsApiCheckOut({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
         path: { id: bookingId! },
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
+    onError: (error) => handleRentalsAuthError(error, logout),
   });
 
   if (!bookingId) {
@@ -453,10 +481,7 @@ function GuestRegistrationPageRoute() {
     queryKey: ['rentals', 'guests', auth?.xTenantId],
     queryFn: () =>
       rentalsApiListGuests({
-        headers: {
-          Authorization: auth!.authorization,
-          'X-Tenant-ID': auth!.xTenantId,
-        },
+        headers: requireRentalsAuthHeaders(auth),
       }),
     enabled: !!auth,
   });
