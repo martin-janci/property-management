@@ -1,4 +1,27 @@
 {
-  "generated": "2026-08-03T14:12:03Z",
-  "assignments": []
+  "generated": "2026-08-03T16:08:22Z",
+  "assignments": [
+    {
+      "task_id": "code-review-ppt-web-core-api-retry-nonidempotent",
+      "branch": "auto-impl/code-review-ppt-web-core-api-retry-nonid-3c50424e",
+      "status": "in-progress",
+      "claimed_at": "2026-08-03T16:08:22Z",
+      "last_updated": "2026-08-03T16:08:22Z",
+      "status_changed_at": "2026-08-03T16:08:22Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    }
+  ]
 }

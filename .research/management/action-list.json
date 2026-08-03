@@ -1,5 +1,40 @@
 {
   "version": 1,
-  "items": [],
+  "items": [
+    {
+      "id": "code-review-ppt-web-core-api-retry-nonidempotent",
+      "action": "ppt-web axios retry interceptor retries non-idempotent POST/PUT on 5xx / network errors — risk of duplicate server-side writes",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T16:07:11Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T16:07:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-token-provider-unset",
+      "action": "ppt-web getApiClient() sends requests with no Authorization header — configureApiClient is never called, so the token provider stays undefined",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T16:07:11Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T16:07:11Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    }
+  ],
   "generated": "2026-07-30T03:23:02Z"
 }
