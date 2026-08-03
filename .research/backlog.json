@@ -6095,7 +6095,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (tier1d ppt-web-ui)"
       ],
@@ -6109,7 +6109,12 @@
       ],
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-03T14:04:34Z",
+        "assignment_status": "merged",
+        "pr_number": 2635
+      }
     },
     {
       "id": "code-review-ppt-web-ui-sessions-double-cast",
@@ -6193,6 +6198,57 @@
         "assignment_status": "merged",
         "pr_number": 2633
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-token-provider-unset",
+      "title": "ppt-web getApiClient() sends requests with no Authorization header — configureApiClient is never called, so the token provider stays undefined",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "lib/api.ts:138 — module-level `tokenGetter` is only assigned inside createAxiosInstance() from config.getToken; it defaults to undefined.",
+        "lib/api.ts:258 — configureApiClient() is the only path that supplies getToken/onUnauthorized, but it has ZERO call sites in the app (grep across ppt-web/src for `configureApiClient(` returns only the definition and the lib/index re-export). AuthContext wires auth via @ppt/api-client setTokenProvider (a different client), not this axios instance.",
+        "lib/api.ts:160-171 — the request interceptor guards `if (tokenGetter)`; with tokenGetter undefined it attaches no Bearer token, so every getApiClient() call goes out unauthenticated.",
+        "Reachable in production: routes/groups/ai-dashboards.tsx:91-92 mount /ai/sentiment and /ai/predictive-maintenance; features/sentiment/hooks/useSentiment.ts:35 and features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:33 call getApiClient().get/post against authenticated endpoints → 401. The file comments claim 'getApiClient() ensures Bearer-token injection', which is currently false.",
+        "onUnauthorized is likewise never wired, so the resulting 401 triggers no refresh/redirect — the dashboards just fail to load."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-retry-nonidempotent",
+      "title": "ppt-web axios retry interceptor retries non-idempotent POST/PUT on 5xx / network errors — risk of duplicate server-side writes",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "lib/api.ts:85-93 — isRetryableError() returns true for ANY request with no response (network error) or status in [408,429,500,502,503,504], with no check on the HTTP method.",
+        "lib/api.ts:185-211 — the response interceptor retries up to MAX_RETRIES (3) for every retryable error regardless of verb; a POST/PUT that the server already committed but that failed with 502/503/504 or a post-commit network drop is silently re-sent.",
+        "Reachable via non-idempotent calls: features/sentiment/hooks/useSentiment.ts:93 getApiClient().post(create alert) and :108 .put(thresholds); features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:76 .post(generate prediction). Retrying these on 5xx can create duplicate records.",
+        "Fix: restrict automatic retry to idempotent methods (GET/HEAD/OPTIONS) or require an idempotency key for mutating requests."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
     }
   ]
 }
