@@ -16,7 +16,8 @@
     "ok": "OK",
     "search": "Kereses",
     "refresh": "Frissites",
-    "submit": "Kuldes"
+    "submit": "Kuldes",
+    "tryAgain": "Probald ujra"
   },
   "tabs": {
     "home": "Fooldal",
@@ -140,16 +141,22 @@
     "photosStillLargeWarning": "A tömörítés után is {{final}} MB a fényképek mérete (a 10 MB-os korlát felett), így a feltöltés lassú lehet vagy gyenge kapcsolat esetén meghiúsulhat.",
     "compressingPhotos": "Fényképek optimalizálása…",
     "queuedTitle": "Offline mentve",
-    "queuedMessage": "Jelenleg offline van. A bejelentést elmentettük, és automatikusan szinkronizálódik, amint újra online lesz.",
-    "queuedOnErrorMessage": "Nem sikerült elérni a kiszolgálót. A bejelentést elmentettük, és automatikusan szinkronizálódik, amint helyreáll a kapcsolat.",
+    "queuedMessage": "Jelenleg offline van. A bejelentést elmentük, és automatikusan szinkronizálódik, amint újra online lesz.",
+    "queuedOnErrorMessage": "Nem sikerült elérni a kiszolgálót. A bejelentést elmentük, és automatikusan szinkronizálódik, amint helyreáll a kapcsolat.",
     "offlineSubmitHint": "Jelenleg offline van — ezt a bejelentést elmentjük, és szinkronizáljuk, amint újra online lesz.",
-    "submitButtonOffline": "Mentés és szinkronizálás később"
+    "submitButtonOffline": "Mentés és szinkronizálás később",
+    "loadError": "A hibabejelentesek nem tolthetok be",
+    "emptyTitle": "Nem talalhato hibabejelentes",
+    "emptyText": "Minden problema megoldva"
   },
   "news": {
     "title": "Hirek",
     "latest": "Legfrissebb hirek",
     "readMore": "Bovebben",
-    "noNews": "Nincsenek elerheto hirek"
+    "noNews": "Nincsenek elerheto hirek",
+    "loadError": "A hirek nem tolthetok be",
+    "emptyTitle": "Semmi uj",
+    "emptyText": "Nezzen vissza kesobb a friss hirekert."
   },
   "voting": {
     "title": "Szavazas",
@@ -244,7 +251,9 @@
       "noFolders": "Nincsenek mas mappak",
       "confirm": "Athelyezes ide",
       "errorTitle": "A mappa athelyezesekor hiba tortent"
-    }
+    },
+    "detailLoadError": "A dokumentum nem toltheto be",
+    "notFound": "A dokumentum nem talalhato"
   },
   "settings": {
     "title": "Beallitasok",
@@ -344,13 +353,15 @@
       "ackDone": "Visszaigazolta ezt a kozlemenyt.",
       "ackError": "A visszaigazolas sikertelen: {{message}}",
       "publishedAt": "Kozzeteve: {{date}}"
-    }
+    },
+    "loadError": "A kozlemenyek nem tolthetok be"
   },
   "widgets": {
     "addedTitle": "Widget hozzaadva",
     "addedMessage": "A widget be lett allitva.",
     "updatedTitle": "Widgetek frissitve",
-    "updatedMessage": "Minden widget frissitesre kerult."
+    "updatedMessage": "Minden widget frissitesre kerult.",
+    "emptyText": "Meg nincsenek beallitott widgetek."
   },
   "permissions": {
     "denied": "Engedly megtagadva",
@@ -374,7 +385,15 @@
     "savedOffline": "Offline mentve",
     "willSyncWhenOnline": "Az allasa elkuldesre kerul amikor ujra online lesz",
     "offlineMode": "Offline. Az allasok helyben lesznek mentve.",
-    "pendingReadings": "Fuggo leolvasasok"
+    "pendingReadings": "Fuggo leolvasasok",
+    "loadError": "A meroorak nem tolthetok be",
+    "emptyTitle": "Nincsenek meroorak",
+    "emptyText": "Az On egysegehez meg nincs meroora regisztralva.",
+    "noUnitTitle": "Nincs tarsitott egyseg",
+    "noUnitText": "A meroorak akkor jelennek meg, ha fiokjat egy egyseghez tarsitjak.",
+    "detailLoadError": "A meroora nem toltheto be",
+    "noReadingsTitle": "Meg nincsenek leolvasasok",
+    "noReadingsText": "Kuldje be elso leolvasasat ehhez a meroorahoz."
   },
   "esignature": {
     "title": "Alairasi keres",
@@ -454,5 +473,44 @@
   "layout": {
     "placeholderTitle": "Szakasz nem elérhető",
     "placeholderBody": "Ez a szakasz jelenleg nem elérhető."
+  },
+  "buildings": {
+    "loadError": "Az epuletek nem tolthetok be",
+    "emptyTitle": "Nincsenek epuletek",
+    "emptyText": "Fiokjahoz meg nincs ingatlan tarsitva."
+  },
+  "messages": {
+    "loadError": "Az uzenetek nem tolthetok be",
+    "emptyTitle": "Nincsenek beszelgetesek",
+    "emptyText": "Kezdjen beszelgetest a kezelovel vagy a szomszedokkal.",
+    "threadLoadError": "A beszelgetes nem toltheto be",
+    "threadEmptyTitle": "Meg nincsenek uzenetek",
+    "threadEmptyText": "Koszonjon, es kezdje el a beszelgetest."
+  },
+  "leases": {
+    "loadError": "A berleti szerzodesek nem tolthetok be",
+    "emptyTitle": "Nincsenek berleti szerzodesek",
+    "emptyText": "Meg egyetlen berleti szerzodeshez sem adtak hozza.",
+    "detailLoadError": "A berleti szerzodes nem toltheto be",
+    "noPayments": "Nincsenek utemezett kozelgo fizetesek.",
+    "notFound": "A berleti szerzodes nem talalhato."
+  },
+  "outages": {
+    "loadError": "A kimaradasok nem tolthetok be",
+    "emptyTitle": "Nincsenek kimaradasok",
+    "emptyText": "Jelenleg semmi sincs utemezve vagy aktiv."
+  },
+  "forms": {
+    "loadError": "Az urlapok nem tolthetok be",
+    "emptyTitle": "Nincsenek urlapok",
+    "emptyText": "Jelenleg nincs kitoltendo urlapja."
+  },
+  "neighbors": {
+    "loadError": "A szomszedok nem tolthetok be",
+    "loading": "Szomszedok betoltese…",
+    "emptyTitle": "Meg nincsenek szomszedok",
+    "noMatches": "Nincs talalat",
+    "emptyText": "A nevjegyzekbe jelentkezo lakok itt jelennek meg.",
+    "noMatchesText": "Probaljon meg mas nevet vagy lakasszamot."
   }
 }
