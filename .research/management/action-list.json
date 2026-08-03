@@ -68,26 +68,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "gh-issue-2630",
-      "action": "Follow-up: OAuth token-usage read route ships without HTTP-level test coverage (PR #2629) (Closes #2630)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-03T06:04:45Z (#2630)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-03T06:04:45Z",
-      "issue_ref": {
-        "number": 2630,
-        "url": "https://github.com/martin-janci/property-management/issues/2630",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
