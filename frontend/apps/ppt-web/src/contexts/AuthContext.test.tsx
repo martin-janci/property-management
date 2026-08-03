@@ -185,7 +185,19 @@ describe('AuthContext.logout — Issue #712', () => {
     // Sanity: AUTHED_QUERY_KEY_ROOTS must cover the real query keys we
     // expect to evict. If a root is dropped from the source list, this
     // assertion will fail loudly rather than letting data silently leak.
-    for (const root of ['user', 'faults', 'announcements', 'ai-chat', 'developer']) {
+    for (const root of [
+      'user',
+      'faults',
+      'announcements',
+      'ai-chat',
+      'developer',
+      // Tenant-scoped analytics dashboards — regression guard for the
+      // logout cache-purge gap where these roots leaked across sessions
+      // on shared workstations.
+      'predictive-maintenance',
+      'sentiment',
+      'notification-analytics',
+    ]) {
       expect(AUTHED_QUERY_KEY_ROOTS).toContain(root);
     }
 
@@ -200,6 +212,11 @@ describe('AuthContext.logout — Issue #712', () => {
     queryClient.setQueryData(['announcements', 'unread-count'], 3);
     queryClient.setQueryData(['ai-chat', 'sessions'], [{ id: 's-1' }]);
     queryClient.setQueryData(['developer', 'apiKeys'], [{ id: 'k-1' }]);
+    // Tenant-scoped analytics dashboards — real key factories from
+    // predictiveKeys / sentimentKeys / notificationAnalyticsKeys.
+    queryClient.setQueryData(['predictive-maintenance', 'needing-maintenance'], [{ id: 'e-1' }]);
+    queryClient.setQueryData(['sentiment', 'dashboard'], { score: 0.42 });
+    queryClient.setQueryData(['notification-analytics', {}], { delivered: 10 });
     queryClient.setQueryData(['router', 'breadcrumbs'], ['home']);
 
     // Sanity: all entries present before logout.
@@ -208,6 +225,11 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(queryClient.getQueryData(['announcements', 'unread-count'])).toBeDefined();
     expect(queryClient.getQueryData(['ai-chat', 'sessions'])).toBeDefined();
     expect(queryClient.getQueryData(['developer', 'apiKeys'])).toBeDefined();
+    expect(
+      queryClient.getQueryData(['predictive-maintenance', 'needing-maintenance'])
+    ).toBeDefined();
+    expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeDefined();
+    expect(queryClient.getQueryData(['notification-analytics', {}])).toBeDefined();
     expect(queryClient.getQueryData(['router', 'breadcrumbs'])).toBeDefined();
 
     // Trigger logout via the live context.
@@ -228,6 +250,12 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(queryClient.getQueryData(['announcements', 'unread-count'])).toBeUndefined();
     expect(queryClient.getQueryData(['ai-chat', 'sessions'])).toBeUndefined();
     expect(queryClient.getQueryData(['developer', 'apiKeys'])).toBeUndefined();
+    // Tenant-scoped analytics dashboards must not survive logout.
+    expect(
+      queryClient.getQueryData(['predictive-maintenance', 'needing-maintenance'])
+    ).toBeUndefined();
+    expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeUndefined();
+    expect(queryClient.getQueryData(['notification-analytics', {}])).toBeUndefined();
 
     // (c) Non-auth-scoped cache survives — the purge is bounded to the
     // AUTHED_QUERY_KEY_ROOTS list, not a blanket `queryClient.clear()`.
