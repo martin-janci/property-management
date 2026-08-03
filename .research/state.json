@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-03T03:09:16Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2629,
-  "last_issue_seen": 2628,
-  "last_commit_sha": "a5fbe4f791cea673b37e37062892433f5602dbc1",
+  "last_run_iso": "2026-08-03T14:16:16Z",
+  "last_run_ms": 45000,
+  "last_pr_seen": 2636,
+  "last_issue_seen": 2630,
+  "last_commit_sha": "c202c374284f6107d72ef42bc1ad1a7be8a37551",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -750,7 +750,18 @@
     "code-review-ppt-web-ui-aria-label-i18n",
     "code-review-ppt-web-ui-sessions-double-cast",
     "code-review-reality-web-agency-import-i18n",
-    "code-review-reality-web-protectedroute-i18n"
+    "code-review-reality-web-protectedroute-i18n",
+    "code-review-ppt-web-core-logout-cache-purge-gap",
+    "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-mutation-no-onerror",
+    "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+    "code-review-ppt-web-core-notfound-i18n-gap",
+    "code-review-mobile-rn-offline-sync-false-complete",
+    "code-review-mobile-rn-thread-send-silent-fail",
+    "code-review-mobile-rn-hardcoded-empty-error-i18n",
+    "code-review-mobile-rn-offline-terminal-drop-dataloss",
+    "code-review-mobile-rn-push-debug-console-log",
+    "screen-map-drift-pr-2636-reality"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -758,14 +769,14 @@
     "api-core": "2026-08-02",
     "reality-server": "2026-08-02",
     "ppt-web-ui": "2026-08-03",
-    "ppt-web-core": "2026-07-24",
+    "ppt-web-core": "2026-08-03",
     "reality-web": "2026-08-03",
     "mobile-rn": "2026-08-03",
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 57,
-    "vectors_created": 246,
+    "runs": 58,
+    "vectors_created": 257,
     "plans_created": 20,
     "quiet_days": 2,
     "auto_fix_count": 0

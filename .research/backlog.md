@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-03 03:09 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-03 14:16 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -29,7 +29,15 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-ppt-web-ui-accounting-invoice-silent-fail` | AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures | open | 2026-08-03 |  |
+| 2 | bug | `code-review-ppt-web-ui-accounting-invoice-silent-fail` | AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures | done | 2026-08-03 |  |
+| 2 | bug | `code-review-ppt-web-core-logout-cache-purge-gap` | ppt-web logout leaves cached user data — 3 feature roots (predictive-maintenance/sentiment/notification-analytics) missing from AUTHED_QUERY_KEY_ROOTS | open | 2026-08-03 |  |
+| 2 | bug | `code-review-ppt-web-core-route-error-boundary-gap` | ppt-web route outlet has no ErrorBoundary — stale-chunk import errors from redeploys crash the whole app to blank screen | open | 2026-08-03 |  |
+| 2 | bug | `code-review-ppt-web-core-mutation-no-onerror` | ppt-web rentals + financial route wrappers have 6 useMutation hooks with no onError — silent failures on write paths | open | 2026-08-03 |  |
+| 2 | bug | `code-review-ppt-web-core-rentals-auth-nonnull-mutation` | ppt-web rentals mutations non-null-assert useRentalsAuth() — mid-session token loss causes hard client crash instead of prompt-to-reauth | open | 2026-08-03 |  |
+| 2 | bug | `code-review-mobile-rn-offline-sync-false-complete` | mobile-rn useOfflineSupport.processQueue reports isComplete:true after a head-of-line-blocked (halted) sync cycle | open | 2026-08-03 |  |
+| 2 | bug | `code-review-mobile-rn-thread-send-silent-fail` | mobile-rn ThreadDetailScreen: message-send mutation has onSuccess only, no onError — failed sends are silent | open | 2026-08-03 |  |
+| 2 | bug | `code-review-mobile-rn-offline-terminal-drop-dataloss` | mobile-rn useOfflineSupport: transient (5xx/network) queued actions permanently DROPPED after 3 retries with only console.error — silent data loss | open | 2026-08-03 |  |
+| 2 | test-gap | `screen-map-drift-pr-2636-reality` | screen-map drift: PR #2636 touched agency/import + agency/inquiries route pages without updating docs/screens/reality/agency-*.md | open | 2026-08-03 |  |
 | 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-db-error-leak-to-client.md) |
 | 2 | security | `code-review-api-core-idempotency-client-tenant` | Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass | done | 2026-08-02 |  |
 | 2 | test-gap | `test-gap-disputes-kpis-window-validation` | /disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined | dropped | 2026-08-01 |  |
@@ -101,10 +109,13 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
-| 1 | bug | `code-review-ppt-web-ui-aria-label-i18n` | ppt-web: 103 hardcoded English aria-label attributes across feature components — screen readers hear English on sk/cs/de | open | 2026-08-03 |  |
-| 1 | bug | `code-review-ppt-web-ui-sessions-double-cast` | SessionsPage double-casts through unknown to hand-maintained interface — defeats API-boundary type-check | open | 2026-08-03 |  |
-| 1 | bug | `code-review-reality-web-agency-import-i18n` | reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations | open | 2026-08-03 |  |
-| 1 | bug | `code-review-reality-web-protectedroute-i18n` | reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de | open | 2026-08-03 |  |
+| 1 | bug | `code-review-ppt-web-ui-aria-label-i18n` | ppt-web: 103 hardcoded English aria-label attributes across feature components — screen readers hear English on sk/cs/de | done | 2026-08-03 |  |
+| 1 | bug | `code-review-ppt-web-ui-sessions-double-cast` | SessionsPage double-casts through unknown to hand-maintained interface — defeats API-boundary type-check | done | 2026-08-03 |  |
+| 1 | bug | `code-review-reality-web-agency-import-i18n` | reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations | done | 2026-08-03 |  |
+| 1 | bug | `code-review-reality-web-protectedroute-i18n` | reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de | done | 2026-08-03 |  |
+| 1 | refactor | `code-review-ppt-web-core-notfound-i18n-gap` | ppt-web: 8 route-wrapper 'entity not found' fallbacks hardcode English JSX — sk/cs/de users see untranslated errors on missing entities | open | 2026-08-03 |  |
+| 1 | refactor | `code-review-mobile-rn-hardcoded-empty-error-i18n` | mobile-rn: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired | open | 2026-08-03 |  |
+| 1 | refactor | `code-review-mobile-rn-push-debug-console-log` | mobile-rn usePushNotifications: debug console.log left on the device-token register/unregister production path | open | 2026-08-03 |  |
 | 1 | bug | `code-review-reality-server-password-reset-no-transport` | reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent | dropped | 2026-08-01 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-scheduler-2026-07-30` | Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576) | done | 2026-07-30 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-layout-tenant-2026-07-30` | Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) | dropped | 2026-07-30 |  |
