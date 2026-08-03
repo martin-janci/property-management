@@ -7,10 +7,12 @@
 'use client';
 import { useAgencyBranding, useMyAgency, useUpdateBranding } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { AgencyLoadError, isNotFoundError, NoAgencyMessage } from './AgencyErrorStates';
 
 export function AgencyBranding() {
+  const t = useTranslations('agencyBranding');
   const {
     data: agency,
     isLoading: agencyLoading,
@@ -112,10 +114,10 @@ export function AgencyBranding() {
       <div className="header">
         <div>
           <Link href="/agency" className="back-link">
-            ← Back to Dashboard
+            {t('back')}
           </Link>
-          <h1 className="title">Agency Branding</h1>
-          <p className="subtitle">Customize your agency&apos;s appearance</p>
+          <h1 className="title">{t('title')}</h1>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
         <button
           type="button"
@@ -123,21 +125,19 @@ export function AgencyBranding() {
           onClick={handleSave}
           disabled={!hasChanges || updateBranding.isPending}
         >
-          {updateBranding.isPending ? 'Saving...' : 'Save Changes'}
+          {updateBranding.isPending ? t('saving') : t('saveChanges')}
         </button>
       </div>
 
       <div className="content-grid">
         {/* Logo Section */}
         <div className="section">
-          <h2 className="section-title">Logo</h2>
-          <p className="section-description">
-            Your logo will appear on all listings and your agency profile.
-          </p>
+          <h2 className="section-title">{t('logoTitle')}</h2>
+          <p className="section-description">{t('logoDesc')}</p>
           <div className="logo-upload">
             <div className="logo-preview">
               {logoPreview || branding?.logoUrl ? (
-                <img src={logoPreview || branding?.logoUrl} alt="Agency logo" />
+                <img src={logoPreview || branding?.logoUrl} alt={t('logoAlt')} />
               ) : (
                 <div className="logo-placeholder">
                   <svg
@@ -159,23 +159,21 @@ export function AgencyBranding() {
             <div className="upload-actions">
               <label className="upload-button">
                 <input type="file" accept="image/*" onChange={handleLogoChange} />
-                Upload Logo
+                {t('uploadLogo')}
               </label>
-              <span className="upload-hint">PNG, JPG up to 2MB. Recommended: 400x200px</span>
+              <span className="upload-hint">{t('logoHint')}</span>
             </div>
           </div>
         </div>
 
         {/* Cover Image Section */}
         <div className="section">
-          <h2 className="section-title">Cover Image</h2>
-          <p className="section-description">
-            The cover image appears at the top of your agency profile page.
-          </p>
+          <h2 className="section-title">{t('coverTitle')}</h2>
+          <p className="section-description">{t('coverDesc')}</p>
           <div className="cover-upload">
             <div className="cover-preview">
               {coverPreview || branding?.coverImageUrl ? (
-                <img src={coverPreview || branding?.coverImageUrl} alt="Agency cover" />
+                <img src={coverPreview || branding?.coverImageUrl} alt={t('coverAlt')} />
               ) : (
                 <div className="cover-placeholder">
                   <svg
@@ -191,28 +189,26 @@ export function AgencyBranding() {
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
-                  <span>No cover image</span>
+                  <span>{t('noCover')}</span>
                 </div>
               )}
             </div>
             <label className="upload-button">
               <input type="file" accept="image/*" onChange={handleCoverChange} />
-              Upload Cover
+              {t('uploadCover')}
             </label>
-            <span className="upload-hint">Recommended: 1920x400px</span>
+            <span className="upload-hint">{t('coverHint')}</span>
           </div>
         </div>
 
         {/* Colors Section */}
         <div className="section">
-          <h2 className="section-title">Brand Colors</h2>
-          <p className="section-description">
-            Choose colors that represent your brand. These will be used on your listings.
-          </p>
+          <h2 className="section-title">{t('colorsTitle')}</h2>
+          <p className="section-description">{t('colorsDesc')}</p>
 
           <div className="colors-grid">
             <div className="color-picker">
-              <label htmlFor="primary-color">Primary Color</label>
+              <label htmlFor="primary-color">{t('primaryColor')}</label>
               <div className="color-input-wrapper">
                 <input
                   id="primary-color"
@@ -230,7 +226,7 @@ export function AgencyBranding() {
             </div>
 
             <div className="color-picker">
-              <label htmlFor="secondary-color">Secondary Color</label>
+              <label htmlFor="secondary-color">{t('secondaryColor')}</label>
               <div className="color-input-wrapper">
                 <input
                   id="secondary-color"
@@ -248,7 +244,7 @@ export function AgencyBranding() {
             </div>
 
             <div className="color-picker">
-              <label htmlFor="accent-color">Accent Color</label>
+              <label htmlFor="accent-color">{t('accentColor')}</label>
               <div className="color-input-wrapper">
                 <input
                   id="accent-color"
@@ -269,8 +265,8 @@ export function AgencyBranding() {
 
         {/* Preview Section */}
         <div className="section preview-section">
-          <h2 className="section-title">Preview</h2>
-          <p className="section-description">See how your branding will appear on listings.</p>
+          <h2 className="section-title">{t('previewTitle')}</h2>
+          <p className="section-description">{t('previewDesc')}</p>
 
           <div className="preview-card" style={{ borderColor: primaryColor }}>
             <div className="preview-image">
@@ -283,7 +279,7 @@ export function AgencyBranding() {
                 />
               )}
               <span className="preview-badge" style={{ backgroundColor: accentColor }}>
-                Featured
+                {t('featured')}
               </span>
             </div>
             <div className="preview-content">
@@ -292,8 +288,8 @@ export function AgencyBranding() {
                   <img src={logoPreview || branding?.logoUrl} alt="Logo" className="preview-logo" />
                 )}
                 <div>
-                  <h3 style={{ color: primaryColor }}>{agency?.name || 'Your Agency'}</h3>
-                  <p>Sample Listing Title</p>
+                  <h3 style={{ color: primaryColor }}>{agency?.name || t('yourAgency')}</h3>
+                  <p>{t('sampleTitle')}</p>
                 </div>
               </div>
               <div className="preview-price" style={{ color: primaryColor }}>
@@ -304,7 +300,7 @@ export function AgencyBranding() {
                 className="preview-button"
                 style={{ backgroundColor: primaryColor }}
               >
-                Contact Agent
+                {t('contactAgent')}
               </button>
             </div>
           </div>

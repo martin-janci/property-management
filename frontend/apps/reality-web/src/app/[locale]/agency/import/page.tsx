@@ -7,12 +7,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { CrmConnection, CsvImport, FeedImport } from '@/components/import';
 
 type ImportTab = 'csv' | 'crm' | 'feed';
 
 export default function AgencyImportPage() {
+  const t = useTranslations('import.page');
   const [activeTab, setActiveTab] = useState<ImportTab>('csv');
 
   return (
@@ -20,10 +22,10 @@ export default function AgencyImportPage() {
       <div className="page-header">
         <div>
           <Link href="/agency" className="back-link">
-            ← Back to Dashboard
+            {t('back')}
           </Link>
-          <h1>Import Listings</h1>
-          <p className="subtitle">Bulk import properties from various sources</p>
+          <h1>{t('title')}</h1>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -47,7 +49,7 @@ export default function AgencyImportPage() {
             <line x1="12" y1="18" x2="12" y2="12" />
             <line x1="9" y1="15" x2="15" y2="15" />
           </svg>
-          CSV Import
+          {t('tabCsv')}
         </button>
         <button
           type="button"
@@ -66,7 +68,7 @@ export default function AgencyImportPage() {
             <path d="M20 7h-4m0 0V3m0 4l4-4M4 17h4m0 0v4m0-4l-4 4" />
             <circle cx="12" cy="12" r="3" />
           </svg>
-          CRM Connections
+          {t('tabCrm')}
         </button>
         <button
           type="button"
@@ -86,7 +88,7 @@ export default function AgencyImportPage() {
             <path d="M4 4a16 16 0 0 1 16 16" />
             <circle cx="5" cy="19" r="2" />
           </svg>
-          Feed Sources
+          {t('tabFeed')}
         </button>
       </div>
 

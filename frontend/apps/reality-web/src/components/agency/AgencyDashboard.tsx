@@ -187,7 +187,7 @@ export function AgencyDashboard() {
             >
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span>Inquiries</span>
+            <span>{t('inquiries')}</span>
           </Link>
           <Link href="/agency/branding" className="action-card">
             <svg
@@ -376,9 +376,10 @@ export function AgencyDashboard() {
 }
 
 function StatsCards({ stats }: { stats: AgencyStats }) {
+  const t = useTranslations('agency');
   const cards = [
     {
-      label: 'Active Listings',
+      label: t('statActiveListings'),
       value: stats.activeListings,
       total: stats.totalListings,
       icon: (
@@ -397,7 +398,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
       color: 'var(--ppt-color-primary)',
     },
     {
-      label: 'Total Views',
+      label: t('statTotalViews'),
       value: formatNumber(stats.totalViews),
       icon: (
         <svg
@@ -416,7 +417,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
       color: 'var(--ppt-color-success)',
     },
     {
-      label: 'Inquiries',
+      label: t('statInquiries'),
       value: stats.totalInquiries,
       icon: (
         <svg
@@ -434,7 +435,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
       color: 'var(--ppt-color-warning)',
     },
     {
-      label: 'Conversion Rate',
+      label: t('statConversionRate'),
       value: `${stats.conversionRate.toFixed(1)}%`,
       icon: (
         <svg
@@ -453,7 +454,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
       color: '#8b5cf6',
     },
     {
-      label: 'Realtors',
+      label: t('statRealtors'),
       value: stats.totalRealtors,
       icon: (
         <svg
@@ -474,7 +475,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
       color: '#ec4899',
     },
     {
-      label: 'Avg. Days on Market',
+      label: t('statAvgDaysOnMarket'),
       value: Math.round(stats.averageDaysOnMarket),
       icon: (
         <svg
@@ -568,6 +569,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
 }
 
 function PerformanceChart({ data }: { data: AgencyPerformance[] }) {
+  const t = useTranslations('agency');
   const maxViews = Math.max(...data.map((d) => d.views), 1);
   const maxInquiries = Math.max(...data.map((d) => d.inquiries), 1);
 
@@ -580,12 +582,12 @@ function PerformanceChart({ data }: { data: AgencyPerformance[] }) {
               <div
                 className="bar views"
                 style={{ height: `${(item.views / maxViews) * 100}%` }}
-                title={`Views: ${item.views}`}
+                title={`${t('chartViews')}: ${item.views}`}
               />
               <div
                 className="bar inquiries"
                 style={{ height: `${(item.inquiries / maxInquiries) * 100}%` }}
-                title={`Inquiries: ${item.inquiries}`}
+                title={`${t('chartInquiries')}: ${item.inquiries}`}
               />
             </div>
             <span className="bar-label">{item.period}</span>
@@ -595,11 +597,11 @@ function PerformanceChart({ data }: { data: AgencyPerformance[] }) {
       <div className="chart-legend">
         <span className="legend-item">
           <span className="legend-color views" />
-          Views
+          {t('chartViews')}
         </span>
         <span className="legend-item">
           <span className="legend-color inquiries" />
-          Inquiries
+          {t('chartInquiries')}
         </span>
       </div>
       <style jsx>{`
@@ -698,10 +700,11 @@ function RealtorLeaderboard({
     rating?: number;
   }>;
 }) {
+  const t = useTranslations('agency');
   return (
     <div className="leaderboard">
       {realtors.length === 0 ? (
-        <p className="empty">No active realtors yet</p>
+        <p className="empty">{t('leaderboardEmpty')}</p>
       ) : (
         realtors.map((realtor, index) => (
           <div key={realtor.id} className="realtor-row">
@@ -716,7 +719,10 @@ function RealtorLeaderboard({
             <div className="realtor-info">
               <span className="realtor-name">{realtor.name}</span>
               <span className="realtor-stats">
-                {realtor.totalSales} sales · {realtor.activeListings} active
+                {t('leaderboardStats', {
+                  sales: realtor.totalSales,
+                  active: realtor.activeListings,
+                })}
               </span>
             </div>
             {realtor.rating && (

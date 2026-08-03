@@ -8,29 +8,25 @@
 
 import type { SyncFrequency, SyncHistoryItem } from '@ppt/reality-api-client';
 import { useSyncHistory, useSyncSchedule, useUpdateSyncSchedule } from '@ppt/reality-api-client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-const FREQUENCY_OPTIONS: { value: SyncFrequency; label: string; description: string }[] = [
-  { value: 'manual', label: 'Manual', description: 'Only sync when you trigger it' },
-  { value: 'hourly', label: 'Hourly', description: 'Sync every hour' },
-  { value: 'daily', label: 'Daily', description: 'Sync once per day' },
-  { value: 'weekly', label: 'Weekly', description: 'Sync once per week' },
-];
+const FREQUENCY_VALUES: SyncFrequency[] = ['manual', 'hourly', 'daily', 'weekly'];
 
 const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
   const hour = i.toString().padStart(2, '0');
   return { value: `${hour}:00`, label: `${hour}:00` };
 });
 
-const DAY_OPTIONS = [
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
-];
+const DAY_KEYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
 
 interface SyncScheduleProps {
   agencyId: string;
@@ -39,9 +35,17 @@ interface SyncScheduleProps {
 }
 
 export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncScheduleProps) {
+  const t = useTranslations('import.schedule');
   const { data: schedule, isLoading } = useSyncSchedule(agencyId, connectionId);
   const { data: history } = useSyncHistory(agencyId, connectionId);
   const updateMutation = useUpdateSyncSchedule(agencyId, connectionId);
+
+  const frequencyOptions = FREQUENCY_VALUES.map((value) => ({
+    value,
+    label: t(`freq.${value}`),
+    description: t(`freq.${value}Desc`),
+  }));
+  const dayOptions = DAY_KEYS.map((key, value) => ({ value, label: t(`days.${key}`) }));
 
   const [isEditing, setIsEditing] = useState(false);
   const [frequency, setFrequency] = useState<SyncFrequency>(schedule?.frequency || 'daily');
@@ -68,12 +72,12 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
       <div className="section">
         <div className="section-header">
           <div>
-            <h3>Sync Schedule</h3>
-            <p className="subtitle">Configure automatic sync for {connectionName}</p>
+            <h3>{t('title')}</h3>
+            <p className="subtitle">{t('subtitle', { name: connectionName })}</p>
           </div>
           {!isEditing && (
             <button type="button" className="edit-button" onClick={() => setIsEditing(true)}>
-              Edit Schedule
+              {t('editSchedule')}
             </button>
           )}
         </div>
@@ -82,7 +86,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           <div className="edit-form">
             {/* Enable/Disable Toggle */}
             <label className="toggle-row">
-              <span>Enable automatic sync</span>
+              <span>{t('enableAuto')}</span>
               <input
                 type="checkbox"
                 checked={enabled}
@@ -92,9 +96,9 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 
             {/* Frequency Selection */}
             <fieldset className="frequency-section">
-              <legend>Sync Frequency</legend>
+              <legend>{t('syncFrequency')}</legend>
               <div className="frequency-options">
-                {FREQUENCY_OPTIONS.map((opt) => (
+                {frequencyOptions.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
@@ -112,7 +116,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
             {/* Time Picker (for daily/weekly) */}
             {(frequency === 'daily' || frequency === 'weekly') && enabled && (
               <div className="time-section">
-                <label htmlFor="sync-time">Preferred Time</label>
+                <label htmlFor="sync-time">{t('preferredTime')}</label>
                 <select
                   id="sync-time"
                   value={preferredTime}
@@ -130,13 +134,13 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
             {/* Day Picker (for weekly) */}
             {frequency === 'weekly' && enabled && (
               <div className="day-section">
-                <label htmlFor="sync-day">Preferred Day</label>
+                <label htmlFor="sync-day">{t('preferredDay')}</label>
                 <select
                   id="sync-day"
                   value={preferredDay}
                   onChange={(e) => setPreferredDay(Number(e.target.value))}
                 >
-                  {DAY_OPTIONS.map((opt) => (
+                  {dayOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -148,7 +152,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
             {/* Actions */}
             <div className="form-actions">
               <button type="button" className="cancel-button" onClick={() => setIsEditing(false)}>
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="button"
@@ -156,7 +160,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
               >
-                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {updateMutation.isPending ? t('saving') : t('saveChanges')}
               </button>
             </div>
           </div>
@@ -164,35 +168,34 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           <div className="schedule-display">
             <div className="schedule-info">
               <div className="info-row">
-                <span className="info-label">Status</span>
+                <span className="info-label">{t('status')}</span>
                 <span className={`status-badge ${schedule?.enabled ? 'enabled' : 'disabled'}`}>
-                  {schedule?.enabled ? 'Enabled' : 'Disabled'}
+                  {schedule?.enabled ? t('enabled') : t('disabled')}
                 </span>
               </div>
               <div className="info-row">
-                <span className="info-label">Frequency</span>
+                <span className="info-label">{t('frequency')}</span>
                 <span className="info-value">
-                  {FREQUENCY_OPTIONS.find((o) => o.value === schedule?.frequency)?.label ||
-                    'Not set'}
+                  {schedule?.frequency ? t(`freq.${schedule.frequency}`) : t('notSet')}
                 </span>
               </div>
               {schedule?.preferredTime && (
                 <div className="info-row">
-                  <span className="info-label">Time</span>
+                  <span className="info-label">{t('time')}</span>
                   <span className="info-value">{schedule.preferredTime}</span>
                 </div>
               )}
               {schedule?.preferredDay !== undefined && schedule.frequency === 'weekly' && (
                 <div className="info-row">
-                  <span className="info-label">Day</span>
+                  <span className="info-label">{t('day')}</span>
                   <span className="info-value">
-                    {DAY_OPTIONS.find((d) => d.value === schedule.preferredDay)?.label}
+                    {dayOptions.find((d) => d.value === schedule.preferredDay)?.label}
                   </span>
                 </div>
               )}
               {schedule?.nextRunAt && (
                 <div className="info-row">
-                  <span className="info-label">Next Run</span>
+                  <span className="info-label">{t('nextRun')}</span>
                   <span className="info-value">
                     {new Date(schedule.nextRunAt).toLocaleString()}
                   </span>
@@ -205,7 +208,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 
       {/* Sync History */}
       <div className="section">
-        <h3>Sync History</h3>
+        <h3>{t('syncHistory')}</h3>
         {history && history.length > 0 ? (
           <div className="history-list">
             {history.map((item) => (
@@ -213,7 +216,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
             ))}
           </div>
         ) : (
-          <p className="no-history">No sync history yet</p>
+          <p className="no-history">{t('noHistory')}</p>
         )}
       </div>
 
@@ -474,6 +477,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 }
 
 function HistoryItem({ item }: { item: SyncHistoryItem }) {
+  const t = useTranslations('import.schedule');
   const statusConfig = getHistoryStatusConfig(item.status);
 
   return (
@@ -484,22 +488,22 @@ function HistoryItem({ item }: { item: SyncHistoryItem }) {
           className="history-status"
           style={{ background: statusConfig.bg, color: statusConfig.color }}
         >
-          {statusConfig.label}
+          {t(`historyStatus.${item.status}`)}
         </span>
       </div>
       <div className="history-stats">
         <span className="stat">
-          <strong>{item.recordsProcessed}</strong> processed
+          <strong>{item.recordsProcessed}</strong> {t('processed')}
         </span>
         <span className="stat">
-          <strong>{item.recordsCreated}</strong> created
+          <strong>{item.recordsCreated}</strong> {t('created')}
         </span>
         <span className="stat">
-          <strong>{item.recordsUpdated}</strong> updated
+          <strong>{item.recordsUpdated}</strong> {t('updated')}
         </span>
         {item.recordsFailed > 0 && (
           <span className="stat error">
-            <strong>{item.recordsFailed}</strong> failed
+            <strong>{item.recordsFailed}</strong> {t('failed')}
           </span>
         )}
       </div>
@@ -593,22 +597,18 @@ function ScheduleSkeleton() {
 function getHistoryStatusConfig(status: SyncHistoryItem['status']) {
   const configs = {
     running: {
-      label: 'Running',
       color: 'var(--ppt-color-primary)',
       bg: 'var(--ppt-color-primary-soft-bg)',
     },
     completed: {
-      label: 'Completed',
       color: 'var(--ppt-color-success-hover)',
       bg: 'var(--ppt-color-success-light)',
     },
     failed: {
-      label: 'Failed',
       color: 'var(--ppt-color-danger)',
       bg: 'var(--ppt-color-danger-light)',
     },
     cancelled: {
-      label: 'Cancelled',
       color: 'var(--ppt-fg-muted)',
       bg: 'var(--ppt-border-default)',
     },

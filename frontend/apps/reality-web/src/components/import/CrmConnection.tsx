@@ -19,6 +19,7 @@ import {
   useSyncCrmConnection,
   useTestCrmConnection,
 } from '@ppt/reality-api-client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 const CRM_PROVIDERS: { id: CrmProvider; name: string; logo: string }[] = [
@@ -41,6 +42,7 @@ const DEFAULT_FIELD_MAPPING: CrmFieldMapping = {
 };
 
 export function CrmConnection() {
+  const t = useTranslations('import.crm');
   const [showModal, setShowModal] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<CrmProvider | null>(null);
 
@@ -51,8 +53,8 @@ export function CrmConnection() {
     <div className="crm-connection">
       <div className="header">
         <div>
-          <h2>CRM Connections</h2>
-          <p className="subtitle">Connect your CRM to automatically sync property listings</p>
+          <h2>{t('title')}</h2>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
         <button type="button" className="add-button" onClick={() => setShowModal(true)}>
           <svg
@@ -67,7 +69,7 @@ export function CrmConnection() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Add Connection
+          {t('addConnection')}
         </button>
       </div>
 
@@ -155,6 +157,8 @@ function ConnectionCard({
   connection: CrmConnectionType;
   agencyId: string;
 }) {
+  const t = useTranslations('import.crm');
+  const tFreq = useTranslations('import.feed.frequency');
   const deleteMutation = useDeleteCrmConnection(agencyId);
   const syncMutation = useSyncCrmConnection(agencyId, connection.id);
 
@@ -162,7 +166,7 @@ function ConnectionCard({
   const statusConfig = getStatusConfig(connection.status);
 
   const handleDelete = async () => {
-    if (confirm('Are you sure you want to remove this connection?')) {
+    if (confirm(t('confirmRemove'))) {
       await deleteMutation.mutateAsync(connection.id);
     }
   };
@@ -181,26 +185,26 @@ function ConnectionCard({
           className="status-badge"
           style={{ background: statusConfig.bg, color: statusConfig.color }}
         >
-          {statusConfig.label}
+          {t(`status.${connection.status}`)}
         </span>
       </div>
 
       <div className="card-body">
         {connection.lastSyncAt && (
           <div className="sync-info">
-            <span className="label">Last sync:</span>
+            <span className="label">{t('lastSync')}</span>
             <span className="value">{new Date(connection.lastSyncAt).toLocaleString()}</span>
           </div>
         )}
         {connection.nextSyncAt && (
           <div className="sync-info">
-            <span className="label">Next sync:</span>
+            <span className="label">{t('nextSync')}</span>
             <span className="value">{new Date(connection.nextSyncAt).toLocaleString()}</span>
           </div>
         )}
         <div className="sync-info">
-          <span className="label">Frequency:</span>
-          <span className="value">{formatFrequency(connection.syncFrequency)}</span>
+          <span className="label">{t('frequency')}</span>
+          <span className="value">{tFreq(connection.syncFrequency)}</span>
         </div>
       </div>
 
@@ -211,10 +215,10 @@ function ConnectionCard({
           onClick={() => syncMutation.mutate()}
           disabled={syncMutation.isPending || connection.status === 'syncing'}
         >
-          {syncMutation.isPending ? 'Syncing...' : 'Sync Now'}
+          {syncMutation.isPending ? t('syncing') : t('syncNow')}
         </button>
         <button type="button" className="action-button settings">
-          Settings
+          {t('settings')}
         </button>
         <button
           type="button"
@@ -222,7 +226,7 @@ function ConnectionCard({
           onClick={handleDelete}
           disabled={deleteMutation.isPending}
         >
-          Remove
+          {t('remove')}
         </button>
       </div>
 
@@ -351,6 +355,7 @@ function AddConnectionModal({
   onSelectProvider: (provider: CrmProvider) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations('import.crm');
   const [step, setStep] = useState<'select' | 'configure' | 'mapping'>('select');
   const [name, setName] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -376,7 +381,7 @@ function AddConnectionModal({
     } catch (error) {
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Connection failed',
+        message: error instanceof Error ? error.message : t('connectionFailed'),
       });
     }
   };
@@ -385,7 +390,9 @@ function AddConnectionModal({
     if (!selectedProvider) return;
     await createMutation.mutateAsync({
       provider: selectedProvider,
-      name: name || `${CRM_PROVIDERS.find((p) => p.id === selectedProvider)?.name} Connection`,
+      name:
+        name ||
+        `${CRM_PROVIDERS.find((p) => p.id === selectedProvider)?.name} ${t('connectionSuffix')}`,
       credentials: {
         apiKey,
         instanceUrl: selectedProvider === 'salesforce' ? instanceUrl : undefined,
@@ -408,11 +415,16 @@ function AddConnectionModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={() => {}}>
         <div className="modal-header">
           <h2 id="modal-title">
-            {step === 'select' && 'Select CRM Provider'}
-            {step === 'configure' && 'Configure Connection'}
-            {step === 'mapping' && 'Field Mapping'}
+            {step === 'select' && t('modalSelect')}
+            {step === 'configure' && t('modalConfigure')}
+            {step === 'mapping' && t('modalMapping')}
           </h2>
-          <button type="button" className="close-button" onClick={onClose} aria-label="Close modal">
+          <button
+            type="button"
+            className="close-button"
+            onClick={onClose}
+            aria-label={t('closeModal')}
+          >
             <svg
               width="24"
               height="24"
@@ -451,30 +463,32 @@ function AddConnectionModal({
           {step === 'configure' && selectedProvider && (
             <div className="configure-form">
               <div className="form-group">
-                <label htmlFor="conn-name">Connection Name (Optional)</label>
+                <label htmlFor="conn-name">{t('connectionName')}</label>
                 <input
                   id="conn-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={`My ${CRM_PROVIDERS.find((p) => p.id === selectedProvider)?.name}`}
+                  placeholder={t('connectionNamePlaceholder', {
+                    provider: CRM_PROVIDERS.find((p) => p.id === selectedProvider)?.name ?? '',
+                  })}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="api-key">API Key</label>
+                <label htmlFor="api-key">{t('apiKey')}</label>
                 <input
                   id="api-key"
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your API key"
+                  placeholder={t('apiKeyPlaceholder')}
                 />
               </div>
 
               {selectedProvider === 'salesforce' && (
                 <div className="form-group">
-                  <label htmlFor="instance-url">Instance URL</label>
+                  <label htmlFor="instance-url">{t('instanceUrl')}</label>
                   <input
                     id="instance-url"
                     type="url"
@@ -495,7 +509,7 @@ function AddConnectionModal({
 
           {step === 'mapping' && (
             <div className="mapping-form">
-              <p className="mapping-hint">Map your CRM fields to listing properties</p>
+              <p className="mapping-hint">{t('mappingHint')}</p>
               {Object.entries(DEFAULT_FIELD_MAPPING).map(([localField, defaultRemote]) => (
                 <div key={localField} className="mapping-row">
                   <label htmlFor={`map-${localField}`}>{formatFieldLabel(localField)}</label>
@@ -518,7 +532,7 @@ function AddConnectionModal({
           {step === 'configure' && (
             <>
               <button type="button" className="secondary" onClick={() => setStep('select')}>
-                Back
+                {t('back')}
               </button>
               <button
                 type="button"
@@ -526,7 +540,7 @@ function AddConnectionModal({
                 onClick={handleTest}
                 disabled={!apiKey || testMutation.isPending}
               >
-                {testMutation.isPending ? 'Testing...' : 'Test Connection'}
+                {testMutation.isPending ? t('testing') : t('testConnection')}
               </button>
             </>
           )}
@@ -534,7 +548,7 @@ function AddConnectionModal({
           {step === 'mapping' && (
             <>
               <button type="button" className="secondary" onClick={() => setStep('configure')}>
-                Back
+                {t('back')}
               </button>
               <button
                 type="button"
@@ -542,7 +556,7 @@ function AddConnectionModal({
                 onClick={handleCreate}
                 disabled={createMutation.isPending}
               >
-                {createMutation.isPending ? 'Creating...' : 'Create Connection'}
+                {createMutation.isPending ? t('creating') : t('createConnection')}
               </button>
             </>
           )}
@@ -769,6 +783,7 @@ function ConnectionsSkeleton() {
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const t = useTranslations('import.crm');
   return (
     <div className="empty-state">
       <svg
@@ -783,10 +798,10 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         <path d="M20 7h-4m0 0V3m0 4l4-4M4 17h4m0 0v4m0-4l-4 4" />
         <circle cx="12" cy="12" r="3" />
       </svg>
-      <h3>No CRM connections</h3>
-      <p>Connect your CRM to automatically sync listings</p>
+      <h3>{t('emptyTitle')}</h3>
+      <p>{t('emptyText')}</p>
       <button type="button" onClick={onAdd}>
-        Add Your First Connection
+        {t('addFirst')}
       </button>
       <style jsx>{`
         .empty-state {
@@ -825,37 +840,23 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 function getStatusConfig(status: CrmConnectionType['status']) {
   const configs = {
     connected: {
-      label: 'Connected',
       color: 'var(--ppt-color-success-hover)',
       bg: 'var(--ppt-color-success-light)',
     },
     disconnected: {
-      label: 'Disconnected',
       color: 'var(--ppt-fg-muted)',
       bg: 'var(--ppt-border-default)',
     },
     error: {
-      label: 'Error',
       color: 'var(--ppt-color-danger)',
       bg: 'var(--ppt-color-danger-light)',
     },
     syncing: {
-      label: 'Syncing',
       color: 'var(--ppt-color-primary)',
       bg: 'var(--ppt-color-primary-soft-bg)',
     },
   };
   return configs[status];
-}
-
-function formatFrequency(frequency: string): string {
-  const labels: Record<string, string> = {
-    manual: 'Manual',
-    hourly: 'Every hour',
-    daily: 'Daily',
-    weekly: 'Weekly',
-  };
-  return labels[frequency] || frequency;
 }
 
 function formatFieldLabel(field: string): string {

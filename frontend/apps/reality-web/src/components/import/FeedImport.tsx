@@ -23,6 +23,7 @@ import {
   useSyncFeedSource,
   useUpdateFeedSource,
 } from '@ppt/reality-api-client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 const DEFAULT_FIELD_MAPPING: FeedFieldMapping = {
@@ -37,14 +38,10 @@ const DEFAULT_FIELD_MAPPING: FeedFieldMapping = {
   photos: 'images',
 };
 
-const FREQUENCY_OPTIONS: { value: SyncFrequency; label: string }[] = [
-  { value: 'manual', label: 'Manual' },
-  { value: 'hourly', label: 'Hourly' },
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-];
+const FREQUENCY_VALUES: SyncFrequency[] = ['manual', 'hourly', 'daily', 'weekly'];
 
 export function FeedImport() {
+  const t = useTranslations('import.feed');
   const [showModal, setShowModal] = useState(false);
 
   const { data: agency } = useMyAgency();
@@ -54,8 +51,8 @@ export function FeedImport() {
     <div className="feed-import">
       <div className="header">
         <div>
-          <h2>Feed Sources</h2>
-          <p className="subtitle">Import listings from XML, RSS, or JSON feeds</p>
+          <h2>{t('title')}</h2>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
         <button type="button" className="add-button" onClick={() => setShowModal(true)}>
           <svg
@@ -70,7 +67,7 @@ export function FeedImport() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Add Feed
+          {t('addFeed')}
         </button>
       </div>
 
@@ -144,6 +141,8 @@ export function FeedImport() {
 }
 
 function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
+  const t = useTranslations('import.feed');
+  const tHist = useTranslations('import.schedule.historyStatus');
   const [showHistory, setShowHistory] = useState(false);
   const deleteMutation = useDeleteFeedSource(agencyId);
   const syncMutation = useSyncFeedSource(agencyId, feed.id);
@@ -159,7 +158,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   };
 
   const handleDelete = async () => {
-    if (confirm('Are you sure you want to remove this feed?')) {
+    if (confirm(t('confirmRemove'))) {
       await deleteMutation.mutateAsync(feed.id);
     }
   };
@@ -178,7 +177,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           className="status-badge"
           style={{ background: statusConfig.bg, color: statusConfig.color }}
         >
-          {statusConfig.label}
+          {t(`status.${feed.status}`)}
         </span>
       </div>
 
@@ -186,16 +185,16 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
         <div className="stats-row">
           <div className="stat">
             <span className="stat-value">{feed.totalListings}</span>
-            <span className="stat-label">Listings</span>
+            <span className="stat-label">{t('listings')}</span>
           </div>
           <div className="stat">
-            <span className="stat-value">{formatFrequency(feed.syncFrequency)}</span>
-            <span className="stat-label">Sync Frequency</span>
+            <span className="stat-value">{t(`frequency.${feed.syncFrequency}`)}</span>
+            <span className="stat-label">{t('syncFrequency')}</span>
           </div>
           {feed.lastFetchAt && (
             <div className="stat">
               <span className="stat-value">{new Date(feed.lastFetchAt).toLocaleDateString()}</span>
-              <span className="stat-label">Last Sync</span>
+              <span className="stat-label">{t('lastSync')}</span>
             </div>
           )}
         </div>
@@ -208,7 +207,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           onClick={() => syncMutation.mutate()}
           disabled={syncMutation.isPending || feed.status === 'error'}
         >
-          {syncMutation.isPending ? 'Syncing...' : 'Sync Now'}
+          {syncMutation.isPending ? t('syncing') : t('syncNow')}
         </button>
         <button
           type="button"
@@ -216,14 +215,14 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           onClick={handleTogglePause}
           disabled={updateMutation.isPending}
         >
-          {feed.status === 'active' ? 'Pause' : 'Resume'}
+          {feed.status === 'active' ? t('pause') : t('resume')}
         </button>
         <button
           type="button"
           className="action-button history"
           onClick={() => setShowHistory(!showHistory)}
         >
-          History
+          {t('history')}
         </button>
         <button
           type="button"
@@ -231,23 +230,26 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           onClick={handleDelete}
           disabled={deleteMutation.isPending}
         >
-          Remove
+          {t('remove')}
         </button>
       </div>
 
       {showHistory && history && (
         <div className="history-section">
-          <h4>Sync History</h4>
+          <h4>{t('syncHistory')}</h4>
           {history.length === 0 ? (
-            <p className="no-history">No sync history yet</p>
+            <p className="no-history">{t('noHistory')}</p>
           ) : (
             <div className="history-list">
               {history.map((item) => (
                 <div key={item.id} className="history-item">
                   <span className="history-date">{new Date(item.startedAt).toLocaleString()}</span>
-                  <span className={`history-status ${item.status}`}>{item.status}</span>
+                  <span className={`history-status ${item.status}`}>{tHist(item.status)}</span>
                   <span className="history-stats">
-                    {item.recordsCreated} created, {item.recordsUpdated} updated
+                    {t('historyStats', {
+                      created: item.recordsCreated,
+                      updated: item.recordsUpdated,
+                    })}
                   </span>
                 </div>
               ))}
@@ -451,6 +453,8 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
 }
 
 function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
+  const t = useTranslations('import.feed');
+  const tFreq = useTranslations('import.feed.frequency');
   const [step, setStep] = useState<'url' | 'preview' | 'mapping'>('url');
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
@@ -475,7 +479,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
 
   const handleCreate = async () => {
     await createMutation.mutateAsync({
-      name: name || 'Property Feed',
+      name: name || t('defaultName'),
       url,
       format: previewData?.format,
       fieldMapping,
@@ -496,11 +500,16 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
       <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={() => {}}>
         <div className="modal-header">
           <h2 id="modal-title">
-            {step === 'url' && 'Add Feed Source'}
-            {step === 'preview' && 'Feed Preview'}
-            {step === 'mapping' && 'Field Mapping'}
+            {step === 'url' && t('modalAdd')}
+            {step === 'preview' && t('modalPreview')}
+            {step === 'mapping' && t('modalMapping')}
           </h2>
-          <button type="button" className="close-button" onClick={onClose} aria-label="Close modal">
+          <button
+            type="button"
+            className="close-button"
+            onClick={onClose}
+            aria-label={t('closeModal')}
+          >
             <svg
               width="24"
               height="24"
@@ -520,7 +529,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
           {step === 'url' && (
             <div className="url-form">
               <div className="form-group">
-                <label htmlFor="feed-url">Feed URL</label>
+                <label htmlFor="feed-url">{t('feedUrl')}</label>
                 <input
                   id="feed-url"
                   type="url"
@@ -528,25 +537,21 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com/feed.xml"
                 />
-                <p className="hint">Supports XML, RSS, Atom, and JSON feeds</p>
+                <p className="hint">{t('feedUrlHint')}</p>
               </div>
 
               <div className="form-group">
-                <label htmlFor="feed-name">Feed Name (Optional)</label>
+                <label htmlFor="feed-name">{t('feedName')}</label>
                 <input
                   id="feed-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="My Property Feed"
+                  placeholder={t('feedNamePlaceholder')}
                 />
               </div>
 
-              {previewMutation.error && (
-                <div className="error-message">
-                  Failed to fetch feed. Please check the URL and try again.
-                </div>
-              )}
+              {previewMutation.error && <div className="error-message">{t('fetchError')}</div>}
             </div>
           )}
 
@@ -554,17 +559,17 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
             <div className="preview-section">
               <div className="preview-info">
                 <div className="info-card">
-                  <span className="info-label">Format</span>
+                  <span className="info-label">{t('format')}</span>
                   <span className="info-value">{getFormatLabel(previewData.format)}</span>
                 </div>
                 <div className="info-card">
-                  <span className="info-label">Items Found</span>
+                  <span className="info-label">{t('itemsFound')}</span>
                   <span className="info-value">{previewData.totalItems}</span>
                 </div>
               </div>
 
               <div className="available-fields">
-                <h4>Available Fields</h4>
+                <h4>{t('availableFields')}</h4>
                 <div className="fields-list">
                   {previewData.availableFields.map((field) => (
                     <span key={field} className="field-tag">
@@ -576,21 +581,21 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
 
               {previewData.sampleItems.length > 0 && (
                 <div className="sample-items">
-                  <h4>Sample Data</h4>
+                  <h4>{t('sampleData')}</h4>
                   <pre>{JSON.stringify(previewData.sampleItems[0], null, 2)}</pre>
                 </div>
               )}
 
               <div className="form-group">
-                <label htmlFor="sync-freq">Sync Frequency</label>
+                <label htmlFor="sync-freq">{t('syncFrequency')}</label>
                 <select
                   id="sync-freq"
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as SyncFrequency)}
                 >
-                  {FREQUENCY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
+                  {FREQUENCY_VALUES.map((value) => (
+                    <option key={value} value={value}>
+                      {tFreq(value)}
                     </option>
                   ))}
                 </select>
@@ -600,7 +605,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
 
           {step === 'mapping' && (
             <div className="mapping-form">
-              <p className="mapping-hint">Map feed fields to listing properties</p>
+              <p className="mapping-hint">{t('mappingHint')}</p>
               {Object.entries(DEFAULT_FIELD_MAPPING).map(([localField, defaultRemote]) => (
                 <div key={localField} className="mapping-row">
                   <label htmlFor={`map-${localField}`}>{formatFieldLabel(localField)}</label>
@@ -627,17 +632,17 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
               onClick={handlePreview}
               disabled={!url || previewMutation.isPending}
             >
-              {previewMutation.isPending ? 'Fetching...' : 'Fetch Feed'}
+              {previewMutation.isPending ? t('fetching') : t('fetchFeed')}
             </button>
           )}
 
           {step === 'preview' && (
             <>
               <button type="button" className="secondary" onClick={() => setStep('url')}>
-                Back
+                {t('back')}
               </button>
               <button type="button" className="primary" onClick={() => setStep('mapping')}>
-                Configure Mapping
+                {t('configureMapping')}
               </button>
             </>
           )}
@@ -645,7 +650,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
           {step === 'mapping' && (
             <>
               <button type="button" className="secondary" onClick={() => setStep('preview')}>
-                Back
+                {t('back')}
               </button>
               <button
                 type="button"
@@ -653,7 +658,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
                 onClick={handleCreate}
                 disabled={createMutation.isPending}
               >
-                {createMutation.isPending ? 'Creating...' : 'Create Feed'}
+                {createMutation.isPending ? t('creating') : t('createFeed')}
               </button>
             </>
           )}
@@ -899,6 +904,7 @@ function FeedsSkeleton() {
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const t = useTranslations('import.feed');
   return (
     <div className="empty-state">
       <svg
@@ -914,10 +920,10 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         <path d="M4 4a16 16 0 0 1 16 16" />
         <circle cx="5" cy="19" r="2" />
       </svg>
-      <h3>No feed sources</h3>
-      <p>Add an XML, RSS, or JSON feed to import listings</p>
+      <h3>{t('emptyTitle')}</h3>
+      <p>{t('emptyText')}</p>
       <button type="button" onClick={onAdd}>
-        Add Your First Feed
+        {t('addFirst')}
       </button>
       <style jsx>{`
         .empty-state {
@@ -956,13 +962,11 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 function getFeedStatusConfig(status: FeedSource['status']) {
   const configs = {
     active: {
-      label: 'Active',
       color: 'var(--ppt-color-success-hover)',
       bg: 'var(--ppt-color-success-light)',
     },
-    paused: { label: 'Paused', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    paused: { color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
     error: {
-      label: 'Error',
       color: 'var(--ppt-color-danger)',
       bg: 'var(--ppt-color-danger-light)',
     },
@@ -978,16 +982,6 @@ function getFormatLabel(format: FeedFormat): string {
     json: 'JSON',
   };
   return labels[format] || format.toUpperCase();
-}
-
-function formatFrequency(frequency: string): string {
-  const labels: Record<string, string> = {
-    manual: 'Manual',
-    hourly: 'Hourly',
-    daily: 'Daily',
-    weekly: 'Weekly',
-  };
-  return labels[frequency] || frequency;
 }
 
 function formatFieldLabel(field: string): string {
