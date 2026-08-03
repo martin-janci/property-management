@@ -1,4 +1,27 @@
 {
   "generated": "2026-08-03T00:13:23Z",
-  "assignments": []
+  "assignments": [
+    {
+      "task_id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
+      "branch": "auto-impl/code-review-ppt-web-ui-accounting-invoic-c06a08f8",
+      "status": "in-progress",
+      "claimed_at": "2026-08-03T04:08:44Z",
+      "last_updated": "2026-08-03T04:08:44Z",
+      "status_changed_at": "2026-08-03T04:08:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    }
+  ]
 }
