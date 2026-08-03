@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-03T02:10:53Z",
+  "archived_at": "2026-08-03T07:10:57Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2251,6 +2251,30 @@
         "vector": "refactor"
       },
       "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:29:56Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
+      "action": "AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-03T07:10:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2631,
+        "merged_at": "2026-08-03T07:10:05Z",
+        "at": "2026-08-03T07:10:47Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-actionqueue-mock-shipped",

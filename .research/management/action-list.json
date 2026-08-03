@@ -2,23 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
-      "action": "AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-03T04:05:34Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-aria-label-i18n",
       "action": "ppt-web: 103 hardcoded English aria-label attributes across feature components — screen readers hear English on sk/cs/de",
       "owner_role": "pm-backend",
