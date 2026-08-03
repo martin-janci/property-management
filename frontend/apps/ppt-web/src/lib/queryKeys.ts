@@ -337,7 +337,8 @@ export const queryKeys = {
  *
  * Covers both the centralized {@link queryKeys} factory roots and the
  * ad-hoc roots used directly in feature hooks (`developer`, `ocr`,
- * `actionQueue`, `executionLogs`, `executionStats`, `ai-chat`).
+ * `actionQueue`, `executionLogs`, `executionStats`, `ai-chat`,
+ * `predictive-maintenance`, `sentiment`, `notification-analytics`).
  *
  * When you add a new auth-scoped query root, add it here too — otherwise the
  * cached data will leak into the next user's session.
@@ -365,6 +366,10 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'executionLogs',
   'executionStats',
   'ai-chat',
+  // Feature-local key factories (analytics dashboards — tenant-scoped)
+  'predictive-maintenance',
+  'sentiment',
+  'notification-analytics',
 ] as const;
 
 // ============================================================================
