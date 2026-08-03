@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-02T20:14:08Z",
+  "archived_at": "2026-08-03T02:10:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -808,6 +808,30 @@
         "merged_pr": 2190,
         "merged_at": "2026-07-11T16:18:10Z",
         "at": "2026-07-11T18:05:18Z"
+      }
+    },
+    {
+      "id": "bug-scheduler-notifications-fire-once",
+      "action": "Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": "plans/bug-scheduler-notifications-fire-once.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
       }
     },
     {
@@ -1776,6 +1800,27 @@
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
+      "id": "code-review-api-handlers-community-unauthenticated-reads-retry1",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read [retry 1/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=code-review-api-handlers-community-unauthenticated-reads reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T04:04:21Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "code-review-api-handlers-community-unauthenticated-reads",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "action": "security (broken access control / IDOR): backend/servers/api-server/src/routes/documents/shares.rs revoke_share checks authorization (created_by/is_manager) against the document from the path `id`, but then looks up + revokes the share purely by `share_id` (find_share_by_id_rls result discarded at :349; revoke_share_rls at :370) with no check that `share.document_id == id`. RLS only scopes to tenant, so a non-manager who created any document A can pass A's id (passing the creator check) plus a share_id belonging to another creator's document B in the same tenant and revoke B's share. Add a `share.document_id == id` guard before revoking.",
       "owner_role": "pm-backend",
@@ -2304,6 +2349,78 @@
       }
     },
     {
+      "id": "code-review-reality-server-db-error-leak-to-client",
+      "action": "reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=2 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-password-reset-no-transport",
+      "action": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-session-invalidate-swallowed",
+      "action": "reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=3 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security"
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-inline-tenant-json-xss",
       "action": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
       "owner_role": "pm-security",
@@ -2432,6 +2549,27 @@
       },
       "last_updated": "2026-07-23T14:34:52.019013Z",
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "data-announcement-fanout-metric-2026-07-23-retry1",
+      "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model) [retry 1/2 of failed data-announcement-fanout-metric-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=data-announcement-fanout-metric-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T10:06:46Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "data-announcement-fanout-metric-2026-07-23",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
     },
     {
       "id": "data-audit-add-evidence-idor-fix-2026-07-23",
@@ -2577,6 +2715,27 @@
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
+      "id": "data-mobile-native-analytics-parity-2026-07-23-retry1",
+      "action": "Audit mobile-native (Reality KMP) event tracking against ppt-web/reality-web parity — surface funnels missing analytics hooks (listing view, search, contact-inquiry) [retry 1/2 of failed data-mobile-native-analytics-parity-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=data-mobile-native-analytics-parity-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T18:06:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "data-mobile-native-analytics-parity-2026-07-23",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "merged",
+        "pr": 2622,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
       "id": "data-pgvector-rag-observability-2026-07-23",
       "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows",
       "owner_role": "pm-data",
@@ -2599,6 +2758,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-24T20:12:21Z"
+      }
+    },
+    {
+      "id": "data-pgvector-rag-observability-2026-07-23-retry1",
+      "action": "Add observability for pgvector RAG retrieval quality (84-5 shipped) — retrieval latency, top-k relevance, empty-result rate — before feature adoption grows [retry 1/2 of failed data-pgvector-rag-observability-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-07-31T22:03:49Z (retry_of=data-pgvector-rag-observability-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T20:08:23Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T22:03:49Z",
+      "retry_of": "data-pgvector-rag-observability-2026-07-23",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "merged",
+        "pr": 2620,
+        "at": "2026-08-03T02:10:22Z"
       }
     },
     {
@@ -4680,6 +4860,27 @@
         "merged_pr": 2347,
         "merged_at": "2026-07-15T18:18:30Z",
         "at": "2026-07-15T20:07:26Z"
+      }
+    },
+    {
+      "id": "gap-84-2-document-sign-page-2026-07-23-retry1",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery (84-2 partial; prior attempt failed no-PR) [retry 1/2 of failed gap-84-2-document-sign-page-2026-07-23-retry3]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=gap-84-2-document-sign-page-2026-07-23-retry3 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T22:15:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "gap-84-2-document-sign-page-2026-07-23-retry3",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
       }
     },
     {
@@ -8842,6 +9043,35 @@
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
+      "id": "gh-issue-2366-retry2",
+      "action": "Follow-up: direct-to-S3 upload drops building_id — building-scoped documents lose their association (PR #2345) (Closes #2366) [retry 2/2 of failed gh-issue-2366]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=gh-issue-2366 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T16:04:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "gh-issue-2366",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2366,
+        "url": "https://github.com/martin-janci/property-management/issues/2366",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
       "id": "gh-issue-2367",
       "action": "Follow-up: validate every synthesized candidate id against IdSchema in scanCandidates (PR #2344) (Closes #2367)",
       "owner_role": "pm-tech-lead",
@@ -9440,6 +9670,35 @@
         ]
       },
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "gh-issue-2528-retry1",
+      "action": "Follow-up: harden booking_push_notification webhook + Airbnb replay parity (PR #2499) (Closes #2528) [retry 1/2 of failed gh-issue-2528]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-01T08:08:56Z (retry_of=gh-issue-2528 reason=failed-no-pr cooldown_ok newest_failure=2026-07-24T22:10:54Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T08:08:56Z",
+      "retry_of": "gh-issue-2528",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "issue_ref": {
+        "number": 2528,
+        "url": "https://github.com/martin-janci/property-management/issues/2528",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "merged",
+        "pr": 2623,
+        "at": "2026-08-03T02:10:22Z"
+      }
     },
     {
       "id": "gh-issue-2529",
@@ -10940,6 +11199,30 @@
       }
     },
     {
+      "id": "refactor-churn-hotspot-integrations-booking-mod-2026-07-31",
+      "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently split by PR #2611)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-07-31T18:05:54Z (score=2 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-07-31T18:05:54Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "merged",
+        "pr": 2619,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
       "id": "refactor-churn-hotspot-integrations-booking-mod-rs-2026-07-27",
       "action": "Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3185 lines this window (post-PR-#2176 tail)",
       "owner_role": "pm-tech-lead",
@@ -11421,6 +11704,27 @@
       "inprogress_reconciled": "assignment=failed @2026-08-01T04:08:40Z"
     },
     {
+      "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry1",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 1/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-01T06:04:15Z (retry_of=sec-layout-webhook-hmac-verify-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-23T22:15:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T06:04:15Z",
+      "retry_of": "sec-layout-webhook-hmac-verify-2026-07-23",
+      "retry_round": 1,
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
       "id": "sec-layout-webhook-integration-test-2026-07-23",
       "action": "Add integration test for layout publish webhook replay/timestamp handling once #2485 fix lands (parity with generic integration webhook test pattern)",
       "owner_role": "pm-security",
@@ -11577,6 +11881,30 @@
         "merged_at": "2026-06-04T13:49:46Z",
         "at": "2026-06-04T15:42:46Z",
         "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-disputes-kpis-window-validation",
+      "action": "/disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-01T20:08:24Z (score=2 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-01T20:08:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "last_updated": "2026-08-03T02:10:22Z",
+      "inprogress_reconciled": {
+        "reason": "in-progress-terminal (archive)",
+        "archive_status": "failed",
+        "pr": null,
+        "at": "2026-08-03T02:10:22Z"
       }
     },
     {

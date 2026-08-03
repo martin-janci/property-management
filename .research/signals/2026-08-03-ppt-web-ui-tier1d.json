@@ -1,0 +1,57 @@
+{
+  "generated": "2026-08-03",
+  "segment": "ppt-web-ui",
+  "source": "rotating-expert-review",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:36-42 — createMutation (invoicesApiCreate) has only an onSuccess handler; there is no onError and the component never reads createMutation.isError. On a failed create the form's onSubmit fires createMutation.mutate(data) (:74) with isSubmitting bound to isPending (:76), so on failure isPending flips back to false, setIsCreating(false) is NOT called, and the user is left on the still-open form with zero feedback about why the invoice was not saved.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:44-49,88-91 — deleteMutation (invoicesApiDelete) is likewise onSuccess-only. onDeleteInvoice runs window.confirm then deleteMutation.mutate(id); a failed delete (network / 403 / conflict) is completely silent — no toast, no alert, no isError branch — and the invoice list is only invalidated on success, so the row stays and the user believes nothing happened.",
+        "This is the sole page in the segment whose write mutations surface no error state at all: sibling pages read isError and render role=alert blocks (e.g. settings/pages/SessionsPage.tsx:98-113 for revoke, documents/components/MoveFolderDialog.tsx:419-424 for the folder tree). Fix: add onError handlers (or read isError/error) on both mutations and render a user-visible failure message; keep the create form open with an inline error rather than silently.",
+        "Impact: medium — these are financial write paths (issue / delete invoice) where a silent failure lets a manager believe an invoice was created or removed when it was not."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-aria-label-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "103 hardcoded English aria-label attributes across ppt-web feature components are not wrapped in react-i18next t(...), so screen-reader users on sk/cs/de locales hear English accessibility labels even though visible copy is translated. grep: `grep -rn 'aria-label=\"[A-Z]' frontend/apps/ppt-web/src/features --include='*.tsx' | grep -v 't('` => 103 hits.",
+        "Representative sites: community/components/PostCard.tsx:164 aria-label=\"Post options menu\"; financial/components/InvoiceDetail.tsx:42,61 \"Close modal\"/\"Close dialog\"; faults/components/TriageFaultDialog.tsx:87 \"Close dialog\"; faults/components/FaultCard.tsx:120 \"Urgent\"; disputes/components/EvidenceUploader.tsx:165,183 \"Add evidence files\"/\"Drop evidence files here or click to browse\"; government-portal/components/SubmissionPreviewModal.tsx:102 \"Close modal\"; workflow-automation/components/TemplatePreviewModal.tsx:67 & ExecutionDetailsModal.tsx:88 close-labels; financial/pages/FinancialReportsPage.tsx:86 \"Report tabs\".",
+        "Distinct from the 2026-08-02 ppt-web-ui i18n finding, which covered window.confirm/prompt/alert copy; this one is the aria-label (screen-reader) surface specifically. Fix: route each aria-label through t('<feature>.a11y.<key>') and add the keys to the locale bundles.",
+        "Impact: low — accessibility/i18n gap; no functional break, but WCAG name/label localization is missing for non-English assistive-tech users."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-double-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` double-casts the generated API-client response through `unknown` into a hand-maintained local SessionRow interface (declared :22, 'mirrors the backend SessionInfo DTO'). The `as unknown as` defeats TypeScript's structural check at the API boundary: if the backend SessionInfo DTO / generated client type drifts (renamed field, isCurrent → is_current, etc.), the compiler will not catch it and sessions.some((s) => !s.isCurrent) (:85) plus the render silently read undefined.",
+        "This is the only `as unknown as` boundary cast found in the segment (grep `as unknown as` over features pages/components returned this single non-test hit). Fix: consume the generated client's Session type directly (map fields explicitly if a view-model is needed) instead of asserting through unknown, so type drift surfaces at compile time.",
+        "Impact: low — no current runtime bug, but the cast removes the compile-time guard that would otherwise flag a session-DTO schema change on this security-relevant page (active-session list / revoke)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
