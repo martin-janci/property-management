@@ -6205,8 +6205,9 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2640",
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
       "evidence": [
@@ -6214,7 +6215,8 @@
         "lib/api.ts:258 — configureApiClient() is the only path that supplies getToken/onUnauthorized, but it has ZERO call sites in the app (grep across ppt-web/src for `configureApiClient(` returns only the definition and the lib/index re-export). AuthContext wires auth via @ppt/api-client setTokenProvider (a different client), not this axios instance.",
         "lib/api.ts:160-171 — the request interceptor guards `if (tokenGetter)`; with tokenGetter undefined it attaches no Bearer token, so every getApiClient() call goes out unauthenticated.",
         "Reachable in production: routes/groups/ai-dashboards.tsx:91-92 mount /ai/sentiment and /ai/predictive-maintenance; features/sentiment/hooks/useSentiment.ts:35 and features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:33 call getApiClient().get/post against authenticated endpoints → 401. The file comments claim 'getApiClient() ensures Bearer-token injection', which is currently false.",
-        "onUnauthorized is likewise never wired, so the resulting 401 triggers no refresh/redirect — the dashboards just fail to load."
+        "onUnauthorized is likewise never wired, so the resulting 401 triggers no refresh/redirect — the dashboards just fail to load.",
+        "resolved: PR #2640 merged 2026-08-03T20:24Z — AuthContext bootstrap now calls configureApiClient({getToken: getAccessToken}) alongside setTokenProvider; regression test asserts the bearer-token header is attached to getApiClient() requests"
       ],
       "files": [
         "frontend/apps/ppt-web/src/lib/api.ts",
@@ -6260,15 +6262,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2638",
         "rotating-expert-review (tier1d mobile-rn)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:360-375 — on a retryable failure the FIFO drain intentionally halts: sets haltedProgress {current: i+1, failed, isComplete: false} (:367-372), emits onProgress, and breaks out of the loop. Comment (:361-366, issue #1767) says failed action + successors are carried forward for next reconnect.",
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:424-426 — after the loop, control falls through to `const finalProgress: SyncProgress = { total, current: total, failed, isComplete: true }` which is set + emitted UNCONDITIONALLY, immediately overwriting the halted `isComplete:false` signal. Partially-drained cycle reports to the UI as fully complete.",
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:399-416 — `failed` counter in finalProgress excludes carried-forward retryable items (they are neither in succeededIds nor terminalFailureIds and are re-persisted to QUEUE_KEY at :413-415). Net effect: sync banner shows 'complete, N failed' while additional actions silently remain queued.",
-        "Suggested fix: `return { success, failed }` on the halt branch, or guard the finalProgress block so it is skipped when the loop broke early."
+        "Suggested fix: `return { success, failed }` on the halt branch, or guard the finalProgress block so it is skipped when the loop broke early.",
+        "resolved: PR #2638 merged 2026-08-03T20:21Z — processQueue now reports isComplete:false with pending>0 after halted head-of-line cycle"
       ],
       "files": [
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
@@ -6284,14 +6288,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2641",
         "rotating-expert-review (tier1d mobile-rn)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:139-142,152-163 — `sendMessage` (POST /api/v1/messages/threads/{id}/messages) is called with { onSuccess: () => { setDraft(''); refetch(); } }. No onError callback; component never reads sendMessage.isError.",
         "On a 5xx/network failure the message fails to post with zero user feedback (no Alert/toast/inline error). Because draft is cleared only in onSuccess, on failure the draft is retained but user gets no signal it didn't send — they may re-tap send repeatedly.",
-        "Contrast: LeaseSignatureScreen.tsx:162-165 (onError → Alert.alert(t(errorKey), err.message)) and VoteDetailScreen.tsx:233-234 (onError → Alert.alert) DO surface errors. Fix: add onError raising err.message (Alert or inline banner) and/or render a retry affordance keyed off sendMessage.isError."
+        "Contrast: LeaseSignatureScreen.tsx:162-165 (onError → Alert.alert(t(errorKey), err.message)) and VoteDetailScreen.tsx:233-234 (onError → Alert.alert) DO surface errors. Fix: add onError raising err.message (Alert or inline banner) and/or render a retry affordance keyed off sendMessage.isError.",
+        "resolved: PR #2641 merged 2026-08-03T20:25Z — ThreadDetailScreen.handleSend now passes onError alongside onSuccess; failed sends surface a QueryErrorBanner and keep the drafted text"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
@@ -6307,14 +6313,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2642",
         "rotating-expert-review (tier1d mobile-rn)"
       ],
       "evidence": [
         "react-i18next is configured and used app-wide (50 files call t()/useTranslation; LeaseSignatureScreen and VoteDetailScreen fully translated), but only 23 of 41 screen .tsx files import useTranslation — the remaining ~18 render hardcoded English concentrated in list/empty/error/loading fallbacks that sk/cs/de users will see untranslated.",
         "Representative sites: FaultsListScreen.tsx:185,195 ('Loading…','No faults found'); BuildingsScreen.tsx:126,136,137; MetersScreen.tsx:156,171,172; MessagesScreen.tsx:134,141,147 ('Loading…','Try again','No conversations'); ThreadDetailScreen.tsx:174,183; AnnouncementsScreen.tsx:266; WidgetSettingsScreen.tsx:90,163.",
-        "Fix: wrap the empty/error/loading Text nodes in t(...), add keys to the mobile locale bundles; add a lint guard for bare visible <Text> literals in screens/. Impact: low (i18n gap, no functional break)."
+        "Fix: wrap the empty/error/loading Text nodes in t(...), add keys to the mobile locale bundles; add a lint guard for bare visible <Text> literals in screens/. Impact: low (i18n gap, no functional break).",
+        "resolved: PR #2642 merged 2026-08-03T22:18Z — replaced hardcoded English empty/error/loading copy across 15 mobile screens with t() lookups; keys added to all 6 locales; FaultsListScreen.i18n.test.tsx regression"
       ],
       "files": [
         "frontend/apps/mobile/src/screens"
@@ -6355,14 +6363,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2639",
         "rotating-expert-review (tier1d mobile-rn)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/hooks/usePushNotifications.ts:240 — console.log('[push] registering native device token with backend') and :267 — console.log('[push] unregistering native device token with backend') are plain debug logs on the always-run push-registration path, not gated behind __DEV__ or a logger abstraction.",
         "Contrast: rest of the segment logs only via console.warn/console.error inside catch blocks (useOfflineSupport.ts, NFCCredentialManager.ts, backgroundNotifications.ts, AuthContext.tsx). These two are the only informational debug logs left on a hot production path.",
-        "Fix: remove or route through the app logger gated on __DEV__. Impact: low (release-log noise, hygiene smell)."
+        "Fix: remove or route through the app logger gated on __DEV__. Impact: low (release-log noise, hygiene smell).",
+        "resolved: PR #2639 merged 2026-08-03T20:22Z — added test asserting all console.* calls stay behind if(__DEV__); code was already properly gated"
       ],
       "files": [
         "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
@@ -6406,15 +6416,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2646",
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/App.tsx:229-231 — the entire lazily-loaded route table renders inside `<main><Suspense fallback={<RouteLoading/>}><AppRoutes/></Suspense></main>` with NO React error boundary at the route-outlet level. The ONLY ErrorBoundary is at the root (main.tsx:50, wrapping the whole `<App/>`).",
         "routes/lazyRoutes.tsx defines ~90 `lazy(() => import(...))` page chunks. A rejected dynamic import is NOT caught by Suspense — it propagates as a thrown error. After a redeploy, a user holding a stale index.html requests an old hashed chunk that no longer exists on the CDN (404) — a routine production event for a Vite hashed-chunk SPA. That rejection, or any render-time throw inside a page, bubbles to the ROOT boundary and unmounts the entire application shell.",
         "components/ErrorBoundary.tsx:99 handleRetry only resets `hasError` and re-renders — for a failed lazy() import the browser has permanently cached the rejected module promise, so 'Try Again' re-throws immediately; only 'Reload Page' (window.location.reload, :182) recovers.",
-        "Fix: wrap `<Suspense><AppRoutes/></Suspense>` in App.tsx:229 with a route-scoped `<ErrorBoundary>` (component supports a custom `fallback`) so failures are contained to the `<main>` outlet, keeping AppNavigation/shell mounted. Optionally give the route-level boundary chunk-load-error detection that triggers an automatic one-shot reload."
+        "Fix: wrap `<Suspense><AppRoutes/></Suspense>` in App.tsx:229 with a route-scoped `<ErrorBoundary>` (component supports a custom `fallback`) so failures are contained to the `<main>` outlet, keeping AppNavigation/shell mounted. Optionally give the route-level boundary chunk-load-error detection that triggers an automatic one-shot reload.",
+        "resolved: PR #2646 merged 2026-08-03T22:18Z — added RouteErrorBoundary wrapping <Outlet/> in App.tsx, reusing existing components/ErrorBoundary; pathname-keyed auto-reset; 3 regression tests"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx",
@@ -6456,14 +6468,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2648",
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:169-176 — useRentalsAuth() returns `{ authorization, xTenantId } | null` and explicitly returns null when `!token || !user?.organizationId` (e.g. access token expired/cleared mid-session, since ppt-web is an SPA that does not reload on token loss).",
         "useQuery guards this correctly with `enabled: !!auth` (rentals.tsx :182,:190,:192). But useMutation has no `enabled` gate: createConnection (:258), syncPlatforms (:272), checkIn (:373) and checkOut (:385) all dereference `auth!.authorization` / `auth!.xTenantId` (:251-252,:262-263,:276-277 and the checkIn/checkOut header blocks) inside mutationFn. If the user triggers one of these after the token has been dropped, `auth!` (non-null assertion on an actually-null value) throws a TypeError.",
-        "Fix: null-check auth at the top of each mutationFn (early-return / throw typed AuthError, or disable the triggering control when `!auth`) rather than relying on the `!` assertion, so a mid-session token loss degrades to a handled error path."
+        "Fix: null-check auth at the top of each mutationFn (early-return / throw typed AuthError, or disable the triggering control when `!auth`) rather than relying on the `!` assertion, so a mid-session token loss degrades to a handled error path.",
+        "resolved: PR #2648 merged 2026-08-03T22:17Z — new requireRentalsAuthHeaders() throws typed AuthError(SESSION_EXPIRED) instead of dereferencing auth!; handleRentalsAuthError wired as onError on all 4 rentals mutations; 6-case regression test"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
@@ -6507,14 +6521,16 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2636"
+        "PR #2636",
+        "PR #2644"
       ],
       "evidence": [
         "PR #2636 modified frontend/apps/reality-web/src/app/[locale]/agency/import/page.tsx and frontend/apps/reality-web/src/app/[locale]/agency/inquiries/page.tsx to convert the agency/import feature cluster to next-intl useTranslations.",
         "No matching update to docs/screens/reality/agency-import.md or docs/screens/reality/agency-inquiries.md in the same PR — screen docs still describe the pre-i18n state.",
-        "Best-effort heuristic per routine spec (route-basename slug match) — these were UI-string changes rather than route-behavior changes, so drift is low-impact. Surfaces as review candidate, not promotable plan."
+        "Best-effort heuristic per routine spec (route-basename slug match) — these were UI-string changes rather than route-behavior changes, so drift is low-impact. Surfaces as review candidate, not promotable plan.",
+        "resolved: PR #2644 merged 2026-08-03T22:18Z — synced agency-import and agency-inquiries screen-maps to PR #2636 i18n rewrite; screen-map validate passes"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/agency/import/page.tsx",
@@ -6526,6 +6542,72 @@
       "updated_at": "2026-08-03",
       "plan": null,
       "reconciled": null
+    },
+    {
+      "id": "code-review-api-handlers-oauth-record-event-inline-latency",
+      "title": "OAuthService.record_token_event awaited inline on token issuance/refresh/revoke hot path — every /oauth/token exchange pays the analytics INSERT round-trip",
+      "vector": "perf",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "issue #2643",
+        "PR #2629"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:201 defines record_token_event as async, called .await at lines 515 (issued), 604 (refreshed), 703+718 (revoked). Errors are swallowed via warn!, but caller still pays the DB round-trip for the analytics INSERT on the hot OAuth path",
+        "Proposed fix by post-merge reviewer: tokio::spawn a detached task inside record_token_event (repo is Clone) so the response returns without awaiting the write — keeps the log-and-ignore contract, takes the write off the critical path"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-oauth-token-usage-unbounded-vec",
+      "title": "GET /platform-admin/oauth/token-usage returns unbounded Vec — usage_per_client has no LIMIT/pagination",
+      "vector": "perf",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "issue #2643",
+        "PR #2629"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin/oauth.rs:99-118 — handler awaits state...usage_per_client(since) which returns an unbounded Vec (one row per client in the window). Admin dashboard endpoint that grows with client count",
+        "Proposed fix by post-merge reviewer: bound with limit (default e.g. 100, ordered by issuance volume) and/or offset pagination, mirroring other paginated platform-admin analytics reads"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/oauth.rs"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-oauth-token-usage-sequential-awaits",
+      "title": "GET /platform-admin/oauth/token-usage awaits totals() and usage_per_client() sequentially — should tokio::try_join!",
+      "vector": "perf",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "issue #2643",
+        "PR #2629"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin/oauth.rs:99-118 — handler issues totals(since) and usage_per_client(since) as two sequential awaits. Independent calls; concurrent execution via tokio::try_join! roughly halves the read latency of the dashboard call",
+        "Proposed fix by post-merge reviewer: tokio::try_join!(self.repo.totals(since), self.repo.usage_per_client(since))"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/oauth.rs"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
     }
   ]
 }

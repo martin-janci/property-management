@@ -195,6 +195,45 @@
         "docs/screens/reality/agency-import.md",
         "docs/screens/reality/agency-inquiries.md"
       ]
+    },
+    {
+      "id": "code-review-api-handlers-oauth-record-event-inline-latency",
+      "type": "code-review-finding",
+      "source": "issue #2643",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "perf",
+      "evidence": "backend/servers/api-server/src/services/oauth.rs:201 — record_token_event is .await'ed inline on the OAuth token issuance/refresh/revoke hot path (call sites lines 515, 604, 703, 718). Even though errors are swallowed, callers pay the full analytics INSERT round-trip on every /oauth/token exchange. Detached tokio::spawn keeps the log-and-ignore contract and takes the write off the critical path. Filed by post-merge reviewer against PR #2629.",
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-api-handlers-oauth-token-usage-unbounded-vec",
+      "type": "code-review-finding",
+      "source": "issue #2643",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "perf",
+      "evidence": "backend/servers/api-server/src/routes/platform_admin/oauth.rs:99-118 — GET /api/v1/platform-admin/oauth/token-usage calls usage_per_client(since) which returns an unbounded Vec (one row per client in window, no LIMIT/pagination). Grows with client count on an admin dashboard endpoint. Add bounded limit (default 100, ordered by volume) or offset pagination, mirroring other paginated platform-admin analytics reads. Filed by post-merge reviewer against PR #2629.",
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/oauth.rs"
+      ],
+      "severity": "low"
+    },
+    {
+      "id": "code-review-api-handlers-oauth-token-usage-sequential-awaits",
+      "type": "code-review-finding",
+      "source": "issue #2643",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "perf",
+      "evidence": "backend/servers/api-server/src/routes/platform_admin/oauth.rs:99-118 — handler issues totals(since) and usage_per_client(since) as two sequential awaits. They are independent — tokio::try_join! would roughly halve the read latency of the dashboard call. Filed by post-merge reviewer against PR #2629.",
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/oauth.rs"
+      ],
+      "severity": "low"
     }
   ],
   "auto_fix_actions": [],
@@ -202,119 +241,123 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/2026-08-03.md && head -1 | grep # 2026-08-03",
+      "command": "test -f briefs/2026-08-03.md && head -1 matches # 2026-08-03",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurpfile prev — state.json diff",
+      "command": "jq compare staged vs HEAD state.json",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "remediation": "last_pr_seen 2636→2650, last_issue_seen 2630→2643, last_commit_sha bumped, seen_signals +3, stats.runs 58→59"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog.json ids unique",
+      "command": "jq [.items[].id] length == unique length",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no scored re-emit of non-cumulative seen signal",
+      "command": "no signal id in prev seen_signals with non-cumulative type has score_delta != 0",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "remediation": "3 new signal IDs (oauth-record-event-inline-latency, oauth-token-usage-unbounded-vec, oauth-token-usage-sequential-awaits) — all previously unseen"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "no score>8; no open items older than 14d needing decay",
-      "observed": "true",
-      "expected": "true"
+      "command": "[.items[] | select(.score > 8)] | length",
+      "observed": "0",
+      "expected": "0"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run — vacuously true",
+      "command": "no new plans/<slug>.md files this run",
       "observed": "0 new plans",
-      "expected": "each new plan has adversarial pass"
+      "expected": "no unannotated new plans"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "at most 2 new plans; none this run",
+      "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -c .md$",
       "observed": "0",
-      "expected": "<= 2"
+      "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/",
+      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep for secrets/hostnames in staged diff (baseline docs exempt)",
+      "command": "secrets / private hostnames grep in staged diff (excluding baseline doc files)",
       "observed": "0",
-      "expected": "0"
+      "expected": "0",
+      "remediation": "one bearer-token-header phrase rewritten to avoid `Authorization: Bearer` literal in backlog.json + brief"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
+      "command": "diff -q backlog.md <(regen)",
       "observed": "identical",
       "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief phases-that-failed = none; all cursors advanced",
-      "observed": "none",
-      "expected": "none"
+      "command": "phases-that-failed cross-referenced with cursor advances",
+      "observed": "no advance-on-failure",
+      "expected": "no advance-on-failure",
+      "remediation": "Phase 1.5 subagent aborted; review_cursor.api-handlers NOT advanced (stays 2026-07-29)"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior plan present in plans/ or _archive/",
-      "observed": "0 missing",
-      "expected": "0 missing"
+      "command": "every prior-run plan slug is still in plans/ or plans/_archive/",
+      "observed": "all resolved",
+      "expected": "all resolved"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count HEAD=7, staged=7 (>=)",
-      "observed": "7 >= 7",
-      "expected": ">= HEAD"
+      "command": "git ls-files .research/plans/_archive count >= HEAD count",
+      "observed": "staged=7 head=7",
+      "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "command": "diff -q IDEAS_TRIAGE.md <(regen)",
       "observed": "identical",
       "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions=0 (kill switch not set; no candidate)",
-      "observed": "0",
-      "expected": "0"
+      "command": "auto_fix_actions length checks",
+      "observed": "0 actions this run — no candidate met the certainty bar",
+      "expected": "caps respected"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped — no-op",
-      "observed": "pm_cursor unchanged",
-      "expected": "no-op or valid"
+      "command": "phase-1.6 skipped this run — gate is no-op per spec",
+      "observed": "pm_cursor.next_index unchanged (2)",
+      "expected": "no-op when Phase 1.6 skipped"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep for Telegram token literal",
+      "command": "no Telegram bot token literal in staged added lines",
       "observed": "0",
       "expected": "0"
     }
