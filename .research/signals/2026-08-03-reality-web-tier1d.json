@@ -1,0 +1,37 @@
+{
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-web-agency-import-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx:329 — hardcoded English UI strings ('Drag and drop your CSV file', 'Map CSV Columns':411, 'Preview Import':593, 'Importing listings...':898, 'Import Complete!':961) with no useTranslations import; the portal serves sk/cs/de/en so non-English realtors see raw English",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:74 — 'Agency Listings' / 'Manage all property listings' + all table headers (Property/Type/Price/Status/Realtor/Views/Inquiries/Actions:154-162) and 'No listings found':536 hardcoded; file never imports next-intl",
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:101 — every field label (Title/Description/Property type/Transaction/Price/City/Postal code/Street/Area/Rooms) hardcoded English; same systemic gap in FeedImport.tsx, SyncSchedule.tsx, AgencyBranding.tsx, CrmConnection.tsx and ComparisonView.tsx:153 ('PDF export coming soon!'). 65 sibling components do use useTranslations, so this cluster is an inconsistent omission, not a project-wide choice"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-protectedroute-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx:26 — 'Loading...' hardcoded English in the auth-gating loading state",
+        "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx:74 — 'Sign in required' (h2), 'Please sign in to access this page.' (:75) and the 'Sign In' button label hardcoded; this component wraps every protected route yet does not import next-intl, so the entire auth-required gate renders untranslated for sk/cs/de users"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
