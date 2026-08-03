@@ -145,18 +145,18 @@
     "queuedOnErrorMessage": "Nepodařilo se spojit se serverem. Hlášení bylo uloženo a automaticky se synchronizuje po obnovení připojení.",
     "offlineSubmitHint": "Jste offline — hlášení se uloží a synchronizuje po obnovení připojení.",
     "submitButtonOffline": "Uložit a synchronizovat později",
-    "loadError": "Nepodarilo se nacist zavady",
-    "emptyTitle": "Nebyly nalezeny zadne zavady",
-    "emptyText": "Vsechny problemy byly vyreseny"
+    "loadError": "Nepodařilo se načíst závady",
+    "emptyTitle": "Nebyly nalezeny žádné závady",
+    "emptyText": "Všechny problémy byly vyřešeny"
   },
   "news": {
     "title": "Zpravy",
     "latest": "Nejnovejsi zpravy",
     "readMore": "Cist vice",
-    "noNews": "Zadne zpravy",
-    "loadError": "Nepodarilo se nacist novinky",
-    "emptyTitle": "Nic noveho",
-    "emptyText": "Novinky najdete pozdeji."
+    "noNews": "Žádné zprávy",
+    "loadError": "Nepodařilo se načíst novinky",
+    "emptyTitle": "Nic nového",
+    "emptyText": "Novinky najdete později."
   },
   "voting": {
     "title": "Hlasovani",
@@ -292,7 +292,7 @@
       "confirm": "Presunout sem",
       "errorTitle": "Slozku se nepodarilo presunout"
     },
-    "detailLoadError": "Nepodarilo se nacist dokument",
+    "detailLoadError": "Nepodařilo se načíst dokument",
     "notFound": "Dokument nebyl nalezen"
   },
   "settings": {
@@ -394,14 +394,14 @@
       "ackError": "Nepodarilo se potvrdit: {{message}}",
       "publishedAt": "Zverejneno: {{date}}"
     },
-    "loadError": "Nepodarilo se nacist oznameni"
+    "loadError": "Nepodařilo se načíst oznámení"
   },
   "widgets": {
     "addedTitle": "Widget pridan",
     "addedMessage": "Widget byl nakonfigurovan.",
     "updatedTitle": "Widgety aktualizovany",
-    "updatedMessage": "Vsechny widgety byly obnoveny.",
-    "emptyText": "Zatim nejsou nakonfigurovany zadne widgety."
+    "updatedMessage": "Všechny widgety byly obnoveny.",
+    "emptyText": "Zatím nejsou nakonfigurovány žádné widgety."
   },
   "permissions": {
     "denied": "Opravneni zamitnuto",
@@ -425,15 +425,15 @@
     "savedOffline": "Ulozeno offline",
     "willSyncWhenOnline": "Vas odecet bude odeslan po pripojeni k internetu",
     "offlineMode": "Jste offline. Odecty budou ulozeny lokalne.",
-    "pendingReadings": "Cekajici odecty",
-    "loadError": "Nepodarilo se nacist merice",
-    "emptyTitle": "Zadne merice",
-    "emptyText": "Pro vasi jednotku zatim nejsou registrovany zadne merice.",
-    "noUnitTitle": "Zadna prirazena jednotka",
-    "noUnitText": "Merice se zobrazi po prirazeni vaseho uctu k jednotce.",
-    "detailLoadError": "Nepodarilo se nacist meric",
-    "noReadingsTitle": "Zatim zadne odecty",
-    "noReadingsText": "Odeslete svuj prvni odecet pro tento meric."
+    "pendingReadings": "Čekající odečty",
+    "loadError": "Nepodařilo se načíst měřiče",
+    "emptyTitle": "Žádné měřiče",
+    "emptyText": "Pro vaši jednotku zatím nejsou registrovány žádné měřiče.",
+    "noUnitTitle": "Žádná přiřazená jednotka",
+    "noUnitText": "Měřiče se zobrazí po přiřazení vašeho účtu k jednotce.",
+    "detailLoadError": "Nepodařilo se načíst měřič",
+    "noReadingsTitle": "Zatím žádné odečty",
+    "noReadingsText": "Odešlete svůj první odečet pro tento měřič."
   },
   "esignature": {
     "title": "Zadost o podpis",
@@ -515,42 +515,42 @@
     "placeholderBody": "Tato sekce momentálně není dostupná."
   },
   "buildings": {
-    "loadError": "Nepodarilo se nacist budovy",
-    "emptyTitle": "Zadne budovy",
-    "emptyText": "K vasemu uctu zatim nejsou prirazeny zadne nemovitosti."
+    "loadError": "Nepodařilo se načíst budovy",
+    "emptyTitle": "Žádné budovy",
+    "emptyText": "K vašemu účtu zatím nejsou přiřazeny žádné nemovitosti."
   },
   "messages": {
-    "loadError": "Nepodarilo se nacist zpravy",
-    "emptyTitle": "Zadne konverzace",
-    "emptyText": "Zacnete konverzaci se spravcem nebo sousedy.",
-    "threadLoadError": "Nepodarilo se nacist konverzaci",
-    "threadEmptyTitle": "Zatim zadne zpravy",
-    "threadEmptyText": "Pozdravte a zacnete konverzaci."
+    "loadError": "Nepodařilo se načíst zprávy",
+    "emptyTitle": "Žádné konverzace",
+    "emptyText": "Začněte konverzaci se správcem nebo sousedy.",
+    "threadLoadError": "Nepodařilo se načíst konverzaci",
+    "threadEmptyTitle": "Zatím žádné zprávy",
+    "threadEmptyText": "Pozdravte a začněte konverzaci."
   },
   "leases": {
-    "loadError": "Nepodarilo se nacist najemni smlouvy",
-    "emptyTitle": "Zadne najemni smlouvy",
-    "emptyText": "Zatim jste nebyli pridani k zadne najemni smlouve.",
-    "detailLoadError": "Nepodarilo se nacist najemni smlouvu",
-    "noPayments": "Nejsou naplanovany zadne nadchazejici platby.",
-    "notFound": "Najemni smlouva nebyla nalezena."
+    "loadError": "Nepodařilo se načíst nájemní smlouvy",
+    "emptyTitle": "Žádné nájemní smlouvy",
+    "emptyText": "Zatím jste nebyli přidáni k žádné nájemní smlouvě.",
+    "detailLoadError": "Nepodařilo se načíst nájemní smlouvu",
+    "noPayments": "Nejsou naplánovány žádné nadcházející platby.",
+    "notFound": "Nájemní smlouva nebyla nalezena."
   },
   "outages": {
-    "loadError": "Nepodarilo se nacist vypadky",
-    "emptyTitle": "Zadne vypadky",
-    "emptyText": "Momentalne neni nic naplanovano ani aktivni."
+    "loadError": "Nepodařilo se načíst výpadky",
+    "emptyTitle": "Žádné výpadky",
+    "emptyText": "Momentálně není nic naplánováno ani aktivní."
   },
   "forms": {
-    "loadError": "Nepodarilo se nacist formulare",
-    "emptyTitle": "Zadne formulare",
-    "emptyText": "Momentalne nemate zadne formulare k vyplneni."
+    "loadError": "Nepodařilo se načíst formuláře",
+    "emptyTitle": "Žádné formuláře",
+    "emptyText": "Momentálně nemáte žádné formuláře k vyplnění."
   },
   "neighbors": {
-    "loadError": "Nepodarilo se nacist sousedy",
-    "loading": "Nacitaji se sousede…",
-    "emptyTitle": "Zatim zadni sousede",
-    "noMatches": "Zadne shody",
-    "emptyText": "Obyvatele, kteri se prihlasi do seznamu, se zobrazi zde.",
-    "noMatchesText": "Zkuste jine jmeno nebo cislo bytu."
+    "loadError": "Nepodařilo se načíst sousedy",
+    "loading": "Načítají se sousedé…",
+    "emptyTitle": "Zatím žádní sousedé",
+    "noMatches": "Žádné shody",
+    "emptyText": "Obyvatelé, kteří se přihlásí do seznamu, se zobrazí zde.",
+    "noMatchesText": "Zkuste jiné jméno nebo číslo bytu."
   }
 }

@@ -16,8 +16,8 @@
     "ok": "OK",
     "search": "Hladat",
     "refresh": "Obnovit",
-    "submit": "Odoslat",
-    "tryAgain": "Skusit znova"
+    "submit": "Odoslať",
+    "tryAgain": "Skúsiť znova"
   },
   "tabs": {
     "home": "Domov",
@@ -145,18 +145,18 @@
     "queuedOnErrorMessage": "Nepodarilo sa spojiť so serverom. Hlásenie bolo uložené a automaticky sa zosynchronizuje po obnovení pripojenia.",
     "offlineSubmitHint": "Ste offline — hlásenie sa uloží a zosynchronizuje po obnovení pripojenia.",
     "submitButtonOffline": "Uložiť a zosynchronizovať neskôr",
-    "loadError": "Nepodarilo sa nacitat poruchy",
-    "emptyTitle": "Nenasli sa ziadne poruchy",
-    "emptyText": "Vsetky problemy boli vyriesene"
+    "loadError": "Nepodarilo sa načítať poruchy",
+    "emptyTitle": "Nenašli sa žiadne poruchy",
+    "emptyText": "Všetky problémy boli vyriešené"
   },
   "news": {
     "title": "Spravy",
     "latest": "Najnovsie spravy",
     "readMore": "Citat viac",
-    "noNews": "Ziadne spravy",
-    "loadError": "Nepodarilo sa nacitat novinky",
-    "emptyTitle": "Nic nove",
-    "emptyText": "Novinky najdete neskor."
+    "noNews": "Žiadne správy",
+    "loadError": "Nepodarilo sa načítať novinky",
+    "emptyTitle": "Nič nové",
+    "emptyText": "Novinky nájdete neskôr."
   },
   "voting": {
     "title": "Hlasovanie",
@@ -292,8 +292,8 @@
       "confirm": "Presun sem",
       "errorTitle": "Priecinok sa nepodarilo presunout"
     },
-    "detailLoadError": "Nepodarilo sa nacitat dokument",
-    "notFound": "Dokument sa nenasiel"
+    "detailLoadError": "Nepodarilo sa načítať dokument",
+    "notFound": "Dokument sa nenašiel"
   },
   "settings": {
     "title": "Nastavenia",
@@ -394,14 +394,14 @@
       "ackError": "Nepodarilo sa potvrdit: {{message}}",
       "publishedAt": "Zverejnene: {{date}}"
     },
-    "loadError": "Nepodarilo sa nacitat oznamy"
+    "loadError": "Nepodarilo sa načítať oznamy"
   },
   "widgets": {
     "addedTitle": "Widget pridany",
     "addedMessage": "Widget bol nakonfigurovany.",
     "updatedTitle": "Widgety aktualizovane",
-    "updatedMessage": "Vsetky widgety boli obnovene.",
-    "emptyText": "Zatial nie su nakonfigurovane ziadne widgety."
+    "updatedMessage": "Všetky widgety boli obnovené.",
+    "emptyText": "Zatiaľ nie sú nakonfigurované žiadne widgety."
   },
   "permissions": {
     "denied": "Povolenie zamietnutne",
@@ -425,15 +425,15 @@
     "savedOffline": "Ulozene offline",
     "willSyncWhenOnline": "Vas odpocet bude odoslany po pripojeni na internet",
     "offlineMode": "Ste offline. Odpocty budu ulozene lokalne.",
-    "pendingReadings": "Cakajuce odpocty",
-    "loadError": "Nepodarilo sa nacitat merace",
-    "emptyTitle": "Ziadne merace",
-    "emptyText": "Pre vasu jednotku zatial nie su zaregistrovane ziadne merace.",
-    "noUnitTitle": "Ziadna priradena jednotka",
-    "noUnitText": "Merace sa zobrazia po priradeni vasho uctu k jednotke.",
-    "detailLoadError": "Nepodarilo sa nacitat merac",
-    "noReadingsTitle": "Zatial ziadne odpocty",
-    "noReadingsText": "Odoslite svoj prvy odpocet pre tento merac."
+    "pendingReadings": "Čakajúce odpočty",
+    "loadError": "Nepodarilo sa načítať merače",
+    "emptyTitle": "Žiadne merače",
+    "emptyText": "Pre vašu jednotku zatiaľ nie sú zaregistrované žiadne merače.",
+    "noUnitTitle": "Žiadna priradená jednotka",
+    "noUnitText": "Merače sa zobrazia po priradení vášho účtu k jednotke.",
+    "detailLoadError": "Nepodarilo sa načítať merač",
+    "noReadingsTitle": "Zatiaľ žiadne odpočty",
+    "noReadingsText": "Odošlite svoj prvý odpočet pre tento merač."
   },
   "esignature": {
     "title": "Ziadost o podpis",
@@ -515,42 +515,42 @@
     "placeholderBody": "Táto sekcia momentálne nie je dostupná."
   },
   "buildings": {
-    "loadError": "Nepodarilo sa nacitat budovy",
-    "emptyTitle": "Ziadne budovy",
-    "emptyText": "K vasmu uctu zatial nie su priradene ziadne nehnutelnosti."
+    "loadError": "Nepodarilo sa načítať budovy",
+    "emptyTitle": "Žiadne budovy",
+    "emptyText": "K vášmu účtu zatiaľ nie sú priradené žiadne nehnuteľnosti."
   },
   "messages": {
-    "loadError": "Nepodarilo sa nacitat spravy",
-    "emptyTitle": "Ziadne konverzacie",
-    "emptyText": "Zacnite konverzaciu so spravcom alebo susedmi.",
-    "threadLoadError": "Nepodarilo sa nacitat konverzaciu",
-    "threadEmptyTitle": "Zatial ziadne spravy",
-    "threadEmptyText": "Pozdravte a zacnite konverzaciu."
+    "loadError": "Nepodarilo sa načítať správy",
+    "emptyTitle": "Žiadne konverzácie",
+    "emptyText": "Začnite konverzáciu so správcom alebo susedmi.",
+    "threadLoadError": "Nepodarilo sa načítať konverzáciu",
+    "threadEmptyTitle": "Zatiaľ žiadne správy",
+    "threadEmptyText": "Pozdravte a začnite konverzáciu."
   },
   "leases": {
-    "loadError": "Nepodarilo sa nacitat najomne zmluvy",
-    "emptyTitle": "Ziadne najomne zmluvy",
-    "emptyText": "Zatial ste neboli pridani k ziadnej najomnej zmluve.",
-    "detailLoadError": "Nepodarilo sa nacitat najomnu zmluvu",
-    "noPayments": "Nie su naplanovane ziadne nadchadzajuce platby.",
-    "notFound": "Najomna zmluva sa nenasla."
+    "loadError": "Nepodarilo sa načítať nájomné zmluvy",
+    "emptyTitle": "Žiadne nájomné zmluvy",
+    "emptyText": "Zatiaľ ste neboli pridaní k žiadnej nájomnej zmluve.",
+    "detailLoadError": "Nepodarilo sa načítať nájomnú zmluvu",
+    "noPayments": "Nie sú naplánované žiadne nadchádzajúce platby.",
+    "notFound": "Nájomná zmluva sa nenašla."
   },
   "outages": {
-    "loadError": "Nepodarilo sa nacitat vypadky",
-    "emptyTitle": "Ziadne vypadky",
-    "emptyText": "Momentalne nie je nic naplanovane ani aktivne."
+    "loadError": "Nepodarilo sa načítať výpadky",
+    "emptyTitle": "Žiadne výpadky",
+    "emptyText": "Momentálne nie je nič naplánované ani aktívne."
   },
   "forms": {
-    "loadError": "Nepodarilo sa nacitat formulare",
-    "emptyTitle": "Ziadne formulare",
-    "emptyText": "Momentalne nemate ziadne formulare na vyplnenie."
+    "loadError": "Nepodarilo sa načítať formuláre",
+    "emptyTitle": "Žiadne formuláre",
+    "emptyText": "Momentálne nemáte žiadne formuláre na vyplnenie."
   },
   "neighbors": {
-    "loadError": "Nepodarilo sa nacitat susedov",
-    "loading": "Nacitavaju sa susedia…",
-    "emptyTitle": "Zatial ziadni susedia",
-    "noMatches": "Ziadne zhody",
-    "emptyText": "Obyvatelia, ktori sa prihlasia do zoznamu, sa zobrazia tu.",
-    "noMatchesText": "Skuste ine meno alebo cislo bytu."
+    "loadError": "Nepodarilo sa načítať susedov",
+    "loading": "Načítavajú sa susedia…",
+    "emptyTitle": "Zatiaľ žiadni susedia",
+    "noMatches": "Žiadne zhody",
+    "emptyText": "Obyvatelia, ktorí sa prihlásia do zoznamu, sa zobrazia tu.",
+    "noMatchesText": "Skúste iné meno alebo číslo bytu."
   }
 }

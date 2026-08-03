@@ -16,8 +16,8 @@
     "ok": "OK",
     "search": "Kereses",
     "refresh": "Frissites",
-    "submit": "Kuldes",
-    "tryAgain": "Probald ujra"
+    "submit": "Küldés",
+    "tryAgain": "Próbáld újra"
   },
   "tabs": {
     "home": "Fooldal",
@@ -145,18 +145,18 @@
     "queuedOnErrorMessage": "Nem sikerült elérni a kiszolgálót. A bejelentést elmentettük, és automatikusan szinkronizálódik, amint helyreáll a kapcsolat.",
     "offlineSubmitHint": "Jelenleg offline van — ezt a bejelentést elmentjük, és szinkronizáljuk, amint újra online lesz.",
     "submitButtonOffline": "Mentés és szinkronizálás később",
-    "loadError": "A hibabejelentesek nem tolthetok be",
-    "emptyTitle": "Nem talalhato hibabejelentes",
-    "emptyText": "Minden problema megoldva"
+    "loadError": "A hibabejelentések nem tölthetők be",
+    "emptyTitle": "Nem található hibabejelentés",
+    "emptyText": "Minden probléma megoldva"
   },
   "news": {
     "title": "Hirek",
     "latest": "Legfrissebb hirek",
     "readMore": "Bovebben",
-    "noNews": "Nincsenek elerheto hirek",
-    "loadError": "A hirek nem tolthetok be",
-    "emptyTitle": "Semmi uj",
-    "emptyText": "Nezzen vissza kesobb a friss hirekert."
+    "noNews": "Nincsenek elérhető hírek",
+    "loadError": "A hírek nem tölthetők be",
+    "emptyTitle": "Semmi új",
+    "emptyText": "Nézzen vissza később a friss hírekért."
   },
   "voting": {
     "title": "Szavazas",
@@ -252,8 +252,8 @@
       "confirm": "Athelyezes ide",
       "errorTitle": "A mappa athelyezesekor hiba tortent"
     },
-    "detailLoadError": "A dokumentum nem toltheto be",
-    "notFound": "A dokumentum nem talalhato"
+    "detailLoadError": "A dokumentum nem tölthető be",
+    "notFound": "A dokumentum nem található"
   },
   "settings": {
     "title": "Beallitasok",
@@ -354,14 +354,14 @@
       "ackError": "A visszaigazolas sikertelen: {{message}}",
       "publishedAt": "Kozzeteve: {{date}}"
     },
-    "loadError": "A kozlemenyek nem tolthetok be"
+    "loadError": "A közlemények nem tölthetők be"
   },
   "widgets": {
     "addedTitle": "Widget hozzaadva",
     "addedMessage": "A widget be lett allitva.",
     "updatedTitle": "Widgetek frissitve",
-    "updatedMessage": "Minden widget frissitesre kerult.",
-    "emptyText": "Meg nincsenek beallitott widgetek."
+    "updatedMessage": "Minden widget frissítésre került.",
+    "emptyText": "Még nincsenek beállított widgetek."
   },
   "permissions": {
     "denied": "Engedly megtagadva",
@@ -385,15 +385,15 @@
     "savedOffline": "Offline mentve",
     "willSyncWhenOnline": "Az allasa elkuldesre kerul amikor ujra online lesz",
     "offlineMode": "Offline. Az allasok helyben lesznek mentve.",
-    "pendingReadings": "Fuggo leolvasasok",
-    "loadError": "A meroorak nem tolthetok be",
-    "emptyTitle": "Nincsenek meroorak",
-    "emptyText": "Az On egysegehez meg nincs meroora regisztralva.",
-    "noUnitTitle": "Nincs tarsitott egyseg",
-    "noUnitText": "A meroorak akkor jelennek meg, ha fiokjat egy egyseghez tarsitjak.",
-    "detailLoadError": "A meroora nem toltheto be",
-    "noReadingsTitle": "Meg nincsenek leolvasasok",
-    "noReadingsText": "Kuldje be elso leolvasasat ehhez a meroorahoz."
+    "pendingReadings": "Függő leolvasások",
+    "loadError": "A mérőórák nem tölthetők be",
+    "emptyTitle": "Nincsenek mérőórák",
+    "emptyText": "Az Ön egységéhez még nincs mérőóra regisztrálva.",
+    "noUnitTitle": "Nincs társított egység",
+    "noUnitText": "A mérőórák akkor jelennek meg, ha fiókját egy egységhez társítják.",
+    "detailLoadError": "A mérőóra nem tölthető be",
+    "noReadingsTitle": "Még nincsenek leolvasások",
+    "noReadingsText": "Küldje be első leolvasását ehhez a mérőórához."
   },
   "esignature": {
     "title": "Alairasi keres",
@@ -475,42 +475,42 @@
     "placeholderBody": "Ez a szakasz jelenleg nem elérhető."
   },
   "buildings": {
-    "loadError": "Az epuletek nem tolthetok be",
-    "emptyTitle": "Nincsenek epuletek",
-    "emptyText": "Fiokjahoz meg nincs ingatlan tarsitva."
+    "loadError": "Az épületek nem tölthetők be",
+    "emptyTitle": "Nincsenek épületek",
+    "emptyText": "Fiókjához még nincs ingatlan társítva."
   },
   "messages": {
-    "loadError": "Az uzenetek nem tolthetok be",
-    "emptyTitle": "Nincsenek beszelgetesek",
-    "emptyText": "Kezdjen beszelgetest a kezelovel vagy a szomszedokkal.",
-    "threadLoadError": "A beszelgetes nem toltheto be",
-    "threadEmptyTitle": "Meg nincsenek uzenetek",
-    "threadEmptyText": "Koszonjon, es kezdje el a beszelgetest."
+    "loadError": "Az üzenetek nem tölthetők be",
+    "emptyTitle": "Nincsenek beszélgetések",
+    "emptyText": "Kezdjen beszélgetést a kezelővel vagy a szomszédokkal.",
+    "threadLoadError": "A beszélgetés nem tölthető be",
+    "threadEmptyTitle": "Még nincsenek üzenetek",
+    "threadEmptyText": "Köszönjön, és kezdje el a beszélgetést."
   },
   "leases": {
-    "loadError": "A berleti szerzodesek nem tolthetok be",
-    "emptyTitle": "Nincsenek berleti szerzodesek",
-    "emptyText": "Meg egyetlen berleti szerzodeshez sem adtak hozza.",
-    "detailLoadError": "A berleti szerzodes nem toltheto be",
-    "noPayments": "Nincsenek utemezett kozelgo fizetesek.",
-    "notFound": "A berleti szerzodes nem talalhato."
+    "loadError": "A bérleti szerződések nem tölthetők be",
+    "emptyTitle": "Nincsenek bérleti szerződések",
+    "emptyText": "Még egyetlen bérleti szerződéshez sem adták hozzá.",
+    "detailLoadError": "A bérleti szerződés nem tölthető be",
+    "noPayments": "Nincsenek ütemezett közelgő fizetések.",
+    "notFound": "A bérleti szerződés nem található."
   },
   "outages": {
-    "loadError": "A kimaradasok nem tolthetok be",
-    "emptyTitle": "Nincsenek kimaradasok",
-    "emptyText": "Jelenleg semmi sincs utemezve vagy aktiv."
+    "loadError": "A kimaradások nem tölthetők be",
+    "emptyTitle": "Nincsenek kimaradások",
+    "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív."
   },
   "forms": {
-    "loadError": "Az urlapok nem tolthetok be",
-    "emptyTitle": "Nincsenek urlapok",
-    "emptyText": "Jelenleg nincs kitoltendo urlapja."
+    "loadError": "Az űrlapok nem tölthetők be",
+    "emptyTitle": "Nincsenek űrlapok",
+    "emptyText": "Jelenleg nincs kitöltendő űrlapja."
   },
   "neighbors": {
-    "loadError": "A szomszedok nem tolthetok be",
-    "loading": "Szomszedok betoltese…",
-    "emptyTitle": "Meg nincsenek szomszedok",
-    "noMatches": "Nincs talalat",
-    "emptyText": "A nevjegyzekbe jelentkezo lakok itt jelennek meg.",
-    "noMatchesText": "Probaljon meg mas nevet vagy lakasszamot."
+    "loadError": "A szomszédok nem tölthetők be",
+    "loading": "Szomszédok betöltése…",
+    "emptyTitle": "Még nincsenek szomszédok",
+    "noMatches": "Nincs találat",
+    "emptyText": "A névjegyzékbe jelentkező lakók itt jelennek meg.",
+    "noMatchesText": "Próbáljon meg más nevet vagy lakásszámot."
   }
 }
