@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-02T14:23:07Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 2627,
+  "last_run_iso": "2026-08-03T02:25:35Z",
+  "last_run_ms": 3200,
+  "last_pr_seen": 2629,
   "last_issue_seen": 2628,
-  "last_commit_sha": "21a036ee30abfbdb7efac5261c9472f5973c22ea",
+  "last_commit_sha": "2c71fabe9d018adbcc0c062df5caf6392f4ef007",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -745,7 +745,16 @@
     "dep-update-noise-pr-2625",
     "code-review-reality-server-agency-members-unauth-idor",
     "code-review-api-core-ssrf-validator-drift",
-    "code-review-api-core-idempotency-client-tenant"
+    "code-review-api-core-idempotency-client-tenant",
+    "code-review-reality-web-agency-import-i18n",
+    "code-review-reality-web-protectedroute-i18n",
+    "code-review-mobile-rn-useapi-no-refresh-retry",
+    "security-mobile-rn-nfc-device-clock-expiry",
+    "test-gap-mobile-rn-nfc-modules-untested",
+    "code-review-ppt-web-core-perf-listener-leak",
+    "code-review-ppt-web-ui-portfolio-dash-mock",
+    "code-review-ppt-web-ui-moderation-prompt-cast",
+    "code-review-ppt-web-ui-dialog-i18n-gap"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -754,14 +763,14 @@
     "reality-server": "2026-08-02",
     "ppt-web-ui": "2026-07-21",
     "ppt-web-core": "2026-07-24",
-    "reality-web": "2026-07-28",
+    "reality-web": "2026-08-03",
     "mobile-rn": "2026-07-22",
     "mobile-native-kmp": "2026-07-27"
   },
   "stats": {
-    "runs": 56,
-    "vectors_created": 241,
-    "plans_created": 20,
+    "runs": 57,
+    "vectors_created": 250,
+    "plans_created": 21,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

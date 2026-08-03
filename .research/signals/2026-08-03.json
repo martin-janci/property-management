@@ -1,0 +1,279 @@
+{
+  "date": "2026-08-03",
+  "run_iso": "2026-08-03T02:19:13Z",
+  "signals": [
+    {
+      "id": "code-review-reality-web-agency-import-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-08-03",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx:329 — hardcoded English UI strings ('Drag and drop your CSV file', 'Map CSV Columns':411, 'Preview Import':593, 'Importing listings...':898, 'Import Complete!':961) with no useTranslations import; the portal serves sk/cs/de/en so non-English realtors see raw English",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:74 — 'Agency Listings' / 'Manage all property listings' + all table headers hardcoded; file never imports next-intl",
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:101 — every field label hardcoded English; same systemic gap in FeedImport.tsx, SyncSchedule.tsx, AgencyBranding.tsx, CrmConnection.tsx and ComparisonView.tsx:153. 65 sibling components do use useTranslations, so this cluster is an inconsistent omission"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-protectedroute-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-08-03",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx:26 — 'Loading...' hardcoded English in the auth-gating loading state",
+        "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx:74 — 'Sign in required' (h2), 'Please sign in to access this page.' and the 'Sign In' button label hardcoded; wraps every protected route yet does not import next-intl, so the entire auth-required gate renders untranslated for sk/cs/de users"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — the central `apiRequest` helper throws on any non-ok response (including 401) with a plain `Error(message)`; no branch attempts a refresh_token exchange and no 401 handler retries the original request. Every useQuery/useMutation across the mobile app will therefore surface a fresh 'Unauthorized' error the moment the short-lived access token expires, forcing manual re-login even when the refresh token is still valid.",
+        "verified in-run 2026-08-03: read apiRequest at :76-91 — sole failure branch throws; no interceptor / no 401 retry path exists in the file"
+      ]
+    },
+    {
+      "id": "security-mobile-rn-nfc-device-clock-expiry",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:274 — `if (new Date(credential.validUntil) < now)` where `now = new Date()` uses the local device clock. On any device where the user can adjust the system time (default on Android/iOS with no MDM lock), an expired credential is accepted as valid — physical-access bypass with no signal recorded server-side.",
+        "verified in-run 2026-08-03: read validateAccess :249-290 — expiry check is client-side date-comparison against device clock with no server-issued freshness proof or nonce.",
+        "Vector escalated to `security` (was `bug` in dispatcher tier1d): a credential-expiry bypass on a physical-access system is confidentiality/integrity risk, not just a functional defect."
+      ]
+    },
+    {
+      "id": "test-gap-mobile-rn-nfc-modules-untested",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files. NFC access is a physical-security-adjacent module (deny/grant on credentials) so shipping without unit-tested access decisions is a coverage gap that will bite on any refactor."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup ONLY disconnects the PerformanceObserver but never removes the window `visibilitychange` and `load` listeners that were registered earlier in the same effect. Every remount/unmount cycle leaks two more listeners; over the lifetime of an SPA session that means N growing subscribers all firing on each visibility change."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing portfolio dashboard renders `mockDashboardSummary` and `mockPropertyCards` constants defined in the file; there is no API call, no useQuery, no props from a real fetch. Every manager viewing 'their' portfolio sees the identical fake `Downtown Office Building / 123 Main St` values regardless of tenant.",
+        "verified in-run 2026-08-03: read PortfolioDashboardPage.tsx :1-50 — component body imports React + card components then binds hardcoded `mockDashboardSummary` object literal (totalPortfolioValue 2_500_000 EUR, etc.). Comment on line 17 says 'would be fetched from API'."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() text is `as`-cast into an enum-typed action parameter without runtime validation, so any operator typing 'nuke' will send an invalid moderation action to the API. Native prompt() also breaks the moderator flow on mobile/native shells that suppress it."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d-2026-08-02",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "Numerous user-facing browser-dialog strings across ppt-web are hardcoded English instead of going through react-i18next `t(...)`, even in translated-elsewhere features. Same class as reality-web i18n gap: sk/cs users see raw English in confirms/prompts."
+      ]
+    }
+  ],
+  "notes": [
+    "Phase 1 observation summary: 1 new merged PR (#2629 OAuth token-usage analytics, clean well-tested), 0 new issues, 0 open PRs touched, 0 stalled reviews crossed 7d, 0 reverts, 0 screen-map drift (no route files touched), 0 fresh churn hotspots (single PR insufficient signal).",
+    "Phase 1.5 primary segment: reality-web (2 medium i18n findings). Also absorbing 3 orphan dispatcher tier1d files from 2026-08-02 (mobile-rn ×3, ppt-web-core ×1, ppt-web-ui ×3) — these were produced by the dispatcher's Tier 1d generator during the drained-buffer window and had not yet flowed through the routine's Phase 2/3 pipeline.",
+    "In-run confidence upgrades: 2 items lifted medium→high after direct source read (useApi-no-refresh-retry, portfolio-dash-mock, nfc-device-clock-expiry).",
+    "Vector re-classification: nfc-device-clock-expiry escalated bug→security (physical-access credential-expiry bypass via client-side clock trust).",
+    "Auto-fix: no candidate this run (no allow-listed signal type + high-confidence + score>=3 combo — all fresh findings are code-review, not screen-map-drift/orphan/fixme/lockfile/stalled-review).",
+    "Coverage upkeep: PR #2629 wired existing 'OAuth Token Management' story (already done) with the analytics leg; coverage.json status unchanged."
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "observed": "0 open items at HEAD — trivial pass",
+      "expected": "decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "adversarial pass annotation found on same line as plan path",
+      "expected": "present"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "observed": "1 new plan",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "observed": "all 4 fields present",
+      "expected": "present"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "observed": "all 11 headings present",
+      "expected": "present"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "observed": "3 ticks",
+      "expected": ">=1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "observed": "Mode: cloud-ok",
+      "expected": "local-only|cloud-ok"
+    },
+    {
+      "goal": "G7-files",
+      "passed": true,
+      "observed": "both cited files exist on disk",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0 secret/hostname matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md byte-identical to regen",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no failed phases this run",
+      "expected": "no lies"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "0 prior plan slugs missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count staged=7 head=7",
+      "expected": "staged >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md byte-identical to regen",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions empty (no candidate)",
+      "expected": "caps satisfied"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped → no-op; management artifacts valid; pm_cursor.next_index=2 in [0,7]",
+      "expected": "valid when 1.6 ran"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0 telegram token matches",
+      "expected": "0"
+    }
+  ]
+}

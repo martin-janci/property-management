@@ -6060,6 +6060,194 @@
         "assignment_status": "merged",
         "pr_number": 2626
       }
+    },
+    {
+      "id": "code-review-reality-web-agency-import-i18n",
+      "title": "Untranslated agency/import/realtor components in reality-web (cluster of hardcoded English)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-03 (reality-web slice)"
+      ],
+      "evidence": [
+        "CsvImport.tsx / AgencyListings.tsx / ListingForm.tsx / FeedImport.tsx / SyncSchedule.tsx / AgencyBranding.tsx / CrmConnection.tsx / ComparisonView.tsx never import next-intl — every user-facing string is hardcoded English. 65 sibling components DO use useTranslations, so this is an inconsistent omission not a project-wide choice; sk/cs/de realtors see raw English."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-protectedroute-i18n",
+      "title": "reality-web ProtectedRoute auth-gate strings untranslated (renders English for sk/cs/de)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-03 (reality-web slice)"
+      ],
+      "evidence": [
+        "ProtectedRoute.tsx wraps every protected route yet never imports next-intl; 'Loading…', 'Sign in required', 'Please sign in to access this page.', 'Sign In' button all hardcoded English."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "title": "mobile useApi apiRequest has no 401→refresh_token retry path (forces manual re-login on expiry)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (mobile-rn slice)"
+      ],
+      "evidence": [
+        "hooks/useApi.ts:82-91 sole failure branch throws a plain Error(HTTP status) — no 401 handler, no refresh_token exchange, no retry-original-request path. Every useQuery/useMutation across the mobile app surfaces 'Unauthorized' the moment the short-lived access token expires, forcing manual re-login even though the refresh token is still valid.",
+        "verified in-run 2026-08-03 via direct source read at :76-91."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useApi.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "security-mobile-rn-nfc-device-clock-expiry",
+      "title": "NFC credential expiry validated against device clock — spoofable physical-access bypass",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (mobile-rn slice)"
+      ],
+      "evidence": [
+        "NFCAccessController.ts:274 — 'if (new Date(credential.validUntil) < now)' with now=new Date() reads the user-controlled device clock. On any device without MDM time lock (default Android/iOS), turning the clock back extends an expired credential — physical-access bypass with no server-side signal recorded.",
+        "verified in-run 2026-08-03 via direct source read at :249-290.",
+        "escalated bug→security: credential-expiry bypass on a physical-access system is confidentiality/integrity risk, not a functional defect."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": "plans/security-mobile-rn-nfc-device-clock-expiry.md"
+    },
+    {
+      "id": "test-gap-mobile-rn-nfc-modules-untested",
+      "title": "NFC access-control modules ship with zero test files (479+321 LOC of physical-security code)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (mobile-rn slice)"
+      ],
+      "evidence": [
+        "NFCAccessController.ts (478 lines) and NFCCredentialManager.ts (321 lines) have zero test files. Access decisions (grant/deny) are physical-security-adjacent; shipping without unit-tested branches means any refactor risks silent regressions."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "title": "usePerformanceMetrics leaks window visibilitychange+load listeners on every remount",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (ppt-web-core slice)"
+      ],
+      "evidence": [
+        "hooks/usePerformanceMetrics.ts:160-164 — effect cleanup ONLY disconnects the PerformanceObserver; the window 'visibilitychange' and 'load' listeners registered earlier in the same effect are never removeEventListener'd. Every remount grows the subscriber list; N stacked listeners fire on each visibility change over a long SPA session."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "title": "PortfolioDashboardPage ships hardcoded mock data — every manager sees the same fake portfolio",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (ppt-web-ui slice)"
+      ],
+      "evidence": [
+        "features/portfolio-performance/pages/PortfolioDashboardPage.tsx binds mockDashboardSummary + mockPropertyCards object literals; no useQuery / no useApi / no props from a real fetch. Every tenant sees Downtown Office Building / 123 Main St / EUR 2 500 000. Comment at line 17 says 'would be fetched from API'.",
+        "verified in-run 2026-08-03 via direct source read of :1-50."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "title": "ContentModerationPage passes window.prompt() text as enum via unchecked as-cast",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (ppt-web-ui slice)"
+      ],
+      "evidence": [
+        "features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() output is 'as'-cast into an enum-typed action parameter without runtime validation. Operator typo → invalid API call. Native prompt() also breaks the flow on mobile/native shells that suppress it."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "title": "ppt-web browser-dialog strings hardcoded English across translated features",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher-tier1d 2026-08-02 (ppt-web-ui slice)"
+      ],
+      "evidence": [
+        "Numerous user-facing browser-dialog strings (confirms/prompts) across ppt-web features are hardcoded English rather than going through react-i18next t(). Sibling components in the same features do use t() — inconsistent omission, sk/cs users see English in dialog paths."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null
     }
   ]
 }
