@@ -25,6 +25,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { QueryErrorBanner } from '../../components/QueryErrorBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
@@ -159,6 +160,11 @@ export function ThreadDetailScreen({
           setDraft('');
           refetch();
         },
+        onError: () => {
+          // Surface the failure inline (see `sendMessage.isError` banner
+          // below) and deliberately DO NOT clear `draft` — the user's message
+          // stays in the composer so they can retry without retyping.
+        },
       }
     );
   };
@@ -216,6 +222,18 @@ export function ThreadDetailScreen({
         {isFetching && !isLoading ? <Text style={styles.syncing}>Syncing…</Text> : null}
         <View style={s.bottomSpacer} />
       </ScrollView>
+
+      {sendMessage.isError ? (
+        // Surface the failed send inline, above the composer, and keep the
+        // drafted text intact (handleSend only clears `draft` on success) so
+        // the user can retry without retyping. A localized, non-leaking
+        // message per the QueryErrorBanner contract — never the raw
+        // backend/error string.
+        <QueryErrorBanner
+          message="Couldn't send your message. Please try again."
+          onRetry={handleSend}
+        />
+      ) : null}
 
       <View style={styles.composer}>
         <TextInput
