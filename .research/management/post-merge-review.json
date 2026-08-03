@@ -1,9 +1,30 @@
 {
-  "generated": "2026-08-02T12:20:00Z",
+  "generated": "2026-08-03T04:10:17Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-03T04:10:17Z",
+      "prs_scanned": 5,
+      "clean": [
+        2627,
+        2626,
+        2527,
+        2522
+      ],
+      "with_issues": [
+        {
+          "pr": 2629,
+          "issue": 2630,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
+    },
     {
       "run_at": "2026-08-02T12:20:00Z",
       "prs_scanned": 6,
@@ -48,7 +69,7 @@
       ],
       "with_issues": [],
       "skipped_already_reviewed": [],
-      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard — exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) — all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 — still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
+      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard \u2014 exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) \u2014 all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 \u2014 still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
     },
     {
       "run_at": "2026-08-01T06:15:42Z",
@@ -741,104 +762,6 @@
           "findings": 1,
           "specialist": "rust-backend",
           "note": "#2239 provenance model_filter assertion is correct+thorough but appended to rag_retrieval_correctness which is #[ignore]d under BIT-351 blind-CI quarantine, so the regression guard never runs on the PR gate (same shape as 2253's ignored api-ecosystem routing tests); propose scoping BIT-352 to re-run these guards / extract to a focused sqlx::test / add ephemeral-PG lane"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-11T22:24:09Z",
-      "prs_scanned": 13,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2226,
-          "issue": 2237,
-          "findings": 2,
-          "specialist": "kotlin-mp",
-          "note": "path-param encoding across mobile-native repos clean + shared asPathSegment helper; 2 test-coverage gaps: Rust pgvector clamp-panic fix untested, refactored KMP encoders untested"
-        },
-        {
-          "pr": 2227,
-          "issue": 2236,
-          "findings": 2,
-          "specialist": "react-web",
-          "note": "getAppEnv de-dup correct+tested; low-sev: stale getAppEnv() comment + still-duplicated AppEnvironment type"
-        },
-        {
-          "pr": 2189,
-          "issue": 2240,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "Airbnb enqueue handler test coverage solid; direct_connect_airbnb success/write path untested (no AirbnbClient base-URL seam); no camelCase DTO bug"
-        },
-        {
-          "pr": 2205,
-          "issue": 2238,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "empty refresh-cookie fix correct+centralized (parse_refresh_cookie None on empty/whitespace); only gap is unit-level not handler-level regression test"
-        },
-        {
-          "pr": 2221,
-          "issue": 2239,
-          "findings": 3,
-          "specialist": "rust-backend",
-          "note": "RAG embedding-write hardening (connection, provenance, FK shape) all fixed; provenance retrieval filter untested + legacy untagged rows still mix embedding spaces (no backfill)"
-        },
-        {
-          "pr": 2220,
-          "issue": 2242,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "create-schedule validation correct+tenant-isolated; next_run_at has no consumer/advance logic (write-only until report dispatcher exists); DST branch untested"
-        },
-        {
-          "pr": 2219,
-          "issue": 2241,
-          "findings": 3,
-          "specialist": "rust-backend",
-          "note": "OAuth CSRF single-use handler test sound; prod Redis state consume is non-atomic GET+DELETE (TOCTOU replay window)"
-        },
-        {
-          "pr": 2218,
-          "issue": 2244,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "per-listing analytics read-fix airtight (ownership gate, pinned search_path, FORCE-RLS test); write path track_listing_view still SECURITY INVOKER FORCE-RLS-blocked so portal analytics render zero e2e; +EXECUTE-to-PUBLIC hardening"
-        },
-        {
-          "pr": 2215,
-          "issue": 2243,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "share<->document revoke scoping correct+tested; get_share_access_log_rls still keys by share_id only (same IDOR class, not route-exposed); revoke_share lacks revoked_at IS NULL idempotency guard"
-        },
-        {
-          "pr": 2214,
-          "issue": 2245,
-          "findings": 3,
-          "specialist": "rust-backend",
-          "note": "webhook-secret code fail-closed correct; env docs inert (compose uses environment allowlist, no env_file); 2nd REALITY_PORTAL_WEBHOOK_SECRET family undocumented+name collision; synology template missed"
-        },
-        {
-          "pr": 2190,
-          "issue": 2246,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "revoke-all/list-sessions cookie resolution fix correct+tested; resolver not user-scoped; list-sessions test asserts count not current-session identity"
-        },
-        {
-          "pr": 2225,
-          "issue": 2247,
-          "findings": 1,
-          "specialist": "generic",
-          "note": "sitemap test_metadata route count 19 verified correct but hard-coded magic number is brittle; propose len()-based consistency check"
-        },
-        {
-          "pr": 2223,
-          "issue": 2248,
-          "findings": 4,
-          "specialist": "generic",
-          "note": "CI backend shard structure sound but bundled a real common --lib assertion fix (13->19); test-rest shard still unsharded bottleneck; api-server doctests dropped; ~4-5x compile minutes"
         }
       ]
     }

@@ -1,5 +1,91 @@
 {
   "version": 1,
-  "items": [],
+  "items": [
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
+      "action": "AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-aria-label-i18n",
+      "action": "ppt-web: 103 hardcoded English aria-label attributes across feature components — screen readers hear English on sk/cs/de",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-double-cast",
+      "action": "SessionsPage double-casts through unknown to hand-maintained interface — defeats API-boundary type-check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-import-i18n",
+      "action": "reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-protectedroute-i18n",
+      "action": "reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    }
+  ],
   "generated": "2026-07-30T03:23:02Z"
 }
