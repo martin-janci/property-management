@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
@@ -118,6 +119,7 @@ interface OutagesScreenProps {
 }
 
 export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | OutageStatus>('all');
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiOutageListResponse>(
@@ -175,18 +177,18 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
       >
         {isLoading ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load outages</Text>
+            <Text style={s.emptyTitle}>{t('outages.loadError')}</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>✅</Text>
-            <Text style={s.emptyTitle}>No outages</Text>
-            <Text style={s.emptyText}>Nothing scheduled or active right now.</Text>
+            <Text style={s.emptyTitle}>{t('outages.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('outages.emptyText')}</Text>
           </View>
         ) : (
           filtered.map((outage) => (

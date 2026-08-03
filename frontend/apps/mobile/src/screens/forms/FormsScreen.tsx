@@ -19,6 +19,7 @@
  */
 
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { warnIfListDegraded } from '../shared/parserWarnings';
@@ -97,6 +98,7 @@ interface FormsScreenProps {
 }
 
 export function FormsScreen({ onNavigate }: FormsScreenProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
     ['forms', 'available'],
     '/api/v1/forms/available',
@@ -126,18 +128,18 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
       >
         {isLoading ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load forms</Text>
+            <Text style={s.emptyTitle}>{t('forms.loadError')}</Text>
           </View>
         ) : forms.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📝</Text>
-            <Text style={s.emptyTitle}>No forms</Text>
-            <Text style={s.emptyText}>You have no forms to complete right now.</Text>
+            <Text style={s.emptyTitle}>{t('forms.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('forms.emptyText')}</Text>
           </View>
         ) : (
           forms.map((form) => (
