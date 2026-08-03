@@ -6249,6 +6249,279 @@
       "updated_at": "2026-08-03",
       "plan": null,
       "reconciled": null
+    },
+    {
+      "id": "code-review-mobile-rn-offline-sync-false-complete",
+      "title": "mobile: useOfflineSupport.processQueue reports isComplete:true after a head-of-line-blocked (halted) sync cycle",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:360-375 — on a retryable failure the FIFO drain intentionally halts: sets haltedProgress {current: i+1, failed, isComplete: false} (:367-372), emits onProgress, and breaks out of the loop. Comment (:361-366, issue #1767) says failed action + successors are carried forward for next reconnect.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:424-426 — after the loop, control falls through to `const finalProgress: SyncProgress = { total, current: total, failed, isComplete: true }` which is set + emitted UNCONDITIONALLY, immediately overwriting the halted `isComplete:false` signal. Partially-drained cycle reports to the UI as fully complete.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:399-416 — `failed` counter in finalProgress excludes carried-forward retryable items (they are neither in succeededIds nor terminalFailureIds and are re-persisted to QUEUE_KEY at :413-415). Net effect: sync banner shows 'complete, N failed' while additional actions silently remain queued.",
+        "Suggested fix: `return { success, failed }` on the halt branch, or guard the finalProgress block so it is skipped when the loop broke early."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-silent-fail",
+      "title": "mobile: ThreadDetailScreen.handleSend send-message mutation has onSuccess only, no onError — failed sends are silent",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:139-142,152-163 — `sendMessage` (POST /api/v1/messages/threads/{id}/messages) is called with { onSuccess: () => { setDraft(''); refetch(); } }. No onError callback; component never reads sendMessage.isError.",
+        "On a 5xx/network failure the message fails to post with zero user feedback (no Alert/toast/inline error). Because draft is cleared only in onSuccess, on failure the draft is retained but user gets no signal it didn't send — they may re-tap send repeatedly.",
+        "Contrast: LeaseSignatureScreen.tsx:162-165 (onError → Alert.alert(t(errorKey), err.message)) and VoteDetailScreen.tsx:233-234 (onError → Alert.alert) DO surface errors. Fix: add onError raising err.message (Alert or inline banner) and/or render a retry affordance keyed off sendMessage.isError."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
+      "title": "mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d mobile-rn)"
+      ],
+      "evidence": [
+        "react-i18next is configured and used app-wide (50 files call t()/useTranslation; LeaseSignatureScreen and VoteDetailScreen fully translated), but only 23 of 41 screen .tsx files import useTranslation — the remaining ~18 render hardcoded English concentrated in list/empty/error/loading fallbacks that sk/cs/de users will see untranslated.",
+        "Representative sites: FaultsListScreen.tsx:185,195 ('Loading…','No faults found'); BuildingsScreen.tsx:126,136,137; MetersScreen.tsx:156,171,172; MessagesScreen.tsx:134,141,147 ('Loading…','Try again','No conversations'); ThreadDetailScreen.tsx:174,183; AnnouncementsScreen.tsx:266; WidgetSettingsScreen.tsx:90,163.",
+        "Fix: wrap the empty/error/loading Text nodes in t(...), add keys to the mobile locale bundles; add a lint guard for bare visible <Text> literals in screens/. Impact: low (i18n gap, no functional break)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-mobile-rn-offline-terminal-drop-dataloss",
+      "title": "mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 retries with only console.error — silent loss of offline-created content",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:353-357 — catch branch increments action.retries then `if (isPermanent || action.retries >= 3)` adds action to terminalFailureIds and console.errors. Dropping 4xx-permanent is correct, but bundling transient failures (5xx/network per the comment at :350-352) into the SAME terminal drop means a queued mutation that hit 3 consecutive 5xx / connectivity blips is discarded, not carried forward.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:399-401 — carriedForward = queue.filter(a => !succeededIds.has(a.id) && !terminalFailureIds.has(a.id)); anything in terminalFailureIds is excluded from `merged` and thus deleted from QUEUE_KEY on the subsequent AsyncStorage.setItem. Nothing re-enqueues it.",
+        "frontend/apps/mobile/src/App.tsx:81-83,337 — the sync-toast's only recovery is onRetry={handleRetrySync} which just calls processQueue() again. Because the terminally-dropped action is no longer in the queue, tapping Retry cannot recover it. For queued fault reports/meter readings/votes/acknowledgements made while offline this is silent data loss after transient server unavailability.",
+        "Fix: treat only isPermanent (4xx) as terminal; give transient failures a larger bounded budget or move them to a dead-letter store surfaced in the UI rather than deleting them."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "frontend/apps/mobile/src/App.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-mobile-rn-push-debug-console-log",
+      "title": "mobile: usePushNotifications — debug console.log left on the device-token register/unregister production path",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:240 — console.log('[push] registering native device token with backend') and :267 — console.log('[push] unregistering native device token with backend') are plain debug logs on the always-run push-registration path, not gated behind __DEV__ or a logger abstraction.",
+        "Contrast: rest of the segment logs only via console.warn/console.error inside catch blocks (useOfflineSupport.ts, NFCCredentialManager.ts, backgroundNotifications.ts, AuthContext.tsx). These two are the only informational debug logs left on a hot production path.",
+        "Fix: remove or route through the app logger gated on __DEV__. Impact: low (release-log noise, hygiene smell)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-cache-purge-gap",
+      "title": "ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentiment, notification-analytics) — cross-user data leak on shared workstations",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347 — AUTHED_QUERY_KEY_ROOTS is the allow-list logout() iterates to purge session-scoped TanStack Query subtrees (contexts/AuthContext.tsx:553-555). Doc (AuthContext logout, issue #712) says the goal is that 'user-bound data never leaks into the next session'. Any query-key root NOT in this list is NOT purged.",
+        "Three feature hooks define their own local key factory whose root string is missing from AUTHED_QUERY_KEY_ROOTS: predictive-maintenance/hooks/usePredictiveMaintenance.ts (`predictiveKeys.all = ['predictive-maintenance']`), sentiment (`all: ['sentiment']`), notification-analytics (`all: ['notification-analytics']`). Roots defined by feature *Keys factories = {ai-chat, notification-analytics, predictive-maintenance, sentiment}; only 'ai-chat' is present in the allow-list.",
+        "All three are tenant-scoped and their pages are routed and reachable (routes/lazyRoutes.tsx:317 SentimentDashboardPage, :322 NotificationAnalyticsPage, :336 PredictiveMaintenancePage). ppt-web is an SPA — logout does NOT reload the page, so queryClient persists across logout→next-login. On a shared manager/kiosk workstation, user B can see user A's cached data until 5-min staleTime lapses or a refetch completes.",
+        "Fix: add 'predictive-maintenance', 'sentiment', 'notification-analytics' to AUTHED_QUERY_KEY_ROOTS. Better: add a lint/unit assertion that every feature-local *Keys.all root is a member of AUTHED_QUERY_KEY_ROOTS so future pages can't silently reintroduce the leak."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts",
+        "frontend/apps/ppt-web/src/features/sentiment",
+        "frontend/apps/ppt-web/src/features/notification-analytics"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-error-boundary-gap",
+      "title": "ppt-web has no route-outlet ErrorBoundary — a single stale-chunk lazy() rejection unmounts the entire application shell",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:229-231 — the entire lazily-loaded route table renders inside `<main><Suspense fallback={<RouteLoading/>}><AppRoutes/></Suspense></main>` with NO React error boundary at the route-outlet level. The ONLY ErrorBoundary is at the root (main.tsx:50, wrapping the whole `<App/>`).",
+        "routes/lazyRoutes.tsx defines ~90 `lazy(() => import(...))` page chunks. A rejected dynamic import is NOT caught by Suspense — it propagates as a thrown error. After a redeploy, a user holding a stale index.html requests an old hashed chunk that no longer exists on the CDN (404) — a routine production event for a Vite hashed-chunk SPA. That rejection, or any render-time throw inside a page, bubbles to the ROOT boundary and unmounts the entire application shell.",
+        "components/ErrorBoundary.tsx:99 handleRetry only resets `hasError` and re-renders — for a failed lazy() import the browser has permanently cached the rejected module promise, so 'Try Again' re-throws immediately; only 'Reload Page' (window.location.reload, :182) recovers.",
+        "Fix: wrap `<Suspense><AppRoutes/></Suspense>` in App.tsx:229 with a route-scoped `<ErrorBoundary>` (component supports a custom `fallback`) so failures are contained to the `<main>` outlet, keeping AppNavigation/shell mounted. Optionally give the route-level boundary chunk-load-error detection that triggers an automatic one-shot reload."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "frontend/apps/ppt-web/src/components/ErrorBoundary.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-ppt-web-core-mutation-no-onerror",
+      "title": "ppt-web rentals + financial useMutation hooks lack onError — money-movement + platform-connect failures produce zero user feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx — all four useMutation hooks omit onError: createConnection (:258), syncPlatforms (:272), checkIn (:373), checkOut (:385). Each has only onSuccess (queryClient.invalidateQueries). A failed platform connect/sync or booking check-in/check-out produces NO user-facing feedback.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx — PaymentManagementPageRoute's matchMutation (:296 manual payment→invoice allocation) and autoMatchMutation (:305 bulk auto-match) define only onSuccess with no onError. A failed money-movement action gives the manager no error toast.",
+        "Inconsistent with the SAME file: sendInvoiceMutation (financial.tsx:169) and downloadPdfMutation (:191) both pair onSuccess with an onError that calls showToast({ type: 'error', ... }). Fix: add an onError to each, mirroring sendInvoiceMutation:179-186."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+      "title": "ppt-web rentals mutations dereference `auth!` non-null — mid-session token loss throws uncaught TypeError instead of handled auth error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:169-176 — useRentalsAuth() returns `{ authorization, xTenantId } | null` and explicitly returns null when `!token || !user?.organizationId` (e.g. access token expired/cleared mid-session, since ppt-web is an SPA that does not reload on token loss).",
+        "useQuery guards this correctly with `enabled: !!auth` (rentals.tsx :182,:190,:192). But useMutation has no `enabled` gate: createConnection (:258), syncPlatforms (:272), checkIn (:373) and checkOut (:385) all dereference `auth!.authorization` / `auth!.xTenantId` (:251-252,:262-263,:276-277 and the checkIn/checkOut header blocks) inside mutationFn. If the user triggers one of these after the token has been dropped, `auth!` (non-null assertion on an actually-null value) throws a TypeError.",
+        "Fix: null-check auth at the top of each mutationFn (early-return / throw typed AuthError, or disable the triggering control when `!auth`) rather than relying on the `!` assertion, so a mid-session token loss degrades to a handled error path."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "code-review-ppt-web-core-notfound-i18n-gap",
+      "title": "ppt-web route wrappers render 8 hardcoded English 'X not found' fallbacks — sk/cs/de users see untranslated text",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (tier1d ppt-web-core)"
+      ],
+      "evidence": [
+        "Eight route-wrapper 'entity not found' fallbacks render hardcoded English JSX text with no react-i18next `t(...)`: routes/groups/announcements.tsx:521 & :596 ('Announcement not found'), buildings.tsx:36 ('Building not found'), community.tsx:78 ('Group not found'), faults.tsx:418 & :472 ('Fault not found'), messaging.tsx:172 ('Thread not found'), rentals.tsx:399 ('Booking not found').",
+        "User-facing strings on a real render path (returned when a detail route's id resolves to no entity), so a sk/cs/de user hitting a missing/deleted entity sees untranslated English. Repo standard is i18n via `t('...')` (react-i18next 16, locales sk/cs/de/en) — same route files use t() for other labels; these fallbacks were left as literals.",
+        "Fix: wrap each in `t('common.notFound', { defaultValue: '<Entity> not found' })` and add keys to sk/cs/de/en bundles."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/buildings.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
+    },
+    {
+      "id": "screen-map-drift-pr-2636-reality",
+      "title": "docs/screens/reality/agency-import + agency-inquiries out of sync with PR #2636 i18n rewrite",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2636"
+      ],
+      "evidence": [
+        "PR #2636 modified frontend/apps/reality-web/src/app/[locale]/agency/import/page.tsx and frontend/apps/reality-web/src/app/[locale]/agency/inquiries/page.tsx to convert the agency/import feature cluster to next-intl useTranslations.",
+        "No matching update to docs/screens/reality/agency-import.md or docs/screens/reality/agency-inquiries.md in the same PR — screen docs still describe the pre-i18n state.",
+        "Best-effort heuristic per routine spec (route-basename slug match) — these were UI-string changes rather than route-behavior changes, so drift is low-impact. Surfaces as review candidate, not promotable plan."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/import/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/inquiries/page.tsx",
+        "docs/screens/reality/agency-import.md",
+        "docs/screens/reality/agency-inquiries.md"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": null
     }
   ]
 }
