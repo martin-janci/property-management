@@ -1,0 +1,54 @@
+{
+  "generated": "2026-08-03T18:10:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "title": "Realtor 'Create Listing' is a dead feature on Android — onSubmit is hardwired to Result.failure(NotImplementedError), and no create endpoint exists in the repository",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "Navigation.kt:490-495 — the composable(Screen.CreateListing.route) destination wires the screen's onSubmit lambda to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit therefore returns a guaranteed failure; the create flow is a permanent no-op in production.",
+        "Full reachable path traced: MyListingsScreen 'Create' button -> Navigation.kt:484 navController.navigate(Screen.CreateListing.route) -> Navigation.kt:490 composable renders CreateListingScreen -> user fills the form and taps submit -> CreateListingScreen.kt:41 onSubmit: suspend (CreateListingInput) -> Result<Unit> is invoked -> the stub returns failure -> CreateListingScreen.kt:121-124 folds it via onFailure into the generic R.string.error_network message. Users see a spurious 'network error' on a fully-filled valid form, and the listing is never created.",
+        "PortalListingsRepository.kt only defines listMyListings (:40), getListingAnalytics (:74), getPortfolioAnalytics (:111) — there is NO createListing method to wire the screen to, so this is a genuine incomplete feature, not a mis-wire. The POST create-listing endpoint (and its repository method) needs to be added before the screen can function.",
+        "Only stub of its kind in androidApp — grep for NotImplementedError/TODO(\"...\") across mobile-native/androidApp returns this one hit, so it is not a broad pattern but a single shipped-but-dead screen."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listings-limit-cap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "Realtor MyListings and portfolio analytics silently truncate at 100 listings — hardcoded limit=100 with no pagination",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "Navigation.kt:472 — MyListings loads via portalListingsRepository.listMyListings(limit = 100) with no offset/paging follow-up; the UI shows at most the first 100 listings and provides no 'load more' path.",
+        "PortalListingsRepository.kt:111-117 — getPortfolioAnalytics also starts from listMyListings(limit = 100), so a realtor with more than 100 listings gets portfolio totals (views/inquiries/favorites) and the daily trend computed over only the first 100 rows. The roll-up is silently under-counted with no indication to the user.",
+        "listMyListings (PortalListingsRepository.kt:40-65) accepts offset but neither call site iterates pages; the backend response is paginated (limit/offset params at :50-51) so the cap is a client-side omission, not a backend limit. Low severity today (few realtors exceed 100 active listings) but the failure mode is silent data loss, which warrants either full pagination or an explicit 'showing first 100' affordance."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

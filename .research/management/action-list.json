@@ -2,23 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "code-review-ppt-web-core-api-retry-nonidempotent",
-      "action": "ppt-web axios retry interceptor retries non-idempotent POST/PUT on 5xx / network errors — risk of duplicate server-side writes",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-03T16:07:11Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-03T16:07:11Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-api-token-provider-unset",
       "action": "ppt-web getApiClient() sends requests with no Authorization header — configureApiClient is never called, so the token provider stays undefined",
       "owner_role": "pm-backend",
@@ -32,6 +15,193 @@
       "backlog_ref": {
         "plan": null,
         "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-offline-sync-false-complete",
+      "action": "mobile: useOfflineSupport.processQueue reports isComplete:true after a head-of-line-blocked (halted) sync cycle",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-offline-terminal-drop-dataloss",
+      "action": "mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 retries with only console.error — silent loss of offline-created content",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-silent-fail",
+      "action": "mobile: ThreadDetailScreen.handleSend send-message mutation has onSuccess only, no onError — failed sends are silent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-cache-purge-gap",
+      "action": "ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentiment, notification-analytics) — cross-user data leak on shared workstations",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-mutation-no-onerror",
+      "action": "ppt-web rentals + financial useMutation hooks lack onError — money-movement + platform-connect failures produce zero user feedback",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+      "action": "ppt-web rentals mutations dereference `auth!` non-null — mid-session token loss throws uncaught TypeError instead of handled auth error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-error-boundary-gap",
+      "action": "ppt-web has no route-outlet ErrorBoundary — a single stale-chunk lazy() rejection unmounts the entire application shell",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2636-reality",
+      "action": "docs/screens/reality/agency-import + agency-inquiries out of sync with PR #2636 i18n rewrite",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
+      "action": "mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-push-debug-console-log",
+      "action": "mobile: usePushNotifications — debug console.log left on the device-token register/unregister production path",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-notfound-i18n-gap",
+      "action": "ppt-web route wrappers render 8 hardcoded English 'X not found' fallbacks — sk/cs/de users see untranslated text",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
         "vector": "bug"
       }
     }
