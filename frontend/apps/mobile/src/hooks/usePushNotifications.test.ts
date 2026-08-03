@@ -19,6 +19,13 @@
 import { apiRequest } from './useApi';
 import { buildPushTokenRegistration, sendPushTokenToBackend } from './usePushNotifications';
 
+// The mobile tsconfig limits `types` to jest + testing-library (no @types/node),
+// so declare the tiny node surface we use — same pattern as
+// `screens/documents/DocumentUploadScreen.parity.test.ts`.
+declare const __dirname: string;
+declare function require(id: 'node:fs'): { readFileSync(path: string, encoding: 'utf8'): string };
+declare function require(id: 'node:path'): { join(...parts: string[]): string };
+
 jest.mock('./useApi', () => ({
   apiRequest: jest.fn(),
 }));
@@ -97,5 +104,53 @@ describe('sendPushTokenToBackend (PR #918 double-encode regression)', () => {
     expect(typeof init.body).toBe('object');
     expect(init.body).toEqual(body);
     expect(typeof init.body).not.toBe('string');
+  });
+});
+
+// Regression guard: no ungated debug logging on the push-token register /
+// unregister production path (code-review-mobile-rn-push-debug-console-log).
+//
+// The two `console.log` calls on that path are intentional dev-only
+// breadcrumbs, but they MUST stay wrapped in `if (__DEV__)` — Metro strips
+// those blocks from release builds, so nothing reaches the production path.
+// This is the same source-level contract lock used by `config/constants.test.ts`.
+// A raw `console.log('...')` slipping back in un-gated (or one that logs the
+// token itself) would re-open the finding, so we assert the shape of the
+// source rather than rendering the hook.
+describe('usePushNotifications — no ungated debug logging on the token path', () => {
+  const { readFileSync } = require('node:fs');
+  const { join } = require('node:path');
+  const source = readFileSync(join(__dirname, 'usePushNotifications.ts'), 'utf8');
+  const lines = source.split('\n');
+
+  const consoleLineNumbers = lines
+    .map((line, i) => ({ line, n: i }))
+    .filter(({ line }) => /\bconsole\.\w+\s*\(/.test(line));
+
+  it('has console calls to guard (fixture sanity)', () => {
+    // If the calls are ever removed entirely that is also acceptable, but this
+    // keeps the guard honest while they exist.
+    expect(consoleLineNumbers.length).toBeGreaterThan(0);
+  });
+
+  it('gates every console.* call behind `if (__DEV__)`', () => {
+    // Any console.* whose nearest non-blank preceding line is not `if (__DEV__) {`
+    // is un-gated and would ship to the production path.
+    const ungated = consoleLineNumbers.filter(({ n }) => {
+      let prev = n - 1;
+      while (prev >= 0 && lines[prev].trim() === '') prev--;
+      return lines[prev]?.trim() !== 'if (__DEV__) {';
+    });
+    expect(ungated.map(({ line }) => line.trim())).toEqual([]);
+  });
+
+  it('never logs the raw push token value', () => {
+    // SECURITY: the native FCM/APNs token grants push-send authority for the
+    // device. A static breadcrumb string may say the word "token", but no
+    // console statement may interpolate or concatenate the actual value.
+    for (const { line } of consoleLineNumbers) {
+      expect(line).not.toContain('${'); // no template-literal interpolation
+      expect(line).not.toMatch(/\+\s*(?:native)?[Pp]ushToken|encodedToken\b|\btoken\b\s*\)/);
+    }
   });
 });
