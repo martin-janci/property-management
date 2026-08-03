@@ -15,6 +15,7 @@
 
 import type { Meter, MeterReading, MeterResponse } from '@ppt/api-client';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
@@ -117,6 +118,7 @@ export function MeterDetailScreen({
   onBack,
   onNavigate,
 }: MeterDetailScreenProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
     ['meters', 'detail', meterId],
     `/api/v1/meters/${meterId ?? ''}`,
@@ -152,12 +154,12 @@ export function MeterDetailScreen({
       >
         {isLoading || !meterId ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load meter</Text>
+            <Text style={s.emptyTitle}>{t('meters.detailLoadError')}</Text>
           </View>
         ) : (
           <>
@@ -180,8 +182,8 @@ export function MeterDetailScreen({
             {readings.length === 0 ? (
               <View style={s.emptyState}>
                 <Text style={s.emptyIcon}>📏</Text>
-                <Text style={s.emptyTitle}>No readings yet</Text>
-                <Text style={s.emptyText}>Submit your first reading for this meter.</Text>
+                <Text style={s.emptyTitle}>{t('meters.noReadingsTitle')}</Text>
+                <Text style={s.emptyText}>{t('meters.noReadingsText')}</Text>
               </View>
             ) : (
               readings.map((r) => (
