@@ -197,6 +197,16 @@ describe('AuthContext.logout — Issue #712', () => {
       'predictive-maintenance',
       'sentiment',
       'notification-analytics',
+      // Tenant-scoped financial + operational caches — the most sensitive
+      // data in the app (invoices, contacts, bank statements, payment
+      // matching, AR aging, report schedules) plus rentals/meters and the
+      // user's active-session list. These must never survive logout.
+      'accounting',
+      'financial',
+      'reports',
+      'rentals',
+      'meters',
+      'auth',
     ]) {
       expect(AUTHED_QUERY_KEY_ROOTS).toContain(root);
     }
@@ -217,6 +227,18 @@ describe('AuthContext.logout — Issue #712', () => {
     queryClient.setQueryData(['predictive-maintenance', 'needing-maintenance'], [{ id: 'e-1' }]);
     queryClient.setQueryData(['sentiment', 'dashboard'], { score: 0.42 });
     queryClient.setQueryData(['notification-analytics', {}], { delivered: 10 });
+    // Tenant-scoped financial + operational caches — real keys from
+    // queryKeys.accounting (invoices/contacts/statements/matching),
+    // financial.tsx (['financial','ar-aging',orgId]), reportKeys
+    // (['reports','schedules',…]), rentals.tsx (['rentals','reservations',…]),
+    // meterKeys (['meters','building-list',…]) and SessionsPage
+    // (['auth','sessions']). All must be evicted on logout.
+    queryClient.setQueryData(['accounting', 'invoices'], [{ id: 'inv-1' }]);
+    queryClient.setQueryData(['financial', 'ar-aging', 'org-1'], { total: 999 });
+    queryClient.setQueryData(['reports', 'schedules', 'list', 'org-1'], [{ id: 'rs-1' }]);
+    queryClient.setQueryData(['rentals', 'reservations', 'tenant-1'], [{ id: 'res-1' }]);
+    queryClient.setQueryData(['meters', 'building-list', 'b-1'], [{ id: 'm-1' }]);
+    queryClient.setQueryData(['auth', 'sessions'], [{ id: 'sess-1' }]);
     queryClient.setQueryData(['router', 'breadcrumbs'], ['home']);
 
     // Sanity: all entries present before logout.
@@ -230,6 +252,12 @@ describe('AuthContext.logout — Issue #712', () => {
     ).toBeDefined();
     expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeDefined();
     expect(queryClient.getQueryData(['notification-analytics', {}])).toBeDefined();
+    expect(queryClient.getQueryData(['accounting', 'invoices'])).toBeDefined();
+    expect(queryClient.getQueryData(['financial', 'ar-aging', 'org-1'])).toBeDefined();
+    expect(queryClient.getQueryData(['reports', 'schedules', 'list', 'org-1'])).toBeDefined();
+    expect(queryClient.getQueryData(['rentals', 'reservations', 'tenant-1'])).toBeDefined();
+    expect(queryClient.getQueryData(['meters', 'building-list', 'b-1'])).toBeDefined();
+    expect(queryClient.getQueryData(['auth', 'sessions'])).toBeDefined();
     expect(queryClient.getQueryData(['router', 'breadcrumbs'])).toBeDefined();
 
     // Trigger logout via the live context.
@@ -256,6 +284,13 @@ describe('AuthContext.logout — Issue #712', () => {
     ).toBeUndefined();
     expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeUndefined();
     expect(queryClient.getQueryData(['notification-analytics', {}])).toBeUndefined();
+    // Tenant-scoped financial + operational caches must not survive logout.
+    expect(queryClient.getQueryData(['accounting', 'invoices'])).toBeUndefined();
+    expect(queryClient.getQueryData(['financial', 'ar-aging', 'org-1'])).toBeUndefined();
+    expect(queryClient.getQueryData(['reports', 'schedules', 'list', 'org-1'])).toBeUndefined();
+    expect(queryClient.getQueryData(['rentals', 'reservations', 'tenant-1'])).toBeUndefined();
+    expect(queryClient.getQueryData(['meters', 'building-list', 'b-1'])).toBeUndefined();
+    expect(queryClient.getQueryData(['auth', 'sessions'])).toBeUndefined();
 
     // (c) Non-auth-scoped cache survives — the purge is bounded to the
     // AUTHED_QUERY_KEY_ROOTS list, not a blanket `queryClient.clear()`.
