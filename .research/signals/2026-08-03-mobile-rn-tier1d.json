@@ -1,0 +1,68 @@
+{
+  "generated": "2026-08-03T00:00:00Z",
+  "segment": "mobile-rn",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 3,
+  "note": "Demand-driven Tier 1d generation (claim buffer starved, backlog-refill found no fresh candidates). review_cursor.mobile-rn is the oldest unreviewed segment (2026-07-22). A prior 2026-08-02-mobile-rn-tier1d.json exists (token-refresh, NFC device-clock, NFC test-gap) but the cursor was never advanced; these 3 findings are net-new and non-overlapping with that file. Saturation check: 0 open code-review-finding items for any segment in backlog.json. Root path is frontend/apps/mobile/src (skill segment-map lists the stale path frontend/mobile/src).",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-offline-sync-false-complete",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "useOfflineSupport.processQueue reports isComplete:true after a head-of-line-blocked (halted) sync cycle",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:360-375 — on a *retryable* failure the FIFO drain intentionally halts: it sets haltedProgress {current: i+1, failed, isComplete: false} (:367-372), calls onProgress, and `break`s out of the for-loop. The comment (:361-366, issue #1767) documents that the failed action and all successors are carried forward for the next reconnect.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:424-426 — but after the loop there is NO early return on the halted path: control falls straight through to `const finalProgress: SyncProgress = { total, current: total, failed, isComplete: true }` which is set + emitted via setSyncProgress/onProgress UNCONDITIONALLY, immediately overwriting the halted `isComplete:false` signal. So a partially-drained cycle reports to the UI as fully complete (current === total, isComplete: true).",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:399-416 — the `failed` counter reported in finalProgress excludes the carried-forward retryable items (they are neither in succeededIds nor terminalFailureIds and are re-persisted to QUEUE_KEY at :413-415). Net effect: the sync banner shows 'complete, N failed' while additional actions silently remain queued, so the user believes the offline queue fully flushed when it did not. Fix: `return { success, failed }` on the halt branch (or guard the finalProgress block so it is skipped when the loop broke early). Confidence medium — bug is unambiguous from source; exact UI copy impact not runtime-confirmed."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-thread-send-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "ThreadDetailScreen.handleSend: send-message mutation has onSuccess only, no onError — failed sends are silent",
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:139-142,152-163 — `sendMessage` (useApiMutation POST /api/v1/messages/threads/{id}/messages) is invoked via sendMessage.mutate({content}, { onSuccess: () => { setDraft(''); refetch(); } }). There is NO onError callback and the component never reads sendMessage.isError anywhere. On a 5xx/network failure the message just fails to post with zero user feedback (no Alert/toast/inline error).",
+        "Because the draft is cleared only in onSuccess, on failure the draft text is retained but the user gets no signal it didn't send — they may assume it was delivered or re-tap send repeatedly. This is a chat send path, where silent drop is directly user-visible correctness.",
+        "Contrast with the segment's other write paths which DO surface errors: LeaseSignatureScreen.tsx:162-165 (onError -> Alert.alert(t(errorKey), err.message)) and VoteDetailScreen.tsx:233-234 (onError -> Alert.alert). ThreadDetailScreen is the outlier. Fix: add an onError that surfaces err.message (Alert or inline banner) and/or render a retry affordance keyed off sendMessage.isError."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired",
+      "files": [
+        "frontend/apps/mobile/src/screens"
+      ],
+      "evidence": [
+        "react-i18next IS configured and used app-wide (50 files call t()/useTranslation; many screens such as LeaseSignatureScreen and VoteDetailScreen are fully translated), but only 23 of 41 screen .tsx files import useTranslation — the remaining ~18 render hardcoded English, concentrated in list/empty/error/loading fallbacks that sk/cs/de users will see untranslated.",
+        "Representative hardcoded user-facing strings (not wrapped in t()): FaultsListScreen.tsx:185,195 ('Loading…','No faults found'); BuildingsScreen.tsx:126,136,137 ('Loading…','No buildings','No properties are linked to your account yet.'); MetersScreen.tsx:156,171,172 ('No unit linked','No meters', body copy); MessagesScreen.tsx:134,141,147 ('Loading…','Try again','No conversations'); ThreadDetailScreen.tsx:174,183 ('← Messages','Loading…'); AnnouncementsScreen.tsx:266 ('No announcements'); WidgetSettingsScreen.tsx:90,163.",
+        "Impact: low — i18n/consistency gap, no functional break. The primary/happy-path copy on these screens is often translated, so users get a jarring mix of translated content with English empty/error states. Fix: wrap the empty/error/loading Text nodes in t(...) and add the keys to the mobile locale bundles; add a lint guard (biome/custom) for bare visible <Text> literals in screens/."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
