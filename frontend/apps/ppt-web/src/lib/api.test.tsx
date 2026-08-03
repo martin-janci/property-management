@@ -148,6 +148,35 @@ async function advanceUntil(predicate: () => boolean): Promise<void> {
   }
 }
 
+/**
+ * Await a raw promise (not driven by useQuery) that goes through the retry
+ * backoff, under fake timers. Mirrors {@link advanceUntil}: it fast-forwards
+ * the fake clock past each backoff sleep until the promise settles, then
+ * returns the outcome so the caller can assert on it.
+ */
+async function settleUnderFakeTimers<T>(
+  promise: Promise<T>
+): Promise<{ status: 'resolved'; value: T } | { status: 'rejected'; reason: unknown }> {
+  let outcome:
+    | { status: 'resolved'; value: T }
+    | { status: 'rejected'; reason: unknown }
+    | undefined;
+  const tracked = promise.then(
+    (value) => {
+      outcome = { status: 'resolved', value };
+    },
+    (reason) => {
+      outcome = { status: 'rejected', reason };
+    }
+  );
+  await advanceUntil(() => outcome !== undefined);
+  await tracked;
+  if (outcome === undefined) {
+    throw new Error('settleUnderFakeTimers: promise never settled within budget');
+  }
+  return outcome;
+}
+
 beforeEach(() => {
   resetApiClient();
   vi.useFakeTimers();
@@ -369,6 +398,20 @@ describe('api client — 5xx surfacing through useQuery', () => {
     expect(attempts()).toBe(2);
   });
 
+  it('retries an idempotent DELETE on a 503 (safe method)', async () => {
+    const instance = configureApiClient({});
+    const { adapter, attempts } = scriptedAdapter([
+      { kind: 'status', status: 503, data: { error: 'SERVICE_UNAVAILABLE', message: 'down' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    const outcome = await settleUnderFakeTimers(getApiClient().delete('/widgets/1'));
+    expect(outcome.status).toBe('rejected');
+    expect((outcome as { reason: ApiError }).reason.status).toBe(503);
+    // DELETE is idempotent -> 1 initial + 3 retries.
+    expect(attempts()).toBe(4);
+  });
+
   it('does NOT retry a non-retryable 4xx and surfaces it immediately', async () => {
     const instance = configureApiClient({});
     const { adapter, attempts } = scriptedAdapter([
@@ -395,5 +438,100 @@ describe('api client — 5xx surfacing through useQuery', () => {
     expect(apiError.isRetryable).toBe(false);
     // No retries for a 400.
     expect(attempts()).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 4. Method-based retry gating (idempotency) — regression for
+//    duplicate-write risk on non-idempotent requests.
+// ---------------------------------------------------------------------------
+
+describe('api client — non-idempotent requests are never auto-retried', () => {
+  it('does NOT retry a POST on a 5xx (avoids duplicate server-side writes)', async () => {
+    const instance = configureApiClient({});
+    const { adapter, attempts } = scriptedAdapter([
+      { kind: 'status', status: 503, data: { error: 'SERVICE_UNAVAILABLE', message: 'down' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    // POST must surface the 5xx immediately, with no retry loop.
+    await expect(getApiClient().post('/widgets', { name: 'x' })).rejects.toMatchObject({
+      status: 503,
+    });
+    expect(attempts()).toBe(1);
+  });
+
+  it('does NOT retry a POST on a network error', async () => {
+    const instance = configureApiClient({});
+    const { adapter, attempts } = scriptedAdapter([{ kind: 'network' }]);
+    installAdapter(instance, adapter);
+
+    await expect(getApiClient().post('/widgets', { name: 'x' })).rejects.toMatchObject({
+      status: 0,
+    });
+    // Exactly one attempt — the network error is NOT replayed for a POST.
+    expect(attempts()).toBe(1);
+  });
+
+  it('does NOT retry a PUT or PATCH on a 5xx', async () => {
+    for (const call of [
+      (i: AxiosInstance) => i.put('/widgets/1', { name: 'x' }),
+      (i: AxiosInstance) => i.patch('/widgets/1', { name: 'x' }),
+    ]) {
+      resetApiClient();
+      const instance = configureApiClient({});
+      const { adapter, attempts } = scriptedAdapter([
+        { kind: 'status', status: 500, data: { error: 'INTERNAL', message: 'boom' } },
+      ]);
+      installAdapter(instance, adapter);
+
+      await expect(call(getApiClient())).rejects.toMatchObject({ status: 500 });
+      expect(attempts()).toBe(1);
+    }
+  });
+
+  it('DOES retry a GET on the same 5xx (safe method is still retried)', async () => {
+    const instance = configureApiClient({});
+    const { adapter, attempts } = scriptedAdapter([
+      { kind: 'status', status: 503, data: { error: 'SERVICE_UNAVAILABLE', message: 'down' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    const { result } = renderHook(
+      () =>
+        useQuery({
+          queryKey: ['get-still-retries'],
+          queryFn: async () => {
+            const res = await getApiClient().get('/widgets');
+            return res.data;
+          },
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await advanceUntil(() => result.current.isError);
+
+    // GET is idempotent -> 1 initial + 3 retries, in contrast to the POST above.
+    expect(attempts()).toBe(4);
+  });
+
+  it('DOES retry a POST that explicitly opts in via `idempotent: true`', async () => {
+    const instance = configureApiClient({});
+    const { adapter, attempts } = scriptedAdapter([
+      { kind: 'status', status: 503, data: { error: 'SERVICE_UNAVAILABLE', message: 'down' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    const outcome = await settleUnderFakeTimers(
+      getApiClient().post('/widgets', { name: 'x' }, {
+        // Caller asserts this write is safe to replay (e.g. carries an
+        // idempotency key).
+        idempotent: true,
+      } as never)
+    );
+    expect(outcome.status).toBe('rejected');
+    expect((outcome as { reason: ApiError }).reason.status).toBe(503);
+    // Opt-in restores the retry budget: 1 initial + 3 retries.
+    expect(attempts()).toBe(4);
   });
 });
