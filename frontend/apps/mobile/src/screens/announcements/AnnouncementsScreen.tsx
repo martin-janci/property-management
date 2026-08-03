@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Pressable,
   RefreshControl,
@@ -157,6 +158,7 @@ interface AnnouncementsScreenProps {
 }
 
 export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
@@ -253,18 +255,18 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       >
         {isLoading ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Loading…</Text>
+            <Text style={styles.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
-            <Text style={styles.emptyTitle}>Couldn't load announcements</Text>
+            <Text style={styles.emptyTitle}>{t('announcements.loadError')}</Text>
           </View>
         ) : filteredAnnouncements.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyTitle}>No announcements</Text>
-            <Text style={styles.emptyText}>Check back later for updates</Text>
+            <Text style={styles.emptyTitle}>{t('announcements.empty')}</Text>
+            <Text style={styles.emptyText}>{t('announcements.emptyMessage')}</Text>
           </View>
         ) : (
           filteredAnnouncements.map((announcement) => (
