@@ -308,4 +308,41 @@ describe('useOfflineSupport.processQueue — issue #1767', () => {
     // Queue fully drained.
     expect(readQueue()).toHaveLength(0);
   });
+
+  it('(e) transient (5xx) failure is NEVER dropped, even past the old 3-retry budget, and keeps being re-attempted', async () => {
+    // Regression for silent offline data loss: a queued action that keeps
+    // hitting a transient 5xx used to be permanently discarded (with only a
+    // console.error) once `retries >= 3`, losing offline-created content.
+    seedQueue([makeAction({ id: 'transient', body: { title: 'reported-offline' } })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    // Server is down for the whole test — every attempt is a transient 5xx.
+    fetchMock.mockResolvedValue(serverError(503));
+
+    await mountHook();
+
+    // Run four reconnect cycles — one more than the old drop threshold (3).
+    for (let cycle = 0; cycle < 4; cycle++) {
+      await act(async () => {
+        await api.processQueue();
+      });
+    }
+
+    // The action was re-attempted on every cycle (not dropped after 3)…
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+
+    // …and it is STILL in the queue — offline content survived.
+    const remaining = readQueue();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe('transient');
+    expect((remaining[0].body as { title: string }).title).toBe('reported-offline');
+    // Retry counter reflects the attempts (observability), but did not cause a drop.
+    expect(remaining[0].retries).toBeGreaterThanOrEqual(4);
+
+    // One more cycle, now with the server recovered, drains it successfully.
+    fetchMock.mockResolvedValue(ok({ id: 'srv-late' }));
+    await act(async () => {
+      await api.processQueue();
+    });
+    expect(readQueue()).toHaveLength(0);
+  });
 });
