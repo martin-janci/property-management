@@ -9,6 +9,7 @@
 import type { AgencyListing, AgencyListingStatus } from '@ppt/reality-api-client';
 import { useAgencyListings, useMyAgency, useRealtors } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
   AgencyLoadError,
@@ -20,6 +21,7 @@ import {
 type StatusFilter = 'all' | AgencyListingStatus;
 
 export function AgencyListings() {
+  const t = useTranslations('agencyListings');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [realtorFilter, setRealtorFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -54,13 +56,13 @@ export function AgencyListings() {
   }
 
   const statusOptions: { value: StatusFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'active', label: 'Active' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'sold', label: 'Sold' },
-    { value: 'rented', label: 'Rented' },
-    { value: 'withdrawn', label: 'Withdrawn' },
+    { value: 'all', label: t('status.all') },
+    { value: 'active', label: t('status.active') },
+    { value: 'draft', label: t('status.draft') },
+    { value: 'pending', label: t('status.pending') },
+    { value: 'sold', label: t('status.sold') },
+    { value: 'rented', label: t('status.rented') },
+    { value: 'withdrawn', label: t('status.withdrawn') },
   ];
 
   return (
@@ -69,10 +71,10 @@ export function AgencyListings() {
       <div className="header">
         <div>
           <Link href="/agency" className="back-link">
-            ← Back to Dashboard
+            {t('back')}
           </Link>
-          <h1 className="title">Agency Listings</h1>
-          <p className="subtitle">Manage all property listings</p>
+          <h1 className="title">{t('title')}</h1>
+          <p className="subtitle">{t('subtitle')}</p>
         </div>
         <Link href="/listings/create" className="create-button">
           <svg
@@ -87,14 +89,14 @@ export function AgencyListings() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Create Listing
+          {t('createListing')}
         </Link>
       </div>
 
       {/* Filters */}
       <div className="filters">
         <div className="filter-group">
-          <label htmlFor="status-filter">Status</label>
+          <label htmlFor="status-filter">{t('filterStatus')}</label>
           <select
             id="status-filter"
             value={statusFilter}
@@ -112,7 +114,7 @@ export function AgencyListings() {
         </div>
 
         <div className="filter-group">
-          <label htmlFor="realtor-filter">Realtor</label>
+          <label htmlFor="realtor-filter">{t('filterRealtor')}</label>
           <select
             id="realtor-filter"
             value={realtorFilter}
@@ -121,7 +123,7 @@ export function AgencyListings() {
               setPage(1);
             }}
           >
-            <option value="all">All Realtors</option>
+            <option value="all">{t('allRealtors')}</option>
             {realtors?.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -133,7 +135,10 @@ export function AgencyListings() {
         <div className="filter-stats">
           {listingsData && (
             <span>
-              Showing {listingsData.listings.length} of {listingsData.total} listings
+              {t('showing', {
+                count: listingsData.listings.length,
+                total: listingsData.total,
+              })}
             </span>
           )}
         </div>
@@ -144,22 +149,22 @@ export function AgencyListings() {
         {isLoading ? (
           <ListingsTableSkeleton />
         ) : listingsError ? (
-          <SectionError message="Couldn't load listings. Please try again." />
+          <SectionError message={t('loadError')} />
         ) : listingsData?.listings.length === 0 ? (
           <EmptyState />
         ) : (
           <table className="listings-table">
             <thead>
               <tr>
-                <th>Property</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Realtor</th>
-                <th>Views</th>
-                <th>Inquiries</th>
-                <th>Updated</th>
-                <th>Actions</th>
+                <th>{t('colProperty')}</th>
+                <th>{t('colType')}</th>
+                <th>{t('colPrice')}</th>
+                <th>{t('colStatus')}</th>
+                <th>{t('colRealtor')}</th>
+                <th>{t('colViews')}</th>
+                <th>{t('colInquiries')}</th>
+                <th>{t('colUpdated')}</th>
+                <th>{t('colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -179,17 +184,15 @@ export function AgencyListings() {
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Previous
+            {t('previous')}
           </button>
-          <span>
-            Page {page} of {Math.ceil(listingsData.total / 20)}
-          </span>
+          <span>{t('pageOf', { page, total: Math.ceil(listingsData.total / 20) })}</span>
           <button
             type="button"
             disabled={page >= Math.ceil(listingsData.total / 20)}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next
+            {t('next')}
           </button>
         </div>
       )}
@@ -346,22 +349,20 @@ export function AgencyListings() {
 }
 
 function ListingRow({ listing }: { listing: AgencyListing }) {
-  const statusConfig: Record<AgencyListingStatus, { label: string; color: string; bg: string }> = {
+  const t = useTranslations('agencyListings');
+  const statusConfig: Record<AgencyListingStatus, { color: string; bg: string }> = {
     active: {
-      label: 'Active',
       color: 'var(--ppt-color-success)',
       bg: 'var(--ppt-color-success-light)',
     },
-    draft: { label: 'Draft', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    draft: { color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
     pending: {
-      label: 'Pending',
       color: 'var(--ppt-color-warning)',
       bg: 'var(--ppt-color-warning-light)',
     },
-    sold: { label: 'Sold', color: '#8b5cf6', bg: '#ede9fe' },
-    rented: { label: 'Rented', color: '#06b6d4', bg: '#cffafe' },
+    sold: { color: '#8b5cf6', bg: '#ede9fe' },
+    rented: { color: '#06b6d4', bg: '#cffafe' },
     withdrawn: {
-      label: 'Withdrawn',
       color: 'var(--ppt-color-danger)',
       bg: 'var(--ppt-color-danger-light)',
     },
@@ -389,12 +390,14 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
         </div>
       </td>
       <td>
-        <span className="type-badge">{listing.transactionType === 'sale' ? 'Sale' : 'Rent'}</span>
+        <span className="type-badge">
+          {listing.transactionType === 'sale' ? t('typeSale') : t('typeRent')}
+        </span>
       </td>
       <td className="price-cell">{formatPrice(listing.price, listing.currency)}</td>
       <td>
         <span className="status-badge" style={{ color: status.color, backgroundColor: status.bg }}>
-          {status.label}
+          {t(`status.${listing.status}`)}
         </span>
       </td>
       <td>{listing.realtorName}</td>
@@ -404,10 +407,10 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
       <td>
         <div className="actions">
           <Link href={`/listings/${listing.slug}`} className="action-link">
-            View
+            {t('view')}
           </Link>
           <Link href={`/listings/${listing.slug}/edit`} className="action-link">
-            Edit
+            {t('edit')}
           </Link>
         </div>
       </td>
@@ -519,6 +522,7 @@ function ListingsTableSkeleton() {
 }
 
 function EmptyState() {
+  const t = useTranslations('agencyListings');
   return (
     <div className="empty-state">
       <svg
@@ -533,10 +537,10 @@ function EmptyState() {
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
         <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
-      <h3>No listings found</h3>
-      <p>Create your first listing to get started.</p>
+      <h3>{t('emptyTitle')}</h3>
+      <p>{t('emptyText')}</p>
       <Link href="/listings/create" className="create-button">
-        Create Listing
+        {t('createListing')}
       </Link>
       <style jsx>{`
         .empty-state {

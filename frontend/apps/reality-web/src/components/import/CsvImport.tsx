@@ -8,6 +8,7 @@
 
 import type { ColumnMapping, CsvImportPreview, CsvValidationError } from '@ppt/reality-api-client';
 import { useCsvImport, useCsvPreview, useMyAgency } from '@ppt/reality-api-client';
+import { useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
 
 const REQUIRED_FIELDS = ['title', 'propertyType', 'transactionType', 'price'];
@@ -28,6 +29,7 @@ const OPTIONAL_FIELDS = [
 type ImportStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'complete';
 
 export function CsvImport() {
+  const t = useTranslations('import');
   const [step, setStep] = useState<ImportStep>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [mapping, setMapping] = useState<Partial<ColumnMapping>>({});
@@ -94,25 +96,30 @@ export function CsvImport() {
     <div className="csv-import">
       {/* Progress Steps */}
       <div className="steps">
-        <Step number={1} label="Upload" active={step === 'upload'} complete={step !== 'upload'} />
+        <Step
+          number={1}
+          label={t('steps.upload')}
+          active={step === 'upload'}
+          complete={step !== 'upload'}
+        />
         <StepConnector complete={step !== 'upload'} />
         <Step
           number={2}
-          label="Map Columns"
+          label={t('steps.mapColumns')}
           active={step === 'mapping'}
           complete={['preview', 'importing', 'complete'].includes(step)}
         />
         <StepConnector complete={['preview', 'importing', 'complete'].includes(step)} />
         <Step
           number={3}
-          label="Preview"
+          label={t('steps.preview')}
           active={step === 'preview'}
           complete={['importing', 'complete'].includes(step)}
         />
         <StepConnector complete={['importing', 'complete'].includes(step)} />
         <Step
           number={4}
-          label="Import"
+          label={t('steps.import')}
           active={step === 'importing' || step === 'complete'}
           complete={step === 'complete'}
         />
@@ -142,9 +149,9 @@ export function CsvImport() {
           />
         )}
 
-        {step === 'mapping' && isPreviewLoading && <LoadingState message="Analyzing CSV file..." />}
+        {step === 'mapping' && isPreviewLoading && <LoadingState message={t('csv.analyzing')} />}
         {step === 'mapping' && previewError && (
-          <ErrorState message="Failed to parse CSV file" onRetry={handleReset} />
+          <ErrorState message={t('csv.parseFailed')} onRetry={handleReset} />
         )}
 
         {step === 'preview' && preview && (
@@ -165,10 +172,7 @@ export function CsvImport() {
         )}
 
         {importMutation.error && (
-          <ErrorState
-            message="Import failed. Please try again."
-            onRetry={() => setStep('preview')}
-          />
+          <ErrorState message={t('csv.importFailed')} onRetry={() => setStep('preview')} />
         )}
       </div>
 
@@ -305,6 +309,7 @@ function UploadStep({
   onDrop: (e: React.DragEvent) => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const t = useTranslations('import.csv');
   return (
     <div
       className={`upload-zone ${isDragging ? 'dragging' : ''}`}
@@ -326,13 +331,13 @@ function UploadStep({
         <polyline points="17 8 12 3 7 8" />
         <line x1="12" y1="3" x2="12" y2="15" />
       </svg>
-      <h3>Drag and drop your CSV file</h3>
-      <p>or click to browse</p>
+      <h3>{t('uploadTitle')}</h3>
+      <p>{t('uploadHint')}</p>
       <label className="browse-button">
-        Browse Files
+        {t('browseFiles')}
         <input type="file" accept=".csv,text/csv" onChange={onFileSelect} hidden />
       </label>
-      <p className="hint">Supported format: CSV (.csv)</p>
+      <p className="hint">{t('supportedFormat')}</p>
 
       <style jsx>{`
         .upload-zone {
@@ -404,19 +409,22 @@ function MappingStep({
   onBack: () => void;
   isLoading: boolean;
 }) {
+  const t = useTranslations('import.csv');
   const allFields = [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS];
 
   return (
     <div className="mapping-step">
-      <h2>Map CSV Columns</h2>
-      <p className="subtitle">Match your CSV columns to listing fields</p>
+      <h2>{t('mapTitle')}</h2>
+      <p className="subtitle">{t('mapSubtitle')}</p>
 
       <div className="mapping-info">
         <span className="file-info">
-          <strong>{preview.totalRows}</strong> rows found
+          <strong>{preview.totalRows}</strong> {t('rowsFoundSuffix')}
         </span>
         {preview.errors.length > 0 && (
-          <span className="error-count">{preview.errors.length} validation issues</span>
+          <span className="error-count">
+            {t('validationIssues', { count: preview.errors.length })}
+          </span>
         )}
       </div>
 
@@ -433,7 +441,7 @@ function MappingStep({
               onChange={(e) => onMappingChange(field as keyof ColumnMapping, e.target.value)}
               disabled={isLoading}
             >
-              <option value="">-- Select column --</option>
+              <option value="">{t('selectColumn')}</option>
               {preview.headers.map((header) => (
                 <option key={header} value={header}>
                   {header}
@@ -446,10 +454,10 @@ function MappingStep({
 
       <div className="actions">
         <button type="button" className="secondary" onClick={onBack}>
-          Back
+          {t('back')}
         </button>
         <button type="button" className="primary" onClick={onNext} disabled={!isComplete}>
-          Preview Import
+          {t('previewImport')}
         </button>
       </div>
 
@@ -588,30 +596,31 @@ function PreviewStep({
   onStartImport: () => void;
   onBack: () => void;
 }) {
+  const t = useTranslations('import.csv');
   return (
     <div className="preview-step">
-      <h2>Preview Import</h2>
-      <p className="subtitle">Review your data before importing</p>
+      <h2>{t('previewTitle')}</h2>
+      <p className="subtitle">{t('previewSubtitle')}</p>
 
       <div className="summary-cards">
         <div className="summary-card">
           <span className="value">{preview.totalRows}</span>
-          <span className="label">Total Rows</span>
+          <span className="label">{t('totalRows')}</span>
         </div>
         <div className="summary-card success">
           <span className="value">{preview.validRows}</span>
-          <span className="label">Valid</span>
+          <span className="label">{t('valid')}</span>
         </div>
         <div className="summary-card error">
           <span className="value">{preview.invalidRows}</span>
-          <span className="label">Invalid</span>
+          <span className="label">{t('invalid')}</span>
         </div>
       </div>
 
       {/* Sample Preview */}
       {preview.sampleData.length > 0 && (
         <div className="sample-section">
-          <h3>Sample Data Preview</h3>
+          <h3>{t('sampleTitle')}</h3>
           <div className="sample-table-container">
             <table className="sample-table">
               <thead>
@@ -642,7 +651,7 @@ function PreviewStep({
       {/* Validation Errors */}
       {preview.errors.length > 0 && (
         <div className="errors-section">
-          <h3>Validation Issues ({preview.errors.length})</h3>
+          <h3>{t('validationTitle', { count: preview.errors.length })}</h3>
           <div className="errors-list">
             {preview.errors.slice(0, 10).map((error: CsvValidationError, i) => (
               <div
@@ -650,13 +659,15 @@ function PreviewStep({
                 className={`error-item ${error.severity}`}
               >
                 <span className="error-location">
-                  Row {error.row}, {error.column}:
+                  {t('errorLocation', { row: error.row, column: error.column })}
                 </span>
                 <span className="error-message">{error.message}</span>
               </div>
             ))}
             {preview.errors.length > 10 && (
-              <p className="more-errors">... and {preview.errors.length - 10} more issues</p>
+              <p className="more-errors">
+                {t('moreIssues', { count: preview.errors.length - 10 })}
+              </p>
             )}
           </div>
         </div>
@@ -670,13 +681,13 @@ function PreviewStep({
             checked={skipInvalid}
             onChange={(e) => onSkipInvalidChange(e.target.checked)}
           />
-          <span>Skip invalid rows and import only valid data ({preview.validRows} rows)</span>
+          <span>{t('skipInvalid', { count: preview.validRows })}</span>
         </label>
       )}
 
       <div className="actions">
         <button type="button" className="secondary" onClick={onBack}>
-          Back to Mapping
+          {t('backToMapping')}
         </button>
         <button
           type="button"
@@ -684,7 +695,7 @@ function PreviewStep({
           onClick={onStartImport}
           disabled={preview.validRows === 0}
         >
-          Import {skipInvalid ? preview.validRows : preview.totalRows} Listings
+          {t('importListings', { count: skipInvalid ? preview.validRows : preview.totalRows })}
         </button>
       </div>
 
@@ -892,11 +903,12 @@ function PreviewStep({
 }
 
 function ImportingState() {
+  const t = useTranslations('import.csv');
   return (
     <div className="importing-state">
       <div className="spinner" />
-      <h3>Importing listings...</h3>
-      <p>Please wait while we process your data.</p>
+      <h3>{t('importing')}</h3>
+      <p>{t('importingHint')}</p>
 
       <style jsx>{`
         .importing-state {
@@ -944,6 +956,7 @@ function CompleteStep({
   result: { successCount: number; failedCount: number; skippedCount: number };
   onNewImport: () => void;
 }) {
+  const t = useTranslations('import.csv');
   return (
     <div className="complete-state">
       <svg
@@ -958,33 +971,33 @@ function CompleteStep({
         <circle cx="12" cy="12" r="10" />
         <polyline points="16 8 10 14 8 12" />
       </svg>
-      <h3>Import Complete!</h3>
+      <h3>{t('complete')}</h3>
 
       <div className="result-summary">
         <div className="result-item success">
           <span className="value">{result.successCount}</span>
-          <span className="label">Imported</span>
+          <span className="label">{t('imported')}</span>
         </div>
         {result.failedCount > 0 && (
           <div className="result-item error">
             <span className="value">{result.failedCount}</span>
-            <span className="label">Failed</span>
+            <span className="label">{t('failed')}</span>
           </div>
         )}
         {result.skippedCount > 0 && (
           <div className="result-item warning">
             <span className="value">{result.skippedCount}</span>
-            <span className="label">Skipped</span>
+            <span className="label">{t('skipped')}</span>
           </div>
         )}
       </div>
 
       <div className="actions">
         <a href="/agency/listings" className="view-button">
-          View Listings
+          {t('viewListings')}
         </a>
         <button type="button" onClick={onNewImport} className="new-import">
-          Import More
+          {t('importMore')}
         </button>
       </div>
 
@@ -1131,6 +1144,7 @@ function LoadingState({ message }: { message: string }) {
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const t = useTranslations('import.csv');
   return (
     <div className="error-state">
       <svg
@@ -1146,10 +1160,10 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
-      <h3>Something went wrong</h3>
+      <h3>{t('errorTitle')}</h3>
       <p>{message}</p>
       <button type="button" onClick={onRetry}>
-        Try Again
+        {t('tryAgain')}
       </button>
 
       <style jsx>{`

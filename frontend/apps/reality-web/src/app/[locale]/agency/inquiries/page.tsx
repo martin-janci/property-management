@@ -11,17 +11,18 @@
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
 import { useMyInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 
-const STATUS_FILTERS: ReadonlyArray<{ value: InquiryStatus | 'all'; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'responded', label: 'Responded' },
-  { value: 'scheduled', label: 'Scheduled' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
+const STATUS_VALUES: ReadonlyArray<InquiryStatus | 'all'> = [
+  'all',
+  'pending',
+  'responded',
+  'scheduled',
+  'completed',
+  'cancelled',
 ];
 
 function statusBadgeColor(status: InquiryStatus): string {
@@ -40,6 +41,7 @@ function statusBadgeColor(status: InquiryStatus): string {
 }
 
 function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
+  const t = useTranslations('agencyInquiries');
   return (
     <li className="row">
       <div className="row-main">
@@ -54,7 +56,7 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
       </div>
       <div className="row-side">
         <span className="badge" style={{ background: statusBadgeColor(inquiry.status) }}>
-          {inquiry.status}
+          {t(`status.${inquiry.status}`)}
         </span>
         <span className="time">{new Date(inquiry.createdAt).toLocaleDateString()}</span>
       </div>
@@ -80,6 +82,7 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
 }
 
 function AgencyInquiriesContent() {
+  const t = useTranslations('agencyInquiries');
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | 'all'>('all');
   const { data, isLoading, error } = useMyInquiries(
     statusFilter === 'all' ? undefined : statusFilter
@@ -90,28 +93,26 @@ function AgencyInquiriesContent() {
   return (
     <div className="container">
       <header className="head">
-        <h1 className="title">Agency inquiries</h1>
-        <p className="subtitle">Inquiries received for your agency's listings.</p>
+        <h1 className="title">{t('title')}</h1>
+        <p className="subtitle">{t('subtitle')}</p>
       </header>
 
       <div className="filters">
-        {STATUS_FILTERS.map((filter) => (
+        {STATUS_VALUES.map((value) => (
           <button
             type="button"
-            key={filter.value}
-            className={`chip ${statusFilter === filter.value ? 'chip-active' : ''}`}
-            onClick={() => setStatusFilter(filter.value)}
+            key={value}
+            className={`chip ${statusFilter === value ? 'chip-active' : ''}`}
+            onClick={() => setStatusFilter(value)}
           >
-            {filter.label}
+            {t(`status.${value}`)}
           </button>
         ))}
       </div>
 
-      {isLoading && <p className="state">Loading inquiries…</p>}
-      {error && <p className="state error">Failed to load inquiries.</p>}
-      {!isLoading && !error && inquiries.length === 0 && (
-        <p className="state">No inquiries match this filter.</p>
-      )}
+      {isLoading && <p className="state">{t('loading')}</p>}
+      {error && <p className="state error">{t('loadError')}</p>}
+      {!isLoading && !error && inquiries.length === 0 && <p className="state">{t('empty')}</p>}
 
       <ul className="list">
         {inquiries.map((inquiry) => (
