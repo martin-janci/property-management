@@ -47,6 +47,12 @@
       "submitting": "Logowanie…",
       "subtitle": "Witamy ponownie w Reality Portal.",
       "title": "Logowanie"
+    },
+    "protected": {
+      "description": "Zaloguj się, aby uzyskać dostęp do tej strony.",
+      "loading": "Ładowanie…",
+      "signIn": "Zaloguj się",
+      "title": "Wymagane logowanie"
     }
   },
   "common": {

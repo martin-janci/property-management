@@ -7,6 +7,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -18,12 +19,13 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const { isLoading, isAuthenticated, login } = useAuth();
   const pathname = usePathname();
+  const t = useTranslations('auth.protected');
 
   if (isLoading) {
     return (
       <div className="loading-container">
         <div className="spinner" />
-        <p>Loading...</p>
+        <p>{t('loading')}</p>
         <style jsx>{`
           .loading-container {
             display: flex;
@@ -71,10 +73,10 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
-        <h2 className="title">Sign in required</h2>
-        <p className="text">Please sign in to access this page.</p>
+        <h2 className="title">{t('title')}</h2>
+        <p className="text">{t('description')}</p>
         <button type="button" className="sign-in-button" onClick={() => login(pathname)}>
-          Sign In
+          {t('signIn')}
         </button>
         <style jsx>{`
           .auth-required {

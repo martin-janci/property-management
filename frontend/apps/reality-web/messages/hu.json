@@ -47,6 +47,12 @@
       "submitting": "Bejelentkezés…",
       "subtitle": "Üdvözöljük újra a Reality Portálon.",
       "title": "Bejelentkezés"
+    },
+    "protected": {
+      "description": "Az oldal megtekintéséhez jelentkezzen be.",
+      "loading": "Betöltés…",
+      "signIn": "Bejelentkezés",
+      "title": "Bejelentkezés szükséges"
     }
   },
   "common": {

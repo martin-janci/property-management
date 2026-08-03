@@ -47,6 +47,12 @@
       "submitting": "Prihlasujem…",
       "subtitle": "Vitajte späť v Reality Portáli.",
       "title": "Prihlásenie"
+    },
+    "protected": {
+      "description": "Ak chcete zobraziť túto stránku, prihláste sa.",
+      "loading": "Načítava sa…",
+      "signIn": "Prihlásiť sa",
+      "title": "Vyžaduje sa prihlásenie"
     }
   },
   "common": {
