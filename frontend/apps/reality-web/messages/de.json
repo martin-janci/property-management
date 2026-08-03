@@ -47,6 +47,12 @@
       "submitting": "Anmelden…",
       "subtitle": "Willkommen zurück bei Reality Portal.",
       "title": "Anmelden"
+    },
+    "protected": {
+      "description": "Bitte melden Sie sich an, um auf diese Seite zuzugreifen.",
+      "loading": "Wird geladen…",
+      "signIn": "Anmelden",
+      "title": "Anmeldung erforderlich"
     }
   },
   "common": {
