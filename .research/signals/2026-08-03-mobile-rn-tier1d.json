@@ -4,8 +4,8 @@
   "source": "dispatcher-tier1d",
   "selection_reason": "oldest-unreviewed",
   "experts_used": ["frontend", "tester"],
-  "findings_count": 3,
-  "note": "Demand-driven Tier 1d generation (claim buffer starved, backlog-refill found no fresh candidates). review_cursor.mobile-rn is the oldest unreviewed segment (2026-07-22). A prior 2026-08-02-mobile-rn-tier1d.json exists (token-refresh, NFC device-clock, NFC test-gap) but the cursor was never advanced; these 3 findings are net-new and non-overlapping with that file. Saturation check: 0 open code-review-finding items for any segment in backlog.json. Root path is frontend/apps/mobile/src (skill segment-map lists the stale path frontend/mobile/src).",
+  "findings_count": 5,
+  "note": "Demand-driven Tier 1d generation (claim buffer starved: claimable=4 < floor=36). review_cursor.mobile-rn was the oldest unreviewed segment (2026-07-22). TWO passes are merged in this artifact: pass A (first 3 signals) — offline-sync false-complete, ThreadDetailScreen send silent-fail, hardcoded empty/error/loading i18n. pass B (last 2 signals, appended by a second same-day Tier 1d generator) — offline-queue transient-drop data loss and usePushNotifications debug console.log; both verified NET-NEW and non-overlapping vs pass A and vs the un-folded 2026-08-02-mobile-rn-tier1d.json (token-refresh, NFC device-clock, NFC test-gap). Pass B re-audited the segment and confirmed it is otherwise well-defended: VotingScreen parseVoteSummaries validates response shape, useApi.ts/DocumentUploadScreen fetch paths check !response.ok, AnnouncementDetailScreen surfaces acknowledge.isError, no skipped/only tests, all Alert.alert copy is i18n-wrapped. Saturation check: 0 open code-review-finding items for mobile-rn in backlog.json. Root path frontend/apps/mobile/src (skill segment-map lists the stale frontend/mobile/src). Dispatcher should advance review_cursor.mobile-rn to 2026-08-03.",
   "signals": [
     {
       "id": "code-review-mobile-rn-offline-sync-false-complete",
@@ -63,6 +63,46 @@
         "Impact: low — i18n/consistency gap, no functional break. The primary/happy-path copy on these screens is often translated, so users get a jarring mix of translated content with English empty/error states. Fix: wrap the empty/error/loading Text nodes in t(...) and add the keys to the mobile locale bundles; add a lint guard (biome/custom) for bare visible <Text> literals in screens/."
       ],
       "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-offline-terminal-drop-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "useOfflineSupport: transient (5xx/network) queued actions are permanently DROPPED after 3 retries with only console.error — silent loss of offline-created content",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "frontend/apps/mobile/src/App.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:353-357 — the catch branch increments action.retries (:353) then `if (isPermanent || action.retries >= 3)` (:354) adds the action to terminalFailureIds and logs `console.error('Action failed after max retries:', action)` (:357). Dropping the 4xx-`permanent` case is correct, but bundling *transient* failures (5xx / network — the comment at :350-352 explicitly routes '5xx, network' through the retry budget) into the SAME terminal drop means a queued mutation that hit 3 consecutive server-5xx / connectivity blips is discarded, not carried forward.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:399-401 — carriedForward = queue.filter(a => !succeededIds.has(a.id) && !terminalFailureIds.has(a.id)); anything in terminalFailureIds is excluded from `merged` and thus deleted from QUEUE_KEY on the subsequent AsyncStorage.setItem. The action is gone from local storage; nothing re-enqueues it.",
+        "frontend/apps/mobile/src/App.tsx:81-83,337 — the sync toast's ONLY recovery affordance is onRetry={handleRetrySync}, and handleRetrySync (:81-83) just calls processQueue() again. Because the terminally-dropped action is no longer in the queue, tapping Retry cannot recover it. For offline-created user content (a queued fault report, meter reading, vote, or acknowledgement made while offline) this is silent data loss after transient server unavailability, with no user-facing record of what was lost (only a console.error a phone user never sees).",
+        "Distinct from the pass-A 'offline-sync-false-complete' finding (about the isComplete:true flag on the halted path, useOfflineSupport.ts:424-426). This is a separate failure mode: permanent discard of transient-failed actions at :354-357. Suggested fix: treat only isPermanent (4xx) as terminal; give transient failures a larger bounded budget or move them to a dead-letter store surfaced in the UI rather than deleting them. Confidence medium — data-loss path is unambiguous from source; exact field impact depends on which action types reach retries>=3."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-push-debug-console-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "usePushNotifications: debug console.log left on the device-token register/unregister production path",
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:240 — console.log('[push] registering native device token with backend') and :267 — console.log('[push] unregistering native device token with backend') are plain debug logs on the always-run push-registration path, not gated behind __DEV__ or a logger abstraction.",
+        "Contrast with the rest of the segment, whose logging is exclusively console.warn/console.error inside catch blocks (useOfflineSupport.ts, NFCCredentialManager.ts, backgroundNotifications.ts, AuthContext.tsx). These two console.log calls are the only informational debug logs left on a hot production path.",
+        "Impact: low — no functional break; release-log noise and a lint/hygiene smell. Fix: remove them or route through the app logger gated on __DEV__. Grouped here only as the one net-new hygiene item not covered by prior mobile-rn passes."
+      ],
+      "expert": "frontend"
     }
   ]
 }
