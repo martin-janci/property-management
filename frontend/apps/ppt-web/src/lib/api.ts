@@ -75,12 +75,35 @@ const INITIAL_RETRY_DELAY = 1000;
 /** HTTP status codes that should trigger a retry */
 const RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504];
 
+/**
+ * HTTP methods that are safe to auto-retry.
+ *
+ * Only safe / idempotent methods are retried automatically. POST, PUT and
+ * PATCH are intentionally excluded: replaying them after a 5xx or a network
+ * error (where the server may already have applied the write but the response
+ * was lost) risks duplicate server-side writes. A request that is genuinely
+ * idempotent may still opt in explicitly via `idempotent: true` on its axios
+ * config — see {@link isMethodRetryable}.
+ */
+const RETRYABLE_METHODS = ['get', 'head', 'options', 'delete'];
+
 // ============================================================================
 // Helpers
 // ============================================================================
 
+/** Axios request config extended with our opt-in idempotency flag. */
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  __retryCount?: number;
+  /** Opt-in: mark a non-safe request (e.g. POST/PUT/PATCH) as safe to retry. */
+  idempotent?: boolean;
+};
+
 /**
  * Check if an error is retryable based on status code or network error.
+ *
+ * Note: this only classifies the *error* (transient vs. permanent). Whether a
+ * request may actually be replayed also depends on its HTTP method — see
+ * {@link isMethodRetryable}. The auto-retry loop requires both.
  */
 function isRetryableError(error: AxiosError): boolean {
   // Network errors (no response) are retryable
@@ -90,6 +113,22 @@ function isRetryableError(error: AxiosError): boolean {
 
   // Check if status code is in retryable list
   return RETRYABLE_STATUS_CODES.includes(error.response.status);
+}
+
+/**
+ * Check whether a request may be auto-retried based on its HTTP method.
+ *
+ * Safe/idempotent methods (GET/HEAD/OPTIONS/DELETE) are retryable by default.
+ * Non-safe methods (POST/PUT/PATCH) are only retried when the caller has
+ * explicitly opted in with `idempotent: true` on the request config. This
+ * guards against duplicate server-side writes on transient failures.
+ */
+function isMethodRetryable(config: InternalAxiosRequestConfig): boolean {
+  if ((config as RetryableRequestConfig).idempotent) {
+    return true;
+  }
+  const method = (config.method ?? 'get').toLowerCase();
+  return RETRYABLE_METHODS.includes(method);
 }
 
 /**
@@ -181,16 +220,17 @@ function createAxiosInstance(config: ApiClientConfig = {}): AxiosInstance {
         onUnauthorizedCallback();
       }
 
-      // Check if we should retry
-      if (config && isRetryableError(error)) {
+      // Check if we should retry.
+      // Both the error (transient) AND the method (safe/idempotent) must permit
+      // it — never auto-retry a non-idempotent POST/PUT/PATCH, to avoid
+      // duplicate server-side writes on 5xx / network failures.
+      if (config && isRetryableError(error) && isMethodRetryable(config)) {
         // Initialize retry count
-        const retryCount =
-          (config as InternalAxiosRequestConfig & { __retryCount?: number }).__retryCount || 0;
+        const retryCount = (config as RetryableRequestConfig).__retryCount || 0;
 
         if (retryCount < MAX_RETRIES) {
           // Update retry count
-          (config as InternalAxiosRequestConfig & { __retryCount?: number }).__retryCount =
-            retryCount + 1;
+          (config as RetryableRequestConfig).__retryCount = retryCount + 1;
 
           // Calculate delay with exponential backoff
           const delay = calculateRetryDelay(retryCount);
