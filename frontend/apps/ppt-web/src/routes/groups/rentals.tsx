@@ -25,8 +25,9 @@ import {
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { ProtectedRoute } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type {
   BookingListParams,
@@ -240,6 +241,8 @@ function RentalsDashboardPageRoute() {
 /** Route wrapper for platform connections. */
 function PlatformConnectionsPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const auth = useRentalsAuth();
   const queryClient = useQueryClient();
 
@@ -267,6 +270,15 @@ function PlatformConnectionsPageRoute() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('rentals.connections.connectFailed', {
+          defaultValue: 'Failed to connect platform',
+        }),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
   });
 
   const syncPlatforms = useMutation({
@@ -280,6 +292,15 @@ function PlatformConnectionsPageRoute() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('rentals.connections.syncFailed', {
+          defaultValue: 'Failed to sync platforms',
+        }),
+        message: err instanceof Error ? err.message : '',
+      });
     },
   });
 
@@ -354,6 +375,8 @@ function BookingsPageRoute() {
 function BookingDetailPageRoute() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const auth = useRentalsAuth();
   const queryClient = useQueryClient();
 
@@ -381,6 +404,15 @@ function BookingDetailPageRoute() {
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('rentals.bookingDetail.checkInFailed', {
+          defaultValue: 'Failed to check in guest',
+        }),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
   });
   const checkOut = useMutation({
     mutationFn: () =>
@@ -393,6 +425,15 @@ function BookingDetailPageRoute() {
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('rentals.bookingDetail.checkOutFailed', {
+          defaultValue: 'Failed to check out guest',
+        }),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
   });
 
   if (!bookingId) {
