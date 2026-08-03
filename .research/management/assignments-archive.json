@@ -2549,6 +2549,28 @@
       "merge_attempted_at": "2026-07-22T22:21:44Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-sessions-double-cast",
+      "branch": "auto-impl/code-review-ppt-web-ui-sessions-double-c-cd39869a",
+      "status": "merged",
+      "claimed_at": "2026-08-03T08:10:23Z",
+      "last_updated": "2026-08-03T10:15:45Z",
+      "status_changed_at": "2026-08-03T10:15:45Z",
+      "pr_number": 2634,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2634",
+      "merged_at": "2026-08-03T10:15:45Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2634 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=replaced double-cast with @ppt/api-client SessionInfo; verify green (1616 tests, typecheck clean); drift=task labeled pm-backend but change is ppt-web frontend",
+      "reviewer_summary": "verdict=approve head_oid=b45a83fe39c750b1301a079286935b8f07258263 note=double-cast-removed-uses-generated-SessionInfo-ci-green-scope-drift-benign-approval-posted-as-comment(self-pr)",
+      "last_reviewed_oid": "b45a83fe39c750b1301a079286935b8f07258263",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T10:13:52Z"
+    },
+    {
       "task_id": "code-review-reality-server-agency-members-unauth-idor",
       "branch": "auto-impl/code-review-reality-server-agency-member-b424e568",
       "status": "failed",
@@ -2637,6 +2659,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-web-agency-import-i18n",
+      "branch": "auto-impl/code-review-reality-web-agency-import-i1-9d243c8d",
+      "status": "merged",
+      "claimed_at": "2026-08-03T08:10:23Z",
+      "last_updated": "2026-08-03T10:15:45Z",
+      "status_changed_at": "2026-08-03T10:15:45Z",
+      "pr_number": 2636,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2636",
+      "merged_at": "2026-08-03T10:15:45Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2636 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=i18n'd reality-web agency/import cluster to next-intl; keys added to all 6 locales; verify OK (235 tests); drift is frontend-only vs pm-backend owner hint",
+      "reviewer_summary": "verdict=approve head_oid=49709e6d70a3066cff881f93c15a6ba4b1f25592 note=all-6-locales-key-identical(273)-dynamic+interpolation-keys-resolve-ci-green-scope-drift-benign(all-reality-web)-approval-posted-as-comment(self-pr)",
+      "last_reviewed_oid": "49709e6d70a3066cff881f93c15a6ba4b1f25592",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T10:13:52Z"
+    },
+    {
       "task_id": "code-review-reality-web-inline-tenant-json-xss",
       "branch": "auto-impl/code-review-reality-web-inline-tenant-js-ec32e1f7",
       "status": "merged",
@@ -2701,6 +2745,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-protectedroute-i18n",
+      "branch": "auto-impl/code-review-reality-web-protectedroute-i-cfae1b3c",
+      "status": "merged",
+      "claimed_at": "2026-08-03T08:10:23Z",
+      "last_updated": "2026-08-03T10:15:45Z",
+      "status_changed_at": "2026-08-03T10:15:45Z",
+      "pr_number": 2633,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2633",
+      "merged_at": "2026-08-03T10:15:45Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2633 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=ProtectedRoute strings moved to auth.protected in all 6 locales; verify green (235 tests); drift is pm-backend hint vs frontend work only",
+      "reviewer_summary": "verdict=approve head_oid=f101ebed1ff08ac874f5bc52441cf42a274c46c9 note=i18n-clean-6-locale-parity-ok-ci-green-scope-drift-benign(all-reality-web)-approval-posted-as-comment(self-pr)",
+      "last_reviewed_oid": "f101ebed1ff08ac874f5bc52441cf42a274c46c9",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T10:13:52Z"
     },
     {
       "task_id": "code-review-reality-web-realtor-mgmt-untranslated",
@@ -10861,5 +10927,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-03T08:10:23Z"
+  "archived_at": "2026-08-03T10:16:35Z"
 }

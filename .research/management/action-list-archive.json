@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-03T08:10:23Z",
+  "archived_at": "2026-08-03T10:16:35Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2349,6 +2349,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-sessions-double-cast",
+      "action": "SessionsPage double-casts through unknown to hand-maintained interface — defeats API-boundary type-check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-03T10:16:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2634,
+        "merged_at": "2026-08-03T10:15:45Z",
+        "at": "2026-08-03T10:16:35Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-agency-members-unauth-idor",
       "action": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR)",
       "owner_role": "pm-backend",
@@ -2445,6 +2469,30 @@
       }
     },
     {
+      "id": "code-review-reality-web-agency-import-i18n",
+      "action": "reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-03T10:16:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2636,
+        "merged_at": "2026-08-03T10:15:45Z",
+        "at": "2026-08-03T10:16:35Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-inline-tenant-json-xss",
       "action": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
       "owner_role": "pm-security",
@@ -2492,6 +2540,30 @@
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "code-review-reality-web-listing-page-ssr-crash",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-protectedroute-i18n",
+      "action": "reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T04:05:34Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-03T10:16:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T04:05:34Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2633,
+        "merged_at": "2026-08-03T10:15:45Z",
+        "at": "2026-08-03T10:16:35Z"
+      }
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-untranslated",

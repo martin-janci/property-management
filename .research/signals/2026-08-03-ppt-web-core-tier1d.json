@@ -1,0 +1,43 @@
+{
+  "generated": "2026-08-03",
+  "segment": "ppt-web-core",
+  "source": "rotating-expert-review",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Tier-1d demand-driven refill (no CHURN_FILES provided). review_cursor: ppt-web-core=2026-07-24 is the oldest segment (mobile-native-kmp 2026-07-27, api-handlers 2026-07-29 next). Not saturated: the 4 open code-review-finding items are ppt-web-ui (aria-label-i18n, sessions-double-cast) + reality-web (agency-import-i18n, protectedroute-i18n); ppt-web-core has 0 open. De-duplicated against all prior ppt-web-core findings (authctx-init-stale-role, ws-token-rotation-stale, ws-ungated-console, apiclient-never-configured/no-token, api-retry-nonidempotent, api-eager-default-export, errorhandler-i18n-gap, perf-console-logs, perf-listener-leak, sessions-cast). AuthContext single-flight refresh, useNetworkStatus/useFocusTrap/analytics/shared were re-read and are sound.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-logout-cache-purge-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:347 — AUTHED_QUERY_KEY_ROOTS is the allow-list logout() iterates to purge session-scoped TanStack Query subtrees (contexts/AuthContext.tsx:553-555: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })`). Its own doc (AuthContext logout, issue #712) states the goal is that 'user-bound data never leaks into the next session'. Any query-key root NOT in this list is NOT purged on logout.",
+        "Three feature hooks define their own local key factory whose root string is missing from AUTHED_QUERY_KEY_ROOTS: features/predictive-maintenance/hooks/usePredictiveMaintenance.ts (`predictiveKeys.all = ['predictive-maintenance']`), features/sentiment (`all: ['sentiment']`), features/notification-analytics (`all: ['notification-analytics']`). Static diff: roots defined by feature *Keys factories = {ai-chat, notification-analytics, predictive-maintenance, sentiment}; only 'ai-chat' is present in the allow-list — the other three were forgotten when their pages were routed (gap-sweep, Epic 13 / Story 2B-C.3).",
+        "All three are tenant-scoped: predictive-maintenance equipment/prediction lists (`GET /ai/equipment`), sentiment analytics, and notification delivery analytics. All three pages are routed and reachable (routes/lazyRoutes.tsx:317 SentimentDashboardPage, :322 NotificationAnalyticsPage, :336 PredictiveMaintenancePage). ppt-web is an SPA — logout does NOT reload the page, so queryClient persists across logout->next-login. On a shared manager/kiosk workstation, user B navigating to any of these three pages after user A logged out can see user A's cached data until the 5-min staleTime lapses or a refetch completes.",
+        "Fix: add 'predictive-maintenance', 'sentiment', 'notification-analytics' to AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:347). Better: add a CI/lint or unit assertion that every feature-local *Keys.all root is a member of AUTHED_QUERY_KEY_ROOTS so future gap-sweep pages can't silently reintroduce the leak. Distinct from all prior ppt-web-core findings (none touched the logout purge list)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-route-error-boundary-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:229-231 — the entire lazily-loaded route table renders inside `<main><Suspense fallback={<RouteLoading/>}><AppRoutes/></Suspense></main>` with NO React error boundary at the route-outlet level. The ONLY ErrorBoundary in the app is at the root (main.tsx:50, wrapping the whole `<App/>` — every provider, AppNavigation, and the outlet).",
+        "routes/lazyRoutes.tsx defines ~90 `lazy(() => import(...))` page chunks (all feature pages). A rejected dynamic import is NOT caught by Suspense — it propagates as a thrown error. After a redeploy, a user holding a stale index.html requests an old hashed chunk that no longer exists on the CDN (404) — a routine production event for a Vite hashed-chunk SPA. That rejection, or any render-time throw inside a page, bubbles to the ROOT boundary and unmounts the entire application shell (nav + layout + providers UI), replacing everything with the global fallback.",
+        "components/ErrorBoundary.tsx:99 handleRetry only resets `hasError` and re-renders the same children — for a failed `lazy()` import the browser has permanently cached the rejected module promise, so 'Try Again' re-throws immediately; only the full 'Reload Page' path (window.location.reload, :182) recovers. Net effect: a single failed page chunk or one buggy page component takes down the whole shell with no in-place recovery.",
+        "Fix: wrap `<Suspense><AppRoutes/></Suspense>` in App.tsx:229 with a route-scoped `<ErrorBoundary>` (the component already supports a custom `fallback`) so failures are contained to the `<main>` outlet, keeping AppNavigation/shell mounted and letting the user navigate away or retry a single route. Optionally give the route-level boundary chunk-load-error detection that triggers an automatic one-shot reload. Prior 2026-07-24 ppt-web-core note recorded 'ErrorBoundary present' as a positive but did not examine its placement/granularity — this is a new finding."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
