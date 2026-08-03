@@ -1,0 +1,223 @@
+{
+  "generated": "2026-08-03T03:09:16Z",
+  "run_note": "Fresh incremental run 12h after prior. Phase 1: 1 code merge (PR #2629 \u2014 OAuth token-usage analytics wire-up closing issue #2628; well-tested, no TODOs/FIXMEs added). Phase 1.5 skipped \u2014 dispatcher tier1d generator already reviewed BOTH ppt-web-ui and reality-web today; 5 code-review-finding signals folded from those artifact files. review_cursor advanced for both segments to 2026-08-03. Phase 1.6 skipped \u2014 low delivery flux (1 PR merged, well-tested, closes existing issue); management artifacts remain fresh from dispatcher's 14:09Z synthesis. Phase 2: 5 new backlog items created. Phase 3: 0 promotions (all new signals score 1-2, no security fast-track eligible). Phase 5: no candidate.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (tier1d ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "AccountingInvoiceManagementPage: create/delete mutations have no onError \u2014 silent invoice failures",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ],
+      "evidence": [
+        "AccountingInvoiceManagementPage.tsx:36-42 \u2014 createMutation (invoicesApiCreate) has only onSuccess; no onError, component never reads isError. Failed create leaves form open with no feedback (isPending flips back, setIsCreating stays true).",
+        "AccountingInvoiceManagementPage.tsx:44-49,88-91 \u2014 deleteMutation is likewise onSuccess-only. Failed delete is silent (no toast/alert/isError branch); list only invalidated on success so row stays and user believes nothing happened.",
+        "This is the sole page in the ppt-web-ui segment whose write mutations surface no error state (sibling pages read isError + render role=alert blocks).",
+        "Impact: medium \u2014 financial write paths (issue / delete invoice) where silent failure lets a manager believe an invoice was created or removed when it was not."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-aria-label-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (tier1d ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "ppt-web: 103 hardcoded English aria-label attributes across feature components \u2014 screen readers hear English on sk/cs/de",
+      "files": [
+        "frontend/apps/ppt-web/src/features"
+      ],
+      "evidence": [
+        "103 hardcoded English aria-label attributes across ppt-web feature components are not wrapped in react-i18next t(...) \u2014 screen-reader users on sk/cs/de locales hear English accessibility labels even though visible copy is translated. grep pattern used: `grep -rn 'aria-label=\"[A-Z]' frontend/apps/ppt-web/src/features --include='*.tsx' | grep -v 't('` => 103 hits.",
+        "Representative sites: community/PostCard.tsx:164, financial/InvoiceDetail.tsx:42,61, faults/TriageFaultDialog.tsx:87, disputes/EvidenceUploader.tsx:165,183, government-portal/SubmissionPreviewModal.tsx:102.",
+        "Distinct from prior ppt-web-ui i18n finding (window.confirm/alert copy) \u2014 this is the aria-label surface. Impact: low \u2014 accessibility/i18n gap, no functional break."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sessions-double-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (tier1d ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "SessionsPage double-casts through unknown to hand-maintained interface \u2014 defeats API-boundary type-check",
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx"
+      ],
+      "evidence": [
+        "SessionsPage.tsx:84 \u2014 `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` double-casts generated-client response through `unknown` into a local SessionRow interface (:22, 'mirrors the backend SessionInfo DTO'). If backend DTO drifts (isCurrent \u2192 is_current, etc.), compile does not catch it; `sessions.some((s) => !s.isCurrent)` silently reads undefined.",
+        "Only `as unknown as` boundary cast in the segment. Fix: consume generated client's Session type directly.",
+        "Impact: low \u2014 no current runtime bug, but the cast removes the compile-time guard on a security-relevant page (active-session list / revoke)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-import-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (tier1d reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "reality-web: agency/import feature cluster hardcoded English \u2014 65 sibling components use useTranslations",
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx"
+      ],
+      "evidence": [
+        "CsvImport.tsx:329 \u2014 hardcoded English strings ('Drag and drop your CSV file', 'Map CSV Columns':411, 'Preview Import':593, 'Importing listings...':898, 'Import Complete!':961); no useTranslations import; portal serves sk/cs/de/en so non-English realtors see raw English.",
+        "AgencyListings.tsx:74 \u2014 'Agency Listings' / 'Manage all property listings' + all table headers (:154-162) and 'No listings found':536 hardcoded; file never imports next-intl.",
+        "ListingForm.tsx:101 \u2014 every field label hardcoded English; same systemic gap in FeedImport.tsx, SyncSchedule.tsx, AgencyBranding.tsx, CrmConnection.tsx, ComparisonView.tsx:153.",
+        "65 sibling components DO use useTranslations \u2014 this cluster is an inconsistent omission, not a project-wide choice."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-protectedroute-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (tier1d reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "title": "reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de",
+      "files": [
+        "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx"
+      ],
+      "evidence": [
+        "ProtectedRoute.tsx:26 \u2014 'Loading...' hardcoded English in auth-gating loading state.",
+        "ProtectedRoute.tsx:74 \u2014 'Sign in required' (h2), :75 'Please sign in to access this page.', and 'Sign In' button label hardcoded; wraps every protected route yet does not import next-intl."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-03.md && first line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "last_pr_seen 2627->2629, last_commit_sha updated, seen_signals +5, review_cursor advanced for 2 segments, stats bumped"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative id double-counted",
+      "observed": "true (all 5 signal ids fresh \u2014 not in prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + 14d decay",
+      "observed": "no open items >14d old to decay; no scores >8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation for each new plan",
+      "observed": "0/0 (no new plans)",
+      "expected": "all plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, headings, ticks, mode, files",
+      "observed": "0 new plans (no candidates scored >=3)",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames (excl baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical (single regen source)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed line == none",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs converge (still present in plans/ or _archive/)",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive tracked >= HEAD tracked",
+      "observed": "unchanged (no archives touched)",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions=[] within caps",
+      "observed": "[]",
+      "expected": "cap satisfied"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 pm_cursor.next_index unchanged at 2; coverage_cursor unchanged at 4 (both no-op gates)",
+      "observed": "pm_now=2 pm_head=2 cc_now=4 cc_head=4",
+      "expected": "gate no-op when pm_cursor stayed put"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token literal in staged +lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
