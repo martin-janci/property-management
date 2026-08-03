@@ -16,7 +16,8 @@
     "ok": "OK",
     "search": "Szukaj",
     "refresh": "Odswiez",
-    "submit": "Wyslij"
+    "submit": "Wyslij",
+    "tryAgain": "Sprobuj ponownie"
   },
   "tabs": {
     "home": "Glowna",
@@ -143,13 +144,19 @@
     "queuedMessage": "Jesteś offline. Zgłoszenie zostało zapisane i zsynchronizuje się automatycznie po ponownym połączeniu.",
     "queuedOnErrorMessage": "Nie udało się połączyć z serwerem. Zgłoszenie zostało zapisane i zsynchronizuje się automatycznie po przywróceniu połączenia.",
     "offlineSubmitHint": "Jesteś offline — to zgłoszenie zostanie zapisane i zsynchronizowane po ponownym połączeniu.",
-    "submitButtonOffline": "Zapisz i zsynchronizuj później"
+    "submitButtonOffline": "Zapisz i zsynchronizuj później",
+    "loadError": "Nie mozna zaladowac usterek",
+    "emptyTitle": "Nie znaleziono usterek",
+    "emptyText": "Wszystkie problemy zostaly rozwiazane"
   },
   "news": {
     "title": "Aktualnosci",
     "latest": "Najnowsze wiadomosci",
     "readMore": "Czytaj wiecej",
-    "noNews": "Brak dostepnych wiadomosci"
+    "noNews": "Brak dostepnych wiadomosci",
+    "loadError": "Nie mozna zaladowac aktualnosci",
+    "emptyTitle": "Nic nowego",
+    "emptyText": "Sprawdz pozniej, aby zobaczyc nowosci."
   },
   "voting": {
     "title": "Glosowanie",
@@ -244,7 +251,9 @@
       "noFolders": "Brak innych folderow",
       "confirm": "Przenes tutaj",
       "errorTitle": "Nie udalo sie przeniesc folderu"
-    }
+    },
+    "detailLoadError": "Nie mozna zaladowac dokumentu",
+    "notFound": "Nie znaleziono dokumentu"
   },
   "settings": {
     "title": "Ustawienia",
@@ -344,13 +353,15 @@
       "ackDone": "Potwierdzono to ogloszenie.",
       "ackError": "Blad potwierdzenia: {{message}}",
       "publishedAt": "Opublikowano: {{date}}"
-    }
+    },
+    "loadError": "Nie mozna zaladowac ogloszen"
   },
   "widgets": {
     "addedTitle": "Widget dodany",
     "addedMessage": "Widget zostal skonfigurowany.",
     "updatedTitle": "Widgety zaktualizowane",
-    "updatedMessage": "Wszystkie widgety zostaly odswiezone."
+    "updatedMessage": "Wszystkie widgety zostaly odswiezone.",
+    "emptyText": "Nie skonfigurowano jeszcze zadnych widzetow."
   },
   "permissions": {
     "denied": "Odmowa uprawnien",
@@ -374,7 +385,15 @@
     "savedOffline": "Zapisano offline",
     "willSyncWhenOnline": "Twoj odczyt zostanie wyslany gdy bedziesz online",
     "offlineMode": "Jestes offline. Odczyty zostana zapisane lokalnie.",
-    "pendingReadings": "Oczekujace odczyty"
+    "pendingReadings": "Oczekujace odczyty",
+    "loadError": "Nie mozna zaladowac licznikow",
+    "emptyTitle": "Brak licznikow",
+    "emptyText": "Dla Twojego lokalu nie zarejestrowano jeszcze zadnych licznikow.",
+    "noUnitTitle": "Brak przypisanego lokalu",
+    "noUnitText": "Liczniki pojawia sie po powiazaniu Twojego konta z lokalem.",
+    "detailLoadError": "Nie mozna zaladowac licznika",
+    "noReadingsTitle": "Brak odczytow",
+    "noReadingsText": "Przeslij swoj pierwszy odczyt dla tego licznika."
   },
   "esignature": {
     "title": "Prosba o podpis",
@@ -454,5 +473,44 @@
   "layout": {
     "placeholderTitle": "Sekcja niedostępna",
     "placeholderBody": "Ta sekcja jest obecnie niedostępna."
+  },
+  "buildings": {
+    "loadError": "Nie mozna zaladowac budynkow",
+    "emptyTitle": "Brak budynkow",
+    "emptyText": "Do Twojego konta nie przypisano jeszcze zadnych nieruchomosci."
+  },
+  "messages": {
+    "loadError": "Nie mozna zaladowac wiadomosci",
+    "emptyTitle": "Brak rozmow",
+    "emptyText": "Rozpocznij rozmowe z zarzadca lub sasiadami.",
+    "threadLoadError": "Nie mozna zaladowac rozmowy",
+    "threadEmptyTitle": "Brak wiadomosci",
+    "threadEmptyText": "Przywitaj sie, aby rozpoczac rozmowe."
+  },
+  "leases": {
+    "loadError": "Nie mozna zaladowac umow najmu",
+    "emptyTitle": "Brak umow najmu",
+    "emptyText": "Nie zostales jeszcze dodany do zadnej umowy najmu.",
+    "detailLoadError": "Nie mozna zaladowac umowy najmu",
+    "noPayments": "Brak zaplanowanych nadchodzacych platnosci.",
+    "notFound": "Nie znaleziono umowy najmu."
+  },
+  "outages": {
+    "loadError": "Nie mozna zaladowac awarii",
+    "emptyTitle": "Brak awarii",
+    "emptyText": "Obecnie nic nie jest zaplanowane ani aktywne."
+  },
+  "forms": {
+    "loadError": "Nie mozna zaladowac formularzy",
+    "emptyTitle": "Brak formularzy",
+    "emptyText": "Obecnie nie masz zadnych formularzy do wypelnienia."
+  },
+  "neighbors": {
+    "loadError": "Nie mozna zaladowac sasiadow",
+    "loading": "Ladowanie sasiadow…",
+    "emptyTitle": "Brak sasiadow",
+    "noMatches": "Brak wynikow",
+    "emptyText": "Mieszkancy, ktorzy dolacza do katalogu, pojawia sie tutaj.",
+    "noMatchesText": "Sprobuj innego imienia lub numeru mieszkania."
   }
 }
