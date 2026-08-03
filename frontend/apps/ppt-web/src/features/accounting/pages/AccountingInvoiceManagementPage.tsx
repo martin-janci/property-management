@@ -11,6 +11,8 @@ import {
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useToast } from '../../../components';
+import { parseApiError } from '../../../lib/errorHandler';
 import { queryKeys } from '../../../lib/queryKeys';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
@@ -18,6 +20,7 @@ import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
 export function AccountingInvoiceManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Auth (Authorization + X-Tenant-ID) is injected centrally by the api-client
   // request interceptor (#1522) — no per-call headers / casts needed here.
@@ -39,12 +42,28 @@ export function AccountingInvoiceManagementPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
       setIsCreating(false);
     },
+    onError: (error) => {
+      const parsed = parseApiError(error);
+      showToast({
+        type: 'error',
+        title: 'Failed to create invoice',
+        message: parsed.message,
+      });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => invoicesApiDelete({ path: { id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
+    },
+    onError: (error) => {
+      const parsed = parseApiError(error);
+      showToast({
+        type: 'error',
+        title: 'Failed to delete invoice',
+        message: parsed.message,
+      });
     },
   });
 
