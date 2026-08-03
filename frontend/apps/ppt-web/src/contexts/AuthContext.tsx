@@ -36,6 +36,7 @@ import {
   useState,
 } from 'react';
 import { trackSignupLoggedIn } from '../features/auth/analytics';
+import { configureApiClient, resetApiClient } from '../lib/api';
 import { AUTHED_QUERY_KEY_ROOTS } from '../lib/queryKeys';
 
 export type { AuthErrorCode, AuthUser };
@@ -322,12 +323,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * This ensures that all API calls automatically include the auth token.
    */
   useEffect(() => {
-    // Register the token provider with the api-client
+    // Register the token provider with the generated @ppt/api-client modules.
     setTokenProvider(getAccessToken);
+
+    // Also configure the hand-rolled axios client in lib/api.ts. This is the
+    // instance returned by getApiClient() and used directly by feature hooks
+    // (sentiment, predictive-maintenance, …). Its request interceptor reads a
+    // module-level token getter that is ONLY set via configureApiClient(); if
+    // this call is missing, getApiClient() falls back to a default instance
+    // with no token getter and every request goes out WITHOUT an Authorization
+    // header. Wiring it here — alongside setTokenProvider — keeps a single
+    // source of truth for the access token (getAccessToken).
+    configureApiClient({ getToken: getAccessToken });
 
     // Clean up on unmount
     return () => {
       clearTokenProvider();
+      resetApiClient();
     };
   }, [getAccessToken]);
 
