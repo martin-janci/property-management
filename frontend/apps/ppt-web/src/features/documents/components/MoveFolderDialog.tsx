@@ -17,6 +17,7 @@
 
 import { type FolderTreeNode, useFolderTree } from '@ppt/api-client';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 // ─── FolderOption ─────────────────────────────────────────────────────────────
@@ -139,9 +140,10 @@ export interface FolderBreadcrumbProps {
 }
 
 export function FolderBreadcrumb({ crumbs, onNavigate, className = '' }: FolderBreadcrumbProps) {
+  const { t } = useTranslation();
   return (
     <>
-      <nav className={`folder-bc ${className}`} aria-label="Umiestnenie priečinka">
+      <nav className={`folder-bc ${className}`} aria-label={t('aria.folderLocation')}>
         <button
           type="button"
           className="folder-bc__crumb folder-bc__crumb--link"
@@ -290,6 +292,7 @@ export function MoveFolderDialog({
   onCancel,
   isPending = false,
 }: MoveFolderDialogProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useFolderTree(buildingId);
   const [selectedId, setSelectedId] = useState<string | null>(currentFolderId);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -317,13 +320,18 @@ export function MoveFolderDialog({
         className="mfd"
         role="dialog"
         aria-modal="true"
-        aria-label="Presunúť dokumenty"
+        aria-label={t('aria.moveDocuments')}
         tabIndex={-1}
       >
         {/* Header */}
         <div className="mfd__header">
           <h3 className="mfd__title">Presunúť do priečinka</h3>
-          <button type="button" className="mfd__close" onClick={onCancel} aria-label="Zavrieť">
+          <button
+            type="button"
+            className="mfd__close"
+            onClick={onCancel}
+            aria-label={t('aria.close')}
+          >
             <svg
               width="16"
               height="16"

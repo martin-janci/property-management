@@ -2,6 +2,7 @@
  * News Article Card Component (Epic 59, Story 59.1)
  */
 
+import { useTranslation } from 'react-i18next';
 import type { ArticleStatus, ArticleSummary } from '../types';
 
 interface NewsArticleCardProps {
@@ -29,6 +30,7 @@ export function NewsArticleCard({
   onArchive,
   onPin,
 }: NewsArticleCardProps) {
+  const { t } = useTranslation();
   const canEdit = article.status === 'draft';
   const canDelete = article.status === 'draft';
   const canPublish = article.status === 'draft';
@@ -40,7 +42,7 @@ export function NewsArticleCard({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             {article.pinned && (
-              <span className="text-amber-500" aria-label="Pinned article">
+              <span className="text-amber-500" aria-label={t('aria.pinnedArticle')}>
                 <svg
                   className="w-4 h-4"
                   fill="currentColor"
@@ -127,7 +129,10 @@ export function NewsArticleCard({
         </div>
       </div>
 
-      <nav className="mt-4 flex items-center gap-2 border-t pt-3" aria-label="Article actions">
+      <nav
+        className="mt-4 flex items-center gap-2 border-t pt-3"
+        aria-label={t('aria.articleActions')}
+      >
         <button
           type="button"
           onClick={() => onView?.(article.id)}

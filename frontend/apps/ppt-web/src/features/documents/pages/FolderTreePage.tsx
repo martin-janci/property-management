@@ -22,6 +22,7 @@
 
 import { type DocumentSummary, useDocuments, useFolderTree } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { DocumentsBrowse } from '../components/DocumentsBrowse';
 import { FolderTree } from '../components/FolderTree';
@@ -49,6 +50,7 @@ function FolderDocuments({
   onSelectDocument,
   onMoveRequest,
 }: FolderDocumentsProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch } = useDocuments({
     folder_id: folderId,
     limit: 50,
@@ -59,7 +61,7 @@ function FolderDocuments({
 
   if (isLoading) {
     return (
-      <ul className="fd__skeleton" aria-busy="true" aria-label="Načítavanie dokumentov">
+      <ul className="fd__skeleton" aria-busy="true" aria-label={t('aria.loadingDocuments')}>
         {Array.from({ length: 5 }).map((_, i) => (
           <li key={i} className="fd__skel-row" />
         ))}
@@ -165,6 +167,7 @@ export interface FolderTreePageProps {
 }
 
 export function FolderTreePage({ organizationId, buildingId }: FolderTreePageProps) {
+  const { t } = useTranslation();
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
 
@@ -211,7 +214,7 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
     <div className="ftp">
       {/* Page header */}
       <div className="ftp__header">
-        <nav className="ftp__breadcrumb" aria-label="Navigácia">
+        <nav className="ftp__breadcrumb" aria-label={t('aria.navigation')}>
           <Link to="/documents" className="ftp__bc-link">
             Dokumenty
           </Link>
@@ -258,7 +261,7 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
       {/* Body: tree (left) + document content (right) */}
       <div className="ftp__body">
         {/* Left: folder tree panel */}
-        <aside className="ftp__sidebar" aria-label="Štruktúra priečinkov">
+        <aside className="ftp__sidebar" aria-label={t('aria.folderStructure')}>
           <FolderTree
             buildingId={buildingId}
             selectedFolderId={selectedFolderId}
@@ -267,7 +270,7 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
         </aside>
 
         {/* Right: document content */}
-        <section className="ftp__content" aria-label="Dokumenty v priečinku">
+        <section className="ftp__content" aria-label={t('aria.documentsInFolder')}>
           {/* Folder header with breadcrumb */}
           <div className="ftp__content-header">
             <div className="ftp__content-heading">

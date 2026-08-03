@@ -47,7 +47,7 @@ function SentimentLine({ trends }: { trends: SentimentTrend[] }): JSX.Element {
     .filter((s) => s.delta < -0.2);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-label="Sentiment trend">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-label={t('aria.sentimentTrend')}>
       {/* Zero line at 0.5 */}
       <line
         x1={PAD}

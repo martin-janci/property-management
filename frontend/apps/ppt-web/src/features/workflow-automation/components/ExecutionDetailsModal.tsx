@@ -6,6 +6,7 @@
  */
 
 import type { ExecutionLog } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface ExecutionDetailsModalProps {
   log: ExecutionLog;
@@ -56,6 +57,7 @@ function formatDuration(ms: number): string {
 }
 
 export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetailsModalProps) {
+  const { t } = useTranslation();
   const status = statusConfig[log.status] ?? statusConfig.pending;
 
   return (
@@ -85,7 +87,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
-              aria-label="Close execution details"
+              aria-label={t('aria.closeExecutionDetails')}
             >
               <svg
                 className="w-6 h-6"

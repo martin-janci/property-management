@@ -13,7 +13,7 @@ import type {
   TriggerCondition,
 } from '@ppt/api-client';
 import { useState } from 'react';
-
+import { useTranslation } from 'react-i18next';
 import { ActionBuilder } from './ActionBuilder';
 import { ConditionBuilder } from './ConditionBuilder';
 import { TriggerSelector } from './TriggerSelector';
@@ -35,6 +35,7 @@ const steps: { id: BuilderStep; label: string; description: string }[] = [
 ];
 
 export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBuilderProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<BuilderStep>('trigger');
   const [rule, setRule] = useState<Partial<AutomationRule>>({
     name: '',
@@ -108,7 +109,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
   return (
     <div className="max-w-4xl mx-auto">
       {/* Step Indicator */}
-      <nav className="mb-8" aria-label="Progress">
+      <nav className="mb-8" aria-label={t('aria.progress')}>
         <ol className="flex items-center">
           {steps.map((step, index) => (
             <li

@@ -218,7 +218,7 @@ export function FileDisputePage({
               <div
                 role="radiogroup"
                 aria-required="true"
-                aria-label="Dispute type"
+                aria-label={t('aria.disputeType')}
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3"
               >
                 {DISPUTE_TYPES.map((t) => {

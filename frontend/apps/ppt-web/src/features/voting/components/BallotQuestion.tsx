@@ -4,6 +4,7 @@
  * owns the `AnswerValue` and receives changes through `onChange`.
  */
 import type { AnswerValue, VoteQuestion } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface BallotQuestionProps {
   question: VoteQuestion;
@@ -148,6 +149,7 @@ function Ranked({
   value: AnswerValue | undefined;
   onChange: (v: AnswerValue) => void;
 }) {
+  const { t } = useTranslation();
   // Default ranking = declared option order until the voter reorders.
   const order = Array.isArray(value) && value.length ? value : question.options.map((o) => o.id);
   const labelFor = (id: string) => question.options.find((o) => o.id === id)?.text ?? id;
@@ -174,7 +176,7 @@ function Ranked({
             onClick={() => move(index, -1)}
             disabled={index === 0}
             className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-            aria-label="Move up"
+            aria-label={t('aria.moveUp')}
           >
             ↑
           </button>
@@ -183,7 +185,7 @@ function Ranked({
             onClick={() => move(index, 1)}
             disabled={index === order.length - 1}
             className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-            aria-label="Move down"
+            aria-label={t('aria.moveDown')}
           >
             ↓
           </button>

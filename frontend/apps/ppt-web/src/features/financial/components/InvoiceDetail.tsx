@@ -3,6 +3,7 @@
  */
 
 import type { InvoiceResponse } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { INVOICE_STATUS_STYLES } from '../utils/constants';
 import { formatCurrency, formatDetailedDate } from '../utils/formatting';
 
@@ -23,6 +24,7 @@ export function InvoiceDetail({
   onClose,
   isSending,
 }: InvoiceDetailProps) {
+  const { t } = useTranslation();
   const { invoice: inv, items, payments } = invoice;
 
   return (
@@ -39,7 +41,7 @@ export function InvoiceDetail({
           }}
           role="button"
           tabIndex={0}
-          aria-label="Close modal"
+          aria-label={t('aria.closeModal')}
         />
 
         {/* Modal */}
@@ -58,7 +60,7 @@ export function InvoiceDetail({
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
-              aria-label="Close dialog"
+              aria-label={t('aria.closeDialog')}
             >
               <svg
                 className="w-6 h-6"

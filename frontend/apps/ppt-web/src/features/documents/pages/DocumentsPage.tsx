@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { DocumentSearch } from '../components/DocumentSearch';
 import { DocumentsBrowse } from '../components/DocumentsBrowse';
@@ -19,6 +20,7 @@ interface DocumentsPageProps {
 }
 
 export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps) {
+  const { t } = useTranslation();
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'search' | 'browse'>('search');
 
@@ -143,7 +145,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
                 type="button"
                 onClick={() => setSelectedDocumentId(null)}
                 className="close-btn"
-                aria-label="Close document detail"
+                aria-label={t('aria.closeDocumentDetail')}
               >
                 ×
               </button>

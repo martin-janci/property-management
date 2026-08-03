@@ -256,7 +256,7 @@ export function ThreadDetailPage({
             }}
             role="button"
             tabIndex={0}
-            aria-label="Close dialog"
+            aria-label={t('aria.closeDialog')}
           />
 
           {/* Dialog */}

@@ -9,6 +9,7 @@
 
 import type { AnnouncementSummary } from '@ppt/api-client';
 import './PinnedAnnouncementsBand.css';
+import { useTranslation } from 'react-i18next';
 
 interface PinnedAnnouncementsBandProps {
   announcements: AnnouncementSummary[];
@@ -16,10 +17,11 @@ interface PinnedAnnouncementsBandProps {
 }
 
 export function PinnedAnnouncementsBand({ announcements, onView }: PinnedAnnouncementsBandProps) {
+  const { t } = useTranslation();
   if (announcements.length === 0) return null;
 
   return (
-    <div className="pinned-band" role="region" aria-label="Pinned announcements">
+    <div className="pinned-band" role="region" aria-label={t('aria.pinnedAnnouncements')}>
       <div className="pinned-band__label">
         <svg
           className="pinned-band__pin-icon"
@@ -44,7 +46,7 @@ export function PinnedAnnouncementsBand({ announcements, onView }: PinnedAnnounc
           >
             <span className="pinned-band__chip-title">{ann.title}</span>
             {ann.acknowledgmentRequired && (
-              <span className="pinned-band__chip-ack" aria-label="Acknowledgment required">
+              <span className="pinned-band__chip-ack" aria-label={t('aria.acknowledgmentRequired')}>
                 !
               </span>
             )}

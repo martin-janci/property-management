@@ -12,6 +12,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useToast } from '../../../components';
 import './OAuthGrantsPage.css';
+import { useTranslation } from 'react-i18next';
 
 /** Internal state for the revoke confirmation dialog. */
 interface ConfirmState {
@@ -20,6 +21,7 @@ interface ConfirmState {
 }
 
 export const OAuthGrantsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: grants, isLoading, isError, error, refetch } = useUserGrants();
   const revokeGrant = useRevokeUserGrant();
@@ -96,7 +98,7 @@ export const OAuthGrantsPage: React.FC = () => {
           You have no authorized third-party applications.
         </div>
       ) : (
-        <ul className="oauth-grants-list" aria-label="Authorized applications">
+        <ul className="oauth-grants-list" aria-label={t('aria.authorizedApplications')}>
           {grantList.map((grant: UserGrant) => (
             <li key={grant.id} className="oauth-grant-card">
               <div className="oauth-grant-info">

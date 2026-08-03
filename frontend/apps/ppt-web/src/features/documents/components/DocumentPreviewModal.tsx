@@ -18,6 +18,7 @@
 import { usePreviewUrl } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useEffect, useId, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useDocumentDownload } from '../hooks/useDocumentDownload';
 import { PdfPreview } from './PdfPreview';
@@ -45,11 +46,12 @@ interface ImagePreviewProps {
 }
 
 function ImagePreview({ documentId, title }: ImagePreviewProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error } = usePreviewUrl(documentId);
 
   if (isLoading) {
     return (
-      <div className="doc-preview__loading" aria-busy="true" aria-label="Načítavanie náhľadu">
+      <div className="doc-preview__loading" aria-busy="true" aria-label={t('aria.loadingPreview')}>
         <div className="doc-preview__spinner" />
         <p>Načítavanie náhľadu…</p>
       </div>
@@ -146,6 +148,7 @@ export function DocumentPreviewModal({
   mimeType,
   onClose,
 }: DocumentPreviewModalProps) {
+  const { t } = useTranslation();
   const titleId = useId();
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -192,7 +195,7 @@ export function DocumentPreviewModal({
               type="button"
               className="doc-preview__close-btn"
               onClick={onClose}
-              aria-label="Zavrieť náhľad"
+              aria-label={t('aria.closePreview')}
             >
               <svg
                 width="20"

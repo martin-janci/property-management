@@ -5,6 +5,7 @@
 
 import DOMPurify from 'dompurify';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useOrganization } from '../../../hooks';
 import { ArticleComments, ArticleReactions } from '../components';
@@ -20,6 +21,7 @@ interface ArticleWithAuthor extends NewsArticle {
 }
 
 export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
+  const { t } = useTranslation();
   const { organizationId } = useOrganization();
   const [article, setArticle] = useState<ArticleWithAuthor | null>(null);
   const [reactionCounts, setReactionCounts] = useState<ReactionCounts | null>(null);
@@ -357,7 +359,7 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       />
 
       {article.reactionsEnabled && reactionCounts && (
-        <section className="article-reactions-section" aria-label="Reactions">
+        <section className="article-reactions-section" aria-label={t('aria.reactions')}>
           <ArticleReactions
             reactionCounts={reactionCounts}
             userReaction={userReaction}
@@ -367,7 +369,7 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       )}
 
       {article.commentsEnabled && (
-        <section className="article-comments-section" aria-label="Comments">
+        <section className="article-comments-section" aria-label={t('aria.comments')}>
           <ArticleComments
             comments={comments}
             onAddComment={handleAddComment}

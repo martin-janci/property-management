@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FaultCategory, FaultPriority } from './FaultCard';
 
 export interface TriageData {
@@ -57,6 +58,7 @@ export function TriageFaultDialog({
   onSubmit,
   onClose,
 }: TriageFaultDialogProps) {
+  const { t } = useTranslation();
   const [priority, setPriority] = useState<FaultPriority>(
     (aiSuggestion?.priority as FaultPriority) || 'medium'
   );
@@ -84,7 +86,7 @@ export function TriageFaultDialog({
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-default"
         onClick={onClose}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
-        aria-label="Close dialog"
+        aria-label={t('aria.closeDialog')}
       />
 
       {/* Dialog */}

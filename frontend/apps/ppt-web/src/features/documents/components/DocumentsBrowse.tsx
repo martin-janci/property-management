@@ -24,6 +24,7 @@ import {
   useDocuments,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDocumentDownload } from '../hooks/useDocumentDownload';
 import { useMoveDocumentWithToast } from '../hooks/useMoveDocumentWithToast';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -239,6 +240,7 @@ export function DocumentsBrowse({
   buildingId,
   onSelectDocument,
 }: DocumentsBrowseProps) {
+  const { t } = useTranslation();
   const [selectedStatus, setSelectedStatus] = useState<DocumentStatus | undefined>(undefined);
   const [selectedAudience, setSelectedAudience] = useState<AccessScope | undefined>(undefined);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
@@ -313,7 +315,7 @@ export function DocumentsBrowse({
   return (
     <div className="docs-browse">
       {/* Status tabs */}
-      <div className="docs-browse__tabs" role="tablist" aria-label="Status dokumentov">
+      <div className="docs-browse__tabs" role="tablist" aria-label={t('aria.documentsStatus')}>
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value ?? 'all'}
@@ -355,7 +357,7 @@ export function DocumentsBrowse({
             }}
             placeholder="Hľadať podľa názvu…"
             className="docs-browse__search"
-            aria-label="Hľadať dokumenty"
+            aria-label={t('aria.searchDocuments')}
           />
         </div>
 
@@ -413,7 +415,7 @@ export function DocumentsBrowse({
         {isLoading && (
           <ul
             className="docs-browse__skeleton"
-            aria-label="Načítavanie dokumentov"
+            aria-label={t('aria.loadingDocuments')}
             aria-busy="true"
           >
             {Array.from({ length: 6 }).map((_, i) => (
@@ -470,7 +472,7 @@ export function DocumentsBrowse({
                   disabled={page === 0}
                   className="docs-browse__page-btn"
                   onClick={() => setPage((p: number) => Math.max(0, p - 1))}
-                  aria-label="Predchádzajúca strana"
+                  aria-label={t('aria.previousPage')}
                 >
                   ‹ Predch.
                 </button>
@@ -482,7 +484,7 @@ export function DocumentsBrowse({
                   disabled={(page + 1) * PAGE_SIZE >= data.total}
                   className="docs-browse__page-btn"
                   onClick={() => setPage((p: number) => p + 1)}
-                  aria-label="Nasledujúca strana"
+                  aria-label={t('aria.nextPage')}
                 >
                   Ďalšia ›
                 </button>

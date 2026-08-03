@@ -16,6 +16,7 @@ import {
   useRevokeDocumentShare,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ConfirmationDialog } from '../../../components/ConfirmationDialog';
 import { useToast } from '../../../components/Toast';
 
@@ -55,6 +56,7 @@ function CreateShareForm({
   documentId: string;
   onCreated: (url?: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const [shareType, setShareType] = useState<ShareType>(SHARE_TYPE.LINK);
   const [targetId, setTargetId] = useState('');
   const [targetIdTouched, setTargetIdTouched] = useState(false);
@@ -187,7 +189,7 @@ function CreateShareForm({
       {shareType === SHARE_TYPE.LINK && (
         <div className="sp-toggle-row">
           <span className="sp-toggle-label">Password protect</span>
-          <label className="sp-switch" aria-label="Enable password protection">
+          <label className="sp-switch" aria-label={t('aria.enablePasswordProtection')}>
             <input
               type="checkbox"
               checked={usePassword}
@@ -215,7 +217,7 @@ function CreateShareForm({
       )}
       <div className="sp-toggle-row">
         <span className="sp-toggle-label">Set expiry</span>
-        <label className="sp-switch" aria-label="Enable expiry">
+        <label className="sp-switch" aria-label={t('aria.enableExpiry')}>
           <input
             type="checkbox"
             checked={useExpiry}
@@ -233,7 +235,7 @@ function CreateShareForm({
             max="365"
             value={expiryDays}
             onChange={(e) => setExpiryDays(e.target.value)}
-            aria-label="Expiry days"
+            aria-label={t('aria.expiryDays')}
           />
           <span className="sp-expiry-unit">days</span>
         </div>

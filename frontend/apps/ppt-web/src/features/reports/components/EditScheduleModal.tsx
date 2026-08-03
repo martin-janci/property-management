@@ -11,6 +11,7 @@
 
 import type { CronScheduleUpdateRequest, ReportSchedule } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CronPicker, isValidCron } from './CronPicker';
 import { RecipientManager } from './RecipientManager';
 
@@ -83,6 +84,7 @@ export function EditScheduleModal({
   onClose,
   onSave,
 }: EditScheduleModalProps) {
+  const { t } = useTranslation();
   const [cronExpression, setCronExpression] = useState(() => scheduleToInitialCron(schedule));
   const [recipients, setRecipients] = useState<string[]>(schedule.recipients);
   const [enabled, setEnabled] = useState(schedule.is_active);
@@ -169,7 +171,7 @@ export function EditScheduleModal({
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
-              aria-label="Close"
+              aria-label={t('aria.close')}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

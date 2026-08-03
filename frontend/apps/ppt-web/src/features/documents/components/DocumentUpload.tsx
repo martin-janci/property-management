@@ -10,6 +10,7 @@ import {
   useUploadDocumentDirect,
 } from '@ppt/api-client';
 import { type ChangeEvent, type DragEvent, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DocumentUploadProps {
   organizationId: string;
@@ -47,6 +48,7 @@ export function DocumentUpload({
   onUploadComplete,
   onCancel,
 }: DocumentUploadProps) {
+  const { t } = useTranslation();
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -276,7 +278,7 @@ export function DocumentUpload({
             onChange={handleFileInput}
             multiple
             accept={SUPPORTED_MIME_TYPES.join(',')}
-            aria-label="Select files to upload"
+            aria-label={t('aria.selectFilesToUpload')}
           />
         </div>
       </div>
@@ -336,7 +338,7 @@ export function DocumentUpload({
                     <span
                       className="success-icon"
                       role="img"
-                      aria-label="Upload completed successfully"
+                      aria-label={t('aria.uploadCompleted')}
                     >
                       <svg
                         width="16"

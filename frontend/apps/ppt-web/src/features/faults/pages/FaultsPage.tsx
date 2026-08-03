@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
   FaultCategory,
   FaultPriority,
@@ -69,6 +70,7 @@ export function FaultsPage({
   onNavigateToTriage,
   onFilterChange,
 }: FaultsPageProps) {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [filters, setFilters] = useState<Omit<FaultListParams, 'page' | 'pageSize'>>({});
@@ -124,7 +126,7 @@ export function FaultsPage({
       {stats && (
         <div
           className="mb-6 flex gap-6 p-4 bg-gray-50 border border-gray-200 rounded-lg"
-          aria-label="Fault statistics"
+          aria-label={t('aria.faultStatistics')}
         >
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.total_count}</p>

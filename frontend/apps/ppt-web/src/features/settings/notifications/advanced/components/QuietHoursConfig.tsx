@@ -6,6 +6,7 @@
 
 import type { DayOfWeek, QuietHoursConfig as QuietHoursConfigType } from '@ppt/api-client';
 import { ALL_DAYS, DAY_LABELS } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface QuietHoursConfigProps {
   config: QuietHoursConfigType;
@@ -14,6 +15,7 @@ interface QuietHoursConfigProps {
 }
 
 export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfigProps) {
+  const { t } = useTranslation();
   const handleDayToggle = (day: DayOfWeek) => {
     const newDays = config.daysOfWeek.includes(day)
       ? config.daysOfWeek.filter((d) => d !== day)
@@ -36,7 +38,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
           type="button"
           role="switch"
           aria-checked={config.enabled}
-          aria-label="Enable quiet hours"
+          aria-label={t('aria.enableQuietHours')}
           onClick={() => onUpdate({ enabled: !config.enabled })}
           disabled={loading}
           className={`
@@ -169,7 +171,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
               type="button"
               role="switch"
               aria-checked={config.allowEmergency}
-              aria-label="Allow emergency notifications during quiet hours"
+              aria-label={t('aria.allowEmergencyNotifications')}
               onClick={() => onUpdate({ allowEmergency: !config.allowEmergency })}
               disabled={loading}
               className={`

@@ -8,6 +8,7 @@ import { AcknowledgmentStats as AcknowledgmentStatsPanel } from '../components/A
 import type { AnnouncementCommentsProps } from '../components/AnnouncementComments';
 import { AnnouncementComments } from '../components/AnnouncementComments';
 import './ViewAnnouncementPage.css';
+import { useTranslation } from 'react-i18next';
 
 interface ViewAnnouncementPageProps {
   announcement: AnnouncementWithDetails;
@@ -60,6 +61,7 @@ export function ViewAnnouncementPage({
   acknowledgmentStats,
   commentsProps,
 }: ViewAnnouncementPageProps) {
+  const { t } = useTranslation();
   const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
   const canDelete = announcement.status === 'draft';
   const canPublish = announcement.status === 'draft' || announcement.status === 'scheduled';
@@ -68,7 +70,7 @@ export function ViewAnnouncementPage({
   if (isLoading) {
     return (
       <div className="view-announcement__loading">
-        <div className="view-announcement__spinner" aria-label="Loading" />
+        <div className="view-announcement__spinner" aria-label={t('aria.loading')} />
       </div>
     );
   }

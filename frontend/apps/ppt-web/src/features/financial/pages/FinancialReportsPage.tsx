@@ -16,6 +16,7 @@ import type {
   ReportExportFormat,
   ReportType,
 } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { BalanceSheetView, CashFlowView, IncomeStatementView } from '../components';
 
 const TABS: { key: ReportType; label: string }[] = [
@@ -69,6 +70,7 @@ export function FinancialReportsPage({
   onExport,
   exportingFormat,
 }: FinancialReportsPageProps) {
+  const { t } = useTranslation();
   const isRange = activeTab !== 'balance-sheet';
 
   return (
@@ -83,7 +85,7 @@ export function FinancialReportsPage({
 
           {/* Tabs */}
           <div className="mt-4 border-b border-gray-200">
-            <nav className="-mb-px flex gap-6" aria-label="Report tabs">
+            <nav className="-mb-px flex gap-6" aria-label={t('aria.reportTabs')}>
               {TABS.map((tab) => (
                 <button
                   key={tab.key}

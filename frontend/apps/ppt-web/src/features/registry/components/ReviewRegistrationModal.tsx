@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ReviewRegistrationModalProps {
   registrationType: 'pet' | 'vehicle';
@@ -25,6 +26,7 @@ export function ReviewRegistrationModal({
   onReject,
   isSubmitting,
 }: ReviewRegistrationModalProps) {
+  const { t } = useTranslation();
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
@@ -56,7 +58,7 @@ export function ReviewRegistrationModal({
           }}
           role="button"
           tabIndex={0}
-          aria-label="Close modal"
+          aria-label={t('aria.closeModal')}
         />
 
         {/* Modal */}

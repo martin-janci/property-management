@@ -9,8 +9,10 @@ import { COLOR_SCHEME_OPTIONS, TEXT_SIZE_OPTIONS } from '@ppt/shared';
 import { useAccessibilityContext } from '@ppt/ui-kit';
 import type React from 'react';
 import '../styles/accessibility.css';
+import { useTranslation } from 'react-i18next';
 
 export const AccessibilitySettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { settings, updateSettings } = useAccessibilityContext();
 
   const handleColorSchemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -163,7 +165,7 @@ export const AccessibilitySettingsPage: React.FC = () => {
       </section>
 
       {/* Preview Section */}
-      <section className="accessibility-preview" aria-label="Settings Preview">
+      <section className="accessibility-preview" aria-label={t('aria.settingsPreview')}>
         <h3>Preview</h3>
         <p>
           This is a preview of how text will appear with your current settings. The quick brown fox
@@ -186,7 +188,10 @@ export const AccessibilitySettingsPage: React.FC = () => {
       </section>
 
       {/* Info Section */}
-      <section className="accessibility-settings-section" aria-label="Additional Information">
+      <section
+        className="accessibility-settings-section"
+        aria-label={t('aria.additionalInformation')}
+      >
         <h2>Additional Help</h2>
         <p>
           If you experience any accessibility issues or have suggestions for improvement, please

@@ -5,6 +5,7 @@
  */
 
 import type { GroupingConfig } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface GroupingSettingsProps {
   config: GroupingConfig;
@@ -13,6 +14,7 @@ interface GroupingSettingsProps {
 }
 
 export function GroupingSettings({ config, loading, onUpdate }: GroupingSettingsProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -28,7 +30,7 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
           type="button"
           role="switch"
           aria-checked={config.enabled}
-          aria-label="Enable smart notification grouping"
+          aria-label={t('aria.enableGrouping')}
           onClick={() => onUpdate({ enabled: !config.enabled })}
           disabled={loading}
           className={`
@@ -65,7 +67,7 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
                 type="button"
                 role="switch"
                 aria-checked={config.groupByCategory}
-                aria-label="Group notifications by category"
+                aria-label={t('aria.groupByCategory')}
                 onClick={() => onUpdate({ groupByCategory: !config.groupByCategory })}
                 disabled={loading}
                 className={`
@@ -98,7 +100,7 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
                 type="button"
                 role="switch"
                 aria-checked={config.groupBySource}
-                aria-label="Group notifications by source"
+                aria-label={t('aria.groupBySource')}
                 onClick={() => onUpdate({ groupBySource: !config.groupBySource })}
                 disabled={loading}
                 className={`

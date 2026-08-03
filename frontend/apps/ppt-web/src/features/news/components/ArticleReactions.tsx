@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ReactionCounts, ReactionType } from '../types';
 
 interface ArticleReactionsProps {
@@ -35,6 +36,7 @@ export function ArticleReactions({
   onToggleReaction,
   disabled = false,
 }: ArticleReactionsProps) {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleReactionClick = async (reaction: ReactionType) => {
@@ -49,7 +51,7 @@ export function ArticleReactions({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap" aria-label="Article reactions">
+    <div className="flex items-center gap-2 flex-wrap" aria-label={t('aria.articleReactions')}>
       {(Object.keys(reactionEmojis) as ReactionType[]).map((reaction) => {
         const count = reactionCounts[reaction];
         const isActive = userReaction === reaction;

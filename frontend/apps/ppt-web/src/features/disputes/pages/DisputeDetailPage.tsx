@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import { type ActionItem, ActionItemCard } from '../components/ActionItemCard';
 import type { DisputeCategory, DisputePriority, DisputeStatus } from '../components/DisputeCard';
@@ -145,6 +146,7 @@ export function DisputeDetailPage({
   onEscalate,
   onNavigateToMediation,
 }: DisputeDetailPageProps) {
+  const { t } = useTranslation();
   const [showProposeDialog, setShowProposeDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [proposalText, setProposalText] = useState('');
@@ -478,7 +480,7 @@ export function DisputeDetailPage({
             className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
             onClick={() => setShowProposeDialog(false)}
             onKeyDown={(e) => e.key === 'Escape' && setShowProposeDialog(false)}
-            aria-label="Close dialog"
+            aria-label={t('aria.closeDialog')}
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
@@ -520,7 +522,7 @@ export function DisputeDetailPage({
             className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
             onClick={() => setShowActionDialog(false)}
             onKeyDown={(e) => e.key === 'Escape' && setShowActionDialog(false)}
-            aria-label="Close dialog"
+            aria-label={t('aria.closeDialog')}
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">

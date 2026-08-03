@@ -215,7 +215,7 @@ export function MessageBubble({
             }}
             role="button"
             tabIndex={0}
-            aria-label="Close menu"
+            aria-label={t('aria.closeMenu')}
           />
 
           {/* Menu */}

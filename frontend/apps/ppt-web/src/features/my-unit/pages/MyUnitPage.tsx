@@ -15,8 +15,10 @@
 
 import { useMyUnits } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function MyUnitPage() {
+  const { t } = useTranslation();
   const { data: units, isLoading, isError, error } = useMyUnits();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -87,7 +89,7 @@ export function MyUnitPage() {
         </div>
       )}
 
-      <section className="my-unit-page__unit" aria-label="Unit details">
+      <section className="my-unit-page__unit" aria-label={t('aria.unitDetails')}>
         <h2>
           Unit {unit.designation}
           {!unit.entrance ? null : ` · Entrance ${unit.entrance}`}
@@ -122,7 +124,7 @@ export function MyUnitPage() {
         </dl>
       </section>
 
-      <section className="my-unit-page__building" aria-label="Building">
+      <section className="my-unit-page__building" aria-label={t('aria.building')}>
         <h2>Building</h2>
         <address>
           {building.name && (
@@ -137,7 +139,7 @@ export function MyUnitPage() {
         </address>
       </section>
 
-      <section className="my-unit-page__association" aria-label="Your residency">
+      <section className="my-unit-page__association" aria-label={t('aria.yourResidency')}>
         <h2>Your residency</h2>
         <dl>
           <dt>Role</dt>
