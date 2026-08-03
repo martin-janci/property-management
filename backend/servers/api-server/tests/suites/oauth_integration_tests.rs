@@ -3070,3 +3070,347 @@ mod token_usage_analytics {
         );
     }
 }
+
+// ─── module: token_usage_read_route ──────────────────────────────────────────
+//
+// Router-driven HTTP coverage for `GET /api/v1/platform-admin/oauth/token-usage`
+// (issue #2630 — post-merge-review follow-up on PR #2629). The sibling
+// `token_usage_analytics` module above only exercises the producer and the
+// repository rollups (`OAuthTokenEventRepository::{totals,usage_per_client}`)
+// called *directly*; nothing drove the read *handler* through the real Axum
+// router, so the response envelope, its authz walls, and its `since` decoding
+// shipped with zero executing HTTP-level coverage.
+//
+// These cases close that gap end-to-end against the real router:
+//   * super-admin + `AuditRead` → 200, and the JSON body carries the
+//     camelCase envelope (`totals` / `perClient` / `since`) after one seeded
+//     issuance.
+//   * the two authz walls each deny with 403: the `require_capability(AuditRead)`
+//     tower layer, and the in-handler `extract_super_admin_token` super-admin
+//     re-check.
+//   * a malformed `?since=` → 400 `INVALID_SINCE`, and a valid RFC 3339
+//     `?since=` narrows the window.
+//
+// IG3 note: NONE of these executed on `dev` before #2630. The deny-path (403)
+// assertions, the 400 `INVALID_SINCE` decode assertion, and the camelCase
+// envelope assertions are entirely net-new — the prior `token_usage_analytics`
+// module never constructed an HTTP request to this route.
+//
+// The platform-admin provisioning recipe mirrors the shipped, passing pattern
+// in `admin_platform_happy_path_tests.rs`: seed a `principal_kind = 'platform'`
+// user (the INSERT bypasses the BEFORE-UPDATE guard), enroll MFA, and grant the
+// capability with `mfa_required = false` so the extractor's recent-MFA recency
+// check is skipped. The OAuth issuance is seeded through the real router via the
+// file-level `confidential_auth_flow` helper.
+
+#[cfg(test)]
+mod token_usage_read_route {
+    use super::*;
+    use api_server::services::JwtService;
+
+    const TOKEN_USAGE_URL: &str = "/api/v1/platform-admin/oauth/token-usage";
+    /// Matches `TestConfig::default().jwt_secret`, so tokens minted here are
+    /// accepted by the `TestApp`'s `JwtService`.
+    const TEST_JWT_SECRET: &str =
+        "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+
+    /// Seed a platform-principal user and return its id. The INSERT bypasses the
+    /// `BEFORE UPDATE` principal_kind guard, so `'platform'` can be set directly.
+    async fn seed_platform_user(pool: &PgPool, email: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+            VALUES ($1, 'h', 'Issue2630 Admin', 'active', NOW(), 'platform')
+            RETURNING id
+            "#,
+        )
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("seed platform user")
+    }
+
+    /// Mark the user as MFA-enrolled (the capability gate's step-2.5 wall).
+    async fn enroll_mfa(pool: &PgPool, user_id: Uuid) {
+        sqlx::query(
+            r#"
+            INSERT INTO user_2fa (user_id, secret, enabled, enabled_at, backup_codes, backup_codes_remaining)
+            VALUES ($1, 'unused-secret', true, NOW(), '[]'::jsonb, 0)
+            ON CONFLICT (user_id) DO UPDATE SET enabled = true, enabled_at = NOW()
+            "#,
+        )
+        .bind(user_id)
+        .execute(pool)
+        .await
+        .expect("enroll mfa");
+    }
+
+    /// Grant a single named `capability` with `mfa_required = false`. `granted_by`
+    /// must reference a distinct real user (FK + app-layer no-self-grant rule).
+    async fn grant_capability(pool: &PgPool, user_id: Uuid, granted_by: Uuid, capability: &str) {
+        sqlx::query(
+            r#"
+            INSERT INTO capability_grants
+                (user_id, capability, granted_by, expires_at, mfa_required, note)
+            VALUES ($1, $2, $3, NULL, false, 'issue-2630')
+            "#,
+        )
+        .bind(user_id)
+        .bind(capability)
+        .bind(granted_by)
+        .execute(pool)
+        .await
+        .expect("grant capability");
+    }
+
+    /// Mint a platform-kind bearer JWT validated by `TestApp`'s JWT secret, with
+    /// the supplied `roles` claim (the wall under test in the deny cases).
+    fn mint_token(user_id: Uuid, email: &str, roles: Option<Vec<String>>) -> String {
+        let svc = JwtService::new(TEST_JWT_SECRET).expect("jwt service");
+        svc.generate_access_token_with_kind(
+            user_id,
+            email,
+            "Issue2630 Admin",
+            None,
+            roles,
+            Some("platform".to_string()),
+        )
+        .expect("mint token")
+    }
+
+    /// Provision a fully-authorized platform super-admin holding `AuditRead`
+    /// (platform principal + MFA + active grant + `super_admin` role) and return
+    /// its bearer token — passes both the capability layer and
+    /// `extract_super_admin_token`.
+    async fn super_admin_with_audit_read(pool: &PgPool, label: &str) -> String {
+        let email = format!("issue2630-sa-{label}-{}@test.local", Uuid::new_v4());
+        let granter_email = format!("issue2630-gr-{label}-{}@test.local", Uuid::new_v4());
+        let admin = seed_platform_user(pool, &email).await;
+        let granter = seed_platform_user(pool, &granter_email).await;
+        enroll_mfa(pool, admin).await;
+        grant_capability(pool, admin, granter, "audit_read").await;
+        mint_token(admin, &email, Some(vec!["super_admin".to_string()]))
+    }
+
+    /// Seed exactly one `issued` OAuth token event through the real router and
+    /// return the client_id it was recorded against.
+    async fn seed_one_issuance(app: &TestApp, pool: &PgPool) -> String {
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(pool).await;
+        confidential_auth_flow(app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        assert_eq!(
+            count_token_events(pool, &client_id, "issued").await,
+            1,
+            "precondition: one issuance must be seeded through the router"
+        );
+        client_id
+    }
+
+    /// Case 1 — super-admin + `AuditRead` gets 200, and the JSON body carries the
+    /// camelCase envelope (`totals` / `perClient` / `since`). The `#[serde(rename_all
+    /// = "camelCase")]` on `OAuthTokenUsageResponse` renames `per_client` →
+    /// `perClient`; assert both that the camelCase spelling is present and that the
+    /// snake_case spelling is absent, so the contract is pinned in both directions.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_token_usage_super_admin_returns_camelcase_body(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let client_id = seed_one_issuance(&app, &pool).await;
+
+        let token = super_admin_with_audit_read(&pool, "ok").await;
+        let resp = app.get(TOKEN_USAGE_URL).bearer(&token).send().await;
+        assert_eq!(
+            resp.status,
+            StatusCode::OK,
+            "super-admin with AuditRead must get 200. body={}",
+            resp.text()
+        );
+
+        let body = resp.json_value();
+        // camelCase envelope keys are present …
+        assert!(
+            body.get("totals").is_some(),
+            "body must carry `totals`: {body}"
+        );
+        assert!(
+            body.get("perClient").is_some(),
+            "body must carry `perClient`: {body}"
+        );
+        assert!(
+            body.get("since").is_some(),
+            "body must carry `since`: {body}"
+        );
+        // … and the snake_case spelling is absent (locks the camelCase rename).
+        assert!(
+            body.get("per_client").is_none(),
+            "`per_client` must be renamed to `perClient`: {body}"
+        );
+        assert!(
+            body["since"].is_string(),
+            "`since` must serialize as an RFC 3339 string: {body}"
+        );
+
+        // The seeded issuance is reflected in the totals + per-client rollup
+        // (nested structs are camelCase too).
+        assert_eq!(
+            body["totals"]["issuedCount"], 1,
+            "totals.issuedCount: {body}"
+        );
+        assert_eq!(
+            body["totals"]["activeClients"], 1,
+            "totals.activeClients: {body}"
+        );
+        assert!(
+            body["totals"].get("issued_count").is_none(),
+            "totals must be camelCase (no `issued_count`): {body}"
+        );
+        let per_client = body["perClient"].as_array().expect("perClient array");
+        let row = per_client
+            .iter()
+            .find(|c| c["clientId"] == client_id)
+            .expect("seeded client must appear in perClient");
+        assert_eq!(row["issuedCount"], 1, "perClient issuedCount: {row}");
+    }
+
+    /// Case 2a — a platform principal holding `AuditRead` (so the capability layer
+    /// passes) but whose token carries no `super_admin` role must be rejected with
+    /// 403 by the in-handler `extract_super_admin_token` re-check.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_token_usage_denied_without_super_admin_role(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+
+        let email = format!("issue2630-norole-{}@test.local", Uuid::new_v4());
+        let granter_email = format!("issue2630-norole-gr-{}@test.local", Uuid::new_v4());
+        let admin = seed_platform_user(&pool, &email).await;
+        let granter = seed_platform_user(&pool, &granter_email).await;
+        enroll_mfa(&pool, admin).await;
+        grant_capability(&pool, admin, granter, "audit_read").await;
+        // Token carries a non-privileged role only.
+        let token = mint_token(admin, &email, Some(vec!["member".to_string()]));
+
+        let resp = app.get(TOKEN_USAGE_URL).bearer(&token).send().await;
+        assert_eq!(
+            resp.status,
+            StatusCode::FORBIDDEN,
+            "a non-super-admin caller must be rejected by extract_super_admin_token. body={}",
+            resp.text()
+        );
+    }
+
+    /// Case 2b — a platform `super_admin` with no `AuditRead` grant must be
+    /// rejected with 403 by the `require_capability(AuditRead)` tower layer,
+    /// before the handler runs.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_token_usage_denied_without_audit_read_capability(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+
+        let email = format!("issue2630-nocap-{}@test.local", Uuid::new_v4());
+        let admin = seed_platform_user(&pool, &email).await;
+        enroll_mfa(&pool, admin).await;
+        // super_admin role but NO capability grant.
+        let token = mint_token(admin, &email, Some(vec!["super_admin".to_string()]));
+
+        let resp = app.get(TOKEN_USAGE_URL).bearer(&token).send().await;
+        assert_eq!(
+            resp.status,
+            StatusCode::FORBIDDEN,
+            "a caller missing the AuditRead capability must be rejected by the layer. body={}",
+            resp.text()
+        );
+    }
+
+    /// Case 3a — a malformed `?since=` must be rejected with 400 and the
+    /// programmatic error code `INVALID_SINCE`.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_token_usage_invalid_since_returns_400(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let token = super_admin_with_audit_read(&pool, "badsince").await;
+
+        let resp = app
+            .get(&format!("{TOKEN_USAGE_URL}?since=not-a-timestamp"))
+            .bearer(&token)
+            .send()
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "a malformed `since` must be rejected with 400. body={}",
+            resp.text()
+        );
+        let body = resp.json_value();
+        assert_eq!(
+            body["code"], "INVALID_SINCE",
+            "error code must be INVALID_SINCE: {body}"
+        );
+    }
+
+    /// Case 3b — a valid RFC 3339 `?since=` narrows the window: a bound in the
+    /// past includes the seeded issuance (and the echoed `since` equals the
+    /// supplied bound), while a bound in the future excludes it.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_token_usage_valid_since_narrows_window(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        seed_one_issuance(&app, &pool).await;
+        let token = super_admin_with_audit_read(&pool, "since").await;
+
+        // A `since` in the past includes the issuance.
+        let past = (chrono::Utc::now() - chrono::Duration::hours(1)).to_rfc3339();
+        let included = app
+            .get(&format!(
+                "{TOKEN_USAGE_URL}?since={}",
+                urlencoding::encode(&past)
+            ))
+            .bearer(&token)
+            .send()
+            .await;
+        assert_eq!(
+            included.status,
+            StatusCode::OK,
+            "valid past `since` must be accepted. body={}",
+            included.text()
+        );
+        let included_body = included.json_value();
+        assert_eq!(
+            included_body["totals"]["issuedCount"], 1,
+            "a past `since` must include the seeded issuance: {included_body}"
+        );
+        // The echoed `since` reflects the caller-supplied bound, not the default.
+        let echoed = included_body["since"].as_str().expect("since string");
+        let echoed_dt = chrono::DateTime::parse_from_rfc3339(echoed).expect("echoed since parses");
+        let supplied_dt =
+            chrono::DateTime::parse_from_rfc3339(&past).expect("supplied since parses");
+        assert_eq!(
+            echoed_dt, supplied_dt,
+            "the echoed `since` must equal the supplied bound"
+        );
+
+        // A `since` in the future excludes the issuance → window narrows to empty.
+        let future = (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339();
+        let narrowed = app
+            .get(&format!(
+                "{TOKEN_USAGE_URL}?since={}",
+                urlencoding::encode(&future)
+            ))
+            .bearer(&token)
+            .send()
+            .await;
+        assert_eq!(
+            narrowed.status,
+            StatusCode::OK,
+            "valid future `since` must be accepted. body={}",
+            narrowed.text()
+        );
+        let narrowed_body = narrowed.json_value();
+        assert_eq!(
+            narrowed_body["totals"]["issuedCount"], 0,
+            "a future `since` must narrow the window to empty: {narrowed_body}"
+        );
+        assert!(
+            narrowed_body["perClient"]
+                .as_array()
+                .map(|a| a.is_empty())
+                .unwrap_or(false),
+            "a future `since` must yield an empty perClient: {narrowed_body}"
+        );
+    }
+}
