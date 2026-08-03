@@ -346,24 +346,40 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
               }
             }
           } catch (error) {
-            // 4xx responses are marked `permanent` by executeQueuedAction
-            // and dropped immediately — replaying them won't help.
-            // Everything else (5xx, network) goes through the retry budget.
+            // Distinguish TERMINAL from TRANSIENT outcomes:
+            //   - TERMINAL (4xx): executeQueuedAction marks the error
+            //     `permanent`. Replaying will never succeed (bad payload, gone,
+            //     forbidden, …), so the action is dropped — keeping it would
+            //     block the queue forever on a request that can't win.
+            //   - TRANSIENT (5xx / network): the server or link is temporarily
+            //     unavailable. These are NEVER dropped, no matter how many times
+            //     they have been retried — dropping them silently loses
+            //     offline-created content (a fault the user reported offline,
+            //     etc.). They are carried forward and re-attempted every
+            //     reconnect until they succeed or turn terminal.
             const isPermanent = (error as { permanent?: boolean })?.permanent === true;
+            // `retries` is still bumped for observability / UI (and so an
+            // exponential-backoff scheduler could read it later), but it no
+            // longer gates dropping a transient action — that was the data-loss
+            // bug: a 5xx that persisted across 3 reconnects silently discarded
+            // the queued item.
             action.retries++;
-            if (isPermanent || action.retries >= 3) {
+            if (isPermanent) {
               failed++;
               terminalFailureIds.add(action.id);
-              console.error('Action failed after max retries:', action);
+              console.error('Action permanently failed (4xx), dropping:', action);
               // A terminal failure can't block its successors — skip it and keep
               // draining the rest of the queue this cycle.
             } else {
-              // Strict-FIFO head-of-line blocking (issue #1767): a *retryable*
+              // Strict-FIFO head-of-line blocking (issue #1767): a *transient*
               // failure halts the cycle. The failed action and every action
               // after it are carried forward in their original order, so a later
               // UPDATE can never be dispatched ahead of an earlier CREATE that
               // is still being retried (which would hit a resource that doesn't
               // exist server-side yet). They retry next reconnect, in order.
+              // Flag it so the UI can surface "waiting to sync" without implying
+              // the item was lost.
+              action.syncStatus = 'failed';
               const haltedProgress: SyncProgress = {
                 total,
                 current: i + 1,
