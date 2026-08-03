@@ -9,6 +9,7 @@
  * `POST /auth/sessions/revoke-all`) exposed through `getAuthApi()`.
  */
 
+import type { SessionInfo } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,19 +19,8 @@ import '../styles/sessions.css';
 /** Query key for the active-sessions list. */
 const SESSIONS_QUERY_KEY = ['auth', 'sessions'] as const;
 
-/** Minimal session shape consumed here (mirrors the backend SessionInfo DTO). */
-interface SessionRow {
-  id: string;
-  deviceInfo?: string | null;
-  ipAddress?: string | null;
-  userAgent?: string | null;
-  createdAt: string;
-  lastUsedAt: string;
-  isCurrent: boolean;
-}
-
 /** Derive a friendly device/browser label from a user-agent string. */
-function deviceLabel(session: SessionRow, unknownLabel: string): string {
+function deviceLabel(session: SessionInfo, unknownLabel: string): string {
   if (session.deviceInfo) return session.deviceInfo;
   const ua = session.userAgent;
   if (!ua) return unknownLabel;
@@ -81,7 +71,7 @@ export const SessionsPage: React.FC = () => {
     },
   });
 
-  const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];
+  const sessions = sessionsQuery.data?.sessions ?? [];
   const hasOtherSessions = sessions.some((s) => !s.isCurrent);
 
   return (
