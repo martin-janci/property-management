@@ -4,7 +4,8 @@ name: Agency Import (UC-50)
 product: reality
 implementations:
   reality-web:
-    component: AgencyImportWizard
+    route: "/agency/import"
+    component: AgencyImportPage
     buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: partial
@@ -25,6 +26,7 @@ sharedComponents:
   - data-table
   - status-pill
   - validation-patterns
+  - next-intl
 designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/pages/agency-import.html
@@ -96,6 +98,8 @@ UC-50 agency property import. Connects to external CRMs / XML feeds to bulk-impo
 
 ### Specific (recent)
 
+- i18n (PR #2636): the whole agency/import cluster is now fully localized via next-intl — no hardcoded English left. Route `/agency/import` renders `AgencyImportPage` (a 3-tab layout: CSV · CRM · Feed) mounting `CsvImport` / `CrmConnection` / `FeedImport`; `SyncSchedule` exists in `components/import` (exported, uses `import.schedule`) but is not yet mounted in the page. Note: the shipped tab layout differs from the 9-step wizard in the design bundle above — the wizard checklist remains aspirational (`buildStatus: in-progress`).
+- i18n message keys live under the `import` namespace with nested `page` / `steps` / `csv` / `crm` / `feed` / `schedule` groups, present in all 6 reality-web locales (en, sk, cs, de, pl, hu — superset of the sk/cs/de/en named in UC-50). Follow the sibling `useTranslations('import.<group>')` pattern when adding strings; auto-derived CSV/CRM/feed field-name labels are intentionally left untranslated (technical schema identifiers, not UI copy).
 - "Beží" status pill uses pulsing dot animation (success-500); respects reduced-motion → static green dot.
 - Skipped-count link drilldown shows which fields blocked import for each skipped row (useful for fixing source data).
 - Webhook URL must be HTTPS only; show inline validation error for HTTP.
@@ -106,4 +110,5 @@ UC-50 agency property import. Connects to external CRMs / XML feeds to bulk-impo
 
 <!-- newest entries on top -->
 
+- 2026-08-03 — agent: synced to PR #2636 i18n rewrite. Corrected component `AgencyImportWizard` → `AgencyImportPage`, added route `/agency/import`, added `next-intl` to sharedComponents, documented `import.*` namespace (page/steps/csv/crm/feed/schedule × 6 locales) and the shipped 3-tab (CSV/CRM/Feed) vs design-bundle 9-step-wizard divergence. buildStatus/apiStatus unchanged (pure i18n refactor, no behavior/API change).
 - 2026-05-09 — agent: bootstrapped from bundle (pages/agency-import.html — 9 sections: 4 steps + confirm + history loaded/empty + 4 error cards); UC-50; parent agency-dashboard; sibling agency-branding
