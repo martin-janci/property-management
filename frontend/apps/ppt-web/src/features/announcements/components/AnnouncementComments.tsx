@@ -165,7 +165,7 @@ function CommentItem({
               className="ann-comment__textarea"
               rows={2}
               maxLength={2000}
-              aria-label="Reply content"
+              aria-label={t('aria.replyContent')}
             />
             <div className="ann-comment__reply-actions">
               <button
@@ -251,7 +251,7 @@ export function AnnouncementComments({
   };
 
   return (
-    <section className="ann-comments" aria-label="Discussion">
+    <section className="ann-comments" aria-label={t('aria.discussion')}>
       <h3 className="ann-comments__heading">
         {t('announcements.comments.discussion')}
         {total > 0 && <span className="ann-comments__count">{total}</span>}
@@ -268,7 +268,7 @@ export function AnnouncementComments({
             rows={3}
             maxLength={2000}
             disabled={isSubmitting}
-            aria-label="New comment"
+            aria-label={t('aria.newComment')}
           />
           <div className="ann-comments__compose-footer">
             <span className="ann-comments__char-count">{newComment.length}/2000</span>
@@ -288,7 +288,11 @@ export function AnnouncementComments({
       )}
 
       {isLoading && (
-        <div className="ann-comments__loading" aria-live="polite" aria-label="Loading comments">
+        <div
+          className="ann-comments__loading"
+          aria-live="polite"
+          aria-label={t('aria.loadingComments')}
+        >
           <div className="view-announcement__spinner" />
         </div>
       )}

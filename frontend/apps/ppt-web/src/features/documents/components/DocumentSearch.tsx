@@ -13,6 +13,7 @@ import {
   useDocumentSearch,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DocumentSearchResult as SearchResultCard } from './DocumentSearchResult';
 
 /** Human-readable labels for the audience filter chips (7a-3). */
@@ -35,6 +36,7 @@ export function DocumentSearch({
   buildingId,
   onSelectDocument,
 }: DocumentSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -203,7 +205,7 @@ export function DocumentSearch({
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="date-input"
-              aria-label="From date"
+              aria-label={t('aria.fromDate')}
             />
             <span>to</span>
             <input
@@ -211,7 +213,7 @@ export function DocumentSearch({
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               className="date-input"
-              aria-label="To date"
+              aria-label={t('aria.toDate')}
             />
           </div>
         </div>

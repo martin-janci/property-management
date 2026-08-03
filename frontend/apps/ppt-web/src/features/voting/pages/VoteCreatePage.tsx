@@ -16,6 +16,7 @@ import {
   useCreateVote,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components';
 import { QUESTION_TYPE_LABELS, QUORUM_TYPE_LABELS } from '../types';
 
@@ -58,6 +59,7 @@ function blankQuestion(): DraftQuestion {
 }
 
 export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: buildingsData } = useBuildings();
   const buildingId = buildingsData?.items?.[0]?.id ?? '';
@@ -294,7 +296,7 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
                           type="button"
                           onClick={() => removeOption(q.key, o.id)}
                           className="text-gray-400 hover:text-red-500"
-                          aria-label="Remove option"
+                          aria-label={t('aria.removeOption')}
                         >
                           ✕
                         </button>

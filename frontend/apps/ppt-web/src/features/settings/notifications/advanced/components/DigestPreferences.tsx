@@ -14,6 +14,7 @@ import {
   FREQUENCY_DESCRIPTIONS,
   FREQUENCY_LABELS,
 } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface DigestPreferencesProps {
   config: DigestConfig;
@@ -22,6 +23,7 @@ interface DigestPreferencesProps {
 }
 
 export function DigestPreferences({ config, loading, onUpdate }: DigestPreferencesProps) {
+  const { t } = useTranslation();
   const handleCategoryToggle = (category: NotificationCategory) => {
     const newCategories = config.includeCategories.includes(category)
       ? config.includeCategories.filter((c) => c !== category)
@@ -63,7 +65,7 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
           type="button"
           role="switch"
           aria-checked={config.enabled}
-          aria-label="Enable notification digest"
+          aria-label={t('aria.enableDigest')}
           onClick={() => onUpdate({ enabled: !config.enabled })}
           disabled={loading}
           className={`

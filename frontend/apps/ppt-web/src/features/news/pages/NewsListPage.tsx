@@ -4,12 +4,14 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOrganization } from '../../../hooks';
 import { NewsArticleCard } from '../components';
 import type { ArticleStatus, ArticleSummary } from '../types';
 
 export function NewsListPage() {
+  const { t } = useTranslation();
   const { organizationId } = useOrganization();
   const navigate = useNavigate();
   const [articles, setArticles] = useState<ArticleSummary[]>([]);
@@ -205,14 +207,14 @@ export function NewsListPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-input"
-          aria-label="Search articles"
+          aria-label={t('aria.searchArticles')}
         />
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as ArticleStatus | '')}
           className="status-filter"
-          aria-label="Filter by status"
+          aria-label={t('aria.filterByStatus')}
         >
           <option value="">All Statuses</option>
           <option value="draft">Drafts</option>

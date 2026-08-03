@@ -3,6 +3,7 @@
  * Epic 4: Fault Reporting & Resolution (UC-03)
  */
 import './FaultCard.css';
+import { useTranslation } from 'react-i18next';
 
 export type FaultStatus =
   | 'new'
@@ -98,6 +99,7 @@ const priorityLabels: Record<FaultPriority, string> = {
 };
 
 export function FaultCard({ fault, onView, onEdit, onTriage, onDelete }: FaultCardProps) {
+  const { t } = useTranslation();
   const canEdit = fault.status === 'new';
   const canTriage = fault.status === 'new';
   const canDelete = fault.status === 'new';
@@ -117,7 +119,7 @@ export function FaultCard({ fault, onView, onEdit, onTriage, onDelete }: FaultCa
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                aria-label="Urgent"
+                aria-label={t('aria.urgent')}
               >
                 <title>Urgent</title>
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />

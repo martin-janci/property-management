@@ -6,6 +6,7 @@
  */
 
 import type { CommunityPost, PostType } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface PostCardProps {
   post: CommunityPost;
@@ -125,6 +126,7 @@ export function PostCard({
   isCurrentUser,
   isLiking,
 }: PostCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
       {/* Header */}
@@ -161,7 +163,7 @@ export function PostCard({
             <button
               type="button"
               className="p-1 text-gray-400 hover:text-gray-600 rounded"
-              aria-label="Post options menu"
+              aria-label={t('aria.postOptionsMenu')}
             >
               <svg
                 className="w-5 h-5"

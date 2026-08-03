@@ -13,6 +13,7 @@ import type {
   UpdateUnitRequest,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUnit, useUnitMutations, useUnits } from '../hooks';
 import { OCCUPANCY_OPTIONS, UNIT_TYPE_OPTIONS, UnitForm, type UnitFormValues } from './UnitForm';
 
@@ -41,6 +42,7 @@ function errorMessage(error: unknown): string | null {
 }
 
 export function UnitsSection({ buildingId }: UnitsSectionProps) {
+  const { t } = useTranslation();
   const [showArchived, setShowArchived] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
@@ -284,7 +286,7 @@ export function UnitsSection({ buildingId }: UnitsSectionProps) {
             type="button"
             className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
             onClick={() => setUnitToArchive(null)}
-            aria-label="Cancel"
+            aria-label={t('aria.cancel')}
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">

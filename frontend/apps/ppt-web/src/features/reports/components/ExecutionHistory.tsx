@@ -6,6 +6,7 @@
 
 import type { ReportExecution, ReportExecutionStatus } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type ExecutionFilters, HistoryFilters } from './HistoryFilters';
 
 interface ExecutionHistoryProps {
@@ -102,6 +103,7 @@ export function ExecutionHistory({
   onRetry,
   onClose,
 }: ExecutionHistoryProps) {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<ExecutionFilters>({});
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
@@ -166,7 +168,7 @@ export function ExecutionHistory({
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
-              aria-label="Close"
+              aria-label={t('aria.close')}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

@@ -25,6 +25,7 @@ import {
 } from '@ppt/api-client';
 import type * as React from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   CategoryPreferenceCard,
@@ -36,6 +37,7 @@ import {
 type ActiveTab = 'categories' | 'schedule' | 'grouping';
 
 export function AdvancedNotificationSettingsPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('categories');
   const [updateError, setUpdateError] = useState<string | null>(null);
 
@@ -237,7 +239,7 @@ export function AdvancedNotificationSettingsPage() {
 
       {/* Tab navigation */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+        <nav className="-mb-px flex space-x-8" aria-label={t('aria.tabs')}>
           {tabs.map((tab) => (
             <button
               key={tab.id}

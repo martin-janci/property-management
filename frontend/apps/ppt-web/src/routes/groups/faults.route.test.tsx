@@ -227,9 +227,10 @@ describe('FaultsPageRoute API wiring (gap-79-1)', () => {
 
     renderFaultsRoute();
 
-    // The stats bar is rendered as a div with aria-label="Fault statistics".
-    // Use findByLabelText to locate the container by its accessible label.
-    const statsBar = await screen.findByLabelText('Fault statistics', {}, { timeout: 5000 });
+    // The stats bar is rendered as a div whose aria-label reads from i18n
+    // (t('aria.faultStatistics')). This suite mocks react-i18next so t()
+    // echoes the key, so locate the container by that resolved key.
+    const statsBar = await screen.findByLabelText('aria.faultStatistics', {}, { timeout: 5000 });
     expect(statsBar).toBeInTheDocument();
     expect(statsBar).toHaveTextContent('42');
     expect(statsBar).toHaveTextContent('30');

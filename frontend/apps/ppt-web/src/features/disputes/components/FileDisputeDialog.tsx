@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { categoryLabels, type DisputeCategory } from './DisputeCard';
 
 export interface FileDisputeData {
@@ -33,6 +34,7 @@ export function FileDisputeDialog({
   onSubmit,
   onClose,
 }: FileDisputeDialogProps) {
+  const { t } = useTranslation();
   const [category, setCategory] = useState<DisputeCategory>('other');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -83,7 +85,7 @@ export function FileDisputeDialog({
         className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
         onClick={handleClose}
         onKeyDown={(e) => e.key === 'Escape' && handleClose()}
-        aria-label="Close dialog"
+        aria-label={t('aria.closeDialog')}
       />
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">

@@ -270,7 +270,7 @@ export function MessagesPage({
 
       {/* Filter tabs */}
       <div className="mb-4 border-b border-gray-200">
-        <nav className="-mb-px flex gap-4" aria-label="Tabs">
+        <nav className="-mb-px flex gap-4" aria-label={t('aria.tabs')}>
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -375,7 +375,7 @@ export function MessagesPage({
             }}
             role="button"
             tabIndex={0}
-            aria-label="Close dialog"
+            aria-label={t('aria.closeDialog')}
           />
           <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
@@ -415,7 +415,7 @@ export function MessagesPage({
             }}
             role="button"
             tabIndex={0}
-            aria-label="Close dialog"
+            aria-label={t('aria.closeDialog')}
           />
           <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">

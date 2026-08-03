@@ -20,6 +20,7 @@ import type { DocumentProps } from 'react-pdf';
 import { Document as PdfDocument, Page as PdfPage, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { useTranslation } from 'react-i18next';
 
 // LoadedPdf is the type of the `pdf` argument in onLoadSuccess.
 // react-pdf re-exports it internally but does not expose it from the package
@@ -78,6 +79,7 @@ export function PdfPreview({ documentId, isPdf = true, className }: PdfPreviewPr
 // --- Inner renderer (only mounted once in-viewport) ---
 
 function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean }) {
+  const { t } = useTranslation();
   const { data: urlData, isLoading: urlLoading, error: urlError } = usePreviewUrl(documentId);
 
   const [numPages, setNumPages] = useState<number>(0);
@@ -160,13 +162,13 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
 
   return (
     <div className="pdf-renderer">
-      <div className="pdf-toolbar" role="toolbar" aria-label="PDF navigacia">
+      <div className="pdf-toolbar" role="toolbar" aria-label={t('aria.pdfNavigation')}>
         <div className="pdf-toolbar-group">
           <button
             type="button"
             onClick={goToPrev}
             disabled={pageNumber <= 1}
-            aria-label="Predchadzajuca strana"
+            aria-label={t('aria.previousPage')}
             className="pdf-icon-btn"
           >
             <svg
@@ -190,7 +192,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
             type="button"
             onClick={goToNext}
             disabled={pageNumber >= numPages}
-            aria-label="Nasledujuca strana"
+            aria-label={t('aria.nextPage')}
             className="pdf-icon-btn"
           >
             <svg
@@ -212,7 +214,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
             type="button"
             onClick={zoomOut}
             disabled={scale <= 0.5}
-            aria-label="Zmensit"
+            aria-label={t('aria.zoomOut')}
             className="pdf-icon-btn"
           >
             <svg
@@ -232,7 +234,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
           <button
             type="button"
             onClick={zoomReset}
-            aria-label="Obnovit priblizenie"
+            aria-label={t('aria.resetZoom')}
             className="pdf-zoom-label"
           >
             {Math.round(scale * 100)}%
@@ -241,7 +243,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
             type="button"
             onClick={zoomIn}
             disabled={scale >= 2.0}
-            aria-label="Zvacsi"
+            aria-label={t('aria.zoomIn')}
             className="pdf-icon-btn"
           >
             <svg
@@ -268,7 +270,7 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
         </div>
       )}
 
-      <div className="pdf-canvas-area" aria-label="PDF nahled">
+      <div className="pdf-canvas-area" aria-label={t('aria.pdfPreview')}>
         <PdfDocument
           file={urlData.url}
           onLoadSuccess={handleDocumentLoadSuccess}

@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CountryFlag } from './CountrySelector';
 
 // Progress animation constants
@@ -47,6 +48,7 @@ export function SubmissionPreviewModal({
   periodEnd,
   isSubmitting = false,
 }: SubmissionPreviewModalProps) {
+  const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -99,7 +101,7 @@ export function SubmissionPreviewModal({
           type="button"
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-pointer"
           onClick={onClose}
-          aria-label="Close modal"
+          aria-label={t('aria.closeModal')}
         />
         <div className="relative w-full max-w-3xl rounded-lg bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">

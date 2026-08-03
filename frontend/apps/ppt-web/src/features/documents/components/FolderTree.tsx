@@ -51,6 +51,7 @@ function FolderNode({
   editingId,
   setEditingId,
 }: FolderNodeProps) {
+  const { t } = useTranslation();
   const { folder, children, document_count } = node;
   const [expanded, setExpanded] = useState(depth === 0);
   const [editValue, setEditValue] = useState(folder.name);
@@ -143,7 +144,7 @@ function FolderNode({
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleEditCommit}
             onKeyDown={handleEditKeyDown}
-            aria-label="Premenúj priečinok"
+            aria-label={t('aria.renameFolder')}
           />
         ) : (
           <button
@@ -165,7 +166,7 @@ function FolderNode({
 
         {/* Action buttons (hover) */}
         {showActions && !isEditing && (
-          <div className="folder-row__actions" role="group" aria-label="Akcie priečinka">
+          <div className="folder-row__actions" role="group" aria-label={t('aria.folderActions')}>
             {canAddChild && (
               <button
                 type="button"
@@ -175,7 +176,7 @@ function FolderNode({
                   onAddChild(folder.id, depth);
                 }}
                 title="Nový podpriečinok"
-                aria-label="Nový podpriečinok"
+                aria-label={t('aria.newSubfolder')}
               >
                 <svg
                   width="13"
@@ -196,7 +197,7 @@ function FolderNode({
               className="folder-row__action-btn"
               onClick={handleEditStart}
               title="Premenovať"
-              aria-label="Premenovať priečinok"
+              aria-label={t('aria.renameFolder')}
             >
               <svg
                 width="13"
@@ -216,7 +217,7 @@ function FolderNode({
               className="folder-row__action-btn folder-row__action-btn--danger"
               onClick={() => onDelete(folder.id, folder.name)}
               title="Odstrániť"
-              aria-label="Odstrániť priečinok"
+              aria-label={t('aria.deleteFolder')}
             >
               <svg
                 width="13"
@@ -268,6 +269,7 @@ interface NewFolderRowProps {
 }
 
 function NewFolderRow({ parentId: _parentId, depth, onCommit, onCancel }: NewFolderRowProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -314,7 +316,7 @@ function NewFolderRow({ parentId: _parentId, depth, onCommit, onCancel }: NewFol
             else onCancel();
           }}
           onKeyDown={handleKeyDown}
-          aria-label="Názov nového priečinka"
+          aria-label={t('aria.newFolderName')}
         />
         <button
           type="button"
@@ -323,7 +325,7 @@ function NewFolderRow({ parentId: _parentId, depth, onCommit, onCancel }: NewFol
             const trimmed = name.trim();
             if (trimmed) onCommit(trimmed);
           }}
-          aria-label="Vytvoriť priečinok"
+          aria-label={t('aria.createFolder')}
         >
           <svg
             width="13"
@@ -341,7 +343,7 @@ function NewFolderRow({ parentId: _parentId, depth, onCommit, onCancel }: NewFol
           type="button"
           className="folder-row__action-btn folder-row__action-btn--danger"
           onClick={onCancel}
-          aria-label="Zrušiť"
+          aria-label={t('aria.cancel')}
         >
           <svg
             width="13"
@@ -370,12 +372,13 @@ interface DeleteDialogProps {
 }
 
 function DeleteDialog({ folderName, onConfirm, onCancel }: DeleteDialogProps) {
+  const { t } = useTranslation();
   return (
     <div
       className="folder-delete-dialog"
       role="dialog"
       aria-modal="true"
-      aria-label="Odstrániť priečinok"
+      aria-label={t('aria.deleteFolder')}
     >
       <div className="folder-delete-dialog__box">
         <h3 className="folder-delete-dialog__title">Odstrániť priečinok</h3>
@@ -540,7 +543,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
             className="folder-tree__add-root"
             onClick={() => setNewFolder({ parentId: null, depth: 0 })}
             title="Nový priečinok"
-            aria-label="Nový koreňový priečinok"
+            aria-label={t('aria.newRootFolder')}
             disabled={createFolder.isPending}
           >
             <svg
@@ -584,7 +587,11 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
 
       {/* Loading */}
       {isLoading && (
-        <ul className="folder-tree__skeleton" aria-busy="true" aria-label="Načítavanie priečinkov">
+        <ul
+          className="folder-tree__skeleton"
+          aria-busy="true"
+          aria-label={t('aria.loadingFolders')}
+        >
           {Array.from({ length: 4 }).map((_, i) => (
             <li
               key={i}
@@ -621,7 +628,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
 
       {/* Tree */}
       {!isLoading && !error && (tree.length > 0 || newFolder) && (
-        <ul className="folder-tree__list" aria-label="Priečinky dokumentov">
+        <ul className="folder-tree__list" aria-label={t('aria.documentFolders')}>
           {tree.map((node) => (
             <FolderNode
               key={node.folder.id}

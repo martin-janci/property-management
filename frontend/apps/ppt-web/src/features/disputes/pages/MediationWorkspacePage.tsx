@@ -433,7 +433,7 @@ export function MediationWorkspacePage({
         <div className="lg:col-span-3">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="border-b border-gray-200 px-6">
-              <nav className="flex gap-6" aria-label="Workspace tabs">
+              <nav className="flex gap-6" aria-label={t('aria.workspaceTabs')}>
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}

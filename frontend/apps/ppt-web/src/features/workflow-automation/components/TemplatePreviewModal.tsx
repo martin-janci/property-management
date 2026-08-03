@@ -6,6 +6,7 @@
  */
 
 import type { AutomationTemplate } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface TemplatePreviewModalProps {
   template: AutomationTemplate;
@@ -32,6 +33,7 @@ const categoryIcons: Record<string, string> = {
 };
 
 export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePreviewModalProps) {
+  const { t } = useTranslation();
   const categoryColor = categoryColors[template.category] ?? categoryColors.general;
   const categoryIcon = categoryIcons[template.category] ?? categoryIcons.general;
 
@@ -64,7 +66,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
-              aria-label="Close template preview"
+              aria-label={t('aria.closeTemplatePreview')}
             >
               <svg
                 className="w-6 h-6"

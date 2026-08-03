@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface PendingEvidence {
   /** Unique stable ID generated client-side */
@@ -49,6 +50,7 @@ interface EvidenceUploaderProps {
 }
 
 export function EvidenceUploader({ files, onChange, disabled = false }: EvidenceUploaderProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   // Track all created object URLs so we can revoke them on unmount only.
@@ -162,7 +164,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
         className="sr-only"
         disabled={disabled}
         onChange={handleInputChange}
-        aria-label="Add evidence files"
+        aria-label={t('aria.addEvidenceFiles')}
       />
 
       {/* Drop zone */}
@@ -180,7 +182,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          aria-label="Drop evidence files here or click to browse"
+          aria-label={t('aria.dropEvidenceFiles')}
           className={[
             'relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer',
             'transition-colors duration-200',
@@ -220,7 +222,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
 
       {/* File list */}
       {files.length > 0 && (
-        <ul className="space-y-2" aria-label="Evidence files">
+        <ul className="space-y-2" aria-label={t('aria.evidenceFiles')}>
           {files.map((item) => (
             <li
               key={item.id}
@@ -283,7 +285,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
                 {item.status === 'uploading' && (
                   <div
                     className="w-4 h-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
-                    aria-label="Uploading…"
+                    aria-label={t('aria.uploading')}
                   />
                 )}
                 {item.status === 'uploaded' && (
@@ -292,7 +294,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    aria-label="Uploaded"
+                    aria-label={t('aria.uploaded')}
                   >
                     <path
                       strokeLinecap="round"

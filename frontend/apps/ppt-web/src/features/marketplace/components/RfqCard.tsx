@@ -3,6 +3,7 @@
  * Epic 68: Service Provider Marketplace (Story 68.3)
  */
 
+import { useTranslation } from 'react-i18next';
 import type { ServiceCategory } from './ProviderCard';
 
 export type RfqStatus = 'draft' | 'sent' | 'quotes_received' | 'awarded' | 'cancelled' | 'expired';
@@ -121,6 +122,7 @@ function getDeadlineStatus(deadline?: string): { text: string; urgent: boolean }
 }
 
 export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqCardProps) {
+  const { t } = useTranslation();
   const canEdit = rfq.status === 'draft';
   const canCompare = rfq.quotesCount > 0;
   const canCancel = rfq.status === 'draft' || rfq.status === 'sent';
@@ -137,7 +139,7 @@ export function RfqCard({ rfq, onView, onEdit, onCompareQuotes, onCancel }: RfqC
                   className="w-5 h-5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
-                  aria-label="Urgent"
+                  aria-label={t('aria.urgent')}
                 >
                   <title>Urgent</title>
                   <path

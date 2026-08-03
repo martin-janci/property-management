@@ -8,6 +8,7 @@
 
 import type { UnitOccupancyStatus, UnitType } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /** Values emitted by the form on submit (decimals are strings, matching the API). */
 export interface UnitFormValues {
@@ -61,6 +62,7 @@ export function UnitForm({
   onSubmit,
   onClose,
 }: UnitFormProps) {
+  const { t } = useTranslation();
   const [designation, setDesignation] = useState(initial?.designation ?? '');
   const [entrance, setEntrance] = useState(initial?.entrance ?? '');
   const [floor, setFloor] = useState(String(initial?.floor ?? 0));
@@ -121,7 +123,7 @@ export function UnitForm({
         className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
         onClick={onClose}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
-        aria-label="Close dialog"
+        aria-label={t('aria.closeDialog')}
       />
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-lg bg-white rounded-lg shadow-xl">
