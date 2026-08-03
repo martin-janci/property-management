@@ -6232,7 +6232,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
@@ -6248,7 +6248,11 @@
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
       "plan": null,
-      "reconciled": null
+      "reconciled": {
+        "at": "2026-08-03T20:04:40Z",
+        "assignment_status": "merged",
+        "pr_number": 2637
+      }
     },
     {
       "id": "code-review-mobile-rn-offline-sync-false-complete",
