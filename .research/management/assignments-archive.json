@@ -2305,6 +2305,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
+      "branch": "auto-impl/code-review-mobile-rn-hardcoded-empty-er-639932af",
+      "status": "merged",
+      "claimed_at": "2026-08-03T18:07:48Z",
+      "last_updated": "2026-08-03T22:18:47Z",
+      "status_changed_at": "2026-08-03T22:18:47Z",
+      "pr_number": 2642,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2642",
+      "merged_at": "2026-08-03T22:18:47Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2642 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=i18n empty/error/loading across 15 mobile screens + 6 locales + FaultsList test; verify green; JSONs blob-sha verified; drift=frontend/mobile (expected)",
+      "reviewer_summary": "verdict=approve head_oid=58555eddc6784b96626aaf102bb5739f93f2908c note=prior-diacritics-fixed-i18n-correct-scope-drift-benign-CI-green",
+      "last_reviewed_oid": "58555eddc6784b96626aaf102bb5739f93f2908c",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-03T22:17:21Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-offline-sync-false-complete",
       "branch": "auto-impl/code-review-mobile-rn-offline-sync-false-157cfa71",
       "status": "merged",
@@ -2523,6 +2545,50 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+      "branch": "auto-impl/code-review-ppt-web-core-rentals-auth-no-bf961d7e",
+      "status": "merged",
+      "claimed_at": "2026-08-03T20:08:22Z",
+      "last_updated": "2026-08-03T22:18:47Z",
+      "status_changed_at": "2026-08-03T22:18:47Z",
+      "pr_number": 2648,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2648",
+      "merged_at": "2026-08-03T22:18:47Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2648 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=guarded rentals mutation auth via requireRentalsAuthHeaders (typed AuthError SESSION_EXPIRED not TypeError) + onError logout redirect; 6-case regression test; VERIFY OK (2135 tests)",
+      "reviewer_summary": "verdict=approve head_oid=9a6b971c0bc88430bbf039bd0e4a2fd393b9abeb note=all-auth!-removed-typed-AuthError-guard-onError-logout-verified-scopedrift-benign",
+      "last_reviewed_oid": "9a6b971c0bc88430bbf039bd0e4a2fd393b9abeb",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T22:17:21Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-route-error-boundary-gap",
+      "branch": "auto-impl/code-review-ppt-web-core-route-error-bou-f2b1f5f5",
+      "status": "merged",
+      "claimed_at": "2026-08-03T20:08:22Z",
+      "last_updated": "2026-08-03T22:18:47Z",
+      "status_changed_at": "2026-08-03T22:18:47Z",
+      "pr_number": 2646,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2646",
+      "merged_at": "2026-08-03T22:18:47Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2646 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=reused ErrorBoundary at route outlet in App.tsx (below nav); 3 regression tests pass; verify green (2132 tests)",
+      "reviewer_summary": "verdict=approve head_oid=f020772ee5961b735b95639bee52c64ac995646b note=reuses-existing-ErrorBoundary-shell-survives-tests-pass-CI-green",
+      "last_reviewed_oid": "f020772ee5961b735b95639bee52c64ac995646b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T22:17:21Z"
     },
     {
       "task_id": "code-review-ppt-web-core-ws-token-rotation-stale",
@@ -10239,6 +10305,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "screen-map-drift-pr-2636-reality",
+      "branch": "auto-impl/screen-map-drift-pr-2636-reality-a18eebd5",
+      "status": "merged",
+      "claimed_at": "2026-08-03T20:08:22Z",
+      "last_updated": "2026-08-03T22:18:47Z",
+      "status_changed_at": "2026-08-03T22:18:47Z",
+      "pr_number": 2644,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2644",
+      "merged_at": "2026-08-03T22:18:47Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2644 status=done specialist=generic scope_drift=true code_reuse_warn=none note=synced agency-import+agency-inquiries to PR#2636 i18n; screens validate strict clean (0/0); docs-only VERIFY OK",
+      "reviewer_summary": "verdict=approve head_oid=b5e4f8eda4ae7d1bb05e56be1b06af125fbc8a53 note=docs-only-screen-map-sync-verified-accurate-scope-drift-intended",
+      "last_reviewed_oid": "b5e4f8eda4ae7d1bb05e56be1b06af125fbc8a53",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T22:17:21Z"
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -11059,5 +11147,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-03T20:27:32Z"
+  "archived_at": "2026-08-03T22:20:34Z"
 }
