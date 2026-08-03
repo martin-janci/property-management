@@ -2505,6 +2505,28 @@
       "merge_attempted_at": "2026-07-22T22:21:44Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-aria-label-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-aria-label-i18n-9e5a6cf1",
+      "status": "merged",
+      "claimed_at": "2026-08-03T08:10:23Z",
+      "last_updated": "2026-08-03T12:13:50Z",
+      "status_changed_at": "2026-08-03T12:13:50Z",
+      "pr_number": 2635,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2635",
+      "merged_at": "2026-08-03T12:13:22Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2635 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=104 aria-labels across 51 ppt-web components moved to aria.* i18n (6 locales); verify green 2123 tests; drift=owner-hint pm-backend but task is frontend",
+      "reviewer_summary": "verdict=approve head_oid=1e5a35a8c144271edef1f06c299ecb3b2037828c note=research-contamination-resolved; ppt-web-only aria i18n, 6-locale parity test, CI green",
+      "last_reviewed_oid": "1e5a35a8c144271edef1f06c299ecb3b2037828c",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-03T12:13:50Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-propinput-json-coerce",
       "branch": "auto-impl/code-review-ppt-web-ui-propinput-json-co-3e6b6c2e",
       "status": "merged",
@@ -10927,5 +10949,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-03T10:16:35Z"
+  "archived_at": "2026-08-03T12:14:09Z"
 }

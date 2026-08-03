@@ -1,27 +1,4 @@
 {
-  "generated": "2026-08-03T10:16:34Z",
-  "assignments": [
-    {
-      "task_id": "code-review-ppt-web-ui-aria-label-i18n",
-      "branch": "auto-impl/code-review-ppt-web-ui-aria-label-i18n-9e5a6cf1",
-      "status": "review",
-      "claimed_at": "2026-08-03T08:10:23Z",
-      "last_updated": "2026-08-03T10:13:52Z",
-      "status_changed_at": "2026-08-03T08:42:31Z",
-      "pr_number": 2635,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2635",
-      "merged_at": null,
-      "specialist": "react-web",
-      "implementer_summary": "pr=2635 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=104 aria-labels across 51 ppt-web components moved to aria.* i18n (6 locales); verify green 2123 tests; drift=owner-hint pm-backend but task is frontend",
-      "reviewer_summary": "verdict=changes head_oid=687e9d86d1b620d591c9796c0b72b6b1e3cdb150 note=aria-i18n-solid-but-3-stale-.research-files(assignments.json,state.json,signals/2026-08-03-mobile-rn-tier1d.json)-contaminate-feature-branch-single-writer-violation-must-revert",
-      "last_reviewed_oid": "687e9d86d1b620d591c9796c0b72b6b1e3cdb150",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    }
-  ]
+  "generated": "2026-08-03T12:13:50Z",
+  "assignments": []
 }

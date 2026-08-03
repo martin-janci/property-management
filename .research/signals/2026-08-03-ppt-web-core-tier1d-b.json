@@ -1,0 +1,56 @@
+{
+  "generated": "2026-08-03",
+  "segment": "ppt-web-core",
+  "source": "rotating-expert-review",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Tier-1d demand-driven refill (backlog exhausted, no CHURN_FILES provided). review_cursor.ppt-web-core=2026-07-24 is the oldest of all 8 segments (mobile-native-kmp 2026-07-27, api-handlers 2026-07-29 next); backlog.json carries 0 OPEN code-review-finding rows for ppt-web-core, so no saturation-skip. A sibling Tier-1d generator emitted 2026-08-03-ppt-web-core-tier1d.json earlier this cycle (findings: logout-cache-purge-gap, route-error-boundary-gap); per the single-writer rule that file is NOT modified and this file uses a distinct name. All three findings below were cross-checked against that same-day file AND every prior ppt-web-core finding (authctx-init-stale-role, ws-token-rotation-stale, ws-ungated-console, apiclient-never-configured/no-token, api-retry-nonidempotent, api-eager-default-export, errorhandler-i18n-gap, perf-console-logs, perf-listener-leak, sessions-cast, logout-cache-purge-gap, route-error-boundary-gap) and are net-new and non-overlapping. Re-verified clean this pass: lib/websocket.ts + hooks/usePerformanceMetrics.ts console calls are all import.meta.env.DEV-gated; every JSON.parse in AuthContext/websocket is wrapped in try/catch; lib/api.ts refresh/retry path is sound.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-mutation-no-onerror",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx — all four useMutation hooks in the rentals route wrappers omit onError: createConnection (rentals.tsx:258), syncPlatforms (:272), checkIn (:373), checkOut (:385). Each defines only onSuccess (queryClient.invalidateQueries). A failed platform connect/sync or booking check-in/check-out therefore produces NO user-facing feedback — the mutationFn rejects, the query cache is not invalidated, and the UI silently stays as-is; the user cannot tell the action failed vs. is still pending.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx — PaymentManagementPageRoute's matchMutation (financial.tsx:296, manual payment->invoice allocation, onMatch) and autoMatchMutation (:305, bulk auto-match, onAutoMatch) also define only `onSuccess: invalidatePayments` with no onError. A failed allocation/auto-match on a money-movement action gives the manager no error toast.",
+        "This is inconsistent with the established convention in the SAME file: sendInvoiceMutation (financial.tsx:169) and downloadPdfMutation (:191) both pair onSuccess with an onError that calls showToast({ type: 'error', ... }). The six mutations above were simply not given the matching error branch. Fix: add an onError handler to each (surface a showToast error, mirroring sendInvoiceMutation:179-186), so mutation failures on these user-initiated write actions are reported rather than swallowed."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:169-176 — useRentalsAuth() returns `{ authorization, xTenantId } | null` and explicitly returns null when `!token || !user?.organizationId` (e.g. access token expired / cleared mid-session, since ppt-web is an SPA that does not reload on token loss).",
+        "The useQuery call sites guard this correctly with `enabled: !!auth` (rentals.tsx: reservations query :182 enabled at :190, connections query :192 enabled) so the queryFn's `auth!.authorization` (:186-187,:197-198) never runs while auth is null. But useMutation has no `enabled` gate: createConnection (:258), syncPlatforms (:272), checkIn (:373) and checkOut (:385) all dereference `auth!.authorization` / `auth!.xTenantId` (:251-252,:262-263,:276-277 and the checkIn/checkOut header blocks) inside mutationFn. If the user triggers one of these actions after the token has been dropped, `auth!` (non-null assertion on an actually-null value) throws a TypeError at call time instead of yielding a clean auth error.",
+        "Fix: null-check auth at the top of each mutationFn (early-return / throw a typed AuthError, or disable the triggering control when `!auth`) rather than relying on the `!` assertion, so a mid-session token loss degrades to a handled error path (and, combined with the onError finding, a toast) instead of an uncaught TypeError. Distinct from prior AuthContext findings — this is the rentals route wrapper's own auth helper usage."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-notfound-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "chore",
+      "evidence": [
+        "Eight route-wrapper 'entity not found' fallbacks render hardcoded English JSX text with no react-i18next `t(...)` wrapping: routes/groups/announcements.tsx:521 & :596 (`<div>Announcement not found</div>`), buildings.tsx:36 (`<div>Building not found</div>`), community.tsx:78 (`<div>Group not found</div>`), faults.tsx:418 & :472 (`<div>Fault not found</div>`), messaging.tsx:172 (`<div>Thread not found</div>`), rentals.tsx:399 (`<div>Booking not found</div>`).",
+        "These are user-facing strings on a real render path (returned when a detail route's id resolves to no entity), so a Slovak/Czech/German user hitting a missing/deleted entity sees untranslated English. The repo standard is i18n via `t('...')` (react-i18next 16, locales sk/cs/de/en) — the same route files use `t()` for their other labels; these fallbacks were left as literals.",
+        "Fix: wrap each in `t('common.notFound', { defaultValue: '<Entity> not found' })` (or per-entity keys) and add the keys to the sk/cs/de/en bundles. Low severity (i18n gap, no functional break)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
