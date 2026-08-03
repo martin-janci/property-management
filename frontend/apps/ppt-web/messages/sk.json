@@ -742,7 +742,15 @@
     "waitBeforeRetry": "Pred opakovaním počkajte.",
     "somethingWentWrong": "Niečo sa pokazilo",
     "unexpectedError": "Ospravedlňujeme sa za nepríjemnosti. Vyskytla sa neočakávaná chyba.",
-    "copyErrorDetailsSupport": "Kopírovať podrobnosti chyby pre podporu"
+    "copyErrorDetailsSupport": "Kopírovať podrobnosti chyby pre podporu",
+    "groupNotFound": "Skupina nebola nájdená",
+    "announcementNotFound": "Oznam nebol nájdený",
+    "threadNotFound": "Konverzácia nebola nájdená",
+    "buildingNotFound": "Budova nebola nájdená",
+    "bookingNotFound": "Rezervácia nebola nájdená",
+    "faultNotFound": "Porucha nebola nájdená",
+    "meterNotFound": "Merač nebol nájdený",
+    "entityNotFound": "{{entity}} sa nenašlo"
   },
   "notifications": {
     "title": "Oznámenia",

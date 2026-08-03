@@ -693,7 +693,15 @@
     "waitBeforeRetry": "Kérem várjon az újrapróbálkozás előtt.",
     "somethingWentWrong": "Valami hiba történt",
     "unexpectedError": "Elnézést kérünk a kellemetlenségért. Váratlan hiba történt.",
-    "copyErrorDetailsSupport": "Hibarészletek másolása az ügyfélszolgálatnak"
+    "copyErrorDetailsSupport": "Hibarészletek másolása az ügyfélszolgálatnak",
+    "groupNotFound": "A csoport nem található",
+    "announcementNotFound": "A közlemény nem található",
+    "threadNotFound": "A beszélgetés nem található",
+    "buildingNotFound": "Az épület nem található",
+    "bookingNotFound": "A foglalás nem található",
+    "faultNotFound": "A hiba nem található",
+    "meterNotFound": "A mérő nem található",
+    "entityNotFound": "{{entity}} nem található"
   },
   "notifications": {
     "title": "Értesítések",
