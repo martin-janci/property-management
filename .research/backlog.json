@@ -6117,21 +6117,28 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2634",
         "rotating-expert-review (tier1d ppt-web-ui)"
       ],
       "evidence": [
         "SessionsPage.tsx:84 — `const sessions = (sessionsQuery.data?.sessions ?? []) as unknown as SessionRow[];` double-casts generated-client response through `unknown` into a local SessionRow interface (:22, 'mirrors the backend SessionInfo DTO'). If backend DTO drifts (isCurrent → is_current, etc.), compile does not catch it; `sessions.some((s) => !s.isCurrent)` silently reads undefined.",
         "Only `as unknown as` boundary cast in the segment. Fix: consume generated client's Session type directly.",
-        "Impact: low — no current runtime bug, but the cast removes the compile-time guard on a security-relevant page (active-session list / revoke)."
+        "Impact: low — no current runtime bug, but the cast removes the compile-time guard on a security-relevant page (active-session list / revoke).",
+        "resolved: PR #2634 merged 2026-08-03T10:14:18Z — type SessionsPage against generated SessionInfo"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx"
       ],
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-03T12:15:00Z",
+        "assignment_status": "merged",
+        "pr_number": 2634
+      }
     },
     {
       "id": "code-review-reality-web-agency-import-i18n",
@@ -6139,15 +6146,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2636",
         "rotating-expert-review (tier1d reality-web)"
       ],
       "evidence": [
         "CsvImport.tsx:329 — hardcoded English strings ('Drag and drop your CSV file', 'Map CSV Columns':411, 'Preview Import':593, 'Importing listings...':898, 'Import Complete!':961); no useTranslations import; portal serves sk/cs/de/en so non-English realtors see raw English.",
         "AgencyListings.tsx:74 — 'Agency Listings' / 'Manage all property listings' + all table headers (:154-162) and 'No listings found':536 hardcoded; file never imports next-intl.",
         "ListingForm.tsx:101 — every field label hardcoded English; same systemic gap in FeedImport.tsx, SyncSchedule.tsx, AgencyBranding.tsx, CrmConnection.tsx, ComparisonView.tsx:153.",
-        "65 sibling components DO use useTranslations — this cluster is an inconsistent omission, not a project-wide choice."
+        "65 sibling components DO use useTranslations — this cluster is an inconsistent omission, not a project-wide choice.",
+        "resolved: PR #2636 merged 2026-08-03T10:14:50Z — i18n the agency/import feature cluster"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/CsvImport.tsx",
@@ -6156,7 +6165,12 @@
       ],
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-03T12:15:00Z",
+        "assignment_status": "merged",
+        "pr_number": 2636
+      }
     },
     {
       "id": "code-review-reality-web-protectedroute-i18n",
@@ -6164,16 +6178,47 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2633",
         "rotating-expert-review (tier1d reality-web)"
       ],
       "evidence": [
         "ProtectedRoute.tsx:26 — 'Loading...' hardcoded English in auth-gating loading state.",
-        "ProtectedRoute.tsx:74 — 'Sign in required' (h2), :75 'Please sign in to access this page.', and 'Sign In' button label hardcoded; wraps every protected route yet does not import next-intl."
+        "ProtectedRoute.tsx:74 — 'Sign in required' (h2), :75 'Please sign in to access this page.', and 'Sign In' button label hardcoded; wraps every protected route yet does not import next-intl.",
+        "resolved: PR #2633 merged 2026-08-03T10:14:29Z — translate ProtectedRoute auth gate"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/auth/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-08-03",
+      "updated_at": "2026-08-03",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-03T12:15:00Z",
+        "assignment_status": "merged",
+        "pr_number": 2633
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2636-reality",
+      "title": "reality-web agency routes touched by PR #2636 without docs/screens/reality/ update — screen-map drift",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2636"
+      ],
+      "evidence": [
+        "PR #2636 (merged 2026-08-03T10:14:50Z) touched frontend/apps/reality-web/src/app/[locale]/agency/import/page.tsx and frontend/apps/reality-web/src/app/[locale]/agency/inquiries/page.tsx",
+        "No docs/screens/reality/*.md file was updated in the same PR — screen docs falling behind route code",
+        "Best-effort heuristic per routine spec — mark as review-candidate; screen-map slugs may not literally match route basenames"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/import/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/inquiries/page.tsx",
+        "docs/screens/reality/"
       ],
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",

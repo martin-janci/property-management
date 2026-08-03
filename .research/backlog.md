@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-03 03:09 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-03 12:15 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -29,7 +29,8 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-ppt-web-ui-accounting-invoice-silent-fail` | AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures | open | 2026-08-03 |  |
+| 2 | bug | `code-review-ppt-web-ui-accounting-invoice-silent-fail` | AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures | done | 2026-08-03 |  |
+| 2 | test-gap | `screen-map-drift-pr-2636-reality` | reality-web agency routes touched by PR #2636 without docs/screens/reality/ update — screen-map drift | open | 2026-08-03 |  |
 | 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-db-error-leak-to-client.md) |
 | 2 | security | `code-review-api-core-idempotency-client-tenant` | Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass | done | 2026-08-02 |  |
 | 2 | test-gap | `test-gap-disputes-kpis-window-validation` | /disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined | dropped | 2026-08-01 |  |
@@ -102,9 +103,9 @@
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | done | 2026-05-23 |  |
 | 1 | bug | `code-review-ppt-web-ui-aria-label-i18n` | ppt-web: 103 hardcoded English aria-label attributes across feature components — screen readers hear English on sk/cs/de | open | 2026-08-03 |  |
-| 1 | bug | `code-review-ppt-web-ui-sessions-double-cast` | SessionsPage double-casts through unknown to hand-maintained interface — defeats API-boundary type-check | open | 2026-08-03 |  |
-| 1 | bug | `code-review-reality-web-agency-import-i18n` | reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations | open | 2026-08-03 |  |
-| 1 | bug | `code-review-reality-web-protectedroute-i18n` | reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de | open | 2026-08-03 |  |
+| 1 | bug | `code-review-ppt-web-ui-sessions-double-cast` | SessionsPage double-casts through unknown to hand-maintained interface — defeats API-boundary type-check | done | 2026-08-03 |  |
+| 1 | bug | `code-review-reality-web-agency-import-i18n` | reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations | done | 2026-08-03 |  |
+| 1 | bug | `code-review-reality-web-protectedroute-i18n` | reality-web ProtectedRoute renders untranslated auth-required gate for sk/cs/de | done | 2026-08-03 |  |
 | 1 | bug | `code-review-reality-server-password-reset-no-transport` | reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent | dropped | 2026-08-01 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-scheduler-2026-07-30` | Churn hotspot: backend/servers/api-server/src/services/scheduler.rs — 347 lines this window (PRs #2567, #2576) | done | 2026-07-30 |  |
 | 1 | refactor | `refactor-churn-hotspot-api-server-layout-tenant-2026-07-30` | Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) | dropped | 2026-07-30 |  |
