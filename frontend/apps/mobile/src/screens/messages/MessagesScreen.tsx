@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
@@ -81,6 +82,7 @@ interface MessagesScreenProps {
 }
 
 export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ThreadListResponse>(
@@ -98,12 +100,12 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     if (!needle) return threads;
-    return threads.filter((t) =>
-      `${threadTitle(t)} ${t.lastMessage?.content ?? ''}`.toLowerCase().includes(needle)
+    return threads.filter((th) =>
+      `${threadTitle(th)} ${th.lastMessage?.content ?? ''}`.toLowerCase().includes(needle)
     );
   }, [threads, search]);
 
-  const unreadTotal = threads.reduce((acc, t) => acc + t.unreadCount, 0);
+  const unreadTotal = threads.reduce((acc, th) => acc + th.unreadCount, 0);
 
   return (
     <View style={s.container}>
@@ -131,21 +133,21 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
       >
         {isLoading ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load messages</Text>
+            <Text style={s.emptyTitle}>{t('messages.loadError')}</Text>
             <Pressable style={s.primaryButton} onPress={() => refetch()}>
-              <Text style={s.primaryButtonText}>Try again</Text>
+              <Text style={s.primaryButtonText}>{t('common.tryAgain')}</Text>
             </Pressable>
           </View>
         ) : filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📬</Text>
-            <Text style={s.emptyTitle}>No conversations</Text>
-            <Text style={s.emptyText}>Start a conversation with your manager or neighbours.</Text>
+            <Text style={s.emptyTitle}>{t('messages.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('messages.emptyText')}</Text>
           </View>
         ) : (
           filtered.map((thread) => {

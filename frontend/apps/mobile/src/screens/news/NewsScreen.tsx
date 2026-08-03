@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
@@ -56,6 +57,7 @@ interface NewsScreenProps {
 }
 
 export function NewsScreen({ onNavigate }: NewsScreenProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | NewsArticle['category']>('all');
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiNewsListResponse>(
@@ -113,18 +115,18 @@ export function NewsScreen({ onNavigate }: NewsScreenProps) {
       >
         {isLoading ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load news</Text>
+            <Text style={s.emptyTitle}>{t('news.loadError')}</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📰</Text>
-            <Text style={s.emptyTitle}>Nothing new</Text>
-            <Text style={s.emptyText}>Check back later for fresh updates.</Text>
+            <Text style={s.emptyTitle}>{t('news.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('news.emptyText')}</Text>
           </View>
         ) : (
           filtered.map((article) => (

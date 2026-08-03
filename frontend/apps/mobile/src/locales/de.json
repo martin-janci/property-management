@@ -16,7 +16,8 @@
     "ok": "OK",
     "search": "Suchen",
     "refresh": "Aktualisieren",
-    "submit": "Absenden"
+    "submit": "Absenden",
+    "tryAgain": "Erneut versuchen"
   },
   "tabs": {
     "home": "Startseite",
@@ -143,13 +144,19 @@
     "queuedMessage": "Sie sind offline. Ihre Meldung wurde gespeichert und wird automatisch synchronisiert, sobald Sie wieder online sind.",
     "queuedOnErrorMessage": "Der Server war nicht erreichbar. Ihre Meldung wurde gespeichert und wird automatisch synchronisiert, sobald die Verbindung wiederhergestellt ist.",
     "offlineSubmitHint": "Sie sind offline — diese Meldung wird gespeichert und synchronisiert, sobald Sie wieder online sind.",
-    "submitButtonOffline": "Speichern und später synchronisieren"
+    "submitButtonOffline": "Speichern und später synchronisieren",
+    "loadError": "Störungsmeldungen konnten nicht geladen werden",
+    "emptyTitle": "Keine Störungsmeldungen gefunden",
+    "emptyText": "Alle Probleme wurden behoben"
   },
   "news": {
     "title": "Nachrichten",
     "latest": "Neueste Nachrichten",
     "readMore": "Mehr lesen",
-    "noNews": "Keine Nachrichten verfugbar"
+    "noNews": "Keine Nachrichten verfügbar",
+    "loadError": "Neuigkeiten konnten nicht geladen werden",
+    "emptyTitle": "Nichts Neues",
+    "emptyText": "Schauen Sie später für neue Updates vorbei."
   },
   "voting": {
     "title": "Abstimmung",
@@ -244,7 +251,9 @@
       "noFolders": "Keine anderen Ordner verfuegbar",
       "confirm": "Hierher verschieben",
       "errorTitle": "Ordner konnte nicht verschoben werden"
-    }
+    },
+    "detailLoadError": "Dokument konnte nicht geladen werden",
+    "notFound": "Dokument nicht gefunden"
   },
   "settings": {
     "title": "Einstellungen",
@@ -344,13 +353,15 @@
       "ackDone": "Sie haben diese Ankundigung bestatigt.",
       "ackError": "Bestatigung fehlgeschlagen: {{message}}",
       "publishedAt": "Veroffentlicht: {{date}}"
-    }
+    },
+    "loadError": "Ankündigungen konnten nicht geladen werden"
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",
     "addedMessage": "Widget wurde konfiguriert.",
     "updatedTitle": "Widgets aktualisiert",
-    "updatedMessage": "Alle Widgets wurden aktualisiert."
+    "updatedMessage": "Alle Widgets wurden aktualisiert.",
+    "emptyText": "Noch keine Widgets konfiguriert."
   },
   "permissions": {
     "denied": "Berechtigung verweigert",
@@ -374,7 +385,15 @@
     "savedOffline": "Offline gespeichert",
     "willSyncWhenOnline": "Ihr Stand wird gesendet wenn Sie wieder online sind",
     "offlineMode": "Sie sind offline. Stande werden lokal gespeichert.",
-    "pendingReadings": "Ausstehende Stande"
+    "pendingReadings": "Ausstehende Stände",
+    "loadError": "Zähler konnten nicht geladen werden",
+    "emptyTitle": "Keine Zähler",
+    "emptyText": "Für Ihre Einheit sind noch keine Zähler registriert.",
+    "noUnitTitle": "Keine Einheit verknüpft",
+    "noUnitText": "Zähler werden angezeigt, sobald Ihr Konto mit einer Einheit verknüpft ist.",
+    "detailLoadError": "Zähler konnte nicht geladen werden",
+    "noReadingsTitle": "Noch keine Ablesungen",
+    "noReadingsText": "Reichen Sie Ihre erste Ablesung für diesen Zähler ein."
   },
   "esignature": {
     "title": "Unterschriftsanfrage",
@@ -454,5 +473,44 @@
   "layout": {
     "placeholderTitle": "Abschnitt nicht verfügbar",
     "placeholderBody": "Dieser Abschnitt ist derzeit nicht verfügbar."
+  },
+  "buildings": {
+    "loadError": "Gebäude konnten nicht geladen werden",
+    "emptyTitle": "Keine Gebäude",
+    "emptyText": "Mit Ihrem Konto sind noch keine Immobilien verknüpft."
+  },
+  "messages": {
+    "loadError": "Nachrichten konnten nicht geladen werden",
+    "emptyTitle": "Keine Unterhaltungen",
+    "emptyText": "Beginnen Sie ein Gespräch mit Ihrer Verwaltung oder Ihren Nachbarn.",
+    "threadLoadError": "Unterhaltung konnte nicht geladen werden",
+    "threadEmptyTitle": "Noch keine Nachrichten",
+    "threadEmptyText": "Sagen Sie Hallo, um das Gespräch zu beginnen."
+  },
+  "leases": {
+    "loadError": "Mietverträge konnten nicht geladen werden",
+    "emptyTitle": "Keine Mietverträge",
+    "emptyText": "Sie wurden noch keinem Mietvertrag hinzugefügt.",
+    "detailLoadError": "Mietvertrag konnte nicht geladen werden",
+    "noPayments": "Keine anstehenden Zahlungen geplant.",
+    "notFound": "Mietvertrag nicht gefunden."
+  },
+  "outages": {
+    "loadError": "Störungen konnten nicht geladen werden",
+    "emptyTitle": "Keine Störungen",
+    "emptyText": "Derzeit ist nichts geplant oder aktiv."
+  },
+  "forms": {
+    "loadError": "Formulare konnten nicht geladen werden",
+    "emptyTitle": "Keine Formulare",
+    "emptyText": "Sie haben derzeit keine Formulare auszufüllen."
+  },
+  "neighbors": {
+    "loadError": "Nachbarn konnten nicht geladen werden",
+    "loading": "Nachbarn werden geladen…",
+    "emptyTitle": "Noch keine Nachbarn",
+    "noMatches": "Keine Treffer",
+    "emptyText": "Bewohner, die sich für das Verzeichnis anmelden, erscheinen hier.",
+    "noMatchesText": "Versuchen Sie einen anderen Namen oder eine andere Wohnungsnummer."
   }
 }

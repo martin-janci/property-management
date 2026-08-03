@@ -4,6 +4,7 @@
  * Epic 49 - Story 49.1: Home Screen Widgets
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Platform,
@@ -25,6 +26,7 @@ interface WidgetSettingsScreenProps {
 }
 
 export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) {
+  const { t } = useTranslation();
   const [isSupported, setIsSupported] = useState<boolean | null>(null);
   const [configs, setConfigs] = useState<WidgetConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
           <Text style={styles.title}>Widget Settings</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </View>
     );
@@ -160,10 +162,10 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Active Widgets</Text>
           {configs.length === 0 ? (
-            <Text style={styles.emptyText}>No widgets configured yet.</Text>
+            <Text style={styles.emptyText}>{t('widgets.emptyText')}</Text>
           ) : (
             configs.map((config) => {
-              const meta = availableTypes.find((t) => t.type === config.type);
+              const meta = availableTypes.find((wt) => wt.type === config.type);
               return (
                 <View key={config.id} style={styles.activeWidgetItem}>
                   <View style={styles.widgetInfo}>
