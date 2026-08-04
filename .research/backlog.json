@@ -6319,7 +6319,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (tier1d mobile-rn)"
       ],
@@ -6334,7 +6334,11 @@
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
       "plan": null,
-      "reconciled": null
+      "reconciled": {
+        "at": "2026-08-04T00:07:12Z",
+        "assignment_status": "merged",
+        "pr_number": 2642
+      }
     },
     {
       "id": "code-review-mobile-rn-offline-terminal-drop-dataloss",
@@ -6422,7 +6426,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
@@ -6440,7 +6444,11 @@
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
       "plan": null,
-      "reconciled": null
+      "reconciled": {
+        "at": "2026-08-04T00:07:12Z",
+        "assignment_status": "merged",
+        "pr_number": 2646
+      }
     },
     {
       "id": "code-review-ppt-web-core-mutation-no-onerror",
@@ -6472,7 +6480,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
@@ -6487,7 +6495,11 @@
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
       "plan": null,
-      "reconciled": null
+      "reconciled": {
+        "at": "2026-08-04T00:07:12Z",
+        "assignment_status": "merged",
+        "pr_number": 2648
+      }
     },
     {
       "id": "code-review-ppt-web-core-notfound-i18n-gap",
@@ -6523,7 +6535,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2636"
       ],
@@ -6541,7 +6553,11 @@
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
       "plan": null,
-      "reconciled": null
+      "reconciled": {
+        "at": "2026-08-04T00:07:12Z",
+        "assignment_status": "merged",
+        "pr_number": 2644
+      }
     }
   ]
 }

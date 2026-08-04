@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-03T20:27:32Z",
+  "archived_at": "2026-08-04T00:14:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2122,6 +2122,30 @@
       "gc1_closed": "ghost-noop 2026-07-12T08:38:52Z"
     },
     {
+      "id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
+      "action": "mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-04T00:07:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2642,
+        "merged_at": "2026-08-03T22:18:47Z",
+        "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-offline-sync-false-complete",
       "action": "mobile: useOfflineSupport.processQueue reports isComplete:true after a head-of-line-blocked (halted) sync cycle",
       "owner_role": "pm-backend",
@@ -2328,6 +2352,54 @@
         "commit": "931a316da4d9296016add73e749997081e4e23b5",
         "subject": "code-review-ppt-web-core-authctx-init-stale-role: route AuthContext cold-boot init through refreshTokenInternal (#2553)",
         "at": "2026-07-29T08:06:29Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+      "action": "ppt-web rentals mutations dereference `auth!` non-null — mid-session token loss throws uncaught TypeError instead of handled auth error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-04T00:07:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2648,
+        "merged_at": "2026-08-03T22:18:47Z",
+        "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-error-boundary-gap",
+      "action": "ppt-web has no route-outlet ErrorBoundary — a single stale-chunk lazy() rejection unmounts the entire application shell",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-04T00:07:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2646,
+        "merged_at": "2026-08-03T22:18:47Z",
+        "at": "2026-08-04T00:07:12Z"
       }
     },
     {
@@ -11913,6 +11985,30 @@
         "merged_pr": 2577,
         "merged_at": "2026-07-30T06:19:43Z",
         "at": "2026-07-30T08:11:29Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2636-reality",
+      "action": "docs/screens/reality/agency-import + agency-inquiries out of sync with PR #2636 i18n rewrite",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-08-04T00:07:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2644,
+        "merged_at": "2026-08-03T22:18:47Z",
+        "at": "2026-08-04T00:07:12Z"
       }
     },
     {
