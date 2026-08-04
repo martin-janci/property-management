@@ -1243,10 +1243,23 @@ ARCHIVED_IDS=$(jq -r '.assignments[]
 active_stems = {stem(r.task_id) for r in assignments
                 if r.status in ("in-progress", "review", "quarantined")}
 
+# MOBILE_NATIVE_GATED = the set of open action-list ids whose work is
+# mobile-native/KMP-owned and therefore STRUCTURALLY UNLANDABLE in the cloud
+# runner (issue #2652 — the `mobile-native/` verify gate `./gradlew
+# spotlessCheck test` fails at config: AGP resolves from dl.google.com, which
+# the egress proxy 403-denies). Claiming one burns a slot + an implementer
+# subagent that can only ever return partial/blocked. This is the claim-time
+# analogue of the Phase 5.5 `awaiting-macos-build` PR gate. The predicate is a
+# deterministic shell helper (id-token OR pure-mobile-native plan Files scope);
+# see the "Mobile-native / KMP claim-time gate" subsection below.
+MOBILE_NATIVE_GATED=$(.research/mobile-native-gate.sh \
+  --action-list .research/management/action-list.json | cut -f1 | sort -u)
+
 candidates = [c for c in action-list
               if c.status == "open"
               and c.id not in active_ids
               and c.id not in ARCHIVED_IDS                  # exact-id archive check (incl. failed — issue #1739 #3)
+              and c.id not in MOBILE_NATIVE_GATED           # issue #2652: skip KMP/mobile-native — unlandable in cloud
               and (c.get("retry_of")                        # retry re-mint rows (Tier 1c) EXEMPT from the stem-aware
                    or stem(c.id) not in {stem(t) for t in ARCHIVED_IDS})   # archive check — their stem matches the failed
                                                             # original BY DESIGN; retry-remint.sh already enforced
@@ -1303,6 +1316,44 @@ claim any task_id that appears in either `assignments.json` (active) OR
 would resurrect a merged/failed task with a fresh `claimed_at` — a bug.
 The `c.id not in ARCHIVED_IDS` check above enforces this (ARCHIVED_IDS
 includes `failed`, so previously-failed ids are also refused — issue #1739 #3).
+
+**Mobile-native / KMP claim-time gate (NEW — issue #2652):**
+
+The mandatory verify gate for any `mobile-native/` change is
+`cd mobile-native && ./gradlew spotlessCheck test`, which fails at Gradle
+*configuration* in the cloud runner: AGP resolves from `dl.google.com`, and the
+org egress proxy 403-denies that host. Every mobile-native/KMP task is
+therefore **structurally unlandable here** — an implementer subagent can only
+ever return `partial`/`blocked`, so claiming one wastes a claim slot and a
+subagent. This is the *claim-time* counterpart of the Phase 5.5
+`awaiting-macos-build` gate for iOS/Swift PRs (which fires at merge time,
+after a PR already exists): both are **expected terminal-for-dispatcher states,
+NOT transient blocks**, and neither the AGP-egress fix nor the ppt-bridge MCP
+route is an in-repo change the dispatcher can make (both are operator-only infra
+options — see issue #2652).
+
+The predicate is a deterministic helper, `.research/mobile-native-gate.sh`,
+run once per Phase 3 in batch mode over `action-list.json` (the
+`MOBILE_NATIVE_GATED` set built above). A candidate is gated iff **either**:
+- its `id` carries a `mobile-native` or `kmp` token (e.g.
+  `code-review-mobile-native-*`, `churn-hotspot-mobile-native-*`,
+  `gap-N-kmp-*`) — the churn/code-review id prefixes called out in #2652 are
+  the strong signal. This deliberately does **not** match `mobile-rn` (React
+  Native — verifiable in cloud via jest) or `frontend/apps/mobile/**`; or
+- the candidate's plan `## Files` scope is **pure** `mobile-native/` (≥1 path
+  under `mobile-native/` and every non-test source path under it). A
+  cross-stack plan that also carries a verifiable backend/frontend slice is
+  intentionally NOT gated.
+
+Gated candidates are excluded from the `candidates` list (the
+`c.id not in MOBILE_NATIVE_GATED` term above) so they **never consume a claim
+slot**. They are NOT dropped: surface every gated OPEN id in Phase 7 under the
+dedicated `Mobile-native gated:` line so the operator sees exactly which
+backlog items are parked on infra (mirrors `Awaiting-macOS-build:`). Because
+the dispatcher can never clear this in-repo, do not retry and do not let gated
+items inflate any starvation/buffer-health metric — they are parked, not
+failed. (The helper's smoke test is `.research/test-mobile-native-gate.sh`;
+self-test T32 asserts the wiring stays encoded.)
 
 **Same-epic burst-claim guard (NEW — item #2):**
 
@@ -2345,6 +2396,7 @@ CI-stuck escalations:     [PR#<n> task=<id> waited=<h>, …]                (gap
 Approved+CI-pending:      [PR#<n> task=<id> attempted=<iso8601> wait=<h>, …]  (gap 4; [] if none)
 Approved+human-gated:     [PR#<n> task=<id>, …]                     (Phase 5.5 needs-human-review SKIP; [] if none)
 Awaiting-macOS-build:     [PR#<n> task=<id>, …]                     (Phase 5.5 macos-build-gated; structural — no macOS runner; NOT a merge failure; [] if none)
+Mobile-native gated:      [<id> signal=<id|files>, …]               (Phase 3 issue #2652: KMP/mobile-native candidates skipped at claim time — AGP egress-blocked; structural, NOT a claim failure; parked not dropped; [] if none)
 Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; [] if none)
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)

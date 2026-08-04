@@ -811,6 +811,39 @@ if [ -f "$ACTION_LIST" ]; then
 fi
 echo
 
+# --- T32: mobile-native/KMP claim-time gate wiring (2026-08-04, issue #2652) -
+# The cloud runner cannot verify any `mobile-native/` change (the `./gradlew`
+# verify gate 403s on AGP from dl.google.com), so such candidates must be
+# skipped at CLAIM time — the analogue of the Phase 5.5 awaiting-macos-build PR
+# gate. Assert three things stay encoded:
+#   (a) the helper + its smoke test exist and are executable;
+#   (b) the prompt wires the helper into the Phase 3 claim predicate AND
+#       surfaces gated items in Phase 7 (Mobile-native gated: line);
+#   (c) the helper is behaviorally correct on a canonical id (positive) and a
+#       React-Native id (negative) — a cheap invariant guard so a future edit
+#       to the id-token regex can't silently start gating (or stop gating) the
+#       wrong thing.
+echo "T32 mobile-native gate wiring: helper present + Phase 3/7 encoded + predicate sane"
+MNGATE="${MNGATE:-.research/mobile-native-gate.sh}"
+if [ -x "$MNGATE" ]; then note "mobile-native-gate.sh present + executable"
+else fail "mobile-native-gate.sh missing or not executable ($MNGATE)"; fi
+if [ -x ".research/test-mobile-native-gate.sh" ]; then note "test-mobile-native-gate.sh present + executable"
+else fail "test-mobile-native-gate.sh missing or not executable"; fi
+if [ -f "$PROMPT" ]; then
+  grep -q 'mobile-native-gate.sh' "$PROMPT"        && note "prompt wires Phase 3 mobile-native gate" || fail "prompt missing mobile-native-gate wiring"
+  grep -q 'MOBILE_NATIVE_GATED' "$PROMPT"          && note "prompt excludes gated ids from candidates" || fail "prompt missing MOBILE_NATIVE_GATED claim exclusion"
+  grep -q 'Mobile-native gated:' "$PROMPT"         && note "prompt surfaces Phase 7 Mobile-native gated line" || fail "prompt missing Phase 7 Mobile-native gated line"
+fi
+if [ -x "$MNGATE" ]; then
+  if bash "$MNGATE" --id code-review-mobile-native-kmp-foo >/dev/null 2>&1; then
+    note "predicate gates a canonical mobile-native id"
+  else fail "predicate did NOT gate code-review-mobile-native-kmp-foo"; fi
+  if bash "$MNGATE" --id code-review-mobile-rn-report-fault >/dev/null 2>&1; then
+    fail "predicate wrongly gated a mobile-rn (React Native) id"
+  else note "predicate does NOT gate mobile-rn (React Native) ids"; fi
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
