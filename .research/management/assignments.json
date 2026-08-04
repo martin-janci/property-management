@@ -1,27 +1,4 @@
 {
-  "generated": "2026-08-04T06:15:43Z",
-  "assignments": [
-    {
-      "task_id": "gh-issue-2651",
-      "branch": "auto-impl/gh-issue-2651-98cecd42",
-      "status": "in-progress",
-      "claimed_at": "2026-08-04T06:13:33Z",
-      "last_updated": "2026-08-04T06:13:33Z",
-      "status_changed_at": "2026-08-04T06:13:33Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    }
-  ]
+  "generated": "2026-08-04T06:31:25Z",
+  "assignments": []
 }

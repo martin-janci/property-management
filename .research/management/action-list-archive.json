@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-04T06:13:15Z",
+  "archived_at": "2026-08-04T06:31:35Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10714,6 +10714,31 @@
         "merged_pr": 2632,
         "merged_at": "2026-08-03T07:44:22Z",
         "at": "2026-08-03T08:10:23Z"
+      }
+    },
+    {
+      "id": "gh-issue-2651",
+      "action": "dispatcher: pick-target-epic picks camelCase-filename ids that trip self-test T21, aborting the finish-first commit (Closes #2651)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-04T06:06:24Z (#2651) | dev-reconcile 2026-08-04T06:31:25Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-04T06:06:24Z",
+      "issue_ref": {
+        "number": 2651,
+        "url": "https://github.com/martin-janci/property-management/issues/2651",
+        "labels": [
+          "follow-up"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "3a20e9515a4747ff81ff41e013d279dc46b1cbfc",
+        "subject": "gh-issue-2651: normalise pick-target-epic epic_prefix to lowercase kebab (T21) (#2653)",
+        "at": "2026-08-04T06:31:25Z"
       }
     },
     {

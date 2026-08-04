@@ -158,25 +158,6 @@
       }
     },
     {
-      "id": "gh-issue-2651",
-      "action": "dispatcher: pick-target-epic picks camelCase-filename ids that trip self-test T21, aborting the finish-first commit (Closes #2651)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-04T06:06:24Z (#2651)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-04T06:06:24Z",
-      "issue_ref": {
-        "number": 2651,
-        "url": "https://github.com/martin-janci/property-management/issues/2651",
-        "labels": [
-          "follow-up"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2652",
       "action": "dispatcher: mobile-native / KMP tasks are unlandable in the cloud runner (AGP from dl.google.com blocked by egress 403) (Closes #2652)",
       "owner_role": "pm-tech-lead",

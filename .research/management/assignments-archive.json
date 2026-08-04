@@ -9547,6 +9547,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2651",
+      "branch": "auto-impl/gh-issue-2651-98cecd42",
+      "status": "merged",
+      "claimed_at": "2026-08-04T06:13:33Z",
+      "last_updated": "2026-08-04T06:31:25Z",
+      "status_changed_at": "2026-08-04T06:31:25Z",
+      "pr_number": 2653,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2653",
+      "merged_at": "2026-08-04T06:29:18Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2653 status=done specialist=generic scope_drift=false code_reuse_warn=none note=ascii_downcase on epic_prefix; T21 regression added, verify green",
+      "reviewer_summary": "verdict=approve head_oid=d4215ccbce2383636125983b8add66f8ede7c253 note=clean-minimal-T21-fix-ci-green-selfapprove-blocked",
+      "last_reviewed_oid": "d4215ccbce2383636125983b8add66f8ede7c253",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -11279,5 +11301,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-04T06:13:15Z"
+  "archived_at": "2026-08-04T06:31:25Z"
 }
