@@ -137,6 +137,43 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Case 6 — camelCase-derived flat task_id must yield a T21-valid epic_prefix.
+# Regression for issue #2651: a closest-to-done epic whose task_id derives
+# from a camelCase source filename (e.g. …-useOfflineSupport-ts) flows through
+# the epic_prefix else-branch (full task_id). Before the fix the picker wrote
+# the verbatim mixed-case id, which trips dispatcher self-test T21 (epic_prefix
+# must be all-lowercase kebab) and aborts the finish-first commit. The picker
+# must normalise the selected prefix to lowercase kebab.
+# ---------------------------------------------------------------------------
+write_actions '[
+  {"id":"churn-hotspot-frontend-mobile-src-hooks-useOfflineSupport-ts","status":"open","priority":"medium","depends_on":[]}
+]'
+write_assignments '[]'
+write_archive '[]'
+rm -f "$TMP/objective.json"
+
+# Same T21 acceptance regex as .research/dispatcher-self-test.sh.
+T21_KEBAB='^[a-z0-9][a-z0-9._-]*$'
+
+out=$("$PICKER" --json "${ARGS[@]}")
+ep=$(echo "$out" | jq -r '.epic_prefix')
+action=$(echo "$out" | jq -r '.action')
+if [ "$action" = "select" ] && printf '%s' "$ep" | grep -Eq "$T21_KEBAB"; then
+  ok "Case 6: camelCase task_id → T21-valid lowercase epic_prefix ($ep)"
+else
+  fail "Case 6: expected select + T21-valid lowercase kebab epic_prefix; got ep=$ep action=$action"
+fi
+
+# And the persisted objective.json must satisfy T21 too.
+"$PICKER" --update "${ARGS[@]}" >/dev/null
+persisted_ep=$(jq -r '.epic_prefix' "$TMP/objective.json")
+if printf '%s' "$persisted_ep" | grep -Eq "$T21_KEBAB"; then
+  ok "Case 6: persisted objective.epic_prefix passes T21 kebab ($persisted_ep)"
+else
+  fail "Case 6: persisted objective.epic_prefix trips T21; got '$persisted_ep'"
+fi
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 if [ "$fail_count" -eq 0 ]; then
