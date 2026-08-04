@@ -485,7 +485,8 @@
     "emptyText": "Kezdjen beszélgetést a kezelővel vagy a szomszédokkal.",
     "threadLoadError": "A beszélgetés nem tölthető be",
     "threadEmptyTitle": "Még nincsenek üzenetek",
-    "threadEmptyText": "Köszönjön, és kezdje el a beszélgetést."
+    "threadEmptyText": "Köszönjön, és kezdje el a beszélgetést.",
+    "threadSendError": "Az üzenet elküldése nem sikerült. Kérjük, próbálja újra."
   },
   "leases": {
     "loadError": "A bérleti szerződések nem tölthetők be",
