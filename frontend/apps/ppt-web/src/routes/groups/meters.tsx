@@ -29,6 +29,7 @@ import {
 } from '@ppt/api-client';
 import { useQueries } from '@tanstack/react-query';
 import { lazy } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import type {
@@ -369,10 +370,11 @@ function ReadingComparisonPageRoute() {
  * fetch is in flight (or when the entity is missing).
  */
 function MeterLoadingNotice({ onBack, isLoading }: { onBack: () => void; isLoading?: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">
-        {isLoading ? 'Loading meter…' : 'Meter not found'}
+        {isLoading ? 'Loading meter…' : t('errors.meterNotFound', 'Meter not found')}
       </h1>
       {!isLoading && (
         <p className="mt-2 text-sm text-gray-500">

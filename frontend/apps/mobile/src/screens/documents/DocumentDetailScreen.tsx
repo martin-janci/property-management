@@ -12,13 +12,14 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiRequest, useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import { isPreviewUnsupportedError } from './DocumentPreviewScreen';
 import { DocumentShareSheet } from './DocumentShareSheet';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────────
 
 /**
  * Shape of GET /api/v1/documents/{id}. The server wraps the document in a
@@ -47,7 +48,7 @@ interface PresignedUrlResponse {
   expires_at: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -65,7 +66,7 @@ function getFileIcon(mimeType: string, fileName: string): string {
   return '🗂️';
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Component ───────────────────────────────────────────────────────────────
 
 interface DocumentDetailScreenProps {
   documentId?: string;
@@ -73,6 +74,7 @@ interface DocumentDetailScreenProps {
 }
 
 export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScreenProps) {
+  const { t } = useTranslation();
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const [opening, setOpening] = useState(false);
 
@@ -136,16 +138,16 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
       <ScrollView style={s.scrollView}>
         {isLoading && (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         )}
 
         {error && !isLoading && (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn’t load document</Text>
+            <Text style={s.emptyTitle}>{t('documents.detailLoadError')}</Text>
             <Pressable style={[s.primaryButton, styles.retryButton]} onPress={handleRetry}>
-              <Text style={s.primaryButtonText}>Retry</Text>
+              <Text style={s.primaryButtonText}>{t('common.retry')}</Text>
             </Pressable>
           </View>
         )}
@@ -153,7 +155,7 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
         {!isLoading && !error && !document && (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📄</Text>
-            <Text style={s.emptyTitle}>Document not found</Text>
+            <Text style={s.emptyTitle}>{t('documents.notFound')}</Text>
           </View>
         )}
 

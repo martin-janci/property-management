@@ -695,7 +695,15 @@
     "waitBeforeRetry": "Proszę poczekać przed ponowną próbą.",
     "somethingWentWrong": "Coś poszło nie tak",
     "unexpectedError": "Przepraszamy za niedogodności. Wystąpił nieoczekiwany błąd.",
-    "copyErrorDetailsSupport": "Kopiuj szczegóły błędu dla wsparcia"
+    "copyErrorDetailsSupport": "Kopiuj szczegóły błędu dla wsparcia",
+    "groupNotFound": "Grupa nie została znaleziona",
+    "announcementNotFound": "Ogłoszenie nie zostało znalezione",
+    "threadNotFound": "Wątek nie został znaleziony",
+    "buildingNotFound": "Budynek nie został znaleziony",
+    "bookingNotFound": "Rezerwacja nie została znaleziona",
+    "faultNotFound": "Usterka nie została znaleziona",
+    "meterNotFound": "Licznik nie został znaleziony",
+    "entityNotFound": "Nie znaleziono: {{entity}}"
   },
   "notifications": {
     "title": "Powiadomienia",

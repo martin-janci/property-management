@@ -49,6 +49,7 @@ import {
   useViolations,
 } from '@ppt/api-client';
 import { lazy } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import type {
@@ -832,10 +833,14 @@ function LeaseLoadingNotice({
   isLoading?: boolean;
   label?: string;
 }) {
+  const { t } = useTranslation();
+  const entity = `${label[0].toUpperCase()}${label.slice(1)}`;
   return (
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">
-        {isLoading ? `Loading ${label}…` : `${label[0].toUpperCase()}${label.slice(1)} not found`}
+        {isLoading
+          ? `Loading ${label}…`
+          : t('errors.entityNotFound', { entity, defaultValue: '{{entity}} not found' })}
       </h1>
       {!isLoading && (
         <p className="mt-2 text-sm text-gray-500">

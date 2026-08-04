@@ -15,6 +15,7 @@
 
 import type { MessageWithSender, ParticipantInfo, ThreadDetailResponse } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -25,6 +26,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { QueryErrorBanner } from '../../components/QueryErrorBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
@@ -127,6 +129,7 @@ export function ThreadDetailScreen({
   participantName: participantNameProp = 'Conversation',
   onBack,
 }: ThreadDetailScreenProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
 
@@ -159,6 +162,11 @@ export function ThreadDetailScreen({
           setDraft('');
           refetch();
         },
+        onError: () => {
+          // Surface the failure inline (see `sendMessage.isError` banner
+          // below) and deliberately DO NOT clear `draft` — the user's message
+          // stays in the composer so they can retry without retyping.
+        },
       }
     );
   };
@@ -180,21 +188,21 @@ export function ThreadDetailScreen({
       <ScrollView style={s.scrollView} contentContainerStyle={styles.threadContent}>
         {isLoading || !threadId ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load conversation</Text>
+            <Text style={s.emptyTitle}>{t('messages.threadLoadError')}</Text>
             <Pressable style={s.primaryButton} onPress={onRefresh}>
-              <Text style={s.primaryButtonText}>Try again</Text>
+              <Text style={s.primaryButtonText}>{t('common.tryAgain')}</Text>
             </Pressable>
           </View>
         ) : messages.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>💬</Text>
-            <Text style={s.emptyTitle}>No messages yet</Text>
-            <Text style={s.emptyText}>Say hello to start the conversation.</Text>
+            <Text style={s.emptyTitle}>{t('messages.threadEmptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('messages.threadEmptyText')}</Text>
           </View>
         ) : (
           messages.map((message) => (
@@ -216,6 +224,18 @@ export function ThreadDetailScreen({
         {isFetching && !isLoading ? <Text style={styles.syncing}>Syncing…</Text> : null}
         <View style={s.bottomSpacer} />
       </ScrollView>
+
+      {sendMessage.isError ? (
+        // Surface the failed send inline, above the composer, and keep the
+        // drafted text intact (handleSend only clears `draft` on success) so
+        // the user can retry without retyping. A localized, non-leaking
+        // message per the QueryErrorBanner contract — never the raw
+        // backend/error string.
+        <QueryErrorBanner
+          message="Couldn't send your message. Please try again."
+          onRetry={handleSend}
+        />
+      ) : null}
 
       <View style={styles.composer}>
         <TextInput

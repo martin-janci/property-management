@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Pressable,
@@ -119,6 +120,7 @@ interface NeighborsScreenProps {
 }
 
 export function NeighborsScreen(_props: NeighborsScreenProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -159,7 +161,7 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
     return (
       <View style={[s.container, styles.center]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[s.cardMeta, { marginTop: 12 }]}>Loading neighbours…</Text>
+        <Text style={[s.cardMeta, { marginTop: 12 }]}>{t('neighbors.loading')}</Text>
       </View>
     );
   }
@@ -168,9 +170,9 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
     return (
       <View style={[s.container, styles.center]}>
         <Text style={s.emptyIcon}>⚠️</Text>
-        <Text style={s.emptyTitle}>Could not load neighbours</Text>
+        <Text style={s.emptyTitle}>{t('neighbors.loadError')}</Text>
         <Pressable style={[s.primaryButton, { marginTop: 16 }]} onPress={onRefresh}>
-          <Text style={s.primaryButtonText}>Retry</Text>
+          <Text style={s.primaryButtonText}>{t('common.retry')}</Text>
         </Pressable>
       </View>
     );
@@ -208,11 +210,11 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
         {filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>🏘️</Text>
-            <Text style={s.emptyTitle}>{search.trim() ? 'No matches' : 'No neighbours yet'}</Text>
+            <Text style={s.emptyTitle}>
+              {search.trim() ? t('neighbors.noMatches') : t('neighbors.emptyTitle')}
+            </Text>
             <Text style={s.emptyText}>
-              {search.trim()
-                ? 'Try a different name or apartment number.'
-                : 'Residents who opt into the directory will appear here.'}
+              {search.trim() ? t('neighbors.noMatchesText') : t('neighbors.emptyText')}
             </Text>
           </View>
         ) : (

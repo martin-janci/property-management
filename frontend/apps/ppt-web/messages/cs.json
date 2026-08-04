@@ -740,7 +740,15 @@
     "waitBeforeRetry": "Před opakováním počkejte.",
     "somethingWentWrong": "Něco se pokazilo",
     "unexpectedError": "Omlouváme se za nepříjemnosti. Došlo k neočekávané chybě.",
-    "copyErrorDetailsSupport": "Kopírovat podrobnosti chyby pro podporu"
+    "copyErrorDetailsSupport": "Kopírovat podrobnosti chyby pro podporu",
+    "groupNotFound": "Skupina nebyla nalezena",
+    "announcementNotFound": "Oznámení nebylo nalezeno",
+    "threadNotFound": "Konverzace nebyla nalezena",
+    "buildingNotFound": "Budova nebyla nalezena",
+    "bookingNotFound": "Rezervace nebyla nalezena",
+    "faultNotFound": "Závada nebyla nalezena",
+    "meterNotFound": "Měřič nebyl nalezen",
+    "entityNotFound": "{{entity}} nebylo nalezeno"
   },
   "notifications": {
     "title": "Oznámení",

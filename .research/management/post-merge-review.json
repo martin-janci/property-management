@@ -1,9 +1,33 @@
 {
-  "generated": "2026-08-03T04:10:17Z",
+  "generated": "2026-08-03T20:17:45Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-03T20:17:45Z",
+      "prs_scanned": 10,
+      "clean": [
+        2626,
+        2627,
+        2631,
+        2632,
+        2633,
+        2634,
+        2635,
+        2636,
+        2637
+      ],
+      "with_issues": [
+        {
+          "pr": 2629,
+          "issue": 2643,
+          "findings": 3,
+          "specialist": "pm-rust",
+          "note": "OAuth token-event record awaited inline on hot path; unbounded per-client read; sequential reads"
+        }
+      ]
+    },
     {
       "run_at": "2026-08-03T04:10:17Z",
       "prs_scanned": 5,
@@ -733,35 +757,6 @@
           "findings": 5,
           "specialist": "react-native",
           "note": "tests enshrine unauth-upload; pin transport #2309 obsoletes; no client-side size/MIME validation"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-13T00:14:11Z",
-      "prs_scanned": 15,
-      "clean": [
-        2271,
-        2270,
-        2269,
-        2268,
-        2267,
-        2266,
-        2264,
-        2261,
-        2260,
-        2259,
-        2257,
-        2256,
-        2255,
-        2253
-      ],
-      "with_issues": [
-        {
-          "pr": 2265,
-          "issue": 2272,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "#2239 provenance model_filter assertion is correct+thorough but appended to rag_retrieval_correctness which is #[ignore]d under BIT-351 blind-CI quarantine, so the regression guard never runs on the PR gate (same shape as 2253's ignored api-ecosystem routing tests); propose scoping BIT-352 to re-run these guards / extract to a focused sqlx::test / add ephemeral-PG lane"
         }
       ]
     }

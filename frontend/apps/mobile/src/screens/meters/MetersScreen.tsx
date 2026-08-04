@@ -16,6 +16,7 @@
 
 import type { Meter as ApiMeterPayload } from '@ppt/api-client';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiQuery } from '../../hooks/useApi';
@@ -124,6 +125,7 @@ interface MetersScreenProps {
 }
 
 export function MetersScreen({ onNavigate }: MetersScreenProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const unitId = user?.unitId;
 
@@ -153,23 +155,23 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
         {!unitId ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>🏠</Text>
-            <Text style={s.emptyTitle}>No unit linked</Text>
-            <Text style={s.emptyText}>Meters appear once your account is linked to a unit.</Text>
+            <Text style={s.emptyTitle}>{t('meters.noUnitTitle')}</Text>
+            <Text style={s.emptyText}>{t('meters.noUnitText')}</Text>
           </View>
         ) : isLoading ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load meters</Text>
+            <Text style={s.emptyTitle}>{t('meters.loadError')}</Text>
           </View>
         ) : meters.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📏</Text>
-            <Text style={s.emptyTitle}>No meters</Text>
-            <Text style={s.emptyText}>No meters are registered for your unit yet.</Text>
+            <Text style={s.emptyTitle}>{t('meters.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('meters.emptyText')}</Text>
           </View>
         ) : (
           meters.map((meter) => (

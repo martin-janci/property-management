@@ -11,6 +11,7 @@
  */
 
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery, useTenantId } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
@@ -138,6 +139,7 @@ interface LeasesScreenProps {
 }
 
 export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
+  const { t } = useTranslation();
   const { tenantId } = useTenantId();
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiLeasesListResponse>(
@@ -165,18 +167,18 @@ export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
       >
         {isLoading || !tenantId ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load leases</Text>
+            <Text style={s.emptyTitle}>{t('leases.loadError')}</Text>
           </View>
         ) : leases.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📑</Text>
-            <Text style={s.emptyTitle}>No leases</Text>
-            <Text style={s.emptyText}>You haven't been added to any rental agreement yet.</Text>
+            <Text style={s.emptyTitle}>{t('leases.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('leases.emptyText')}</Text>
           </View>
         ) : (
           leases.map((lease) => {

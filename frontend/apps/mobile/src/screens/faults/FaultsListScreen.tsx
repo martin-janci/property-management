@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
@@ -130,6 +131,7 @@ const formatDate = (dateString: string): string => {
 };
 
 export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all');
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiFaultListResponse>(
@@ -182,18 +184,18 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
       >
         {isLoading ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Loading…</Text>
+            <Text style={styles.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
-            <Text style={styles.emptyTitle}>Couldn't load faults</Text>
+            <Text style={styles.emptyTitle}>{t('faults.loadError')}</Text>
           </View>
         ) : filteredFaults.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🔧</Text>
-            <Text style={styles.emptyTitle}>No faults found</Text>
-            <Text style={styles.emptyText}>All issues have been addressed</Text>
+            <Text style={styles.emptyTitle}>{t('faults.emptyTitle')}</Text>
+            <Text style={styles.emptyText}>{t('faults.emptyText')}</Text>
           </View>
         ) : (
           filteredFaults.map((fault) => (

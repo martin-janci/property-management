@@ -5,6 +5,7 @@
  * Extracted from App.tsx to isolate community work.
  */
 import type { CommunityGroup } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../components';
 import { useAuth } from '../../contexts';
@@ -73,9 +74,10 @@ function CreateGroupPageRoute() {
 function GroupDetailPageRoute() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (!groupId) {
-    return <div>Group not found</div>;
+    return <div>{t('errors.groupNotFound', 'Group not found')}</div>;
   }
 
   // Mock group data

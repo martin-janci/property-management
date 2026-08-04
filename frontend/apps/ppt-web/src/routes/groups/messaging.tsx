@@ -169,7 +169,7 @@ function ThreadDetailPageRoute() {
   const deleteMessage = useDeleteMessage();
 
   if (!threadId) {
-    return <div>Thread not found</div>;
+    return <div>{t('errors.threadNotFound', 'Thread not found')}</div>;
   }
 
   const handleThreadSendMessage = async (data: SendMessageRequest) => {

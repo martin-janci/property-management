@@ -335,17 +335,25 @@ export const queryKeys = {
  * the cache purge to user data while leaving any unrelated/non-session cache
  * (e.g. router-internal caches, future public/lookup queries) untouched.
  *
- * Covers both the centralized {@link queryKeys} factory roots and the
- * ad-hoc roots used directly in feature hooks (`developer`, `ocr`,
- * `actionQueue`, `executionLogs`, `executionStats`, `ai-chat`).
+ * Covers the centralized {@link queryKeys} factory roots (including
+ * `accounting`), the shared `@ppt/api-client` key-factory roots consumed by
+ * ppt-web (`messages`, `meters`, `reports`), and the ad-hoc roots used
+ * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
+ * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
+ * `sentiment`, `notification-analytics`, `financial`, `rentals`, and the
+ * `auth`-rooted active-sessions cache).
  *
  * When you add a new auth-scoped query root, add it here too — otherwise the
- * cached data will leak into the next user's session.
+ * cached data will leak into the next user's session. This must cover ALL
+ * tenant-/user-scoped caches; the financial roots (`accounting`, `financial`,
+ * `reports`) are the most sensitive and must never survive logout on a shared
+ * workstation.
  *
  * @see Issue #712 — logout `queryClient.clear()` was too aggressive
  */
 export const AUTHED_QUERY_KEY_ROOTS = [
   // queryKeys factory roots
+  'accounting',
   'announcements',
   'faults',
   'documents',
@@ -358,6 +366,9 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'user',
   'buildings',
   'notifications',
+  // Shared @ppt/api-client key-factory roots consumed by ppt-web
+  'meters',
+  'reports',
   // Ad-hoc roots used directly in feature hooks
   'developer',
   'ocr',
@@ -365,6 +376,14 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'executionLogs',
   'executionStats',
   'ai-chat',
+  'financial',
+  'rentals',
+  // Active-session management (SessionsPage — ['auth', 'sessions'])
+  'auth',
+  // Feature-local key factories (analytics dashboards — tenant-scoped)
+  'predictive-maintenance',
+  'sentiment',
+  'notification-analytics',
 ] as const;
 
 // ============================================================================

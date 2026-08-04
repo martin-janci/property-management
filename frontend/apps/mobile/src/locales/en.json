@@ -16,7 +16,8 @@
     "ok": "OK",
     "search": "Search",
     "refresh": "Refresh",
-    "submit": "Submit"
+    "submit": "Submit",
+    "tryAgain": "Try again"
   },
   "tabs": {
     "home": "Home",
@@ -143,13 +144,19 @@
     "queuedMessage": "You're offline. Your report was saved and will sync automatically when you reconnect.",
     "queuedOnErrorMessage": "We couldn't reach the server. Your report was saved and will sync automatically when the connection is restored.",
     "offlineSubmitHint": "You're offline — this report will be saved and synced when you reconnect.",
-    "submitButtonOffline": "Save & sync later"
+    "submitButtonOffline": "Save & sync later",
+    "loadError": "Couldn't load faults",
+    "emptyTitle": "No faults found",
+    "emptyText": "All issues have been addressed"
   },
   "news": {
     "title": "News",
     "latest": "Latest News",
     "readMore": "Read More",
-    "noNews": "No news available"
+    "noNews": "No news available",
+    "loadError": "Couldn't load news",
+    "emptyTitle": "Nothing new",
+    "emptyText": "Check back later for fresh updates."
   },
   "voting": {
     "title": "Voting",
@@ -284,7 +291,9 @@
         "correspondence": "Correspondence",
         "other": "Other"
       }
-    }
+    },
+    "detailLoadError": "Couldn't load document",
+    "notFound": "Document not found"
   },
   "settings": {
     "title": "Settings",
@@ -384,13 +393,15 @@
       "ackDone": "You have acknowledged this announcement.",
       "ackError": "Failed to acknowledge: {{message}}",
       "publishedAt": "Published: {{date}}"
-    }
+    },
+    "loadError": "Couldn't load announcements"
   },
   "widgets": {
     "addedTitle": "Widget Added",
     "addedMessage": "Widget has been configured.",
     "updatedTitle": "Widgets Updated",
-    "updatedMessage": "All widgets have been refreshed."
+    "updatedMessage": "All widgets have been refreshed.",
+    "emptyText": "No widgets configured yet."
   },
   "permissions": {
     "denied": "Permission Denied",
@@ -414,7 +425,15 @@
     "savedOffline": "Saved Offline",
     "willSyncWhenOnline": "Your reading will be submitted when you're back online",
     "offlineMode": "You're offline. Readings will be saved locally.",
-    "pendingReadings": "Pending Readings"
+    "pendingReadings": "Pending Readings",
+    "loadError": "Couldn't load meters",
+    "emptyTitle": "No meters",
+    "emptyText": "No meters are registered for your unit yet.",
+    "noUnitTitle": "No unit linked",
+    "noUnitText": "Meters appear once your account is linked to a unit.",
+    "detailLoadError": "Couldn't load meter",
+    "noReadingsTitle": "No readings yet",
+    "noReadingsText": "Submit your first reading for this meter."
   },
   "esignature": {
     "title": "Signature Request",
@@ -494,5 +513,44 @@
   "layout": {
     "placeholderTitle": "Section unavailable",
     "placeholderBody": "This section is currently not available."
+  },
+  "buildings": {
+    "loadError": "Couldn't load buildings",
+    "emptyTitle": "No buildings",
+    "emptyText": "No properties are linked to your account yet."
+  },
+  "messages": {
+    "loadError": "Couldn't load messages",
+    "emptyTitle": "No conversations",
+    "emptyText": "Start a conversation with your manager or neighbours.",
+    "threadLoadError": "Couldn't load conversation",
+    "threadEmptyTitle": "No messages yet",
+    "threadEmptyText": "Say hello to start the conversation."
+  },
+  "leases": {
+    "loadError": "Couldn't load leases",
+    "emptyTitle": "No leases",
+    "emptyText": "You haven't been added to any rental agreement yet.",
+    "detailLoadError": "Couldn't load lease",
+    "noPayments": "No upcoming payments scheduled.",
+    "notFound": "Lease not found."
+  },
+  "outages": {
+    "loadError": "Couldn't load outages",
+    "emptyTitle": "No outages",
+    "emptyText": "Nothing scheduled or active right now."
+  },
+  "forms": {
+    "loadError": "Couldn't load forms",
+    "emptyTitle": "No forms",
+    "emptyText": "You have no forms to complete right now."
+  },
+  "neighbors": {
+    "loadError": "Could not load neighbours",
+    "loading": "Loading neighbours…",
+    "emptyTitle": "No neighbours yet",
+    "noMatches": "No matches",
+    "emptyText": "Residents who opt into the directory will appear here.",
+    "noMatchesText": "Try a different name or apartment number."
   }
 }
