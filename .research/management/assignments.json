@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-04T14:17:24Z",
+  "generated": "2026-08-04T14:38:57Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2658",
       "branch": "auto-impl/gh-issue-2658-662f7525",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-04T14:07:51Z",
-      "last_updated": "2026-08-04T14:07:51Z",
-      "status_changed_at": "2026-08-04T14:07:51Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-04T14:38:57Z",
+      "status_changed_at": "2026-08-04T14:38:57Z",
+      "pr_number": 2660,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2660",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2660 status=review(partial-verify) specialist=rust-backend scope_drift=true code_reuse_warn=none note=fix scoped to voice_webhooks.rs (validate OAuth token, constant-time compare, fail-closed HMAC); 3 new unit tests + clippy/fmt green; local verify red only on 4 pre-existing sqlx DB tests in services::scheduler (cloud has no Postgres, unrelated); draft PR #2660 opened for GitHub CI DB gate",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
