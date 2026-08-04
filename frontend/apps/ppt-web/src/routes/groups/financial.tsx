@@ -253,7 +253,9 @@ function InvoiceManagementPageRoute() {
  */
 function PaymentManagementPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const queryClient = useQueryClient();
   const orgId = user?.organizationId ?? '';
 
@@ -301,10 +303,28 @@ function PaymentManagementPageRoute() {
         amount: vars.amount,
       }),
     onSuccess: invalidatePayments,
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('financial.payments.matchFailed', {
+          defaultValue: 'Failed to allocate payment',
+        }),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
   });
   const autoMatchMutation = useMutation({
     mutationFn: () => autoMatchPayments(orgId),
     onSuccess: invalidatePayments,
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('financial.payments.autoMatchFailed', {
+          defaultValue: 'Failed to auto-match payments',
+        }),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
   });
 
   return (
