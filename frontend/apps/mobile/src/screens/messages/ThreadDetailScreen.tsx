@@ -101,6 +101,29 @@ function parseThreadDetailInner(data: unknown): ApiThreadDetail | null {
   };
 }
 
+/**
+ * Sort key for a message timestamp, resilient to a malformed `createdAt`.
+ * `isApiMessage` only shape-checks `id` + `content`, so `sentAt` may be a
+ * non-date string (e.g. `'x'`); `new Date(bad).getTime()` is `NaN`, which
+ * makes the comparator non-deterministic. Anomalous rows sink to the end.
+ */
+function sentAtSortKey(sentAt: string): number {
+  const ms = new Date(sentAt).getTime();
+  return Number.isNaN(ms) ? Number.POSITIVE_INFINITY : ms;
+}
+
+/**
+ * Format a message timestamp for the bubble, or `''` when the value isn't a
+ * valid date. Guards against a malformed `createdAt` (not shape-validated by
+ * `isApiMessage`) rendering the literal string "Invalid Date". Exported for
+ * unit testing.
+ */
+export function formatMessageTime(sentAt: string): string {
+  const d = new Date(sentAt);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
 /** Map api-server messages onto UI bubbles, oldest first. `currentUserId`
  *  drives the `fromMe` flag. Exported for unit testing. */
 export function toUiMessages(detail: ApiThreadDetail | null, currentUserId?: string): Message[] {
@@ -115,7 +138,11 @@ export function toUiMessages(detail: ApiThreadDetail | null, currentUserId?: str
         authorName: fromMe ? 'You' : participantName(m.sender) || 'Participant',
       };
     })
-    .sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+    .sort((a, b) => {
+      const ka = sentAtSortKey(a.sentAt);
+      const kb = sentAtSortKey(b.sentAt);
+      return ka === kb ? 0 : ka - kb;
+    });
 }
 
 interface ThreadDetailScreenProps {
@@ -213,10 +240,7 @@ export function ThreadDetailScreen({
               {!message.fromMe && <Text style={styles.author}>{message.authorName}</Text>}
               <Text style={[styles.body, message.fromMe && styles.bodyMine]}>{message.body}</Text>
               <Text style={[styles.time, message.fromMe && styles.timeMine]}>
-                {new Date(message.sentAt).toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {formatMessageTime(message.sentAt)}
               </Text>
             </View>
           ))
