@@ -10,11 +10,13 @@ on:
       - ".research/retry-remint.sh"
       - ".research/issue-ingest.sh"
       - ".research/mcp-push-size-guard.sh"
+      - ".research/mobile-native-gate.sh"
       - ".research/test-backlog-refill.sh"
       - ".research/test-backlog-reconcile.sh"
       - ".research/test-retry-remint.sh"
       - ".research/test-issue-ingest.sh"
       - ".research/test-mcp-push-size-guard.sh"
+      - ".research/test-mobile-native-gate.sh"
       - ".research/management/assignments.json"
       - ".claude/skills/ppt-implement/**"
       - ".claude/skills/ppt-pr-merge/**"
@@ -49,6 +51,8 @@ jobs:
         run: bash .research/test-issue-ingest.sh
       - name: mcp-push-size-guard behavioral smoke test
         run: bash .research/test-mcp-push-size-guard.sh
+      - name: mobile-native-gate behavioral smoke test
+        run: bash .research/test-mobile-native-gate.sh
       - name: goal-check (enforcing)
         env:
           GOAL_CHECK_ENFORCE: "1"
