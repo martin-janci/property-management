@@ -57,6 +57,25 @@ Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`
 ## Notes
 
 ### Specific (recent)
+- 2026-08-04 — **rentals mutations now guard auth (session-expiry UX), PR #2648.**
+  The rentals route group (`groups/rentals.tsx`) no longer dereferences `auth!`
+  on the request path. All 10 rentals request sites route through
+  `requireRentalsAuthHeaders(auth)`, which throws a typed
+  `AuthError('SESSION_EXPIRED')` when the session is lost mid-flight instead of
+  raising an opaque `TypeError`. The four mutations —
+  `rentalsApiCreateConnection` (create connection), `rentalsApiSyncPlatforms`
+  (sync), `rentalsApiCheckIn`, `rentalsApiCheckOut` — wire
+  `handleRentalsAuthError(error, logout)` as their TanStack Query `onError`: a
+  session-loss `AuthError` calls AuthContext `logout()`, which clears the
+  session and lets `ProtectedRoute` redirect to `/login` (the app's existing
+  dropped-session UX); non-session errors are left untouched. Queries were
+  already gated on `enabled: !!auth` and were converted to the same helper for
+  consistency. Regression coverage:
+  `frontend/apps/ppt-web/src/routes/groups/rentals.auth-guard.test.tsx`
+  (`requireRentalsAuthHeaders(null)` throws `AuthError`, not `TypeError`; a
+  wired `useMutation` settles in a handled `AuthError` state and never hits the
+  API). `buildStatus`/`apiStatus` unchanged — this is a robustness/UX guard, not
+  a surface change.
 - 2026-07-09 — created this screen-map to give UC-29 (and UC-30) a canonical
   home. UC-29 had only been attached to `ppt/settings-integrations` (the Airbnb
   connect sub-flow, gap-83-1); the primary rentals management surface at
@@ -72,6 +91,11 @@ Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-08-04 — agent: screen-map-drift-pr-2648-ppt — reconciled this screen-map
+  with PR #2648 (guard rentals mutation auth). Documented the mutation
+  auth-guard / session-expiry redirect behavior (`requireRentalsAuthHeaders` +
+  `handleRentalsAuthError` on all four rentals mutations) under Notes > Specific.
+  Docs-only screen-map reconcile; no frontmatter outcome changed.
 - 2026-07-09 — agent: gap-screens-link-uc-29 — created the Short-Term Rentals
   Dashboard screen-map and linked UC-29 (+ UC-30) to it, giving the
   Short-Term Rental Management use case a canonical screen-map home beyond the
