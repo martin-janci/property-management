@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-04T02:18:23Z",
+  "archived_at": "2026-08-04T06:13:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2046,6 +2046,30 @@
         "merged_pr": 2595,
         "merged_at": "2026-07-30T16:17:53Z",
         "at": "2026-07-30T16:21:50Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-04T04:05:19Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-04T06:05:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-04T04:05:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-04T06:05:31Z"
       }
     },
     {

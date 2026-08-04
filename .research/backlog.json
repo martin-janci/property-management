@@ -6595,7 +6595,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
@@ -6607,7 +6607,12 @@
       ],
       "created_at": "2026-08-04",
       "updated_at": "2026-08-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-04T06:05:31Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "screen-map-drift-pr-2646-ppt",

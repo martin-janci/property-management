@@ -1,13 +1,13 @@
 {
-  "generated": "2026-08-04T04:08:00Z",
+  "generated": "2026-08-04T06:15:43Z",
   "assignments": [
     {
-      "task_id": "gh-issue-2643",
-      "branch": "auto-impl/gh-issue-2643-b5eaef42",
+      "task_id": "gh-issue-2651",
+      "branch": "auto-impl/gh-issue-2651-98cecd42",
       "status": "in-progress",
-      "claimed_at": "2026-08-03T22:19:18Z",
-      "last_updated": "2026-08-04T04:08:00Z",
-      "status_changed_at": "2026-08-04T02:13:19Z",
+      "claimed_at": "2026-08-04T06:13:33Z",
+      "last_updated": "2026-08-04T06:13:33Z",
+      "status_changed_at": "2026-08-04T06:13:33Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -19,7 +19,7 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 1,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     }
