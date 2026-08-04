@@ -1573,6 +1573,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-src-s-cd031226",
+      "status": "merged",
+      "claimed_at": "2026-08-04T12:08:00Z",
+      "last_updated": "2026-08-04T16:17:14Z",
+      "status_changed_at": "2026-08-04T16:17:14Z",
+      "pr_number": 2659,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2659",
+      "merged_at": "2026-08-04T16:14:31Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2659 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=guarded malformed createdAt (Invalid Date label + NaN sort) in ThreadDetailScreen; non-conflicting with #2656; verify+goal-check green",
+      "reviewer_summary": "verdict=approve head_oid=e62f55be4f49dbd20ceeea4cd04227d15c433026 note=prior-i18n-regression-resolved-clean-nan-safe-timestamp-fix",
+      "last_reviewed_oid": "e62f55be4f49dbd20ceeea4cd04227d15c433026",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-04T16:17:14Z"
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-58eccf28",
       "status": "failed",
@@ -9657,6 +9679,28 @@
       "merge_attempted_at": "2026-08-04T12:16:00Z"
     },
     {
+      "task_id": "gh-issue-2658",
+      "branch": "auto-impl/gh-issue-2658-662f7525",
+      "status": "merged",
+      "claimed_at": "2026-08-04T14:07:51Z",
+      "last_updated": "2026-08-04T16:17:14Z",
+      "status_changed_at": "2026-08-04T16:17:14Z",
+      "pr_number": 2660,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2660",
+      "merged_at": "2026-08-04T16:13:30Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2660 status=review(partial-verify) specialist=rust-backend scope_drift=true code_reuse_warn=none note=fix scoped to voice_webhooks.rs (validate OAuth token, constant-time compare, fail-closed HMAC); 3 new unit tests + clippy/fmt green; local verify red only on 4 pre-existing sqlx DB tests in services::scheduler (cloud has no Postgres, unrelated); draft PR #2660 opened for GitHub CI DB gate",
+      "reviewer_summary": "verdict=approve head_oid=62877039b47c97b3ff4462f767232818a0c7e15d note=auth-fix-correct-well-tested; approve posted as COMMENT (github blocks self-approve)",
+      "last_reviewed_oid": "62877039b47c97b3ff4462f767232818a0c7e15d",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-04T16:17:14Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -11455,5 +11499,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-04T12:21:08Z"
+  "archived_at": "2026-08-04T16:17:55Z"
 }

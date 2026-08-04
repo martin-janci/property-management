@@ -1,0 +1,46 @@
+[
+  {
+    "id": "code-review-api-core-workflow-cond-parse-failopen",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/workflow_executor.rs:459-489 — evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup nor Condition, the `else` branch (lines 481-486) only logs `tracing::warn!(\"Could not parse condition, skipping\")` and continues; it does NOT return Ok(false). If every condition in the list is unparseable (or the malformed one is the only gating predicate), the loop falls through to `Ok(true)` at line 489.",
+      "This directly gates side-effecting action execution: the sole caller (workflow_executor.rs:344 `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }`) skips the workflow only when the gate returns false. A malformed/schema-drifted condition therefore causes the workflow's actions (email/notification/api_call — services/actions/*) to fire UNCONDITIONALLY on every matching trigger event, instead of being blocked.",
+      "Reachable in production via execute/process workflow-event path; conditions are author-supplied JSON persisted on the workflow row (`workflow.conditions.0`), so a new operator, a removed field, or any serde-shape drift silently flips a gated automation into an always-on one. A gate should fail CLOSED on uninterpretable input — return Ok(false) (or propagate a WorkflowError) when a condition cannot be parsed, rather than skipping it. Note evaluate_single_condition errors already propagate via `?` (fail-closed); only the serde parse path fails open."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-workflow-not-group-drops-conds",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirely ignores every remaining entry in `group.conditions` AND all of `group.groups`. The code comment at line 528 even states 'only first condition is considered'.",
+      "Unlike And/Or (lines 499-526) which fold over BOTH `conditions` and nested `groups`, the Not arm has no fold. A workflow author expressing NOT over multiple predicates (e.g. intending NOT(A AND B), or a NOT wrapping a nested group while also carrying a stray condition) gets NOT(A) — a silently-wrong gate result with no error surfaced.",
+      "Same gating path as the fail-open finding (feeds workflow_executor.rs:344 action-execution decision), so an incorrectly-negated group can either run actions that should be blocked or block actions that should run. Fix: evaluate the Not group's full child set (negate the AND/OR fold of all conditions + nested groups), or reject a Not group carrying more than one child at validation time so the ambiguity cannot be persisted."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-workflow-matches-regex-recompile",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "dx",
+    "evidence": [
+      "backend/servers/api-server/src/services/workflow_executor.rs:610-621 — the ComparisonOperator::Matches arm calls `regex::Regex::new(pattern)` (line 618) on every single condition evaluation. Regex compilation is the expensive step in the `regex` crate; recompiling it per evaluate_single_condition call, inside the per-event × per-condition workflow-evaluation loop, wastes CPU proportional to (triggered workflows × conditions) for each inbound trigger event.",
+      "The compiled Regex depends only on the author-supplied `pattern` string stored on the condition, so it is a natural candidate for a compile-once cache (e.g. a keyed cache on the executor, or precompiling condition regexes when the workflow is loaded). No correctness impact — efficiency/DX only. (The Rust `regex` crate is backtracking-free, so this is not a ReDoS concern, only a redundant-compilation cost.)"
+    ],
+    "expert": "rust"
+  }
+]

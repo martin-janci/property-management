@@ -34,44 +34,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
-      "action": "Churn hotspot: 2 commits touching frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-04T04:05:19Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-04T04:05:19Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "gh-issue-2658",
-      "action": "Voice webhook receiver has demo-grade auth: authenticate_voice_user ignores the access token (broken authentication) (Closes #2658)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-04T14:03:38Z (#2658)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-04T14:03:38Z",
-      "issue_ref": {
-        "number": 2658,
-        "url": "https://github.com/martin-janci/property-management/issues/2658",
-        "labels": [
-          "security",
-          "backend",
-          "follow-up"
-        ]
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
