@@ -6620,7 +6620,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2646"
       ],
@@ -6633,7 +6633,12 @@
       ],
       "created_at": "2026-08-04",
       "updated_at": "2026-08-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-04T12:04:18Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "screen-map-drift-pr-2647-ppt",
@@ -6641,7 +6646,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2647"
       ],
@@ -6654,7 +6659,12 @@
       ],
       "created_at": "2026-08-04",
       "updated_at": "2026-08-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-04T12:04:18Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "screen-map-drift-pr-2648-ppt",
@@ -6705,7 +6715,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "local git log since 2026-08-03T17:00Z"
       ],
@@ -6717,7 +6727,12 @@
       ],
       "created_at": "2026-08-04",
       "updated_at": "2026-08-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-04T12:04:18Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
@@ -6745,7 +6760,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "local git log since 2026-08-03T17:00Z"
       ],
@@ -6757,7 +6772,12 @@
       ],
       "created_at": "2026-08-04",
       "updated_at": "2026-08-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-04T12:04:18Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     }
   ]
 }

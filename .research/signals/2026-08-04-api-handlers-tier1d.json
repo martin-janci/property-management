@@ -1,0 +1,47 @@
+[
+  {
+    "id": "code-review-api-handlers-voice-webhook-default-secret",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 3,
+    "confidence": "high",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 — verify_hmac_signature() FAILS OPEN: line 950 `std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string())`. When the env var is unset, the receiver validates inbound webhook signatures against the hardcoded, source-visible constant \"default_secret\", so any attacker can forge a valid HMAC-SHA256 signature and pass verification.",
+      "Reachable in production: the router is mounted at `/api/v1/webhooks/voice` (backend/servers/api-server/src/lib.rs:339-340 via voice_webhook_router()), exposing POST /verify -> verify_webhook_signature -> verify_hmac_signature (voice_webhooks.rs:71, 712, 948). This is NOT the UNMOUNTED esignature receiver.",
+      "Inconsistent with the fail-closed pattern used by every sibling receiver: DocuSign/Adobe/HelloSign in integrations/webhook.rs:778/808/837 return 500 CONFIG_ERROR when their secret env var is empty, and PORTAL/AIRBNB/STRIPE secrets fail closed per backend/CLAUDE.md. Fix: fail closed (reject) when VOICE_WEBHOOK_SECRET is unset instead of defaulting to a known constant."
+    ],
+    "expert": "security"
+  },
+  {
+    "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 3,
+    "confidence": "high",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits on the first differing byte, exposing a timing side-channel that can be used to recover a valid signature byte-by-byte.",
+      "The codebase already knows the correct pattern and applies it elsewhere in the same segment: signatures.rs:679 uses `subtle::ct_eq` under a length guard, and caddy_ask.rs:181 uses a length-checked constant-time compare. voice_webhooks.rs is the lone signature-verification path using raw `==`.",
+      "Reachable via the mounted POST /api/v1/webhooks/voice/verify path (lib.rs:339-340 -> voice_webhooks.rs:71 -> 712 -> 959). Fix: compare with a constant-time primitive (subtle::ConstantTimeEq / ct_eq) after a length check, matching signatures.rs."
+    ],
+    "expert": "security"
+  },
+  {
+    "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 3,
+    "confidence": "high",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 — authenticate_voice_user() performs NO token validation: the `_access_token` parameter is unused (underscore-prefixed) and the function returns whatever device the query `SELECT * FROM voice_assistant_devices WHERE platform = $1 AND is_active = TRUE ORDER BY last_used_at DESC NULLS LAST LIMIT 1` returns — i.e. an arbitrary active device for the platform, not the device/user bound to the presented token. Any caller is authenticated as some other user's voice device (broken authentication / horizontal privilege escalation).",
+      "Reachable from mounted handlers: the Alexa handler (voice_webhooks.rs:127) and Google Assistant handler (voice_webhooks.rs:243) both call authenticate_voice_user(rls.conn(), token, ...) and then act on the returned device on the request principal's behalf; router mounted at /api/v1/webhooks/voice (lib.rs:339-340).",
+      "The code comments themselves flag it as placeholder ('for now, find any active device', 'In production, you would validate the token and look up the associated user'), confirming the auth check was never implemented. Fix: validate the OAuth/JWT access token and select the device by its owning user, not the first active row for the platform."
+    ],
+    "expert": "security"
+  }
+]
