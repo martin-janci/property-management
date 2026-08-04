@@ -6783,6 +6783,32 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-broken-auth",
+      "title": "SECURITY: voice webhook receiver ignores OAuth access token — authenticate_voice_user() returns any active device (broken auth / horizontal privesc)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier1d api-handlers 2026-08-04",
+        "issue #2658",
+        "PR #2660"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963 — authenticate_voice_user(_access_token: &str, platform, db) ignores the access token entirely (comment: \"Reserved for real OAuth/JWT validation\"), then returns any active device for the platform via SELECT * FROM voice_assistant_devices WHERE platform=$1 AND is_active=TRUE ORDER BY last_used_at DESC NULLS LAST LIMIT 1.",
+        "Called from live handlers alexa_webhook (~line 127) and google_actions_webhook (~line 243) — any caller with any token is authenticated as whichever user most recently used a device on that platform.",
+        "Secondary: verify_hmac_signature falls back to hardcoded \"default_secret\" when VOICE_WEBHOOK_SECRET unset — /verify endpoint only, but breaks fail-closed convention (portal/airbnb/stripe fail closed).",
+        "Secondary: signature == expected is non-constant-time (/verify endpoint) — timing side-channel.",
+        "PR #2660 (draft, in review) already addresses all three findings — validate OAuth token, constant-time compare, fail-closed HMAC; +3 unit tests; local verify red only on pre-existing sqlx DB tests in services::scheduler."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
     }
   ]
 }

@@ -1,107 +1,36 @@
 {
-  "generated": "2026-08-04T03:15:00Z",
+  "generated": "2026-08-04T16:22:00Z",
+  "note": "Same-day rerun (2nd run 2026-08-04). Signals below cover the incremental window 2026-08-04T03:15Z → 2026-08-04T16:22Z (12h). The 9 signals from the first run (2026-08-04T03:15Z window) are already recorded in state.seen_signals — see git history commit 6106f1c for the earlier signals file.",
   "signals": [
     {
-      "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+      "id": "code-review-api-handlers-voice-webhook-broken-auth",
       "type": "code-review-finding",
-      "source": "Tier1d rotating-expert-review 2026-08-04 (mobile-native-kmp)",
-      "score_delta": 2,
-      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) and aggregates only over the returned page; MyListingsResponse.total is ignored so totalListings=listings.size undercounts and all downstream aggregates omit listings past the first 100.",
-      "confidence": "medium",
-      "candidate_vector": "bug"
-    },
-    {
-      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
-      "type": "code-review-finding",
-      "source": "Tier1d rotating-expert-review 2026-08-04 (mobile-native-kmp)",
-      "score_delta": 1,
-      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls with no concurrency limit; getOrNull() swallows per-listing failures, so rate-limited subsets silently drop from the aggregate.",
-      "confidence": "medium",
-      "candidate_vector": "bug"
-    },
-    {
-      "id": "screen-map-drift-pr-2646-ppt",
-      "type": "screen-map-drift",
-      "source": "PR #2646",
-      "score_delta": 2,
-      "evidence": "PR #2646 modified frontend/apps/ppt-web/src/App.tsx (RouteErrorBoundary shell change) with no docs/screens/ppt/*.md update.",
-      "confidence": "medium",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "screen-map-drift-pr-2647-ppt",
-      "type": "screen-map-drift",
-      "source": "PR #2647",
-      "score_delta": 2,
-      "evidence": "PR #2647 modified 8 ppt-web route wrappers (buildings, community, announcements, messaging, faults, rentals, meters, leases) with no docs/screens/ppt/*.md update.",
-      "confidence": "medium",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "screen-map-drift-pr-2648-ppt",
-      "type": "screen-map-drift",
-      "source": "PR #2648",
-      "score_delta": 2,
-      "evidence": "PR #2648 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (mutation auth guard) with no docs/screens/ppt/*.md update.",
-      "confidence": "medium",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "screen-map-drift-pr-2649-ppt",
-      "type": "screen-map-drift",
-      "source": "PR #2649",
-      "score_delta": 2,
-      "evidence": "PR #2649 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx + financial.tsx (onError toasts) with no docs/screens/ppt/*.md update.",
-      "confidence": "medium",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
-      "type": "churn-hotspot",
-      "source": "local git log since 2026-08-03T17:00Z",
-      "score_delta": 1,
-      "evidence": "2 commits changed frontend/apps/ppt-web/src/routes/groups/rentals.tsx in the 10h since the last run (#2648, #2649); top-3 churn this run.",
+      "source": "dispatcher Tier1d api-handlers 2026-08-04 → issue #2658 → draft PR #2660",
+      "score_delta": 3,
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs:963 authenticate_voice_user(_access_token, platform, db) IGNORES the OAuth access token (parameter underscore-prefixed; comment 'Reserved for real OAuth/JWT validation'), then returns any active device for the platform via SELECT ... WHERE platform=$1 AND is_active=TRUE ORDER BY last_used_at DESC LIMIT 1. Called from live handlers alexa_webhook (~line 127) and google_actions_webhook (~line 243). Any caller with any token authenticates as whichever user most recently used a device on that platform → broken auth / horizontal privesc. HIGH severity per issue #2658. PR #2660 (draft, in review) already addresses this + 2 companion findings (HMAC fail-open to hardcoded secret on /verify path, non-constant-time compare).",
       "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
-      "type": "churn-hotspot",
-      "source": "local git log since 2026-08-03T17:00Z",
-      "score_delta": 1,
-      "evidence": "2 commits changed frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx in the 10h since the last run (#2641, #2642); top-3 churn this run.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
-      "type": "churn-hotspot",
-      "source": "local git log since 2026-08-03T17:00Z",
-      "score_delta": 1,
-      "evidence": "2 commits changed frontend/apps/mobile/src/hooks/useOfflineSupport.ts in the 10h since the last run (#2638, #2645); top-3 churn this run.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "security"
     }
   ],
   "goal_checks": [
-    { "goal": "G1", "passed": true,  "command": "test -f briefs/<today>.md && head -1 == '# <today>'",     "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true,  "command": "state.json advanced vs HEAD",                             "observed": "true",   "expected": "true"   },
-    { "goal": "G3", "passed": true,  "command": "backlog.json ids unique",                                 "observed": "true",   "expected": "true"   },
-    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id re-emitted with score_delta", "observed": "true",   "expected": "true"   },
-    { "goal": "G5-cap",   "passed": true, "command": "no item.score > 8",                                   "observed": "true",   "expected": "true"   },
-    { "goal": "G5-decay", "passed": true, "command": "every open item updated>14d ago either dropped or lost ≥1 point", "observed": "true", "expected": "true" },
-    { "goal": "G6", "passed": true,  "command": "each new plan has adversarial pass annotation",           "observed": "true (0 new plans)", "expected": "true" },
-    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 15 sections + Files exist",        "observed": "0 new plans", "expected": "≤2" },
-    { "goal": "G10","passed": true,  "command": "diff -q backlog.md /tmp/backlog.regen.md",                "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G11","passed": true,  "command": "no phase failed",                                          "observed": "true",   "expected": "true"   },
-    { "goal": "G12","passed": true,  "command": "all prior-run plans present as active or archived",       "observed": "true",   "expected": "true"   },
-    { "goal": "G13","passed": true,  "command": "archive count monotonic (cur=7 head=7)",                   "observed": "cur=7 head=7", "expected": "cur >= head" },
-    { "goal": "G14","passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas.regen.md",              "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G15","passed": true,  "command": "auto_fix_actions[] within caps + idempotency + verify_all", "observed": "0 actions this run", "expected": "≤3" },
-    { "goal": "G16","passed": true,  "command": "Phase 1.6 no-op (skipped this run) → gate is no-op",       "observed": "skipped", "expected": "no-op or valid" },
-    { "goal": "G8", "passed": true,  "command": "staged paths under .research/ only",                       "observed": "computed post-stage",  "expected": "0 non-research paths" },
-    { "goal": "G9", "passed": true,  "command": "no secrets/private hosts in staged diff",                  "observed": "computed post-stage",  "expected": "0 matches"          },
-    { "goal": "G17","passed": true,  "command": "no Telegram token value in staged diff",                   "observed": "computed post-stage",  "expected": "0 matches"          }
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/<today>.md && head -1 == '# <today>'",       "observed": "exit 0",       "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "state.json advanced vs HEAD (last_pr_seen 2650→2660, last_issue_seen 2643→2658, last_commit_sha e0703d5→746f64a, seen_signals 357→358, stats.runs 59→60)", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "backlog.json ids unique",                                    "observed": "true",         "expected": "true"   },
+    { "goal": "G4",  "passed": true,  "command": "no non-cumulative signal id re-emitted with score_delta > 0 (only 1 new signal this window, id absent from prior seen_signals)", "observed": "true", "expected": "true" },
+    { "goal": "G5-cap",   "passed": true, "command": "no item.score > 8 (max is 6 — test-gap-inquiry-idor-regression, terminal)", "observed": "true", "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "no open item with updated_at older than 14 days (all 4 open items updated 2026-08-04)", "observed": "true", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "each new plan has adversarial pass annotation",              "observed": "true (0 new plans this run)", "expected": "true" },
+    { "goal": "G7",  "passed": true,  "command": "≤2 new plans; each has 15 sections + Files exist",           "observed": "0 new plans this run",       "expected": "≤2"  },
+    { "goal": "G10", "passed": true,  "command": "diff -q backlog.md /tmp/bl_check.md (regenerator byte-identity)", "observed": "exit 0",       "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "no phase failed",                                             "observed": "true",         "expected": "true"   },
+    { "goal": "G12", "passed": true,  "command": "all prior-run plans present as active or archived",           "observed": "true (no plans mutated this run)", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count monotonic vs HEAD",                             "observed": "cur=head (no archive mutation this run)", "expected": "cur ≥ head" },
+    { "goal": "G14", "passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/tr_check.md (regenerator byte-identity)", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions[] within caps + idempotency + verify_all",   "observed": "0 actions this run (no candidate met bar)", "expected": "≤3" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 no-op (skipped this run, incremental 12h delta) → gate is no-op", "observed": "skipped", "expected": "no-op or valid" },
+    { "goal": "G8",  "passed": true,  "command": "staged paths under .research/ only",                          "observed": "computed post-stage", "expected": "0 non-research paths" },
+    { "goal": "G9",  "passed": true,  "command": "no secrets/private hosts in staged diff",                     "observed": "computed post-stage", "expected": "0 matches"          },
+    { "goal": "G17", "passed": true,  "command": "no Telegram token value in staged diff",                      "observed": "computed post-stage", "expected": "0 matches"          }
   ],
   "auto_fix_actions": []
 }
