@@ -6,22 +6,22 @@
       "branch": "auto-impl/gh-issue-2652-7bc4a851",
       "status": "review",
       "claimed_at": "2026-08-04T08:08:13Z",
-      "last_updated": "2026-08-04T08:19:18Z",
+      "last_updated": "2026-08-04T08:26:00Z",
       "status_changed_at": "2026-08-04T08:19:18Z",
       "pr_number": 2655,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2655",
       "merged_at": null,
       "specialist": "generic",
       "implementer_summary": "pr=2655 status=done specialist=generic scope_drift=false code_reuse_warn=none note=claim-time KMP gate (helper+Phase3/7+T32+CI); self-test+smoke+verify green",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=e9f99f030b5ea2674c39ff643f18f8c5d859e844 note=gate-deterministic-no-overgate-verified-on-real-action-list-T32-CI-green",
+      "last_reviewed_oid": "e9f99f030b5ea2674c39ff643f18f8c5d859e844",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-08-04T08:26:00Z"
     }
   ]
 }
