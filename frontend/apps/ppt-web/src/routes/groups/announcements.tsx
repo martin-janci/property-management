@@ -517,8 +517,9 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
 /** Route wrapper — guards for missing param before mounting inner component */
 function ViewAnnouncementPageRoute() {
   const { announcementId } = useParams<{ announcementId: string }>();
+  const { t } = useTranslation();
   if (!announcementId) {
-    return <div>Announcement not found</div>;
+    return <div>{t('errors.announcementNotFound', 'Announcement not found')}</div>;
   }
   return <ViewAnnouncementPageInner announcementId={announcementId} />;
 }
@@ -592,8 +593,9 @@ function EditAnnouncementPageInner({ announcementId }: { announcementId: string 
 /** Route wrapper — guards for missing param before mounting inner component */
 function EditAnnouncementPageRoute() {
   const { announcementId } = useParams<{ announcementId: string }>();
+  const { t } = useTranslation();
   if (!announcementId) {
-    return <div>Announcement not found</div>;
+    return <div>{t('errors.announcementNotFound', 'Announcement not found')}</div>;
   }
   return <EditAnnouncementPageInner announcementId={announcementId} />;
 }

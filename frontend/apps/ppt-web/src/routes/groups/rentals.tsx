@@ -25,6 +25,7 @@ import {
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
 import { AuthError, type AuthErrorCode, useAuth } from '../../contexts';
@@ -391,6 +392,7 @@ function BookingDetailPageRoute() {
   const auth = useRentalsAuth();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
@@ -424,7 +426,7 @@ function BookingDetailPageRoute() {
   });
 
   if (!bookingId) {
-    return <div>Booking not found</div>;
+    return <div>{t('errors.bookingNotFound', 'Booking not found')}</div>;
   }
 
   if (isLoading || !data || !data.data) {

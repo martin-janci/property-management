@@ -4,6 +4,7 @@
  * Owns the building route-wrapper components and the `<Route>` table fragment
  * for buildings + facilities. Extracted from App.tsx to isolate this work.
  */
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
 import {
@@ -32,8 +33,9 @@ function BuildingsPageRoute() {
 /** Route wrapper for building detail (Epic 3, Story 3.1) — gap-sweep */
 function BuildingDetailPageRoute() {
   const { buildingId } = useParams<{ buildingId: string }>();
+  const { t } = useTranslation();
   if (!buildingId) {
-    return <div>Building not found</div>;
+    return <div>{t('errors.buildingNotFound', 'Building not found')}</div>;
   }
   return <BuildingDetailPage buildingId={buildingId} />;
 }
