@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-04T08:08:29Z",
+  "archived_at": "2026-08-04T08:29:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10766,6 +10766,32 @@
         "commit": "3a20e9515a4747ff81ff41e013d279dc46b1cbfc",
         "subject": "gh-issue-2651: normalise pick-target-epic epic_prefix to lowercase kebab (T21) (#2653)",
         "at": "2026-08-04T06:31:25Z"
+      }
+    },
+    {
+      "id": "gh-issue-2652",
+      "action": "dispatcher: mobile-native / KMP tasks are unlandable in the cloud runner (AGP from dl.google.com blocked by egress 403) (Closes #2652)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-04T06:06:24Z (#2652) | gc1-reconcile 2026-08-04T08:29:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-04T06:06:24Z",
+      "issue_ref": {
+        "number": 2652,
+        "url": "https://github.com/martin-janci/property-management/issues/2652",
+        "labels": [
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2655,
+        "merged_at": "2026-08-04T08:28:36Z",
+        "at": "2026-08-04T08:29:16Z"
       }
     },
     {
