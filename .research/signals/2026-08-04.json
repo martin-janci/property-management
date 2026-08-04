@@ -5,8 +5,11 @@
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
       "type": "code-review-finding",
       "source": "Tier1d rotating-expert-review 2026-08-04 (mobile-native-kmp)",
-      "score_delta": 2,
-      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) and aggregates only over the returned page; MyListingsResponse.total is ignored so totalListings=listings.size undercounts and all downstream aggregates omit listings past the first 100.",
+      "score_delta": 0,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) and aggregates only over the returned page; MyListingsResponse.total is ignored so totalListings=listings.size undercounts and all downstream aggregates omit listings past the first 100.",
+        "score_delta zeroed on same-day re-emit \u2014 already applied in the 03:15Z run"
+      ],
       "confidence": "medium",
       "candidate_vector": "bug"
     },
@@ -14,8 +17,11 @@
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
       "type": "code-review-finding",
       "source": "Tier1d rotating-expert-review 2026-08-04 (mobile-native-kmp)",
-      "score_delta": 1,
-      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls with no concurrency limit; getOrNull() swallows per-listing failures, so rate-limited subsets silently drop from the aggregate.",
+      "score_delta": 0,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls with no concurrency limit; getOrNull() swallows per-listing failures, so rate-limited subsets silently drop from the aggregate.",
+        "score_delta zeroed on same-day re-emit \u2014 already applied in the 03:15Z run"
+      ],
       "confidence": "medium",
       "candidate_vector": "bug"
     },
@@ -23,8 +29,11 @@
       "id": "screen-map-drift-pr-2646-ppt",
       "type": "screen-map-drift",
       "source": "PR #2646",
-      "score_delta": 2,
-      "evidence": "PR #2646 modified frontend/apps/ppt-web/src/App.tsx (RouteErrorBoundary shell change) with no docs/screens/ppt/*.md update.",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2646 modified frontend/apps/ppt-web/src/App.tsx (RouteErrorBoundary shell change) with no docs/screens/ppt/*.md update.",
+        "score_delta zeroed on same-day re-emit \u2014 already applied in the 03:15Z run"
+      ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
     },
@@ -32,8 +41,11 @@
       "id": "screen-map-drift-pr-2647-ppt",
       "type": "screen-map-drift",
       "source": "PR #2647",
-      "score_delta": 2,
-      "evidence": "PR #2647 modified 8 ppt-web route wrappers (buildings, community, announcements, messaging, faults, rentals, meters, leases) with no docs/screens/ppt/*.md update.",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2647 modified 8 ppt-web route wrappers (buildings, community, announcements, messaging, faults, rentals, meters, leases) with no docs/screens/ppt/*.md update.",
+        "score_delta zeroed on same-day re-emit \u2014 already applied in the 03:15Z run"
+      ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
     },
@@ -41,8 +53,11 @@
       "id": "screen-map-drift-pr-2648-ppt",
       "type": "screen-map-drift",
       "source": "PR #2648",
-      "score_delta": 2,
-      "evidence": "PR #2648 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (mutation auth guard) with no docs/screens/ppt/*.md update.",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2648 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (mutation auth guard) with no docs/screens/ppt/*.md update.",
+        "score_delta zeroed on same-day re-emit \u2014 already applied in the 03:15Z run"
+      ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
     },
@@ -50,8 +65,11 @@
       "id": "screen-map-drift-pr-2649-ppt",
       "type": "screen-map-drift",
       "source": "PR #2649",
-      "score_delta": 2,
-      "evidence": "PR #2649 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx + financial.tsx (onError toasts) with no docs/screens/ppt/*.md update.",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2649 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx + financial.tsx (onError toasts) with no docs/screens/ppt/*.md update.",
+        "score_delta zeroed on same-day re-emit \u2014 already applied in the 03:15Z run"
+      ],
       "confidence": "medium",
       "candidate_vector": "test-gap"
     },
@@ -81,27 +99,167 @@
       "evidence": "2 commits changed frontend/apps/mobile/src/hooks/useOfflineSupport.ts in the 10h since the last run (#2638, #2645); top-3 churn this run.",
       "confidence": "high",
       "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (api-handlers) adopted 2026-08-04T14:30Z",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 \u2014 authenticate_voice_user() ignores the _access_token parameter and returns any active device for the platform (SELECT ... WHERE platform=$1 AND is_active=TRUE ORDER BY last_used_at DESC LIMIT 1). Live handlers alexa_webhook (line 127) and google_actions_webhook (line 243) act on the returned device's owning-user context \u2014 horizontal privilege escalation.",
+        "Router mounted at /api/v1/webhooks/voice (lib.rs:339-340). Filed as issue #2658."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (api-handlers) adopted 2026-08-04T14:30Z",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 \u2014 verify_hmac_signature() falls back to hardcoded 'default_secret' when VOICE_WEBHOOK_SECRET is unset. Diverges from every sibling receiver (DocuSign/Adobe/HelloSign/Portal/Airbnb/Stripe) which fails closed with 500 CONFIG_ERROR.",
+        "Reachable via POST /api/v1/webhooks/voice/verify. Filed as issue #2658."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (api-handlers) adopted 2026-08-04T14:30Z",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:959 \u2014 signature==expected non-constant-time compare exposes a timing sidechannel; the same segment uses subtle::ct_eq correctly at signatures.rs:679. Reachable via POST /api/v1/webhooks/voice/verify. Filed as issue #2658."
+      ]
     }
   ],
   "goal_checks": [
-    { "goal": "G1", "passed": true,  "command": "test -f briefs/<today>.md && head -1 == '# <today>'",     "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true,  "command": "state.json advanced vs HEAD",                             "observed": "true",   "expected": "true"   },
-    { "goal": "G3", "passed": true,  "command": "backlog.json ids unique",                                 "observed": "true",   "expected": "true"   },
-    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id re-emitted with score_delta", "observed": "true",   "expected": "true"   },
-    { "goal": "G5-cap",   "passed": true, "command": "no item.score > 8",                                   "observed": "true",   "expected": "true"   },
-    { "goal": "G5-decay", "passed": true, "command": "every open item updated>14d ago either dropped or lost ≥1 point", "observed": "true", "expected": "true" },
-    { "goal": "G6", "passed": true,  "command": "each new plan has adversarial pass annotation",           "observed": "true (0 new plans)", "expected": "true" },
-    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 15 sections + Files exist",        "observed": "0 new plans", "expected": "≤2" },
-    { "goal": "G10","passed": true,  "command": "diff -q backlog.md /tmp/backlog.regen.md",                "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G11","passed": true,  "command": "no phase failed",                                          "observed": "true",   "expected": "true"   },
-    { "goal": "G12","passed": true,  "command": "all prior-run plans present as active or archived",       "observed": "true",   "expected": "true"   },
-    { "goal": "G13","passed": true,  "command": "archive count monotonic (cur=7 head=7)",                   "observed": "cur=7 head=7", "expected": "cur >= head" },
-    { "goal": "G14","passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas.regen.md",              "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G15","passed": true,  "command": "auto_fix_actions[] within caps + idempotency + verify_all", "observed": "0 actions this run", "expected": "≤3" },
-    { "goal": "G16","passed": true,  "command": "Phase 1.6 no-op (skipped this run) → gate is no-op",       "observed": "skipped", "expected": "no-op or valid" },
-    { "goal": "G8", "passed": true,  "command": "staged paths under .research/ only",                       "observed": "computed post-stage",  "expected": "0 non-research paths" },
-    { "goal": "G9", "passed": true,  "command": "no secrets/private hosts in staged diff",                  "observed": "computed post-stage",  "expected": "0 matches"          },
-    { "goal": "G17","passed": true,  "command": "no Telegram token value in staged diff",                   "observed": "computed post-stage",  "expected": "0 matches"          }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 .research/briefs/2026-08-04.md matches ^# 2026-08-04$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD (cursors + seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap \u2264 8; 0 open items past 14-day cutoff (2026-07-21)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has 'adversarial pass:' annotation in brief",
+      "observed": "both new plans annotated (passed)",
+      "expected": "both annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + 4 metadata + 11 headings + capability tick + Mode + Files-exist",
+      "observed": "2 plans; all sections present; all cited paths resolve",
+      "expected": "\u22642 plans all-sections all-paths-resolve"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames on staged diff (excluded baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder-rot patterns in brief + new plans",
+      "observed": "no rot",
+      "expected": "no rot"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count (staged) \u2265 (HEAD)",
+      "observed": "7 \u2265 7",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + type sub-caps",
+      "observed": "empty (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2192 gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram tokens in staged diff added lines",
+      "observed": "0",
+      "expected": "0"
+    }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 3 new voice-webhook code-review-finding signals are not in Phase 5 allowlist (allowlist covers screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review only)"
 }

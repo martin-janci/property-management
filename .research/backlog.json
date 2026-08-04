@@ -6672,12 +6672,14 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2648"
+        "PR #2648",
+        "PR #2657"
       ],
       "evidence": [
-        "PR #2648 (code-review-ppt-web-core-rentals-auth-nonnull-mutation) modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx with no docs/screens/ppt/*.md update. Best-effort heuristic — flow-change may or may not be user-visible."
+        "PR #2648 (code-review-ppt-web-core-rentals-auth-nonnull-mutation) modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx with no docs/screens/ppt/*.md update. Best-effort heuristic — flow-change may or may not be user-visible.",
+        "resolved: PR #2657 (screen-map-drift-pr-2648-ppt: reconcile ppt-web screen-map) — code patterns not independently verified (drift heuristic has no TODO/FIXME anchor); updated docs/screens/ppt/rentals-dashboard.md Notes+Agent Log per Screen-Map Protocol"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
@@ -6778,6 +6780,72 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "title": "SECURITY: authenticate_voice_user ignores the OAuth access token — Alexa/Google webhook impersonation (broken authentication)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "tier1d-dispatcher-generator (api-handlers) 2026-08-04",
+        "issue #2658"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 — authenticate_voice_user() takes _access_token: &str (underscore-prefixed → ignored) and returns whichever active device was most recently used on the platform: `SELECT * FROM voice_assistant_devices WHERE platform = $1 AND is_active = TRUE ORDER BY last_used_at DESC NULLS LAST LIMIT 1`. Called from alexa_webhook (line 127) and google_actions_webhook (line 243); router mounted at /api/v1/webhooks/voice (lib.rs:339-340 via voice_webhook_router). Any caller with any token (incl. garbage) is authenticated as an arbitrary user — horizontal privilege escalation.",
+        "Filed as GitHub issue #2658 (security + backend + follow-up)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": "plans/code-review-api-handlers-voice-webhook-token-authbypass.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "title": "SECURITY: verify_hmac_signature falls back to hardcoded \"default_secret\" when VOICE_WEBHOOK_SECRET unset — signatures forgeable",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "tier1d-dispatcher-generator (api-handlers) 2026-08-04",
+        "issue #2658"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 — `std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string())` (line 950). When the env var is unset the receiver validates inbound HMAC-SHA256 signatures against the hardcoded source-visible constant \"default_secret\", so any attacker who reads the repo can forge a valid signature.",
+        "Reachable from POST /api/v1/webhooks/voice/verify (verify_webhook_signature at line 712 → verify_hmac_signature at 948). Sibling receivers (PORTAL_WEBHOOK_SECRET, AIRBNB_WEBHOOK_SECRET, STRIPE_WEBHOOK_SECRET, DocuSign/Adobe/HelloSign in integrations/webhook.rs:778/808/837) all fail closed (500 CONFIG_ERROR) — voice_webhooks.rs is the odd one out. Filed as GitHub issue #2658."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": "plans/code-review-api-handlers-voice-webhook-default-secret.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "title": "SECURITY: verify_hmac_signature uses non-constant-time == compare — timing sidechannel on /verify",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator (api-handlers) 2026-08-04",
+        "issue #2658"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — signature is verified via `Ok(signature == expected)` where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits on the first differing byte, exposing a timing sidechannel that can be used to recover a valid signature byte-by-byte.",
+        "The codebase already has the right pattern in the same segment: signatures.rs:679 uses subtle::ct_eq under a length guard; caddy_ask.rs:181 does the same. voice_webhooks.rs is the lone signature-verification path using raw ==. Reachable via POST /api/v1/webhooks/voice/verify (lib.rs:339-340 → voice_webhooks.rs:71 → 712 → 959). Filed as GitHub issue #2658."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
     }
   ]
 }
