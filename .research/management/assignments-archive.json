@@ -10679,6 +10679,28 @@
       "merge_attempted_at": "2026-08-04T12:16:00Z"
     },
     {
+      "task_id": "screen-map-drift-pr-2649-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-2649-ppt-67918eed",
+      "status": "merged",
+      "claimed_at": "2026-08-04T16:17:55Z",
+      "last_updated": "2026-08-04T18:16:00Z",
+      "status_changed_at": "2026-08-04T18:16:00Z",
+      "pr_number": 2661,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2661",
+      "merged_at": "2026-08-04T18:12:42Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2661 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=docs-only reconcile of financial-payments screen-map (onError toasts, PR #2649); rentals untouched (no real drift; already covered by #2648); /screens validate clean",
+      "reviewer_summary": "verdict=approve head_oid=a99e05f4a1413ee18dd8edb940a8e871b77a8fe0 note=docs-only screen-map reconcile verified against dev (financial onError toasts match; rentals correctly untouched — #2648 auth-guard already documented); scope_drift benign owner mis-tag; CI green; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "a99e05f4a1413ee18dd8edb940a8e871b77a8fe0",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-04T18:11:30Z"
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -11499,5 +11521,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-04T16:17:55Z"
+  "archived_at": "2026-08-04T18:15:15Z"
 }

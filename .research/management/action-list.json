@@ -17,23 +17,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "screen-map-drift-pr-2649-ppt",
-      "action": "screen-map drift: PR #2649 touched ppt-web rentals + financial routes (onError toasts) without updating docs/screens/ppt/",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-04T04:05:19Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-04T04:05:19Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "code-review-reality-server-token-cache-evict-arbitrary",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/state.rs:698-712 — TokenValidationCache::set(), when the cache is full after expired-entry eviction, claims to 'remove oldest entries' (inline comment) but actually removes ARBITRARY entries. It builds keys_to_remove from `cache.iter().take(entries_to_remove)` over a std HashMap, whose iteration order is unspecified/randomized. There is no insertion-time or expiry-time ordering captured (CachedTokenValidation stores `expires_at` but it is not consulted in this second pass), so the entries dropped are not the oldest.",
+      "Effect: under sustained load once the 10 000-entry cap (Default::new(60, 10000)) is reached, freshly-validated tokens can be evicted while still-live-but-older entries are retained, degrading the SSO introspection cache hit-rate (Epic 104.2) and pushing extra load back onto the PM introspection endpoint — the exact thing the cache exists to avoid. No correctness/security impact (a miss just triggers a real introspection), so severity is low; fix is to sort the eviction candidates by `expires_at` (or use a proper LRU) instead of relying on HashMap order."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-listings-page-no-upper-cap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/listings.rs:28-34 — clamp_pagination() is documented as the single guard that keeps raw `page`/`limit` query params 'safe before they reach SQL', and it correctly bounds `limit` via `.clamp(1, MAX_LISTINGS_LIMIT)` (100). But `page` is only floored: `page.unwrap_or(1).max(1)` — there is NO upper bound. A public, unauthenticated caller can pass `?page=2000000000` on GET /api/v1/listings.",
+      "The unbounded page is then wired into PublicListingQuery (build_listing_query, listings.rs:44-49) and turned into a SQL OFFSET downstream (offset = (page-1)*limit in the api-core repository layer). This is both (a) a deep-pagination resource-exhaustion vector on a public endpoint — a huge OFFSET forces the DB to scan+discard millions of rows per request — and (b) a latent `(page-1)*limit` i32 multiply that can overflow for large page values (panic in debug / wrap in release), the same class of raw-DB/500 failure the function's own doc-comment says it exists to prevent for negative limits.",
+      "Fix: clamp `page` to a sane maximum in clamp_pagination (mirroring the limit clamp), or compute a max-page from the total count, so an attacker-supplied page cannot drive an unbounded OFFSET / arithmetic overflow. The clamp function already owns pagination safety for this segment, so the guard belongs here."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-saved-search-dup-alerts",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/services/saved_search_alerts.rs:225-238 — in the per-search scan loop, once new match ids are found the code enqueues the alert (enqueue_search_alert, lines 217-233) and THEN advances the watermark via `let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64).await` at line 235-238. The watermark-advance error is discarded with `let _ =`.",
+      "Ordering bug: the enqueue succeeds (alert is committed to the queue) but if the subsequent mark_saved_search_matched fails, the ignored error means `last_matched_at` is NOT advanced. On the next due poll the loop re-reads the same `since` watermark (line 173) and find_new_match_listing_ids returns the SAME listing ids again, which are enqueued a SECOND time — the user receives duplicate saved-search notifications for the same listings. The sibling enqueue-failure path (line 224-231) deliberately `continue`s WITHOUT advancing the watermark 'so the next due run retries' — but that same 'don't advance' behaviour is harmful AFTER a successful enqueue because the work is already done.",
+      "Fix: propagate/handle the mark_saved_search_matched error after a successful enqueue (e.g. log at error and, ideally, perform enqueue+watermark advance in one transaction so they commit atomically), rather than silently swallowing it and risking duplicate alert delivery."
+    ],
+    "expert": "rust"
+  }
+]

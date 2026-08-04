@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-04T16:18:03Z",
+  "archived_at": "2026-08-04T18:15:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12403,6 +12403,30 @@
         "merged_pr": 2657,
         "merged_at": "2026-08-04T12:19:19Z",
         "at": "2026-08-04T14:03:10Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2649-ppt",
+      "action": "screen-map drift: PR #2649 touched ppt-web rentals + financial routes (onError toasts) without updating docs/screens/ppt/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-04T04:05:19Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-08-04T18:15:15Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-04T04:05:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2661,
+        "merged_at": "2026-08-04T18:12:42Z",
+        "at": "2026-08-04T18:15:15Z"
       }
     },
     {
