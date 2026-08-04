@@ -1,4 +1,9 @@
-import { parseThreadDetail, threadTitle, toUiMessages } from './ThreadDetailScreen';
+import {
+  formatMessageTime,
+  parseThreadDetail,
+  threadTitle,
+  toUiMessages,
+} from './ThreadDetailScreen';
 
 let warnSpy: jest.SpyInstance;
 beforeEach(() => {
@@ -88,5 +93,37 @@ describe('toUiMessages', () => {
   it('treats every message as not-from-me when the user id is unknown', () => {
     const msgs = toUiMessages(parseThreadDetail(validDetail), undefined);
     expect(msgs.every((m) => !m.fromMe)).toBe(true);
+  });
+
+  it('keeps a message with a malformed createdAt and sinks it to the end', () => {
+    // `isApiMessage` only validates id + content, so a non-date createdAt
+    // survives parsing. It must not break the sort (NaN comparator) — the
+    // anomalous row sorts last while the valid rows keep chronological order.
+    const detail = parseThreadDetail({
+      messages: [
+        { id: 'bad', content: 'no timestamp', createdAt: 'x' },
+        { id: 'm2', content: 'Reply', createdAt: '2026-04-22T09:15:00Z' },
+        { id: 'm1', content: 'Question', createdAt: '2026-04-22T08:30:00Z' },
+      ],
+    });
+    const msgs = toUiMessages(detail, undefined);
+    expect(msgs.map((m) => m.id)).toEqual(['m1', 'm2', 'bad']);
+  });
+});
+
+describe('formatMessageTime', () => {
+  it('formats a valid ISO timestamp to an hour:minute label', () => {
+    // Non-empty and free of the "Invalid Date" sentinel.
+    const label = formatMessageTime('2026-04-22T08:30:00Z');
+    expect(label).not.toBe('');
+    expect(label).not.toMatch(/Invalid Date/);
+  });
+
+  it.each([
+    ['a non-date string', 'x'],
+    ['an empty string', ''],
+    ['garbage', 'not-a-date'],
+  ])('returns an empty string rather than "Invalid Date" for %s', (_label, input) => {
+    expect(formatMessageTime(input)).toBe('');
   });
 });
