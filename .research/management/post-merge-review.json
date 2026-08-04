@@ -1,9 +1,38 @@
 {
-  "generated": "2026-08-03T20:17:45Z",
+  "generated": "2026-08-04T08:09:21Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-04T08:09:21Z",
+      "prs_scanned": 13,
+      "clean": [
+        2638,
+        2639,
+        2640,
+        2642,
+        2644,
+        2645,
+        2646,
+        2647,
+        2648,
+        2649,
+        2650,
+        2653
+      ],
+      "with_issues": [
+        {
+          "pr": 2641,
+          "issue": 2654,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "ThreadDetailScreen send-error banner ships a hardcoded English literal (\"Couldn't send your message. Please try again.\") while sibling PR #2642 i18n'd every other empty/error/loading string in the SAME screen across 6 locales; banner is half-localized (retry uses common.retry, message does not). low-severity i18n convention gap -> NET-NEW #2654."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=9 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Scanned 13 never-reviewed PRs (2638-2653) not carrying post-merge-reviewed; the 2626-2637 + 2544-2551 wave already labeled/reviewed and skipped. 12 CLEAN: 2638 (offline sync false-complete: adds pending field, isComplete=pending===0, halt+drain tests), 2639 (push-token console.log DEV-gating source-shape guard + no-raw-token assertion), 2640 (AuthProvider now calls configureApiClient so getApiClient() carries Bearer; real fix+test), 2642 (i18n empty/error/loading across ~18 mobile screens, 6 locales, representative FaultsListScreen test), 2644 (screen-map sync to #2636, docs-only), 2645 (offline transient 5xx NEVER dropped past old 3-retry budget; data-loss fix + survival test), 2646 (route-outlet ErrorBoundary keyed on pathname; shell survives stale-chunk lazy reject; 3 tests), 2647 (route-wrapper 'X not found' i18n across 6 locales + Slovak regression test), 2648 (rentals mutation auth guard: requireRentalsAuthHeaders throws typed AuthError not TypeError, onError->logout; thorough tests), 2649 (financial payments allocate/auto-match onError toasts + prod-route test), 2650 (logout cache-purge: adds accounting/financial/reports/rentals/meters/auth/predictive-maintenance/sentiment/notification-analytics roots to AUTHED_QUERY_KEY_ROOTS; security fix + exhaustive test), 2653 (pick-target-epic ascii_downcase so camelCase-derived epic_prefix passes T21; shell fix+test). Minor non-filed observation: 2649 financial onError toast surfaces raw err.message (ppt-web manager-facing; QueryErrorBanner mobile contract says never leak raw error) - too weak to file. Labeling: update_pull_request has no labels param and issue_write-update would clobber existing PR labels (e.g. app-tsx-queue on 2646), so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run. NET-NEW actionable issues: 1 (#2654)."
+    },
     {
       "run_at": "2026-08-03T20:17:45Z",
       "prs_scanned": 10,
@@ -645,118 +674,6 @@
           "findings": 4,
           "specialist": "rust-backend",
           "note": "core fix correct+tested; retry path dups leads (no unique index); residual silent-drops"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-15T00:00:00Z",
-      "prs_scanned": 15,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2313,
-          "issue": 2318,
-          "findings": 5,
-          "specialist": "rust-backend",
-          "note": "due-work consumer silent RLS no-op in prod (FORCE RLS, no worker context)"
-        },
-        {
-          "pr": 2312,
-          "issue": 2321,
-          "findings": 4,
-          "specialist": "rust-backend",
-          "note": "cross-org back-fill blocked by FORCE RLS (no super-admin policy); pgvector test dead in CI"
-        },
-        {
-          "pr": 2310,
-          "issue": 2319,
-          "findings": 5,
-          "specialist": "rust-backend",
-          "note": "worker warn-logs benign no-device skips + 4 low cleanups"
-        },
-        {
-          "pr": 2309,
-          "issue": 2320,
-          "findings": 5,
-          "specialist": "rust-backend",
-          "note": "file_key IDOR at document registration; unsigned Content-Length makes 50MiB cap advisory"
-        },
-        {
-          "pr": 2289,
-          "issue": 2317,
-          "findings": 4,
-          "specialist": "rust-backend",
-          "note": "core IDOR fix complete; adjacent exposures (escalated-list ungated, feedback org-scoped only)"
-        },
-        {
-          "pr": 2294,
-          "issue": 2322,
-          "findings": 6,
-          "specialist": "react-web",
-          "note": "route-level role gate missing, pagination ignored, no screen-map, en-only i18n"
-        },
-        {
-          "pr": 2293,
-          "issue": 2325,
-          "findings": 6,
-          "specialist": "react-web",
-          "note": "hooks bypass authenticatedFetchJson; orphan unprotected route; i18n missing"
-        },
-        {
-          "pr": 2292,
-          "issue": 2324,
-          "findings": 5,
-          "specialist": "react-web",
-          "note": "list hooks call nonexistent backend endpoints \u2014 create flow still broken"
-        },
-        {
-          "pr": 2287,
-          "issue": 2326,
-          "findings": 6,
-          "specialist": "nextjs-web",
-          "note": "Decimal-as-string wire bug flips drop/increase labels; AC-5 toggle untracked"
-        },
-        {
-          "pr": 2304,
-          "issue": 2323,
-          "findings": 5,
-          "specialist": "react-native",
-          "note": "core fix sound; ~24 sibling screens still silent-zero; banner not extracted"
-        },
-        {
-          "pr": 2286,
-          "issue": 2330,
-          "findings": 5,
-          "specialist": "rust-backend",
-          "note": "core replay design sound; sibling per-portal receivers unprotected, no dedup"
-        },
-        {
-          "pr": 2288,
-          "issue": 2331,
-          "findings": 5,
-          "specialist": "kotlin-mp",
-          "note": "Decimal-as-string wire mismatch kills alert/favorites decoding; no visible UI shipped"
-        },
-        {
-          "pr": 2311,
-          "issue": 2328,
-          "findings": 2,
-          "specialist": "generic",
-          "note": "scanEpics emits schema-invalid mixed-case candidate ids + greedy suffix regex"
-        },
-        {
-          "pr": 2305,
-          "issue": 2329,
-          "findings": 3,
-          "specialist": "react-native",
-          "note": "tests solid; JWT decode triplicated; stale useTenantId cache on logout"
-        },
-        {
-          "pr": 2308,
-          "issue": 2327,
-          "findings": 5,
-          "specialist": "react-native",
-          "note": "tests enshrine unauth-upload; pin transport #2309 obsoletes; no client-side size/MIME validation"
         }
       ]
     }
