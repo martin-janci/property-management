@@ -1,26 +1,26 @@
 {
-  "generated": "2026-08-04T12:20:00Z",
+  "generated": "2026-08-04T14:17:24Z",
   "assignments": [
     {
       "task_id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-src-s-cd031226",
       "status": "review",
       "claimed_at": "2026-08-04T12:08:00Z",
-      "last_updated": "2026-08-04T12:22:00Z",
-      "status_changed_at": "2026-08-04T12:22:00Z",
+      "last_updated": "2026-08-04T14:17:24Z",
+      "status_changed_at": "2026-08-04T14:17:24Z",
       "pr_number": 2659,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2659",
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=2659 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=guarded malformed createdAt (Invalid Date label + NaN sort) in ThreadDetailScreen; non-conflicting with #2656; verify+goal-check green",
       "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "last_reviewed_oid": "3cfdd38381fb3428e52b0f248f62112e14925bda",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {

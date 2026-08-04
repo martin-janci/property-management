@@ -19,23 +19,6 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-2648-ppt",
-      "action": "screen-map drift: PR #2648 touched ppt-web rentals route (mutation auth guard) without updating docs/screens/ppt/",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-04T04:05:19Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-04T04:05:19Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "screen-map-drift-pr-2649-ppt",
       "action": "screen-map drift: PR #2649 touched ppt-web rentals + financial routes (onError toasts) without updating docs/screens/ppt/",
       "owner_role": "pm-qa",
@@ -70,22 +53,23 @@
       }
     },
     {
-      "id": "gh-issue-2654",
-      "action": "Follow-up: ThreadDetailScreen send-error banner is hardcoded English, bypassing i18n (PR #2641) (Closes #2654)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
+      "id": "gh-issue-2658",
+      "action": "Voice webhook receiver has demo-grade auth: authenticate_voice_user ignores the access token (broken authentication) (Closes #2658)",
+      "owner_role": "pm-security",
+      "priority": "high",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-04T10:03:54Z (#2654)",
+      "source": "dispatcher-issue-ingest 2026-08-04T14:03:38Z (#2658)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-04T10:03:54Z",
+      "first_open_at": "2026-08-04T14:03:38Z",
       "issue_ref": {
-        "number": 2654,
-        "url": "https://github.com/martin-janci/property-management/issues/2654",
+        "number": 2658,
+        "url": "https://github.com/martin-janci/property-management/issues/2658",
         "labels": [
-          "follow-up",
-          "from-merged-review"
+          "security",
+          "backend",
+          "follow-up"
         ]
       }
     }

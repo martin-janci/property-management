@@ -1,9 +1,25 @@
 {
-  "generated": "2026-08-04T08:09:21Z",
+  "generated": "2026-08-04T14:07:35Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-04T14:07:35Z",
+      "prs_scanned": 3,
+      "clean": [
+        2655,
+        2656,
+        2657
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=3 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Focus PRs #2656 + #2657 both merged 2026-08-04T12:19Z, AFTER the 08:09Z review that only reached #2653; also caught #2655 (merged 08:28Z, likewise after 08:09Z). All prior in-window PRs (2626-2653) already scanned in earlier runs. 3 never-reviewed PRs scanned, all CLEAN: #2655 (dispatcher infra for issue #2652 -- new .research/mobile-native-gate.sh claim-time KMP gate + test-mobile-native-gate.sh smoke test + dispatcher-self-test T32 + dispatcher-prompt Phase 3 candidate-exclusion / Phase 7 'Mobile-native gated:' surface + CI dispatcher-self-test.yml path+step wiring; id_signal regex '(^|[-_])(mobile-native|kmp)([-_]|$)' correctly gates KMP and excludes mobile-rn/frontend-apps-mobile; files_signal gates pure-mobile-native plan Files scope, spares cross-stack; assignment-form arithmetic safe under set -euo pipefail; empty-section guarded; thorough offline fixture-fed tests incl. batch open-only filter -- correct+complete), #2656 (closes prior-review finding #2654: ThreadDetailScreen send-error banner now t('messages.threadSendError'); key added to ALL 6 mobile locales cs/de/en/hu/pl/sk -- verified on disk, no missing-key gap; test updated to assert the i18n key routes through useTranslation and still asserts raw backend error never leaks -- complete), #2657 (docs-only screen-map reconcile of ppt/rentals-dashboard.md to PR #2648's rentals mutation auth-guard; Notes>Specific + Agent Log only, no frontmatter/outcome change, accurate -- clean). Considered filing on #2655 files_signal treating a docs-companion path as a 'verifiable slice' (would un-gate a still-unverifiable KMP plan) and on the 'don't inflate starvation metric' guidance being prose-only (metric code not in diff) -- both too speculative/low-value to file; false-negatives just fall back to prior claim+blocked behavior (no regression). NET-NEW actionable issues: 0. Labeling: MCP update_pull_request has no labels param and issue_write-update would clobber existing PR labels, so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run.",
+      "focus_prs": [
+        2656,
+        2657
+      ]
+    },
     {
       "run_at": "2026-08-04T08:09:21Z",
       "prs_scanned": 13,
@@ -72,11 +88,11 @@
           "issue": 2630,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
+          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) — clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage — no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
         }
       ],
       "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run — auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) — still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
     },
     {
       "run_at": "2026-08-02T12:20:00Z",
@@ -122,7 +138,7 @@
       ],
       "with_issues": [],
       "skipped_already_reviewed": [],
-      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard \u2014 exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) \u2014 all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 \u2014 still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
+      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard — exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) — all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 — still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
     },
     {
       "run_at": "2026-08-01T06:15:42Z",
@@ -189,7 +205,7 @@
         }
       ],
       "skipped_already_reviewed": [],
-      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 \u2014 the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
+      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 — the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
     },
     {
       "run_at": "2026-07-31T16:18:37Z",
@@ -210,7 +226,7 @@
           "issue": 2612,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification \u2014 it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
+          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification — it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
         }
       ],
       "skipped_already_reviewed": [
@@ -240,7 +256,7 @@
           "issue": 2573,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "DELETE /documents/by-file-key deletes by org-scope only \u2014 no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
+          "note": "DELETE /documents/by-file-key deletes by org-scope only — no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
         },
         {
           "pr": 2568,
@@ -289,7 +305,7 @@
           "issue": 2562,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "get_dispute_kpis unwired dead code \u2014 no route/export consumes the funnel/TTR KPIs"
+          "note": "get_dispute_kpis unwired dead code — no route/export consumes the funnel/TTR KPIs"
         },
         {
           "pr": 2549,
@@ -488,7 +504,7 @@
           "issue": 2417,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \u2014 docs-only, scheduler.rs is correct"
+          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) — docs-only, scheduler.rs is correct"
         },
         {
           "pr": 2335,
@@ -643,37 +659,6 @@
           "findings": 1,
           "specialist": "react-web",
           "note": "high-quality PR; optimistic toggle patches preferences[] not categories[].enabledEvents so 'X of Y enabled' badge desyncs until onSettled refetch"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-15T00:30:00Z",
-      "prs_scanned": 5,
-      "clean": [
-        2274,
-        2273
-      ],
-      "with_issues": [
-        {
-          "pr": 2281,
-          "issue": 2341,
-          "findings": 3,
-          "specialist": "nextjs-web",
-          "note": "partial-body fix sound; residual type-guard/schema/soft-404 hardening"
-        },
-        {
-          "pr": 2280,
-          "issue": 2343,
-          "findings": 4,
-          "specialist": "nextjs-web",
-          "note": "HIGH: 404-conflation inverted + useMyAgency hits nonexistent /agencies/me; siblings unfixed"
-        },
-        {
-          "pr": 2278,
-          "issue": 2342,
-          "findings": 4,
-          "specialist": "rust-backend",
-          "note": "core fix correct+tested; retry path dups leads (no unique index); residual silent-drops"
         }
       ]
     }
