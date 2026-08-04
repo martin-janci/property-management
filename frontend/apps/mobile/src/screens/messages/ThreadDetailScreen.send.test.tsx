@@ -99,8 +99,10 @@ describe('ThreadDetailScreen — send outcomes', () => {
     expect(mockMutationFn).toHaveBeenCalledWith({ content: 'Please fix the elevator' });
 
     // The failure is surfaced inline (reused QueryErrorBanner) with a retry.
-    // The banner shows a user-facing message, never the raw backend error.
-    expect(screen.getByText(/Couldn't send/)).toBeTruthy();
+    // The banner message is i18n-driven (the `t(key) => key` test mock renders
+    // the key, proving the copy routes through useTranslation, never a raw
+    // English literal and never the raw backend error).
+    expect(screen.getByText('messages.threadSendError')).toBeTruthy();
     expect(screen.queryByText(new RegExp(SEND_ERROR))).toBeNull();
     expect(screen.getByText('common.retry')).toBeTruthy(); // i18n key in tests
 
@@ -117,6 +119,6 @@ describe('ThreadDetailScreen — send outcomes', () => {
 
     expect(mockMutationFn).toHaveBeenCalledTimes(1);
     expect(screen.queryByDisplayValue('Thanks!')).toBeNull();
-    expect(screen.queryByText(/Couldn't send/)).toBeNull();
+    expect(screen.queryByText('messages.threadSendError')).toBeNull();
   });
 });
