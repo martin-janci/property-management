@@ -3,7 +3,7 @@ import { setMfaChallengeHandler } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrowserRouter, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   AnnouncerProvider,
   ConnectionStatus,
@@ -11,6 +11,7 @@ import {
   OfflineIndicator,
   ToastProvider,
 } from './components';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
@@ -193,6 +194,30 @@ function RouteLoading() {
 }
 
 /**
+ * Route-outlet-level error boundary.
+ *
+ * Scopes render/lazy failures to the route outlet so they can't unmount the
+ * whole application shell. Without this, a single stale-chunk `lazy()`
+ * rejection (or any uncaught render error in one route) propagates all the way
+ * to the top-level `<ErrorBoundary>` in `main.tsx`, which wraps the *entire*
+ * `<App />` — nav, providers and all — and replaces the whole UI with the
+ * global fallback. Placing a boundary here, as a child of `<main>` and a
+ * sibling *below* `<AppNavigation>`, keeps the shell (nav, language switcher,
+ * connection status) mounted and renders the fallback only inside the content
+ * region. The reused `ErrorBoundary` fallback already offers a reload
+ * affordance ("Reload Page") plus an in-place "Try Again".
+ *
+ * The boundary is keyed on `pathname` so that navigating to a different route
+ * after a failure resets it automatically — the user recovers by clicking a
+ * nav link, without a full page reload. Must be rendered inside
+ * `BrowserRouter` for `useLocation` to resolve.
+ */
+export function RouteErrorBoundary({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>;
+}
+
+/**
  * Command Palette wrapper that registers navigation commands.
  * Must be rendered inside BrowserRouter for useNavigate to work.
  */
@@ -226,9 +251,11 @@ function App() {
                               never see impersonation tokens directly. */}
                           <AppNavigation />
                           <main id="main-content">
-                            <Suspense fallback={<RouteLoading />}>
-                              <AppRoutes />
-                            </Suspense>
+                            <RouteErrorBoundary>
+                              <Suspense fallback={<RouteLoading />}>
+                                <AppRoutes />
+                              </Suspense>
+                            </RouteErrorBoundary>
                           </main>
                         </div>
                       </CommandPaletteWrapper>

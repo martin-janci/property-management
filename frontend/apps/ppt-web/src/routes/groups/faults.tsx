@@ -415,7 +415,7 @@ function FaultDetailPageRoute() {
   }, [error, showToast, t]);
 
   if (!faultId) {
-    return <div>Fault not found</div>;
+    return <div>{t('errors.faultNotFound', 'Fault not found')}</div>;
   }
 
   const isManager = isManagerRole(user?.role);
@@ -464,12 +464,13 @@ function EditFaultPageRoute() {
   const { faultId } = useParams<{ faultId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const { data, isLoading } = useFault(faultId ?? '');
   const { data: buildingsData } = useBuildings();
   const updateFault = useUpdateFault(faultId ?? '');
 
   if (!faultId) {
-    return <div>Fault not found</div>;
+    return <div>{t('errors.faultNotFound', 'Fault not found')}</div>;
   }
   if (isLoading || !data) {
     return <div className="p-6">Loading…</div>;

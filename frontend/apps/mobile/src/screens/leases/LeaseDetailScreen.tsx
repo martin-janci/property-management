@@ -13,6 +13,7 @@
 
 import type { Lease as ApiLeasePayload, LeasePayment, LeaseWithDetails } from '@ppt/api-client';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { warnIfParseFailed } from '../shared/parserWarnings';
@@ -125,6 +126,7 @@ interface LeaseDetailScreenProps {
 }
 
 export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailScreenProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
     ['leases', 'detail', leaseId],
     `/api/v1/leases/${leaseId ?? ''}`,
@@ -169,13 +171,13 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
       >
         {isLoading || !leaseId ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error || !lease ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load lease</Text>
-            <Text style={s.emptyText}>{error?.message ?? 'Lease not found.'}</Text>
+            <Text style={s.emptyTitle}>{t('leases.detailLoadError')}</Text>
+            <Text style={s.emptyText}>{error?.message ?? t('leases.notFound')}</Text>
           </View>
         ) : (
           <>
@@ -193,7 +195,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
             <Text style={styles.sectionTitle}>Upcoming payments</Text>
             {payments.length === 0 ? (
               <View style={s.card}>
-                <Text style={s.cardBody}>No upcoming payments scheduled.</Text>
+                <Text style={s.cardBody}>{t('leases.noPayments')}</Text>
               </View>
             ) : (
               payments.map((payment) => (

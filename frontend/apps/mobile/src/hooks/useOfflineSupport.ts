@@ -122,6 +122,18 @@ export interface SyncProgress {
   total: number;
   current: number;
   failed: number;
+  /**
+   * Actions still awaiting a successful (or terminal) outcome. Zero only when
+   * the queue is fully drained; > 0 whenever the cycle halted early on a
+   * head-of-line-blocking retryable failure with work still carried forward
+   * (issue #2637).
+   */
+  pending: number;
+  /**
+   * True only when the queue was **fully drained** this cycle (`pending === 0`).
+   * A cycle that halts early on a retryable head-of-line failure reports
+   * `isComplete: false` with `pending > 0` — it did NOT finish (issue #2637).
+   */
   isComplete: boolean;
 }
 
@@ -305,9 +317,22 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         const flushStartIds = new Set(queue.map((a) => a.id));
 
         // Initialize progress
-        const initialProgress: SyncProgress = { total, current: 0, failed: 0, isComplete: false };
+        const initialProgress: SyncProgress = {
+          total,
+          current: 0,
+          failed: 0,
+          pending: total,
+          isComplete: false,
+        };
         setSyncProgress(initialProgress);
         onProgress?.(initialProgress);
+
+        // Did the cycle stop early on a retryable head-of-line failure? If so
+        // the queue is NOT drained and the final progress must reflect that
+        // (issue #2637). `haltedAt` records how far we got so the final
+        // `current` is accurate.
+        let halted = false;
+        let haltedAt = total;
 
         // Classify every action in the ORIGINAL queue order so we can rebuild
         // the carry-forward list as a strict-FIFO subsequence (issue #1767):
@@ -380,10 +405,17 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
               // Flag it so the UI can surface "waiting to sync" without implying
               // the item was lost.
               action.syncStatus = 'failed';
+              // Record the head-of-line halt so the final progress reports the
+              // queue as NOT drained, with the carried-forward pending count
+              // (issue #2637).
+              halted = true;
+              haltedAt = i + 1;
               const haltedProgress: SyncProgress = {
                 total,
                 current: i + 1,
                 failed,
+                // Everything from the failed action onward is still queued.
+                pending: total - success - failed,
                 isComplete: false,
               };
               setSyncProgress(haltedProgress);
@@ -397,6 +429,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
             total,
             current: i + 1,
             failed,
+            pending: total - success - failed,
             isComplete: false,
           };
           setSyncProgress(currentProgress);
@@ -436,8 +469,19 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         await AsyncStorage.setItem(LAST_SYNC_KEY, now.toString());
         setLastSyncTime(new Date(now));
 
-        // Final progress update
-        const finalProgress: SyncProgress = { total, current: total, failed, isComplete: true };
+        // Final progress update. `isComplete` reflects whether the queue was
+        // actually drained — NOT merely that the cycle ended (issue #2637). A
+        // cycle that halted early on a retryable head-of-line failure leaves
+        // `merged` non-empty, so it must report `isComplete: false` with the
+        // carried-forward `pending` count rather than falsely claiming success.
+        const pending = merged.length;
+        const finalProgress: SyncProgress = {
+          total,
+          current: halted ? haltedAt : total,
+          failed,
+          pending,
+          isComplete: pending === 0,
+        };
         setSyncProgress(finalProgress);
         onProgress?.(finalProgress);
 

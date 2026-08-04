@@ -12,6 +12,7 @@
  */
 
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery, useTenantId } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
@@ -96,6 +97,7 @@ interface BuildingsScreenProps {
 }
 
 export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
+  const { t } = useTranslation();
   const { tenantId } = useTenantId();
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiBuildingsListResponse>(
@@ -123,18 +125,18 @@ export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
       >
         {isLoading || !tenantId ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load buildings</Text>
+            <Text style={s.emptyTitle}>{t('buildings.loadError')}</Text>
           </View>
         ) : buildings.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>🏢</Text>
-            <Text style={s.emptyTitle}>No buildings</Text>
-            <Text style={s.emptyText}>No properties are linked to your account yet.</Text>
+            <Text style={s.emptyTitle}>{t('buildings.emptyTitle')}</Text>
+            <Text style={s.emptyText}>{t('buildings.emptyText')}</Text>
           </View>
         ) : (
           buildings.map((building) => (

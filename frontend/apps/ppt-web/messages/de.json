@@ -693,7 +693,15 @@
     "waitBeforeRetry": "Bitte warten Sie, bevor Sie es erneut versuchen.",
     "somethingWentWrong": "Etwas ist schiefgelaufen",
     "unexpectedError": "Wir entschuldigen uns für die Unannehmlichkeiten. Ein unerwarteter Fehler ist aufgetreten.",
-    "copyErrorDetailsSupport": "Fehlerdetails für den Support kopieren"
+    "copyErrorDetailsSupport": "Fehlerdetails für den Support kopieren",
+    "groupNotFound": "Gruppe nicht gefunden",
+    "announcementNotFound": "Ankündigung nicht gefunden",
+    "threadNotFound": "Konversation nicht gefunden",
+    "buildingNotFound": "Gebäude nicht gefunden",
+    "bookingNotFound": "Buchung nicht gefunden",
+    "faultNotFound": "Störung nicht gefunden",
+    "meterNotFound": "Zähler nicht gefunden",
+    "entityNotFound": "{{entity}} nicht gefunden"
   },
   "notifications": {
     "title": "Benachrichtigungen",

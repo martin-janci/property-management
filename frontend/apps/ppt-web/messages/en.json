@@ -877,7 +877,15 @@
     "waitBeforeRetry": "Please wait before trying again.",
     "somethingWentWrong": "Something went wrong",
     "unexpectedError": "We apologize for the inconvenience. An unexpected error has occurred.",
-    "copyErrorDetailsSupport": "Copy error details for support"
+    "copyErrorDetailsSupport": "Copy error details for support",
+    "groupNotFound": "Group not found",
+    "announcementNotFound": "Announcement not found",
+    "threadNotFound": "Thread not found",
+    "buildingNotFound": "Building not found",
+    "bookingNotFound": "Booking not found",
+    "faultNotFound": "Fault not found",
+    "meterNotFound": "Meter not found",
+    "entityNotFound": "{{entity}} not found"
   },
   "notifications": {
     "title": "Notifications",

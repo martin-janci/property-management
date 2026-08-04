@@ -11,6 +11,9 @@
  *       earlier CREATE that failed and is being retried.
  *   (d) offline-edit linkage — after a CREATE returns its server id, a queued
  *       UPDATE that targeted the temp id is replayed against the real id.
+ *   (e) halted-cycle honesty (issue #2637) — a cycle that stops early on a
+ *       retryable head-of-line failure reports isComplete:false with pending>0,
+ *       never a false completion.
  *
  * The hook is a real React hook (useState/useRef/useEffect), so it is driven
  * through a tiny `react-test-renderer` harness. We deliberately do NOT import
@@ -89,6 +92,7 @@ const store = TEST_GLOBAL.__offlineStore;
 
 import {
   type QueuedAction,
+  type SyncProgress,
   type UseOfflineSupportReturn,
   useOfflineSupport,
 } from './useOfflineSupport';
@@ -309,10 +313,80 @@ describe('useOfflineSupport.processQueue — issue #1767', () => {
     expect(readQueue()).toHaveLength(0);
   });
 
-  it('(e) transient (5xx) failure is NEVER dropped, even past the old 3-retry budget, and keeps being re-attempted', async () => {
+  it('(e) does NOT report isComplete after a head-of-line-blocked (halted) cycle', async () => {
+    // issue #2637: a retryable failure halts the flush mid-cycle. The final
+    // progress must NOT claim the queue is complete while items are still
+    // pending — the old code unconditionally overwrote the halted state with
+    // { isComplete: true } after the loop.
+    seedQueue([
+      makeAction({ id: 'create', type: 'CREATE', endpoint: '/api/v1/faults', body: { t: 'c' } }),
+      makeAction({
+        id: 'update',
+        type: 'UPDATE',
+        method: 'PUT',
+        endpoint: '/api/v1/faults/known-id',
+        body: { t: 'u' },
+      }),
+    ]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    // The head-of-line CREATE fails with a retryable 5xx, halting the cycle.
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/api/v1/faults')) return serverError(503);
+      return ok({});
+    });
+
+    await mountHook();
+
+    const events: SyncProgress[] = [];
+    let result!: { success: number; failed: number };
+    await act(async () => {
+      result = await api.processQueue((p) => events.push({ ...p }));
+    });
+
+    // The CREATE blocked the UPDATE, so nothing succeeded and nothing was
+    // terminally dropped (503 is retryable) — one attempt, then halt.
+    expect(result).toEqual({ success: 0, failed: 0 });
+
+    // The FINAL progress tick must reflect a halt, not a completion.
+    const last = events.at(-1);
+    expect(last).toBeDefined();
+    expect(last?.isComplete).toBe(false);
+    expect(last?.pending).toBeGreaterThan(0);
+
+    // The exposed syncProgress state agrees with the callback's last tick.
+    expect(api.syncProgress?.isComplete).toBe(false);
+    expect(api.syncProgress?.pending).toBeGreaterThan(0);
+
+    // Both actions survive in the queue for the next reconnect (strict FIFO).
+    expect(readQueue().map((a) => a.id)).toEqual(['create', 'update']);
+  });
+
+  it('reports isComplete with pending:0 when the queue fully drains', async () => {
+    // Positive counterpart to (e): a clean drain must still report completion.
+    seedQueue([makeAction({ id: 'a1' }), makeAction({ id: 'a2' })]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValue(ok({ id: 'srv' }));
+
+    await mountHook();
+
+    const events: SyncProgress[] = [];
+    await act(async () => {
+      await api.processQueue((p) => events.push({ ...p }));
+    });
+
+    const last = events.at(-1);
+    expect(last?.isComplete).toBe(true);
+    expect(last?.pending).toBe(0);
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it('(f) transient (5xx) failure is NEVER dropped, even past the old 3-retry budget, and keeps being re-attempted', async () => {
     // Regression for silent offline data loss: a queued action that keeps
     // hitting a transient 5xx used to be permanently discarded (with only a
     // console.error) once `retries >= 3`, losing offline-created content.
+    // With head-of-line halting (issue #2637) the action also stays at the
+    // front of the queue across reconnects, but the drop-condition fix is what
+    // guarantees it is never discarded no matter how many times it is retried.
     seedQueue([makeAction({ id: 'transient', body: { title: 'reported-offline' } })]);
     const fetchMock = globalThis.fetch as jest.Mock;
     // Server is down for the whole test — every attempt is a transient 5xx.
