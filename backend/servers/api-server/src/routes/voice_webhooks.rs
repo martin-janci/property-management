@@ -17,7 +17,7 @@ use axum::{
     Json, Router,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
     voice_platform, AlexaCard, AlexaIntent, AlexaOutputSpeech, AlexaRequestBody, AlexaResponseBody,
@@ -944,10 +944,26 @@ fn verify_google_request(headers: &HeaderMap) -> Result<(), String> {
     Ok(())
 }
 
+/// Constant-time byte equality for secret-derived string comparisons.
+///
+/// Issue #2658 (#3): comparing signatures/tokens with `==` leaks a timing
+/// side-channel proportional to the shared prefix length. Mirrors the
+/// constant-time comparison the portal/Airbnb webhook receivers use.
+fn ct_eq_str(a: &str, b: &str) -> bool {
+    use subtle::ConstantTimeEq;
+    a.as_bytes().ct_eq(b.as_bytes()).into()
+}
+
 /// Verify HMAC-SHA256 signature.
+///
+/// Issue #2658 (#2): fails **closed** when `VOICE_WEBHOOK_SECRET` is unset.
+/// The previous `unwrap_or("default_secret")` verified against a literal
+/// present in source, letting anyone forge signatures; the sibling receivers
+/// (`PORTAL_WEBHOOK_SECRET`, `AIRBNB_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`)
+/// all fail closed, and so do we now.
 fn verify_hmac_signature(signature: &str, body: &str) -> Result<bool, String> {
-    let secret =
-        std::env::var("VOICE_WEBHOOK_SECRET").unwrap_or_else(|_| "default_secret".to_string());
+    let secret = std::env::var("VOICE_WEBHOOK_SECRET")
+        .map_err(|_| "VOICE_WEBHOOK_SECRET is not configured".to_string())?;
 
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
         .map_err(|e| format!("Invalid HMAC key: {}", e))?;
@@ -956,37 +972,103 @@ fn verify_hmac_signature(signature: &str, body: &str) -> Result<bool, String> {
 
     let expected = BASE64.encode(mac.finalize().into_bytes());
 
-    Ok(signature == expected)
+    // Constant-time compare (issue #2658 #3) instead of `signature == expected`.
+    Ok(ct_eq_str(signature, &expected))
 }
 
-/// Authenticate user via OAuth access token.
+/// Whether `presented` is the access token that owns `device`: it must match
+/// the device's decrypted stored token (constant-time) and not be expired.
+///
+/// Pure (no I/O) so the security-critical matching logic can be unit-tested
+/// without a database. See `authenticate_voice_user`.
+fn voice_device_token_matches(
+    crypto: &IntegrationCrypto,
+    device: &db::models::VoiceAssistantDevice,
+    presented: &str,
+    now: DateTime<Utc>,
+) -> bool {
+    let Some(encrypted) = device.access_token_encrypted.as_deref() else {
+        return false;
+    };
+    // A token we cannot decrypt (e.g. after key rotation) is simply not a match.
+    let Ok(stored) = crypto.decrypt(encrypted) else {
+        return false;
+    };
+    if !ct_eq_str(&stored, presented) {
+        return false;
+    }
+    // Reject an expired access token.
+    match device.token_expires_at {
+        Some(expires_at) => expires_at > now,
+        None => true,
+    }
+}
+
+/// Authenticate a voice request by matching the platform-presented OAuth access
+/// token against the encrypted token stored for a linked device.
+///
+/// Issue #2658 (#1 — broken authentication): the previous implementation
+/// ignored the access token entirely and returned *any* active device for the
+/// platform, authenticating every caller as whichever user most recently used
+/// the platform (horizontal privilege escalation). We now fail closed unless
+/// the presented token exactly matches a device's stored token:
+///   * an absent/blank token is rejected outright;
+///   * the integration encryption key is required — stored tokens are
+///     ciphertext, so without the key we cannot validate and refuse rather than
+///     authenticate anyone;
+///   * each active device's stored token is decrypted and compared to the
+///     presented token in constant time, and only the owning (unexpired) device
+///     is returned.
 async fn authenticate_voice_user(
     conn: &mut PgConnection,
-    // Reserved for real OAuth/JWT validation; not used by the simplified
-    // platform lookup below. Issue #765 removed the dead plaintext-encryption of
-    // this value (it was computed and discarded).
-    _access_token: &str,
+    access_token: &str,
     platform: &str,
 ) -> Result<db::models::VoiceAssistantDevice, (StatusCode, Json<ErrorResponse>)> {
-    // In production, validate the access token and extract user ID
-    // For now, find device by platform that has matching token pattern
+    let unauthorized = || {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_ACCESS_TOKEN",
+                "Voice device not linked or access token invalid. Please complete account linking.",
+            )),
+        )
+    };
 
-    // Look for device with this token (simplified - production would validate JWT/OAuth).
-    // Note: this is a read-only lookup, not a persistence path, so no encryption
-    // of the access token is performed here.
+    // Reject an absent/blank token outright.
+    if access_token.trim().is_empty() {
+        return Err(unauthorized());
+    }
 
-    // Try to find a device - for demo, just find any active device for the platform
-    // In production, you would validate the token and look up the associated user
+    // Stored device access tokens are encrypted at rest; without the integration
+    // encryption key we cannot validate the presented token, so fail closed
+    // rather than authenticate anyone.
+    let crypto = IntegrationCrypto::try_from_env().ok_or_else(|| {
+        tracing::error!(
+            "Voice authentication unavailable: INTEGRATION_ENCRYPTION_KEY is not configured"
+        );
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Voice token validation is not configured",
+            )),
+        )
+    })?;
+
+    // Fetch the active, token-bearing devices for this platform. We cannot match
+    // the token in SQL because the stored value is AES-GCM ciphertext (random
+    // nonce per encryption), so equality is checked after decryption below.
     let devices = sqlx::query_as::<_, db::models::VoiceAssistantDevice>(
         r#"
         SELECT * FROM voice_assistant_devices
-        WHERE platform = $1 AND is_active = TRUE
+        WHERE platform = $1
+          AND is_active = TRUE
+          AND access_token_encrypted IS NOT NULL
         ORDER BY last_used_at DESC NULLS LAST
-        LIMIT 1
         "#,
     )
     .bind(platform)
-    .fetch_optional(&mut *conn)
+    .fetch_all(&mut *conn)
     .await
     .map_err(|e| {
         tracing::error!("Database error: {}", e);
@@ -996,15 +1078,11 @@ async fn authenticate_voice_user(
         )
     })?;
 
-    devices.ok_or_else(|| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "DEVICE_NOT_LINKED",
-                "Voice device not linked. Please complete account linking.",
-            )),
-        )
-    })
+    let now = Utc::now();
+    devices
+        .into_iter()
+        .find(|device| voice_device_token_matches(&crypto, device, access_token, now))
+        .ok_or_else(unauthorized)
 }
 
 /// Extract command text from Alexa intent.
@@ -1423,7 +1501,96 @@ mod tests {
         assert!(!resp.0.valid);
         assert_eq!(resp.0.error.as_deref(), Some("Invalid signature"));
 
+        // Issue #2658 (#2): with the secret unset, verification fails closed
+        // (Err) rather than silently verifying against a hardcoded default.
         std::env::remove_var("VOICE_WEBHOOK_SECRET");
+        assert!(verify_hmac_signature(&good, body).is_err());
+    }
+
+    // --- ct_eq_str / voice_device_token_matches (issue #2658) -----------
+
+    #[test]
+    fn ct_eq_str_matches_only_identical_strings() {
+        assert!(ct_eq_str("token-abc", "token-abc"));
+        assert!(!ct_eq_str("token-abc", "token-abd"));
+        assert!(!ct_eq_str("token-abc", "token-abc-longer"));
+        assert!(!ct_eq_str("", "x"));
+        assert!(ct_eq_str("", ""));
+    }
+
+    /// A `VoiceAssistantDevice` whose `access_token_encrypted` holds `plaintext`
+    /// encrypted under `crypto`, expiring at `expires_at`.
+    fn device_with_token(
+        crypto: &IntegrationCrypto,
+        plaintext: Option<&str>,
+        expires_at: Option<DateTime<Utc>>,
+    ) -> db::models::VoiceAssistantDevice {
+        let now = Utc::now();
+        db::models::VoiceAssistantDevice {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            unit_id: None,
+            platform: voice_platform::ALEXA.to_string(),
+            device_id: "dev-1".to_string(),
+            device_name: None,
+            linked_at: now,
+            last_used_at: None,
+            access_token_encrypted: plaintext.map(|p| crypto.encrypt(p).unwrap()),
+            refresh_token_encrypted: None,
+            token_expires_at: expires_at,
+            is_active: true,
+            capabilities: serde_json::json!([]),
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn voice_token_match_is_exact_and_rejects_mismatch_missing_and_expired() {
+        // Deterministic 32-byte key; construct crypto directly (no env races).
+        let crypto = IntegrationCrypto::new(&"ab".repeat(32)).expect("crypto");
+        let now = Utc::now();
+
+        // Exact match on a non-expiring token -> authenticated.
+        let dev = device_with_token(&crypto, Some("real-token"), None);
+        assert!(voice_device_token_matches(&crypto, &dev, "real-token", now));
+
+        // Wrong token -> not a match (this is the broken-auth regression: the
+        // old code returned this device regardless of the presented token).
+        assert!(!voice_device_token_matches(&crypto, &dev, "attacker", now));
+
+        // Device without a stored token -> never a match.
+        let no_tok = device_with_token(&crypto, None, None);
+        assert!(!voice_device_token_matches(
+            &crypto,
+            &no_tok,
+            "real-token",
+            now
+        ));
+
+        // Matching token but expired -> rejected.
+        let expired =
+            device_with_token(&crypto, Some("real-token"), Some(now - Duration::hours(1)));
+        assert!(!voice_device_token_matches(
+            &crypto,
+            &expired,
+            "real-token",
+            now
+        ));
+
+        // Matching token still valid in the future -> accepted.
+        let future = device_with_token(&crypto, Some("real-token"), Some(now + Duration::hours(1)));
+        assert!(voice_device_token_matches(
+            &crypto,
+            &future,
+            "real-token",
+            now
+        ));
+
+        // A token encrypted under a different key can't be decrypted -> no match.
+        let other = IntegrationCrypto::new(&"cd".repeat(32)).expect("crypto");
+        assert!(!voice_device_token_matches(&other, &dev, "real-token", now));
     }
 
     #[tokio::test]
