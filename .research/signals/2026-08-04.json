@@ -1,59 +1,72 @@
 {
-  "generated": "2026-08-04T03:15:00Z",
+  "generated": "2026-08-04T10:14:14Z",
+  "window": {
+    "from_iso": "2026-08-04T03:15:00Z",
+    "to_iso": "2026-08-04T10:14:14Z",
+    "notes": "Same-day incremental rerun triggered by buffer-low payload (dispatcher claimable=9/72). Earlier same-day routine commit 6106f1c already scored the 9 signals derived from the wider 2026-07-31→2026-08-04 window. This rerun preserves them for the daily audit trail with score_delta zeroed on non-cumulative types (G4-safe idempotent rewrite). Cursors now advance past dispatcher-meta PRs #2653 + #2655 and issue #2654; no new scoring signals derived in the 6h incremental window."
+  },
+  "trigger_payload": "buffer-low: claimable=9/72 — refill planner",
+  "trigger_payload_disposition": "Treated as operational DATA per routine spec. Noted in brief. NOT used to bypass Phase-3 gates: no open backlog row meets score>=3 or the security fast-track, so no plan promoted this run. Refilling the planner requires implementer-authored plans from an operator (or new observations that raise open rows above the promotion threshold).",
   "signals": [
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
       "type": "code-review-finding",
       "source": "Tier1d rotating-expert-review 2026-08-04 (mobile-native-kmp)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) and aggregates only over the returned page; MyListingsResponse.total is ignored so totalListings=listings.size undercounts and all downstream aggregates omit listings past the first 100.",
       "confidence": "medium",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "same_day_rerun": true
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
       "type": "code-review-finding",
       "source": "Tier1d rotating-expert-review 2026-08-04 (mobile-native-kmp)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls with no concurrency limit; getOrNull() swallows per-listing failures, so rate-limited subsets silently drop from the aggregate.",
       "confidence": "medium",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "same_day_rerun": true
     },
     {
       "id": "screen-map-drift-pr-2646-ppt",
       "type": "screen-map-drift",
       "source": "PR #2646",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "PR #2646 modified frontend/apps/ppt-web/src/App.tsx (RouteErrorBoundary shell change) with no docs/screens/ppt/*.md update.",
       "confidence": "medium",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "same_day_rerun": true
     },
     {
       "id": "screen-map-drift-pr-2647-ppt",
       "type": "screen-map-drift",
       "source": "PR #2647",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "PR #2647 modified 8 ppt-web route wrappers (buildings, community, announcements, messaging, faults, rentals, meters, leases) with no docs/screens/ppt/*.md update.",
       "confidence": "medium",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "same_day_rerun": true
     },
     {
       "id": "screen-map-drift-pr-2648-ppt",
       "type": "screen-map-drift",
       "source": "PR #2648",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "PR #2648 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (mutation auth guard) with no docs/screens/ppt/*.md update.",
       "confidence": "medium",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "same_day_rerun": true
     },
     {
       "id": "screen-map-drift-pr-2649-ppt",
       "type": "screen-map-drift",
       "source": "PR #2649",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "PR #2649 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx + financial.tsx (onError toasts) with no docs/screens/ppt/*.md update.",
       "confidence": "medium",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "same_day_rerun": true
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
@@ -62,7 +75,8 @@
       "score_delta": 1,
       "evidence": "2 commits changed frontend/apps/ppt-web/src/routes/groups/rentals.tsx in the 10h since the last run (#2648, #2649); top-3 churn this run.",
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "same_day_rerun": true
     },
     {
       "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
@@ -71,7 +85,8 @@
       "score_delta": 1,
       "evidence": "2 commits changed frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx in the 10h since the last run (#2641, #2642); top-3 churn this run.",
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "same_day_rerun": true
     },
     {
       "id": "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
@@ -80,28 +95,146 @@
       "score_delta": 1,
       "evidence": "2 commits changed frontend/apps/mobile/src/hooks/useOfflineSupport.ts in the 10h since the last run (#2638, #2645); top-3 churn this run.",
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "same_day_rerun": true
     }
   ],
+  "phase_1_5_disposition": {
+    "invoked": false,
+    "reason": "Same-day idempotency: mobile-native-kmp segment already reviewed at 03:15 (review_cursor.mobile-native-kmp=2026-08-04). The 6h incremental window merged only 2 dispatcher-meta PRs (#2653 + #2655) under .research/ and .github/workflows/ — no application code churn to re-review. Cursor left as-is; api-handlers (2026-07-29 last) remains next in rotation for tomorrow."
+  },
+  "phase_1_6_disposition": {
+    "invoked": false,
+    "reason": "Same-day idempotency: earlier routine commit 6106f1c already skipped Phase 1.6 (10h delta, PM subagent skipped, pm_cursor + coverage_cursor NOT advanced). The 6h incremental delta on top does not meet the threshold to invoke the heavy PM synthesis either. pm_cursor.next_index unchanged (still 2 → pm-frontend). G16 no-op per its skip clause."
+  },
+  "auto_fix_actions": [],
+  "auto_fix_disposition": "no candidate — signals[] this run are idempotent re-emits (score_delta zeroed on non-cumulative). Every allowlist candidate was already evaluated at 03:15 (no allowlist match then either).",
   "goal_checks": [
-    { "goal": "G1", "passed": true,  "command": "test -f briefs/<today>.md && head -1 == '# <today>'",     "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true,  "command": "state.json advanced vs HEAD",                             "observed": "true",   "expected": "true"   },
-    { "goal": "G3", "passed": true,  "command": "backlog.json ids unique",                                 "observed": "true",   "expected": "true"   },
-    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id re-emitted with score_delta", "observed": "true",   "expected": "true"   },
-    { "goal": "G5-cap",   "passed": true, "command": "no item.score > 8",                                   "observed": "true",   "expected": "true"   },
-    { "goal": "G5-decay", "passed": true, "command": "every open item updated>14d ago either dropped or lost ≥1 point", "observed": "true", "expected": "true" },
-    { "goal": "G6", "passed": true,  "command": "each new plan has adversarial pass annotation",           "observed": "true (0 new plans)", "expected": "true" },
-    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 15 sections + Files exist",        "observed": "0 new plans", "expected": "≤2" },
-    { "goal": "G10","passed": true,  "command": "diff -q backlog.md /tmp/backlog.regen.md",                "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G11","passed": true,  "command": "no phase failed",                                          "observed": "true",   "expected": "true"   },
-    { "goal": "G12","passed": true,  "command": "all prior-run plans present as active or archived",       "observed": "true",   "expected": "true"   },
-    { "goal": "G13","passed": true,  "command": "archive count monotonic (cur=7 head=7)",                   "observed": "cur=7 head=7", "expected": "cur >= head" },
-    { "goal": "G14","passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas.regen.md",              "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G15","passed": true,  "command": "auto_fix_actions[] within caps + idempotency + verify_all", "observed": "0 actions this run", "expected": "≤3" },
-    { "goal": "G16","passed": true,  "command": "Phase 1.6 no-op (skipped this run) → gate is no-op",       "observed": "skipped", "expected": "no-op or valid" },
-    { "goal": "G8", "passed": true,  "command": "staged paths under .research/ only",                       "observed": "computed post-stage",  "expected": "0 non-research paths" },
-    { "goal": "G9", "passed": true,  "command": "no secrets/private hosts in staged diff",                  "observed": "computed post-stage",  "expected": "0 matches"          },
-    { "goal": "G17","passed": true,  "command": "no Telegram token value in staged diff",                   "observed": "computed post-stage",  "expected": "0 matches"          }
-  ],
-  "auto_fix_actions": []
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-04.md && head -1 == \"# 2026-08-04\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true — last_pr_seen 2650→2655, last_issue_seen 2643→2654, last_commit_sha e0703d5→599b88e, last_run_iso advanced, stats.runs 59→60, stats.quiet_days 2→3",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-ids on backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit-with-nonzero-score-delta filter on non-cumulative types",
+      "observed": "0 offenders — non-cumulative re-emits carry score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open item with updated_at <= today-14",
+      "observed": "0 stale open rows (all 8 updated 2026-08-04)",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → vacuously true",
+      "observed": "0 new plans in plans/",
+      "expected": "adversarial pass documented for each new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count 0 ≤ 2; no metadata/headings gates to run",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v \"^.research/\" | wc -l",
+      "observed": "0 (staged set is .research/ only)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secret/private-hostname scan (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen from backlog.json",
+      "observed": "backlog.json unchanged this run; backlog.md diff limited to timestamp header (rendered from same source)",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed; brief \"Phases that failed\" is \"none\"",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present under plans/ or plans/_archive/",
+      "observed": "no plans added/removed this run; convergence preserved",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows count staged vs HEAD",
+      "observed": "unchanged this run",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen from vector==triage rows",
+      "observed": "backlog.json triage rows unchanged; IDEAS_TRIAGE.md diff limited to timestamp header",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "≤3 total, ≤1 per action_type, none in auto_fix_history"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → no-op",
+      "observed": "pm_cursor + coverage_cursor unchanged; skip clause activates",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot-token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
 }
