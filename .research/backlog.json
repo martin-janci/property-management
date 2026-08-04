@@ -6346,22 +6346,24 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review (tier1d mobile-rn)"
+        "rotating-expert-review (tier1d mobile-rn)",
+        "PR #2645"
       ],
       "evidence": [
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:353-357 — catch branch increments action.retries then `if (isPermanent || action.retries >= 3)` adds action to terminalFailureIds and console.errors. Dropping 4xx-permanent is correct, but bundling transient failures (5xx/network per the comment at :350-352) into the SAME terminal drop means a queued mutation that hit 3 consecutive 5xx / connectivity blips is discarded, not carried forward.",
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:399-401 — carriedForward = queue.filter(a => !succeededIds.has(a.id) && !terminalFailureIds.has(a.id)); anything in terminalFailureIds is excluded from `merged` and thus deleted from QUEUE_KEY on the subsequent AsyncStorage.setItem. Nothing re-enqueues it.",
         "frontend/apps/mobile/src/App.tsx:81-83,337 — the sync-toast's only recovery is onRetry={handleRetrySync} which just calls processQueue() again. Because the terminally-dropped action is no longer in the queue, tapping Retry cannot recover it. For queued fault reports/meter readings/votes/acknowledgements made while offline this is silent data loss after transient server unavailability.",
-        "Fix: treat only isPermanent (4xx) as terminal; give transient failures a larger bounded budget or move them to a dead-letter store surfaced in the UI rather than deleting them."
+        "Fix: treat only isPermanent (4xx) as terminal; give transient failures a larger bounded budget or move them to a dead-letter store surfaced in the UI rather than deleting them.",
+        "resolved: PR #2645 merged 2026-08-04 — preserve transient-failing offline queue actions"
       ],
       "files": [
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
         "frontend/apps/mobile/src/App.tsx"
       ],
       "created_at": "2026-08-03",
-      "updated_at": "2026-08-03",
+      "updated_at": "2026-08-04",
       "plan": null,
       "reconciled": null
     },
@@ -6398,15 +6400,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review (tier1d ppt-web-core)"
+        "rotating-expert-review (tier1d ppt-web-core)",
+        "PR #2650"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/lib/queryKeys.ts:347 — AUTHED_QUERY_KEY_ROOTS is the allow-list logout() iterates to purge session-scoped TanStack Query subtrees (contexts/AuthContext.tsx:553-555). Doc (AuthContext logout, issue #712) says the goal is that 'user-bound data never leaks into the next session'. Any query-key root NOT in this list is NOT purged.",
         "Three feature hooks define their own local key factory whose root string is missing from AUTHED_QUERY_KEY_ROOTS: predictive-maintenance/hooks/usePredictiveMaintenance.ts (`predictiveKeys.all = ['predictive-maintenance']`), sentiment (`all: ['sentiment']`), notification-analytics (`all: ['notification-analytics']`). Roots defined by feature *Keys factories = {ai-chat, notification-analytics, predictive-maintenance, sentiment}; only 'ai-chat' is present in the allow-list.",
         "All three are tenant-scoped and their pages are routed and reachable (routes/lazyRoutes.tsx:317 SentimentDashboardPage, :322 NotificationAnalyticsPage, :336 PredictiveMaintenancePage). ppt-web is an SPA — logout does NOT reload the page, so queryClient persists across logout→next-login. On a shared manager/kiosk workstation, user B can see user A's cached data until 5-min staleTime lapses or a refetch completes.",
-        "Fix: add 'predictive-maintenance', 'sentiment', 'notification-analytics' to AUTHED_QUERY_KEY_ROOTS. Better: add a lint/unit assertion that every feature-local *Keys.all root is a member of AUTHED_QUERY_KEY_ROOTS so future pages can't silently reintroduce the leak."
+        "Fix: add 'predictive-maintenance', 'sentiment', 'notification-analytics' to AUTHED_QUERY_KEY_ROOTS. Better: add a lint/unit assertion that every feature-local *Keys.all root is a member of AUTHED_QUERY_KEY_ROOTS so future pages can't silently reintroduce the leak.",
+        "resolved: PR #2650 merged 2026-08-04 — purge analytics query roots on logout (extended to accounting + financial + reports + rentals + meters + auth)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/lib/queryKeys.ts",
@@ -6416,7 +6420,7 @@
         "frontend/apps/ppt-web/src/features/notification-analytics"
       ],
       "created_at": "2026-08-03",
-      "updated_at": "2026-08-03",
+      "updated_at": "2026-08-04",
       "plan": null,
       "reconciled": null
     },
@@ -6456,21 +6460,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review (tier1d ppt-web-core)"
+        "rotating-expert-review (tier1d ppt-web-core)",
+        "PR #2649"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx — all four useMutation hooks omit onError: createConnection (:258), syncPlatforms (:272), checkIn (:373), checkOut (:385). Each has only onSuccess (queryClient.invalidateQueries). A failed platform connect/sync or booking check-in/check-out produces NO user-facing feedback.",
         "frontend/apps/ppt-web/src/routes/groups/financial.tsx — PaymentManagementPageRoute's matchMutation (:296 manual payment→invoice allocation) and autoMatchMutation (:305 bulk auto-match) define only onSuccess with no onError. A failed money-movement action gives the manager no error toast.",
-        "Inconsistent with the SAME file: sendInvoiceMutation (financial.tsx:169) and downloadPdfMutation (:191) both pair onSuccess with an onError that calls showToast({ type: 'error', ... }). Fix: add an onError to each, mirroring sendInvoiceMutation:179-186."
+        "Inconsistent with the SAME file: sendInvoiceMutation (financial.tsx:169) and downloadPdfMutation (:191) both pair onSuccess with an onError that calls showToast({ type: 'error', ... }). Fix: add an onError to each, mirroring sendInvoiceMutation:179-186.",
+        "resolved: PR #2649 merged 2026-08-04 — surface rentals/financial mutation failures via error toast"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
         "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
       ],
       "created_at": "2026-08-03",
-      "updated_at": "2026-08-03",
+      "updated_at": "2026-08-04",
       "plan": null,
       "reconciled": null
     },
@@ -6562,6 +6568,191 @@
         "assignment_status": "merged",
         "pr_number": 2644
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+      "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-04 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+      "title": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-04 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls via listings.map { async { … } }.awaitAll(); per-listing failures are swallowed by getOrNull() (line 121). Bursts the shared HttpClient pool, hammers the mobile radio, and invites 429 rate-limiting."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2646-ppt",
+      "title": "screen-map drift: PR #2646 touched ppt-web route wrapper (App.tsx) without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2646"
+      ],
+      "evidence": [
+        "PR #2646 (code-review-ppt-web-core-route-error-boundary-gap) modified frontend/apps/ppt-web/src/App.tsx (+RouteErrorBoundary wrapper) with no docs/screens/ppt/*.md update; screen-map falls behind the shell structure change."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2647-ppt",
+      "title": "screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2647"
+      ],
+      "evidence": [
+        "PR #2647 (code-review-ppt-web-core-notfound-i18n-gap) modified 8 route wrappers (buildings, community, announcements, messaging, faults, rentals, meters, leases) with no docs/screens/ppt/*.md update — 8-way surface change unaccounted for in screen docs."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2648-ppt",
+      "title": "screen-map drift: PR #2648 touched ppt-web rentals route (mutation auth guard) without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2648"
+      ],
+      "evidence": [
+        "PR #2648 (code-review-ppt-web-core-rentals-auth-nonnull-mutation) modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx with no docs/screens/ppt/*.md update. Best-effort heuristic — flow-change may or may not be user-visible."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2649-ppt",
+      "title": "screen-map drift: PR #2649 touched ppt-web rentals + financial routes (onError toasts) without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2649"
+      ],
+      "evidence": [
+        "PR #2649 (code-review-ppt-web-core-mutation-no-onerror) modified rentals.tsx + financial.tsx with no docs/screens/ppt/*.md update. Best-effort heuristic — error-surface addition may or may not warrant screen-doc change."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
+      "title": "Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git log since 2026-08-03T17:00Z"
+      ],
+      "evidence": [
+        "2 commits changed frontend/apps/ppt-web/src/routes/groups/rentals.tsx in the 10h since the last run (#2648 auth guard, #2649 onError toasts); top-3 churn this run"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+      "title": "Churn hotspot: 2 commits touching frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git log since 2026-08-03T17:00Z"
+      ],
+      "evidence": [
+        "2 commits changed frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx in the 10h since the last run (#2641 send failure surface, #2642 empty/error/loading i18n); top-3 churn this run"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts",
+      "title": "Churn hotspot: 2 commits touching frontend/apps/mobile/src/hooks/useOfflineSupport.ts (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git log since 2026-08-03T17:00Z"
+      ],
+      "evidence": [
+        "2 commits changed frontend/apps/mobile/src/hooks/useOfflineSupport.ts in the 10h since the last run (#2638 isComplete on halted cycle, #2645 transient-drop dataloss fix); top-3 churn this run"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-08-04",
+      "updated_at": "2026-08-04",
+      "plan": null
     }
   ]
 }

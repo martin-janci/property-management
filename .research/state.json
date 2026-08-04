@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-03T17:00:00Z",
-  "last_run_ms": 3800,
-  "last_pr_seen": 2636,
-  "last_issue_seen": 2630,
-  "last_commit_sha": "3a6df61c8a482f4fea3575fb5fe48d29bbc2cb15",
+  "last_run_iso": "2026-08-04T03:15:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2650,
+  "last_issue_seen": 2643,
+  "last_commit_sha": "e0703d5901ef5454df8919ec71e503f8625e23fb",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -411,6 +411,21 @@
       "runs_seen": 1,
       "last_seen": "2026-07-30",
       "recent_churn": 240
+    },
+    "frontend/apps/ppt-web/src/routes/groups/rentals.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-04",
+      "recent_churn": 2
+    },
+    "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-04",
+      "recent_churn": 2
+    },
+    "frontend/apps/mobile/src/hooks/useOfflineSupport.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-04",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -761,7 +776,16 @@
     "code-review-ppt-web-core-mutation-no-onerror",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-notfound-i18n-gap",
-    "screen-map-drift-pr-2636-reality"
+    "screen-map-drift-pr-2636-reality",
+    "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+    "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+    "screen-map-drift-pr-2646-ppt",
+    "screen-map-drift-pr-2647-ppt",
+    "screen-map-drift-pr-2648-ppt",
+    "screen-map-drift-pr-2649-ppt",
+    "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+    "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -772,11 +796,11 @@
     "ppt-web-core": "2026-08-03",
     "reality-web": "2026-08-03",
     "mobile-rn": "2026-08-03",
-    "mobile-native-kmp": "2026-07-27"
+    "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 58,
-    "vectors_created": 257,
+    "runs": 59,
+    "vectors_created": 266,
     "plans_created": 20,
     "quiet_days": 2,
     "auto_fix_count": 0
