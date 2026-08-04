@@ -2349,6 +2349,28 @@
       "merge_attempted_at": "2026-08-03T20:20:00Z"
     },
     {
+      "task_id": "code-review-mobile-rn-offline-terminal-drop-dataloss",
+      "branch": "auto-impl/code-review-mobile-rn-offline-terminal-d-0f850ac9",
+      "status": "merged",
+      "claimed_at": "2026-08-03T20:08:22Z",
+      "last_updated": "2026-08-04T02:18:22Z",
+      "status_changed_at": "2026-08-04T02:18:22Z",
+      "pr_number": 2645,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2645",
+      "merged_at": "2026-08-04T02:15:38Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2645 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=transient 5xx/network offline actions no longer dropped after 3 retries; only 4xx terminal drops; regression test red-on-main then green; verify OK 595 mobile tests",
+      "reviewer_summary": "verdict=approve head_oid=cac13914140889e793b3f2b7a87804279fff4382 note=transient-preserved-headoflineFIFO-intended-regression-test-valid-CI-green",
+      "last_reviewed_oid": "cac13914140889e793b3f2b7a87804279fff4382",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-push-debug-console-log",
       "branch": "auto-impl/code-review-mobile-rn-push-debug-console-295a452f",
       "status": "merged",
@@ -2545,6 +2567,50 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-core-logout-cache-purge-gap",
+      "branch": "auto-impl/code-review-ppt-web-core-logout-cache-pu-def4e967",
+      "status": "merged",
+      "claimed_at": "2026-08-03T18:07:48Z",
+      "last_updated": "2026-08-04T02:13:19Z",
+      "status_changed_at": "2026-08-04T02:13:19Z",
+      "pr_number": 2650,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2650",
+      "merged_at": "2026-08-04T02:05:28Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2650 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added predictive-maintenance/sentiment/notification-analytics to AUTHED_QUERY_KEY_ROOTS; regression test red-pre/green-post; verify green",
+      "reviewer_summary": "verdict=approve head_oid=40080a9483331092b371f85f088860ed30536a44 note=re-review: accounting + all tenant-scoped roots now purged on logout; test extended; CI green",
+      "last_reviewed_oid": "40080a9483331092b371f85f088860ed30536a44",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-mutation-no-onerror",
+      "branch": "auto-impl/code-review-ppt-web-core-mutation-no-one-21589652",
+      "status": "merged",
+      "claimed_at": "2026-08-03T20:08:22Z",
+      "last_updated": "2026-08-04T02:18:22Z",
+      "status_changed_at": "2026-08-04T02:18:22Z",
+      "pr_number": 2649,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2649",
+      "merged_at": "2026-08-04T02:14:04Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2649 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=added onError toasts to 2 financial money-movement + 4 rentals platform-connect/booking mutations; regression test proves rejected auto-match surfaces error toast; verify green (2130 tests)",
+      "reviewer_summary": "verdict=approve head_oid=f8f3e54cb9c3d98425449d06a04361ad5d2568f4 note=onError-toasts-additive-money-movement-behavior-unchanged-test-solid",
+      "last_reviewed_oid": "f8f3e54cb9c3d98425449d06a04361ad5d2568f4",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-04T00:13:43Z"
     },
     {
       "task_id": "code-review-ppt-web-core-notfound-i18n-gap",
@@ -11169,5 +11235,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-04T00:13:43Z"
+  "archived_at": "2026-08-04T02:18:22Z"
 }

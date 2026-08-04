@@ -6507,7 +6507,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (tier1d ppt-web-core)"
       ],
@@ -6527,7 +6527,11 @@
       "created_at": "2026-08-03",
       "updated_at": "2026-08-03",
       "plan": null,
-      "reconciled": null
+      "reconciled": {
+        "at": "2026-08-04T02:09:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2647
+      }
     },
     {
       "id": "screen-map-drift-pr-2636-reality",

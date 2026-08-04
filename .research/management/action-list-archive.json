@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-04T00:14:13Z",
+  "archived_at": "2026-08-04T02:18:23Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2170,6 +2170,29 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-offline-terminal-drop-dataloss",
+      "action": "mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 retries with only console.error — silent loss of offline-created content",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-04T02:18:22Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4d80705f7d5911a48c05ecce0670633c8ed2d9cf",
+        "subject": "code-review-mobile-rn-offline-terminal-drop-dataloss: preserve transient-failing offline queue actions (#2645)",
+        "at": "2026-08-04T02:18:22Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-push-debug-console-log",
       "action": "mobile: usePushNotifications — debug console.log left on the device-token register/unregister production path",
       "owner_role": "pm-backend",
@@ -2352,6 +2375,76 @@
         "commit": "931a316da4d9296016add73e749997081e4e23b5",
         "subject": "code-review-ppt-web-core-authctx-init-stale-role: route AuthContext cold-boot init through refreshTokenInternal (#2553)",
         "at": "2026-07-29T08:06:29Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-cache-purge-gap",
+      "action": "ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentiment, notification-analytics) — cross-user data leak on shared workstations",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-04T02:09:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "858ad283f1d298a47d36336bc80b294dc55f3872",
+        "subject": "code-review-ppt-web-core-logout-cache-purge-gap: purge analytics query roots on logout (#2650)",
+        "at": "2026-08-04T02:09:58Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-mutation-no-onerror",
+      "action": "ppt-web rentals + financial useMutation hooks lack onError — money-movement + platform-connect failures produce zero user feedback",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-04T02:18:22Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f2ee8ee41887c30b10f581b9271617a3aaf47d26",
+        "subject": "code-review-ppt-web-core-mutation-no-onerror: surface rentals/financial mutation failures via error toast (#2649)",
+        "at": "2026-08-04T02:18:22Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-notfound-i18n-gap",
+      "action": "ppt-web route wrappers render 8 hardcoded English 'X not found' fallbacks — sk/cs/de users see untranslated text",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-03T18:05:27Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-04T02:09:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-03T18:05:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2647,
+        "merged_at": "2026-08-04T00:13:43Z",
+        "at": "2026-08-04T02:09:58Z"
       }
     },
     {

@@ -1,0 +1,38 @@
+{
+  "generated": "2026-08-04T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["kotlin"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 — getPortfolioAnalytics() builds the realtor dashboard by calling listMyListings(limit = 100) (line 113) and then aggregating ONLY over the returned `listings` collection. The server clamps limit to 1..=100 (documented on listMyListings line 42), so a realtor who owns more than 100 listings silently gets a portfolio that covers only the first 100.",
+        "The truncation is invisible: MyListingsResponse carries `val total: Long` (PortalListingModels.kt:47) which is the true owned-listing count, but getPortfolioAnalytics never reads `.total` — it uses `.listings` (the capped page) for everything. Consequences on a >100-listing account: totalListings = listings.size (line 145) reports 100 instead of the real count; activeListings (line 146) undercounts; and every aggregate — totalViews/totalInquiries/totalFavorites and the viewsTrend/inquiriesTrend series (lines 126-152) — omits all listings past the first 100. The dashboard shows wrong, under-reported numbers with no error or indication.",
+        "There is also no offset paging loop: the function issues exactly one listMyListings call at offset 0. Fix: page through with the existing `offset` param until collected.size >= response.total (or loop while a full page of 100 is returned), then aggregate over the complete set; and set totalListings from response.total rather than listings.size so the count is correct even if per-listing analytics are skipped."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 — getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit: `listings.map { listing -> async { getListingAnalytics(listing.id).getOrNull() } }.awaitAll()`. With the current page size that launches up to 100 simultaneous GET /api/v1/my/listings/{id}/analytics calls from a mobile device.",
+        "On a large portfolio this bursts the shared HttpClientProvider connection pool, hammers the mobile radio, and is a natural trigger for server-side rate limiting (429) — and because per-listing failures are swallowed by getOrNull() (line 121), a rate-limited subset silently drops out of the aggregate, compounding the accuracy problem in the sibling finding. Consider bounding concurrency (e.g. chunk the listings and awaitAll per chunk, or gate with a Semaphore of ~4-8 permits) so the dashboard degrades gracefully instead of stampeding the backend."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}
