@@ -10,7 +10,9 @@
  * - Caching: write, read, expiry, clear-by-key, clear-all.
  * - Queue:   enqueue, dedupe, persisted shape, count tracking.
  * - Process: success path (clears queue, advances last sync time, reports
- *            progress), retry-and-drop path (>= 3 retries removes the item).
+ *            progress); terminal 4xx is dropped; transient 5xx is retried and
+ *            preserved (never dropped — see the hook unit test for the
+ *            past-3-retries survival regression).
  * - Network gating: processQueue is a no-op while offline.
  *
  * NetInfo is the only RN dependency that needs a custom test double — the
