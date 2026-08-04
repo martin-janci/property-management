@@ -231,10 +231,7 @@ export function ThreadDetailScreen({
         // the user can retry without retyping. A localized, non-leaking
         // message per the QueryErrorBanner contract — never the raw
         // backend/error string.
-        <QueryErrorBanner
-          message="Couldn't send your message. Please try again."
-          onRetry={handleSend}
-        />
+        <QueryErrorBanner message={t('messages.threadSendError')} onRetry={handleSend} />
       ) : null}
 
       <View style={styles.composer}>

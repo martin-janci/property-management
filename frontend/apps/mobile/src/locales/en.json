@@ -525,7 +525,8 @@
     "emptyText": "Start a conversation with your manager or neighbours.",
     "threadLoadError": "Couldn't load conversation",
     "threadEmptyTitle": "No messages yet",
-    "threadEmptyText": "Say hello to start the conversation."
+    "threadEmptyText": "Say hello to start the conversation.",
+    "threadSendError": "Couldn't send your message. Please try again."
   },
   "leases": {
     "loadError": "Couldn't load leases",

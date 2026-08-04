@@ -485,7 +485,8 @@
     "emptyText": "Rozpocznij rozmowę z zarządcą lub sąsiadami.",
     "threadLoadError": "Nie można załadować rozmowy",
     "threadEmptyTitle": "Brak wiadomości",
-    "threadEmptyText": "Przywitaj się, aby rozpocząć rozmowę."
+    "threadEmptyText": "Przywitaj się, aby rozpocząć rozmowę.",
+    "threadSendError": "Nie udało się wysłać wiadomości. Spróbuj ponownie."
   },
   "leases": {
     "loadError": "Nie można załadować umów najmu",

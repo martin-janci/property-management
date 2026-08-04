@@ -485,7 +485,8 @@
     "emptyText": "Beginnen Sie ein Gespräch mit Ihrer Verwaltung oder Ihren Nachbarn.",
     "threadLoadError": "Unterhaltung konnte nicht geladen werden",
     "threadEmptyTitle": "Noch keine Nachrichten",
-    "threadEmptyText": "Sagen Sie Hallo, um das Gespräch zu beginnen."
+    "threadEmptyText": "Sagen Sie Hallo, um das Gespräch zu beginnen.",
+    "threadSendError": "Ihre Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
   },
   "leases": {
     "loadError": "Mietverträge konnten nicht geladen werden",

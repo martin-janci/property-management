@@ -525,7 +525,8 @@
     "emptyText": "Začnite konverzáciu so správcom alebo susedmi.",
     "threadLoadError": "Nepodarilo sa načítať konverzáciu",
     "threadEmptyTitle": "Zatiaľ žiadne správy",
-    "threadEmptyText": "Pozdravte a začnite konverzáciu."
+    "threadEmptyText": "Pozdravte a začnite konverzáciu.",
+    "threadSendError": "Správu sa nepodarilo odoslať. Skúste to znova."
   },
   "leases": {
     "loadError": "Nepodarilo sa načítať nájomné zmluvy",
