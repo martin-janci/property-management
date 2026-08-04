@@ -77,11 +77,23 @@ done
 #   ^(gap-\d+[a-z]?)
 #   ^(pm-[a-z-]+?)-
 #   else: full task_id
+#
+# The result is lowercased (ascii_downcase). The gap-/pm- branches already
+# yield lowercase by construction, but the else-branch returns the full
+# task_id verbatim — and task_ids derived from camelCase source filenames
+# (e.g. churn-hotspot-…-useOfflineSupport-ts) carry uppercase characters.
+# An uppercase epic_prefix written to objective.json trips dispatcher
+# self-test T21 (epic_prefix must be all-lowercase kebab), which ABORTS the
+# finish-first Phase-6 commit (issue #2651). Normalising here keeps the
+# internal grouping self-consistent (STATS group-by and the KEEP comparison
+# both see the lowercased form) and guarantees the persisted target always
+# satisfies the T21 invariant.
 epic_prefix_jq='
   def epic_prefix:
-    if test("^gap-[0-9]+[a-z]?") then capture("^(?<e>gap-[0-9]+[a-z]?)").e
-    elif test("^pm-[a-z-]+?-") then capture("^(?<e>pm-[a-z-]+?)-").e
-    else . end;
+    ( if test("^gap-[0-9]+[a-z]?") then capture("^(?<e>gap-[0-9]+[a-z]?)").e
+      elif test("^pm-[a-z-]+?-") then capture("^(?<e>pm-[a-z-]+?)-").e
+      else . end
+    ) | ascii_downcase;
 '
 
 # Build the set of task_ids that are NOT claimable: in active assignments
