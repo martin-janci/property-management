@@ -1,0 +1,57 @@
+{
+  "generated": "2026-08-05",
+  "segment": "ppt-web-ui",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "churn-aligned",
+  "selection_note": "Oldest-unreviewed by cursor is reality-server (2026-08-02), but reality-server already has a full 3-finding tier1d file dated today (2026-08-05-reality-server-tier1d.json: link-pm-account-noop, pwreset-token-dropped-prod, inquiry-detail-empty-msgs) — that segment's per-run cap is filled, so per the skill's saturation rule I skipped it. Among the tied-oldest 2026-08-03 segments, hotspot_history shows heavy recent churn in ppt-web disputes/documents (MediationWorkspacePage, MediationResolutionForm/ChatThread, MoveFolderDialog, FileDisputePage), which map to ppt-web-ui — so ppt-web-ui was selected churn-aligned. The churn-hot dispute/document components themselves were reviewed and found clean (every mutateAsync is wrapped in try/catch with i18n toasts; no console.*, no `as any`, no missing-error branches), so findings come from the wider ppt-web-ui compliance/emergency/settings pages. Deduplicated against prior ppt-web-ui findings: accounting-invoice-silent-fail, aria-label-i18n, sessions-double-cast, propinput-json-coerce, savedirty-stale-closure, actionqueue-mock-shipped.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 — handleTakeAction reads a free-text moderation action from `window.prompt('Enter action type (remove, restrict, warn, approve):', 'approve')` (:130) and then, with no validation, casts the raw string straight to the API union at :143 `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` before `takeAction.mutate`. A user can type anything (or any typo) and it is sent to the moderation backend as a supposedly-typed action_type — the `as` cast defeats the compiler check at the exact point where untrusted input crosses the API boundary. If the backend does not itself reject unknown action_type values, an invalid/unexpected moderation action is applied.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:169-178 — the appeal path has the identical shape: `const decision = window.prompt('Enter decision (uphold, overturn):', 'uphold')` (:169) is cast unvalidated at :178 `decision: decision as 'uphold' | 'overturn'` and sent via `decideAppeal.mutate`. Same unchecked cross-boundary cast of free-text input.",
+        "This is a shipped compliance-critical page (content moderation + appeals) whose primary action UX is `window.prompt`/`alert` — the file's own `TODO(Phase-2)` comments at :128 and :167 acknowledge the prompts are a placeholder to be replaced with a validated modal form. Fix: validate the prompt result against the allowed set (or use a `<select>` in a modal) before mutating, and drop the `as` cast in favour of a narrowed value; the backend contract should also 400 on unknown action_type/decision as defence in depth."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-strings-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "ppt-web is a react-i18next app shipping sk/cs/de/en, yet several shipped feature pages surface hardcoded English user-facing error strings not wrapped in `t()`. frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx: setUpdateError('Failed to update category preference. Please try again.') (:83), 'Failed to update quiet hours. Please try again.' (:303), 'Failed to update digest preferences. Please try again.' (:319), 'Failed to update grouping settings. Please try again.' (:337) — none use i18n, so non-English users see raw English on every notification-settings failure.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx — the moderation failure UX uses untranslated native dialogs: alert('Failed to assign case. Please try again.') (:119), alert('Failed to take action. Please try again.') (:151), alert('Failed to decide appeal. Please try again.') (:186), plus the window.prompt label strings at :130/:136/:169/:172 ('Enter action type…', 'Enter rationale…', 'Enter decision…'). All are hardcoded English on a shipped compliance page.",
+        "Distinct from the prior ppt-web-ui aria-label-i18n finding (which covered aria-label *attributes*): this is visible copy in error toasts / alert()/prompt() dialogs. Fix: route these through `t('…')` keys (and prefer the app's toast/error component over native alert()) so the compliance and notification-settings error paths localise like the rest of the app."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-console-error-committed",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Committed production feature code left with raw `console.error(...)` calls that log full error objects to the browser console in prod. Clusters: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:118,150,185; AmlDashboardPage.tsx:130,172; DsaReportsPage.tsx:97,111,123; frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx:60,93,108,128,159; frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx:77,302,318,336.",
+        "AdvancedNotificationSettingsPage.tsx:77 is the sharpest case — it logs the *update payload* alongside the error: `console.error('Failed to update category notification preference', { category, channel, enabled, error })` — leaking request context to the prod console (a minor info-exposure / noise concern), not just an error string.",
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:116 — the OCR catch block does nothing but `console.error('OCR processing failed')` (no user-facing feedback, no rethrow), so the console line is the only trace of the failure.",
+        "Most of these sit next to proper user-facing handling (setError/alert/toast), so severity is low — this is a hygiene/telemetry smell rather than a silent failure. Fix: route through the app logger/telemetry wrapper (or strip) instead of `console.error`, and avoid logging request payloads to the browser console."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
