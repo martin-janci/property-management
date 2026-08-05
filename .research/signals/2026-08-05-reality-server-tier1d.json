@@ -1,0 +1,47 @@
+[
+  {
+    "id": "code-review-reality-server-link-pm-account-noop",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/handlers/users/mod.rs:360-378 — UserHandler::link_pm_account() performs its guard checks (already-linked at :360, email-match at :364-367) and then, at the point where it must persist the PM<->portal linkage, does NOT write anything: the block at :369-376 only emits a `tracing::info!(... \"Account linking requested\")` line and immediately returns `LinkResult::Success`. The inline comment is explicit: 'This would need a new repo method to update pm_user_id specifically / For now, we indicate success as the linking logic is in place.'",
+      "This is a silent no-op mutation that reports success. The caller (and any client UI) is told the accounts are linked, but `portal_users.pm_user_id` is never set. On the very next call the already-linked short-circuit at :360 (`if portal_user.pm_user_id.is_some()`) still evaluates false, so the endpoint keeps returning Success forever while the link never materialises — SSO/account-merge flows that depend on pm_user_id being populated (e.g. cross-app session invalidation, unified profile) will silently misbehave.",
+      "Fix: add the repo method to persist pm_user_id (or route through the unified users write path already used by update_profile at :415-419) and only return LinkResult::Success after the write commits; otherwise return an explicit not-implemented error rather than a false Success."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-pwreset-token-dropped-prod",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/users.rs:437-488 — request_password_reset() generates and stores a reset token (handler.request_password_reset returns PasswordResetRequestResult::Sent { plaintext_token } at :453), but there is no email transport wired for the reality server (comment at :454-457). In debug builds the token is surfaced via `tracing::info!(... token = %plaintext_token ...)` (:458-463), but in release builds the `#[cfg(not(debug_assertions))]` arm at :464-471 does `let _ = plaintext_token;` — the token is discarded and only a token-less 'Password reset token issued' line is logged.",
+      "Net effect in production: a portal user who requests a password reset causes a token to be minted and persisted, but there is no channel (no email, no log) by which they can ever receive it. The reset link/token can never reach the user, so the password-reset feature is non-functional end-to-end in prod while the endpoint still returns 200 'If an account exists ... a reset link has been sent.' (:485-487) — a misleading success for a dead flow.",
+      "Fix: wire the reality-server email transport (or a shared notification service) so PasswordResetRequestResult::Sent actually dispatches the token to the user; until then the '...a reset link has been sent' copy overpromises. Track as an incomplete-feature blocker for the portal password-reset UC."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-inquiry-detail-empty-msgs",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/inquiries.rs:592-595 — the inquiry-detail handler (GET inquiry for realtor; ownership verified at :575-584) builds its response as `InquiryDetailResponse { inquiry, messages: vec![] }` with the inline comment `// Would fetch conversation messages`. The messages field is unconditionally an empty vec — the conversation thread is never loaded from the repository.",
+      "Effect: a realtor opening any inquiry detail always sees an empty message list even when a conversation exists, making the inquiry/messaging UC appear broken or empty. This is a shipped-but-incomplete endpoint (the response type advertises a messages array that is never populated), not a crash — hence low severity — but it is a user-facing functional gap distinct from a mere TODO because the endpoint is live and returns a structurally-complete-but-empty payload.",
+      "Fix: fetch the conversation messages for the inquiry (scoped to the same realtor ownership already verified above) and populate `messages`, or remove the field from the response contract until the messaging feature lands."
+    ],
+    "expert": "rust"
+  }
+]
