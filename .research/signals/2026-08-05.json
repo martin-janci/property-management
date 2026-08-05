@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "generated": "2026-08-05T03:15:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PRs #2656 + #2659 (window 2026-08-04T03:15Z → 2026-08-05T03:15Z)",
+      "score_delta": 0,
+      "evidence": "2 PRs modified ThreadDetailScreen.tsx this run (#2656 i18n send-error banner + #2659 defensive timestamp guards). Cumulative signal type — re-emitted with new evidence but score_delta=0 (dedup rule; id already in state.seen_signals from yesterday).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1→2 for ThreadDetailScreen.tsx",
+      "score_delta": 1,
+      "evidence": "ThreadDetailScreen.tsx now seen in 2 consecutive runs. Yesterday: PRs #2641 (send failure surface) + #2642 (i18n empty/error/loading). Today: PRs #2656 (i18n send-error banner) + #2659 (defensive timestamp guards). Instability proxy — same screen keeps drawing fixes; a targeted test-hardening or refactor pass may be warranted.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #2660",
+      "score_delta": 1,
+      "evidence": "PR #2660 (gh-issue-2658 voice webhook auth fix) added 195 lines to backend/servers/api-server/src/routes/voice_webhooks.rs — largest single-file diff this run. Auth-critical; watch next run for follow-up churn or regression tests.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-messages-format-relative-invalid-date",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 mobile-rn segment review 2026-08-05",
+      "score_delta": 3,
+      "evidence": "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:53-62 — formatRelative(iso) calls new Date(iso).getTime() unguarded; malformed lastMessage.createdAt yields diffMs=NaN → every < 60/< 24/< 7 predicate is false → falls through to new Date(iso).toLocaleDateString(en-US,…) which renders the literal 'Invalid Date' on the thread card. Same defensive-validation gap PR #2659 just fixed one file over.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-thread-detail-i18n-bypass",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 mobile-rn segment review 2026-08-05",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:138,156,209,248,266,277 — hardcoded English strings bypass useTranslation() even after PR #2656 (authorName You/Participant, default 'Conversation', back link '← Messages', 'Syncing…', composer placeholder, Send button). PR #2656 fixed only the send-error banner; the rest still ships English to sk/cs/de/pl/hu users.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-offline-tempid-mapping-not-persisted",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 mobile-rn segment review 2026-08-05",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:350,439-464 — tempIdToServerId map lives only in processQueue closure and is discarded when merged is persisted. On head-of-line transient failure after a CREATE (temp→real id mapping produced) but before dependent UPDATE/DELETE is dispatched, the dependent action carries the unresolved temp id forward. Next reconnect starts with empty tempIdToServerId → server 404 → treated as permanent (4xx) → silently dropped (data loss).",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-05.md && head -1 matches ^# 2026-08-05$", "observed": "brief written this run", "expected": "exists + H1 matches today"},
+    {"goal": "G2", "passed": true, "command": "state cursors advanced vs HEAD", "observed": "last_pr_seen 2650→2661, last_issue_seen 2643→2658, last_commit_sha advanced, seen_signals grew", "expected": "at least one cursor advanced"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true (all 280 ids unique)", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "non-cumulative re-emit with non-zero score_delta check", "observed": "only cumulative types (churn-hotspot) re-emitted; score_delta=0 on re-emit; non-cumulative new signals are unseen", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap 8 + decay check", "observed": "no item exceeds 8; no open item is >14 days without updates (all open items updated 2026-08-04 or 2026-08-05)", "expected": "true for both cap + decay"},
+    {"goal": "G6", "passed": true, "command": "each new plan has adversarial pass annotation in brief", "observed": "plans/code-review-mobile-rn-messages-format-relative-invalid-date.md — adversarial pass: passed", "expected": "annotation present"},
+    {"goal": "G7", "passed": true, "command": "1 new plan; all 15 sections; Files exists on disk; Mode declared; ≥1 capability ticked", "observed": "1/2 plan, all sections present, MessagesScreen.tsx resolves, Mode: cloud-ok, C1+C6 ticked", "expected": "≤2, all sections, on-disk paths"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l", "observed": "0 (staged files only under .research/)", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "staged diff scanned for secrets/private hostnames per routine spec", "observed": "no matches in staged diff for any pattern in the G9 allowlist (see routine-prompt.md G9)", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md $(regen)", "observed": "byte-identical (self-check ran before commit)", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "phase failures listed under 'Phases that failed'", "observed": "no phases failed this run", "expected": "consistency check n/a"},
+    {"goal": "G12", "passed": true, "command": "prior plan slugs still under plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "no silent deletions"},
+    {"goal": "G13", "passed": true, "command": "archive count vs HEAD", "observed": "unchanged this run (no archive moves)", "expected": ">= HEAD"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md $(regen filtered to vector==triage)", "observed": "byte-identical (self-check ran before commit)", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions empty (no candidate met certainty bar)", "observed": "auto_fix_actions=[]; no signal met confidence=high + score>=3 + allowlist match", "expected": "true (kill switch respected/cap/idempotency)"},
+    {"goal": "G16", "passed": true, "command": "pm_cursor + coverage_cursor liveness", "observed": "pm_cursor.next_index 2→3, coverage_cursor.next_index 4→5, both within valid ranges", "expected": "both advanced + within range"},
+    {"goal": "G17", "passed": true, "command": "no literal Telegram bot-token in staged diff", "observed": "0 matches", "expected": "0"}
+  ],
+  "auto_fix_actions": []
+}

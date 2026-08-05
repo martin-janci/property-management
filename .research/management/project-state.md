@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-07-30 — routine Phase 1.6 lightweight upkeep (Scrum Master synthesis + pm-backend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 1 → 2 (pm-backend → pm-frontend next), coverage_cursor idx 3 → 4 (epic-79 re-checked, all 4 stories still done, evidence refreshed with PR #2553 on 79-2; advances to epic-7a)._
+_Generated: 2026-08-05 — routine Phase 1.6 lightweight upkeep (Scrum Master synthesis + pm-frontend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 2 → 3 (pm-frontend → pm-qa next), coverage_cursor idx 4 → 5. Shipped 7 PRs since 2026-08-04T03:15Z: dispatcher research fixes (#2653, #2655), mobile RN i18n + defensive timestamps (#2656, #2659), backend voice-webhook auth security fix (#2660), 2 screen-map docs reconciles (#2657, #2661). 5 new backlog vectors (1 promoted to plan); mobile-rn ThreadDetailScreen.tsx now flagged as repeated-churn (runs_seen=2). Sole delivery blocker remains the 3 accounting-feature PRs (#2555/#2558/#2559) idle 7 days._
 
 ## Executive summary
 

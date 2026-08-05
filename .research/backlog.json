@@ -6698,12 +6698,14 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2649"
+        "PR #2649",
+        "PR #2661"
       ],
       "evidence": [
-        "PR #2649 (code-review-ppt-web-core-mutation-no-onerror) modified rentals.tsx + financial.tsx with no docs/screens/ppt/*.md update. Best-effort heuristic — error-surface addition may or may not warrant screen-doc change."
+        "PR #2649 (code-review-ppt-web-core-mutation-no-onerror) modified rentals.tsx + financial.tsx with no docs/screens/ppt/*.md update. Best-effort heuristic — error-surface addition may or may not warrant screen-doc change.",
+        "resolved: PR #2661 merged 2026-08-04 — screen-map-drift-pr-2649-ppt reconciled docs/screens/ppt/financial-payments.md (onError toasts under Notes > Specific)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
@@ -6711,7 +6713,7 @@
         "docs/screens/ppt/"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-04",
+      "updated_at": "2026-08-05",
       "plan": null
     },
     {
@@ -6788,6 +6790,120 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "repeated-churn-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+      "title": "Repeated churn: ThreadDetailScreen.tsx modified in 2 consecutive routine runs — screen keeps drawing fixes",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2641",
+        "PR #2642",
+        "PR #2656",
+        "PR #2659",
+        "hotspot_history runs_seen 2"
+      ],
+      "evidence": [
+        "hotspot_history.runs_seen 1→2 for frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+        "yesterday run: PRs #2641 (send-failure surface) + #2642 (i18n empty/error/loading)",
+        "today run: PRs #2656 (i18n send-error banner) + #2659 (defensive timestamp guards)",
+        "instability proxy — fixes keep converging on the same file; consider a targeted test-hardening or refactor pass"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice_webhooks-rs",
+      "title": "Churn hotspot: voice_webhooks.rs (+195 lines this run — security fix)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2660"
+      ],
+      "evidence": [
+        "PR #2660 (gh-issue-2658 voice webhook auth fix) added 195 lines to backend/servers/api-server/src/routes/voice_webhooks.rs — largest single-file diff this run",
+        "auth-critical file; watch next run for follow-up churn or regression tests"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-messages-format-relative-invalid-date",
+      "title": "mobile-rn: MessagesScreen.tsx formatRelative renders literal Invalid Date when lastMessage.createdAt is malformed",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 mobile-rn segment review 2026-08-05"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:53-62 — formatRelative(iso) calls new Date(iso).getTime() unguarded; a malformed/missing lastMessage.createdAt yields diffMs=NaN → every < 60 / < 24 / < 7 comparison is false → falls through to new Date(iso).toLocaleDateString(en-US, …) which renders the literal string Invalid Date on the thread card",
+        "same defensive-validation gap PR #2659 just fixed one file over (formatMessageTime / sentAtSortKey in ThreadDetailScreen.tsx); mirror the guard here"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": "plans/code-review-mobile-rn-messages-format-relative-invalid-date.md"
+    },
+    {
+      "id": "code-review-mobile-rn-thread-detail-i18n-bypass",
+      "title": "mobile-rn: ThreadDetailScreen still ships hardcoded English literals after #2656 i18n sweep — bypasses useTranslation()",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 mobile-rn segment review 2026-08-05"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx:138,156,209,248,266,277 — hardcoded English strings bypass useTranslation (already imported at line 159): authorName You/Participant, default prop Conversation, back link ← Messages, Syncing…, composer placeholder Write a message…, Send button text",
+        "PR #2656 only routed the send-error banner through i18n; remaining literals still ship English to sk/cs/de/pl/hu users",
+        "contradicts the send.test's own assertion that error copy never renders a raw English literal"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-offline-tempid-mapping-not-persisted",
+      "title": "mobile-rn: useOfflineSupport tempIdToServerId mapping lost across app restart — dependent actions silently dropped",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 mobile-rn segment review 2026-08-05"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:350,439-464 — tempIdToServerId map built during a flush lives only in processQueue closure; discarded when merged is persisted",
+        "on head-of-line TRANSIENT failure after a CREATE (which produced a temp→real id mapping) but before a dependent UPDATE/DELETE is dispatched, the dependent action is carried forward with an unresolved temp id in endpoint/body",
+        "next reconnect starts with empty tempIdToServerId, dispatches the dependent action with the stale temp id, server returns 404 → treated as permanent (4xx) at line 262-266 → silently dropped (data loss)",
+        "fix: persist the mapping alongside the queue, or eagerly rewrite carried-forward siblings before saving merged"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
     }
   ]
 }
