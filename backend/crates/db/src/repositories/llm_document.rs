@@ -1632,6 +1632,10 @@ impl LlmDocumentRepository {
         refresh_token_encrypted: Option<&str>,
         token_expires_at: Option<DateTime<Utc>>,
         capabilities: serde_json::Value,
+        // Keyed HMAC-SHA256 of the access token (#2662): indexed lookup key so
+        // voice-webhook auth avoids the O(N) decrypt-and-scan. NULL is accepted
+        // and simply defers the device to the linear-scan fallback.
+        access_token_hash: Option<&[u8]>,
     ) -> Result<VoiceAssistantDevice, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -1641,9 +1645,9 @@ impl LlmDocumentRepository {
             INSERT INTO voice_assistant_devices (
                 organization_id, user_id, unit_id, platform, device_id,
                 device_name, access_token_encrypted, refresh_token_encrypted,
-                token_expires_at, capabilities, linked_at
+                token_expires_at, capabilities, access_token_hash, linked_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
             RETURNING *
             "#,
         )
@@ -1657,6 +1661,7 @@ impl LlmDocumentRepository {
         .bind(refresh_token_encrypted)
         .bind(token_expires_at)
         .bind(&capabilities)
+        .bind(access_token_hash)
         .fetch_one(executor)
         .await
     }
@@ -1872,6 +1877,10 @@ impl LlmDocumentRepository {
         access_token_encrypted: &str,
         refresh_token_encrypted: Option<&str>,
         token_expires_at: Option<DateTime<Utc>>,
+        // Keyed HMAC-SHA256 of the new access token (#2662): kept in lock-step
+        // with `access_token_encrypted` so the indexed lookup stays correct
+        // after a token refresh.
+        access_token_hash: Option<&[u8]>,
     ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -1882,6 +1891,7 @@ impl LlmDocumentRepository {
                 access_token_encrypted = $2,
                 refresh_token_encrypted = COALESCE($3, refresh_token_encrypted),
                 token_expires_at = $4,
+                access_token_hash = $5,
                 updated_at = NOW()
             WHERE id = $1 AND is_active = TRUE
             RETURNING *
@@ -1891,6 +1901,7 @@ impl LlmDocumentRepository {
         .bind(access_token_encrypted)
         .bind(refresh_token_encrypted)
         .bind(token_expires_at)
+        .bind(access_token_hash)
         .fetch_optional(executor)
         .await
     }
