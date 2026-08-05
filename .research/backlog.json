@@ -6698,7 +6698,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2649"
       ],
@@ -6712,7 +6712,12 @@
       ],
       "created_at": "2026-08-04",
       "updated_at": "2026-08-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-05T12:03:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2661
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",

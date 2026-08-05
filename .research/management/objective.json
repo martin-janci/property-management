@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
   "selected_at": "2026-08-04T16:17:37Z",
-  "last_action": "repick",
-  "reason": "prior target 'gh-issue-2658' exhausted; closest-to-done is 'code-review-mobile-native-kmp-portfolio-analytics-caps-100' (open=1 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
