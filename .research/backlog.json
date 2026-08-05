@@ -6793,6 +6793,97 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "title": "Churn hotspot: voice_webhooks.rs — 223-line security fix landed via PR #2660 (broken-auth in authenticate_voice_user)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2660",
+        "Issue #2658"
+      ],
+      "evidence": [
+        "PR #2660 merged 2026-08-04 rewrote authenticate_voice_user + verify_hmac_signature (223 additions/28 deletions) fixing horizontal-privilege-escalation via ignored access-token. This is post-fix churn — noted for hotspot bookkeeping, no follow-up work implied. Will decay in 14 days if no further churn."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "title": "Repeated churn: ThreadDetailScreen.tsx — hardened across runs_seen=2 consecutive runs (i18n + timestamp guard)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2641",
+        "PR #2642",
+        "PR #2656",
+        "PR #2659"
+      ],
+      "evidence": [
+        "hotspot_history.runs_seen=2 (last_seen 2026-08-04→2026-08-05). Four hardening PRs in 4 days on this messaging screen: #2641 send-fail banner, #2642 i18n empty/error/loading, #2656 i18n send-error key, #2659 malformed timestamp guard. All small, all legitimate. Not risky-churn — no fix/revert without tests; every PR ships regression coverage. Filed for visibility; will decay unless a real smell (revert / fixup-of-fixup) emerges."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-invitation-authz-escalation",
+      "title": "SECURITY: reality-server create_invitation lacks agency-membership check — any authenticated user joins any agency as admin",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Tier-1.5 dev-review 2026-08-05 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:373-401 create_invitation takes RequestPrincipal but never calls super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id) — unlike update_agency (L268) and update_branding (L322) which both do. Client-supplied `role` passes through verbatim (COALESCE defaults to realtor, but admin/owner accepted).",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs:220-253 create_invitation INSERTs blindly; accept_invitation (L256-293) selects by token only and inserts reality_agency_members keyed on the ACCEPTING principal.user_id — never comparing invitation.email to accepting user email.",
+        "Attack chain: authenticated portal user U POSTs /api/v1/agencies/{TARGET}/invitations with `{email:'anything', role:'admin'}`, reads token from 200 body, POSTs /api/v1/agencies/invitations/{token}/accept — U is now an active admin of TARGET (full update_agency / update_branding / run_import SSRF-surface power).",
+        "Fix pattern already in-repo: mirror update_agency L268 (check_agency_membership call before repo call) AND add email-match guard in accept_invitation."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/crates/db/src/repositories/reality_portal/agencies.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": "plans/code-review-reality-server-invitation-authz-escalation.md"
+    },
+    {
+      "id": "code-review-reality-server-my-reports-total-page-length",
+      "title": "reality-server list_my_reports returns page length as `total` — pagination broken (client cannot compute page count)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1.5 dev-review 2026-08-05 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/reports.rs:342 list_my_reports issues LIMIT $2 OFFSET $3 (default 20), then `let total = reports.len();` — so `total` is ALWAYS ≤ page size and equals `limit` on every non-final page. Client's `total / limit` always 1.",
+        "Same bug class fixed in routes/realtors.rs:220-225 (inquiries axis) and routes/inquiries.rs:478-494 (list_my_inquiries) — both now run a matching COUNT(*) in parallel via tokio::try_join!.",
+        "Wire-contract wart: MyReportsResponse.total is `usize`, serializes inconsistently on 32- vs 64-bit hosts; should be i64.",
+        "Fix direction: SELECT COUNT(*) FROM listing_reports WHERE reporter_user_id = $1 AND ($2::text IS NULL OR status = $2), join with page query via tokio::try_join!, return as i64."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,188 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-05.md && head -1 briefs/2026-08-05.md | grep -q '^# 2026-08-05$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json cursor advance vs HEAD",
+      "observed": "true (last_pr_seen 2650->2661, last_issue_seen 2643->2658, seen_signals+5)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in prev seen_signals with score_delta != 0",
+      "observed": "true — repeated-churn is cumulative type; other new signals not in prev seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no item score > 8; no open item >14d without decay or drop",
+      "observed": "true — max score 6 (done); only open items are all created 2026-08-04 or later",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plans/<slug>.md has 'adversarial pass:' brief annotation",
+      "observed": "true — 1 new plan, brief annotates 'adversarial pass: passed'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, each 4 metadata + 11 headings + ticked capability + Mode + Files exist",
+      "observed": "1 new plan (code-review-reality-server-invitation-authz-escalation.md) with 4 metadata + 12 ## headings + 4 ticked caps + Mode: cloud-ok + 2 Files (both exist on disk)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0 (verified pre-commit)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secret patterns in staged .research/ diff",
+      "observed": "0 (verified pre-commit)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical (regenerated in Phase 4 via scratchpad/render.py before staging)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists any failed phases + cursor rollback",
+      "observed": "no phases failed; all cursors advanced",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in plans/ or _archive/",
+      "observed": "true — plans/ set matches HEAD + this run's promotion; no silent deletes",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run ≥ archive count at HEAD",
+      "observed": "6 == 6 (no archive changes this run)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical (regenerated in Phase 4)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline: auto_fix_actions counts, idempotency, kill-switch",
+      "observed": "auto_fix_actions=[]; Phase 5 no candidate (only the new security plan met bar but it's not in the allowlist — allowlist covers screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-bump, stalled-review only)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid when Phase 1.6 ran; else no-op",
+      "observed": "no-op — Phase 1.6 skipped this run (pm_cursor.next_index unchanged from HEAD=2)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot-token value in staged diff",
+      "observed": "0 (verified pre-commit)",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2660",
+      "score_delta": 1,
+      "evidence": "PR #2660 merged 2026-08-04 rewrote voice_webhooks.rs authenticate_voice_user + verify_hmac_signature (+195/-28, 223 changes total) to fix issue #2658 (broken auth — horizontal privilege escalation via ignored access token). Top-1 raw code-file churn this run.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2656, PR #2659",
+      "score_delta": 0,
+      "evidence": "2026-08-05 cumulative re-emit: PRs #2656 (i18n send-error banner) + #2659 (malformed timestamp guard) both touched ThreadDetailScreen.tsx this run — ~39 changes total. Still top-3 code-file churn; signal already in seen_signals from 2026-08-04, score_delta suppressed per G4 cumulative rule.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "repeated-churn",
+      "source": "PR #2641, PR #2642, PR #2656, PR #2659",
+      "score_delta": 1,
+      "evidence": "hotspot_history.runs_seen advanced 1→2 (last_seen 2026-08-04→2026-08-05). Four hardening PRs in 4 days (#2641 send-fail banner, #2642 i18n empty/error/loading, #2656 i18n send-error key, #2659 timestamp guard). NOT risky-churn — every PR ships regression coverage. Flag for visibility only.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-invitation-authz-escalation",
+      "type": "code-review-finding",
+      "source": "Tier-1.5 dev-review 2026-08-05 (reality-server)",
+      "score_delta": 3,
+      "evidence": "backend/servers/reality-server/src/routes/agencies.rs:373-401 create_invitation lacks check_agency_membership (unlike update_agency L268 / update_branding L322); repo accept_invitation (agencies.rs:256) never compares invitation.email to accepting user email. Full attack chain: any authenticated portal user POSTs {email:X, role:admin} to /api/v1/agencies/{TARGET}/invitations, then /accept with the returned token — U is now an active admin of TARGET (full update / import / SSRF power). Severity=HIGH.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-my-reports-total-page-length",
+      "type": "code-review-finding",
+      "source": "Tier-1.5 dev-review 2026-08-05 (reality-server)",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/reports.rs:342 list_my_reports sets `let total = reports.len();` after a LIMIT/OFFSET page fetch — so `total` = page size on every non-final page. Same class fixed in routes/realtors.rs:220-225 and routes/inquiries.rs:478-494 via matching COUNT(*) in tokio::try_join!. Severity=MEDIUM.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — new security finding is high-confidence + score=3 but its signal type (code-review-finding) is not in the Phase 5 allowlist; the security fix goes through the standard manual-implementer plan path.",
+  "phase_1_5": {
+    "segment_reviewed": "reality-server",
+    "reason": "oldest-unreviewed (2026-08-02, 3 days) + no churn hotspots in this segment this run",
+    "findings_count": 2,
+    "cursor_advanced": true,
+    "prev_cursor": "2026-08-02",
+    "new_cursor": "2026-08-05"
+  },
+  "phase_1_6": {
+    "skipped": true,
+    "reason": "delivery-side heavy subagent skipped per token discipline (dispatcher continuously refills PM state); pm_cursor + coverage_cursor NOT advanced; G16 becomes no-op per its 'skip' clause"
+  },
+  "phase_5": {
+    "attempted": false,
+    "reason": "no candidate — allowlist is screen-map-drift / screen-map-orphan / fixme-in-merged-code / lockfile-bump / stalled-review; today's signals match none of those shapes"
+  }
+}

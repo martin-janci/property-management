@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-04T03:15:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2650,
-  "last_issue_seen": 2643,
-  "last_commit_sha": "e0703d5901ef5454df8919ec71e503f8625e23fb",
+  "last_run_iso": "2026-08-05T14:12:00Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 2661,
+  "last_issue_seen": 2658,
+  "last_commit_sha": "648273ab27df917d315d3fbe6f296e538229df03",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -418,14 +418,19 @@
       "recent_churn": 2
     },
     "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-04",
-      "recent_churn": 2
+      "runs_seen": 2,
+      "last_seen": "2026-08-05",
+      "recent_churn": 39
     },
     "frontend/apps/mobile/src/hooks/useOfflineSupport.ts": {
       "runs_seen": 1,
       "last_seen": "2026-08-04",
       "recent_churn": 2
+    },
+    "backend/servers/api-server/src/routes/voice_webhooks.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-05",
+      "recent_churn": 223
     }
   },
   "seen_signals": [
@@ -785,13 +790,17 @@
     "screen-map-drift-pr-2649-ppt",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
-    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+    "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+    "repeated-churn-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+    "code-review-reality-server-invitation-authz-escalation",
+    "code-review-reality-server-my-reports-total-page-length"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-04",
     "api-core": "2026-08-04",
-    "reality-server": "2026-08-02",
+    "reality-server": "2026-08-05",
     "ppt-web-ui": "2026-08-03",
     "ppt-web-core": "2026-08-03",
     "reality-web": "2026-08-03",
@@ -799,9 +808,9 @@
     "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 59,
-    "vectors_created": 266,
-    "plans_created": 20,
+    "runs": 60,
+    "vectors_created": 270,
+    "plans_created": 21,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
