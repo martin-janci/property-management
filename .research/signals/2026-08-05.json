@@ -1,0 +1,194 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-05",
+      "type": "lag_warning",
+      "source": "state.last_run_iso vs now",
+      "score_delta": 0,
+      "evidence": [
+        "Routine has not run in 40h (>36h threshold); last_run_iso=2026-08-04T03:15:00Z. Logged in brief; no backlog item created."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+      "type": "churn-hotspot",
+      "source": "local git log since 2026-08-04T03:15Z",
+      "score_delta": 0,
+      "evidence": [
+        "2 commits touched frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx in the 40h window (#2656 gh-issue-2654 i18n send-error banner, #2659 malformed timestamps); top-1 churn this run.",
+        "Cumulative re-emit (id already in state.seen_signals from 2026-08-04); score_delta=0 per Phase 1 dedup rule for cumulative signal types. Backlog item already status=done (closed by PR #2659)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history bump 2026-08-04 → 2026-08-05",
+      "score_delta": 1,
+      "evidence": [
+        "hotspot_history[ThreadDetailScreen.tsx].runs_seen 1 → 2 after this run's bump; file has churned in 2 consecutive routine windows. Both waves were convergent post-merge-review fixes (send-error + i18n in Aug 4 window, i18n send-error + malformed-ts guard in Aug 5 window) — instability class flagged for visibility; likely self-resolving."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-imports-list-jobs-page-total-clamp",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review — segment=reality-server (oldest-unreviewed 2026-08-02); severity=medium",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:141 `let total = jobs.len() as i64;` — same class as PR #919 fix for realtor inquiries; query.limit.unwrap_or(20) (line 130) has no .clamp() (unbounded read); query.offset.unwrap_or(0) (line 131) has no .max(0) (negative offset → raw DB error 500)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-imports-list-feeds-unbounded",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review — segment=reality-server; severity=medium",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:336-347 list_feeds calls state.reality_portal_repo.list_feed_subscriptions(agency_id).await then sets total = feeds.len() as i64; no limit/offset params anywhere in the handler or repo call. Combined resource-exhaustion + page-length-as-total defect on an authenticated org-scoped endpoint."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-agency-imports-history-hardcoded-100",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review — segment=reality-server; severity=medium",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:174-183 list_import_history: SQL `ORDER BY created_at DESC LIMIT 100` followed by `let total = rows.len() as i64;` — handler has no page/limit/offset query params; agencies with >100 imports get a silently-truncated total and cannot paginate to older records."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal matched allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise[lockfile] / stalled-review) at confidence=high + score>=3 this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-05.md && head -1 == '# 2026-08-05'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay (only 1 pre-existing open item, updated 2026-08-04 — 1d old, no decay yet)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans, ≤2 cap trivially satisfied",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief for phase-failure honesty (none this run)",
+      "observed": "none",
+      "expected": "honest"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge (no new plans, no deletions of prior plans)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; Phase 1.6 skipped this run so GC7 clause is no-op (pm_cursor not advanced)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

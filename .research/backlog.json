@@ -6793,6 +6793,86 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-reality-server-imports-list-jobs-page-total-clamp",
+      "title": "reality-server list_import_jobs reports page-length as total + unclamped limit/offset — clients paginate wrong, 500 on negative offset",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-05 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:141 `let total = jobs.len() as i64;` — same class as PR #919 fix for realtor inquiries; `query.limit.unwrap_or(20)` (line 130) lacks `.clamp()` (unbounded read); `query.offset.unwrap_or(0)` (line 131) lacks `.max(0)` (negative offset → raw DB error 500)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-imports-list-feeds-unbounded",
+      "title": "reality-server list_feeds fetches every feed subscription for an agency with no LIMIT + reports len as total (auth'd org-scoped endpoint)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-05 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:336-347 `let feeds = state.reality_portal_repo.list_feed_subscriptions(agency_id).await; ... let total = feeds.len() as i64;` — no limit/offset params anywhere in the handler or repo call; combined resource-exhaustion + page-length-as-total defect"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-agency-imports-history-hardcoded-100",
+      "title": "reality-server list_import_history caps SQL at LIMIT 100 then reports len as total — agencies with >100 imports silently truncated, no pagination",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-05 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:174-183 SQL `ORDER BY created_at DESC LIMIT 100` then `let total = rows.len() as i64;` — handler has no page/limit/offset query params; silently caps + wrong total"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+      "title": "ThreadDetailScreen.tsx repeated-churn — runs_seen=2 (fixes converging on same file across two consecutive routine windows)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history bump 2026-08-05"
+      ],
+      "evidence": [
+        "ThreadDetailScreen.tsx modified again this window (#2656 i18n send-error, #2659 malformed timestamps) after last run's #2641 send-failure surface + #2642 empty/error/loading i18n; second-run-in-a-row — instability proxy. Context: both waves were convergent post-merge-review fixes, not divergent rework."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-05",
+      "updated_at": "2026-08-05",
+      "plan": null
     }
   ]
 }

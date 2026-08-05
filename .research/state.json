@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-04T03:15:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2650,
-  "last_issue_seen": 2643,
-  "last_commit_sha": "e0703d5901ef5454df8919ec71e503f8625e23fb",
+  "last_run_iso": "2026-08-05T20:16:35Z",
+  "last_run_ms": 240000,
+  "last_pr_seen": 2663,
+  "last_issue_seen": 2662,
+  "last_commit_sha": "7989bfd005801bfbf12cf8d4a10cc0e163abc169",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -418,8 +418,8 @@
       "recent_churn": 2
     },
     "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-04",
+      "runs_seen": 2,
+      "last_seen": "2026-08-05",
       "recent_churn": 2
     },
     "frontend/apps/mobile/src/hooks/useOfflineSupport.ts": {
@@ -785,13 +785,18 @@
     "screen-map-drift-pr-2649-ppt",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
-    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+    "lag-warning-2026-08-05",
+    "repeated-churn-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
+    "code-review-reality-server-imports-list-jobs-page-total-clamp",
+    "code-review-reality-server-imports-list-feeds-unbounded",
+    "code-review-reality-server-agency-imports-history-hardcoded-100"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-04",
     "api-core": "2026-08-04",
-    "reality-server": "2026-08-02",
+    "reality-server": "2026-08-05",
     "ppt-web-ui": "2026-08-03",
     "ppt-web-core": "2026-08-03",
     "reality-web": "2026-08-03",
@@ -799,8 +804,8 @@
     "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 59,
-    "vectors_created": 266,
+    "runs": 60,
+    "vectors_created": 270,
     "plans_created": 20,
     "quiet_days": 2,
     "auto_fix_count": 0
