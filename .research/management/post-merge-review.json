@@ -1,9 +1,33 @@
 {
-  "generated": "2026-08-04T14:07:35Z",
+  "generated": "2026-08-05T16:10:11Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-05T16:10:11Z",
+      "prs_scanned": 3,
+      "clean": [
+        2659,
+        2661
+      ],
+      "with_issues": [
+        {
+          "pr": 2660,
+          "issue": 2662,
+          "findings": 2,
+          "specialist": "pm-rust",
+          "note": "Voice-webhook auth fix (closes #2658) is correct+well-tested at the pure-fn level (voice_device_token_matches, ct_eq_str, fail-closed HMAC), but two shape follow-ups: (1) performance/med -- authenticate_voice_user does an unbounded fetch_all of every active token-bearing device for the platform (cross-org) then AES-GCM-decrypts+ct-compares each in a linear scan -> O(N) decrypts/request, grows with adoption, amplification vector on well-formed-but-nonmatching requests; proposed indexed keyed-HMAC access_token_hash column to select the candidate in SQL then verify the single decrypt. (2) test-coverage/med -- the actual priv-escalation regression lives at the fetch_all+find route/DB level but only the extracted pure predicate is tested; #[sqlx::test] DB suite doesn't run in cloud runner so the route selection path (seed 2 devices, present A's token -> must return A not B; nonmatch->401; expired->reject) is uncovered (same net class as #2357/#2359). -> NET-NEW #2662."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5, buffer-starved pipeline drained (0 active). gh CLI proxy-unreliable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (wrote artifacts only, no commit/push -- dispatcher Phase 6 folds the .research delta). Window merged-to-dev 14d (>=2026-07-22), base=dev, max_prs=15. Prior run (2026-08-04T14:07Z) reached #2657/#2656/#2655; this run scanned the 3 never-reviewed PRs merged after it: #2659 (mobile-rn ThreadDetailScreen malformed-createdAt guard: new formatMessageTime returns '' not 'Invalid Date', sentAtSortKey NaN-safe sinks anomalous rows to +Inf with ka===kb?0 guard against Infinity-Infinity=NaN, 6 new tests -- CLEAN), #2660 (Rust voice-webhook broken-auth fix -> 1 issue #2662, see with_issues), #2661 (docs-only screen-map reconcile of ppt/financial-payments.md to PR #2649 onError toasts; correctly declined to touch rentals-dashboard since #2649's merged diff only hit financial.tsx; /screens validate clean -- CLEAN). Dedup: 4 pre-existing open follow-ups (#2643 OAuth token-usage hot path, #2612 notification fire-once transient drop, #2575 disputes kpis window-ordering, #2366 S3 building_id) checked -- #2662 is distinct (different route + concerns). Labeling: MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP -- this JSON run-history is the dedup record for the next run (same precedent as prior runs). Breadcrumb comment left on #2660. NET-NEW actionable issues: 1 (#2662).",
+      "focus_prs": [
+        2659,
+        2660,
+        2661
+      ]
+    },
     {
       "run_at": "2026-08-04T14:07:35Z",
       "prs_scanned": 3,
@@ -88,11 +112,11 @@
           "issue": 2630,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) — clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage — no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
+          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
         }
       ],
       "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run — auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) — still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
     },
     {
       "run_at": "2026-08-02T12:20:00Z",
@@ -138,7 +162,7 @@
       ],
       "with_issues": [],
       "skipped_already_reviewed": [],
-      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard — exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) — all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 — still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
+      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard \u2014 exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) \u2014 all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 \u2014 still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
     },
     {
       "run_at": "2026-08-01T06:15:42Z",
@@ -205,7 +229,7 @@
         }
       ],
       "skipped_already_reviewed": [],
-      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 — the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
+      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 \u2014 the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
     },
     {
       "run_at": "2026-07-31T16:18:37Z",
@@ -226,7 +250,7 @@
           "issue": 2612,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification — it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
+          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification \u2014 it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
         }
       ],
       "skipped_already_reviewed": [
@@ -256,7 +280,7 @@
           "issue": 2573,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "DELETE /documents/by-file-key deletes by org-scope only — no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
+          "note": "DELETE /documents/by-file-key deletes by org-scope only \u2014 no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
         },
         {
           "pr": 2568,
@@ -305,7 +329,7 @@
           "issue": 2562,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "get_dispute_kpis unwired dead code — no route/export consumes the funnel/TTR KPIs"
+          "note": "get_dispute_kpis unwired dead code \u2014 no route/export consumes the funnel/TTR KPIs"
         },
         {
           "pr": 2549,
@@ -504,7 +528,7 @@
           "issue": 2417,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) — docs-only, scheduler.rs is correct"
+          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \u2014 docs-only, scheduler.rs is correct"
         },
         {
           "pr": 2335,
@@ -554,113 +578,6 @@
         2373
       ],
       "with_issues": []
-    },
-    {
-      "run_at": "2026-07-16T00:33:04Z",
-      "prs_scanned": 15,
-      "clean": [
-        2349
-      ],
-      "with_issues": [
-        {
-          "pr": 2356,
-          "issue": 2357,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "role gate on GET /ai/chat/escalated shipped without a deny-path regression test"
-        },
-        {
-          "pr": 2355,
-          "issue": 2359,
-          "findings": 3,
-          "specialist": "rust-backend",
-          "note": "/agencies/me omits is_active=TRUE (resolves left memberships; earliest-joined shadows current agency); no backend test; dual 404-guard drift"
-        },
-        {
-          "pr": 2354,
-          "issue": 2360,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "view webhook increments syndication stats unconditionally (record_webhook_event dedup result discarded); replay-in-window + honest retries still inflate counts"
-        },
-        {
-          "pr": 2353,
-          "issue": 2358,
-          "findings": 3,
-          "specialist": "db-migration",
-          "note": "retry-on-unmatched shipped ahead of dedup index; Duplicate branch is dead code -> portal retries insert duplicate leads; genuinely-unmatched ids loop 5xx forever"
-        },
-        {
-          "pr": 2352,
-          "issue": 2361,
-          "findings": 1,
-          "specialist": "react-native",
-          "note": "login() evicts only auth/tenant-id while logout() clears all; non-tenant-scoped keys leak prior org's cached data on login-without-logout"
-        },
-        {
-          "pr": 2351,
-          "issue": 2362,
-          "findings": 1,
-          "specialist": "nextjs-web",
-          "note": "shipped fix correct + i18n-complete; deferred parseListingDetail normalizer consolidation (4 hand-rolled shape guards)"
-        },
-        {
-          "pr": 2350,
-          "issue": 2364,
-          "findings": 1,
-          "specialist": "kotlin-mp",
-          "note": "favorites fix correct/complete/CI-verified; low-sev regression-net for latent Decimal-string trap on unconsumed portal_listings + price-history DTOs"
-        },
-        {
-          "pr": 2348,
-          "issue": 2365,
-          "findings": 2,
-          "specialist": "nextjs-web",
-          "note": "Decimal-string fix correct+tested; AC-5 toggle has no executing test (backend authz tests #[ignore]-quarantined) + non-persist OFF-state risk from '?? true' fallback"
-        },
-        {
-          "pr": 2347,
-          "issue": 2363,
-          "findings": 2,
-          "specialist": "react-web",
-          "note": "solid page (error-branching, i18n parity, screen-map flipped); signer signs unseen document (PDF preview deferred, needs token-scoped public doc-fetch) + single-use token left in URL/history"
-        },
-        {
-          "pr": 2346,
-          "issue": 2368,
-          "findings": 2,
-          "specialist": "react-native",
-          "note": "core hardening solid (fail-fast auth + size/MIME); hand-copied allow-list has no drift guard + photo-picker path bypasses the MIME guard"
-        },
-        {
-          "pr": 2345,
-          "issue": 2366,
-          "findings": 1,
-          "specialist": "react-web",
-          "note": "uploadDocumentDirect drops building_id; building-scoped docs lose association (CreateDocumentRequest lacks field); distinct from #2320/#2318"
-        },
-        {
-          "pr": 2344,
-          "issue": 2367,
-          "findings": 1,
-          "specialist": "generic",
-          "note": "regex + epic-id lowercase fix correct; residual same-class gap: non-latin names in other scanCandidates slugify to empty -> ppt/ fails IdSchema at init/validate"
-        },
-        {
-          "pr": 2338,
-          "issue": 2370,
-          "findings": 1,
-          "specialist": "react-web",
-          "note": "endpoint wiring/cron/contract-test correct (#2318 finding-3 cron_expression client type now closed); i18n leak - hardcoded English report labels + raw English error toast across 5 non-EN locales"
-        },
-        {
-          "pr": 2337,
-          "issue": 2369,
-          "findings": 1,
-          "specialist": "react-web",
-          "note": "high-quality PR; optimistic toggle patches preferences[] not categories[].enabledEvents so 'X of Y enabled' badge desyncs until onSettled refetch"
-        }
-      ]
     }
   ]
 }
