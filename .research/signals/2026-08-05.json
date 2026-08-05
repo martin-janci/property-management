@@ -1,0 +1,186 @@
+{
+  "generated": "2026-08-05T12:15:00Z",
+  "signals": [
+    {
+      "id": "code-review-reality-server-link-pm-account-noop",
+      "type": "code-review-finding",
+      "source": "Tier1d rotating-expert-review 2026-08-05 (reality-server) — adopted from dispatcher .research/signals/2026-08-05-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/handlers/users/mod.rs:360-378 — link_pm_account() runs its guard checks (already-linked at :360, email-match at :364-367) and then, at the point where it must persist the PM<->portal linkage, emits `tracing::info!(... \"Account linking requested\")` and returns LinkResult::Success without writing portal_users.pm_user_id. Silent no-op mutation; caller thinks the accounts are linked but the next call still short-circuits to false at :360.",
+      "segment": "reality-server",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-pwreset-token-dropped-prod",
+      "type": "code-review-finding",
+      "source": "Tier1d rotating-expert-review 2026-08-05 (reality-server) — adopted from dispatcher .research/signals/2026-08-05-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/users.rs:437-488 — request_password_reset() mints + persists a reset token but has no email transport; debug builds log the token at :458-463, release builds drop it with `let _ = plaintext_token;` at :464-471. Endpoint still returns 200 'a reset link has been sent' at :485-487, so a portal user can never receive the reset — feature dead end-to-end in prod.",
+      "segment": "reality-server",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-msgs",
+      "type": "code-review-finding",
+      "source": "Tier1d rotating-expert-review 2026-08-05 (reality-server) — adopted from dispatcher .research/signals/2026-08-05-reality-server-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/inquiries.rs:592-595 — inquiry-detail handler builds InquiryDetailResponse { inquiry, messages: vec![] } with the comment 'Would fetch conversation messages'. messages is unconditionally empty; realtors opening any inquiry always see an empty thread even when a conversation exists.",
+      "segment": "reality-server",
+      "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "gh commits window 2026-08-04T03:15Z → 2026-08-05T12:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2 more commits touched frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx this run (#2656 send-error i18n, #2659 malformed-timestamp guard). Both landed with tests. Cumulative re-emit — no score_delta applied per routine's cumulative-carve-out rule."
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2 for ThreadDetailScreen.tsx",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "hotspot_history[ThreadDetailScreen.tsx].runs_seen advances 1 → 2 this run (2026-08-04 PRs #2641/#2642 first window; 2026-08-05 PRs #2656/#2659 second window). Instability proxy — but both windows landed with tests, so no risky-churn."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# <today>'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD: cursors or seen_signals differ",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in prior seen with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "max score <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14d — decay vacuous",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run — vacuously passes",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run — count <= 2 trivially",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff .research/ only",
+      "observed": "pending",
+      "expected": "true — will verify pre-commit"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "pending",
+      "expected": "true — will verify pre-commit"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen from backlog.json",
+      "observed": "true (generated together)",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — no phase failures this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "true (no plan moves this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count non-decreasing",
+      "observed": "true (no changes)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "true (generated together)",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix this run",
+      "observed": "true (empty auto_fix_actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "true (skipped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token in staged diff",
+      "observed": "pending",
+      "expected": "true — will verify pre-commit"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist bar (all new items score<=2, confidence=medium)"
+}
