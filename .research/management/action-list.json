@@ -17,30 +17,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "gap-84-1-ppt-web-direct-s3-upload",
-      "action": "ppt-web: wire direct-to-S3 document upload via POST /documents/upload-url (api-client binding + UploadDocument integration). Backend presigned-URL endpoint landed in #2309; ppt-web still proxies uploads through the server. Scope to the shipped API; happy-path wiring.",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-coverage-refill 2026-08-05T08:09:38Z (story 84-1-s3-presigned-urls partial gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T08:09:38Z"
-    },
-    {
-      "id": "gap-84-2-ppt-web-document-sign-page",
-      "action": "ppt-web: build the signer-facing document-sign page (screen-map ppt/document-sign, buildStatus planned→shipped) consuming the shipped e-signature API. Verify signature-request email delivery end-to-end. Scope to the shipped backend API (prior attempt failed with no PR on sandbox timeout — keep the slice tight).",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-coverage-refill 2026-08-05T08:09:38Z (story 84-2-esignature-email partial gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T08:09:38Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
