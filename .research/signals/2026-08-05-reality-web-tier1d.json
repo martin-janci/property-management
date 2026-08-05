@@ -1,0 +1,58 @@
+{
+  "generated": "2026-08-05",
+  "segment": "reality-web",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Research buffer starved (claimable=1 < floor=36); deterministic refills dry, so this is a Tier-1d demand-driven review. state.review_cursor's true oldest is reality-server (2026-08-02), but reality-server AND ppt-web-ui already have full 3-finding tier1d files dated today (2026-08-05-reality-server-tier1d.json, 2026-08-05-ppt-web-ui-tier1d.json) -> per-run cap filled, saturation-skip both. Remaining oldest tie sits at cursor date 2026-08-03: ppt-web-core, reality-web, mobile-rn. Dispatcher guidance says PREFER backend/ or frontend/ that is implementable+verifiable in the cloud runner and AVOID mobile-native -> mobile-rn deprioritized. Between the two frontend candidates, ppt-web-core is heavily picked-over (11 prior tier1d review runs, very large dedupe surface) whereas reality-web has only 6 prior runs and fresher ground; both are equally implementable (Next.js SSR/CSR under frontend/), so reality-web selected. Not backlog-saturated (0 open code-review-finding items for reality-web in backlog.json; threshold is >=3). Segment root: frontend/apps/reality-web/src/ (skill map lists pre-monorepo path frontend/reality-web/src/). Frontend expert, static-only, no secondary in the skill matrix. Deduplicated against every prior reality-web signal file (crm-import-no-i18n, aria-labels-untranslated, stray-console-error, jsonld-xss, tenant-bootstrap-xss, killswitch-i18n, pricealert-mut-noerr, sso-callback-i18n, listings-no-error-branch, saved-search-hardcoded-i18n, profile-hardcoded-locale, realtor-profile-mock-data, listings-page-no-iserror, profile-pages-i18n-gap, agency-import-i18n, protectedroute-i18n): the three findings below target the listing-EDIT pages, the price-map page, and the comparison-view export — all previously unreviewed files/surfaces. Verified during the pass that the public-conversion paths (ContactForm.tsx, PriceAlerts.tsx, listings/[slug]/page.tsx SSR) are clean: proper isLoading/error/empty states, i18n via next-intl, and a well-commented SSR null/shape guard (parseListingDetail + notFound()).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-export-pdf-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:151-153 — handleExportPDF() is a shipped no-op stub: its entire body is a comment `// In a real implementation, this would generate a PDF` (:152) followed by `showToast('PDF export coming soon!', 'info')` (:153). It is wired to a visible, always-enabled `Export PDF` <button> at :212-227 on the public property-comparison page (Epic 51 / Story 51.3). A user who clicks Export PDF gets a 'coming soon' toast and nothing else — an advertised feature that does nothing in production.",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — the whole component ships with ZERO i18n (grep: 0 occurrences of useTranslations/next-intl in the file), so its user-facing copy is hardcoded English on a portal that serves sk/cs/de/en: the button labels `Share` (:210 area) and `Export PDF` (:227), plus the share/export toasts `'Comparison link copied to clipboard!'` (:145), `'Share this URL: <url>'` (:147) and `'PDF export coming soon!'` (:153). Non-English visitors on the comparison surface see raw English.",
+        "Fix: either implement PDF export (client-side generator or a reality-server endpoint) or hide/disable the Export PDF button until it exists — a shipped button that only toasts 'coming soon' is an incomplete feature reachable in prod, not a placeholder. Separately, route ComparisonView through next-intl `t()` for the Share/Export button labels and the three toasts. Distinct from the prior realtor-profile-mock-data finding (that was mock DATA on the realtor profile; this is a dead ACTION + i18n gap on the comparison view)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx — this is a `[locale]`-routed page in a next-intl app (sk/cs/de/en) yet imports NO translation API (grep: 0 useTranslations/getTranslations/next-intl) and hardcodes English throughout: heading `Edit listing` (:74), subtitle `Update the details of your listing.` (:75), `Loading listing…` (:81), `Missing listing id.` (:68), and the two API-failure fallbacks `'Could not load listing.'` (:42) and `'Could not save listing.'` (:61). Every non-English realtor editing a listing sees English chrome and English error copy.",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — the owner-side edit wizard has the mirror-image defect: it hardcodes SLOVAK error fallbacks instead of routing through i18n — `'Načítanie inzerátu zlyhalo.'` (:166) on load failure and `'Uloženie zlyhalo, skúste znova.'` (:213) on save failure. On this locale-routed page a de/en/cs owner hits a failure and gets Slovak text. So across the two listing-edit surfaces the same UC is un-localised in two opposite directions (English on realtor edit, Slovak on account edit).",
+        "Fix: wrap all user-facing copy + error fallbacks on both edit pages in next-intl `t('…')` keys (the sibling listing/detail and contact surfaces already do this). Distinct from the prior profile-pages-i18n-gap / profile-hardcoded-locale findings, which covered the realtor/account PROFILE pages — the listing-EDIT pages are separate files not previously reviewed."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx — a `[locale]`-routed page that DOES call `useTranslations('pages.priceMap')` (:40) but still renders large blocks of hardcoded Slovak that bypass i18n. The property-type filter chips come from a module-level `PROPERTY_OPTIONS` array with literal Slovak labels `'Všetky' / 'Byty' / 'Domy' / 'Pozemky'` (:29-34) and are rendered raw as `{opt.label}` at :189. The insights cards use hardcoded Slovak labels/trends built in the useMemo (:54+) — e.g. `'Priemerná cena / m²'`, `'Najdrahšia lokalita'`, `'Najväčší rast'`, `\"<n> lokalít\"` — and are rendered raw at :508/:521. cs/de/en visitors see Slovak labels on an otherwise-localised page.",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:37 and :96 — number formatting is pinned to the Slovak locale regardless of the active route locale: `formatPrice` does `Math.round(v).toLocaleString('sk-SK')` (:37) and the listings-count insight does `totalListings.toLocaleString('sk-SK')` (:96). Digit grouping/format is therefore always Slovak (e.g. non-breaking-space grouping) for de/en/cs users; the currency glyph `€` is also hardcoded in the same template. Should use the active `locale` (via next-intl `useLocale()` / `Intl.NumberFormat(locale, …)`) as PriceAlerts.tsx already does.",
+        "Fix: move PROPERTY_OPTIONS + insight labels into the `pages.priceMap` message catalog and resolve them through `t()`, and thread the active locale into `toLocaleString` / `Intl.NumberFormat` instead of the literal 'sk-SK'. Distinct from prior reality-web i18n findings (crm-import, saved-search, profile pages, agency-import, protectedroute) — the price-map page is a separate, previously-unreviewed surface, and this finding additionally covers a locale-pinned number-format bug, not just untranslated copy."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

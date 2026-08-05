@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-04T18:15:15Z",
+  "archived_at": "2026-08-05T20:13:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10919,6 +10919,33 @@
         "merged_pr": 2660,
         "merged_at": "2026-08-04T16:13:30Z",
         "at": "2026-08-04T16:18:03Z"
+      }
+    },
+    {
+      "id": "gh-issue-2662",
+      "action": "Follow-up: voice-webhook auth decrypts every active platform device per request + the multi-device selection path has no integration test (PR #2660) (Closes #2662)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-05T18:01:41Z (#2662) | gc1-reconcile 2026-08-05T20:10:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T18:01:41Z",
+      "issue_ref": {
+        "number": 2662,
+        "url": "https://github.com/martin-janci/property-management/issues/2662",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2663,
+        "merged_at": "2026-08-05T20:10:07Z",
+        "at": "2026-08-05T20:10:40Z"
       }
     },
     {

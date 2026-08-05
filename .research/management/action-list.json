@@ -17,26 +17,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "gh-issue-2662",
-      "action": "Follow-up: voice-webhook auth decrypts every active platform device per request + the multi-device selection path has no integration test (PR #2660) (Closes #2662)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-05T18:01:41Z (#2662)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T18:01:41Z",
-      "issue_ref": {
-        "number": 2662,
-        "url": "https://github.com/martin-janci/property-management/issues/2662",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
