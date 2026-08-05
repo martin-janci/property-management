@@ -95,6 +95,11 @@ pub(crate) async fn link_voice_device(
             refresh_token_encrypted.as_deref(),
             token_expires_at,
             serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
+            // #2662: this linking path only sees the already-encrypted token
+            // (the plaintext lives inside `exchange_voice_oauth_tokens`), so it
+            // stores a NULL lookup hash; `authenticate_voice_user` falls back to
+            // the linear scan for such rows until the token is next refreshed.
+            None,
         )
         .await;
     rls.release().await;

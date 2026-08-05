@@ -361,7 +361,7 @@ async fn oauth_token_exchange(
     let oauth_manager = VoiceOAuthManager::from_env();
     let crypto = IntegrationCrypto::try_from_env();
 
-    let (access_encrypted, refresh_encrypted, expires_at) = if oauth_manager
+    let (access_encrypted, refresh_encrypted, expires_at, access_hash) = if oauth_manager
         .has_platform(voice_platform)
     {
         // Get redirect URI from environment
@@ -396,8 +396,15 @@ async fn oauth_token_exchange(
         let refresh_encrypted =
             encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
                 .map_err(voice_encryption_required)?;
+        // #2662: derive the indexed lookup hash from the plaintext token.
+        let access_hash = voice_access_token_hash(&tokens.access_token);
 
-        (access_encrypted, refresh_encrypted, tokens.expires_at)
+        (
+            access_encrypted,
+            refresh_encrypted,
+            tokens.expires_at,
+            access_hash,
+        )
     } else if cfg!(debug_assertions) {
         // Platform not configured - use simulated tokens for development only.
         // Gated behind `debug_assertions` (security fix #890): release builds
@@ -408,6 +415,7 @@ async fn oauth_token_exchange(
         );
         let simulated_access = format!("voice_access_{}_{}", request.platform, Uuid::new_v4());
         let simulated_refresh = format!("voice_refresh_{}_{}", request.platform, Uuid::new_v4());
+        let access_hash = voice_access_token_hash(&simulated_access);
         (
             encrypt_required(crypto.as_ref(), &simulated_access)
                 .map_err(voice_encryption_required)?,
@@ -416,6 +424,7 @@ async fn oauth_token_exchange(
                     .map_err(voice_encryption_required)?,
             ),
             Some(Utc::now() + Duration::hours(1)),
+            access_hash,
         )
     } else {
         tracing::error!(
@@ -467,6 +476,7 @@ async fn oauth_token_exchange(
             refresh_encrypted.as_deref(),
             expires_at,
             serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
+            access_hash.as_deref(),
         )
         .await
         .map_err(|e| {
@@ -578,48 +588,57 @@ async fn oauth_token_refresh(
         )
     })?;
 
-    let (new_access_encrypted, new_refresh_encrypted, new_expires_at) = if oauth_manager
-        .has_platform(voice_platform)
-    {
-        // Decrypt the refresh token
-        let refresh_token = decrypt_if_available(crypto.as_ref(), refresh_token_encrypted);
+    let (new_access_encrypted, new_refresh_encrypted, new_expires_at, new_access_hash) =
+        if oauth_manager.has_platform(voice_platform) {
+            // Decrypt the refresh token
+            let refresh_token = decrypt_if_available(crypto.as_ref(), refresh_token_encrypted);
 
-        // Refresh the tokens using OAuth client
-        let tokens = oauth_manager
-            .refresh_token(voice_platform, &refresh_token)
-            .await
-            .map_err(|e| {
-                tracing::error!("Token refresh failed: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "TOKEN_REFRESH_FAILED",
-                        format!("Failed to refresh token: {}", e),
-                    )),
-                )
-            })?;
+            // Refresh the tokens using OAuth client
+            let tokens = oauth_manager
+                .refresh_token(voice_platform, &refresh_token)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Token refresh failed: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new(
+                            "TOKEN_REFRESH_FAILED",
+                            format!("Failed to refresh token: {}", e),
+                        )),
+                    )
+                })?;
 
-        // Issue #765: encryption is MANDATORY — fail closed if no key is set.
-        let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
-            .map_err(voice_encryption_required)?;
-        let refresh_encrypted =
-            encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
+            // Issue #765: encryption is MANDATORY — fail closed if no key is set.
+            let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
                 .map_err(voice_encryption_required)?;
+            let refresh_encrypted =
+                encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
+                    .map_err(voice_encryption_required)?;
+            // #2662: keep the indexed lookup hash in lock-step with the new token.
+            let access_hash = voice_access_token_hash(&tokens.access_token);
 
-        (access_encrypted, refresh_encrypted, tokens.expires_at)
-    } else {
-        // Platform not configured - use simulated tokens for development
-        tracing::warn!(
-            "Voice OAuth not configured for platform {}, using simulated refresh",
-            device.platform
-        );
-        let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
-        (
-            encrypt_required(crypto.as_ref(), &new_access).map_err(voice_encryption_required)?,
-            None,
-            Some(Utc::now() + Duration::hours(1)),
-        )
-    };
+            (
+                access_encrypted,
+                refresh_encrypted,
+                tokens.expires_at,
+                access_hash,
+            )
+        } else {
+            // Platform not configured - use simulated tokens for development
+            tracing::warn!(
+                "Voice OAuth not configured for platform {}, using simulated refresh",
+                device.platform
+            );
+            let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
+            let access_hash = voice_access_token_hash(&new_access);
+            (
+                encrypt_required(crypto.as_ref(), &new_access)
+                    .map_err(voice_encryption_required)?,
+                None,
+                Some(Utc::now() + Duration::hours(1)),
+                access_hash,
+            )
+        };
 
     // Update the device tokens under the device's own org/user RLS context.
     let mut guard = rls_pool
@@ -643,6 +662,7 @@ async fn oauth_token_refresh(
             &new_access_encrypted,
             new_refresh_encrypted.as_deref(),
             new_expires_at,
+            new_access_hash.as_deref(),
         )
         .await
         .map_err(|e| {
@@ -976,6 +996,23 @@ fn verify_hmac_signature(signature: &str, body: &str) -> Result<bool, String> {
     Ok(ct_eq_str(signature, &expected))
 }
 
+/// Keyed HMAC-SHA256 of a voice OAuth access token, used as a deterministic,
+/// indexed lookup key (`voice_assistant_devices.access_token_hash`) so
+/// `authenticate_voice_user` selects the candidate device in SQL instead of
+/// decrypt-and-scanning every active device for the platform (issue #2662).
+///
+/// Keyed with `INTEGRATION_ENCRYPTION_KEY` — the same secret that encrypts the
+/// token at rest — so the persisted value is a keyed MAC, not an offline-
+/// guessable plain digest. Returns `None` when the key is unavailable: write
+/// paths then persist a NULL hash and the read path falls back to the linear
+/// scan, so a device is never locked out.
+fn voice_access_token_hash(access_token: &str) -> Option<Vec<u8>> {
+    let key = std::env::var(integrations::ENCRYPTION_KEY_ENV).ok()?;
+    let mut mac = HmacSha256::new_from_slice(key.as_bytes()).ok()?;
+    mac.update(access_token.as_bytes());
+    Some(mac.finalize().into_bytes().to_vec())
+}
+
 /// Whether `presented` is the access token that owns `device`: it must match
 /// the device's decrypted stored token (constant-time) and not be expired.
 ///
@@ -1055,30 +1092,73 @@ async fn authenticate_voice_user(
         )
     })?;
 
-    // Fetch the active, token-bearing devices for this platform. We cannot match
-    // the token in SQL because the stored value is AES-GCM ciphertext (random
-    // nonce per encryption), so equality is checked after decryption below.
+    let now = Utc::now();
+    let db_error = || {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+        )
+    };
+
+    // Fast path (issue #2662): select the single candidate device by a keyed
+    // HMAC-SHA256 of the presented token, resolved by the partial index on
+    // (platform, access_token_hash), instead of AES-GCM-decrypting every active
+    // device for the platform. The decrypt + constant-time verify below remains
+    // the authority (defence in depth) — the hash only narrows the search, so a
+    // hash collision or a stale/rotated row still cannot authenticate.
+    let token_hash = voice_access_token_hash(access_token);
+    if let Some(hash) = token_hash.as_deref() {
+        let candidate = sqlx::query_as::<_, db::models::VoiceAssistantDevice>(
+            r#"
+            SELECT * FROM voice_assistant_devices
+            WHERE platform = $1
+              AND is_active = TRUE
+              AND access_token_hash = $2
+            LIMIT 1
+            "#,
+        )
+        .bind(platform)
+        .bind(hash)
+        .fetch_optional(&mut *conn)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {}", e);
+            db_error()
+        })?;
+
+        if let Some(device) = candidate {
+            if voice_device_token_matches(&crypto, &device, access_token, now) {
+                return Ok(device);
+            }
+        }
+    }
+
+    // Fallback: linear decrypt-and-scan. When a hash was computed we only need
+    // the rows that predate the hash column (NULL hash) — the indexed path above
+    // already covered every backfilled row; when no key/hash is available we
+    // scan all active token-bearing devices (legacy behaviour). Either way the
+    // AES-GCM ciphertext (random nonce per encryption) cannot be matched in SQL,
+    // so equality is checked after decryption.
+    let scanned_hashed = token_hash.is_some();
     let devices = sqlx::query_as::<_, db::models::VoiceAssistantDevice>(
         r#"
         SELECT * FROM voice_assistant_devices
         WHERE platform = $1
           AND is_active = TRUE
           AND access_token_encrypted IS NOT NULL
+          AND (NOT $2 OR access_token_hash IS NULL)
         ORDER BY last_used_at DESC NULLS LAST
         "#,
     )
     .bind(platform)
+    .bind(scanned_hashed)
     .fetch_all(&mut *conn)
     .await
     .map_err(|e| {
         tracing::error!("Database error: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-        )
+        db_error()
     })?;
 
-    let now = Utc::now();
     devices
         .into_iter()
         .find(|device| voice_device_token_matches(&crypto, device, access_token, now))
@@ -1541,6 +1621,10 @@ mod tests {
             token_expires_at: expires_at,
             is_active: true,
             capabilities: serde_json::json!([]),
+            // The pure predicate ignores the lookup hash (it re-derives trust
+            // from the decrypted ciphertext); the DB-backed selection is covered
+            // by `authenticate_voice_user_*` below.
+            access_token_hash: None,
             created_at: now,
             updated_at: now,
         }
@@ -1591,6 +1675,102 @@ mod tests {
         // A token encrypted under a different key can't be decrypted -> no match.
         let other = IntegrationCrypto::new(&"cd".repeat(32)).expect("crypto");
         assert!(!voice_device_token_matches(&other, &dev, "real-token", now));
+    }
+
+    // --- authenticate_voice_user (DB-backed selection path, issue #2662) ------
+    //
+    // Postgres-backed via `#[sqlx::test]` (runs under backend.yml CI; the cloud
+    // verify gate skips it — no DATABASE_URL). This drives the real fetch +
+    // selection loop the pure `voice_device_token_matches` predicate cannot
+    // reach: the #2660 regression lived exactly here (the old code returned
+    // *any* active device for the platform regardless of the presented token).
+
+    /// Seed one active voice device on `platform` whose stored token is `token`
+    /// (encrypted under `crypto`) and whose indexed lookup hash is the keyed
+    /// HMAC of `token`, expiring at `expires_at`. Returns the new device id.
+    async fn seed_voice_device(
+        pool: &sqlx::PgPool,
+        crypto: &IntegrationCrypto,
+        platform: &str,
+        token: &str,
+        expires_at: Option<DateTime<Utc>>,
+    ) -> Uuid {
+        let id = Uuid::new_v4();
+        sqlx::query(
+            r#"
+            INSERT INTO voice_assistant_devices (
+                id, organization_id, user_id, platform, device_id,
+                access_token_encrypted, access_token_hash, token_expires_at,
+                is_active, capabilities
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, '[]'::jsonb)
+            "#,
+        )
+        .bind(id)
+        .bind(Uuid::new_v4())
+        .bind(Uuid::new_v4())
+        .bind(platform)
+        .bind(format!("dev-{id}"))
+        .bind(crypto.encrypt(token).expect("encrypt seed token"))
+        .bind(voice_access_token_hash(token))
+        .bind(expires_at)
+        .execute(pool)
+        .await
+        .expect("seed voice device");
+        id
+    }
+
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn authenticate_voice_user_selects_owner_and_rejects_others(pool: sqlx::PgPool) {
+        // `authenticate_voice_user` reads the encryption key from the process
+        // environment — both to decrypt stored tokens and to key the lookup
+        // hash — so pin a deterministic key. This is the only in-crate test that
+        // touches INTEGRATION_ENCRYPTION_KEY.
+        let key = "ab".repeat(32); // 64 hex chars = 32 bytes
+        std::env::set_var(integrations::ENCRYPTION_KEY_ENV, &key);
+        let crypto = IntegrationCrypto::new(&key).expect("crypto");
+
+        // Two devices on the same platform with distinct tokens (the priv-esc
+        // guard: presenting A's token must never authenticate as B).
+        let id_a = seed_voice_device(&pool, &crypto, voice_platform::ALEXA, "token-A", None).await;
+        let _id_b = seed_voice_device(&pool, &crypto, voice_platform::ALEXA, "token-B", None).await;
+
+        let mut conn = pool.acquire().await.expect("acquire connection");
+
+        // (a) Presenting A's token resolves to exactly device A, never B.
+        let dev = authenticate_voice_user(&mut conn, "token-A", voice_platform::ALEXA)
+            .await
+            .expect("token-A must authenticate as device A");
+        assert_eq!(
+            dev.id, id_a,
+            "presented token-A must resolve to device A only"
+        );
+
+        // (b) A token matching no device -> 401 INVALID_ACCESS_TOKEN.
+        let (status, body) =
+            authenticate_voice_user(&mut conn, "token-UNKNOWN", voice_platform::ALEXA)
+                .await
+                .expect_err("unknown token must be rejected");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(body.0.code, "INVALID_ACCESS_TOKEN");
+
+        // (c) An expired but otherwise-matching token is rejected.
+        let past = Utc::now() - Duration::hours(1);
+        seed_voice_device(
+            &pool,
+            &crypto,
+            voice_platform::ALEXA,
+            "token-EXP",
+            Some(past),
+        )
+        .await;
+        let (status, body) = authenticate_voice_user(&mut conn, "token-EXP", voice_platform::ALEXA)
+            .await
+            .expect_err("expired token must be rejected");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(body.0.code, "INVALID_ACCESS_TOKEN");
+
+        std::env::remove_var(integrations::ENCRYPTION_KEY_ENV);
     }
 
     #[tokio::test]

@@ -472,6 +472,12 @@ pub struct VoiceAssistantDevice {
     pub token_expires_at: Option<DateTime<Utc>>,
     pub is_active: bool,
     pub capabilities: serde_json::Value,
+    /// Keyed HMAC-SHA256 of the access token — an indexed, deterministic lookup
+    /// key so voice-webhook auth selects the candidate device in SQL instead of
+    /// decrypt-and-scanning every active device for the platform (#2662). NULL
+    /// for rows linked before the column existed (fall back to the linear scan).
+    #[serde(default)]
+    pub access_token_hash: Option<Vec<u8>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
