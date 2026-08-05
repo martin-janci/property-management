@@ -17,6 +17,438 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-api-handlers-marketplace-award-quote-idor",
+      "action": "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 — authenticate_voice_user() performs NO token validation: the `_access_token` parameter is unused (underscore-prefixed) and the function returns whatever device the query `SELE",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-reality-server-invite-authz",
+      "action": "backend/servers/reality-server/src/routes/agencies.rs:373-401 — create_invitation (wired at line 38: POST /api/v1/agencies/{id}/invitations) performs NO membership/role check before calling the repo, unlike its siblings update_agency (line ",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=reality-server)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "action": "backend/servers/api-server/src/services/actions/api_call.rs:106 — reqwest::Client is built (Client::builder().timeout(60s).user_agent(...).build()) without a redirect policy, so it follows up to 10 redirects by default. validate_external_ur",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=medium vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-voice-report-fault-not-persisted",
+      "action": "backend/servers/api-server/src/services/voice_commands.rs:267 action_report_fault is a placeholder: it generates a throwaway fault_id = Uuid::new_v4() (:279), returns VoiceActionResult { success: true, ... } and tells the resident 'Porucha ",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-missing-authz-article",
+      "action": "backend/servers/api-server/src/routes/news_articles.rs:607-770 — publish_article, archive_article, restore_article, pin_article extract `_user: AuthUser` but never check `is_manager()`/authorship, unlike create_article (line 446) and update",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=medium vector=bug seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-alexa-noverify",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:700-708 — the `alexa` branch of webhook verification sets `valid: !request.signature.is_empty()` with no cryptographic check whatsoever: any non-empty string is accepted as a valid Ale",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:950 — verify_hmac_signature() reads VOICE_WEBHOOK_SECRET via `std::env::var(...).unwrap_or_else(|_| \"default_secret\".to_string())`, so when the env var is unset the HMAC key silently b",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-apiclient-never-configured",
+      "action": "frontend/apps/ppt-web/src/lib/api.ts:258 (configureApiClient) is NEVER called in production code. A repo-wide grep for `configureApiClient(` finds hits only in lib/api.test.tsx (7 test calls) and the docstring — no call in main.tsx / App.ts",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=ppt-web-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-mock-data",
+      "action": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=medium vector=bug seg=ppt-web-ui)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "action": "RE-RAISE (unfixed at HEAD b1f6ad5, first emitted 2026-07-12, subsequently decayed out of backlog.json but the vulnerable code is unchanged): backend/servers/reality-server/src/util/url_validator.rs:145-164 — validate_fetch_url()'s Host::Ipv",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=reality-server)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "action": "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes document (Slovak 'zapisnica' under §14 z.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-ai-ocr-correction-idor",
+      "action": "backend/servers/api-server/src/routes/ai/ocr.rs:261-312 — submit_correction (POST /api/v1/ai/ocr/correction) authorizes only by checking the caller is_member of the CLIENT-SUPPLIED body.organization_id (OcrCorrectionRequest.organization_id:",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=api-handlers)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "action": "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_reques",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-reality-server-invite-email-mismatch",
+      "action": "backend/servers/reality-server/src/routes/agencies.rs:421-448 — accept_invitation adds the calling principal.user_id as an agency member based solely on a valid, unexpired token (repo accept_invitation at backend/crates/db/src/repositories/",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=reality-server)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-backslash-redirect",
+      "action": "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash fo",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=reality-server)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-hostname",
+      "action": "backend/servers/api-server/src/services/actions/api_call.rs:179 (validate_external_url) — the private/internal-IP guard only runs when the host is a LITERAL IP (`if let Ok(ip) = host.parse::<IpAddr>()`). A DNS hostname that resolves to a pr",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-idempotency-lock-cancel-leak",
+      "action": "backend/crates/api-core/src/middleware/idempotency.rs:93 — session-level pg_advisory_lock($1) acquired on a pooled connection, released only at line 163 after next.run(request).await; if the request future is cancelled (client disconnect) b",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-sched-notify-swallow",
+      "action": "backend/servers/api-server/src/services/scheduler.rs:322-324 — self.get_announcement_target_users(announcement).await.unwrap_or_default() collapses any DB/query error into an empty Vec, so on a transient failure the just-published announcem",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-voice-cmd-fabricated-success",
+      "action": "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 — action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-voice-read-handlers-fabricate-data",
+      "action": "backend/servers/api-server/src/services/voice_commands.rs:235 action_check_balance returns a hardcoded response ('Your current balance is zero. You have no outstanding fees.') with data { balance: 0.0, currency: EUR } and success:true, rega",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-parse-failopen",
+      "action": "backend/servers/api-server/src/services/workflow_executor.rs:459-489 — evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup nor Condition, the `else` branch (lines",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
+    },
+    {
+      "id": "code-review-api-core-workflow-not-group-drops-conds",
+      "action": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirel",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
