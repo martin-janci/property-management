@@ -19,6 +19,15 @@
 //! clause. The workflow router already used this `_for_org` idiom (#791);
 //! these tests pin the same contract for the AI/LLM repo methods.
 //!
+//! IDOR-footgun cleanup: the six unscoped `LlmDocumentRepository` methods
+//! named above (`find_generation_request`, `find_prompt_template`,
+//! `find_listing_description`, `list_listing_descriptions`,
+//! `publish_description`, `find_photo_enhancement`) have been **removed**
+//! from the repository entirely — they had zero remaining production call
+//! sites (every handler already called the `_for_org` twin) and existed only
+//! as a reachable-by-mistake footgun for future callers. The `_for_org`
+//! variants are now the only public surface for these lookups.
+//!
 //! Coverage in this file: chat-session read, feedback write, listing-description
 //! list read, listing-description PUBLISH (the cross-tenant mutate), and
 //! photo-enhancement read — the full LLM-document IDOR cluster from the
@@ -38,8 +47,12 @@
 //! pre-fix code). The IDOR fix itself lives in the repository's WHERE clause,
 //! so the security contract is asserted there directly: the scoped method
 //! must NOT return another org's row even though the raw (pre-fix) query
-//! would. Each test also runs the unscoped query to demonstrate the leak the
-//! `_for_org` variant closes.
+//! would. Where the pre-fix unscoped repo method still exists (chat
+//! sessions, whose unscoped path is a raw SQL query rather than a repo
+//! method — see (1)), the test also demonstrates the leak directly; for the
+//! `LlmDocumentRepository` methods the unscoped twins have since been
+//! deleted (see module note above), so the `_for_org` assertions alone pin
+//! the contract.
 //!
 //! These tests use the `ai_*` tables that ship migrations (`00042_create_ai_chat.sql`)
 //! so they run against `db::MIGRATOR` deterministically.
@@ -586,17 +599,11 @@ async fn list_listing_descriptions_for_org_blocks_cross_tenant_read(pool: PgPool
         "org B must NOT be able to read org A's listing descriptions"
     );
 
-    // Demonstrate the leak the org predicate closes: the unscoped lookup the
-    // pre-fix handler performed returns the row regardless of org.
-    let unscoped = repo
-        .list_listing_descriptions(&pool, listing_in_a)
-        .await
-        .expect("query ok");
-    assert_eq!(
-        unscoped.len(),
-        1,
-        "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
-    );
+    // The pre-fix unscoped `list_listing_descriptions(listing_id)` repo method
+    // (the IDOR footgun this demonstrated) has been removed entirely —
+    // `list_listing_descriptions_for_org` is now the only reachable public
+    // surface for this query, so the leak it closes can no longer be
+    // reintroduced by a caller reaching for the "obvious" unscoped name.
 }
 
 // ---------------------------------------------------------------------------
@@ -773,14 +780,9 @@ async fn find_photo_enhancement_for_org_blocks_cross_tenant_read(pool: PgPool) {
         "org B must NOT be able to read org A's photo enhancement"
     );
 
-    // Demonstrate the leak the org predicate closes: the unscoped lookup the
-    // pre-fix handler performed returns the row regardless of org.
-    let unscoped = repo
-        .find_photo_enhancement(&pool, enh_in_a)
-        .await
-        .expect("query ok");
-    assert!(
-        unscoped.is_some(),
-        "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
-    );
+    // The pre-fix unscoped `find_photo_enhancement(id)` repo method (the IDOR
+    // footgun this demonstrated) has been removed entirely —
+    // `find_photo_enhancement_for_org` is now the only reachable public
+    // surface for this query, so the leak it closes can no longer be
+    // reintroduced by a caller reaching for the "obvious" unscoped name.
 }
