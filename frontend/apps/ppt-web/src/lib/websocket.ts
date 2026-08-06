@@ -5,8 +5,14 @@
  * - Authentication via JWT token
  * - Automatic reconnection with exponential backoff
  * - Connection state machine
- * - Heartbeat/ping-pong mechanism
  * - Event emitter pattern for message handling
+ *
+ * Liveness is handled entirely at the WebSocket protocol layer: the api-server
+ * sends protocol-level `Ping` frames (`Message::Ping` in `ws_notifications.rs`)
+ * and the browser answers them with an automatic protocol-level `Pong`. The
+ * client does NOT run any application-level `{type:'ping'}`/`{type:'pong'}`
+ * heartbeat — that redundant mechanism used to force-close the socket every
+ * ~40 s because the server never emits an app-level `{type:'pong'}` reply.
  */
 
 /**
@@ -49,8 +55,8 @@ export interface ServerWsEnvelope {
  * Normalise one decoded server frame into the client's internal
  * {@link WebSocketMessage} shape.
  *
- * Returns `null` for frames that are not a recognised event envelope (e.g. a
- * bare `pong` heartbeat or malformed JSON) so callers can short-circuit.
+ * Returns `null` for frames that are not a recognised event envelope (e.g.
+ * malformed JSON or a stray non-event frame) so callers can short-circuit.
  *
  * The server emits `{ event, payload }`; we map `event` -> `type` and supply a
  * client-side receive `timestamp` (the server envelope carries none) so gap
@@ -166,18 +172,6 @@ export interface WebSocketServiceConfig {
   maxReconnectDelay?: number;
 
   /**
-   * Heartbeat interval in milliseconds.
-   * @default 30000
-   */
-  heartbeatInterval?: number;
-
-  /**
-   * Pong timeout in milliseconds (how long to wait for pong after ping).
-   * @default 10000
-   */
-  pongTimeout?: number;
-
-  /**
    * Maximum number of reconnect attempts before giving up.
    * After exceeding this, the client emits a `connection:max-retries-exceeded`
    * message and stops retrying. Call `connect()` again to resume.
@@ -216,8 +210,8 @@ function defaultWebSocketUrl(): string {
 /**
  * Dev-only diagnostic logging for the WebSocket client.
  *
- * The connection diagnostics below (send failures, handler errors, pong
- * timeouts, reconnect give-up) are valuable while developing but must not
+ * The connection diagnostics below (send failures, handler errors, reconnect
+ * give-up) are valuable while developing but must not
  * leak to the browser console in production builds: they surface internal
  * connection state and add noise for end users. Gating on `import.meta.env.DEV`
  * — the same convention `lib/api.ts` uses for its retry logging — lets Vite
@@ -259,19 +253,12 @@ export class WebSocketService {
   private readonly getToken: () => string | null;
   private readonly minReconnectDelay: number;
   private readonly maxReconnectDelay: number;
-  private readonly heartbeatInterval: number;
-  private readonly pongTimeout: number;
   private readonly maxReconnectAttempts: number;
 
   // Reconnection state
   private reconnectAttempts = 0;
   private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private shouldReconnect = true;
-
-  // Heartbeat state
-  private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
-  private pongTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private awaitingPong = false;
 
   // Event handlers
   private messageHandlers: Map<string, Set<MessageHandler>> = new Map();
@@ -285,8 +272,6 @@ export class WebSocketService {
     this.getToken = config.getToken;
     this.minReconnectDelay = config.minReconnectDelay ?? 1000;
     this.maxReconnectDelay = config.maxReconnectDelay ?? 30000;
-    this.heartbeatInterval = config.heartbeatInterval ?? 30000;
-    this.pongTimeout = config.pongTimeout ?? 10000;
     this.maxReconnectAttempts = config.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
   }
 
@@ -376,7 +361,6 @@ export class WebSocketService {
   disconnect(): void {
     this.shouldReconnect = false;
     this.clearReconnectTimeout();
-    this.stopHeartbeat();
 
     if (this.socket) {
       this.socket.close(1000, 'Client disconnecting');
@@ -400,8 +384,6 @@ export class WebSocketService {
    */
   private teardownStaleSocket(): void {
     if (!this.socket) return;
-
-    this.stopHeartbeat();
 
     const stale = this.socket;
     stale.onopen = null;
@@ -489,12 +471,9 @@ export class WebSocketService {
       this.reconnectAttempts = 0;
       this.lastError = null;
       this.setConnectionState('connected');
-      this.startHeartbeat();
     };
 
     this.socket.onclose = (event) => {
-      this.stopHeartbeat();
-
       if (event.wasClean) {
         this.setConnectionState('disconnected');
       } else {
@@ -522,14 +501,6 @@ export class WebSocketService {
   private handleMessage(event: MessageEvent): void {
     try {
       const data = JSON.parse(event.data as string);
-
-      // Handle pong response. The client emits `{ type: 'ping' }` and the
-      // server may echo `{ type: 'pong' }`; either heartbeat reply is matched
-      // here before the canonical-envelope path below.
-      if (data && typeof data === 'object' && data.type === 'pong') {
-        this.handlePong();
-        return;
-      }
 
       // Server speaks the canonical `{ event, payload }` envelope. Normalise
       // it into the internal message shape (event -> type) so subscribers can
@@ -660,60 +631,6 @@ export class WebSocketService {
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;
-    }
-  }
-
-  private startHeartbeat(): void {
-    this.stopHeartbeat();
-
-    this.heartbeatIntervalId = setInterval(() => {
-      this.sendPing();
-    }, this.heartbeatInterval);
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatIntervalId) {
-      clearInterval(this.heartbeatIntervalId);
-      this.heartbeatIntervalId = null;
-    }
-
-    if (this.pongTimeoutId) {
-      clearTimeout(this.pongTimeoutId);
-      this.pongTimeoutId = null;
-    }
-
-    this.awaitingPong = false;
-  }
-
-  private sendPing(): void {
-    if (!this.isConnected() || this.awaitingPong) {
-      return;
-    }
-
-    const pingMessage: WebSocketMessage = {
-      type: 'ping',
-      payload: null,
-      timestamp: new Date().toISOString(),
-    };
-
-    if (this.send(pingMessage)) {
-      this.awaitingPong = true;
-
-      this.pongTimeoutId = setTimeout(() => {
-        if (this.awaitingPong) {
-          wsWarn('[WebSocket] Pong timeout - closing connection');
-          this.socket?.close(4000, 'Pong timeout');
-        }
-      }, this.pongTimeout);
-    }
-  }
-
-  private handlePong(): void {
-    this.awaitingPong = false;
-
-    if (this.pongTimeoutId) {
-      clearTimeout(this.pongTimeoutId);
-      this.pongTimeoutId = null;
     }
   }
 }
