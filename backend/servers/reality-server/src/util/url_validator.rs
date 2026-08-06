@@ -61,6 +61,49 @@ fn is_development() -> bool {
     std::env::var("RUST_ENV").unwrap_or_default() == "development"
 }
 
+/// Returns `Some(reason)` when an IPv4 address falls in a private, loopback,
+/// link-local, reserved, broadcast, or multicast range that must not be
+/// fetched server-side; `None` when the address is publicly routable.
+///
+/// Shared by the [`Host::Ipv4`] arm and the [`Host::Ipv6`] arm (after
+/// unmapping IPv4-mapped / IPv4-compatible addresses) so the same policy
+/// can't be bypassed by re-encoding a forbidden IPv4 address into IPv6.
+fn ipv4_forbidden_reason(octets: [u8; 4]) -> Option<&'static str> {
+    // 10.0.0.0/8 — private
+    if octets[0] == 10 {
+        return Some("10.0.0.0/8 (private)");
+    }
+    // 172.16.0.0/12 — private
+    if octets[0] == 172 && (16..=31).contains(&octets[1]) {
+        return Some("172.16.0.0/12 (private)");
+    }
+    // 192.168.0.0/16 — private
+    if octets[0] == 192 && octets[1] == 168 {
+        return Some("192.168.0.0/16 (private)");
+    }
+    // 127.0.0.0/8 — loopback
+    if octets[0] == 127 {
+        return Some("127.0.0.0/8 (loopback)");
+    }
+    // 169.254.0.0/16 — link-local (covers AWS/GCP metadata 169.254.169.254)
+    if octets[0] == 169 && octets[1] == 254 {
+        return Some("169.254.0.0/16 (link-local / cloud metadata)");
+    }
+    // 0.0.0.0/8 — reserved
+    if octets[0] == 0 {
+        return Some("0.0.0.0/8 (reserved)");
+    }
+    // 255.255.255.255 — broadcast
+    if octets == [255, 255, 255, 255] {
+        return Some("255.255.255.255 (broadcast)");
+    }
+    // 224.0.0.0/4 — multicast
+    if octets[0] >= 224 && octets[0] <= 239 {
+        return Some("224.0.0.0/4 (multicast)");
+    }
+    None
+}
+
 /// Validate that `raw` is a safe URL to fetch server-side.
 ///
 /// On success returns the parsed [`Url`]. On failure returns a structured
@@ -91,55 +134,8 @@ pub fn validate_fetch_url(raw: &str) -> Result<Url, UrlValidationError> {
 
     match host {
         Host::Ipv4(ip) => {
-            let octets = ip.octets();
-
-            // 10.0.0.0/8 — private
-            if octets[0] == 10 {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "10.0.0.0/8 (private)".into(),
-                ));
-            }
-            // 172.16.0.0/12 — private
-            if octets[0] == 172 && (16..=31).contains(&octets[1]) {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "172.16.0.0/12 (private)".into(),
-                ));
-            }
-            // 192.168.0.0/16 — private
-            if octets[0] == 192 && octets[1] == 168 {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "192.168.0.0/16 (private)".into(),
-                ));
-            }
-            // 127.0.0.0/8 — loopback
-            if octets[0] == 127 {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "127.0.0.0/8 (loopback)".into(),
-                ));
-            }
-            // 169.254.0.0/16 — link-local (covers AWS/GCP metadata 169.254.169.254)
-            if octets[0] == 169 && octets[1] == 254 {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "169.254.0.0/16 (link-local / cloud metadata)".into(),
-                ));
-            }
-            // 0.0.0.0/8 — reserved
-            if octets[0] == 0 {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "0.0.0.0/8 (reserved)".into(),
-                ));
-            }
-            // 255.255.255.255 — broadcast
-            if octets == [255, 255, 255, 255] {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "255.255.255.255 (broadcast)".into(),
-                ));
-            }
-            // 224.0.0.0/4 — multicast
-            if octets[0] >= 224 && octets[0] <= 239 {
-                return Err(UrlValidationError::PrivateOrReservedIp(
-                    "224.0.0.0/4 (multicast)".into(),
-                ));
+            if let Some(reason) = ipv4_forbidden_reason(ip.octets()) {
+                return Err(UrlValidationError::PrivateOrReservedIp(reason.into()));
             }
         }
         Host::Ipv6(ip) => {
@@ -147,6 +143,19 @@ pub fn validate_fetch_url(raw: &str) -> Result<Url, UrlValidationError> {
                 return Err(UrlValidationError::PrivateOrReservedIp(
                     "::1 (IPv6 loopback)".into(),
                 ));
+            }
+            // IPv4-mapped (`::ffff:a.b.c.d`) and IPv4-compatible (`::a.b.c.d`)
+            // addresses embed a real IPv4 destination. Unmap and run the IPv4
+            // policy, otherwise the guard can be bypassed by re-encoding a
+            // forbidden IPv4 address (e.g. `::ffff:169.254.169.254`,
+            // `::ffff:127.0.0.1`) into IPv6.
+            if let Some(v4) = ip.to_ipv4() {
+                if let Some(reason) = ipv4_forbidden_reason(v4.octets()) {
+                    return Err(UrlValidationError::PrivateOrReservedIp(format!(
+                        "IPv4-mapped IPv6 -> {}",
+                        reason
+                    )));
+                }
             }
             let segments = ip.segments();
             // fc00::/7 — IPv6 unique local
@@ -298,5 +307,44 @@ mod tests {
             validate_fetch_url("https://[::1]/"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
         ));
+    }
+
+    #[test]
+    fn rejects_ipv4_mapped_metadata_ip() {
+        // `::ffff:169.254.169.254` must be unmapped and rejected as cloud
+        // metadata link-local, not slipped through the IPv6 branch.
+        let _g = EnvGuard::set("production");
+        assert!(matches!(
+            validate_fetch_url("https://[::ffff:169.254.169.254]/latest/meta-data/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_ipv4_mapped_loopback() {
+        // `::ffff:127.0.0.1` must be unmapped and rejected as IPv4 loopback.
+        let _g = EnvGuard::set("production");
+        assert!(matches!(
+            validate_fetch_url("https://[::ffff:127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_ipv4_mapped_private() {
+        // `::ffff:10.0.0.5` must be unmapped and rejected as RFC1918 private.
+        let _g = EnvGuard::set("production");
+        assert!(matches!(
+            validate_fetch_url("https://[::ffff:10.0.0.5]/feed.xml"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    #[test]
+    fn accepts_ipv4_mapped_public() {
+        // A publicly-routable IPv4-mapped address must still pass so the
+        // unmapping doesn't over-block legitimate destinations.
+        let _g = EnvGuard::set("production");
+        assert!(validate_fetch_url("https://[::ffff:93.184.216.34]/").is_ok());
     }
 }
