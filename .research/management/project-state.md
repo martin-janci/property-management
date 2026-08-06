@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-07-30 — routine Phase 1.6 lightweight upkeep (Scrum Master synthesis + pm-backend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 1 → 2 (pm-backend → pm-frontend next), coverage_cursor idx 3 → 4 (epic-79 re-checked, all 4 stories still done, evidence refreshed with PR #2553 on 79-2; advances to epic-7a)._
+_Generated: 2026-08-06 — routine Phase 1.6 lightweight upkeep (pm-frontend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 2 → 3 (pm-frontend → pm-qa next), coverage_cursor idx 4 → 5 (epic-7a re-checked, no material change; advances to epic-80). Sprint window 2026-08-04..08-06 shipped 25 PRs — most of the code-review/security backlog cleared; buffer-low fired from dispatcher for planner refill._
 
 ## Executive summary
 

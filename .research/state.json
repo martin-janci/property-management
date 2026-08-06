@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-04T03:15:00Z",
+  "last_run_iso": "2026-08-06T18:39:02Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2650,
+  "last_pr_seen": 2683,
   "last_issue_seen": 2643,
-  "last_commit_sha": "e0703d5901ef5454df8919ec71e503f8625e23fb",
+  "last_commit_sha": "819e2cd2a0822e1363ea4d8203f828c8fd19d32d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -785,23 +785,35 @@
     "screen-map-drift-pr-2649-ppt",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
-    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+    "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+    "code-review-api-handlers-enhanced-chat-stub",
+    "code-review-api-handlers-ai-upstream-error-leak",
+    "code-review-mobile-rn-auth-restore-stale-token",
+    "code-review-mobile-rn-biometric-prompt-i18n",
+    "code-review-ppt-web-core-ws-pong-timeout-drop",
+    "code-review-ppt-web-core-ws-giveup-no-resume",
+    "code-review-reality-server-inquiries-no-ratelimit",
+    "code-review-reality-server-inquiry-email-stub",
+    "code-review-reality-server-listing-viewcount-hardcoded-zero",
+    "code-review-reality-server-orphan-listinghandler-stub-detail",
+    "code-review-reality-server-orphan-schedule-viewing-stub",
+    "lag-warning-2026-08-06"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-04",
+    "api-handlers": "2026-08-06",
     "api-core": "2026-08-04",
-    "reality-server": "2026-08-02",
+    "reality-server": "2026-08-06",
     "ppt-web-ui": "2026-08-03",
-    "ppt-web-core": "2026-08-03",
+    "ppt-web-core": "2026-08-06",
     "reality-web": "2026-08-03",
-    "mobile-rn": "2026-08-03",
+    "mobile-rn": "2026-08-06",
     "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 59,
-    "vectors_created": 266,
-    "plans_created": 20,
+    "runs": 60,
+    "vectors_created": 277,
+    "plans_created": 21,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -816,11 +828,11 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 2,
+    "next_index": 3,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
-      "pm-frontend": "2026-06-10",
+      "pm-frontend": "2026-08-06",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
       "pm-security": "2026-07-21",
@@ -829,6 +841,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 4
+    "next_index": 5
   }
 }
