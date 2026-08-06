@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "A biometrikus hitelesites nem sikerult",
     "signInWith": "Bejelentkezes ezzel: {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometria"
+    "biometrics": "Biometria",
+    "biometric": {
+      "enablePrompt": "Biometrikus bejelentkezes engedelyezese",
+      "authenticatePrompt": "Bejelentkezes az Ingatlankezelesbe",
+      "cancel": "Megse",
+      "usePasscode": "Jelkod hasznalata",
+      "usePassword": "Jelszo hasznalata"
+    }
   },
   "dashboard": {
     "title": "Iranyitopult",
