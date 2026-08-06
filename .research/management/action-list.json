@@ -431,6 +431,48 @@
         "vector": "bug",
         "source": "tier1d-signal-bridge"
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23-retry1",
+      "action": "Churn hotspot: infra_ops_authz_backfill_tests.rs — 364 lines this run (BIT-268 test backfill) [retry 1/2 of failed refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-06T04:09:25Z (retry_of=refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T04:03:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T04:09:25Z",
+      "retry_of": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23",
+      "retry_round": 1
+    },
+    {
+      "id": "repeated-churn-api-server-routes-auth-rs-2026-07-28-retry1",
+      "action": "auth.rs repeated-churn — runs_seen=4, 2950 lines / ~107K in one module (2nd-largest route file) [retry 1/2 of failed repeated-churn-api-server-routes-auth-rs-2026-07-28]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-06T04:09:25Z (retry_of=repeated-churn-api-server-routes-auth-rs-2026-07-28 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T04:03:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T04:09:25Z",
+      "retry_of": "repeated-churn-api-server-routes-auth-rs-2026-07-28",
+      "retry_round": 1
+    },
+    {
+      "id": "security-voice-webhook-alexa-signature-not-verified-retry1",
+      "action": "SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature [retry 1/2 of failed security-voice-webhook-alexa-signature-not-verified]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-06T04:09:25Z (retry_of=security-voice-webhook-alexa-signature-not-verified reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T04:03:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T04:09:25Z",
+      "retry_of": "security-voice-webhook-alexa-signature-not-verified",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
