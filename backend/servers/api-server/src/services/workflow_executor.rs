@@ -468,14 +468,14 @@ impl WorkflowExecutor {
         for condition_json in conditions {
             // Try to parse as a condition group
             if let Ok(group) = serde_json::from_value::<ConditionGroup>(condition_json.clone()) {
-                if !self.evaluate_condition_group(&group, context)? {
+                if !evaluate_condition_group(&group, context)? {
                     return Ok(false);
                 }
             } else if let Ok(condition) =
                 serde_json::from_value::<Condition>(condition_json.clone())
             {
                 // Try to parse as a single condition
-                if !self.evaluate_single_condition(&condition, context)? {
+                if !evaluate_single_condition(&condition, context)? {
                     return Ok(false);
                 }
             } else {
@@ -488,220 +488,217 @@ impl WorkflowExecutor {
 
         Ok(true)
     }
+}
 
-    /// Evaluate a condition group.
-    fn evaluate_condition_group(
-        &self,
-        group: &ConditionGroup,
-        context: &ActionContext,
-    ) -> Result<bool, WorkflowError> {
-        match group.operator {
-            LogicalOperator::And => {
-                // All conditions must be true
-                for condition in &group.conditions {
-                    if !self.evaluate_single_condition(condition, context)? {
-                        return Ok(false);
-                    }
-                }
-                for nested_group in &group.groups {
-                    if !self.evaluate_condition_group(nested_group, context)? {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
-            }
-            LogicalOperator::Or => {
-                // At least one condition must be true
-                for condition in &group.conditions {
-                    if self.evaluate_single_condition(condition, context)? {
-                        return Ok(true);
-                    }
-                }
-                for nested_group in &group.groups {
-                    if self.evaluate_condition_group(nested_group, context)? {
-                        return Ok(true);
-                    }
-                }
-                Ok(false)
-            }
-            LogicalOperator::Not => {
-                // Invert the result (only first condition is considered)
-                if let Some(condition) = group.conditions.first() {
-                    Ok(!self.evaluate_single_condition(condition, context)?)
-                } else if let Some(nested_group) = group.groups.first() {
-                    Ok(!self.evaluate_condition_group(nested_group, context)?)
-                } else {
-                    Ok(true)
+/// Evaluate a condition group.
+///
+/// Semantics per [`LogicalOperator`]:
+/// - `And` — every condition **and** every nested group must hold.
+/// - `Or`  — at least one condition or nested group must hold.
+/// - `Not` — the negation of the group's conjunction (De Morgan): the group
+///   is satisfied iff **not all** of its conditions/nested groups hold. Every
+///   child participates — earlier revisions negated only the first condition
+///   and silently dropped the rest, so a multi-condition `Not` gave wrong
+///   results.
+fn evaluate_condition_group(
+    group: &ConditionGroup,
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    match group.operator {
+        LogicalOperator::And => evaluate_conjunction(group, context),
+        LogicalOperator::Or => {
+            // At least one condition must be true
+            for condition in &group.conditions {
+                if evaluate_single_condition(condition, context)? {
+                    return Ok(true);
                 }
             }
+            for nested_group in &group.groups {
+                if evaluate_condition_group(nested_group, context)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        LogicalOperator::Not => {
+            // NOT negates the conjunction of the ENTIRE group, so all
+            // conditions and nested groups are considered — not just the
+            // first. NOT(a AND b AND …) by De Morgan.
+            Ok(!evaluate_conjunction(group, context)?)
         }
     }
+}
 
-    /// Evaluate a single condition.
-    fn evaluate_single_condition(
-        &self,
-        condition: &Condition,
-        context: &ActionContext,
-    ) -> Result<bool, WorkflowError> {
-        // Get the field value from context
-        let field_value = self.get_field_value(&condition.field, context);
-
-        match condition.operator {
-            ComparisonOperator::IsNull => Ok(field_value.is_null()),
-            ComparisonOperator::IsNotNull => Ok(!field_value.is_null()),
-            _ => {
-                let compare_value = condition.value.as_ref().ok_or_else(|| {
-                    WorkflowError::ConditionError(format!(
-                        "Missing comparison value for field: {}",
-                        condition.field
-                    ))
-                })?;
-
-                match condition.operator {
-                    ComparisonOperator::Eq => Ok(field_value == *compare_value),
-                    ComparisonOperator::Ne => Ok(field_value != *compare_value),
-                    ComparisonOperator::Gt => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? > 0)
-                    }
-                    ComparisonOperator::Gte => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? >= 0)
-                    }
-                    ComparisonOperator::Lt => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? < 0)
-                    }
-                    ComparisonOperator::Lte => {
-                        Ok(self.compare_numeric(&field_value, compare_value)? <= 0)
-                    }
-                    ComparisonOperator::Contains => {
-                        let field_string = field_value.to_string();
-                        let compare_string = compare_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let compare_str = compare_value.as_str().unwrap_or(&compare_string);
-                        Ok(field_str.contains(compare_str))
-                    }
-                    ComparisonOperator::StartsWith => {
-                        let field_string = field_value.to_string();
-                        let compare_string = compare_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let compare_str = compare_value.as_str().unwrap_or(&compare_string);
-                        Ok(field_str.starts_with(compare_str))
-                    }
-                    ComparisonOperator::EndsWith => {
-                        let field_string = field_value.to_string();
-                        let compare_string = compare_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let compare_str = compare_value.as_str().unwrap_or(&compare_string);
-                        Ok(field_str.ends_with(compare_str))
-                    }
-                    ComparisonOperator::In => {
-                        if let Some(arr) = compare_value.as_array() {
-                            Ok(arr.contains(&field_value))
-                        } else {
-                            Ok(false)
-                        }
-                    }
-                    ComparisonOperator::NotIn => {
-                        if let Some(arr) = compare_value.as_array() {
-                            Ok(!arr.contains(&field_value))
-                        } else {
-                            Ok(true)
-                        }
-                    }
-                    ComparisonOperator::Matches => {
-                        let field_string = field_value.to_string();
-                        let field_str = field_value.as_str().unwrap_or(&field_string);
-                        let pattern = compare_value.as_str().ok_or_else(|| {
-                            WorkflowError::ConditionError(
-                                "Regex pattern must be a string".to_string(),
-                            )
-                        })?;
-                        let regex = regex::Regex::new(pattern).map_err(|e| {
-                            WorkflowError::ConditionError(format!("Invalid regex: {}", e))
-                        })?;
-                        Ok(regex.is_match(field_str))
-                    }
-                    _ => Ok(false),
-                }
-            }
+/// Evaluate every condition and nested group of `group` as a conjunction (AND).
+///
+/// Returns `true` only when all conditions and all nested groups hold. An empty
+/// group is vacuously `true`. Shared by the `And` and `Not` operators.
+fn evaluate_conjunction(
+    group: &ConditionGroup,
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    for condition in &group.conditions {
+        if !evaluate_single_condition(condition, context)? {
+            return Ok(false);
         }
     }
-
-    /// Get a field value from the context using dot notation.
-    fn get_field_value(&self, field: &str, context: &ActionContext) -> serde_json::Value {
-        let parts: Vec<&str> = field.split('.').collect();
-        if parts.is_empty() {
-            return serde_json::Value::Null;
+    for nested_group in &group.groups {
+        if !evaluate_condition_group(nested_group, context)? {
+            return Ok(false);
         }
-
-        let root = parts[0];
-        let remaining = &parts[1..];
-
-        let root_value = if root == "trigger" {
-            context.trigger_event.clone()
-        } else if root.starts_with("action_") {
-            context
-                .context
-                .get(root)
-                .cloned()
-                .unwrap_or(serde_json::Value::Null)
-        } else {
-            // Direct field access on trigger event
-            return self.traverse_json(&context.trigger_event, &parts);
-        };
-
-        self.traverse_json(&root_value, remaining)
     }
+    Ok(true)
+}
 
-    /// Traverse a JSON value using field path.
-    fn traverse_json(&self, value: &serde_json::Value, path: &[&str]) -> serde_json::Value {
-        let mut current = value.clone();
-        for key in path {
-            current = match current {
-                serde_json::Value::Object(map) => {
-                    map.get(*key).cloned().unwrap_or(serde_json::Value::Null)
+/// Evaluate a single condition.
+fn evaluate_single_condition(
+    condition: &Condition,
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    // Get the field value from context
+    let field_value = get_field_value(&condition.field, context);
+
+    match condition.operator {
+        ComparisonOperator::IsNull => Ok(field_value.is_null()),
+        ComparisonOperator::IsNotNull => Ok(!field_value.is_null()),
+        _ => {
+            let compare_value = condition.value.as_ref().ok_or_else(|| {
+                WorkflowError::ConditionError(format!(
+                    "Missing comparison value for field: {}",
+                    condition.field
+                ))
+            })?;
+
+            match condition.operator {
+                ComparisonOperator::Eq => Ok(field_value == *compare_value),
+                ComparisonOperator::Ne => Ok(field_value != *compare_value),
+                ComparisonOperator::Gt => Ok(compare_numeric(&field_value, compare_value)? > 0),
+                ComparisonOperator::Gte => Ok(compare_numeric(&field_value, compare_value)? >= 0),
+                ComparisonOperator::Lt => Ok(compare_numeric(&field_value, compare_value)? < 0),
+                ComparisonOperator::Lte => Ok(compare_numeric(&field_value, compare_value)? <= 0),
+                ComparisonOperator::Contains => {
+                    let field_string = field_value.to_string();
+                    let compare_string = compare_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let compare_str = compare_value.as_str().unwrap_or(&compare_string);
+                    Ok(field_str.contains(compare_str))
                 }
-                serde_json::Value::Array(arr) => {
-                    if let Ok(index) = key.parse::<usize>() {
-                        arr.get(index).cloned().unwrap_or(serde_json::Value::Null)
+                ComparisonOperator::StartsWith => {
+                    let field_string = field_value.to_string();
+                    let compare_string = compare_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let compare_str = compare_value.as_str().unwrap_or(&compare_string);
+                    Ok(field_str.starts_with(compare_str))
+                }
+                ComparisonOperator::EndsWith => {
+                    let field_string = field_value.to_string();
+                    let compare_string = compare_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let compare_str = compare_value.as_str().unwrap_or(&compare_string);
+                    Ok(field_str.ends_with(compare_str))
+                }
+                ComparisonOperator::In => {
+                    if let Some(arr) = compare_value.as_array() {
+                        Ok(arr.contains(&field_value))
                     } else {
-                        serde_json::Value::Null
+                        Ok(false)
                     }
                 }
-                _ => return serde_json::Value::Null,
-            };
+                ComparisonOperator::NotIn => {
+                    if let Some(arr) = compare_value.as_array() {
+                        Ok(!arr.contains(&field_value))
+                    } else {
+                        Ok(true)
+                    }
+                }
+                ComparisonOperator::Matches => {
+                    let field_string = field_value.to_string();
+                    let field_str = field_value.as_str().unwrap_or(&field_string);
+                    let pattern = compare_value.as_str().ok_or_else(|| {
+                        WorkflowError::ConditionError("Regex pattern must be a string".to_string())
+                    })?;
+                    let regex = regex::Regex::new(pattern).map_err(|e| {
+                        WorkflowError::ConditionError(format!("Invalid regex: {}", e))
+                    })?;
+                    Ok(regex.is_match(field_str))
+                }
+                _ => Ok(false),
+            }
         }
-        current
+    }
+}
+
+/// Get a field value from the context using dot notation.
+fn get_field_value(field: &str, context: &ActionContext) -> serde_json::Value {
+    let parts: Vec<&str> = field.split('.').collect();
+    if parts.is_empty() {
+        return serde_json::Value::Null;
     }
 
-    /// Compare two JSON values as numbers.
-    fn compare_numeric(
-        &self,
-        a: &serde_json::Value,
-        b: &serde_json::Value,
-    ) -> Result<i32, WorkflowError> {
-        let a_num = a
-            .as_f64()
-            .or_else(|| a.as_str().and_then(|s| s.parse::<f64>().ok()));
+    let root = parts[0];
+    let remaining = &parts[1..];
 
-        let b_num = b
-            .as_f64()
-            .or_else(|| b.as_str().and_then(|s| s.parse::<f64>().ok()));
+    let root_value = if root == "trigger" {
+        context.trigger_event.clone()
+    } else if root.starts_with("action_") {
+        context
+            .context
+            .get(root)
+            .cloned()
+            .unwrap_or(serde_json::Value::Null)
+    } else {
+        // Direct field access on trigger event
+        return traverse_json(&context.trigger_event, &parts);
+    };
 
-        match (a_num, b_num) {
-            (Some(a), Some(b)) => {
-                if (a - b).abs() < f64::EPSILON {
-                    Ok(0)
-                } else if a > b {
-                    Ok(1)
+    traverse_json(&root_value, remaining)
+}
+
+/// Traverse a JSON value using field path.
+fn traverse_json(value: &serde_json::Value, path: &[&str]) -> serde_json::Value {
+    let mut current = value.clone();
+    for key in path {
+        current = match current {
+            serde_json::Value::Object(map) => {
+                map.get(*key).cloned().unwrap_or(serde_json::Value::Null)
+            }
+            serde_json::Value::Array(arr) => {
+                if let Ok(index) = key.parse::<usize>() {
+                    arr.get(index).cloned().unwrap_or(serde_json::Value::Null)
                 } else {
-                    Ok(-1)
+                    serde_json::Value::Null
                 }
             }
-            _ => Err(WorkflowError::ConditionError(format!(
-                "Cannot compare non-numeric values: {:?} and {:?}",
-                a, b
-            ))),
+            _ => return serde_json::Value::Null,
+        };
+    }
+    current
+}
+
+/// Compare two JSON values as numbers.
+fn compare_numeric(a: &serde_json::Value, b: &serde_json::Value) -> Result<i32, WorkflowError> {
+    let a_num = a
+        .as_f64()
+        .or_else(|| a.as_str().and_then(|s| s.parse::<f64>().ok()));
+
+    let b_num = b
+        .as_f64()
+        .or_else(|| b.as_str().and_then(|s| s.parse::<f64>().ok()));
+
+    match (a_num, b_num) {
+        (Some(a), Some(b)) => {
+            if (a - b).abs() < f64::EPSILON {
+                Ok(0)
+            } else if a > b {
+                Ok(1)
+            } else {
+                Ok(-1)
+            }
         }
+        _ => Err(WorkflowError::ConditionError(format!(
+            "Cannot compare non-numeric values: {:?} and {:?}",
+            a, b
+        ))),
     }
 }
 
@@ -994,6 +991,82 @@ mod tests {
         let group: ConditionGroup = serde_json::from_value(group_json).unwrap();
         assert_eq!(group.operator, LogicalOperator::And);
         assert_eq!(group.conditions.len(), 2);
+    }
+
+    // ------------------------------------------------------------------
+    // NOT operator: must consider the FULL condition set, not just the
+    // first child. Regression for the bug where evaluate_condition_group
+    // negated only `conditions.first()` and dropped the rest.
+    // ------------------------------------------------------------------
+
+    fn eval_ctx(trigger_event: serde_json::Value) -> ActionContext {
+        ActionContext::new(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            trigger_event,
+        )
+    }
+
+    #[test]
+    fn test_not_group_considers_all_conditions() {
+        // First condition TRUE, second FALSE → conjunction is FALSE →
+        // NOT(false) = TRUE. The old first-only path returned NOT(true) =
+        // FALSE, silently ignoring the second condition.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let group: ConditionGroup = serde_json::from_value(serde_json::json!({
+            "operator": "not",
+            "conditions": [
+                { "field": "trigger.amount", "operator": "gt", "value": 10 },      // true
+                { "field": "trigger.status", "operator": "eq", "value": "closed" } // false
+            ]
+        }))
+        .unwrap();
+
+        assert!(
+            evaluate_condition_group(&group, &ctx).unwrap(),
+            "NOT(true AND false) must be true; the second condition must not be dropped"
+        );
+    }
+
+    #[test]
+    fn test_not_group_all_true_is_false() {
+        // Every condition TRUE → conjunction TRUE → NOT(true) = FALSE.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let group: ConditionGroup = serde_json::from_value(serde_json::json!({
+            "operator": "not",
+            "conditions": [
+                { "field": "trigger.amount", "operator": "gt", "value": 10 },    // true
+                { "field": "trigger.status", "operator": "eq", "value": "open" } // true
+            ]
+        }))
+        .unwrap();
+
+        assert!(!evaluate_condition_group(&group, &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_not_group_does_not_drop_nested_groups() {
+        // A TRUE condition plus a FALSE nested group → conjunction FALSE →
+        // NOT(false) = TRUE. Confirms nested groups also participate in NOT.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let group: ConditionGroup = serde_json::from_value(serde_json::json!({
+            "operator": "not",
+            "conditions": [
+                { "field": "trigger.amount", "operator": "gt", "value": 10 } // true
+            ],
+            "groups": [
+                {
+                    "operator": "and",
+                    "conditions": [
+                        { "field": "trigger.status", "operator": "eq", "value": "closed" } // false
+                    ]
+                }
+            ]
+        }))
+        .unwrap();
+
+        assert!(evaluate_condition_group(&group, &ctx).unwrap());
     }
 
     #[test]
