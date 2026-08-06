@@ -1770,6 +1770,17 @@ mod tests {
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(body.0.code, "INVALID_ACCESS_TOKEN");
 
+        // (d) An absent (empty or whitespace-only) access token is rejected
+        // outright — the fail-closed early return, before any device lookup, so
+        // a caller presenting no token can never be authenticated as a device.
+        for absent in ["", "   "] {
+            let (status, body) = authenticate_voice_user(&mut conn, absent, voice_platform::ALEXA)
+                .await
+                .expect_err("absent token must be rejected");
+            assert_eq!(status, StatusCode::UNAUTHORIZED);
+            assert_eq!(body.0.code, "INVALID_ACCESS_TOKEN");
+        }
+
         std::env::remove_var(integrations::ENCRYPTION_KEY_ENV);
     }
 
