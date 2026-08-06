@@ -92,23 +92,6 @@ impl LlmDocumentRepository {
         .await
     }
 
-    /// Find a generation request by ID.
-    pub async fn find_generation_request<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Option<LlmGenerationRequest>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, LlmGenerationRequest>(
-            "SELECT * FROM llm_generation_requests WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(executor)
-        .await
-    }
-
     /// Find a generation request by ID — tenant-scoped (issue #766 / #816).
     ///
     /// `org_id` must originate from the verified request principal. Returns
@@ -332,21 +315,6 @@ impl LlmDocumentRepository {
         .await
     }
 
-    /// Find a prompt template by ID.
-    pub async fn find_prompt_template<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Option<LlmPromptTemplate>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, LlmPromptTemplate>("SELECT * FROM llm_prompt_templates WHERE id = $1")
-            .bind(id)
-            .fetch_optional(executor)
-            .await
-    }
-
     /// Find a prompt template by ID — tenant-scoped (issue #766 / #816).
     ///
     /// `org_id` must originate from the verified request principal. A template
@@ -527,40 +495,6 @@ impl LlmDocumentRepository {
         .await
     }
 
-    /// Find a generated description by ID.
-    pub async fn find_listing_description<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Option<GeneratedListingDescription>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, GeneratedListingDescription>(
-            "SELECT * FROM generated_listing_descriptions WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(executor)
-        .await
-    }
-
-    /// List descriptions for a listing.
-    pub async fn list_listing_descriptions<'e, E>(
-        &self,
-        executor: E,
-        listing_id: Uuid,
-    ) -> Result<Vec<GeneratedListingDescription>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, GeneratedListingDescription>(
-            "SELECT * FROM generated_listing_descriptions WHERE listing_id = $1 ORDER BY generated_at DESC",
-        )
-        .bind(listing_id)
-        .fetch_all(executor)
-        .await
-    }
-
     /// List descriptions for a listing — tenant-scoped (issue #766 / #816).
     ///
     /// `org_id` must originate from the verified request principal. The
@@ -614,23 +548,6 @@ impl LlmDocumentRepository {
         .bind(id)
         .bind(edited_description)
         .bind(edited_by)
-        .fetch_optional(executor)
-        .await
-    }
-
-    /// Mark description as published.
-    pub async fn publish_description<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Option<GeneratedListingDescription>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, GeneratedListingDescription>(
-            "UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *",
-        )
-        .bind(id)
         .fetch_optional(executor)
         .await
     }
@@ -1508,21 +1425,6 @@ impl LlmDocumentRepository {
         .bind(&metadata)
         .fetch_one(executor)
         .await
-    }
-
-    /// Find photo enhancement by ID.
-    pub async fn find_photo_enhancement<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Option<PhotoEnhancement>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, PhotoEnhancement>("SELECT * FROM photo_enhancements WHERE id = $1")
-            .bind(id)
-            .fetch_optional(executor)
-            .await
     }
 
     /// Find photo enhancement by ID — tenant-scoped (issue #766 / #816).
