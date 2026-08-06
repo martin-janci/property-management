@@ -141,7 +141,11 @@ async fn alexa_webhook(
     let response = match &request.request {
         AlexaRequestBody::LaunchRequest { .. } => {
             // Welcome message
-            let processor = VoiceCommandProcessor::new(state.llm_document_repo.clone());
+            let processor = VoiceCommandProcessor::new(
+                state.llm_document_repo.clone(),
+                state.fault_repo.clone(),
+                state.unit_repo.clone(),
+            );
             let (result, _) = processor
                 .process_command(rls.conn(), device.id, "help", &locale)
                 .await
@@ -157,7 +161,11 @@ async fn alexa_webhook(
         AlexaRequestBody::IntentRequest { intent, .. } => {
             // Process the intent
             let command_text = extract_alexa_command_text(intent);
-            let processor = VoiceCommandProcessor::new(state.llm_document_repo.clone());
+            let processor = VoiceCommandProcessor::new(
+                state.llm_document_repo.clone(),
+                state.fault_repo.clone(),
+                state.unit_repo.clone(),
+            );
             let (result, _) = processor
                 .process_command(rls.conn(), device.id, &command_text, &locale)
                 .await
@@ -260,7 +268,11 @@ async fn google_actions_webhook(
         .unwrap_or(&request.handler.name);
 
     // Process the command
-    let processor = VoiceCommandProcessor::new(state.llm_document_repo.clone());
+    let processor = VoiceCommandProcessor::new(
+        state.llm_document_repo.clone(),
+        state.fault_repo.clone(),
+        state.unit_repo.clone(),
+    );
     let (result, _) = processor
         .process_command(rls.conn(), device.id, command_text, locale)
         .await

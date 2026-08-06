@@ -5,12 +5,11 @@
 //! - Action execution (report fault, check balance, etc.)
 //! - Spoken response generation
 
-use chrono::Utc;
 use db::models::{
-    voice_intent, ParsedVoiceCommand, VoiceActionResult, VoiceAssistantDevice, VoiceCard,
-    VoiceCommandHistory,
+    fault_category, voice_intent, CreateFault, ParsedVoiceCommand, VoiceActionResult,
+    VoiceAssistantDevice, VoiceCard, VoiceCommandHistory,
 };
-use db::repositories::LlmDocumentRepository;
+use db::repositories::{FaultRepository, LlmDocumentRepository, UnitRepository};
 use serde_json::json;
 use sqlx::PgConnection;
 use std::time::Instant;
@@ -46,12 +45,22 @@ pub enum VoiceCommandError {
 #[derive(Clone)]
 pub struct VoiceCommandProcessor {
     llm_document_repo: LlmDocumentRepository,
+    fault_repo: FaultRepository,
+    unit_repo: UnitRepository,
 }
 
 impl VoiceCommandProcessor {
     /// Create a new voice command processor.
-    pub fn new(llm_document_repo: LlmDocumentRepository) -> Self {
-        Self { llm_document_repo }
+    pub fn new(
+        llm_document_repo: LlmDocumentRepository,
+        fault_repo: FaultRepository,
+        unit_repo: UnitRepository,
+    ) -> Self {
+        Self {
+            llm_document_repo,
+            fault_repo,
+            unit_repo,
+        }
     }
 
     /// Parse a voice command to extract intent and slots.
@@ -134,14 +143,19 @@ impl VoiceCommandProcessor {
     }
 
     /// Execute a voice command action.
+    ///
+    /// `conn` is threaded through so intents that mutate state (e.g.
+    /// [`voice_intent::REPORT_FAULT`]) can persist through the caller's
+    /// RLS-scoped connection.
     pub async fn execute_action(
         &self,
+        conn: &mut PgConnection,
         device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
         match parsed.intent.as_str() {
             voice_intent::CHECK_BALANCE => self.action_check_balance(device, parsed).await,
-            voice_intent::REPORT_FAULT => self.action_report_fault(device, parsed).await,
+            voice_intent::REPORT_FAULT => self.action_report_fault(conn, device, parsed).await,
             voice_intent::CHECK_ANNOUNCEMENTS => {
                 self.action_check_announcements(device, parsed).await
             }
@@ -182,7 +196,7 @@ impl VoiceCommandProcessor {
         let parsed = self.parse_command(command_text, locale);
 
         // Execute the action
-        let result = self.execute_action(&device, &parsed).await;
+        let result = self.execute_action(&mut *conn, &device, &parsed).await;
 
         let processing_time_ms = start_time.elapsed().as_millis() as i32;
 
@@ -266,6 +280,7 @@ impl VoiceCommandProcessor {
 
     async fn action_report_fault(
         &self,
+        conn: &mut PgConnection,
         device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
@@ -273,10 +288,46 @@ impl VoiceCommandProcessor {
             .slots
             .get("description")
             .and_then(|v| v.as_str())
-            .unwrap_or("Issue reported via voice assistant");
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or("Issue reported via voice assistant")
+            .to_string();
 
-        // In a real implementation, this would create a fault via the fault repository
-        let fault_id = Uuid::new_v4();
+        // A fault must be anchored to a building. The voice device is linked to
+        // a unit; resolve its building so the persisted fault lands in the right
+        // tenant scope (RLS is enforced through the caller's `conn`).
+        let unit_id = device.unit_id.ok_or_else(|| {
+            VoiceCommandError::ActionFailed(
+                "voice device is not linked to a unit; cannot file a fault".to_string(),
+            )
+        })?;
+        let unit = self
+            .unit_repo
+            .find_by_id_rls(&mut *conn, unit_id)
+            .await?
+            .ok_or_else(|| VoiceCommandError::ActionFailed(format!("unit {unit_id} not found")))?;
+
+        // Persist the fault via the shared repository so it actually exists and
+        // the returned ticket number references a real row (previously this
+        // handler fabricated a throwaway UUID and never wrote anything).
+        let create = CreateFault {
+            organization_id: device.organization_id,
+            building_id: unit.building_id,
+            unit_id: Some(unit_id),
+            reporter_id: device.user_id,
+            title: Self::build_fault_title(&description),
+            description: description.clone(),
+            location_description: None,
+            category: fault_category::OTHER.to_string(),
+            priority: None,
+            idempotency_key: None,
+        };
+        create
+            .validate()
+            .map_err(|e| VoiceCommandError::ActionFailed(e.to_string()))?;
+
+        let fault = self.fault_repo.create_rls(&mut *conn, create).await?;
+        let fault_id = fault.id;
 
         let response = match parsed.language.as_str() {
             "sk" => format!(
@@ -307,10 +358,31 @@ impl VoiceCommandProcessor {
             data: Some(json!({
                 "fault_id": fault_id,
                 "description": description,
-                "unit_id": device.unit_id,
-                "reported_at": Utc::now().to_rfc3339()
+                "unit_id": Some(unit_id),
+                "building_id": unit.building_id,
+                "reported_at": fault.created_at.to_rfc3339()
             })),
         })
+    }
+
+    /// Derive a concise fault title from the spoken description, kept well
+    /// under `CreateFault`'s 255-character cap and truncated on a UTF-8
+    /// character boundary.
+    fn build_fault_title(description: &str) -> String {
+        const MAX_TITLE_BYTES: usize = 120;
+        let trimmed = description.trim();
+        if trimmed.is_empty() {
+            return "Voice-reported fault".to_string();
+        }
+        let mut title = String::new();
+        for ch in trimmed.chars() {
+            if title.len() + ch.len_utf8() > MAX_TITLE_BYTES {
+                title.push('…');
+                break;
+            }
+            title.push(ch);
+        }
+        title
     }
 
     async fn action_check_announcements(
@@ -551,7 +623,102 @@ mod tests {
     fn create_test_processor() -> VoiceCommandProcessor {
         // Use a dummy pool - parse_command doesn't hit the database
         let pool = sqlx::PgPool::connect_lazy("postgres://localhost/test").unwrap();
-        VoiceCommandProcessor::new(LlmDocumentRepository::new(pool))
+        VoiceCommandProcessor::new(
+            LlmDocumentRepository::new(pool.clone()),
+            FaultRepository::new(pool.clone()),
+            UnitRepository::new(pool),
+        )
+    }
+
+    fn processor_with_pool(pool: sqlx::PgPool) -> VoiceCommandProcessor {
+        VoiceCommandProcessor::new(
+            LlmDocumentRepository::new(pool.clone()),
+            FaultRepository::new(pool.clone()),
+            UnitRepository::new(pool),
+        )
+    }
+
+    /// Build an in-memory linked, active voice device pointing at the given
+    /// tenant graph. `execute_action` only reads `organization_id`, `user_id`
+    /// and `unit_id`, so no device row needs to exist for the report-fault path.
+    fn make_device(org_id: Uuid, user_id: Uuid, unit_id: Option<Uuid>) -> VoiceAssistantDevice {
+        let now = chrono::Utc::now();
+        VoiceAssistantDevice {
+            id: Uuid::new_v4(),
+            organization_id: org_id,
+            user_id,
+            unit_id,
+            platform: "alexa".to_string(),
+            device_id: "test-device".to_string(),
+            device_name: None,
+            linked_at: now,
+            last_used_at: None,
+            access_token_encrypted: None,
+            refresh_token_encrypted: None,
+            token_expires_at: None,
+            is_active: true,
+            capabilities: json!([]),
+            access_token_hash: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    async fn seed_org(pool: &sqlx::PgPool, slug: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO organizations (name, slug, contact_email, status)
+            VALUES ($1, $2, $3, 'active') RETURNING id
+            "#,
+        )
+        .bind(format!("Voice Org {slug}"))
+        .bind(format!("voice-{slug}"))
+        .bind(format!("{slug}@voice.test"))
+        .fetch_one(pool)
+        .await
+        .expect("seed org")
+    }
+
+    async fn seed_user(pool: &sqlx::PgPool, email: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO users (email, password_hash, name, status, email_verified_at)
+            VALUES ($1, 'test_hash', 'Voice Resident', 'active', NOW())
+            RETURNING id
+            "#,
+        )
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("seed user")
+    }
+
+    async fn seed_building(pool: &sqlx::PgPool, org_id: Uuid, slug: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO buildings (organization_id, street, city, postal_code, country)
+            VALUES ($1, $2, 'Bratislava', '81101', 'Slovakia') RETURNING id
+            "#,
+        )
+        .bind(org_id)
+        .bind(format!("{slug} Street 1"))
+        .fetch_one(pool)
+        .await
+        .expect("seed building")
+    }
+
+    async fn seed_unit(pool: &sqlx::PgPool, building_id: Uuid, designation: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO units (building_id, designation, floor)
+            VALUES ($1, $2, 1) RETURNING id
+            "#,
+        )
+        .bind(building_id)
+        .bind(designation)
+        .fetch_one(pool)
+        .await
+        .expect("seed unit")
     }
 
     #[tokio::test]
@@ -583,6 +750,97 @@ mod tests {
         let parsed = processor.parse_command("Skontroluj moj zostatok", "sk-SK");
         assert_eq!(parsed.intent, voice_intent::CHECK_BALANCE);
         assert_eq!(parsed.language, "sk");
+    }
+
+    #[test]
+    fn test_build_fault_title() {
+        // Short descriptions pass through verbatim.
+        assert_eq!(
+            VoiceCommandProcessor::build_fault_title("elevator is broken"),
+            "elevator is broken"
+        );
+        // Blank falls back to a fixed title (CreateFault rejects empty titles).
+        assert_eq!(
+            VoiceCommandProcessor::build_fault_title("   "),
+            "Voice-reported fault"
+        );
+        // Overlong input is truncated on a char boundary and stays under the
+        // 255-char cap CreateFault::validate enforces.
+        let long = "a".repeat(500);
+        let title = VoiceCommandProcessor::build_fault_title(&long);
+        assert!(title.len() <= 255);
+        assert!(title.ends_with('…'));
+    }
+
+    /// Regression (code-review: voice report-fault not persisted): the handler
+    /// used to fabricate a throwaway `Uuid::new_v4()` and report success
+    /// without ever writing a row. It must now persist a real fault via the
+    /// repository and return that row's id. Skipped by the offline verify gate
+    /// (no DATABASE_URL); runs under backend.yml CI.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_report_fault_persists_fault(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "rf").await;
+        let user = seed_user(&pool, "rf@voice.test").await;
+        let building = seed_building(&pool, org, "RF").await;
+        let unit = seed_unit(&pool, building, "RF-1").await;
+
+        let processor = processor_with_pool(pool.clone());
+        let device = make_device(org, user, Some(unit));
+        let parsed = processor.parse_command("Report a fault with the elevator", "en-US");
+
+        let mut conn = pool.acquire().await.expect("acquire connection");
+        let result = processor
+            .execute_action(&mut conn, &device, &parsed)
+            .await
+            .expect("report fault should succeed");
+
+        assert!(result.success);
+        // The returned id must reference a persisted row, not a throwaway UUID.
+        let fault_id = result
+            .data
+            .as_ref()
+            .and_then(|d| d.get("fault_id"))
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .expect("fault_id present in action data");
+
+        let persisted: (Uuid, Uuid, Uuid) =
+            sqlx::query_as("SELECT id, building_id, reporter_id FROM faults WHERE id = $1")
+                .bind(fault_id)
+                .fetch_one(&pool)
+                .await
+                .expect("fault row must exist in the database");
+        assert_eq!(persisted.0, fault_id);
+        assert_eq!(persisted.1, building);
+        assert_eq!(persisted.2, user);
+    }
+
+    /// A voice device not linked to a unit has no building to anchor the fault,
+    /// so the action must surface an error instead of the old fake success.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_report_fault_without_unit_errors(pool: sqlx::PgPool) {
+        let org = seed_org(&pool, "nou").await;
+        let user = seed_user(&pool, "nou@voice.test").await;
+
+        let processor = processor_with_pool(pool.clone());
+        let device = make_device(org, user, None);
+        let parsed = processor.parse_command("Report a fault with the elevator", "en-US");
+
+        let mut conn = pool.acquire().await.expect("acquire connection");
+        let err = processor
+            .execute_action(&mut conn, &device, &parsed)
+            .await
+            .expect_err("unit-less device must not silently succeed");
+        assert!(matches!(err, VoiceCommandError::ActionFailed(_)));
+
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM faults")
+            .fetch_one(&pool)
+            .await
+            .expect("count faults");
+        assert_eq!(
+            count, 0,
+            "no fault row must be created when there is no unit"
+        );
     }
 
     #[test]
