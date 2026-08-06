@@ -1,0 +1,43 @@
+[
+  {
+    "id": "code-review-ppt-web-ui-policyform-number-coercion",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/insurance/components/PolicyForm.tsx:108 — handleChange does `[name]: type === 'number' ? Number(value) : value || undefined`. `Number('')` is 0, so clearing a numeric policy field (coverage amount / premium / deductible) silently coerces it to 0 instead of undefined/empty, and any non-numeric edge value yields NaN — either way a bad numeric is written into formData and submitted via onSubmit(formData) (:98) to the insurance-policy API with no NaN/empty guard.",
+      "Sibling forms in the SAME feature use the safe pattern: features/insurance/components/ClaimForm.tsx:93 guards `type === 'number' ? (value ? Number(value) : undefined) : ...` and features/leases/components/LeaseForm.tsx:111 guards `value === '' ? undefined : Number(value)`. PolicyForm dropped the empty-string guard, making it an outlier data-integrity regression on a financial (insurance premium/coverage) input surface."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-error-pages-i18n",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "All four app-wide terminal error screens render hardcoded English with no useTranslation, in an app shipping sk/cs/de/en: features/errors/pages/NotFoundPage.tsx (title=\"Page not found\", description=\"The page you're looking for doesn't exist or has moved.\", buttons \"Go back\" :24 / \"Home\" :27); features/errors/pages/ForbiddenPage.tsx:16 (title=\"Access denied\"); features/errors/pages/SessionExpiredPage.tsx:27 (title=\"Your session has expired\"); features/errors/pages/ServerErrorPage.tsx:23 (title=\"Something went wrong\", \"Retry\" button).",
+      "None of the four files import react-i18next (grep useTranslation/t( -> 0 hits). These are catch-all screens shown app-wide (404 route, 403, session-expired redirect, error boundary fallback), so a non-English user always hits untranslated English on the exact screens meant to orient a confused/blocked user."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-meters-windowopen-tabnab",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/meters/components/ReadingValidationCard.tsx:122 and :125 — the meter-reading photo thumbnail opens the stored image via `window.open(reading.photoUrl, '_blank')` with no `'noopener,noreferrer'` window-features argument (both the onClick and the onKeyDown Enter/Space handler). `reading.photoUrl` is server/tenant-supplied data; without noopener the opened tab receives a live `window.opener` reference (reverse-tabnabbing — the opened document can navigate the manager's app tab to a phishing page). Modern browsers default _blank to noopener, so impact is mitigation-dependent, but the explicit flag is the established safe pattern (sibling links in messaging/documents/disputes use rel=\"noopener noreferrer\")."
+    ],
+    "expert": "frontend"
+  }
+]
