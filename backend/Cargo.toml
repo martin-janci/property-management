@@ -47,7 +47,7 @@ utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono", "decimal"
 utoipa-swagger-ui = { version = "9", features = ["axum"] }
 
 # Validation
-validator = { version = "0.20", features = ["derive"] }
+validator = { version = "0.21", features = ["derive"] }
 
 # Database
 # Entries within each group are kept alphabetically sorted so that Dependabot
