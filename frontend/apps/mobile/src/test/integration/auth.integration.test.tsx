@@ -31,6 +31,14 @@ import enLocale from '../../locales/en.json';
 import huLocale from '../../locales/hu.json';
 import plLocale from '../../locales/pl.json';
 import skLocale from '../../locales/sk.json';
+import { makeJwt } from '../jwt';
+
+/** Current time in whole seconds — the unit JWT `exp` claims use. */
+const nowSec = () => Math.floor(Date.now() / 1000);
+/** A well-formed access token whose `exp` is already in the past. */
+const expiredToken = () => makeJwt({ sub: 'u-1', exp: nowSec() - 60 });
+/** A well-formed access token valid for another hour. */
+const validToken = () => makeJwt({ sub: 'u-1', exp: nowSec() + 3600 });
 
 // AuthProvider now purges the AsyncStorage-backed tenant caches on
 // login/logout (issue #2399), so swap the shared jest stub for a real
@@ -160,6 +168,75 @@ describe('AuthContext integration', () => {
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
       expect(result.current.biometricAvailable).toBe(false);
+    });
+  });
+
+  // Regression for the code-review finding: the cold-start `initialize()` effect
+  // used to restore `isAuthenticated: true` whenever a stored access token +
+  // user existed, without checking the token's `exp`. Access tokens are
+  // short-lived, so a cold start after the TTL restored an already-expired
+  // bearer. The same gap existed on the biometric-unlock path.
+  describe('stale access-token restore (exp check)', () => {
+    it('refreshes an expired stored access token on cold start before restoring the session', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+      // initialize() must exchange the expired bearer via /auth/refresh.
+      mockFetchOnce({ access_token: 'refreshed-access', refresh_token: 'refreshed-refresh' });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+      // The refresh endpoint was hit on cold start (not the login endpoint).
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/refresh`,
+        expect.objectContaining({ method: 'POST' })
+      );
+      const [, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
+      expect(JSON.parse(init.body)).toEqual({ refresh_token: 'stored-refresh' });
+      // The session is trusted only with the freshly-issued token.
+      expect(result.current.accessToken).toBe('refreshed-access');
+      expect(result.current.user).toEqual(sampleUser);
+      expect(store.get('ppt_access_token')).toBe('refreshed-access');
+      expect(store.get('ppt_refresh_token')).toBe('refreshed-refresh');
+    });
+
+    it('drops to the login screen when the cold-start refresh of an expired token fails', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+      mockFetchOnce({}, 401); // refresh rejected
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      // Never restore an expired session when it cannot be refreshed.
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+      expect(result.current.accessToken).toBeNull();
+      // The failed refresh cascaded through logout(), clearing SecureStore.
+      expect(store.has('ppt_access_token')).toBe(false);
+      expect(store.has('ppt_refresh_token')).toBe(false);
+    });
+
+    it('restores the session without a refresh when the stored access token is still valid', async () => {
+      const token = validToken();
+      primeSecureStore({
+        ppt_access_token: token,
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+      expect(result.current.accessToken).toBe(token);
+      // A valid token must NOT trigger a network round-trip on boot.
+      expect(globalThis.fetch).not.toHaveBeenCalled();
     });
   });
 
@@ -602,6 +679,87 @@ describe('AuthContext integration', () => {
       // it must NOT purge the cache (resetLocalData is intentionally not called).
       expect(result.current.isAuthenticated).toBe(true);
       expect(asyncStore.has('ppt_cache_faults_list')).toBe(true);
+    });
+
+    it('authenticateWithBiometric refreshes an expired stored token on unlock without refetching (#2399)', async () => {
+      // Boot with a still-valid token so mount restores cleanly (no refresh).
+      primeSecureStore({
+        ppt_access_token: validToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+      // A same-user persisted cache entry that must survive the unlock.
+      asyncStore.set('ppt_cache_faults_list', JSON.stringify([{ id: 'f-1' }]));
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      // Simulate the device sitting locked past the access-token TTL: the stored
+      // bearer is now expired, but the refresh token is still valid.
+      const store = primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockFetchOnce({ access_token: 'unlocked-access', refresh_token: 'unlocked-refresh' });
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.authenticateWithBiometric();
+      });
+
+      expect(ok).toBe(true);
+      expect(result.current.isAuthenticated).toBe(true);
+      // The token was refreshed on unlock...
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/refresh`,
+        expect.objectContaining({ method: 'POST' })
+      );
+      expect(result.current.accessToken).toBe('unlocked-access');
+      expect(store.get('ppt_access_token')).toBe('unlocked-access');
+      // ...but the user's cached data was preserved (only the token refreshed,
+      // no resetLocalData / user refetch — #2399 intent kept intact).
+      expect(asyncStore.has('ppt_cache_faults_list')).toBe(true);
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/login`,
+        expect.anything()
+      );
+    });
+
+    it('authenticateWithBiometric returns false when the expired-token refresh fails', async () => {
+      primeSecureStore({
+        ppt_access_token: validToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      // Log out, then present an expired stored token whose refresh is rejected.
+      await act(async () => {
+        await result.current.logout();
+      });
+      primeSecureStore({
+        ppt_access_token: expiredToken(),
+        ppt_refresh_token: 'stored-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockFetchOnce({}, 401);
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.authenticateWithBiometric();
+      });
+
+      expect(ok).toBe(false);
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(false));
     });
 
     it('authenticateWithBiometric is a no-op when biometric is not enabled', async () => {
