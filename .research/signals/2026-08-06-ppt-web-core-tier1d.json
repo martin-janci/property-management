@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-08-06",
+  "generated": "2026-08-06",
+  "segment": "ppt-web-core",
+  "source": "rotating-expert-review",
+  "selection_reason": "forced-segment",
+  "selection_note": "Tier-1d demand-driven refill (buffer starved, no CHURN_FILES). FORCE_SEGMENT=ppt-web-core per dispatcher (freshest non-saturated cloud-verifiable segment; reality-server/ppt-web-ui/reality-web have very recent tier1d passes, mobile-native-kmp is dispatcher-unlandable). Saturation guard OK: backlog.json carries 0 OPEN code-review-finding rows for ppt-web-core. De-duplicated against ALL prior ppt-web-core findings (authctx-init-stale-role, ws-token-rotation-stale, ws-ungated-console, apiclient-never-configured/no-token, api-retry-nonidempotent, api-eager-default-export, errorhandler-i18n-gap, perf-console-logs, perf-listener-leak, sessions-cast, logout-cache-purge-gap, route-error-boundary-gap, mutation-no-onerror, rentals-auth-nonnull-mutation, notfound-i18n-gap). Both findings below are net-new and centre on lib/websocket.ts heartbeat + reconnect lifecycle, which no prior finding examined. Re-verified clean this pass: lib/api.ts retry/refresh, lib/errorHandler.ts, lib/analytics.ts, lib/storage.ts, hooks/useFocusTrap.ts, hooks/useNetworkStatus.ts, contexts/AuthContext.tsx single-flight refresh + cold-boot init. The websocket console calls are all DEV-gated (wsWarn/wsError), and JSON.parse sites are try/catch-wrapped.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:688-709 — the client heartbeat sends an APPLICATION-level ping frame `{type:'ping', payload:null, timestamp}` via send() every heartbeatInterval (default 30000ms, :288), sets `awaitingPong = true`, and arms a pongTimeout (default 10000ms, :289). The ONLY thing that clears awaitingPong is receiving a text frame whose `data.type === 'pong'` (handleMessage :529-532 -> handlePong :711-718). If no such frame arrives within 10s, `this.socket?.close(4000, 'Pong timeout')` fires (:705), producing a non-clean close -> onclose (:495-510) -> scheduleReconnect().",
+        "The api-server notification WS handler NEVER sends an application-level `{type:'pong'}`. Verified in backend/servers/api-server/src/routes/ws_notifications.rs: the server only emits `Message::Text` carrying the `{event, payload}` WsEvent envelope (:219-230) for notifications, and uses PROTOCOL-level `Message::Ping(vec![])` for its own liveness probe (:242). Its inbound arm (:257-260) explicitly treats every client frame (Text/Binary/Ping/Pong) as a heartbeat and returns without replying — see the module header comment (:27, 'Client -> server: any message is treated as a heartbeat (pong)'). No code path serialises the string 'pong' back to the client.",
+        "Consequence: on every connection the client opens (onopen -> startHeartbeat :488-493), 30s later it sends `{type:'ping'}`, the server swallows it, awaitingPong stays true, and at ~40s the client force-closes with code 4000 and reconnects. onclose->stopHeartbeat->scheduleReconnect->connect->onopen->startHeartbeat repeats the cycle indefinitely. parseServerMessage (:59-76) maps real notification events onto `type = <event name>`, never 'pong', so an incoming notification never clears awaitingPong either. The realtime notification channel therefore drops and reconnects roughly every 40s for the entire authenticated session.",
+        "Reachability confirmed in production: App.tsx:94-101 mounts <WebSocketProvider> around the whole authenticated app with NO heartbeatInterval/pongTimeout override, so the 30s/10s defaults apply; WebSocketContext.tsx:250-251 calls service.connect() whenever auth.isAuthenticated && accessToken. Impact: constant socket churn, missed pushes during each reconnect gap, redundant server WS-session setup/teardown, and spurious onDisconnected/onReconnected callback firing every ~40s. Fix: the client-side app-level ping is both wrong (server never answers it) and redundant (the server already pings and the browser auto-pongs at the protocol level, invisible to JS). Remove the sendPing/pongTimeout logic and rely on the server's Message::Ping + browser auto-pong for liveness; OR have the server echo an application `{type:'pong'}` on receipt of `{type:'ping'}` so the contract matches. Distinct from the prior ws-token-rotation-stale and ws-ungated-console findings."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:600-612 — once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) scheduleReconnect() sets `shouldReconnect = false`, emits `connection:max-retries-exceeded`, and sets an error state. From that point NOTHING in the client re-arms reconnection: onclose only reconnects when shouldReconnect is true (:507), and reconnectAttempts is never reset by connect() or disconnect() — only a successful onopen resets it (:489). The public resetReconnectAttempts() (:479-481) is dead code (no caller in the segment).",
+        "The default backoff sum (min 1000ms doubling, capped at 30000ms, over 10 attempts) is only ~3 minutes, so any real outage longer than that — laptop sleep, tunnel/VPN drop, backend redeploy window, mobile network gap — permanently kills the notification socket for the rest of the session.",
+        "There is no auto-resume wiring. contexts/WebSocketContext.tsx only calls service.connect() on an auth change (:246-256); it never subscribes to `connection:max-retries-exceeded` and is not connected to hooks/useNetworkStatus.ts (which already detects browser online/offline transitions, useNetworkStatus.ts:96-121). So when connectivity returns, the socket stays dead until the user logs out/in or reloads the page — user silently stops receiving realtime pushes with no indication and no recovery path.",
+        "Fix: on the browser `online` event (or via useNetworkStatusEffect) call service.connect() to resume, and have connect() reset reconnectAttempts (or call resetReconnectAttempts()) so a fresh attempt budget is granted; optionally surface the `connection:max-retries-exceeded` state in WebSocketContext so the UI can offer a manual reconnect. Net-new — no prior ppt-web-core finding covered the reconnect give-up / resume lifecycle."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

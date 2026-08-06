@@ -200,28 +200,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "code-review-api-handlers-voice-webhook-default-secret",
-      "branch": "auto-impl/code-review-api-handlers-voice-webhook-d-5e3512f4",
-      "status": "in-progress",
-      "claimed_at": "2026-08-06T02:07:48Z",
-      "last_updated": "2026-08-06T02:07:48Z",
-      "status_changed_at": "2026-08-06T02:07:48Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "code-review-ppt-web-ui-portfolio-mock-data",
       "branch": "auto-impl/code-review-ppt-web-ui-portfolio-mock-da-d21eab33",
       "status": "in-progress",

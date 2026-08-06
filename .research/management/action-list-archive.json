@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-05T20:13:13Z",
+  "archived_at": "2026-08-06T02:18:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1909,6 +1909,31 @@
         "merged_pr": 2181,
         "merged_at": "2026-07-08T18:03:00Z",
         "at": "2026-07-08T18:10:39Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:950 — verify_hmac_signature() reads VOICE_WEBHOOK_SECRET via `std::env::var(...).unwrap_or_else(|_| \"default_secret\".to_string())`, so when the env var is unset the HMAC key silently b",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-handlers) | gc1-reconcile 2026-08-06T02:18:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T02:18:08Z"
       }
     },
     {

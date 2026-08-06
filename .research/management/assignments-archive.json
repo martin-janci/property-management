@@ -2015,6 +2015,28 @@
       "merge_attempted_at": "2026-07-08T18:03:00Z"
     },
     {
+      "task_id": "code-review-api-handlers-voice-webhook-default-secret",
+      "branch": "auto-impl/code-review-api-handlers-voice-webhook-d-5e3512f4",
+      "status": "failed",
+      "claimed_at": "2026-08-06T02:07:48Z",
+      "last_updated": "2026-08-06T02:16:36Z",
+      "status_changed_at": "2026-08-06T02:16:36Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed on dev by fdeca2a (gh-issue-2658/#2660): fails closed on unset VOICE_WEBHOOK_SECRET + regression test present; empty diff, no PR needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-webhook-portal-signature-not-verified",
       "branch": "auto-impl/code-review-api-handlers-webhook-portal-e79d5115",
       "status": "merged",
@@ -11543,5 +11565,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-05T20:10:39Z"
+  "archived_at": "2026-08-06T02:18:08Z"
 }
