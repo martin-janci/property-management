@@ -2657,6 +2657,28 @@
       "merge_attempted_at": "2026-08-03T20:20:00Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-apiclient-never-configured",
+      "branch": "auto-impl/code-review-ppt-web-core-apiclient-never-87b5e689",
+      "status": "failed",
+      "claimed_at": "2026-08-06T00:07:08Z",
+      "last_updated": "2026-08-06T04:15:32Z",
+      "status_changed_at": "2026-08-06T04:15:32Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=stale finding: configureApiClient already wired at bootstrap in AuthProvider useEffect (AuthContext.tsx:337, landed dev via PR #2645); no change needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-authctx-init-stale-role",
       "branch": "auto-impl/code-review-ppt-web-core-authctx-init-st-2676c0eb",
       "status": "merged",
@@ -11565,5 +11587,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-06T02:18:08Z"
+  "archived_at": "2026-08-06T04:17:17Z"
 }

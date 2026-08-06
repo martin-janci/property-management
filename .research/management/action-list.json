@@ -163,24 +163,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-apiclient-never-configured",
-      "action": "frontend/apps/ppt-web/src/lib/api.ts:258 (configureApiClient) is NEVER called in production code. A repo-wide grep for `configureApiClient(` finds hits only in lib/api.test.tsx (7 test calls) and the docstring — no call in main.tsx / App.ts",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=ppt-web-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "bug",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-portfolio-mock-data",
       "action": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook",
       "owner_role": "pm-backend",
