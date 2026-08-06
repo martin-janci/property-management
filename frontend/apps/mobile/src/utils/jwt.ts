@@ -37,3 +37,29 @@ export function extractTenantId(token: string): string | null {
   const value = payload?.tenant_id;
   return typeof value === 'string' ? value : null;
 }
+
+/**
+ * Report whether a JWT's `exp` claim is at/past `now + skewSeconds`.
+ *
+ * `skewSeconds` (default 0) lets callers treat a token that is *about* to
+ * expire as already expired, so a proactive refresh happens before the bearer
+ * goes stale rather than after the first 401.
+ *
+ * Access tokens are short-lived, so a cold start (or a biometric unlock after
+ * the device sat locked) can restore a token whose TTL already elapsed. Callers
+ * use this to decide whether to `refreshToken()` before trusting a restored
+ * session (see AuthContext `initialize` / `authenticateWithBiometric`).
+ *
+ * Semantics are deliberately narrow: this returns `true` only for a token that
+ * carries a *readable numeric* `exp` in the past. A malformed token, or one
+ * with a missing/non-numeric `exp`, returns `false` — we can't prove it is
+ * expired, so we defer to the server's own 401 (which drives the normal refresh
+ * path) rather than eagerly discarding a session at boot.
+ */
+export function isJwtExpired(token: string, skewSeconds = 0): boolean {
+  const payload = decodeJwtPayload(token);
+  const exp = payload?.exp;
+  if (typeof exp !== 'number') return false;
+  const nowSeconds = Date.now() / 1000;
+  return exp <= nowSeconds + skewSeconds;
+}
