@@ -276,6 +276,20 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-notify-route-wiring",
+      "action": "reality-server: the live public endpoint routes::inquiries::send_contact_message persists via state.reality_portal_repo.create_inquiry(...) directly and does NOT route through InquiriesHandler, so the new InquiryNotifier seam (added in PR #2696) is never reached on the live path — realtors still get no notification. Wire send_contact_message (and the viewing-request route if it shares the bypass) through InquiriesHandler::with_notifier so the best-effort notification fires. Touches routes/inquiries.rs + handler state wiring.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "implementer-secondary-finding PR#2696 (inquiry-email-stub) 2026-08-06T22:36:16Z",
+      "deadline": null,
+      "dependency": "code-review-reality-server-inquiry-email-stub (PR #2696 seam must land first)",
+      "depends_on": [
+        "code-review-reality-server-inquiry-email-stub"
+      ],
+      "first_open_at": "2026-08-06T22:36:16Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
