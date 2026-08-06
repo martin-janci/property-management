@@ -19,42 +19,6 @@
       }
     },
     {
-      "id": "code-review-ai-ocr-correction-idor",
-      "action": "backend/servers/api-server/src/routes/ai/ocr.rs:261-312 — submit_correction (POST /api/v1/ai/ocr/correction) authorizes only by checking the caller is_member of the CLIENT-SUPPLIED body.organization_id (OcrCorrectionRequest.organization_id:",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=api-handlers)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
-      "id": "code-review-api-core-llm-unscoped-idor-footguns",
-      "action": "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_reques",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=api-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
       "id": "code-review-reality-server-invite-email-mismatch",
       "action": "backend/servers/reality-server/src/routes/agencies.rs:421-448 — accept_invitation adds the calling principal.user_id as an agency member based solely on a valid, unexpired token (repo accept_invitation at backend/crates/db/src/repositories/",
       "owner_role": "pm-security",
@@ -87,78 +51,6 @@
         "plan": null,
         "score": 2,
         "vector": "security",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
-      "id": "code-review-api-core-api-call-ssrf-hostname",
-      "action": "backend/servers/api-server/src/services/actions/api_call.rs:179 (validate_external_url) — the private/internal-IP guard only runs when the host is a LITERAL IP (`if let Ok(ip) = host.parse::<IpAddr>()`). A DNS hostname that resolves to a pr",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
-      "id": "code-review-api-core-idempotency-lock-cancel-leak",
-      "action": "backend/crates/api-core/src/middleware/idempotency.rs:93 — session-level pg_advisory_lock($1) acquired on a pooled connection, released only at line 163 after next.run(request).await; if the request future is cancelled (client disconnect) b",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
-      "id": "code-review-api-core-sched-notify-swallow",
-      "action": "backend/servers/api-server/src/services/scheduler.rs:322-324 — self.get_announcement_target_users(announcement).await.unwrap_or_default() collapses any DB/query error into an empty Vec, so on a transient failure the just-published announcem",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
-      "id": "code-review-api-core-voice-cmd-fabricated-success",
-      "action": "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 — action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug",
         "source": "tier1d-signal-bridge"
       }
     },

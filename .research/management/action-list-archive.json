@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-06T10:20:23Z",
+  "archived_at": "2026-08-06T12:19:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1599,6 +1599,31 @@
       }
     },
     {
+      "id": "code-review-ai-ocr-correction-idor",
+      "action": "backend/servers/api-server/src/routes/ai/ocr.rs:261-312 — submit_correction (POST /api/v1/ai/ocr/correction) authorizes only by checking the caller is_member of the CLIENT-SUPPLIED body.organization_id (OcrCorrectionRequest.organization_id:",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=api-handlers) | gc1-reconcile 2026-08-06T12:19:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2676,
+        "merged_at": "2026-08-06T12:17:51Z",
+        "at": "2026-08-06T12:19:51Z"
+      }
+    },
+    {
       "id": "code-review-api-core-admin-rs-swallowed-serialize",
       "action": "layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500",
       "owner_role": "pm-backend",
@@ -1619,6 +1644,31 @@
         "commit": "15e16e976fa35acc3c97de08d2bed8914b1a078d",
         "subject": "code-review-api-core-admin-rs-swallowed-serialize: return 500 on failed layout serialize instead of null body (#2606)",
         "at": "2026-07-31T04:04:25Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-api-call-ssrf-hostname",
+      "action": "backend/servers/api-server/src/services/actions/api_call.rs:179 (validate_external_url) — the private/internal-IP guard only runs when the host is a LITERAL IP (`if let Ok(ip) = host.parse::<IpAddr>()`). A DNS hostname that resolves to a pr",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core) | gc1-reconcile 2026-08-06T12:19:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2677,
+        "merged_at": "2026-08-06T12:17:51Z",
+        "at": "2026-08-06T12:19:51Z"
       }
     },
     {
@@ -1671,6 +1721,56 @@
       }
     },
     {
+      "id": "code-review-api-core-idempotency-lock-cancel-leak",
+      "action": "backend/crates/api-core/src/middleware/idempotency.rs:93 — session-level pg_advisory_lock($1) acquired on a pooled connection, released only at line 163 after next.run(request).await; if the request future is cancelled (client disconnect) b",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core) | gc1-reconcile 2026-08-06T12:19:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2681,
+        "merged_at": "2026-08-06T12:17:51Z",
+        "at": "2026-08-06T12:19:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "action": "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_reques",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=api-core) | gc1-reconcile 2026-08-06T12:19:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2680,
+        "merged_at": "2026-08-06T12:17:51Z",
+        "at": "2026-08-06T12:19:51Z"
+      }
+    },
+    {
       "id": "code-review-api-core-osrng-expect",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential encrypt",
       "owner_role": "pm-backend",
@@ -1703,6 +1803,31 @@
         "merged_pr": 2609,
         "merged_at": "2026-07-31T04:17:44Z",
         "at": "2026-07-31T04:18:34Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-sched-notify-swallow",
+      "action": "backend/servers/api-server/src/services/scheduler.rs:322-324 — self.get_announcement_target_users(announcement).await.unwrap_or_default() collapses any DB/query error into an empty Vec, so on a transient failure the just-published announcem",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core) | gc1-reconcile 2026-08-06T12:19:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2678,
+        "merged_at": "2026-08-06T12:17:51Z",
+        "at": "2026-08-06T12:19:51Z"
       }
     },
     {
@@ -1851,6 +1976,31 @@
         "merged_pr": 2627,
         "merged_at": "2026-08-02T12:11:30Z",
         "at": "2026-08-02T14:04:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-voice-cmd-fabricated-success",
+      "action": "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 — action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=high vector=bug seg=api-core) | gc1-reconcile 2026-08-06T12:19:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2679,
+        "merged_at": "2026-08-06T12:17:51Z",
+        "at": "2026-08-06T12:19:51Z"
       }
     },
     {
