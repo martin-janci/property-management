@@ -607,11 +607,28 @@ async fn update_article(
 async fn publish_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<PublishArticleRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
+
+    // Authorization check - only the author or managers can publish.
+    // The lookup is org-scoped, so a caller in another org gets 404 here
+    // rather than reaching the author/manager check.
+    let existing = repo
+        .find_by_id(id, tenant.tenant_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to get article: {}", e)))?
+        .ok_or_else(|| not_found("Article not found"))?;
+
+    let is_manager = user.role.as_ref().map(|r| r.is_manager()).unwrap_or(false);
+    let is_author = existing.author_id == user.user_id;
+    if !is_manager && !is_author {
+        return Err(forbidden(
+            "Only the author or managers can publish this article",
+        ));
+    }
 
     let article = repo
         .publish(id, tenant.tenant_id, req.published_at)
@@ -642,10 +659,27 @@ async fn publish_article(
 async fn archive_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
+
+    // Authorization check - only the author or managers can archive.
+    // The lookup is org-scoped, so a caller in another org gets 404 here
+    // rather than reaching the author/manager check.
+    let existing = repo
+        .find_by_id(id, tenant.tenant_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to get article: {}", e)))?
+        .ok_or_else(|| not_found("Article not found"))?;
+
+    let is_manager = user.role.as_ref().map(|r| r.is_manager()).unwrap_or(false);
+    let is_author = existing.author_id == user.user_id;
+    if !is_manager && !is_author {
+        return Err(forbidden(
+            "Only the author or managers can archive this article",
+        ));
+    }
 
     let article = repo
         .archive(id, tenant.tenant_id)
@@ -676,10 +710,27 @@ async fn archive_article(
 async fn restore_article(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
+
+    // Authorization check - only the author or managers can restore.
+    // The lookup is org-scoped, so a caller in another org gets 404 here
+    // rather than reaching the author/manager check.
+    let existing = repo
+        .find_by_id(id, tenant.tenant_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to get article: {}", e)))?
+        .ok_or_else(|| not_found("Article not found"))?;
+
+    let is_manager = user.role.as_ref().map(|r| r.is_manager()).unwrap_or(false);
+    let is_author = existing.author_id == user.user_id;
+    if !is_manager && !is_author {
+        return Err(forbidden(
+            "Only the author or managers can restore this article",
+        ));
+    }
 
     let article = repo
         .restore(id, tenant.tenant_id)
@@ -750,6 +801,23 @@ async fn pin_article(
     Json(req): Json<PinArticleRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
     let repo = NewsArticleRepository::new(state.db.clone());
+
+    // Authorization check - only the author or managers can pin/unpin.
+    // The lookup is org-scoped, so a caller in another org gets 404 here
+    // rather than reaching the author/manager check.
+    let existing = repo
+        .find_by_id(id, tenant.tenant_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to get article: {}", e)))?
+        .ok_or_else(|| not_found("Article not found"))?;
+
+    let is_manager = user.role.as_ref().map(|r| r.is_manager()).unwrap_or(false);
+    let is_author = existing.author_id == user.user_id;
+    if !is_manager && !is_author {
+        return Err(forbidden(
+            "Only the author or managers can pin this article",
+        ));
+    }
 
     let article = repo
         .set_pinned(id, tenant.tenant_id, req.pinned, Some(user.user_id))
