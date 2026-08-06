@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-06T04:17:17Z",
+  "archived_at": "2026-08-06T10:20:23Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1622,6 +1622,31 @@
       }
     },
     {
+      "id": "code-review-api-core-apicall-ssrf-redirect",
+      "action": "backend/servers/api-server/src/services/actions/api_call.rs:106 — reqwest::Client is built (Client::builder().timeout(60s).user_agent(...).build()) without a redirect policy, so it follows up to 10 redirects by default. validate_external_ur",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=medium vector=bug seg=api-core) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
       "id": "code-review-api-core-idempotency-client-tenant",
       "action": "Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant collision or bypass",
       "owner_role": "pm-security",
@@ -1829,6 +1854,31 @@
       }
     },
     {
+      "id": "code-review-api-core-voice-report-fault-not-persisted",
+      "action": "backend/servers/api-server/src/services/voice_commands.rs:267 action_report_fault is a placeholder: it generates a throwaway fault_id = Uuid::new_v4() (:279), returns VoiceActionResult { success: true, ... } and tells the resident 'Porucha ",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-core) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2666,
+        "merged_at": "2026-08-06T08:12:22Z",
+        "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-community-cross-tenant-idor",
       "action": "SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs",
       "owner_role": "pm-security",
@@ -1893,6 +1943,56 @@
       }
     },
     {
+      "id": "code-review-api-handlers-marketplace-award-quote-idor",
+      "action": "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=api-handlers) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-missing-authz-article",
+      "action": "backend/servers/api-server/src/routes/news_articles.rs:607-770 — publish_article, archive_article, restore_article, pin_article extract `_user: AuthUser` but never check `is_manager()`/authorship, unlike create_article (line 446) and update",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=medium vector=bug seg=api-handlers) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2665,
+        "merged_at": "2026-08-06T08:12:22Z",
+        "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-shares-revoke-doc-mismatch",
       "action": "security (broken access control / IDOR): backend/servers/api-server/src/routes/documents/shares.rs revoke_share checks authorization (created_by/is_manager) against the document from the path `id`, but then looks up + revokes the share purely by `share_id` (find_share_by_id_rls result discarded at :349; revoke_share_rls at :370) with no check that `share.document_id == id`. RLS only scopes to tenant, so a non-manager who created any document A can pass A's id (passing the creator check) plus a share_id belonging to another creator's document B in the same tenant and revoke B's share. Add a `share.document_id == id` guard before revoking.",
       "owner_role": "pm-backend",
@@ -1909,6 +2009,31 @@
         "merged_pr": 2181,
         "merged_at": "2026-07-08T18:03:00Z",
         "at": "2026-07-08T18:10:39Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-alexa-noverify",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:700-708 — the `alexa` branch of webhook verification sets `valid: !request.signature.is_empty()` with no cryptographic check whatsoever: any non-empty string is accepted as a valid Ale",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-handlers) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T10:11:51Z"
       }
     },
     {
@@ -1934,6 +2059,56 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-06T02:18:08Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=api-handlers) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T10:20:23Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 — authenticate_voice_user() performs NO token validation: the `_access_token` parameter is unused (underscore-prefixed) and the function returns whatever device the query `SELE",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=api-handlers) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2667,
+        "merged_at": "2026-08-06T10:11:34Z",
+        "at": "2026-08-06T10:20:23Z"
       }
     },
     {
@@ -2750,6 +2925,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-portfolio-mock-data",
+      "action": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=medium vector=bug seg=ppt-web-ui) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2664,
+        "merged_at": "2026-08-06T08:12:22Z",
+        "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-propinput-json-coerce",
       "action": "TenantSectionEditor PropInput silently JSON.parse-coerces every string prop on blur — override payload corrupted (\"true\" -> boolean, \"[]\" -> array)",
       "owner_role": "pm-backend",
@@ -2870,6 +3070,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-invite-authz",
+      "action": "backend/servers/reality-server/src/routes/agencies.rs:373-401 — create_invitation (wired at line 38: POST /api/v1/agencies/{id}/invitations) performs NO membership/role check before calling the repo, unlike its siblings update_agency (line ",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=security seg=reality-server) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2669,
+        "merged_at": "2026-08-06T10:11:34Z",
+        "at": "2026-08-06T10:20:23Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-password-reset-no-transport",
       "action": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent",
       "owner_role": "pm-backend",
@@ -2915,6 +3140,31 @@
         "archive_status": "failed",
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
+      "action": "RE-RAISE (unfixed at HEAD b1f6ad5, first emitted 2026-07-12, subsequently decayed out of backlog.json but the vulnerable code is unchanged): backend/servers/reality-server/src/util/url_validator.rs:145-164 — validate_fetch_url()'s Host::Ipv",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=reality-server) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2668,
+        "merged_at": "2026-08-06T10:11:34Z",
+        "at": "2026-08-06T10:20:23Z"
       }
     },
     {
@@ -3072,6 +3322,31 @@
         "merged_pr": 2603,
         "merged_at": "2026-07-30T20:17:12Z",
         "at": "2026-07-30T20:18:07Z"
+      }
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "action": "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes document (Slovak 'zapisnica' under §14 z.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=3 conf=high vector=bug seg=api-handlers) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2670,
+        "merged_at": "2026-08-06T10:16:14Z",
+        "at": "2026-08-06T10:20:23Z"
       }
     },
     {
@@ -11527,6 +11802,27 @@
       }
     },
     {
+      "id": "pm-scrum-master-signer-doc-sign-page-84-2-retry1",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned to shipped; verify signature-request email delivery (84-2 partial) [retry 1/2 of failed pm-scrum-master-signer-doc-sign-page-84-2]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-06T08:16:04Z (retry_of=pm-scrum-master-signer-doc-sign-page-84-2 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T08:07:55Z) | gc1-reconcile 2026-08-06T10:11:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T08:16:04Z",
+      "retry_of": "pm-scrum-master-signer-doc-sign-page-84-2",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "done",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
       "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started)",
       "owner_role": "pm-frontend",
@@ -12304,6 +12600,27 @@
       }
     },
     {
+      "id": "repeated-churn-api-server-routes-auth-rs-2026-07-28-retry1",
+      "action": "auth.rs repeated-churn — runs_seen=4, 2950 lines / ~107K in one module (2nd-largest route file) [retry 1/2 of failed repeated-churn-api-server-routes-auth-rs-2026-07-28]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-06T04:09:25Z (retry_of=repeated-churn-api-server-routes-auth-rs-2026-07-28 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T04:03:29Z) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T04:09:25Z",
+      "retry_of": "repeated-churn-api-server-routes-auth-rs-2026-07-28",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2671,
+        "merged_at": "2026-08-06T10:16:14Z",
+        "at": "2026-08-06T10:20:23Z"
+      }
+    },
+    {
       "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
       "action": "forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening)",
       "owner_role": "pm-backend",
@@ -12697,6 +13014,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-30T08:06:04Z"
+      }
+    },
+    {
+      "id": "security-voice-webhook-alexa-signature-not-verified-retry1",
+      "action": "SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature [retry 1/2 of failed security-voice-webhook-alexa-signature-not-verified]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-06T04:09:25Z (retry_of=security-voice-webhook-alexa-signature-not-verified reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T04:03:29Z) | gc1-reconcile 2026-08-06T10:20:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T04:09:25Z",
+      "retry_of": "security-voice-webhook-alexa-signature-not-verified",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2672,
+        "merged_at": "2026-08-06T10:16:14Z",
+        "at": "2026-08-06T10:20:23Z"
       }
     },
     {

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "code-review-reality-server-inquiries-no-ratelimit",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/handlers/inquiries/mod.rs:36 — InquiryResult::RateLimited variant is defined but never constructed or matched anywhere (grep finds a single occurrence). The abuse control is dead code: create_inquiry (mod.rs:189) never enforces any throttle.",
+      "backend/servers/reality-server/src/routes/inquiries.rs:180 send_contact_message and :298 request_viewing are unauthenticated public POST endpoints (no RequestPrincipal extractor) that persist inquiry rows and fire a realtor notification, guarded only by length/format validation — no per-IP or per-listing rate limit, giving an anonymous spam / DB resource-exhaustion vector.",
+      "backend/servers/reality-server/src/main.rs:527-569 — the middleware stack (DefaultBodyLimit, security_headers, CORS, host/tenant-resolution) has no per-IP/governor rate limiter; tenant_rate_limiters (state.rs:861) is per-org RPM and does not cover anonymous inquiry POSTs."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-inquiry-email-stub",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/handlers/inquiries/mod.rs:340 send_inquiry_notification is a stub that only emits a tracing::info log ('In production, this would send an email via email service'); no email is ever dispatched. Realtors are never notified of new contact/viewing requests, yet the public endpoint (routes/inquiries.rs:267) responds 'Your message has been sent. The realtor will respond soon.' — a shipped-but-non-functional notification path."
+    ],
+    "expert": "rust"
+  }
+]
