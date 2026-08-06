@@ -131,7 +131,7 @@ opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
 tracing-opentelemetry = "0.33"
 
 # Error tracking (Epic 95)
-sentry = { version = "0.48", features = ["tracing", "tower", "tower-http"] }
+sentry = { version = "0.49", features = ["tracing", "tower", "tower-http"] }
 
 # AWS SDK for S3 (Epic 103)
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
