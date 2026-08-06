@@ -73,6 +73,15 @@ base32 = "0.5"
 base64 = "0.22"
 aes-gcm = "0.11"
 subtle = "2.5"
+# Alexa Skills Kit request-signature verification (voice webhook, issue #2668):
+# X.509 leaf parsing + RSA-SHA1 (PKCS#1 v1.5) signature check over the raw body.
+# `rsa` is already resolved transitively (jsonwebtoken rust_crypto backend); we
+# depend on it directly here. `sha1` is pinned to the 0.10 (digest 0.10) line
+# so it composes with `rsa` 0.9's `Pkcs1v15Sign::new::<Sha1>()`; the `oid`
+# feature supplies the SHA-1 `AssociatedOid` the PKCS#1 v1.5 prefix needs.
+rsa = "0.9"
+sha1 = { version = "0.10", features = ["oid"] }
+x509-cert = { version = "0.2", features = ["pem"] }
 lettre = { version = "0.11", features = ["tokio1-native-tls", "builder", "hostname", "smtp-transport"] }
 # Bounded-concurrency dispatch for NotificationPipeline (issue #484)
 futures-util = "0.3"
