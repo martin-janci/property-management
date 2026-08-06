@@ -14,7 +14,7 @@ use api_core::extractors::RlsConnection;
 use common::errors::ErrorResponse;
 use common::tenant::TenantRole;
 use db::models::regional_compliance::*;
-use db::models::vote::VoteResults;
+use db::models::vote::{Vote, VoteResults};
 
 use crate::state::AppState;
 
@@ -300,6 +300,108 @@ async fn validate_slovak_vote(
     result
 }
 
+/// Voting figures for an official minutes / usneseni document, derived from the
+/// **persisted** vote record.
+///
+/// Both `get_slovak_vote_minutes` (Slovak zapisnica, §14 z. 182/1993 Z.z.) and
+/// `get_czech_usneseni` (Czech usneseni, §1206 z. 89/2012 Sb.) previously filled
+/// these legally-binding documents with hardcoded mock values — a fixed
+/// 2024-01-15 meeting date, 100/75 ownership shares, a 60/10/5
+/// for/against/abstain split and `result_approved: true` — regardless of what
+/// the vote actually decided. This derives every figure from the vote's
+/// persisted counts, its `quorum_met` flag and its calculated `VoteResults`, so
+/// the generated document reflects the real outcome. Ownership-share fields are
+/// sourced from the eligible/participation counts (the only per-vote tally the
+/// vote record carries); per-question and top-line for/against/abstain figures
+/// come from the calculated result options.
+struct VoteMinutesTally {
+    meeting_date: NaiveDate,
+    total_ownership_shares: Decimal,
+    participating_shares: Decimal,
+    participation_percentage: Decimal,
+    quorum_met: bool,
+    votes_for: Decimal,
+    votes_against: Decimal,
+    abstentions: Decimal,
+    result_approved: bool,
+    questions: Vec<QuestionMinutes>,
+}
+
+fn derive_vote_minutes_tally(
+    vote: &Vote,
+    required_quorum: Decimal,
+    approved_label: &str,
+    rejected_label: &str,
+) -> VoteMinutesTally {
+    let eligible = vote.eligible_count.unwrap_or(0).max(0);
+    let participating = vote.participation_count.unwrap_or(0).max(0);
+    let total_ownership_shares = Decimal::from(eligible);
+    let participating_shares = Decimal::from(participating);
+    let participation_percentage = if eligible > 0 {
+        (participating_shares / total_ownership_shares * Decimal::new(100, 0)).round_dp(2)
+    } else {
+        Decimal::ZERO
+    };
+
+    let mut questions = Vec::new();
+    let (mut votes_for, mut votes_against, mut abstentions) =
+        (Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+
+    if let Ok(results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
+        for (idx, q) in results.questions.iter().enumerate() {
+            let (mut q_for, mut q_against, mut q_abstain) =
+                (Decimal::ZERO, Decimal::ZERO, Decimal::ZERO);
+            for opt in &q.results {
+                let count = Decimal::from(opt.count.max(0));
+                match opt.option_text.to_lowercase().as_str() {
+                    "yes" | "for" | "za" | "ano" | "schvalujem" => q_for += count,
+                    "no" | "against" | "proti" | "ne" | "neschvalujem" => q_against += count,
+                    _ => q_abstain += count,
+                }
+            }
+            questions.push(QuestionMinutes {
+                question_text: q.question_text.clone(),
+                votes_for: q_for,
+                votes_against: q_against,
+                abstentions: q_abstain,
+                result: if q_for > q_against {
+                    approved_label.to_string()
+                } else {
+                    rejected_label.to_string()
+                },
+            });
+            // The top-line for/against/abstain figures mirror the primary
+            // (first) decision question.
+            if idx == 0 {
+                votes_for = q_for;
+                votes_against = q_against;
+                abstentions = q_abstain;
+            }
+        }
+    }
+
+    // Prefer the persisted quorum flag; fall back to the computed participation
+    // when the vote was never formally closed/calculated.
+    let quorum_met = vote
+        .quorum_met
+        .unwrap_or(participation_percentage >= required_quorum);
+    let result_approved = quorum_met && votes_for > votes_against;
+
+    VoteMinutesTally {
+        // The meeting/decision date is the date the vote closed, not a constant.
+        meeting_date: vote.end_at.date_naive(),
+        total_ownership_shares,
+        participating_shares,
+        participation_percentage,
+        quorum_met,
+        votes_for,
+        votes_against,
+        abstentions,
+        result_approved,
+        questions,
+    }
+}
+
 #[utoipa::path(get, path = "/api/v1/regional-compliance/slovak/voting/minutes/{vote_id}", tag = "Regional Compliance", params(("vote_id" = Uuid, Path, description = "Vote ID")), responses((status = 200, description = "Minutes", body = SlovakVoteMinutes)))]
 async fn get_slovak_vote_minutes(
     mut rls: RlsConnection,
@@ -338,25 +440,43 @@ async fn get_slovak_vote_minutes(
             "SS 14 ods. 1 zakona 182/1993 Z.z.".to_string(),
         ));
 
+    // Meeting location is the building's real address, not a fixed placeholder.
+    let building = state
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), vote.building_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?;
+    let meeting_location = building
+        .as_ref()
+        .map(|b| format!("{}, {}", b.street, b.city))
+        .unwrap_or_default();
+
+    let tally = derive_vote_minutes_tally(&vote, rule.0, "schvalene", "neschvalene");
+
     let result = Ok(Json(SlovakVoteMinutes {
         vote_id,
         building_id: vote.building_id,
-        meeting_date: NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
-        meeting_location: "Spolocenska miestnost, Hlavna 1, Bratislava".to_string(),
+        meeting_date: tally.meeting_date,
+        meeting_location,
         title: vote.title,
         decision_type: SlovakDecisionType::SimpleMajority,
         legal_reference: rule.1,
-        total_ownership_shares: Decimal::new(10000, 2),
-        participating_shares: Decimal::new(7500, 2),
-        participation_percentage: Decimal::new(7500, 2),
+        total_ownership_shares: tally.total_ownership_shares,
+        participating_shares: tally.participating_shares,
+        participation_percentage: tally.participation_percentage,
         quorum_required: rule.0,
-        quorum_met: true,
-        votes_for: Decimal::new(6000, 2),
-        votes_against: Decimal::new(1000, 2),
-        abstentions: Decimal::new(500, 2),
-        result_approved: true,
+        quorum_met: tally.quorum_met,
+        votes_for: tally.votes_for,
+        votes_against: tally.votes_against,
+        abstentions: tally.abstentions,
+        result_approved: tally.result_approved,
         participants: vec![],
-        questions: vec![],
+        questions: tally.questions,
         generated_at: Utc::now(),
     }));
     rls.release().await;
@@ -858,6 +978,7 @@ async fn get_czech_usneseni(
     State(state): State<AppState>,
     Path(vote_id): Path<Uuid>,
 ) -> Result<Json<CzechSvjUsneseni>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let vote = state
         .vote_repo
         .find_poll_by_id_rls(&mut **rls.conn(), vote_id)
@@ -890,28 +1011,76 @@ async fn get_czech_usneseni(
             "SS 1206 zakona 89/2012 Sb.".to_string(),
         ));
 
+    // SVJ identity (ICO) comes from the building's persisted Czech SVJ config,
+    // not a hardcoded "12345678".
+    let svj_config = state
+        .regional_compliance_repo
+        .get_czech_svj_config(&mut **rls.conn(), org_id, vote.building_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?;
+    let ico = svj_config
+        .as_ref()
+        .map(|c| c.ico.clone())
+        .unwrap_or_default();
+
+    // SVJ name is the organization name; meeting location is the building's
+    // real address.
+    let org = state
+        .org_repo
+        .find_by_id_rls(&mut **rls.conn(), org_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?;
+    let svj_name = org.as_ref().map(|o| o.name.clone()).unwrap_or_default();
+
+    let building = state
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), vote.building_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?;
+    let meeting_location = building
+        .as_ref()
+        .map(|b| format!("{}, {}", b.street, b.city))
+        .unwrap_or_default();
+
+    let tally = derive_vote_minutes_tally(&vote, rule.0, "schvaleno", "neschvaleno");
+
     let result = Ok(Json(CzechSvjUsneseni {
         vote_id,
         building_id: vote.building_id,
-        svj_name: "SVJ Hlavni 1".to_string(),
-        ico: "12345678".to_string(),
-        meeting_date: NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
-        meeting_location: "Spolecenska mistnost, Hlavni 1, Praha".to_string(),
+        svj_name,
+        ico,
+        meeting_date: tally.meeting_date,
+        meeting_location,
         title: vote.title,
         decision_type: CzechDecisionType::SimpleMajority,
         legal_reference: rule.1,
-        total_ownership_shares: Decimal::new(10000, 2),
-        participating_shares: Decimal::new(7500, 2),
-        participation_percentage: Decimal::new(7500, 2),
+        total_ownership_shares: tally.total_ownership_shares,
+        participating_shares: tally.participating_shares,
+        participation_percentage: tally.participation_percentage,
         quorum_required: rule.0,
-        quorum_met: true,
-        votes_for: Decimal::new(6000, 2),
-        votes_against: Decimal::new(1000, 2),
-        abstentions: Decimal::new(500, 2),
-        result_approved: true,
+        quorum_met: tally.quorum_met,
+        votes_for: tally.votes_for,
+        votes_against: tally.votes_against,
+        abstentions: tally.abstentions,
+        result_approved: tally.result_approved,
         requires_notary: false,
         participants: vec![],
-        questions: vec![],
+        questions: tally.questions,
         generated_at: Utc::now(),
     }));
     rls.release().await;
@@ -988,4 +1157,151 @@ async fn get_compliance_status(
     }));
     rls.release().await;
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+    use serde_json::json;
+
+    /// Build a persisted-shaped `Vote` for the minutes-derivation tests.
+    fn sample_vote(
+        results: serde_json::Value,
+        eligible: Option<i32>,
+        participation: Option<i32>,
+        quorum_met: Option<bool>,
+    ) -> Vote {
+        Vote {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::new_v4(),
+            building_id: Uuid::new_v4(),
+            title: "Annual General Meeting 2026".to_string(),
+            description: None,
+            start_at: None,
+            end_at: Utc.with_ymd_and_hms(2026, 3, 20, 18, 0, 0).unwrap(),
+            status: "closed".to_string(),
+            quorum_type: "simple_majority".to_string(),
+            quorum_percentage: Some(50),
+            allow_delegation: false,
+            anonymous_voting: false,
+            participation_count: participation,
+            eligible_count: eligible,
+            quorum_met,
+            results,
+            results_calculated_at: None,
+            created_by: Uuid::new_v4(),
+            published_by: None,
+            published_at: None,
+            cancelled_by: None,
+            cancelled_at: None,
+            cancellation_reason: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    /// Regression for the hardcoded-vote-minutes bug: every figure in the
+    /// generated legal document must come from the persisted vote record, never
+    /// the old mock constants (2024-01-15 date, 100/75 shares, 60/10/5 split,
+    /// always-approved).
+    #[test]
+    fn tally_is_sourced_from_persisted_vote_not_hardcoded() {
+        let results = json!({
+            "vote_id": Uuid::new_v4(),
+            "participation_count": 8,
+            "eligible_count": 10,
+            "participation_rate": 80.0,
+            "quorum_met": true,
+            "calculated_at": "2026-03-20T18:05:00Z",
+            "questions": [{
+                "question_id": Uuid::new_v4(),
+                "question_text": "Approve the 2026 repair fund?",
+                "question_type": "yes_no",
+                "total_votes": 8,
+                "weighted_total": 8.0,
+                "winner": null,
+                "results": [
+                    {"option_id": Uuid::new_v4(), "option_text": "Za", "count": 6, "weighted_count": 6.0, "percentage": 75.0},
+                    {"option_id": Uuid::new_v4(), "option_text": "Proti", "count": 1, "weighted_count": 1.0, "percentage": 12.5},
+                    {"option_id": Uuid::new_v4(), "option_text": "Zdrzujem sa", "count": 1, "weighted_count": 1.0, "percentage": 12.5}
+                ]
+            }]
+        });
+        let vote = sample_vote(results, Some(10), Some(8), Some(true));
+
+        let tally =
+            derive_vote_minutes_tally(&vote, Decimal::new(5001, 2), "schvalene", "neschvalene");
+
+        // Meeting date is the vote's close date, NOT the old hardcoded constant.
+        assert_eq!(
+            tally.meeting_date,
+            NaiveDate::from_ymd_opt(2026, 3, 20).unwrap()
+        );
+        assert_ne!(
+            tally.meeting_date,
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()
+        );
+        // Shares are sourced from the persisted eligible/participation counts.
+        assert_eq!(tally.total_ownership_shares, Decimal::from(10));
+        assert_eq!(tally.participating_shares, Decimal::from(8));
+        assert_eq!(tally.participation_percentage, Decimal::new(8000, 2));
+        // For/against/abstain come from the real result options (6/1/1), not 60/10/5.
+        assert_eq!(tally.votes_for, Decimal::from(6));
+        assert_eq!(tally.votes_against, Decimal::from(1));
+        assert_eq!(tally.abstentions, Decimal::from(1));
+        assert!(tally.quorum_met);
+        assert!(tally.result_approved);
+        assert_eq!(tally.questions.len(), 1);
+        assert_eq!(tally.questions[0].result, "schvalene");
+    }
+
+    /// A rejected / failed vote must render as rejected — the old code always
+    /// returned `result_approved: true`.
+    #[test]
+    fn tally_reflects_a_rejected_vote() {
+        let results = json!({
+            "vote_id": Uuid::new_v4(),
+            "participation_count": 2,
+            "eligible_count": 10,
+            "participation_rate": 20.0,
+            "quorum_met": false,
+            "calculated_at": "2026-03-20T18:05:00Z",
+            "questions": [{
+                "question_id": Uuid::new_v4(),
+                "question_text": "Approve?",
+                "question_type": "yes_no",
+                "total_votes": 2,
+                "weighted_total": 2.0,
+                "winner": null,
+                "results": [
+                    {"option_id": Uuid::new_v4(), "option_text": "Yes", "count": 0, "weighted_count": 0.0, "percentage": 0.0},
+                    {"option_id": Uuid::new_v4(), "option_text": "No", "count": 2, "weighted_count": 2.0, "percentage": 100.0}
+                ]
+            }]
+        });
+        let vote = sample_vote(results, Some(10), Some(2), Some(false));
+
+        let tally =
+            derive_vote_minutes_tally(&vote, Decimal::new(5001, 2), "schvaleno", "neschvaleno");
+
+        assert_eq!(tally.votes_for, Decimal::ZERO);
+        assert_eq!(tally.votes_against, Decimal::from(2));
+        assert!(!tally.quorum_met);
+        assert!(!tally.result_approved);
+        assert_eq!(tally.questions[0].result, "neschvaleno");
+    }
+
+    /// A vote with no calculated results must not fabricate a tally.
+    #[test]
+    fn tally_handles_empty_results() {
+        let vote = sample_vote(json!({}), Some(0), Some(0), None);
+        let tally =
+            derive_vote_minutes_tally(&vote, Decimal::new(5001, 2), "schvalene", "neschvalene");
+        assert_eq!(tally.total_ownership_shares, Decimal::ZERO);
+        assert_eq!(tally.participation_percentage, Decimal::ZERO);
+        assert_eq!(tally.votes_for, Decimal::ZERO);
+        assert!(tally.questions.is_empty());
+        assert!(!tally.result_approved);
+    }
 }
