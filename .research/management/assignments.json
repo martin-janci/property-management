@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T12:34:40Z",
+  "generated": "2026-08-06T13:41:21Z",
   "assignments": [
     {
       "task_id": "code-review-reality-server-invite-email-mismatch",
@@ -114,18 +114,18 @@
     {
       "task_id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23-retry1",
       "branch": "auto-impl/refactor-churn-hotspot-infra-ops-authz-b-1c445527",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-06T12:07:31Z",
-      "last_updated": "2026-08-06T12:07:31Z",
-      "status_changed_at": "2026-08-06T12:07:31Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-06T13:41:21Z",
+      "status_changed_at": "2026-08-06T13:41:21Z",
+      "pr_number": 2683,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2683",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2683 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=tightened weak is_client_error->exact 401/403 in infra_ops authz backfill; fmt+clippy+5/5 target tests green (local PG+vendored swagger); 3 gate fails pre-existing UNRELATED airbnb/booking external-API tests (egress-blocked, pass in CI)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
