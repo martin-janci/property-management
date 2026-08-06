@@ -17,8 +17,13 @@
  * every event, so the round-trip is asserted explicitly.
  */
 
-import { describe, expect, it } from 'vitest';
-import { buildWebSocketUrl, parseServerMessage, WS_NOTIFICATIONS_PATH } from './websocket';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  buildWebSocketUrl,
+  parseServerMessage,
+  WebSocketService,
+  WS_NOTIFICATIONS_PATH,
+} from './websocket';
 
 describe('buildWebSocketUrl', () => {
   it('appends the canonical handler path to a bare origin', () => {
@@ -86,5 +91,92 @@ describe('parseServerMessage', () => {
     expect(parseServerMessage(null)).toBeNull();
     expect(parseServerMessage('string')).toBeNull();
     expect(parseServerMessage(42)).toBeNull();
+  });
+});
+
+/**
+ * Minimal `WebSocket` double so the service lifecycle can be driven under fake
+ * timers without a real network. Records every instance and every `close()`
+ * call so a test can assert the client never force-closes a healthy socket.
+ */
+class MockWebSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSING = 2;
+  static readonly CLOSED = 3;
+
+  static instances: MockWebSocket[] = [];
+
+  readyState = MockWebSocket.CONNECTING;
+  onopen: (() => void) | null = null;
+  onclose: ((event: { code: number; reason: string; wasClean: boolean }) => void) | null = null;
+  onerror: (() => void) | null = null;
+  onmessage: ((event: { data: string }) => void) | null = null;
+
+  readonly url: string;
+  readonly sent: string[] = [];
+  readonly closeCalls: { code?: number; reason?: string }[] = [];
+
+  constructor(url: string) {
+    this.url = url;
+    MockWebSocket.instances.push(this);
+  }
+
+  send(data: string): void {
+    this.sent.push(data);
+  }
+
+  close(code?: number, reason?: string): void {
+    this.closeCalls.push({ code, reason });
+    this.readyState = MockWebSocket.CLOSED;
+    this.onclose?.({ code: code ?? 1000, reason: reason ?? '', wasClean: code === 1000 });
+  }
+
+  /** Test helper: drive the handshake to open. */
+  simulateOpen(): void {
+    this.readyState = MockWebSocket.OPEN;
+    this.onopen?.();
+  }
+}
+
+describe('WebSocketService heartbeat (regression: #ws-pong-timeout-drop)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    MockWebSocket.instances = [];
+    vi.stubGlobal('WebSocket', MockWebSocket);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('does not force-close the socket after 60s with no app-level pong reply', () => {
+    // Regression: the client used to send an application-level {type:'ping'}
+    // every 30s and force-close with code 4000 "Pong timeout" 10s later because
+    // the api-server never emits an app-level {type:'pong'}. Liveness now lives
+    // purely at the protocol layer (server Ping + browser auto-Pong), so a
+    // healthy socket that receives no app-level pong must stay open.
+    const service = new WebSocketService({ getToken: () => 'jwt-token' });
+
+    service.connect();
+    expect(MockWebSocket.instances).toHaveLength(1);
+    const socket = MockWebSocket.instances[0];
+    socket.simulateOpen();
+    expect(service.getConnectionState()).toBe('connected');
+
+    // Well past the old 30s heartbeat + 10s pong-timeout window.
+    vi.advanceTimersByTime(60_000);
+
+    // The client must not have closed the socket…
+    expect(socket.closeCalls).toHaveLength(0);
+    // …must never send an app-level heartbeat frame…
+    expect(socket.sent).toHaveLength(0);
+    // …must not have scheduled a reconnect (no second socket)…
+    expect(MockWebSocket.instances).toHaveLength(1);
+    // …and must still report itself connected.
+    expect(service.getConnectionState()).toBe('connected');
+
+    service.disconnect();
   });
 });
