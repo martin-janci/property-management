@@ -5,9 +5,12 @@
 //!   * same key + different payload is rejected with 422,
 //!   * expired rows are lazily discarded and the handler executes again.
 
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Duration,
 };
 
 use axum::{
@@ -20,6 +23,9 @@ use axum::{
     Json, Router,
 };
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+use sqlx::Connection;
+use tokio::sync::Notify;
 use tower::ServiceExt;
 use uuid::Uuid;
 
@@ -105,6 +111,51 @@ fn post_demo_resolved(
         })
         .body(Body::from(body.to_string()))
         .expect("build request")
+}
+
+/// State for the "hanging handler" fixture used by the cancellation-safety
+/// regression test below: the handler signals `started` the moment it begins
+/// running (proving the idempotency middleware has acquired its lock and is
+/// now parked inside `next.run(request).await`), then hangs forever so the
+/// test can abort the request task mid-flight, deterministically.
+#[derive(Clone)]
+struct HangingTestState {
+    pool: db::DbPool,
+    started: Arc<Notify>,
+}
+
+impl TenantMembershipProvider for HangingTestState {
+    fn db_pool(&self) -> &db::DbPool {
+        &self.pool
+    }
+}
+
+async fn hanging_idempotency(
+    Extension(state): Extension<HangingTestState>,
+    request: Request<Body>,
+    next: Next,
+) -> Response {
+    api_core::middleware::handle_idempotent_request(state.pool.clone(), request, next).await
+}
+
+async fn hanging_handler(State(state): State<HangingTestState>) -> (StatusCode, Json<Value>) {
+    state.started.notify_one();
+    // Never resolves — the test aborts the enclosing task while this is
+    // pending, simulating a client disconnect mid-request.
+    std::future::pending::<()>().await;
+    unreachable!("hanging_handler must be cancelled before resolving")
+}
+
+fn build_hanging_app(pool: db::DbPool, started: Arc<Notify>) -> Router {
+    let state = HangingTestState { pool, started };
+
+    Router::new()
+        .route(
+            "/demo",
+            post(hanging_handler).route_layer(from_fn(hanging_idempotency)),
+        )
+        .layer(Extension(state.clone()))
+        .with_state(state)
 }
 
 fn is_replayed(response: &Response) -> bool {
@@ -392,5 +443,132 @@ async fn spoofed_tenant_header_cannot_change_scope(pool: db::DbPool) {
         hits.load(Ordering::SeqCst),
         2,
         "the spoofed X-Tenant-ID header must never merge two tenants into one scope"
+    );
+}
+
+/// Reimplements `advisory_lock_id` (private to `idempotency.rs`) so the test
+/// can independently compute the exact lock id a given request will hash to,
+/// without needing the middleware to expose its internals.
+fn expected_lock_id(tenant_scope: &str, method: &str, path: &str, key: &str) -> i64 {
+    let mut hasher = Sha256::new();
+    hasher.update(tenant_scope.as_bytes());
+    hasher.update(b"\n");
+    hasher.update(method.as_bytes());
+    hasher.update(b"\n");
+    hasher.update(path.as_bytes());
+    hasher.update(b"\n");
+    hasher.update(key.as_bytes());
+
+    let digest = hasher.finalize();
+    let mut bytes = [0_u8; 8];
+    bytes.copy_from_slice(&digest[..8]);
+    i64::from_be_bytes(bytes)
+}
+
+/// Regression test for the advisory-lock cancellation leak: if the request
+/// future carrying `handle_idempotent_request` is dropped mid-flight (e.g. a
+/// client disconnect while the wrapped handler is still running), the
+/// idempotency lock it holds must still be released — not leaked for the
+/// life of the pooled connection.
+///
+/// Pre-fix, the middleware acquired a *session-level* `pg_advisory_lock` on a
+/// bare pooled connection and released it only via an explicit
+/// `pg_advisory_unlock` after `next.run(request).await` returned. Dropping
+/// the future between those two points (as happens here) skipped the
+/// release entirely, wedging every subsequent request — from ANY session —
+/// that shares the same idempotency key behind a lock nobody would ever
+/// release.
+///
+/// The check below deliberately opens an *independent* Postgres connection
+/// (its own backend session/PID) rather than reusing `pool` to test for the
+/// lock: Postgres advisory locks are re-entrant *within the same session*,
+/// so probing from a connection the pool happens to hand back from its own
+/// recycled/leaked connection would trivially "succeed" even under the bug
+/// and prove nothing. Only a genuinely different session can distinguish
+/// "released" from "leaked but incidentally re-entered".
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn cancelled_request_does_not_leak_advisory_lock(pool: db::DbPool) {
+    // `#[sqlx::test]`'s fixture pool sets `idle_timeout(Some(1s))` on the
+    // per-test database (see sqlx-postgres's `testing::test_context`), so an
+    // idle connection — including one that leaked a session-level advisory
+    // lock — gets physically closed (and the lock incidentally released
+    // along with it) within about a second regardless of whether this
+    // middleware releases it correctly. That would mask the exact bug this
+    // test exists to catch. Build a dedicated pool against the same
+    // database with idle reaping disabled so only the middleware's own
+    // release behavior can free the lock.
+    let app_pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(5)
+        .idle_timeout(None)
+        .max_lifetime(None)
+        .connect_with(pool.connect_options().as_ref().clone())
+        .await
+        .expect("open dedicated no-idle-reap pool for the app");
+
+    let started = Arc::new(Notify::new());
+    let hanging_app = build_hanging_app(app_pool.clone(), started.clone());
+    let tenant_id = Uuid::new_v4();
+    let idempotency_key = "idem-cancel-leak";
+
+    let first_request = post_demo(idempotency_key, tenant_id, json!({"value": 1}));
+    let first_task = tokio::spawn(async move {
+        let _ = hanging_app.oneshot(first_request).await;
+    });
+
+    // Block until the handler has actually started — i.e. the idempotency
+    // middleware has acquired its advisory lock and is now parked inside
+    // `next.run(request).await`, exactly the window the bug leaked in.
+    started.notified().await;
+
+    // Simulate a client disconnect mid-flight by aborting the task while it
+    // is still inside the handler. This drops `handle_idempotent_request`'s
+    // future — and everything it was holding — without ever reaching the
+    // unlock/commit at the end of the function. Awaiting the aborted handle
+    // guarantees the future's Drop glue (and thus the transaction's queued
+    // rollback) has run before we proceed.
+    first_task.abort();
+    let _ = first_task.await;
+
+    // `post_demo` requests carry no `ResolvedTenant` extension, so
+    // `tenant_scope()` resolves to the fixed "global" sentinel regardless of
+    // the `x-tenant-id` header value (see `spoofed_tenant_header_cannot_change_scope`).
+    let lock_id = expected_lock_id("global", "POST", "/demo", idempotency_key);
+
+    // Open a brand-new connection to the same database, independent of
+    // `pool`'s recycling, so we're guaranteed to probe from a different
+    // backend session.
+    let mut checker = sqlx::PgConnection::connect_with(pool.connect_options().as_ref())
+        .await
+        .expect("open independent checker connection");
+
+    // The background flush that turns the queued `ROLLBACK` into bytes on
+    // the wire (sqlx's `Floating::return_to_pool` pinging the connection
+    // before releasing it) races with this check, so poll briefly instead of
+    // asserting on the first attempt. Pre-fix, this never becomes true and
+    // the outer timeout fails the test instead of hanging the suite.
+    let poll_result = tokio::time::timeout(Duration::from_secs(15), async {
+        loop {
+            let acquired: bool = sqlx::query_scalar("SELECT pg_try_advisory_lock($1)")
+                .bind(lock_id)
+                .fetch_one(&mut checker)
+                .await
+                .expect("pg_try_advisory_lock query");
+            if acquired {
+                let _ = sqlx::query("SELECT pg_advisory_unlock($1)")
+                    .bind(lock_id)
+                    .execute(&mut checker)
+                    .await;
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+    })
+    .await;
+
+    assert!(
+        poll_result.is_ok(),
+        "advisory lock id={lock_id} is still held by another session after the \
+         first request was cancelled — the idempotency lock leaked past task \
+         cancellation instead of being released"
     );
 }

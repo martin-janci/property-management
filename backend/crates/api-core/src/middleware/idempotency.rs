@@ -77,10 +77,25 @@ pub async fn handle_idempotent_request(
     let request_hash = request_hash(&method, &path, &request_body);
     let request = Request::from_parts(parts, Body::from(request_body.clone()));
 
-    let mut conn = match pool.acquire().await {
-        Ok(conn) => conn,
+    // Hold the idempotency serialization lock as a *transaction-scoped*
+    // advisory lock (`pg_advisory_xact_lock`) rather than a session-level
+    // `pg_advisory_lock`/`pg_advisory_unlock` pair on a bare pooled
+    // connection.
+    //
+    // This makes release cancellation-safe: `sqlx::Transaction::drop`
+    // unconditionally queues a `ROLLBACK` if the transaction was never
+    // committed, and returning the underlying `PoolConnection` to the pool
+    // flushes that queued rollback before the connection is made available
+    // again (see sqlx's `Floating::return_to_pool`, which pings the
+    // connection — flushing any pending writes — before releasing it). So
+    // even if this future is dropped mid-flight (client disconnect while
+    // `next.run(request).await` is pending), the transaction — and with it
+    // the xact-scoped advisory lock — is guaranteed to be torn down instead
+    // of leaking for the life of the pooled connection.
+    let mut tx = match pool.begin().await {
+        Ok(tx) => tx,
         Err(err) => {
-            tracing::error!(error = %err, "failed to acquire idempotency connection");
+            tracing::error!(error = %err, "failed to open idempotency transaction");
             return error_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL_ERROR",
@@ -90,12 +105,13 @@ pub async fn handle_idempotent_request(
     };
 
     let lock_id = advisory_lock_id(&tenant_scope, &method, &path, &key);
-    if let Err(err) = sqlx::query("SELECT pg_advisory_lock($1)")
+    if let Err(err) = sqlx::query("SELECT pg_advisory_xact_lock($1)")
         .bind(lock_id)
-        .execute(&mut *conn)
+        .execute(&mut *tx)
         .await
     {
         tracing::error!(error = %err, "failed to acquire idempotency advisory lock");
+        // `tx` drops here: queues a ROLLBACK, releasing any partial state.
         return error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             "INTERNAL_ERROR",
@@ -103,10 +119,9 @@ pub async fn handle_idempotent_request(
         );
     }
 
-    let cached = match load_cached_response(&mut conn, &tenant_scope, &method, &path, &key).await {
+    let cached = match load_cached_response(&mut tx, &tenant_scope, &method, &path, &key).await {
         Ok(row) => row,
         Err(err) => {
-            let _ = unlock(&mut conn, lock_id).await;
             tracing::error!(error = %err, "failed to load cached idempotency response");
             return error_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -118,7 +133,7 @@ pub async fn handle_idempotent_request(
 
     if let Some(row) = cached {
         if row.request_hash != request_hash {
-            let _ = unlock(&mut conn, lock_id).await;
+            let _ = tx.commit().await;
             return error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "IDEMPOTENCY_KEY_REUSED",
@@ -126,7 +141,7 @@ pub async fn handle_idempotent_request(
             );
         }
 
-        let _ = unlock(&mut conn, lock_id).await;
+        let _ = tx.commit().await;
         return cached_response(row);
     }
 
@@ -135,7 +150,7 @@ pub async fn handle_idempotent_request(
         Ok(captured) => {
             if !captured.status.is_server_error() {
                 if let Err(err) = store_response(
-                    &mut conn,
+                    &mut tx,
                     &tenant_scope,
                     &method,
                     &path,
@@ -146,7 +161,6 @@ pub async fn handle_idempotent_request(
                 .await
                 {
                     tracing::error!(error = %err, "failed to store idempotent response");
-                    let _ = unlock(&mut conn, lock_id).await;
                     return error_response(
                         StatusCode::INTERNAL_SERVER_ERROR,
                         "INTERNAL_ERROR",
@@ -160,7 +174,7 @@ pub async fn handle_idempotent_request(
         Err(response) => response,
     };
 
-    let _ = unlock(&mut conn, lock_id).await;
+    let _ = tx.commit().await;
     response
 }
 
@@ -212,19 +226,8 @@ fn advisory_lock_id(tenant_scope: &str, method: &str, path: &str, key: &str) -> 
     i64::from_be_bytes(bytes)
 }
 
-async fn unlock(
-    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
-    lock_id: i64,
-) -> Result<(), sqlx::Error> {
-    sqlx::query("SELECT pg_advisory_unlock($1)")
-        .bind(lock_id)
-        .execute(&mut **conn)
-        .await?;
-    Ok(())
-}
-
 async fn load_cached_response(
-    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
+    conn: &mut sqlx::PgConnection,
     tenant_scope: &str,
     method: &str,
     path: &str,
@@ -244,7 +247,7 @@ async fn load_cached_response(
     .bind(method)
     .bind(path)
     .bind(key)
-    .execute(&mut **conn)
+    .execute(&mut *conn)
     .await?;
 
     sqlx::query_as::<_, CachedResponseRow>(
@@ -262,7 +265,7 @@ async fn load_cached_response(
     .bind(method)
     .bind(path)
     .bind(key)
-    .fetch_optional(&mut **conn)
+    .fetch_optional(&mut *conn)
     .await
 }
 
@@ -308,7 +311,7 @@ async fn capture_response(response: Response) -> Result<CapturedResponse, Respon
 }
 
 async fn store_response(
-    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
+    conn: &mut sqlx::PgConnection,
     tenant_scope: &str,
     method: &str,
     path: &str,
@@ -349,7 +352,7 @@ async fn store_response(
     .bind(&response.content_type)
     .bind(&response.body)
     .bind(IDEMPOTENCY_TTL_HOURS)
-    .execute(&mut **conn)
+    .execute(&mut *conn)
     .await?;
 
     Ok(())
