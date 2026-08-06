@@ -3165,6 +3165,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-ws-ungated-console-retry1",
+      "branch": "auto-impl/code-review-ppt-web-core-ws-ungated-cons-4b0138cd",
+      "status": "failed",
+      "claimed_at": "2026-08-06T18:13:18Z",
+      "last_updated": "2026-08-06T18:18:39Z",
+      "status_changed_at": "2026-08-06T18:18:39Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done (no-op) — fix already landed on dev; all ~10 ws console calls already gated via wsWarn/wsError (import.meta.env.DEV). No changes needed.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-accounting-invoic-c06a08f8",
       "status": "merged",
@@ -5743,6 +5765,28 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-uc-33-1-link-dispute-screen-map-retry1",
+      "branch": "auto-impl/gap-uc-33-1-link-dispute-screen-map-retr-38dbe05b",
+      "status": "failed",
+      "claimed_at": "2026-08-06T18:07:39Z",
+      "last_updated": "2026-08-06T18:18:39Z",
+      "status_changed_at": "2026-08-06T18:18:39Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked — UC-33.1 is Tenant Screening (Request Background Check), not disputes; dispute screen-maps correctly map to UC-38. Refused to create wrong mapping. [BAD-PREMISE]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
@@ -12159,5 +12203,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-06T18:13:27Z"
+  "archived_at": "2026-08-06T18:23:48Z"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-06T18:13:32Z",
+  "archived_at": "2026-08-06T18:23:48Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3026,6 +3026,20 @@
         "vector": "refactor"
       },
       "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:29:56Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-ungated-console-retry1",
+      "action": "[DISPATCHER-DONE: already landed on dev — ws console calls already gated via wsWarn/wsError] 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod [retry 1/2 of failed code-review-ppt-web-core-ws-ungated-console]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=code-review-ppt-web-core-ws-ungated-console reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:29:56Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T18:04:42Z",
+      "retry_of": "code-review-ppt-web-core-ws-ungated-console",
+      "retry_round": 1
     },
     {
       "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
@@ -6427,6 +6441,20 @@
         "merged_at": null,
         "at": "2026-07-30T16:21:50Z"
       }
+    },
+    {
+      "id": "gap-uc-33-1-link-dispute-screen-map-retry1",
+      "action": "[DISPATCHER-DROP: implementer verified UC-33.1 is Tenant Screening not disputes — bad premise] Link UC-33.1 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter [retry 1/2 of failed gap-uc-33-1-link-dispute-screen-map]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=gap-uc-33-1-link-dispute-screen-map reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:08:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T18:04:42Z",
+      "retry_of": "gap-uc-33-1-link-dispute-screen-map",
+      "retry_round": 1
     },
     {
       "id": "gap-uc-33-2-link-dispute-screen-map",
