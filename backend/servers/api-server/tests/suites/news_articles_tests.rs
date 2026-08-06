@@ -28,7 +28,9 @@
 
 #![allow(dead_code)]
 
-use crate::common::{create_manager_with_org, TestApp, TestUser};
+use crate::common::{
+    create_authenticated_user, create_manager_with_org, mint_tenant_token, TestApp, TestUser,
+};
 use axum::http::StatusCode;
 use serde_json::{json, Value};
 use sqlx::PgPool;
@@ -103,6 +105,21 @@ async fn seed_comment(pool: &PgPool, article_id: Uuid, user_id: Uuid, content: &
     .fetch_one(pool)
     .await
     .expect("seed comment")
+}
+
+/// Register a second user who is neither a manager nor the article author,
+/// and return a Resident-role tenant token scoped to `org`. Used by the
+/// authorization regression tests for the mutating lifecycle endpoints.
+async fn non_manager_non_author_token(app: &TestApp, org: Uuid) -> String {
+    let intruder = TestUser::new();
+    let _ = create_authenticated_user(app, &intruder).await;
+    let intruder_id = user_id_for(&app.pool, &intruder.email).await;
+    mint_tenant_token(
+        intruder_id,
+        &intruder.email,
+        org,
+        common::tenant::TenantRole::Resident,
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -378,6 +395,116 @@ async fn pin_article_succeeds(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body: Value = resp.json_value();
     assert_eq!(body["article"]["pinned"].as_bool(), Some(true));
+}
+
+// ---------------------------------------------------------------------------
+// Authorization regression tests: a non-manager, non-author caller must NOT
+// be able to publish / archive / restore / pin another user's article.
+// (Previously these handlers extracted `_user: AuthUser` but never checked
+// is_manager()/authorship, so any authenticated user could mutate lifecycle.)
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn publish_article_non_manager_non_author_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let manager = TestUser::new();
+    let (_mgr_token, org) = create_manager_with_org(&app, &manager, "news-publish-403").await;
+    let author_id = user_id_for(&app.pool, &manager.email).await;
+    let article_id = seed_article(&app.pool, org, author_id, "Not yours to publish").await;
+
+    let token = non_manager_non_author_token(&app, org).await;
+
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/news/{article_id}/publish"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .json(json!({}))
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn archive_article_non_manager_non_author_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let manager = TestUser::new();
+    let (_mgr_token, org) = create_manager_with_org(&app, &manager, "news-archive-403").await;
+    let author_id = user_id_for(&app.pool, &manager.email).await;
+    let article_id = seed_published_article(&app.pool, org, author_id).await;
+
+    let token = non_manager_non_author_token(&app, org).await;
+
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/news/{article_id}/archive"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .json(json!({}))
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn restore_article_non_manager_non_author_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let manager = TestUser::new();
+    let (_mgr_token, org) = create_manager_with_org(&app, &manager, "news-restore-403").await;
+    let author_id = user_id_for(&app.pool, &manager.email).await;
+
+    let article_id: Uuid = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO news_articles \
+         (organization_id, author_id, title, content, status, archived_at) \
+         VALUES ($1, $2, 'Archived article', 'Content.', 'archived', NOW()) \
+         RETURNING id",
+    )
+    .bind(org)
+    .bind(author_id)
+    .fetch_one(&app.pool)
+    .await
+    .expect("seed archived article");
+
+    let token = non_manager_non_author_token(&app, org).await;
+
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/news/{article_id}/restore"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .json(json!({}))
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn pin_article_non_manager_non_author_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let manager = TestUser::new();
+    let (_mgr_token, org) = create_manager_with_org(&app, &manager, "news-pin-403").await;
+    let author_id = user_id_for(&app.pool, &manager.email).await;
+    let article_id = seed_article(&app.pool, org, author_id, "Not yours to pin").await;
+
+    let token = non_manager_non_author_token(&app, org).await;
+
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/news/{article_id}/pin"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .json(json!({"pinned": true}))
+                .build(),
+        )
+        .await;
+
+    resp.assert_status(StatusCode::FORBIDDEN);
 }
 
 // ---------------------------------------------------------------------------
