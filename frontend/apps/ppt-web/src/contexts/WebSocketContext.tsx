@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useNetworkStatusEffect } from '../hooks/useNetworkStatus';
 import {
   type ConnectionState,
   type MessageHandler,
@@ -70,6 +71,15 @@ export interface WebSocketContextValue {
    * The last connection error, if any.
    */
   error: Error | null;
+
+  /**
+   * Whether the client has exhausted its reconnect-attempt budget and given up
+   * retrying for now. Cleared automatically once a connection is
+   * re-established (e.g. after the browser regains connectivity, or a manual
+   * {@link reconnect}). UIs can use this to surface an explicit "reconnect"
+   * affordance instead of a transient error.
+   */
+  maxRetriesExceeded: boolean;
 
   /**
    * Subscribe to WebSocket events of a specific type.
@@ -177,6 +187,7 @@ export function WebSocketProvider({
 }: WebSocketProviderProps) {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [error, setError] = useState<Error | null>(null);
+  const [maxRetriesExceeded, setMaxRetriesExceeded] = useState(false);
   const serviceRef = useRef<WebSocketService | null>(null);
   const wasConnectedRef = useRef(false);
   const previousStateRef = useRef<ConnectionState>('disconnected');
@@ -222,6 +233,8 @@ export function WebSocketProvider({
       setError(err ?? null);
 
       if (state === 'connected') {
+        // A live connection clears any prior give-up state.
+        setMaxRetriesExceeded(false);
         if (wasConnectedRef.current) {
           // This is a reconnection
           onReconnectedRef.current?.();
@@ -236,11 +249,37 @@ export function WebSocketProvider({
       }
     });
 
+    // Surface the terminal give-up state so the UI can offer an explicit
+    // reconnect affordance rather than silently losing realtime for the
+    // session. Cleared again on the next successful 'connected' transition.
+    const unsubscribeMaxRetries = service.subscribe('connection:max-retries-exceeded', () => {
+      setMaxRetriesExceeded(true);
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeMaxRetries();
       service.disconnect();
     };
   }, []);
+
+  // Resume the socket when the browser regains connectivity. The service's
+  // exponential-backoff budget (default ~3 min) can be exhausted by a longer
+  // outage — sleep/resume, a VPN drop, or a server redeploy — after which the
+  // service gives up permanently for the session and nothing re-arms it.
+  // A regained-connectivity signal is exactly when to retry: connect() resets
+  // the reconnect budget and re-establishes the socket.
+  useNetworkStatusEffect(
+    useCallback(() => {
+      const service = serviceRef.current;
+      if (!service) return;
+      // Only resume while still authenticated — otherwise connect() would just
+      // error out on a missing token.
+      if (authRef.current.isAuthenticated && authRef.current.accessToken) {
+        service.connect();
+      }
+    }, [])
+  );
 
   // Handle auth changes - connect when authenticated, disconnect when not
   useEffect(() => {
@@ -335,12 +374,13 @@ export function WebSocketProvider({
       isConnecting: connectionState === 'connecting',
       connectionState,
       error,
+      maxRetriesExceeded,
       subscribe,
       send,
       getLastEventTimestamp,
       reconnect,
     }),
-    [connectionState, error, subscribe, send, getLastEventTimestamp, reconnect]
+    [connectionState, error, maxRetriesExceeded, subscribe, send, getLastEventTimestamp, reconnect]
   );
 
   return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
