@@ -358,6 +358,16 @@ pub async fn list_members(
 }
 
 /// Create agency invitation.
+///
+/// SECURITY (invite-authz audit): requires an authenticated principal who is
+/// an active member of the target agency. Previously this handler called the
+/// repo directly with no membership gate, so ANY authenticated user could
+/// invite themselves (or anyone) into ANY agency via
+/// `POST /api/v1/agencies/{id}/invitations` — a self-service privilege
+/// escalation. We now apply the same `check_agency_membership` gate the
+/// sibling mutators (`update_agency`, `update_branding`) use: `404` when the
+/// agency doesn't exist and `403` for a non-member (never leaks cross-agency
+/// membership).
 #[utoipa::path(
     post,
     path = "/api/v1/agencies/{id}/invitations",
@@ -367,8 +377,10 @@ pub async fn list_members(
     responses(
         (status = 201, description = "Invitation created", body = RealityAgencyInvitation),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not a member of this agency"),
         (status = 404, description = "Agency not found")
-    )
+    ),
+    security(("session_token" = []))
 )]
 pub async fn create_invitation(
     State(state): State<AppState>,
@@ -376,6 +388,19 @@ pub async fn create_invitation(
     Path(agency_id): Path<Uuid>,
     Json(data): Json<CreateAgencyInvitation>,
 ) -> Result<Json<RealityAgencyInvitation>, (axum::http::StatusCode, String)> {
+    // SECURITY (invite-authz): gate on active membership of the target agency
+    // via the shared helper — single source of truth for "is this user allowed
+    // to mutate this agency's data?". Returns 404 (unknown agency) / 403
+    // (non-member) before any invitation is created.
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", e),
+        )
+    })?;
+    super::agency_imports::check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
+    drop(conn);
+
     let invitation = state
         .reality_portal_repo
         .create_invitation(agency_id, principal.user_id, data)
