@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.compose) apply false
     // Spotless 8.5.0+ is required for Gradle 9 support.
-    id("com.diffplug.spotless") version "8.8.0"
+    id("com.diffplug.spotless") version "8.9.0"
 }
 
 spotless {
