@@ -772,45 +772,213 @@ async fn verify_webhook_signature(
 // Helper Functions
 // ============================================================================
 
-/// Verify Alexa request signature (Story 98.6).
+/// Verify an Alexa Skills Kit request signature (issue #2668 — SECURITY).
 ///
-/// Validates Alexa request according to Amazon's specification:
-/// 1. Validates certificate URL format and domain
-/// 2. Verifies timestamp is within 150 seconds
-/// 3. (In production) Fetches and validates certificate chain
-/// 4. (In production) Verifies signature using certificate public key
+/// The previous implementation validated only the certificate URL format and
+/// the request timestamp and then returned `Ok(())` — the `Signature` header
+/// was bound to `_signature` and never checked, so **any** request carrying a
+/// well-formed `SignatureCertChainUrl` and a fresh timestamp was accepted
+/// regardless of whether it was actually signed by Amazon. That let an attacker
+/// forge arbitrary voice commands (report faults, read announcements, etc.) for
+/// any linked device.
+///
+/// We now implement Amazon's documented verification
+/// (<https://developer.amazon.com/docs/custom-skills/host-a-custom-skill-as-a-web-service.html#verifying-that-the-request-was-sent-by-alexa>):
+///
+/// 1. Validate the `SignatureCertChainUrl` (scheme/host/port/path — existing
+///    `validate_alexa_cert_url`). This constrains the fetch to Amazon's S3
+///    bucket over TLS, so the certificate origin is authenticated by the
+///    transport.
+/// 2. Validate the request timestamp is within 150 seconds (anti-replay).
+/// 3. Fetch the PEM certificate chain from the (validated) URL, with a small
+///    in-process TTL cache so a burst of requests does not re-fetch.
+/// 4. Validate the signing (leaf) certificate: it is currently within its
+///    validity window and its Subject Alternative Names include
+///    `echo-api.amazon.com`.
+/// 5. Verify the base64-decoded `Signature` header is a valid PKCS#1 v1.5
+///    RSA-SHA1 signature of the **raw request body** under the leaf
+///    certificate's public key.
+///
+/// Any failure returns `Err(_)`; the caller maps that to `401 Unauthorized`.
 async fn verify_alexa_signature(headers: &HeaderMap, body: &[u8]) -> Result<(), String> {
-    // Get required headers
+    // Get required headers. Alexa header names are case-insensitive; `HeaderMap`
+    // lookups already normalise case.
     let cert_url = headers
         .get("SignatureCertChainUrl")
         .and_then(|v| v.to_str().ok())
         .ok_or("Missing SignatureCertChainUrl header")?;
 
-    let _signature = headers
+    let signature_b64 = headers
         .get("Signature")
         .and_then(|v| v.to_str().ok())
         .ok_or("Missing Signature header")?;
 
-    // Step 1: Validate certificate URL format
+    // Step 1: Validate certificate URL format (host/scheme/port/path).
     validate_alexa_cert_url(cert_url)?;
 
-    // Step 2: Validate timestamp from request body
+    // Step 2: Validate timestamp from request body (replay protection).
     validate_alexa_timestamp(body)?;
 
-    // Step 3 & 4: Certificate validation
-    // In a full production implementation, you would:
-    // - Fetch the certificate from cert_url (with caching)
-    // - Verify the certificate chain up to Amazon root CA
-    // - Check certificate is not expired
-    // - Verify the signature using the certificate's public key
-    //
-    // For now, we validate URL format and timestamp which catches most issues.
-    // Full certificate validation requires x509 parsing libraries (e.g., `x509-parser`).
+    // Decode the presented signature before doing any network work.
+    let signature = BASE64
+        .decode(signature_b64.trim().as_bytes())
+        .map_err(|e| format!("Signature is not valid base64: {e}"))?;
 
-    tracing::info!(
-        cert_url = %cert_url,
-        "Alexa signature validation passed (URL and timestamp validated)"
-    );
+    // Step 3: Fetch the certificate chain (validated URL only), with caching.
+    let cert_pem = fetch_alexa_cert_chain(cert_url).await?;
+
+    // Steps 4 & 5: leaf validity + SAN + RSA-SHA1 body signature.
+    verify_alexa_cert_and_signature(&cert_pem, &signature, body, Utc::now())?;
+
+    tracing::info!(cert_url = %cert_url, "Alexa request signature verified");
+    Ok(())
+}
+
+/// TTL for cached Alexa signing certificates. Amazon rotates the `echo.api`
+/// certificate infrequently; caching by URL for an hour avoids re-fetching on
+/// every request without pinning a stale cert for long.
+const ALEXA_CERT_CACHE_TTL: std::time::Duration = std::time::Duration::from_secs(3600);
+
+/// Process-local cache of fetched certificate-chain PEM bytes keyed by URL.
+#[allow(clippy::type_complexity)]
+static ALEXA_CERT_CACHE: std::sync::OnceLock<
+    std::sync::Mutex<
+        std::collections::HashMap<String, (std::time::Instant, std::sync::Arc<Vec<u8>>)>,
+    >,
+> = std::sync::OnceLock::new();
+
+/// Fetch the PEM certificate chain from a (previously validated) Alexa cert
+/// URL, memoising the result for [`ALEXA_CERT_CACHE_TTL`].
+///
+/// The URL is only ever reached after [`validate_alexa_cert_url`], so it always
+/// points at `https://s3.amazonaws.com/echo.api/…`; TLS authenticates the S3
+/// origin. Returns the raw PEM bytes (one or more concatenated certificates).
+async fn fetch_alexa_cert_chain(url: &str) -> Result<std::sync::Arc<Vec<u8>>, String> {
+    let cache =
+        ALEXA_CERT_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+    // Fast path: a fresh cache entry.
+    if let Ok(guard) = cache.lock() {
+        if let Some((fetched_at, bytes)) = guard.get(url) {
+            if fetched_at.elapsed() < ALEXA_CERT_CACHE_TTL {
+                return Ok(bytes.clone());
+            }
+        }
+    }
+
+    let response = reqwest::Client::new()
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch Alexa certificate: {e}"))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "Alexa certificate fetch returned HTTP {}",
+            response.status()
+        ));
+    }
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read Alexa certificate body: {e}"))?
+        .to_vec();
+    let bytes = std::sync::Arc::new(bytes);
+
+    if let Ok(mut guard) = cache.lock() {
+        guard.insert(url.to_string(), (std::time::Instant::now(), bytes.clone()));
+    }
+
+    Ok(bytes)
+}
+
+/// Validate the Alexa signing certificate and verify the request-body signature.
+///
+/// Pure (no I/O): takes the fetched PEM chain, the decoded signature bytes, the
+/// raw request body, and the current time, so the security-critical logic is
+/// unit-testable without a network or a real Amazon certificate. Splitting the
+/// fetch out of this function is what lets the regression tests exercise the
+/// forged-signature path against a locally generated certificate.
+///
+/// Checks, in order:
+/// 1. The leaf (first) certificate parses.
+/// 2. `now` is within the leaf's `notBefore..=notAfter` window.
+/// 3. The leaf's Subject Alternative Names include `echo-api.amazon.com`.
+/// 4. `signature` is a valid PKCS#1 v1.5 RSA-SHA1 signature of `body` under the
+///    leaf's public key.
+fn verify_alexa_cert_and_signature(
+    cert_pem: &[u8],
+    signature: &[u8],
+    body: &[u8],
+    now: DateTime<Utc>,
+) -> Result<(), String> {
+    use rsa::pkcs8::DecodePublicKey;
+    use rsa::{Pkcs1v15Sign, RsaPublicKey};
+    use sha1::{Digest, Sha1};
+    use x509_cert::der::{Decode, DecodePem, Encode};
+    use x509_cert::ext::pkix::{name::GeneralName, SubjectAltName};
+    use x509_cert::Certificate;
+
+    // (1) Parse the leaf certificate (first PEM block in the chain).
+    let cert = Certificate::from_pem(cert_pem)
+        .map_err(|e| format!("Failed to parse Alexa certificate: {e}"))?;
+    let tbs = &cert.tbs_certificate;
+
+    // (2) Validity window.
+    let now_s = now.timestamp();
+    if now_s < 0 {
+        return Err("Current time is before the Unix epoch".to_string());
+    }
+    let now_s = now_s as u64;
+    let not_before = tbs.validity.not_before.to_unix_duration().as_secs();
+    let not_after = tbs.validity.not_after.to_unix_duration().as_secs();
+    if now_s < not_before {
+        return Err("Alexa certificate is not yet valid".to_string());
+    }
+    if now_s > not_after {
+        return Err("Alexa certificate has expired".to_string());
+    }
+
+    // (3) Subject Alternative Name must include echo-api.amazon.com.
+    // OID 2.5.29.17 = id-ce-subjectAltName.
+    let mut san_ok = false;
+    if let Some(extensions) = tbs.extensions.as_ref() {
+        for ext in extensions.iter() {
+            if ext.extn_id.to_string() != "2.5.29.17" {
+                continue;
+            }
+            let san = SubjectAltName::from_der(ext.extn_value.as_bytes())
+                .map_err(|e| format!("Failed to parse certificate SAN: {e}"))?;
+            for general_name in san.0.iter() {
+                if let GeneralName::DnsName(dns) = general_name {
+                    if dns.as_str().eq_ignore_ascii_case("echo-api.amazon.com") {
+                        san_ok = true;
+                        break;
+                    }
+                }
+            }
+            if san_ok {
+                break;
+            }
+        }
+    }
+    if !san_ok {
+        return Err("Alexa certificate SAN does not include echo-api.amazon.com".to_string());
+    }
+
+    // (4) Verify the RSA-SHA1 signature over the raw request body.
+    let spki_der = tbs
+        .subject_public_key_info
+        .to_der()
+        .map_err(|e| format!("Failed to encode certificate public key: {e}"))?;
+    let public_key = RsaPublicKey::from_public_key_der(&spki_der)
+        .map_err(|e| format!("Certificate public key is not RSA: {e}"))?;
+
+    let digest = Sha1::digest(body);
+    public_key
+        .verify(Pkcs1v15Sign::new::<Sha1>(), &digest, signature)
+        .map_err(|_| "Alexa request signature does not match request body".to_string())?;
 
     Ok(())
 }
@@ -1502,16 +1670,144 @@ mod tests {
         assert!(verify_alexa_signature(&headers, &body).await.is_err());
     }
 
-    #[tokio::test]
-    async fn alexa_signature_accepts_valid_url_and_timestamp() {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "signaturecertchainurl",
-            HeaderValue::from_static("https://s3.amazonaws.com/echo.api/cert.pem"),
+    // Regression for issue #2668: a valid cert URL + fresh timestamp is NO
+    // LONGER sufficient. The old code returned Ok() here without ever checking
+    // the signature; the request-body signature verification now lives in
+    // `verify_alexa_cert_and_signature`, exercised end-to-end below against a
+    // locally generated certificate. (The `verify_alexa_signature` wrapper adds
+    // a live cert fetch over the network, so its happy path is covered by an
+    // integration harness, not this unit test.)
+
+    // A self-signed RSA-2048 certificate whose SAN is `echo-api.amazon.com`,
+    // valid 2026..2126 (generated with `openssl req -x509 -sha1`), plus its
+    // PKCS#8 private key — used to sign a body the way Alexa's edge would.
+    const ALEXA_TEST_CERT_PEM: &str = "-----BEGIN CERTIFICATE-----\n\
+MIIDPzCCAiegAwIBAgIUc05E5fmM11dnpbFxoswJSfvairYwDQYJKoZIhvcNAQEF\n\
+BQAwHjEcMBoGA1UEAwwTZWNoby1hcGkuYW1hem9uLmNvbTAgFw0yNjA4MDYwODI3\n\
+MDlaGA8yMTI2MDcxMzA4MjcwOVowHjEcMBoGA1UEAwwTZWNoby1hcGkuYW1hem9u\n\
+LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJMYjkpium0M0ozF\n\
+xb2Cb+9G2KtRxsN15YOYfUpp1yWdE08R+ZJbXqk3Q4bP7axRJtDiR/a9OlsvEcJS\n\
+twELoCkforsFQyJ53d5UCzPdLj2iOhXpg0jtv0Gh3u7Fg27n/ugqEhHaJukSjCiX\n\
+4lao8t1Wd9lkxLhOEUCP6D7a9NYmIfu5ut3MqmyKeOfAAVBOjaVhS374Zq3+0OnY\n\
+wSimT4+9FoTZMfeVmyVzyByyR5C3CSG9+VZq3sG86AJdhZ786ko7Dlsi/XppTQe+\n\
+CYiYWb+gPEVoN8ezopr15cgAMREUNUKHajQBHbD8FEHkTAPnZqT0wrxD3MLleuKp\n\
+pc2j/wkCAwEAAaNzMHEwHQYDVR0OBBYEFKYUUOrdDzvE0xV9fZJ+kDY6csU2MB8G\n\
+A1UdIwQYMBaAFKYUUOrdDzvE0xV9fZJ+kDY6csU2MA8GA1UdEwEB/wQFMAMBAf8w\n\
+HgYDVR0RBBcwFYITZWNoby1hcGkuYW1hem9uLmNvbTANBgkqhkiG9w0BAQUFAAOC\n\
+AQEADWxe+1VEnu98Q4Xb7egrV/DUkSZLEfM9H2gSqux3NYDzjRa0/7nivMQCZGSw\n\
+IgRswmQDAV+djLUNQcmONqVgc8VkdHsqeZb5zgr6eEiNqHgIkwGnz41OS3oz05Qb\n\
+AlFFJU8TsobjnOQ9//Qt/ECtlEBpmretbGld1dxJ0cNo4mpLtCBjXkb9uBFeiwCy\n\
+yUjA/5nfAXELnHCTHNN1YFC1CNBQQk9bFHwQEAc9OgWvMIojbcoXbRwZpUOaQOlE\n\
+I6tLJePCUV9CHXNgSRBEPWCbufVHtFtyJQisGBSNUMzVPMQHbBouYUOmvju7H/bc\n\
+i+jshHpYblmQyitGXulqctcnWA==\n\
+-----END CERTIFICATE-----\n";
+
+    const ALEXA_TEST_KEY_PEM: &str = "-----BEGIN PRIVATE KEY-----\n\
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCTGI5KYrptDNKM\n\
+xcW9gm/vRtirUcbDdeWDmH1KadclnRNPEfmSW16pN0OGz+2sUSbQ4kf2vTpbLxHC\n\
+UrcBC6ApH6K7BUMied3eVAsz3S49ojoV6YNI7b9Bod7uxYNu5/7oKhIR2ibpEowo\n\
+l+JWqPLdVnfZZMS4ThFAj+g+2vTWJiH7ubrdzKpsinjnwAFQTo2lYUt++Gat/tDp\n\
+2MEopk+PvRaE2TH3lZslc8gcskeQtwkhvflWat7BvOgCXYWe/OpKOw5bIv16aU0H\n\
+vgmImFm/oDxFaDfHs6Ka9eXIADERFDVCh2o0AR2w/BRB5EwD52ak9MK8Q9zC5Xri\n\
+qaXNo/8JAgMBAAECggEAAaTb/UHseGN07HYZkKBHM5GeAmR/SqgJX5lvaArLXjwg\n\
+JGl3ObmmnZCfWHUVNdBxNRMxr59733Dvm2rXfli0tT+euYVJ6RYbLXzmDvy1OOLf\n\
+OudhgbSHh0/MSSyhBwxV0DQygBYpNRW8G4g0CJjU4GCoUFWPcHRjPg6bBMMndUe9\n\
+kWOB2kZ3o4oQkJCgQ0/93VnYYk2i7mWjrUNbpqhcLX2+GzzrecGnPbbF2528IKRL\n\
+GAUn9VdkwvzP8fGWOpq9qa6iWw6kkteCoQLZoHR/hN1XaQhGN2HhqjKu43gxmm16\n\
+eNa4nm+xfoe2f3eHHqkVZ+RkJHKfxMtO7HHBXKfcoQKBgQDHcmRYyo33erlu28gg\n\
+vINI3I7D9IqRiByrtnlpnDADtEhorcJFkZXtJuV+14HxK5nBl042bY4hSS52Y3UL\n\
+poW0ibpiOVUp46PvNs7grqTBew1WX5/Cf+zebbLChHOAJi6lfouWQaCwUmNn7qs7\n\
+rh+lxtcOMb+dB/yDyhvq/nBn6QKBgQC8zhKsfpPgvgwgw104zk5NJ6Pyvnvn3TRq\n\
+AB0YuBpgAYWRJMXomBurmB2wv7PfBduBEiXKKazHH7n3b74U+7lGhq+ydU7K/Nd2\n\
+tgtC5klKo0B6cFtPZ+0URhJ7clrYobRcFnVTax/dhvNNah8J8vGvi90BTL/34GWe\n\
+p6iFLSuKIQKBgFDuyG2HdGhycoDbyrAODzAn3/8AYqJ/mzLKzyXd7VXzeFaR+/2D\n\
+AFXFrOb1yJL24GPAZEqN1lkHe0UrQrnBjwwdv3ZQUZC4ATP3B6gA9nZU2qqsDwY8\n\
+JwBzf1CTstLTq6YYXchRRUWHiTMJlI6ZL9pzf50Q7vJn5T4Na5rGORLRAoGAfSnH\n\
+q16GPfj/JUEeLahmtDNRNn0cuwsj0hmdMGPr6DVaDGxqXtVnkovXMvMDFRhW+evD\n\
+7Y9PIPphWC1Vv6dYne5vz0iBIYQYenQYZxMvBzHObtzJS4zD2CrT2c5ndzFL1bh1\n\
+swVTLJJn/KwbQ4cwvYVkz5XHtVWnSFQxHYhiUsECgYBTJ6GXGXWyVgCCZMEsJ52z\n\
+dsIyiBSr+2cG/1bvncg2zhl45m6krGTplUO9p4K8sSwmrQxGe13nbtbijNeLuQ0D\n\
+FSMLvIzM5qOlblU6uGMSaCW3G6n4FKJo/Vqm8frVJP7wvywYy0AA32smETJyqFN0\n\
+dQPD++LeIpOChiX4Ru2uMQ==\n\
+-----END PRIVATE KEY-----\n";
+
+    // Sign `body` exactly as Alexa's edge does: PKCS#1 v1.5 RSA over SHA-1(body).
+    fn alexa_sign(body: &[u8]) -> Vec<u8> {
+        use rsa::pkcs8::DecodePrivateKey;
+        use rsa::{Pkcs1v15Sign, RsaPrivateKey};
+        use sha1::{Digest, Sha1};
+        let key = RsaPrivateKey::from_pkcs8_pem(ALEXA_TEST_KEY_PEM).expect("load test key");
+        let digest = Sha1::digest(body);
+        key.sign(Pkcs1v15Sign::new::<Sha1>(), &digest)
+            .expect("sign body")
+    }
+
+    #[test]
+    fn alexa_cert_and_signature_accepts_valid_signature() {
+        let body = br#"{"request":{"type":"LaunchRequest"}}"#;
+        let sig = alexa_sign(body);
+        assert!(
+            verify_alexa_cert_and_signature(ALEXA_TEST_CERT_PEM.as_bytes(), &sig, body, Utc::now())
+                .is_ok(),
+            "a body signed with the cert's key must verify"
         );
-        headers.insert("signature", HeaderValue::from_static("sig"));
-        let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
-        assert!(verify_alexa_signature(&headers, &body).await.is_ok());
+    }
+
+    #[test]
+    fn alexa_cert_and_signature_rejects_forged_signature() {
+        // Attacker presents a body they control with a bogus signature — the
+        // exact forgery the old code accepted. Must be rejected.
+        let body = br#"{"request":{"type":"IntentRequest","intent":{"name":"evil"}}}"#;
+        let forged = vec![0u8; 256]; // right length, wrong signature
+        let err = verify_alexa_cert_and_signature(
+            ALEXA_TEST_CERT_PEM.as_bytes(),
+            &forged,
+            body,
+            Utc::now(),
+        )
+        .unwrap_err();
+        assert!(err.contains("does not match"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn alexa_cert_and_signature_rejects_tampered_body() {
+        // Valid signature for one body must not authenticate a different body.
+        let signed_body = br#"{"request":{"type":"LaunchRequest"}}"#;
+        let sig = alexa_sign(signed_body);
+        let tampered_body = br#"{"request":{"type":"LaunchRequest"} }"#; // one byte differs
+        let err = verify_alexa_cert_and_signature(
+            ALEXA_TEST_CERT_PEM.as_bytes(),
+            &sig,
+            tampered_body,
+            Utc::now(),
+        )
+        .unwrap_err();
+        assert!(err.contains("does not match"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn alexa_cert_and_signature_rejects_expired_certificate() {
+        // The test cert is valid 2026..2126; evaluate it far in the future.
+        let body = br#"{"request":{"type":"LaunchRequest"}}"#;
+        let sig = alexa_sign(body);
+        let far_future = Utc::now() + Duration::days(365 * 200);
+        let err =
+            verify_alexa_cert_and_signature(ALEXA_TEST_CERT_PEM.as_bytes(), &sig, body, far_future)
+                .unwrap_err();
+        assert!(err.contains("expired"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn alexa_cert_and_signature_rejects_unparseable_cert() {
+        let body = br#"{"request":{"type":"LaunchRequest"}}"#;
+        let sig = alexa_sign(body);
+        assert!(verify_alexa_cert_and_signature(
+            b"-----BEGIN CERTIFICATE-----\nnope\n",
+            &sig,
+            body,
+            Utc::now()
+        )
+        .is_err());
     }
 
     // --- verify_google_request ------------------------------------------
