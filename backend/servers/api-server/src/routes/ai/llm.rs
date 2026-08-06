@@ -1111,51 +1111,43 @@ async fn publish_description(
     path = "/api/v1/ai/llm/chat/enhanced",
     request_body = EnhancedChatRequest,
     responses(
-        (status = 200, description = "Chat response with context"),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 501, description = "Enhanced (RAG) chat not implemented", body = ErrorResponse),
     ),
     tag = "AI LLM"
 )]
 async fn enhanced_chat(
-    State(state): State<AppState>,
     mut rls: RlsConnection,
-    Json(req): Json<EnhancedChatRequest>,
+    Json(_req): Json<EnhancedChatRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = rls.tenant_id();
-
-    // Get escalation config
-    let config = state
-        .llm_document_repo
-        .get_escalation_config(rls.conn(), tenant_id)
-        .await;
+    // Fail closed (code review — code-review-api-handlers-enhanced-chat-stub).
+    //
+    // The RAG pipeline this endpoint promises — (1) search document embeddings
+    // for relevant context, (2) call the LLM with that context, (3) score the
+    // response confidence against the escalation threshold — is NOT implemented.
+    //
+    // The previous placeholder returned a 200 success payload built entirely
+    // from fabricated data: a canned echo `response`, a hardcoded
+    // `confidence: 0.85`, `tokens_used: 150`, an empty `sources: []`, and an
+    // `escalated` flag derived from that fake confidence. Clients — and any
+    // escalation automation reading those metrics — could act on invented data.
+    // Until the real embedding + LLM pipeline lands, return 501 so no caller
+    // mistakes a stub for a real answer.
+    //
+    // `RlsConnection` is still extracted so unauthenticated requests are
+    // rejected with 401 before reaching here; release it immediately as we do
+    // no database work.
     rls.release().await;
-    let config = config.map_err(|e| {
-        tracing::error!("Failed to get escalation config: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get config")),
-        )
-    })?;
 
-    // Placeholder response - real implementation would:
-    // 1. Search document embeddings for relevant context
-    // 2. Call LLM with context
-    // 3. Check confidence against threshold
-    let confidence = 0.85; // Placeholder
-    let escalated = confidence < config.confidence_threshold;
-
-    let response = serde_json::json!({
-        "message_id": Uuid::new_v4(),
-        "response": format!("I understand you're asking about: {}. Let me help you with that.", req.message),
-        "confidence": confidence,
-        "sources": [],
-        "escalated": escalated,
-        "escalation_reason": if escalated { Some("Low confidence in response") } else { None },
-        "language_detected": req.language,
-        "tokens_used": 150
-    });
-
-    Ok(Json(response))
+    Err((
+        StatusCode::NOT_IMPLEMENTED,
+        Json(ErrorResponse::new(
+            "ENHANCED_CHAT_NOT_IMPLEMENTED",
+            "Enhanced (RAG) chat is not yet implemented: the document-embedding \
+             search and LLM pipeline are not wired up, so no chat response, \
+             confidence score, or escalation decision can be produced.",
+        )),
+    ))
 }
 
 async fn get_escalation_config(
