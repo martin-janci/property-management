@@ -2081,6 +2081,28 @@
       "merge_attempted_at": "2026-08-06T12:16:08Z"
     },
     {
+      "task_id": "code-review-api-core-voice-read-handlers-fabricate-data",
+      "branch": "auto-impl/code-review-api-core-voice-read-handlers-62395236",
+      "status": "failed",
+      "claimed_at": "2026-08-06T12:07:31Z",
+      "last_updated": "2026-08-06T16:17:58Z",
+      "status_changed_at": "2026-08-06T16:17:58Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed in dev via #2679 (voice check-balance fabrication); action_check_balance returns success:false/data:None + regression test; no-op reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-voice-report-fault-not-persisted",
       "branch": "auto-impl/code-review-api-core-voice-report-fault-34a8b68f",
       "status": "merged",
@@ -3361,6 +3383,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-invite-email-mismatch",
+      "branch": "auto-impl/code-review-reality-server-invite-email-93fb65a3",
+      "status": "merged",
+      "claimed_at": "2026-08-06T12:07:31Z",
+      "last_updated": "2026-08-06T16:17:58Z",
+      "status_changed_at": "2026-08-06T16:17:58Z",
+      "pr_number": 2682,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2682",
+      "merged_at": "2026-08-06T16:17:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2682 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=draft PR open; fmt clean; local clippy/test env-blocked (github-403 swagger-ui + no local postgres), CI backend.yml is gate; sibling api-server accept_invitation has same bug (follow-up)",
+      "reviewer_summary": "verdict=approve head_oid=665987ced4a0c7745bc84f81b87f3006ceef1dca note=recipient-gate-correct;CI-green(security-tests,fmt-clippy);scope-drift-justified;self-approve-blocked-by-gh",
+      "last_reviewed_oid": "665987ced4a0c7745bc84f81b87f3006ceef1dca",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-06T16:17:58Z"
     },
     {
       "task_id": "code-review-reality-server-password-reset-no-transport",
@@ -10605,6 +10649,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-infra-ops-authz-backfill-2026-07-23-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-infra-ops-authz-b-1c445527",
+      "status": "merged",
+      "claimed_at": "2026-08-06T12:07:31Z",
+      "last_updated": "2026-08-06T16:17:58Z",
+      "status_changed_at": "2026-08-06T16:17:58Z",
+      "pr_number": 2683,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2683",
+      "merged_at": "2026-08-06T16:17:12Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2683 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=tightened weak is_client_error->exact 401/403 in infra_ops authz backfill; fmt+clippy+5/5 target tests green (local PG+vendored swagger); 3 gate fails pre-existing UNRELATED airbnb/booking external-API tests (egress-blocked, pass in CI)",
+      "reviewer_summary": "verdict=approve head_oid=43fc6baed86fc4361ffddcb0122afd94fbd032d0 note=test-only-assertion-tightening-correct;scope-drift-benign;CI-green;self-pr-comment",
+      "last_reviewed_oid": "43fc6baed86fc4361ffddcb0122afd94fbd032d0",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-06T16:17:58Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-integrations-booking-mod-2026-07-31",
       "branch": "auto-impl/refactor-churn-hotspot-integrations-book-d396d9c5",
       "status": "merged",
@@ -11939,6 +12005,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "triage-closed-not-merged-pr-2489-retry1",
+      "branch": "auto-impl/triage-closed-not-merged-pr-2489-retry1-f4017820",
+      "status": "failed",
+      "claimed_at": "2026-08-06T16:08:34Z",
+      "last_updated": "2026-08-06T16:17:58Z",
+      "status_changed_at": "2026-08-06T16:17:58Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=#2491 (5-update superset, merged 07-29) fully supersedes #2489; react-family held at 19.2.0 by intentional pnpm.overrides (react-native@0.86 exact react:19.2.0 peer) — no residual bump warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "triage-dispatcher-mcp-push-large-file-issue-1014",
       "branch": "auto-impl/triage-dispatcher-mcp-push-large-file-is-b746df24",
       "status": "merged",
@@ -12027,5 +12115,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-06T12:19:06Z"
+  "archived_at": "2026-08-06T16:20:33Z"
 }

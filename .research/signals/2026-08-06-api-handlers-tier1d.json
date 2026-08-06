@@ -1,0 +1,32 @@
+[
+  {
+    "id": "code-review-api-handlers-enhanced-chat-stub",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/ai/llm.rs:1119-1158 — `enhanced_chat` is a stubbed production handler that returns fabricated data. It ignores the request except to echo it: `\"response\": format!(\"I understand you're asking about: {}. Let me help you with that.\", req.message)` (line 1149), with a hardcoded `confidence: 0.85` (line 1144), `tokens_used: 150`, empty `sources: []`, and an `escalated` flag derived from the fake confidence. No LLM call, no document-embedding search is performed. The inline comment admits it: `// Placeholder response - real implementation would: 1. Search document embeddings ... 2. Call LLM with context ... 3. Check confidence against threshold`.",
+      "Reachable in production: mounted at POST /chat/enhanced in `llm_router()` (backend/servers/api-server/src/routes/ai/llm.rs:49, `.route(\"/chat/enhanced\", post(enhanced_chat))`), which lib.rs wires into the app. The placeholder branch is unconditional — every caller receives the canned echo plus fabricated confidence/token/escalation metrics, so any UI or client that trusts these fields is acting on invented data.",
+      "Fix: implement the documented pipeline (embedding search -> LLM call -> confidence/escalation check) or fail closed with a 501/NOT_IMPLEMENTED instead of returning a success payload with fabricated confidence and token counts. The neighbouring `generate_lease` handler in the same file shows the real LLM-call + persistence pattern to follow."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-handlers-ai-upstream-error-leak",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/servers/api-server/src/routes/ai/llm.rs:687 — the raw upstream LLM-provider error is forwarded verbatim into the client-facing response body: `Json(ErrorResponse::new(\"GENERATION_FAILED\", format!(\"Failed to generate lease: {}\", e)))`. The error is already captured server-side via `tracing::error!(\"Lease generation failed: {}\", e)` (line 658), so the client copy adds no user value while potentially exposing provider request IDs, model/config hints, or fragments of the upstream response body.",
+      "backend/servers/api-server/src/routes/ai/voice.rs:194 — same pattern on the voice OAuth path: `Json(ErrorResponse::new(\"OAUTH_EXCHANGE_FAILED\", format!(\"Failed to exchange authorization code: {}\", e)))` returns the upstream OAuth-provider exchange error `e` (already logged at voice.rs:189) directly to the API caller.",
+      "This is a segment-level error-hygiene pattern: internal/upstream error detail should be logged server-side (as it already is) and replaced with a generic client message. Fix: return a stable generic message (e.g. \"Lease generation failed\", \"Authorization code exchange failed\") and keep the detailed `{e}` only in the tracing call."
+    ],
+    "expert": "security"
+  }
+]
