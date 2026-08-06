@@ -145,7 +145,7 @@ redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 clap = { version = "4.4", features = ["derive", "env"] }
 dialoguer = "0.12"
 genpdf = "0.2.0"
-rust_xlsxwriter = "0.96"
+rust_xlsxwriter = "0.97"
 
 # i18n (Epic 111)
 fluent = "0.16"
