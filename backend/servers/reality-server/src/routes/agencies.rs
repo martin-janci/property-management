@@ -432,6 +432,17 @@ pub struct AcceptInvitationRequest {
 }
 
 /// Accept agency invitation.
+///
+/// SECURITY (invite-email-match audit): an invitation is bound to the specific
+/// email address it was issued to. A valid, unexpired token is NOT sufficient
+/// to join — the authenticated principal must own the invited email. Without
+/// this gate, a *different* logged-in user who obtains someone else's invite
+/// token (e.g. from a forwarded email or a leaked link) could join the agency,
+/// a privilege escalation. We therefore verify the caller is the invited
+/// recipient (`verify_invitation_recipient`) BEFORE the invitation is consumed
+/// and membership is created: `400` for an unknown/expired token (no oracle
+/// beyond what the caller already holds) and `403` when the token is valid but
+/// issued to a different address.
 #[utoipa::path(
     post,
     path = "/api/v1/agencies/invitations/{token}/accept",
@@ -440,7 +451,8 @@ pub struct AcceptInvitationRequest {
     responses(
         (status = 200, description = "Invitation accepted", body = RealityAgencyMember),
         (status = 400, description = "Invalid or expired token"),
-        (status = 401, description = "Unauthorized")
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Invitation was issued to a different email")
     )
 )]
 pub async fn accept_invitation(
@@ -448,6 +460,18 @@ pub async fn accept_invitation(
     principal: RequestPrincipal,
     Path(token): Path<String>,
 ) -> Result<Json<RealityAgencyMember>, (axum::http::StatusCode, String)> {
+    // SECURITY (invite-email-match): gate on recipient identity before adding
+    // membership. See the handler doc-comment above for the escalation this
+    // prevents.
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", e),
+        )
+    })?;
+    verify_invitation_recipient(&mut conn, &token, principal.user_id).await?;
+    drop(conn);
+
     let member = state
         .reality_portal_repo
         .accept_invitation(&token, principal.user_id)
@@ -470,4 +494,61 @@ pub async fn accept_invitation(
         })?;
 
     Ok(Json(member))
+}
+
+/// SECURITY helper: verify the authenticated principal is the invited
+/// recipient of the pending invitation identified by `token`.
+///
+/// The invitation carries the exact `email` it was issued to. Membership must
+/// only be granted to the principal that owns that address — a valid token on
+/// its own is not proof of identity. This mirrors the freshness predicate the
+/// repository's `accept_invitation` uses (`accepted_at IS NULL AND expires_at >
+/// NOW()`) so a stale/consumed token is reported as invalid here rather than
+/// silently passing the recipient gate.
+///
+/// Returns:
+/// - `400 Invalid invitation token` — unknown, already-accepted, or expired
+///   token (same shape the repo surfaces, so no new oracle is introduced).
+/// - `403` — token is valid but was issued to a different email address.
+async fn verify_invitation_recipient(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
+    token: &str,
+    user_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let invited_email: Option<String> = sqlx::query_scalar(
+        "SELECT email FROM reality_agency_invitations \
+         WHERE token = $1 AND accepted_at IS NULL AND expires_at > NOW()",
+    )
+    .bind(token)
+    .fetch_optional(&mut **conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("load invitation", e))?;
+
+    let Some(invited_email) = invited_email else {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Invalid invitation token".to_string(),
+        ));
+    };
+
+    let user_email: Option<String> = sqlx::query_scalar("SELECT email FROM users WHERE id = $1")
+        .bind(user_id)
+        .fetch_optional(&mut **conn)
+        .await
+        .map_err(|e| crate::util::errors::db_error("load user", e))?;
+
+    // Case-insensitive, whitespace-trimmed comparison: email addresses are
+    // routinely stored/entered with differing case, and the local-part match
+    // here is an authorization decision, not a routing one.
+    let is_recipient =
+        user_email.is_some_and(|email| email.trim().eq_ignore_ascii_case(invited_email.trim()));
+
+    if !is_recipient {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "This invitation was issued to a different email address".to_string(),
+        ));
+    }
+
+    Ok(())
 }

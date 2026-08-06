@@ -83,6 +83,41 @@ async fn seed_membership(pool: &PgPool, agency_id: Uuid, user_id: Uuid) {
     .expect("seed_membership failed");
 }
 
+/// Seed a pending, unexpired invitation bound to `email`, returning its token.
+async fn seed_invitation(
+    pool: &PgPool,
+    agency_id: Uuid,
+    invited_by: Uuid,
+    email: &str,
+    token: &str,
+) {
+    sqlx::query(
+        r#"
+        INSERT INTO reality_agency_invitations
+            (agency_id, email, role, invited_by, token, expires_at)
+        VALUES ($1, $2, 'realtor', $3, $4, NOW() + INTERVAL '7 days')
+        "#,
+    )
+    .bind(agency_id)
+    .bind(email)
+    .bind(invited_by)
+    .bind(token)
+    .execute(pool)
+    .await
+    .expect("seed_invitation failed");
+}
+
+async fn membership_count(pool: &PgPool, agency_id: Uuid, user_id: Uuid) -> i64 {
+    sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM reality_agency_members WHERE agency_id = $1 AND user_id = $2",
+    )
+    .bind(agency_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("membership_count failed")
+}
+
 // ── list_agencies (public) ────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -340,5 +375,83 @@ async fn accept_invitation_authenticated_unknown_token_returns_non_401(pool: PgP
     assert_ne!(
         status, 401,
         "authenticated accept_invitation must not return 401"
+    );
+}
+
+/// SECURITY regression (invite-email-match): a different logged-in user who
+/// obtains a valid, unexpired invite token must NOT be able to join the agency.
+/// The recipient gate must reject with 403 and create no membership. Before the
+/// fix this returned 200 and added the wrong user as a member.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn accept_invitation_email_mismatch_returns_403_and_adds_no_member(pool: PgPool) {
+    let inviter = seed_user(&pool, "mismatch-inviter").await;
+    let agency = seed_agency(&pool, "mismatch").await;
+    let token = "invite-token-mismatch";
+    // Invitation issued to a target that is NOT the accepting user.
+    seed_invitation(
+        &pool,
+        agency,
+        inviter,
+        "intended@agencies-authz.test",
+        token,
+    )
+    .await;
+
+    // A different, unrelated logged-in user holding the token.
+    let attacker = seed_platform_user(&pool, "mismatch-attacker").await;
+    let attacker_token = mint_token(attacker);
+
+    let app = agencies_router(pool.clone());
+    let status = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/agencies/invitations/{token}/accept"),
+        Some(&attacker_token),
+    )
+    .await;
+
+    assert_eq!(
+        status, 403,
+        "accept_invitation must reject a non-recipient with 403, got {status}"
+    );
+    assert_eq!(
+        membership_count(&pool, agency, attacker).await,
+        0,
+        "a rejected accept must not create membership for the wrong user"
+    );
+}
+
+/// Happy path for the recipient gate: the invited email's owner accepts and
+/// becomes a member (200). Guards against the fix over-rejecting legitimate
+/// acceptances.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn accept_invitation_matching_email_succeeds(pool: PgPool) {
+    let inviter = seed_user(&pool, "match-inviter").await;
+    let agency = seed_agency(&pool, "match").await;
+    // `seed_platform_user` stores email `{tag}@agencies-authz.test`; issue the
+    // invitation to that exact address so the recipient gate passes.
+    let recipient = seed_platform_user(&pool, "match-recipient").await;
+    let recipient_email = "match-recipient@agencies-authz.test";
+    let token = "invite-token-match";
+    seed_invitation(&pool, agency, inviter, recipient_email, token).await;
+
+    let recipient_token = mint_token(recipient);
+    let app = agencies_router(pool.clone());
+    let status = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/agencies/invitations/{token}/accept"),
+        Some(&recipient_token),
+    )
+    .await;
+
+    assert_eq!(
+        status, 200,
+        "the invited recipient must be able to accept, got {status}"
+    );
+    assert_eq!(
+        membership_count(&pool, agency, recipient).await,
+        1,
+        "a successful accept must create exactly one membership row"
     );
 }
