@@ -109,20 +109,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-review-accounting-mvp-trio-retry1",
-      "action": "Review + shepherd merge of the accounting MVP-loop trio (PRs #2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — draft-ready since 2026-07-28 with no reviewer engagement [retry 1/2 of failed pm-scrum-master-review-accounting-mvp-trio]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=pm-scrum-master-review-accounting-mvp-trio reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:08:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T18:04:42Z",
-      "retry_of": "pm-scrum-master-review-accounting-mvp-trio",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-ppt-web-core-ws-ungated-console-retry1",
       "action": "10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod [retry 1/2 of failed code-review-ppt-web-core-ws-ungated-console]",
       "owner_role": "pm-tech-lead",
@@ -148,20 +134,6 @@
       "depends_on": [],
       "first_open_at": "2026-08-06T18:04:42Z",
       "retry_of": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
-      "retry_round": 1
-    },
-    {
-      "id": "gap-uc-33-2-link-dispute-screen-map-retry1",
-      "action": "[BAD-PREMISE: UC-33.2 is Tenant Screening not disputes] Link UC-33.2 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter [retry 1/2 of failed gap-uc-33-2-link-dispute-screen-map]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=gap-uc-33-2-link-dispute-screen-map reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:30:34Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T18:04:42Z",
-      "retry_of": "gap-uc-33-2-link-dispute-screen-map",
       "retry_round": 1
     }
   ],

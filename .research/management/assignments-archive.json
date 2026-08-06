@@ -5769,6 +5769,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-uc-33-2-link-dispute-screen-map-retry1",
+      "branch": "auto-impl/gap-uc-33-2-link-dispute-screen-map-retr-d7f0928a",
+      "status": "failed",
+      "claimed_at": "2026-08-06T18:07:39Z",
+      "last_updated": "2026-08-06T18:13:18Z",
+      "status_changed_at": "2026-08-06T18:13:18Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "dispatcher claim-time prune: BAD-PREMISE (self-flagged) — UC-33.2 is Tenant Screening, not disputes; linking it to a dispute screen-map is incorrect. Not retrying.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-1680",
       "branch": "auto-impl/gh-issue-1680-044713b8",
       "status": "failed",
@@ -10251,6 +10273,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-review-accounting-mvp-trio-retry1",
+      "branch": "auto-impl/pm-scrum-master-review-accounting-mvp-tr-c3448747",
+      "status": "failed",
+      "claimed_at": "2026-08-06T18:07:39Z",
+      "last_updated": "2026-08-06T18:13:18Z",
+      "status_changed_at": "2026-08-06T18:13:18Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "dispatcher claim-time prune: not an implementer task — asks to review/shepherd human-owned feature PRs #2555/#2558/#2559 (accounting trio, stalled since 2026-07-28); outside ppt-implement/auto-impl scope. Surfaced for human PM review.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-signer-doc-sign-page-84-2",
       "branch": "auto-impl/pm-scrum-master-signer-doc-sign-page-84-be4673ab",
       "status": "failed",
@@ -12115,5 +12159,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-06T16:20:33Z"
+  "archived_at": "2026-08-06T18:13:27Z"
 }
