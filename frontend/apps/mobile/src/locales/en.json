@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "Biometric authentication was not successful",
     "signInWith": "Sign in with {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometrics"
+    "biometrics": "Biometrics",
+    "biometric": {
+      "enablePrompt": "Enable biometric login",
+      "authenticatePrompt": "Login to Property Management",
+      "cancel": "Cancel",
+      "usePasscode": "Use passcode",
+      "usePassword": "Use password"
+    }
   },
   "dashboard": {
     "title": "Dashboard",

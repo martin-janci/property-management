@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "Biometrische Authentifizierung war nicht erfolgreich",
     "signInWith": "Anmelden mit {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometrie"
+    "biometrics": "Biometrie",
+    "biometric": {
+      "enablePrompt": "Biometrische Anmeldung aktivieren",
+      "authenticatePrompt": "Bei der Hausverwaltung anmelden",
+      "cancel": "Abbrechen",
+      "usePasscode": "Passcode verwenden",
+      "usePassword": "Passwort verwenden"
+    }
   },
   "dashboard": {
     "title": "Dashboard",

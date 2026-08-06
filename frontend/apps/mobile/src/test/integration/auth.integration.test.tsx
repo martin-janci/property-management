@@ -25,6 +25,12 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
+import csLocale from '../../locales/cs.json';
+import deLocale from '../../locales/de.json';
+import enLocale from '../../locales/en.json';
+import huLocale from '../../locales/hu.json';
+import plLocale from '../../locales/pl.json';
+import skLocale from '../../locales/sk.json';
 
 // AuthProvider now purges the AsyncStorage-backed tenant caches on
 // login/logout (issue #2399), so swap the shared jest stub for a real
@@ -479,6 +485,19 @@ describe('AuthContext integration', () => {
       expect(enabled).toBe(true);
       expect(result.current.biometricEnabled).toBe(true);
       expect(store.get('ppt_biometric_enabled')).toBe('true');
+
+      // The OS biometric dialog copy must come from i18n, not hardcoded
+      // English (code-review-mobile-rn-biometric-prompt-i18n). The shared
+      // react-i18next mock returns the key verbatim (`t(key) => key`), so we
+      // assert on the keys and that the old literals are gone.
+      expect(mockedLocalAuth.authenticateAsync).toHaveBeenCalledWith({
+        promptMessage: 'auth.biometric.enablePrompt',
+        cancelLabel: 'auth.biometric.cancel',
+        fallbackLabel: 'auth.biometric.usePasscode',
+      });
+      const enableArg = mockedLocalAuth.authenticateAsync.mock.calls[0][0];
+      expect(enableArg.promptMessage).not.toBe('Enable biometric login');
+      expect(enableArg.fallbackLabel).not.toBe('Use passcode');
     });
 
     it('enableBiometric returns false when prompt is cancelled', async () => {
@@ -549,6 +568,17 @@ describe('AuthContext integration', () => {
       expect(ok).toBe(true);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.user).toEqual(sampleUser);
+
+      // Unlock dialog copy is i18n-sourced, not hardcoded English
+      // (code-review-mobile-rn-biometric-prompt-i18n).
+      expect(mockedLocalAuth.authenticateAsync).toHaveBeenCalledWith({
+        promptMessage: 'auth.biometric.authenticatePrompt',
+        cancelLabel: 'auth.biometric.cancel',
+        fallbackLabel: 'auth.biometric.usePassword',
+      });
+      const authArg = mockedLocalAuth.authenticateAsync.mock.calls[0][0];
+      expect(authArg.promptMessage).not.toBe('Login to Property Management');
+      expect(authArg.fallbackLabel).not.toBe('Use password');
     });
 
     it('authenticateWithBiometric deliberately preserves persisted caches (issue #2399)', async () => {
@@ -588,5 +618,48 @@ describe('AuthContext integration', () => {
       expect(ok).toBe(false);
       expect(mockedLocalAuth.authenticateAsync).not.toHaveBeenCalled();
     });
+  });
+});
+
+// Resource-layer guard: the biometric prompt keys referenced by AuthContext
+// must exist in every shipped locale and carry a real, non-English translation
+// (code-review-mobile-rn-biometric-prompt-i18n). Mirrors the pattern in
+// FaultsListScreen.i18n.test.tsx.
+describe('auth.biometric prompt keys resolve to real, locale-distinct translations', () => {
+  const BIOMETRIC_KEYS = [
+    'enablePrompt',
+    'authenticatePrompt',
+    'cancel',
+    'usePasscode',
+    'usePassword',
+  ] as const;
+
+  it('en carries the expected English copy', () => {
+    expect(enLocale.auth.biometric.enablePrompt).toBe('Enable biometric login');
+    expect(enLocale.auth.biometric.authenticatePrompt).toBe('Login to Property Management');
+    expect(enLocale.auth.biometric.cancel).toBe('Cancel');
+    expect(enLocale.auth.biometric.usePasscode).toBe('Use passcode');
+    expect(enLocale.auth.biometric.usePassword).toBe('Use password');
+  });
+
+  it('every shipped locale defines all biometric keys as non-empty strings', () => {
+    for (const locale of [enLocale, skLocale, csLocale, deLocale, plLocale, huLocale]) {
+      for (const key of BIOMETRIC_KEYS) {
+        const value = locale.auth.biometric[key];
+        expect(typeof value).toBe('string');
+        expect(value.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('non-English locales translate the prompt copy away from English', () => {
+    // `cancel` is a proper noun-ish UI word that can legitimately collide in
+    // some languages, so only assert divergence on the descriptive prompts.
+    for (const locale of [skLocale, csLocale, deLocale, plLocale, huLocale]) {
+      expect(locale.auth.biometric.enablePrompt).not.toBe(enLocale.auth.biometric.enablePrompt);
+      expect(locale.auth.biometric.authenticatePrompt).not.toBe(
+        enLocale.auth.biometric.authenticatePrompt
+      );
+    }
   });
 });

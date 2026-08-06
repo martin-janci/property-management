@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "Uwierzytelnianie biometryczne nie bylo udane",
     "signInWith": "Zaloguj sie przez {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometria"
+    "biometrics": "Biometria",
+    "biometric": {
+      "enablePrompt": "Wlacz logowanie biometryczne",
+      "authenticatePrompt": "Zaloguj sie do Zarzadzania nieruchomosciami",
+      "cancel": "Anuluj",
+      "usePasscode": "Uzyj kodu dostepu",
+      "usePassword": "Uzyj hasla"
+    }
   },
   "dashboard": {
     "title": "Panel",

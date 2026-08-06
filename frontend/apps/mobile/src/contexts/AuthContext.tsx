@@ -5,6 +5,7 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { resetLocalData } from '../services/resetLocalData';
 
 // Token storage keys
@@ -59,6 +60,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [state, setState] = useState<AuthState>({
     isLoading: true,
     isAuthenticated: false,
@@ -252,9 +254,9 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Enable biometric login',
-        cancelLabel: 'Cancel',
-        fallbackLabel: 'Use passcode',
+        promptMessage: t('auth.biometric.enablePrompt'),
+        cancelLabel: t('auth.biometric.cancel'),
+        fallbackLabel: t('auth.biometric.usePasscode'),
       });
 
       if (result.success) {
@@ -268,7 +270,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Failed to enable biometric:', error);
       return false;
     }
-  }, [state.biometricAvailable]);
+  }, [state.biometricAvailable, t]);
 
   const disableBiometric = useCallback(async () => {
     await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
@@ -282,9 +284,9 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Login to Property Management',
-        cancelLabel: 'Cancel',
-        fallbackLabel: 'Use password',
+        promptMessage: t('auth.biometric.authenticatePrompt'),
+        cancelLabel: t('auth.biometric.cancel'),
+        fallbackLabel: t('auth.biometric.usePassword'),
       });
 
       if (result.success) {
@@ -314,7 +316,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Biometric authentication failed:', error);
       return false;
     }
-  }, [state.biometricEnabled, state.biometricAvailable]);
+  }, [state.biometricEnabled, state.biometricAvailable, t]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

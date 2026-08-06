@@ -54,7 +54,14 @@
     "biometricNotSuccessful": "Biometricke overeni nebylo uspesne",
     "signInWith": "Prihlasit se pomoci {{provider}}",
     "faceIdTouchId": "Face ID / Touch ID",
-    "biometrics": "Biometrie"
+    "biometrics": "Biometrie",
+    "biometric": {
+      "enablePrompt": "Zapnout biometricke prihlaseni",
+      "authenticatePrompt": "Prihlaseni do Spravy nemovitosti",
+      "cancel": "Zrusit",
+      "usePasscode": "Pouzit pristupovy kod",
+      "usePassword": "Pouzit heslo"
+    }
   },
   "dashboard": {
     "title": "Prehled",
