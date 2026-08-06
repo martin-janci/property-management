@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-06T18:23:48Z",
+  "archived_at": "2026-08-06T22:20:20Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3330,6 +3330,31 @@
         "archive_status": "failed",
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-backslash-redirect",
+      "action": "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash fo",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=reality-server) | gc1-reconcile 2026-08-06T22:14:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-06T22:14:31Z"
       }
     },
     {

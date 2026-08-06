@@ -19,24 +19,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-sso-backslash-redirect",
-      "action": "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash fo",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=security seg=reality-server)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
       "id": "code-review-api-core-workflow-cond-parse-failopen",
       "action": "backend/servers/api-server/src/services/workflow_executor.rs:459-489 — evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup nor Condition, the `else` branch (lines",
       "owner_role": "pm-backend",
