@@ -221,6 +221,26 @@ impl RealityPortalRepository {
         Ok(())
     }
 
+    /// Get the aggregate view total for a listing (public read).
+    ///
+    /// Routes through the SECURITY DEFINER `portal_get_listing_view_count`
+    /// function (migration 00220), **not** a direct `SELECT SUM(views)`. A plain
+    /// select on the RLS-subject reality-server pool reads back zero for
+    /// portal-owned listings (`organization_id IS NULL`): `listing_analytics` is
+    /// `FORCE ROW LEVEL SECURITY` (migration 00113) with an org-only policy and
+    /// no portal-owner branch, and the public pool has no org context — the same
+    /// RLS trap that broke the write path (#2244) and the per-owner read (#2199).
+    /// The definer function bypasses that policy and only ever aggregates the
+    /// requested listing's `views` counter. There is no ownership gate — a public
+    /// listing's total view count is itself public (read-side counterpart of
+    /// [`track_view`](Self::track_view)).
+    pub async fn get_view_count(&self, listing_id: Uuid) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>("SELECT portal_get_listing_view_count($1)")
+            .bind(listing_id)
+            .fetch_one(&self.pool)
+            .await
+    }
+
     /// Get listing analytics (org-scoped path).
     ///
     /// This runs a direct `SELECT` on the RLS-subject pool, so it only returns
