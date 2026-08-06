@@ -1,7 +1,20 @@
 // Epic 144: Portfolio Performance Analytics - Portfolio Dashboard Page
+import {
+  type CashFlowTrendPoint,
+  type DashboardSummary,
+  type MetricsSummary,
+  type PerformanceAlert as PerformanceAlertDto,
+  type PropertyPerformanceCard,
+  useCashFlowTrend,
+  useDashboardSummary,
+  useMarkAlertRead,
+  usePortfolioAlerts,
+  usePortfolioMetricsSummary,
+  usePropertyPerformanceCards,
+  useResolveAlert,
+} from '@ppt/api-client';
 import type React from 'react';
 import {
-  BenchmarkComparisonCard,
   CashFlowChart,
   FinancialMetricsTable,
   MetricsSummaryCard,
@@ -13,238 +26,156 @@ interface PortfolioDashboardPageProps {
   portfolioId: string;
 }
 
-// Mock data for demonstration - would be fetched from API
-const mockDashboardSummary = {
-  totalPortfolioValue: 2500000,
-  totalEquity: 1200000,
-  totalDebt: 1300000,
-  debtToEquityRatio: 1.08,
-  ltvRatio: 52,
-  ytdNoi: 180000,
-  ytdCashFlow: 95000,
-  ytdReturnPct: 7.9,
-  propertyCount: 4,
-  currency: 'EUR',
-};
+// --- Decimal helpers ------------------------------------------------------
+// The api-server serializes `rust_decimal::Decimal` with the `serde-str`
+// feature, so monetary / ratio fields arrive as strings. Convert at the edge.
+const num = (v: string | null | undefined): number => (v == null ? 0 : Number(v));
+const optNum = (v: string | null | undefined): number | undefined =>
+  v == null ? undefined : Number(v);
 
-const mockPropertyCards = [
-  {
-    id: '1',
-    propertyName: 'Downtown Office Building',
-    buildingAddress: '123 Main St',
-    currentValue: 800000,
-    equity: 400000,
-    ltv: 50,
-    noi: 64000,
-    capRate: 8.0,
-    cashOnCash: 12.5,
-    dscr: 1.45,
-    monthlyCashFlow: 3200,
-    performanceStatus: 'excellent',
-    currency: 'EUR',
-  },
-  {
-    id: '2',
-    propertyName: 'Residential Complex',
-    buildingAddress: '456 Oak Ave',
-    currentValue: 1200000,
-    equity: 500000,
-    ltv: 58.3,
-    noi: 84000,
-    capRate: 7.0,
-    cashOnCash: 10.2,
-    dscr: 1.25,
-    monthlyCashFlow: 4200,
-    performanceStatus: 'good',
-    currency: 'EUR',
-  },
-  {
-    id: '3',
-    propertyName: 'Retail Strip',
-    buildingAddress: '789 Commerce Blvd',
-    currentValue: 500000,
-    equity: 300000,
-    ltv: 40,
-    noi: 32000,
-    capRate: 6.4,
-    cashOnCash: 8.5,
-    dscr: 1.15,
-    monthlyCashFlow: 1800,
-    performanceStatus: 'fair',
-    currency: 'EUR',
-  },
-];
+// --- Response → component-prop mappers (snake_case → camelCase) -----------
+function mapPropertyCard(card: PropertyPerformanceCard) {
+  return {
+    id: card.property_id,
+    propertyName: card.property_name,
+    buildingAddress: card.building_address ?? undefined,
+    currentValue: num(card.current_value),
+    equity: num(card.equity),
+    ltv: optNum(card.ltv),
+    noi: num(card.noi),
+    capRate: optNum(card.cap_rate),
+    cashOnCash: optNum(card.cash_on_cash),
+    dscr: optNum(card.dscr),
+    occupancyRate: optNum(card.occupancy_rate),
+    monthlyCashFlow: optNum(card.monthly_cash_flow),
+    performanceStatus: card.performance_status,
+    currency: card.currency,
+  };
+}
 
-const mockCashFlowTrend = [
-  {
-    period: '2024-01',
-    periodDate: '2024-01-01',
-    grossIncome: 18000,
-    operatingExpenses: 5000,
-    noi: 13000,
-    debtService: 8000,
-    netCashFlow: 5000,
-  },
-  {
-    period: '2024-02',
-    periodDate: '2024-02-01',
-    grossIncome: 18500,
-    operatingExpenses: 5200,
-    noi: 13300,
-    debtService: 8000,
-    netCashFlow: 5300,
-  },
-  {
-    period: '2024-03',
-    periodDate: '2024-03-01',
-    grossIncome: 17800,
-    operatingExpenses: 6500,
-    noi: 11300,
-    debtService: 8000,
-    netCashFlow: 3300,
-  },
-  {
-    period: '2024-04',
-    periodDate: '2024-04-01',
-    grossIncome: 18200,
-    operatingExpenses: 5100,
-    noi: 13100,
-    debtService: 8000,
-    netCashFlow: 5100,
-  },
-  {
-    period: '2024-05',
-    periodDate: '2024-05-01',
-    grossIncome: 19000,
-    operatingExpenses: 5300,
-    noi: 13700,
-    debtService: 8000,
-    netCashFlow: 5700,
-  },
-  {
-    period: '2024-06',
-    periodDate: '2024-06-01',
-    grossIncome: 18800,
-    operatingExpenses: 5400,
-    noi: 13400,
-    debtService: 8000,
-    netCashFlow: 5400,
-  },
-];
+function mapCashFlowPoint(point: CashFlowTrendPoint) {
+  return {
+    period: point.period,
+    periodDate: point.period_date,
+    grossIncome: num(point.gross_income),
+    operatingExpenses: num(point.operating_expenses),
+    noi: num(point.noi),
+    debtService: optNum(point.debt_service),
+    netCashFlow: num(point.net_cash_flow),
+  };
+}
 
-const mockBenchmark = {
-  benchmarkName: 'Regional Multi-Family Index',
-  benchmarkSource: 'Industry',
-  comparisonDate: '2024-06-30',
-  metrics: [
-    {
-      metricName: 'cap_rate',
-      actualValue: 7.1,
-      benchmarkValue: 6.5,
-      variance: 0.6,
-      variancePct: 9.2,
-      percentile: 72,
-      status: 'above_benchmark',
-    },
-    {
-      metricName: 'cash_on_cash',
-      actualValue: 10.2,
-      benchmarkValue: 9.8,
-      variance: 0.4,
-      variancePct: 4.1,
-      percentile: 65,
-      status: 'above_benchmark',
-    },
-    {
-      metricName: 'occupancy',
-      actualValue: 94.5,
-      benchmarkValue: 95.2,
-      variance: -0.7,
-      variancePct: -0.7,
-      percentile: 45,
-      status: 'below_benchmark',
-    },
-    {
-      metricName: 'dscr',
-      actualValue: 1.28,
-      benchmarkValue: 1.25,
-      variance: 0.03,
-      variancePct: 2.4,
-      percentile: 58,
-      status: 'at_benchmark',
-    },
-  ],
-  overallPerformance: 'Good',
-  overallPercentile: 62,
-  performanceScore: 74,
-};
+function mapMetric(metric: MetricsSummary) {
+  return {
+    propertyId: metric.property_id ?? undefined,
+    propertyName: metric.property_name ?? undefined,
+    noi: num(metric.noi),
+    capRate: optNum(metric.cap_rate),
+    cashOnCash: optNum(metric.cash_on_cash),
+    irr: optNum(metric.irr),
+    dscr: optNum(metric.dscr),
+    equityMultiple: optNum(metric.equity_multiple),
+    period: metric.period,
+    currency: metric.currency,
+  };
+}
 
-const mockAlerts = [
-  {
-    id: '1',
-    alertType: 'metric_threshold',
-    severity: 'warning',
-    title: 'DSCR Below Target',
-    message: 'Retail Strip property DSCR has fallen below your target of 1.25x',
-    metricName: 'DSCR',
-    currentValue: 1.15,
-    thresholdValue: 1.25,
-    isRead: false,
-    isResolved: false,
-    createdAt: '2024-06-28T10:30:00Z',
-  },
-  {
-    id: '2',
-    alertType: 'market_comparison',
-    severity: 'info',
-    title: 'Portfolio Outperforming Market',
-    message: 'Your portfolio cap rate is 9.2% above the regional benchmark',
-    isRead: true,
-    isResolved: false,
-    createdAt: '2024-06-25T14:15:00Z',
-  },
-];
+// Year-to-date window used for the metrics summary (per-property table).
+function ytdRange(): { period_start: string; period_end: string } {
+  const now = new Date();
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return {
+    period_start: `${now.getUTCFullYear()}-01-01`,
+    period_end: iso(now),
+  };
+}
 
-const mockMetrics = [
-  {
-    propertyId: '1',
-    propertyName: 'Downtown Office Building',
-    noi: 64000,
-    capRate: 8.0,
-    cashOnCash: 12.5,
-    irr: 15.2,
-    dscr: 1.45,
-    equityMultiple: 1.85,
-    period: 'YTD 2024',
-    currency: 'EUR',
-  },
-  {
-    propertyId: '2',
-    propertyName: 'Residential Complex',
-    noi: 84000,
-    capRate: 7.0,
-    cashOnCash: 10.2,
-    irr: 12.8,
-    dscr: 1.25,
-    equityMultiple: 1.62,
-    period: 'YTD 2024',
-    currency: 'EUR',
-  },
-  {
-    propertyId: '3',
-    propertyName: 'Retail Strip',
-    noi: 32000,
-    capRate: 6.4,
-    cashOnCash: 8.5,
-    irr: 10.5,
-    dscr: 1.15,
-    equityMultiple: 1.45,
-    period: 'YTD 2024',
-    currency: 'EUR',
-  },
-];
+const SummaryCards: React.FC<{ summary: DashboardSummary }> = ({ summary }) => (
+  <div className="grid grid-cols-5 gap-4">
+    <MetricsSummaryCard
+      title="Portfolio Value"
+      value={num(summary.total_portfolio_value)}
+      format="currency"
+      currency={summary.currency}
+    />
+    <MetricsSummaryCard
+      title="Total Equity"
+      value={num(summary.total_equity)}
+      format="currency"
+      currency={summary.currency}
+    />
+    <MetricsSummaryCard
+      title="YTD NOI"
+      value={num(summary.ytd_noi)}
+      format="currency"
+      currency={summary.currency}
+    />
+    <MetricsSummaryCard
+      title="YTD Cash Flow"
+      value={num(summary.ytd_cash_flow)}
+      format="currency"
+      currency={summary.currency}
+      change={optNum(summary.ytd_return_pct)}
+      changeLabel="YTD return"
+      trend={num(summary.ytd_cash_flow) >= 0 ? 'up' : 'down'}
+    />
+    <MetricsSummaryCard
+      title="LTV Ratio"
+      value={num(summary.ltv_ratio)}
+      format="percent"
+      subtitle={
+        summary.debt_to_equity_ratio != null
+          ? `D/E: ${num(summary.debt_to_equity_ratio).toFixed(2)}x`
+          : undefined
+      }
+    />
+  </div>
+);
 
 export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ portfolioId }) => {
+  const summaryQuery = useDashboardSummary(portfolioId);
+  const cardsQuery = usePropertyPerformanceCards(portfolioId);
+  const trendQuery = useCashFlowTrend(portfolioId);
+  const alertsQuery = usePortfolioAlerts(portfolioId);
+  const metricsQuery = usePortfolioMetricsSummary(portfolioId, ytdRange());
+  const markRead = useMarkAlertRead(portfolioId);
+  const resolve = useResolveAlert(portfolioId);
+
+  // The summary is the primary resource — gate the page shell on it.
+  if (summaryQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-sm text-gray-500">
+        Loading portfolio dashboard…
+      </div>
+    );
+  }
+
+  if (summaryQuery.isError || !summaryQuery.data) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+        <h2 className="text-sm font-semibold text-red-800">Failed to load portfolio dashboard</h2>
+        <p className="mt-1 text-sm text-red-700">
+          {summaryQuery.error instanceof Error
+            ? summaryQuery.error.message
+            : 'The portfolio summary could not be retrieved. Please try again.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => summaryQuery.refetch()}
+          className="mt-4 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const summary = summaryQuery.data;
+  const alerts = alertsQuery.data ?? [];
+  const propertyCards = cardsQuery.data ?? [];
+  const cashFlowTrend = trendQuery.data ?? [];
+  const metrics = metricsQuery.data?.property_metrics ?? [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -252,7 +183,7 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Portfolio Dashboard</h1>
           <p className="text-sm text-gray-500">
-            Portfolio ID: {portfolioId} | Last updated: June 30, 2024
+            Portfolio ID: {portfolioId} | As of: {summary.as_of_date}
           </p>
         </div>
         <div className="flex space-x-3">
@@ -272,81 +203,46 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-5 gap-4">
-        <MetricsSummaryCard
-          title="Portfolio Value"
-          value={mockDashboardSummary.totalPortfolioValue}
-          format="currency"
-          currency={mockDashboardSummary.currency}
-          change={5.2}
-          changeLabel="vs last year"
-          trend="up"
-        />
-        <MetricsSummaryCard
-          title="Total Equity"
-          value={mockDashboardSummary.totalEquity}
-          format="currency"
-          currency={mockDashboardSummary.currency}
-          change={8.1}
-          changeLabel="vs last year"
-          trend="up"
-        />
-        <MetricsSummaryCard
-          title="YTD NOI"
-          value={mockDashboardSummary.ytdNoi}
-          format="currency"
-          currency={mockDashboardSummary.currency}
-          change={3.5}
-          changeLabel="vs prior YTD"
-          trend="up"
-        />
-        <MetricsSummaryCard
-          title="YTD Cash Flow"
-          value={mockDashboardSummary.ytdCashFlow}
-          format="currency"
-          currency={mockDashboardSummary.currency}
-          change={-2.1}
-          changeLabel="vs prior YTD"
-          trend="down"
-        />
-        <MetricsSummaryCard
-          title="LTV Ratio"
-          value={mockDashboardSummary.ltvRatio}
-          format="percent"
-          subtitle={`D/E: ${mockDashboardSummary.debtToEquityRatio.toFixed(2)}x`}
-        />
-      </div>
+      <SummaryCards summary={summary} />
 
       {/* Alerts Section */}
-      {mockAlerts.length > 0 && (
+      {alerts.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-gray-900">Alerts</h2>
-          {mockAlerts.map((alert) => (
+          {alerts.map((alert: PerformanceAlertDto) => (
             <PerformanceAlert
               key={alert.id}
-              {...alert}
-              onMarkRead={() => {
-                // TODO: wire to alerts API (mark-read mutation)
-              }}
-              onResolve={() => {
-                // TODO: wire to alerts API (resolve mutation)
-              }}
+              id={alert.id}
+              alertType={alert.alert_type}
+              severity={alert.severity}
+              title={alert.title}
+              message={alert.message}
+              metricName={alert.metric_name ?? undefined}
+              currentValue={optNum(alert.current_value)}
+              thresholdValue={optNum(alert.threshold_value)}
+              isRead={alert.is_read}
+              isResolved={alert.is_resolved}
+              createdAt={alert.created_at}
+              onMarkRead={() => markRead.mutate(alert.id)}
+              onResolve={() => resolve.mutate(alert.id)}
             />
           ))}
         </div>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Cash Flow Chart - 2 columns */}
-        <div className="col-span-2">
-          <CashFlowChart data={mockCashFlowTrend} currency={mockDashboardSummary.currency} />
-        </div>
-
-        {/* Benchmark Comparison - 1 column */}
-        <div>
-          <BenchmarkComparisonCard {...mockBenchmark} />
-        </div>
+      {/* Cash Flow Chart */}
+      <div>
+        {trendQuery.isLoading ? (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">
+            Loading cash-flow trend…
+          </div>
+        ) : trendQuery.isError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+            Failed to load cash-flow trend.
+          </div>
+        ) : (
+          <CashFlowChart data={cashFlowTrend.map(mapCashFlowPoint)} currency={summary.currency} />
+        )}
       </div>
 
       {/* Property Cards */}
@@ -357,21 +253,35 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
             View All Properties
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          {mockPropertyCards.map((property) => (
-            <PropertyCard
-              key={property.id}
-              {...property}
-              onClick={() => {
-                // TODO: navigate to property detail route
-              }}
-            />
-          ))}
-        </div>
+        {cardsQuery.isLoading ? (
+          <div className="text-sm text-gray-500">Loading properties…</div>
+        ) : cardsQuery.isError ? (
+          <div className="text-sm text-red-700">Failed to load property performance.</div>
+        ) : propertyCards.length === 0 ? (
+          <div className="text-sm text-gray-500">No properties in this portfolio yet.</div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {propertyCards.map((property: PropertyPerformanceCard) => (
+              <PropertyCard
+                key={property.property_id}
+                {...mapPropertyCard(property)}
+                onClick={() => {
+                  // TODO: navigate to property detail route
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Financial Metrics Table */}
-      <FinancialMetricsTable metrics={mockMetrics} title="Financial Metrics Summary" />
+      {metricsQuery.isError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          Failed to load financial metrics.
+        </div>
+      ) : (
+        <FinancialMetricsTable metrics={metrics.map(mapMetric)} title="Financial Metrics Summary" />
+      )}
     </div>
   );
 };

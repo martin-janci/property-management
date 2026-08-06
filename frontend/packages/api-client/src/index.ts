@@ -60,6 +60,7 @@ export * from './onboarding';
 export * from './outages';
 export * from './packages';
 export * from './person-months';
+export * from './portfolio-performance';
 export * from './registry';
 export * from './reports';
 export {
