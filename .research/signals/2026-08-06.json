@@ -1,0 +1,211 @@
+{
+  "generated_at": "2026-08-06T03:16:00Z",
+  "since_iso": "2026-08-04T03:15:00Z",
+  "last_pr_seen_before": 2650,
+  "last_issue_seen_before": 2643,
+  "last_commit_sha_before": "e0703d5901ef5454df8919ec71e503f8625e23fb",
+  "run_notes": [
+    "8 merged PRs since #2650: #2653, #2655, #2656, #2657, #2659, #2660, #2661, #2663 (#2643, #2654, #2658, #2662 are issue numbers, not PRs).",
+    "5 issues touched (all CLOSED): #2662, #2658, #2654, #2652, #2651.",
+    "0 open PRs touched since last run (14 open PRs, none updated after 2026-07-30).",
+    "48 commits on dev since last SHA (8 PR merges + 40 dispatcher/generator bookkeeping).",
+    "Routine lag: 47h (>36h → lag_warning emitted).",
+    "Phase 1.6 (heavy PM subagent) SKIPPED — 2-day incremental delta; last upkeep 2026-08-01 still valid; pm_cursor + coverage_cursor NOT advanced; G16 becomes no-op per skip clause."
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2660, PR #2663",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "voice_webhooks.rs touched by 2 merged PRs this window (#2660 broken-auth fix 2026-08-04; #2663 HMAC-indexed lookup + sqlx::test regression 2026-08-05).",
+        "New hotspot — no prior entry in state.hotspot_history for this file (runs_seen becomes 1)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2656, PR #2659",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative_re_emit": true,
+      "evidence": [
+        "ThreadDetailScreen.tsx touched by 2 merged PRs this window (#2656 i18n send-error banner; #2659 formatMessageTime guard against malformed createdAt).",
+        "Signal ID already in state.seen_signals from 2026-08-04 run — churn-hotspot is in the cumulative allowlist (G4 carve-out); re-emit with score_delta=0."
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+      "type": "repeated-churn",
+      "source": "PR #2656, PR #2659 (this run) + PR #2641/2645/2646 (prior run)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history runs_seen for this file: 1 (prior 2026-08-04) → 2 (this run) — instability proxy fires.",
+        "Prior run's churn-hotspot backlog item (`churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx`) is already status=done (resolved by PR #2659 which cited it verbatim). No new open backlog item created — signal is analytical/observability only this run."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-06",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso=2026-08-04T03:15:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine skipped 2026-08-05 (no brief written). Lag from last_run_iso to now = ~47h (>36h threshold). Surfaced under brief 'Since last run' as `Routine lag: 1d 23h`; no stale_routine_alert (lag < 72h)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
+      "type": "code-review-finding",
+      "source": "Tier1d rotating expert review 2026-08-06 (ppt-web-core segment)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "See .research/signals/2026-08-06-ppt-web-core-tier1d.json for the full 4-bullet finding.",
+        "Client (websocket.ts:688-709) sends `{type:'ping'}` and force-closes at 10s if no matching application `{type:'pong'}` arrives; server (ws_notifications.rs:27, 219-260) treats every inbound frame as a heartbeat and never emits application `pong`. Result: 40s reconnect loop for every authenticated session."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
+      "type": "code-review-finding",
+      "source": "Tier1d rotating expert review 2026-08-06 (ppt-web-core segment)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "See .research/signals/2026-08-06-ppt-web-core-tier1d.json for the full 4-bullet finding.",
+        "websocket.ts:600-612 sets shouldReconnect=false after max attempts (~3 min budget); reconnectAttempts never resets outside a successful onopen; WebSocketContext.tsx never subscribes to `connection:max-retries-exceeded` and is not wired to the browser online event → any outage longer than 3 min permanently kills the notification socket for the session."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-06.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals not double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap<=8 + decay check",
+      "observed": "no violations",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plan has adversarial pass line in brief",
+      "observed": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md → passed",
+      "expected": "passed|fixed-in-place|rolled-back"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count<=2 + shape + capability + mode + files exist",
+      "observed": "1 new plan, all shape checks pass",
+      "expected": "≤2 + shape complete"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs fresh regeneration",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed line honesty",
+      "observed": "none reported; no cursors froze",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD count",
+      "observed": "7 >= 7",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs fresh regeneration",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + kill-switch",
+      "observed": "[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + coverage_cursor (skip-clause)",
+      "observed": "Phase 1.6 skipped → no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

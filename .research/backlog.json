@@ -6793,6 +6793,78 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
+      "title": "ppt-web WS heartbeat sends application `{type:'ping'}` that server ignores → force-close/reconnect every ~40s",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Tier1d review 2026-08-06 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:688-709 client heartbeat sends `{type:'ping'}` and arms a 10s pongTimeout that only clears on an application-level `{type:'pong'}`.",
+        "backend/servers/api-server/src/routes/ws_notifications.rs treats every inbound frame as a heartbeat and never serializes an application `pong` — the server uses PROTOCOL-level Message::Ping only.",
+        "Consequence: on every fresh socket the client reaches awaitingPong=true after 30s, force-closes with code 4000 at ~40s, reconnects; loop repeats for the whole session. Reachable in production: App.tsx mounts <WebSocketProvider> with default intervals.",
+        "Fix options: remove the app-level ping (rely on browser auto-pong to server Message::Ping), OR have the server echo `{type:'pong'}` when it receives `{type:'ping'}`."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "backend/servers/api-server/src/routes/ws_notifications.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
+      "title": "ppt-web WS gives up after 10 reconnect attempts (~3 min budget) and never resumes — any longer outage silently kills realtime for the session",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-06 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:600-612 — once reconnectAttempts reaches maxReconnectAttempts (default 10) scheduleReconnect() sets shouldReconnect=false and emits `connection:max-retries-exceeded`. reconnectAttempts is only reset by a successful onopen; resetReconnectAttempts() has no caller.",
+        "Default backoff sum (~3 min over 10 attempts) is shorter than most real outages (laptop sleep, VPN drop, backend redeploy, mobile network gap), so a single longer outage permanently dead-ends the notification socket.",
+        "contexts/WebSocketContext.tsx never subscribes to `connection:max-retries-exceeded` and is not wired to hooks/useNetworkStatus.ts — nothing re-arms connect() when the browser comes back online.",
+        "Fix: on browser `online` (or via useNetworkStatusEffect) call service.connect() + reset reconnectAttempts; optionally surface `connection:max-retries-exceeded` so the UI can offer a manual reconnect."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice_webhooks-rs",
+      "title": "Churn hotspot: 2 commits touching backend/servers/api-server/src/routes/voice_webhooks.rs (window 2026-08-04..2026-08-06)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2660",
+        "PR #2663"
+      ],
+      "evidence": [
+        "PR #2660 (gh-issue-2658: validate voice webhook access token — broken-auth fix) touched voice_webhooks.rs 2026-08-04.",
+        "PR #2663 (gh-issue-2662: harden voice-webhook auth device lookup — HMAC-indexed lookup + sqlx::test regression) touched voice_webhooks.rs 2026-08-05.",
+        "Both PRs sit on the same async fn cluster (authenticate_voice_user, verify_hmac_signature, oauth_token_exchange/refresh) — expected settling after issue #2658 landed; monitor for further churn before promoting to refactor plan."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
     }
   ]
 }

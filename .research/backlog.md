@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-04 03:15 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-06 03:16 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 3 | bug | `code-review-ppt-web-core-ws-pong-timeout-drop` | ppt-web WS heartbeat sends application `{type:'ping'}` that server ignores → force-close/reconnect e | ready | 2026-08-06 | [plan](plans/code-review-ppt-web-core-ws-pong-timeout-drop.md) |
 | 3 | security | `code-review-api-core-ssrf-validator-drift` | api-server workflow api_call.rs has a duplicate SSRF validator that drifts from common::url_validati | done | 2026-08-02 |  |
 | 3 | bug | `code-review-reality-server-agency-members-unauth-idor` | reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated c | dropped | 2026-08-02 |  |
 | 3 | security | `code-review-reality-server-sso-session-invalidate-swallowed` | reality-server sync_session swallows invalidate_session error — portal session survives after PM tok | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-sso-session-invalidate-swallowed.md) |
@@ -29,14 +30,15 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-ppt-web-core-ws-giveup-no-resume` | ppt-web WS gives up after 10 reconnect attempts (~3 min budget) and never resumes — any longer outag | open | 2026-08-06 |  |
 | 2 | bug | `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard u | open | 2026-08-04 |  |
 | 2 | bug | `code-review-mobile-rn-offline-terminal-drop-dataloss` | mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 r | done | 2026-08-04 |  |
 | 2 | bug | `code-review-ppt-web-core-logout-cache-purge-gap` | ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentim | done | 2026-08-04 |  |
 | 2 | bug | `code-review-ppt-web-core-mutation-no-onerror` | ppt-web rentals + financial useMutation hooks lack onError — money-movement + platform-connect failu | done | 2026-08-04 |  |
-| 2 | test-gap | `screen-map-drift-pr-2646-ppt` | screen-map drift: PR #2646 touched ppt-web route wrapper (App.tsx) without updating docs/screens/ppt | open | 2026-08-04 |  |
-| 2 | test-gap | `screen-map-drift-pr-2647-ppt` | screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updat | open | 2026-08-04 |  |
-| 2 | test-gap | `screen-map-drift-pr-2648-ppt` | screen-map drift: PR #2648 touched ppt-web rentals route (mutation auth guard) without updating docs | open | 2026-08-04 |  |
-| 2 | test-gap | `screen-map-drift-pr-2649-ppt` | screen-map drift: PR #2649 touched ppt-web rentals + financial routes (onError toasts) without updat | open | 2026-08-04 |  |
+| 2 | test-gap | `screen-map-drift-pr-2646-ppt` | screen-map drift: PR #2646 touched ppt-web route wrapper (App.tsx) without updating docs/screens/ppt | dropped | 2026-08-04 |  |
+| 2 | test-gap | `screen-map-drift-pr-2647-ppt` | screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updat | dropped | 2026-08-04 |  |
+| 2 | test-gap | `screen-map-drift-pr-2648-ppt` | screen-map drift: PR #2648 touched ppt-web rentals route (mutation auth guard) without updating docs | done | 2026-08-04 |  |
+| 2 | test-gap | `screen-map-drift-pr-2649-ppt` | screen-map drift: PR #2649 touched ppt-web rentals + financial routes (onError toasts) without updat | done | 2026-08-04 |  |
 | 2 | bug | `code-review-mobile-rn-offline-sync-false-complete` | mobile: useOfflineSupport.processQueue reports isComplete:true after a head-of-line-blocked (halted) | done | 2026-08-03 |  |
 | 2 | bug | `code-review-mobile-rn-thread-send-silent-fail` | mobile: ThreadDetailScreen.handleSend send-message mutation has onSuccess only, no onError — failed  | done | 2026-08-03 |  |
 | 2 | bug | `code-review-ppt-web-core-api-retry-nonidempotent` | ppt-web axios retry interceptor retries non-idempotent POST/PUT on 5xx / network errors — risk of du | done | 2026-08-03 |  |
@@ -116,10 +118,11 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts` | Churn hotspot: 2 commits touching frontend/apps/mobile/src/hooks/useOfflineSupport.ts (window 2026-0 | open | 2026-08-04 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx` | Churn hotspot: 2 commits touching frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx ( | open | 2026-08-04 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx` | Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-0 | open | 2026-08-04 |  |
-| 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout` | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no c | open | 2026-08-04 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-voice_webhooks-rs` | Churn hotspot: 2 commits touching backend/servers/api-server/src/routes/voice_webhooks.rs (window 20 | open | 2026-08-06 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts` | Churn hotspot: 2 commits touching frontend/apps/mobile/src/hooks/useOfflineSupport.ts (window 2026-0 | dropped | 2026-08-04 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx` | Churn hotspot: 2 commits touching frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx ( | done | 2026-08-04 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx` | Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-0 | dropped | 2026-08-04 |  |
+| 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout` | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no c | dropped | 2026-08-04 |  |
 | 1 | bug | `code-review-mobile-rn-hardcoded-empty-error-i18n` | mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18n | done | 2026-08-03 |  |
 | 1 | bug | `code-review-mobile-rn-push-debug-console-log` | mobile: usePushNotifications — debug console.log left on the device-token register/unregister produc | done | 2026-08-03 |  |
 | 1 | bug | `code-review-ppt-web-core-notfound-i18n-gap` | ppt-web route wrappers render 8 hardcoded English 'X not found' fallbacks — sk/cs/de users see untra | done | 2026-08-03 |  |
