@@ -169,9 +169,23 @@ impl ActionExecutor for ApiCallExecutor {
         // documentation ranges. Delegating keeps scheme allowlisting
         // (http(s) only, plain-http gated to `RUST_ENV=development`), blocked
         // hosts/TLDs, and private/reserved IP checks in lock-step everywhere.
-        if let Err(e) = common::url_validation::validate_external_url(&url) {
-            return Err(ActionError::ConfigurationError(e.to_string()));
-        }
+        let parsed_url = common::url_validation::validate_external_url(&url)
+            .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
+
+        // SSRF via DNS: `validate_external_url` only inspects the literal
+        // string — a hostname with no literal-IP form (e.g.
+        // "attacker.example.com") that resolves to a private/internal
+        // address at request time sailed straight through it. Resolve now,
+        // right before the request is issued, and reject if *any* resolved
+        // address falls in a forbidden range. Fails closed: a resolution
+        // error also rejects.
+        let host = parsed_url.host_str().ok_or_else(|| {
+            ActionError::ConfigurationError("API call URL must have a host".to_string())
+        })?;
+        let port = parsed_url.port_or_known_default().unwrap_or(443);
+        common::url_validation::validate_resolved_host(host, port)
+            .await
+            .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
 
         // Build request
         let mut request = match api_config.method {
@@ -419,6 +433,55 @@ mod tests {
             other => panic!(
                 "expected ConfigurationError (SSRF rejection) for a multicast \
                  address, got: {other:?}"
+            ),
+        }
+    }
+
+    /// Regression (SSRF via DNS): `validate_external_url` only inspected the
+    /// literal URL string, so a DNS hostname with no literal-IP form (e.g.
+    /// `internal.attacker.example`) sailed through even when it resolves to
+    /// a private/internal address at request time — the guard never ran a
+    /// DNS lookup at all. `common::url_validation::validate_resolved_host`
+    /// covers the "resolves to a private IP" case itself, using an injected
+    /// fake resolver so it stays hermetic (see
+    /// `common::url_validation::tests::validate_resolved_host_rejects_hostname_resolving_to_private_ip`).
+    ///
+    /// This test proves the executor actually *wires in* that check (rather
+    /// than the fix existing only in the library, unused) by exercising the
+    /// fail-closed branch: a hostname under the IETF-reserved `.invalid` TLD
+    /// (RFC 2606) can never resolve, so DNS resolution errors out and the
+    /// fail-closed `ResolutionFailed` branch rejects it — fast and without
+    /// depending on any specific external network state, since the
+    /// non-delegation of `.invalid` is guaranteed rather than incidental.
+    /// Fails on `dev`: `execute` there never calls
+    /// `validate_resolved_host`/`validate_resolved_host_with`, so a
+    /// non-literal-IP hostname was never re-validated post-DNS and this call
+    /// would instead fail later with an `ExternalServiceError` from
+    /// `reqwest` (a connect failure), not the `ConfigurationError` this test
+    /// asserts.
+    #[tokio::test]
+    async fn execute_rejects_hostname_that_fails_dns_resolution() {
+        let executor = ApiCallExecutor::new();
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({
+            "url": "https://this-host-cannot-resolve.invalid/webhook"
+        });
+
+        match executor.execute(&config, &context).await {
+            Err(ActionError::ConfigurationError(msg)) => {
+                assert!(
+                    msg.contains("resolve"),
+                    "expected a DNS-resolution rejection message, got: {msg}"
+                );
+            }
+            other => panic!(
+                "expected ConfigurationError (fail-closed DNS resolution) for an \
+                 unresolvable host, got: {other:?}"
             ),
         }
     }
