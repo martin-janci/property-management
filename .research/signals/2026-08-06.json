@@ -1,0 +1,208 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-06",
+      "type": "lag_warning",
+      "source": "state.last_run_iso vs now",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine last ran 2026-08-04T03:15Z; now ~2026-08-06T06:20Z; 51h since last run (>36h)"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-04",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2950 lines of churn in this window"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen 5\u21926 (long-running instability proxy)"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-04",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2799 lines of churn in this window"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-04",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2460 lines of churn (successor to reports.rs after PR #2599)"
+    },
+    {
+      "id": "dep-update-noise-frontend-batch-2026-07-30",
+      "type": "dep-update-noise",
+      "source": "PRs #2581\u2013#2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "11 dependabot PRs opened 2026-07-30; not scored; logged"
+    },
+    {
+      "id": "code-review-reality-server-listings-viewcount",
+      "type": "code-review-finding",
+      "source": "commit 980519f8 (dispatcher Tier-1d dev-review)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "routes/listings.rs:432 hardcodes view_count:0 while handlers/listings/mod.rs::track_view persists to listing_analytics"
+    },
+    {
+      "id": "code-review-reality-server-orphaned-get-listing",
+      "type": "code-review-finding",
+      "source": "commit 980519f8 (dispatcher Tier-1d dev-review)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "handlers/listings/mod.rs:74-113 defines get_listing() returning stubbed data; no call sites per reviewer"
+    },
+    {
+      "id": "code-review-reality-server-orphaned-schedule-viewing",
+      "type": "code-review-finding",
+      "source": "commit 980519f8 (dispatcher Tier-1d dev-review)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "handlers/inquiries/mod.rs:290-337 schedule_viewing() always returns not-yet-implemented"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-06.md && head -1 == '# 2026-08-06'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "last_pr_seen 2650->2663, seen_signals +9, hotspot_history advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal-id dedup vs prev seen_signals",
+      "observed": "no non-cumulative id double-counted with score_delta!=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "backlog cap<=8 + decay for open items age>14d",
+      "observed": "no score>8; sole pre-existing open item (portfolio-caps) is 2d old \u2014 no decay owed",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial-pass annotation in brief",
+      "observed": "plans/code-review-reality-server-listings-viewcount.md \u2014 adversarial pass: passed",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count + metadata + headings + capability + mode + files-exist",
+      "observed": "1 new plan; all 4 metadata + 11 headings; C1+C6 ticked; Mode: cloud-ok; both cited files exist on disk",
+      "expected": "ok"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0 (pre-check \u2014 will re-verify at commit time)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged .research/ diff (excluding baseline docs)",
+      "observed": "0 (pre-check \u2014 will re-verify at commit time)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md matches staged (via python /tmp/gen-backlog.py)",
+      "observed": "will re-diff at commit time",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases failed reconciled with cursors",
+      "observed": "no phase failed; all cursors advanced as expected",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present or in archive",
+      "observed": "no plan renames this run; convergent",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "no archive change this run \u2014 >=",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md matches staged (via python /tmp/gen-triage.py)",
+      "observed": "byte-identical to staged (regenerator matches previous run's output)",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency + kill-switch",
+      "observed": "auto_fix_actions=[]; no PR/issue/comment opened this run; ROUTINE_AUTOFIX_DISABLED not set but no eligible candidate",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 no-op (skipped this run)",
+      "observed": "pm_cursor + coverage_cursor NOT advanced; management artifacts unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0 (pre-check)",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist \u00d7 confidence-high \u00d7 score>=3"
+}

@@ -6793,6 +6793,132 @@
         "assignment_status": "failed",
         "pr_number": null
       }
+    },
+    {
+      "id": "code-review-reality-server-listings-viewcount",
+      "title": "GET /listings/{id} hardcodes view_count:0 while track_view persists to listing_analytics",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "commit 980519f8 (dispatcher Tier-1d dev-review)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:432 returns `view_count: 0, // Would need analytics query`",
+        "backend/servers/reality-server/src/handlers/listings/mod.rs:132 already has track_view() persisting to listing_analytics",
+        "Read path never queries the analytics store so the public listing detail always shows 0 views"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs",
+        "backend/servers/reality-server/src/handlers/listings/mod.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": "plans/code-review-reality-server-listings-viewcount.md"
+    },
+    {
+      "id": "code-review-reality-server-orphaned-get-listing",
+      "title": "handlers/listings/mod.rs get_listing returns stubbed data with no call sites (dead)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit 980519f8 (dispatcher Tier-1d dev-review)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/listings/mod.rs:74-113 defines get_listing that returns stub data",
+        "Reachability gate: pub mod listings IS declared in handlers/mod.rs — module reachable, function itself has no callers per reviewer grep"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/listings/mod.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-orphaned-schedule-viewing",
+      "title": "handlers/inquiries/mod.rs schedule_viewing always returns not-yet-implemented (dead stub)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit 980519f8 (dispatcher Tier-1d dev-review)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs:290-337 returns hard-coded not-yet-implemented",
+        "Reachability gate: pub mod inquiries IS declared in handlers/mod.rs; function itself has no callers per reviewer"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
+      "title": "churn hotspot: backend/servers/api-server/src/routes/auth.rs (2950 lines, runs_seen=6)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "git log since 2026-08-04"
+      ],
+      "evidence": [
+        "2950 lines of churn in this window",
+        "repeated-churn: runs_seen went 5->6 (long-running instability proxy)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "title": "churn hotspot: backend/servers/api-server/src/routes/integrations/webhook.rs (2799 lines)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log since 2026-08-04"
+      ],
+      "evidence": [
+        "2799 lines of churn in this window"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-mod-rs",
+      "title": "churn hotspot: backend/servers/api-server/src/routes/reports/mod.rs (2460 lines)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log since 2026-08-04"
+      ],
+      "evidence": [
+        "2460 lines of churn in this window (successor to reports.rs after PR #2599 module extract)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-06",
+      "updated_at": "2026-08-06",
+      "plan": null
     }
   ]
 }
