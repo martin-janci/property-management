@@ -263,9 +263,54 @@ async fn submit_correction(
     auth: AuthUser,
     Json(body): Json<OcrCorrectionRequest>,
 ) -> Result<(StatusCode, Json<OcrCorrectionResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // Do not trust `body.organization_id` alone for authorization: it is
+    // client-supplied, and a caller who is a member of *some* org could
+    // point `meter_reading_id` at a different org's reading while still
+    // passing `is_member` for their own org (IDOR). When a target reading
+    // is referenced, derive the owning organization from that reading's
+    // meter and require the payload's organization_id to agree with it,
+    // rejecting any mismatch as cross-tenant access. With no target
+    // reading there is no other-tenant record to leak, so the caller's
+    // claimed org membership is the whole scope.
+    let scoped_organization_id = if let Some(meter_reading_id) = body.meter_reading_id {
+        let reading = state
+            .meter_repo
+            .get_reading(meter_reading_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = ?e, "Meter reading lookup failed");
+                internal_err("Failed to verify meter reading access")
+            })?
+            .ok_or_else(|| not_found("Meter reading not found"))?;
+
+        let meter = state
+            .meter_repo
+            .get_meter(reading.meter_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = ?e, "Meter lookup failed");
+                internal_err("Failed to verify meter reading access")
+            })?
+            .ok_or_else(|| not_found("Meter reading not found"))?;
+
+        if body.organization_id != meter.organization_id {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "organization_id does not match the meter reading's organisation",
+                )),
+            ));
+        }
+
+        meter.organization_id
+    } else {
+        body.organization_id
+    };
+
     let is_member = state
         .org_member_repo
-        .is_member(body.organization_id, auth.user_id)
+        .is_member(scoped_organization_id, auth.user_id)
         .await
         .map_err(|_| internal_err("Database error"))?;
     if !is_member {
@@ -288,7 +333,7 @@ async fn submit_correction(
         .create_ocr_correction(
             auth.user_id,
             CreateOcrCorrection {
-                organization_id: body.organization_id,
+                organization_id: scoped_organization_id,
                 meter_reading_id: body.meter_reading_id,
                 original_value: orig,
                 corrected_value: corr,

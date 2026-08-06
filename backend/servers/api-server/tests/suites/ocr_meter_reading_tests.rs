@@ -13,6 +13,7 @@
 use axum::http::{header, Method, Request, StatusCode};
 use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
+use std::str::FromStr;
 use tower::ServiceExt;
 use uuid::Uuid;
 
@@ -96,6 +97,21 @@ async fn seed_meter(pool: &PgPool, org_id: Uuid, building_id: Uuid, number: &str
     .fetch_one(pool)
     .await
     .expect("seed meter")
+}
+
+async fn seed_reading(pool: &PgPool, meter_id: Uuid, reading: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO meter_readings (meter_id, reading, source, status)
+        VALUES ($1, $2, 'manual', 'pending')
+        RETURNING id
+        "#,
+    )
+    .bind(meter_id)
+    .bind(rust_decimal::Decimal::from_str(reading).unwrap())
+    .fetch_one(pool)
+    .await
+    .expect("seed reading")
 }
 
 fn mint_token(user_id: Uuid, email: &str) -> String {
@@ -401,4 +417,70 @@ async fn submit_correction_cross_tenant_rejected(pool: PgPool) {
         "cross-tenant correction must be rejected (got {})",
         resp.status()
     );
+}
+
+/// Regression test for the IDOR where `submit_correction` authorized solely
+/// on the client-supplied `organization_id`, without checking who actually
+/// owns the referenced `meter_reading_id`. A caller who is a legitimate
+/// member of org_a (and therefore passes the naive `is_member(body.
+/// organization_id)` check) must NOT be able to attach a correction to a
+/// `meter_reading_id` that belongs to org_b by simply claiming
+/// `organization_id: org_a` in the body.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn submit_correction_cross_org_via_meter_reading_id_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "corr-mr-a").await;
+    let org_b = seed_org(&pool, "corr-mr-b").await;
+
+    let user_a = seed_user(&pool, "ocr-corr-mr-a@test.local").await;
+    seed_membership(&pool, org_a, user_a).await; // user_a is only in org_a
+
+    let building_b = seed_building(&pool, org_b).await;
+    let meter_b = seed_meter(&pool, org_b, building_b, "CORR-MR-B-1").await;
+    let reading_b = seed_reading(&pool, meter_b, "42.0").await; // owned by org_b
+
+    let token_a = mint_token(user_a, "ocr-corr-mr-a@test.local");
+
+    // Attacker is a real member of org_a (passes a naive is_member(body.org)
+    // check) but targets org_b's meter reading while claiming org_a.
+    let payload = json!({
+        "organization_id": org_a,
+        "original_value": 42.0_f64,
+        "corrected_value": 999.0_f64,
+        "image_url": "https://evil.example.com/meter.jpg",
+        "meter_reading_id": reading_b
+    });
+
+    let resp = app
+        .router
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/ai/ocr/correction")
+                .header(header::AUTHORIZATION, format!("Bearer {}", token_a))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(axum::body::Body::from(
+                    serde_json::to_vec(&payload).unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert!(
+        resp.status().as_u16() >= 400,
+        "cross-org correction via meter_reading_id must be rejected (got {})",
+        resp.status()
+    );
+
+    // The correction must not have been persisted at all.
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM ocr_meter_corrections WHERE meter_reading_id = $1",
+    )
+    .bind(reading_b)
+    .fetch_one(&pool)
+    .await
+    .expect("count corrections");
+    assert_eq!(count, 0, "no correction row should have been persisted");
 }
