@@ -407,10 +407,21 @@ impl Scheduler {
             // Send notifications for each published announcement
             for announcement in &published {
                 // Get target users based on target_type and target_ids.
-                // A DB error here must be surfaced (not coerced into an empty
-                // target set) so a failed dispatch is observable instead of
-                // silently sending zero notifications — mirrors the
-                // log-and-fall-back treatment in `send_vote_reminders`.
+                //
+                // A query error here is NOT the same thing as "no target
+                // users" (a legitimately empty audience, e.g. an unpopulated
+                // building). Coercing it into an empty Vec would let the loop
+                // fall through to the `if !target_user_ids.is_empty()` guard
+                // below and silently treat a transient DB failure as "zero
+                // recipients, nothing to send" — the announcement is already
+                // marked published (see `publish_scheduled()` above) but
+                // nobody is ever notified, and nothing signals the failure.
+                //
+                // Log with full context here (announcement id / target type —
+                // detail the caller's generic log line below doesn't have),
+                // then propagate so `run_scheduled_tasks` observes the error,
+                // increments the scheduler error metric, and the failure is
+                // never mistaken for a successful zero-recipient dispatch.
                 let target_user_ids = match self.get_announcement_target_users(announcement).await {
                     Ok(ids) => ids,
                     Err(e) => {
@@ -419,9 +430,10 @@ impl Scheduler {
                             target_type = %announcement.target_type,
                             error = %e,
                             "Failed to resolve announcement notification targets; \
-                             skipping dispatch for this announcement"
+                             propagating so the failure is observable instead of \
+                             silently notifying zero users"
                         );
-                        Vec::new()
+                        return Err(e);
                     }
                 };
 
@@ -1747,6 +1759,90 @@ mod tests {
             targets,
             vec![resident_a],
             "only the owning org's resident is targeted"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // IG3 regression (code-review-api-core-sched-notify-swallow): a target-
+    // resolution DB error must propagate out of
+    // `publish_scheduled_announcements`, not collapse into an empty target
+    // Vec.
+    //
+    // Before the fix, `get_announcement_target_users` errors were logged and
+    // then swallowed into `Vec::new()`; the loop's
+    // `if !target_user_ids.is_empty()` guard then skipped
+    // `notify_announcement_published` entirely and `publish_scheduled_announcements`
+    // still returned `Ok(())`. The announcement was already flipped to
+    // `status = 'published'` by `publish_scheduled()`, so the net effect of a
+    // transient query error was: announcement marked published, zero
+    // notifications sent, function reports success. This test sabotages the
+    // "all" leg's `user_memberships` join (drops the table after seeding, so
+    // `publish_scheduled()` itself still succeeds) and asserts the error
+    // surfaces as `Err` rather than a silent `Ok(())`.
+    // ------------------------------------------------------------------
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_publish_scheduled_announcements_propagates_target_resolution_error(
+        pool: sqlx::PgPool,
+    ) {
+        let org = seed_org(&pool, "swallow-guard").await;
+        let author = seed_user(&pool, "author@swallow-guard.test").await;
+
+        let scheduled_at = chrono::Utc::now() - chrono::Duration::minutes(1);
+        let announcement_id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO announcements (
+                organization_id, author_id, title, content,
+                target_type, target_ids, status, scheduled_at
+            )
+            VALUES ($1, $2, $3, $4, 'all'::announcement_target_type, $5, 'scheduled'::announcement_status, $6)
+            RETURNING id
+            "#,
+        )
+        .bind(org)
+        .bind(author)
+        .bind("Swallow guard")
+        .bind("body")
+        .bind(serde_json::json!([]))
+        .bind(scheduled_at)
+        .fetch_one(&pool)
+        .await
+        .expect("seed scheduled announcement");
+
+        // Sabotage ONLY the target-resolution query's dependency. The `"all"`
+        // leg joins `user_memberships`; dropping it after the announcement is
+        // seeded leaves `publish_scheduled()` (an UPDATE against
+        // `announcements` alone) unaffected, so the failure is isolated to
+        // target resolution — exactly the "transient failure mid-fanout"
+        // scenario the fix defends against.
+        sqlx::query("DROP TABLE user_memberships CASCADE")
+            .execute(&pool)
+            .await
+            .expect("sabotage user_memberships");
+
+        let scheduler = test_scheduler(pool.clone());
+        let result = scheduler.publish_scheduled_announcements().await;
+
+        assert!(
+            result.is_err(),
+            "a target-resolution query error must propagate as Err — coercing it \
+             into an empty target Vec makes `publish_scheduled_announcements` \
+             report Ok(()) while silently sending zero notifications for an \
+             announcement that is already marked published"
+        );
+
+        // The announcement was already flipped to `published` by
+        // `publish_scheduled()` before the sabotaged query ran — confirming
+        // that, so the test genuinely exercises "published but notification
+        // targets failed to resolve" rather than "publish itself failed".
+        let status: String =
+            sqlx::query_scalar("SELECT status::text FROM announcements WHERE id = $1")
+                .bind(announcement_id)
+                .fetch_one(&pool)
+                .await
+                .expect("read announcement status");
+        assert_eq!(
+            status, "published",
+            "announcement must already be published when target resolution fails"
         );
     }
 
