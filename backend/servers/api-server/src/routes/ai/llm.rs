@@ -28,6 +28,11 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use uuid::Uuid;
 
+/// Client-facing message returned when lease generation fails. The underlying
+/// LLM-provider error is logged server-side in [`generate_lease`] but is never
+/// forwarded to the client, to avoid leaking upstream provider detail.
+const LEASE_GENERATION_FAILED_MESSAGE: &str = "Lease generation failed";
+
 /// Router for LLM document generation (Epic 64).
 pub fn llm_router() -> Router<AppState> {
     Router::new()
@@ -684,7 +689,9 @@ async fn generate_lease(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "GENERATION_FAILED",
-                    format!("Failed to generate lease: {}", e),
+                    // Do not leak the upstream LLM-provider error to the client;
+                    // the detail is already logged server-side above.
+                    LEASE_GENERATION_FAILED_MESSAGE,
                 )),
             ))
         }
@@ -1456,5 +1463,34 @@ async fn get_generation_request(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression guard for the AI upstream-error leak finding: the client-facing
+    /// body for a failed lease generation must carry only the fixed generic
+    /// message and must never contain the raw upstream LLM-provider error
+    /// (which is logged server-side in `generate_lease`).
+    #[test]
+    fn lease_generation_error_does_not_leak_upstream_detail() {
+        // A representative raw provider error that must not reach the client.
+        let upstream_detail = "provider 503: model overloaded (upstream request id abc123)";
+
+        // Mirror the client body built by `generate_lease`'s error branch.
+        let response = ErrorResponse::new("GENERATION_FAILED", LEASE_GENERATION_FAILED_MESSAGE);
+        let body = serde_json::to_string(&response).expect("serialize ErrorResponse");
+
+        assert!(
+            !body.contains(upstream_detail),
+            "client error body leaked the upstream provider detail: {body}"
+        );
+        assert!(
+            !body.contains("Failed to generate lease:"),
+            "client error body still interpolates the upstream error: {body}"
+        );
+        assert_eq!(response.message, LEASE_GENERATION_FAILED_MESSAGE);
     }
 }

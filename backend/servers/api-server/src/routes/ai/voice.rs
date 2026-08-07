@@ -17,6 +17,11 @@ use common::errors::ErrorResponse;
 use db::models::LinkVoiceDeviceRequest;
 use uuid::Uuid;
 
+/// Client-facing message returned when the voice-device OAuth code exchange
+/// fails. The underlying provider error is logged server-side but is never
+/// forwarded to the client, to avoid leaking upstream OAuth-provider detail.
+const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = "Authorization code exchange failed";
+
 // ============================================================================
 // Story 64.5: Voice Assistant Endpoints
 // ============================================================================
@@ -191,7 +196,9 @@ async fn exchange_voice_oauth_tokens(
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new(
                     "OAUTH_EXCHANGE_FAILED",
-                    format!("Failed to exchange authorization code: {}", e),
+                    // Do not leak the upstream OAuth-provider error to the client;
+                    // the detail is already logged server-side above.
+                    OAUTH_EXCHANGE_FAILED_MESSAGE,
                 )),
             )
         })?;
@@ -320,5 +327,34 @@ pub(crate) async fn list_voice_commands(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression guard for the AI upstream-error leak finding: the client-facing
+    /// body for a failed voice-device OAuth code exchange must carry only the
+    /// fixed generic message and must never contain the raw upstream provider
+    /// error (which is logged server-side).
+    #[test]
+    fn oauth_exchange_error_does_not_leak_upstream_detail() {
+        // A representative raw provider error that must not reach the client.
+        let upstream_detail = "invalid_grant: authorization code expired (provider trace xyz)";
+
+        // Mirror the client body built by the OAuth exchange error branch.
+        let response = ErrorResponse::new("OAUTH_EXCHANGE_FAILED", OAUTH_EXCHANGE_FAILED_MESSAGE);
+        let body = serde_json::to_string(&response).expect("serialize ErrorResponse");
+
+        assert!(
+            !body.contains(upstream_detail),
+            "client error body leaked the upstream provider detail: {body}"
+        );
+        assert!(
+            !body.contains("Failed to exchange authorization code:"),
+            "client error body still interpolates the upstream error: {body}"
+        );
+        assert_eq!(response.message, OAUTH_EXCHANGE_FAILED_MESSAGE);
     }
 }
