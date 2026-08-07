@@ -112,6 +112,21 @@ struct IndexDocumentResponse {
 /// and connection hold time.
 const MAX_INDEX_CHUNKS: usize = 512;
 
+/// Whether an embedding batch is well-formed for indexing: the provider must
+/// return exactly one vector per submitted chunk.
+///
+/// The [`EmbeddingProvider::embed_batch`] contract is one vector per input, but
+/// the production OpenAI backend fulfils it via a remote batch call whose `data`
+/// array length is not guaranteed by the type system. If the provider returns
+/// *fewer* vectors than chunks (a truncated / partial batch response), the write
+/// loop's `chunks.iter().zip(embeddings.iter())` silently drops the surplus
+/// chunks — only a prefix of the document is indexed while the caller still gets
+/// a 201 success, corrupting later similarity retrieval. Verify the counts match
+/// and fail closed instead.
+fn embedding_batch_is_complete(chunk_count: usize, embedding_count: usize) -> bool {
+    chunk_count == embedding_count
+}
+
 /// Index a document into the pgvector RAG store (Story 84.5 / 103.5).
 ///
 /// This is the missing application-side embedding-write flow: it generates an
@@ -269,6 +284,27 @@ async fn index_document(
             ));
         }
     };
+
+    // partial-batch guard: the write loop below zips chunks with embeddings, so a
+    // provider that returns fewer vectors than chunks would silently index only a
+    // prefix of the document and still report success. Fail closed on any
+    // count mismatch rather than persisting a partially-embedded document.
+    if !embedding_batch_is_complete(chunks.len(), embeddings.len()) {
+        tracing::error!(
+            organization_id = %tenant_id,
+            document_id = %req.document_id,
+            chunks = chunks.len(),
+            embeddings = embeddings.len(),
+            "RAG embedding provider returned a mismatched vector count — refusing partial index"
+        );
+        return Err((
+            StatusCode::BAD_GATEWAY,
+            Json(ErrorResponse::new(
+                "EMBEDDING_FAILED",
+                "Embedding provider returned an incomplete result",
+            )),
+        ));
+    }
 
     // Base metadata: caller-provided object (if any) plus an optional title.
     // Per-vector provenance (`embedding_model`) is folded in by the repository's
@@ -1484,5 +1520,40 @@ mod tests {
             "client error body still interpolates the upstream error: {body}"
         );
         assert_eq!(response.message, LEASE_GENERATION_FAILED_MESSAGE);
+    }
+
+    /// Regression guard for the RAG partial-index gap: a provider that returns
+    /// fewer embedding vectors than submitted chunks must be rejected, because
+    /// the `index_document` write loop zips chunks with embeddings and would
+    /// otherwise silently persist only a prefix of the document.
+    #[test]
+    fn embedding_batch_mismatch_is_rejected_before_write() {
+        let chunks = ["a", "b", "c"];
+        // Provider dropped one vector (truncated / partial batch response).
+        let embeddings = [vec![0.0f32], vec![0.0f32]];
+
+        // Demonstrate the silent-truncation hazard the guard exists to prevent:
+        // zip stops at the shorter side, so only 2 of the 3 chunks would be
+        // written while the caller still gets a success response.
+        let written = chunks.iter().zip(embeddings.iter()).count();
+        assert_eq!(
+            written, 2,
+            "zip truncates to the shorter side — 1 chunk would be silently dropped"
+        );
+
+        // The guard catches the mismatch...
+        assert!(
+            !embedding_batch_is_complete(chunks.len(), embeddings.len()),
+            "mismatched vector count must be treated as incomplete"
+        );
+        // ...and accepts the well-formed 1-vector-per-chunk case.
+        assert!(
+            embedding_batch_is_complete(chunks.len(), chunks.len()),
+            "one vector per chunk is a complete batch"
+        );
+        assert!(
+            embedding_batch_is_complete(0, 0),
+            "an empty batch is trivially complete"
+        );
     }
 }
