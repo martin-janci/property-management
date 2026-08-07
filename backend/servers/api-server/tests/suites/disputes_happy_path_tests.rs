@@ -555,8 +555,18 @@ async fn dispute_sessions_happy_path(pool: PgPool) {
 /// GET /api/v1/disputes/kpis returns the DisputeKpis JSON contract for the
 /// caller's org cohort. Files one dispute inside the window and asserts the
 /// full funnel + TTR shape, plus that the filed dispute is counted.
+///
+/// Issue #2575: this `#[sqlx::test]` DB-contract case remains under the
+/// systemic BIT-440 dev-hostage quarantine (un-quarantining it in isolation,
+/// while BIT-440 is unresolved, reintroduces the failing test that PR #1984
+/// quarantined to unblock the gate — see the BIT-417 de-quarantine precedent,
+/// which only lifted the marker once BIT-440 cleared). It must be
+/// de-quarantined together with the rest of the BIT-440 suite when that
+/// ticket clears. The endpoint's *executing* coverage now lives in
+/// `dispute_kpis_rejects_inverted_window` below, which is a plain
+/// `#[tokio::test]` outside BIT-440 scope.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
+#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440 (de-quarantine tracked by #2575 when BIT-440 clears)"]
 async fn dispute_kpis_happy_path(pool: PgPool) {
     let ctx = setup(pool, "kpis").await;
     // Seed a cohort member (created_at defaults to NOW(), inside the window).
@@ -617,6 +627,98 @@ async fn dispute_kpis_happy_path(pool: PgPool) {
     assert!(
         ttr["count"].as_i64().is_some(),
         "ttr.count is an integer: {ttr}"
+    );
+
+    // Issue #2575: an inverted window (start after end) is rejected with a
+    // 422 VALIDATION_ERROR rather than silently returning a degenerate
+    // zero-count 200. Asserted here too so the DB-contract case covers the
+    // validation branch once BIT-440 clears and this test runs.
+    let inverted = ctx
+        .get(&format!(
+            "/api/v1/disputes/kpis?window_start={end}&window_end={start}"
+        ))
+        .send()
+        .await;
+    assert_eq!(
+        inverted.status.as_u16(),
+        422,
+        "inverted window should be rejected with 422, got {}: {}",
+        inverted.status,
+        inverted.text()
+    );
+    assert_eq!(
+        inverted.json_value().get("code").and_then(|c| c.as_str()),
+        Some("VALIDATION_ERROR"),
+        "inverted-window error code should be VALIDATION_ERROR: {}",
+        inverted.text()
+    );
+}
+
+/// Validation guard (issue #2575): an inverted or empty reporting window
+/// (`window_start >= window_end`) is rejected with `422 VALIDATION_ERROR`
+/// *before* the repository is consulted, so a caller gets an explicit error
+/// instead of a degenerate zero-count `DisputeKpis` with a `200`.
+///
+/// This is deliberately a plain `#[tokio::test]`, not `#[sqlx::test]`: the
+/// validation branch returns before any DB access (`require_org` reads the JWT
+/// claim, then the ordering check fires), so it needs no live Postgres and is
+/// therefore NOT subject to the BIT-440 dev-hostage quarantine that gates the
+/// `#[sqlx::test]` contract case above. It runs on every CI/dev `cargo test`,
+/// giving the endpoint executing coverage of its validation contract. The
+/// lazy pool never connects — the same pattern the `push_fanout.rs` /
+/// `voice_commands.rs` pure-path unit tests use.
+#[tokio::test]
+async fn dispute_kpis_rejects_inverted_window() {
+    let pool = sqlx::PgPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+        .expect("connect_lazy builds without connecting");
+    let app = TestApp::new(pool).await;
+    let token = mint_token(Uuid::new_v4(), Uuid::new_v4());
+
+    // Z-suffixed RFC3339 avoids `+00:00` query encoding (mirrors the happy path).
+    let later = (chrono::Utc::now() + chrono::Duration::days(1))
+        .format("%Y-%m-%dT%H:%M:%SZ")
+        .to_string();
+    let earlier = (chrono::Utc::now() - chrono::Duration::days(1))
+        .format("%Y-%m-%dT%H:%M:%SZ")
+        .to_string();
+
+    // Inverted bounds: window_start strictly AFTER window_end.
+    let inverted = app
+        .get(&format!(
+            "/api/v1/disputes/kpis?window_start={later}&window_end={earlier}"
+        ))
+        .bearer(&token)
+        .send()
+        .await;
+    assert_eq!(
+        inverted.status.as_u16(),
+        422,
+        "inverted window should be rejected with 422, got {}: {}",
+        inverted.status,
+        inverted.text()
+    );
+    assert_eq!(
+        inverted.json_value().get("code").and_then(|c| c.as_str()),
+        Some("VALIDATION_ERROR"),
+        "error code should be VALIDATION_ERROR: {}",
+        inverted.text()
+    );
+
+    // Empty bounds: `[t, t)` is empty, so equal start/end is rejected too.
+    let same = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let empty = app
+        .get(&format!(
+            "/api/v1/disputes/kpis?window_start={same}&window_end={same}"
+        ))
+        .bearer(&token)
+        .send()
+        .await;
+    assert_eq!(
+        empty.status.as_u16(),
+        422,
+        "empty window (start == end) should be rejected with 422, got {}: {}",
+        empty.status,
+        empty.text()
     );
 }
 

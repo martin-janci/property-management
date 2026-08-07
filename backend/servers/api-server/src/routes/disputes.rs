@@ -417,6 +417,25 @@ async fn get_kpis(
     Query(query): Query<KpisQuery>,
 ) -> Result<Json<DisputeKpis>, (StatusCode, Json<ErrorResponse>)> {
     let organization_id = require_org(&user)?;
+
+    // Issue #2575: validate the reporting window before touching the repo.
+    // `get_dispute_kpis` filters the cohort on `window_start <= filed_at <
+    // window_end`, so an inverted or empty window (`window_start >=
+    // window_end`) silently yields a degenerate zero-count `DisputeKpis` with
+    // a 200 — a caller cannot distinguish "no disputes in window" from
+    // "I inverted my bounds". Reject it up front, mirroring how the sibling
+    // mutating handlers surface `VALIDATION_ERROR` (see `resolve_dispute` /
+    // `update_mediation_notes`). Cheap guard, clearer contract.
+    if query.window_start >= query.window_end {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "window_start must be strictly before window_end",
+            )),
+        ));
+    }
+
     state
         .dispute_repo
         .get_dispute_kpis(organization_id, query.window_start, query.window_end)
