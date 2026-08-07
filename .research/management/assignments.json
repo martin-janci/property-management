@@ -48,10 +48,10 @@
     {
       "task_id": "code-review-reality-server-inquiries-no-ratelimit",
       "branch": "auto-impl/code-review-reality-server-inquiries-no-e541d1a2",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-08-06T20:12:56Z",
-      "last_updated": "2026-08-07T08:09:54Z",
-      "status_changed_at": "2026-08-07T08:09:54Z",
+      "last_updated": "2026-08-07T08:21:08Z",
+      "status_changed_at": "2026-08-07T08:21:08Z",
       "pr_number": 2698,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2698",
       "merged_at": null,
@@ -64,7 +64,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
-      "fix_rounds": 1,
+      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {
