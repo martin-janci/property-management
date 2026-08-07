@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-08-07T00:16:26Z",
+  "since_iso": "2026-08-06T18:39:02Z",
+  "lag_hours": 5,
+  "notes": [
+    "Buffer-low fire: dispatcher payload was 'claimable=2/72 — refill planner'. Routine ran an incremental refresh (not deep mode).",
+    "Phase 1.5 skipped: no fresh churn window and previous run already covered top segments via dispatcher-driven tier1d.",
+    "Phase 1.6 lightweight upkeep: advanced pm_cursor 3→4 (pm-qa done, pm-devops next), coverage_cursor 5→6 (epic-80 re-checked, advances to epic-81)."
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-server-inquiry-notify-route-wiring",
+      "type": "code-review-finding",
+      "source": "PR #2696 implementer-secondary-finding 2026-08-06T22:36:16Z",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "reality-server live public endpoint routes::inquiries::send_contact_message persists via state.reality_portal_repo.create_inquiry(...) directly and does NOT route through InquiriesHandler, so the new InquiryNotifier seam (added in PR #2696) is never reached on the live path — realtors still get no notification. Blocked by: PR #2696 (seam must land first). Files: backend/servers/reality-server/src/routes/inquiries.rs + main.rs handler-state wiring."
+    }
+  ],
+  "goal_checks": [],
+  "auto_fix_actions": []
+}
