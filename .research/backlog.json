@@ -7087,36 +7087,40 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "Issue #2699",
-        "PR #2692 (2026-08-07 00:08)"
+        "PR #2692 (2026-08-07 00:08)",
+        "PR #2700"
       ],
       "evidence": [
         "backend/crates/db/migrations/ carries two files at prefix 00220 on dev: 00220_listing_syndication_view_counters.sql (from 2026-08-06 dispatcher batch cb91cac) and 00220_portal_get_listing_view_count.sql (from #2692 merged 2026-08-07 00:08 8cf0fb5). Confirmed on origin/dev via git ls-tree.",
         "Migration-collision CI gate now fails on every PR based on current dev (backend check/test/test-shard set). Observed on PR #2697 check job run 31134619480.",
-        "Mechanical fix: `git mv 00220_portal_get_listing_view_count.sql 00227_portal_get_listing_view_count.sql` (00221–00226 all used); rerun `cargo sqlx prepare`."
+        "Mechanical fix: `git mv 00220_portal_get_listing_view_count.sql 00227_portal_get_listing_view_count.sql` (00221–00226 all used); rerun `cargo sqlx prepare`.",
+        "resolved: PR #2700 merged 2026-08-07 06:09 — renumber portal_get_listing_view_count migration 00220 → 00227 (collision); dev-hostage unblocked; verified 00220 slot holds only listing_syndication_view_counters and 00227_portal_get_listing_view_count.sql sits alone."
       ],
       "files": [
         "backend/crates/db/migrations/00220_portal_get_listing_view_count.sql"
       ],
       "created_at": "2026-08-07",
       "updated_at": "2026-08-07",
-      "plan": "plans/gh-issue-2699-migration-collision.md"
+      "plan": "plans/_archive/gh-issue-2699-migration-collision.md"
     },
     {
       "id": "code-review-reality-web-comparison-share-all-or-nothing",
       "title": "reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared comparison URL",
       "vector": "bug",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Tier1d review 2026-08-07 (reality-web)"
+        "Tier1d review 2026-08-07 (reality-web)",
+        "PR #2701"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:57 — loadSharedListings uses Promise.all over per-id fetches that throw on non-ok; one deleted/unpublished/moved listing rejects the whole batch and the catch (:62-64) sets the generic loadError so NONE render.",
-        "Fix: switch to Promise.allSettled and add only fulfilled results (the `if (listing)` guard at :55 already anticipates partial results but can never fire under Promise.all)."
+        "Fix: switch to Promise.allSettled and add only fulfilled results (the `if (listing)` guard at :55 already anticipates partial results but can never fire under Promise.all).",
+        "resolved: PR #2701 merged 2026-08-07 06:18 — ComparisonUrlHandler.tsx switched from Promise.all to Promise.allSettled; verified line 54 uses Promise.allSettled; regression test asserts good ids still load with a bad id in the middle."
       ],
       "files": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
@@ -7129,15 +7133,17 @@
       "id": "code-review-reality-web-listingform-nan-validation",
       "title": "reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently",
       "vector": "bug",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Tier1d review 2026-08-07 (reality-web)"
+        "Tier1d review 2026-08-07 (reality-web)",
+        "PR #2702"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:87-88 submits area/rooms as `x ? Number(x) : undefined` with no validation. handleSubmit (:66-73) checks only title/description/city/price. Non-numeric strings yield NaN → JSON.stringify(NaN)=null; negative/zero pass unchecked.",
-        "Fix: validate area/rooms with the same Number.isFinite && value > 0 guard used for price."
+        "Fix: validate area/rooms with the same Number.isFinite && value > 0 guard used for price.",
+        "resolved: PR #2702 merged 2026-08-07 06:18 — ListingForm.tsx gained parseOptionalNonNegative guard (line 51); NaN + negative area/rooms now flagged inline; 5-case regression test added."
       ],
       "files": [
         "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx"
