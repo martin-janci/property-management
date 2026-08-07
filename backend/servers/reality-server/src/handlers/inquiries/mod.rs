@@ -3,7 +3,7 @@
 //! Implements contact validation, email notifications,
 //! and viewing scheduling functionality.
 
-use db::models::{CreateListingInquiry, ListingInquiry, ScheduleViewing, ViewingSchedule};
+use db::models::{CreateListingInquiry, ListingInquiry, ViewingSchedule};
 use db::repositories::RealityPortalRepository;
 use uuid::Uuid;
 
@@ -34,21 +34,6 @@ pub enum InquiryResult {
     RealtorNotFound,
     /// Rate limited (too many inquiries)
     RateLimited,
-    /// Database error
-    DatabaseError(String),
-}
-
-/// Viewing scheduling result.
-#[derive(Debug)]
-pub enum ViewingResult {
-    /// Viewing scheduled successfully
-    Scheduled(Box<ViewingSchedule>),
-    /// Inquiry not found
-    InquiryNotFound,
-    /// Time slot unavailable
-    TimeSlotUnavailable,
-    /// Validation failed
-    ValidationFailed(Vec<ValidationError>),
     /// Database error
     DatabaseError(String),
 }
@@ -286,54 +271,6 @@ impl InquiriesHandler {
         Self::send_response_notification(inquiry_id).await;
 
         Ok(response)
-    }
-
-    /// Schedule a viewing for an inquiry.
-    pub async fn schedule_viewing(
-        &self,
-        _inquiry_id: Uuid,
-        _realtor_id: Uuid,
-        data: ScheduleViewing,
-    ) -> ViewingResult {
-        // Validate scheduled time
-        let now = chrono::Utc::now();
-        if data.scheduled_at <= now {
-            return ViewingResult::ValidationFailed(vec![ValidationError {
-                field: "scheduled_at".to_string(),
-                message: "Viewing must be scheduled in the future".to_string(),
-            }]);
-        }
-
-        // Check if within reasonable timeframe (next 90 days)
-        let max_date = now + chrono::Duration::days(90);
-        if data.scheduled_at > max_date {
-            return ViewingResult::ValidationFailed(vec![ValidationError {
-                field: "scheduled_at".to_string(),
-                message: "Viewing must be within the next 90 days".to_string(),
-            }]);
-        }
-
-        // Validate duration
-        let duration = data.duration_minutes.unwrap_or(30);
-        if !(15..=120).contains(&duration) {
-            return ViewingResult::ValidationFailed(vec![ValidationError {
-                field: "duration_minutes".to_string(),
-                message: "Duration must be between 15 and 120 minutes".to_string(),
-            }]);
-        }
-
-        // For now, return a placeholder since we don't have the full viewing scheduling in repo
-        // In production, this would create the viewing record
-        tracing::info!(
-            inquiry_id = %_inquiry_id,
-            scheduled_at = %data.scheduled_at,
-            "Viewing scheduling requested"
-        );
-
-        ViewingResult::ValidationFailed(vec![ValidationError {
-            field: "viewing".to_string(),
-            message: "Viewing scheduling not yet implemented".to_string(),
-        }])
     }
 
     /// Send notification email for new inquiry.
