@@ -95,4 +95,38 @@ describe('ComparisonUrlHandler', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(addToComparison).not.toHaveBeenCalled();
   });
+
+  it('degrades gracefully: one bad id is dropped, the good ones still load', async () => {
+    // Regression bar for the all-or-nothing bug: `Promise.all` used to reject
+    // on the first failure, so a single stale/missing id blanked the entire
+    // shared comparison. The good listings must survive.
+    const goodA = { ...mockListing, id: 'good-a', slug: 'good-a' };
+    const goodB = { ...mockListing, id: 'good-b', slug: 'good-b' };
+
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/bad')) {
+        return { ok: false, status: 404, json: async () => ({}) };
+      }
+      const id = url.endsWith('/good-a') ? goodA : goodB;
+      return { ok: true, status: 200, json: async () => id };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<ComparisonUrlHandler sharedIds={['good-a', 'bad', 'good-b']} />);
+
+    // Both good listings are added despite the bad id in the middle.
+    await waitFor(() => expect(addToComparison).toHaveBeenCalledWith(goodA));
+    await waitFor(() => expect(addToComparison).toHaveBeenCalledWith(goodB));
+
+    // The bad id is dropped — it is never handed to the comparison. Every
+    // added listing is one of the two good ones (guard against the harness
+    // re-running the effect since the mocked context stays empty).
+    for (const [added] of addToComparison.mock.calls) {
+      expect(['good-a', 'good-b']).toContain(added.id);
+    }
+
+    // The comparison is usable, so the error state must NOT blank it out.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });
