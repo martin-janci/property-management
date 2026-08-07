@@ -866,7 +866,18 @@ pub struct AppState {
     /// this set keys on a hash of the client IP so an anonymous flood is
     /// answered with HTTP 429 (see `InquiriesHandler::rate_limit_result`).
     /// Default quota comes from `INQUIRY_RATE_LIMIT_RPM` (env override).
+    ///
+    /// Because the key space is attacker-influenced (rotating source IPs), the
+    /// set is constructed **bounded** (`with_default_bounded`) so the map can
+    /// never grow past `INQUIRY_RATE_LIMIT_MAX_IPS` entries — memory is capped
+    /// inline on every insert, no background sweep task required.
     pub inquiry_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Number of trusted reverse-proxy hops in front of reality-server, used to
+    /// pick a **spoof-resistant** client address out of `X-Forwarded-For` (the
+    /// hop our own trusted proxy appended, counted from the right — see
+    /// `routes::inquiries::client_ip_bucket`). Loaded from
+    /// `INQUIRY_TRUSTED_PROXY_HOPS`, default 1 (a single reverse proxy).
+    pub inquiry_trusted_proxy_hops: usize,
 }
 
 /// Default per-IP quota (requests/minute) for the anonymous inquiry POST
@@ -874,6 +885,18 @@ pub struct AppState {
 /// handful of contact/viewing requests per minute from one address, while a
 /// spam/DB-exhaustion bot needs far more. Override with `INQUIRY_RATE_LIMIT_RPM`.
 pub const INQUIRY_RATE_LIMIT_RPM: u32 = 12;
+
+/// Hard cap on the number of distinct per-IP buckets held by the anonymous
+/// inquiry limiter. Bounds memory against an attacker rotating source IPs:
+/// once the map is full, inserting a new IP first reclaims TTL-expired buckets
+/// and then evicts the oldest — the map never exceeds this many entries.
+/// ~100k small entries is a few MB. Override with `INQUIRY_RATE_LIMIT_MAX_IPS`.
+pub const INQUIRY_RATE_LIMIT_MAX_IPS: usize = 100_000;
+
+/// Idle TTL for a per-IP inquiry bucket. Only needs to outlive the 1-minute
+/// rate window; a few minutes lets bursts be counted while keeping the map
+/// small. Buckets idle longer than this are reclaimed on the next insert.
+pub const INQUIRY_RATE_LIMIT_IDLE_TTL: Duration = Duration::from_secs(300);
 
 impl AppState {
     /// Create a new AppState with database pool.
@@ -908,9 +931,28 @@ impl AppState {
             .and_then(|v| v.parse::<u32>().ok())
             .filter(|v| *v > 0)
             .unwrap_or(INQUIRY_RATE_LIMIT_RPM);
+        // Bounded construction: the key space is a hash of the client IP, which
+        // an attacker can rotate freely, so we MUST cap the map or it grows
+        // without bound (memory-DoS). `with_default_bounded` evicts inline.
+        let inquiry_max_ips = std::env::var("INQUIRY_RATE_LIMIT_MAX_IPS")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(INQUIRY_RATE_LIMIT_MAX_IPS);
         let inquiry_rate_limiters = Arc::new(
-            api_core::middleware::TenantRateLimiterSet::with_default(inquiry_rpm),
+            api_core::middleware::TenantRateLimiterSet::with_default_bounded(
+                inquiry_rpm,
+                INQUIRY_RATE_LIMIT_IDLE_TTL,
+                inquiry_max_ips,
+            ),
         );
+        // Trusted reverse-proxy hop count for spoof-resistant client-IP
+        // derivation (default 1 = a single reverse proxy in front of us).
+        let inquiry_trusted_proxy_hops = std::env::var("INQUIRY_TRUSTED_PROXY_HOPS")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(1);
 
         Self {
             db,
@@ -931,6 +973,7 @@ impl AppState {
             tenant_rate_limiters,
             // Per-IP throttle for unauthenticated inquiry POSTs.
             inquiry_rate_limiters,
+            inquiry_trusted_proxy_hops,
         }
     }
 

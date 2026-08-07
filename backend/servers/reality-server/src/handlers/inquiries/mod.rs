@@ -188,23 +188,20 @@ impl InquiriesHandler {
 
     /// Create a new inquiry.
     ///
-    /// `rate_limit` is the decision from the per-IP inquiry limiter
-    /// (`AppState::inquiry_rate_limiters`); a denial short-circuits to
-    /// [`InquiryResult::RateLimited`] before any validation or DB work so an
-    /// anonymous flood cannot persist rows or fan out realtor notifications.
+    /// The per-IP anonymous throttle is enforced at the ROUTE layer
+    /// (`routes::inquiries::enforce_inquiry_rate_limit`, which calls
+    /// [`Self::rate_limit_result`]) BEFORE the request ever reaches a
+    /// create path, so a rejected flood never touches validation or the DB.
+    /// This method therefore takes no rate-limit decision — threading one
+    /// through here would be dead code (the live routes call the repository
+    /// directly and never construct an `InquiriesHandler`).
     pub async fn create_inquiry(
         &self,
-        rate_limit: RateLimitDecision,
         listing_id: Uuid,
         realtor_id: Uuid,
         user_id: Option<Uuid>,
         data: CreateListingInquiry,
     ) -> InquiryResult {
-        // Abuse control (dead-code-no-more): reject before touching the DB.
-        if let Some(limited) = Self::rate_limit_result(rate_limit) {
-            return limited;
-        }
-
         // Validate contact info
         let validation = Self::validate_contact(
             &data.name,
