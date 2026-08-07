@@ -305,8 +305,28 @@ export class WebSocketService {
 
   /**
    * Connect to the WebSocket server.
+   *
+   * An explicit `connect()` is a fresh (re)start request, so it resets the
+   * reconnect-attempt budget via {@link resetReconnectAttempts}. This is what
+   * makes a resume after a previous give-up work: once
+   * {@link scheduleReconnect} has hit `maxReconnectAttempts` and flipped
+   * `shouldReconnect` off, the budget is stuck at the cap; without the reset a
+   * subsequent `connect()` would open one socket and then immediately give up
+   * again on the first unclean close. The internal backoff loop deliberately
+   * calls {@link openConnection} directly (NOT `connect()`) so a mid-backoff
+   * retry does not reset the budget — otherwise the cap could never be reached.
    */
   connect(): void {
+    this.resetReconnectAttempts();
+    this.openConnection();
+  }
+
+  /**
+   * Open (or re-open) the underlying socket without touching the reconnect
+   * budget. Shared by the public {@link connect} entry point and the internal
+   * exponential-backoff reconnect loop.
+   */
+  private openConnection(): void {
     const token = this.getToken();
     if (!token) {
       this.setConnectionState('error', new Error('No auth token available'));
@@ -593,7 +613,9 @@ export class WebSocketService {
     this.reconnectAttempts++;
 
     this.reconnectTimeoutId = setTimeout(() => {
-      this.connect();
+      // Continue the backoff loop via openConnection() so this retry does NOT
+      // reset the attempt budget — only an explicit connect() does that.
+      this.openConnection();
     }, delay);
   }
 
