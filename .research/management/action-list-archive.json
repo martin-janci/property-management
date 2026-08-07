@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-07T12:45:53Z",
+  "archived_at": "2026-08-07T16:21:27Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1080,6 +1080,30 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + upstream error masking #2694)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-07T16:21:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2706,
+        "merged_at": "2026-08-07T16:19:50Z",
+        "at": "2026-08-07T16:21:27Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
       "action": "Churn hotspot: 2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (window 2026-06-10 03:05Z→18:30Z)",
       "owner_role": "pm-backend",
@@ -1216,6 +1240,30 @@
         "merged_pr": 1813,
         "merged_at": "2026-06-24T02:26:53Z",
         "at": "2026-06-25T12:13:32Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
+      "action": "Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 workflow NOT-group fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-07T16:21:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2708,
+        "merged_at": "2026-08-07T16:19:50Z",
+        "at": "2026-08-07T16:21:27Z"
       }
     },
     {
@@ -3449,6 +3497,30 @@
       }
     },
     {
+      "id": "code-review-reality-server-inquiries-no-ratelimit",
+      "action": "reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-07T16:05:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2698,
+        "merged_at": "2026-08-07T14:25:30Z",
+        "at": "2026-08-07T16:05:27Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-invite-authz",
       "action": "backend/servers/reality-server/src/routes/agencies.rs:373-401 — create_invitation (wired at line 38: POST /api/v1/agencies/{id}/invitations) performs NO membership/role check before calling the repo, unlike its siblings update_agency (line ",
       "owner_role": "pm-security",
@@ -4404,6 +4476,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-31T04:22:39Z"
+      }
+    },
+    {
+      "id": "dx-closed-not-merged-pr-2387-retry2",
+      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 [retry 2/2 of failed dx-closed-not-merged-pr-2387]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-07T08:11:10Z (retry_of=dx-closed-not-merged-pr-2387 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T04:22:38Z) | gc1-reconcile 2026-08-07T16:05:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T08:11:10Z",
+      "retry_of": "dx-closed-not-merged-pr-2387",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-07T16:05:27Z"
       }
     },
     {
@@ -11895,6 +11988,32 @@
         "commit": "9c8da676d5f0bf7d0757c88f97d241651ae97276",
         "subject": "gh-issue-2699: renumber portal_get_listing_view_count migration 00220 → 00227 (#2700)",
         "at": "2026-08-07T08:10:06Z"
+      }
+    },
+    {
+      "id": "gh-issue-2704",
+      "action": "Unbounded response-body read in workflow action api_call.rs — memory-amplification DoS (Closes #2704)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-07T08:10:30Z (#2704) | gc1-reconcile 2026-08-07T16:21:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T08:10:30Z",
+      "issue_ref": {
+        "number": 2704,
+        "url": "https://github.com/martin-janci/property-management/issues/2704",
+        "labels": [
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2707,
+        "merged_at": "2026-08-07T16:19:50Z",
+        "at": "2026-08-07T16:21:27Z"
       }
     },
     {

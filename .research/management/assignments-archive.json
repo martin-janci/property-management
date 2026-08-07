@@ -1199,6 +1199,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-a92e710d",
+      "status": "merged",
+      "claimed_at": "2026-08-07T14:11:01Z",
+      "last_updated": "2026-08-07T16:19:50Z",
+      "status_changed_at": "2026-08-07T16:19:50Z",
+      "pr_number": 2706,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2706",
+      "merged_at": "2026-08-07T16:19:50Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2706 status=done specialist=rust-backend scope_drift=true note=fail-closed guard on partial RAG embedding batch in /rag/index + regression test; CI backend.yml gates; drift=owner-hint pm-tech-lead maps docs vs backend file",
+      "reviewer_summary": "verdict=approve note=partial-RAG-batch-fail-closed-guard-correct-tested-ci-green",
+      "last_reviewed_oid": "0ace9ee16f74d9789798dd1dbde63eed0bdea580",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-4cec5c13",
       "status": "merged",
@@ -1307,6 +1329,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-24T02:25:33Z"
+    },
+    {
+      "task_id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-6ecafa47",
+      "status": "merged",
+      "claimed_at": "2026-08-07T14:11:01Z",
+      "last_updated": "2026-08-07T16:19:50Z",
+      "status_changed_at": "2026-08-07T16:19:50Z",
+      "pr_number": 2708,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2708",
+      "merged_at": "2026-08-07T16:19:50Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2708 status=done specialist=rust-backend note=compare_numeric rejects non-finite string coercions (NaN/inf)+4 tests; distinct region from #2684 (no overlap); CI gates",
+      "reviewer_summary": "verdict=approve note=sound-nonfinite-compare-fix+tests-ci-green-no-2684-overlap",
+      "last_reviewed_oid": "fcf5b18d3addce3578d1fe4edb8ff4eb82b36c49",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
@@ -3909,6 +3953,28 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-listingform-no-i18n",
+      "branch": "auto-impl/code-review-reality-web-listingform-no-i-952f7e3a",
+      "status": "merged",
+      "claimed_at": "2026-08-07T08:15:35Z",
+      "last_updated": "2026-08-07T16:19:50Z",
+      "status_changed_at": "2026-08-07T16:19:50Z",
+      "pr_number": 2709,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2709",
+      "merged_at": "2026-08-07T16:19:50Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2709 status=done specialist=nextjs-web scope_drift=true note=i18n ListingForm across 6 locales; verify green (242 tests); drift=owner-hint mismatch only",
+      "reviewer_summary": "verdict=approve note=i18n-listingform-clean-6locale-parity-27keys-ci-green",
+      "last_reviewed_oid": "04e8b02854efe95e61e9f69e2e6e976e3315e66b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
@@ -10647,6 +10713,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2704",
+      "branch": "auto-impl/gh-issue-2704-74777f32",
+      "status": "merged",
+      "claimed_at": "2026-08-07T14:11:01Z",
+      "last_updated": "2026-08-07T16:19:50Z",
+      "status_changed_at": "2026-08-07T16:19:50Z",
+      "pr_number": 2707,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2707",
+      "merged_at": "2026-08-07T16:19:50Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2707 status=done specialist=rust-backend scope_drift=true note=capped api_call response read at 8MiB (CL precheck+streaming), truncate-marker+warn, 2 tests; CI gates; drift=owner-hint only",
+      "reviewer_summary": "verdict=approve note=clean-8MiB-dos-cap-ssrf-block-untouched-ci-green",
+      "last_reviewed_oid": "ec05b3f00f1e8b234d058b78db135d13189b16ac",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -12621,5 +12709,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-07T14:28:24Z"
+  "archived_at": "2026-08-07T16:21:27Z"
 }
