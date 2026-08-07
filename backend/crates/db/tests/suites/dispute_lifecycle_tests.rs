@@ -387,3 +387,83 @@ async fn add_evidence_persists_and_records_activity(pool: PgPool) {
         .expect("delete query ok");
     assert!(right_scope, "evidence is deletable via its own dispute id");
 }
+
+/// Regression: attaching evidence must emit an access-audit event on the
+/// platform-admin `audit_logs` stream — who (`user_id`) added evidence
+/// (`resource_id` = evidence id, `resource_type = 'dispute_evidence'`) to
+/// which dispute (`details.dispute_id`), scoped to the owning org.
+///
+/// Fails on `dev` (pre-fix `add_evidence` writes the evidence row + activity
+/// but NO `audit_logs` row, so the SELECT returns zero rows). Passes once the
+/// repo emits the `resource_created`/`dispute_evidence` audit row, mirroring
+/// the `membership.rs` / support-data audit-emission pattern. Sibling to the
+/// support-tooling `support_data_viewed` emission on the read path.
+#[sqlx::test]
+async fn add_evidence_writes_access_audit_event(pool: PgPool) {
+    let org = seed_org(&pool, "evaudit").await;
+    let user = seed_user(&pool, "evaudit@dispute-lifecycle.test").await;
+    let repo = DisputeRepository::new(pool.clone());
+
+    let dispute = repo
+        .file_dispute(org, file_req(org, user, vec![]))
+        .await
+        .expect("file dispute");
+
+    let evidence = repo
+        .add_evidence(
+            AddEvidence {
+                dispute_id: dispute.id,
+                uploaded_by: user,
+                filename: "lease-scan.pdf".into(),
+                original_filename: "Lease Scan.pdf".into(),
+                content_type: "application/pdf".into(),
+                size_bytes: 2048,
+                storage_url: "s3://evidence/lease-scan.pdf".into(),
+                description: None,
+            },
+            org,
+        )
+        .await
+        .expect("add evidence");
+
+    // Exactly one access-audit row for this evidence attachment, carrying the
+    // actor, the org, and the parent dispute in `details`.
+    #[derive(sqlx::FromRow)]
+    struct AuditRow {
+        user_id: Option<Uuid>,
+        resource_id: Option<Uuid>,
+        org_id: Option<Uuid>,
+        details: serde_json::Value,
+    }
+
+    let row: AuditRow = sqlx::query_as(
+        r#"
+        SELECT user_id, resource_id, org_id, details
+        FROM audit_logs
+        WHERE action = 'resource_created'::audit_action
+          AND resource_type = 'dispute_evidence'
+          AND resource_id = $1
+        "#,
+    )
+    .bind(evidence.id)
+    .fetch_one(&pool)
+    .await
+    .expect("add_evidence must write a dispute_evidence access-audit row");
+
+    assert_eq!(row.user_id, Some(user), "audit actor is the uploader");
+    assert_eq!(
+        row.resource_id,
+        Some(evidence.id),
+        "audit targets the evidence"
+    );
+    assert_eq!(
+        row.org_id,
+        Some(org),
+        "audit row is scoped to the owning org"
+    );
+    assert_eq!(
+        row.details["dispute_id"],
+        serde_json::json!(dispute.id),
+        "audit details record which dispute the evidence was added to"
+    );
+}
