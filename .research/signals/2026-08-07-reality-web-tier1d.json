@@ -1,0 +1,54 @@
+{
+  "generated": "2026-08-07T00:00:00Z",
+  "segment": "reality-web",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-share-all-or-nothing",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:57 — loadSharedListings() resolves a shared comparison URL by fetching each listing id and then `await Promise.all(fetchPromises)` (:57). Each per-id fetch throws on a non-ok response (:45-47 `if (!response.ok) throw new Error(...)`), so `Promise.all` rejects as soon as ANY single listing in the shared set fails to load. The catch (:62-64) then swallows the whole batch: it sets the generic `t('loadError')` and NONE of the listings render — the `addToComparison` loop (:53-58) is never reached.",
+        "Failure trigger is ordinary, not adversarial: a shared comparison link encodes up to 4 listing ids in the URL (`sharedIds.slice(0, 4)`, :38); the moment one of those listings is deleted, unpublished, or moved to another tenant (→ 404/403), the entire shared link degrades to a total error page even though the other 1-3 listings are perfectly loadable. Shared URLs are long-lived and inventory churns, so this is a common real-world state.",
+        "Fix: use `Promise.allSettled` and add only the fulfilled results to the comparison (the `if (listing)` guard at :55 already anticipates partial results but can never fire under `Promise.all`); optionally surface a soft notice when some ids were dropped. This turns a one-bad-id total failure into graceful partial rendering."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listingform-nan-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:87-88 — the realtor create/edit form submits `area: area ? Number(area) : undefined` and `rooms: rooms ? Number(rooms) : undefined` with NO validation on either field. `area`/`rooms` are free-text string state (:61-62, seeded from `initialValue?.area?.toString()`); the handleSubmit validation block (:66-73) checks only title, description, city, and price (`Number.isFinite(priceNum) && priceNum > 0`). Area and rooms are never validated.",
+        "Consequence: any non-numeric input (e.g. `\"12m2\"`, `\"abc\"`) is truthy, so `Number(area)` yields `NaN` and `NaN` is passed to `onSubmit`; `JSON.stringify(NaN)` serializes to `null`, so the realtor silently posts a null/absent area or rooms instead of getting a validation error. Negative or zero values (`-5`, `0`) also pass unchecked and are submitted verbatim. The form renders `noValidate` (:97) so the browser does not backstop this either.",
+        "This form is reachable in production: it is rendered by both `app/[locale]/realtor/listings/new/page.tsx:40` and `app/[locale]/realtor/listings/[id]/edit/page.tsx:90`. Fix: validate area/rooms with the same `Number.isFinite(...) && value > 0` guard already used for price (or `>= 0` if optional), and block submit when they are present-but-invalid rather than coercing to NaN."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listingform-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx — the shared realtor listing form imports NO translation API (grep: 0 useTranslations/getTranslations/next-intl) and hardcodes English throughout a sk/cs/de/en next-intl app: transaction-type options `'For sale'` / `'For rent'` (:31-32), field labels `Property type` (:126) and `Postal code` (:197) plus 9 other `<label>` fields (:100-231), and all validation messages — `'Title is required'` (:69), `'Description is required'` (:70), `'City is required'` (:71), `'Price must be a positive number'` (:73).",
+        "This is distinct from the 2026-08-05 finding `code-review-reality-web-listing-edit-pages-no-i18n`, which covered only the `[id]/edit/page.tsx` wrapper shells. ListingForm.tsx is the shared body those wrappers render (imported by `realtor/listings/new/page.tsx:10` AND `realtor/listings/[id]/edit/page.tsx:10`), so it contains the bulk of the actual user-facing copy in the realtor create/edit flow and remains fully English even if the wrapper pages are localized.",
+        "Fix: route all labels, the sale/rent option labels, and the validation strings through next-intl `t('…')` keys under a shared `realtor.listingForm` namespace (sibling detail/contact/sell surfaces already do this). Localizing once here fixes both the create and edit routes."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

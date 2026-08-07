@@ -37,59 +37,6 @@
       }
     },
     {
-      "id": "gh-issue-2575-retry1",
-      "action": "Follow-up: /disputes/kpis has no window-ordering validation and its only test is quarantined (PR #2572) (Closes #2575) [retry 1/2 of failed gh-issue-2575]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=gh-issue-2575 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:08:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T18:04:42Z",
-      "retry_of": "gh-issue-2575",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2575,
-        "url": "https://github.com/martin-janci/property-management/issues/2575",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1-retry1",
-      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started) [retry 1/2 of failed pm-scrum-master-wire-ppt-web-direct-s3-84-1]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=pm-scrum-master-wire-ppt-web-direct-s3-84-1 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:29:56Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T18:04:42Z",
-      "retry_of": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-api-handlers-enhanced-chat-stub",
-      "action": "api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data....",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-auth-restore-stale-token",
       "action": "mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto...",
       "owner_role": "pm-backend",
@@ -124,57 +71,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
-      "action": "reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-ai-upstream-error-leak",
-      "action": "api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f...",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-biometric-prompt-i18n",
-      "action": "mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-server-inquiry-email-stub",
       "action": "reality-server: a shipped-but-non-functional notification path.",
       "owner_role": "pm-backend",
@@ -194,23 +90,6 @@
     {
       "id": "code-review-reality-server-orphan-listinghandler-stub-detail",
       "action": "reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-orphan-schedule-viewing-stub",
-      "action": "reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da...",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
