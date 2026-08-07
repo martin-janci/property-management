@@ -6855,7 +6855,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator"
       ],
@@ -6869,7 +6869,12 @@
       ],
       "created_at": "2026-08-06",
       "updated_at": "2026-08-06",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-07T14:07:06Z",
+        "assignment_status": "merged",
+        "pr_number": 2690
+      }
     },
     {
       "id": "code-review-mobile-rn-biometric-prompt-i18n",
@@ -7204,7 +7209,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2689"
       ],
@@ -7216,7 +7221,12 @@
       ],
       "created_at": "2026-08-07",
       "updated_at": "2026-08-07",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-07T14:07:06Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs",
