@@ -963,5 +963,34 @@
         "cancelled": "Abgebrochen"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Titel",
+    "labelDescription": "Beschreibung",
+    "labelPropertyType": "Immobilientyp",
+    "labelTransaction": "Transaktion",
+    "labelPrice": "Preis",
+    "labelCurrency": "Währung",
+    "labelCity": "Stadt",
+    "labelPostalCode": "Postleitzahl",
+    "labelStreet": "Straße",
+    "labelArea": "Fläche (m²)",
+    "labelRooms": "Zimmer",
+    "propertyTypeApartment": "Wohnung",
+    "propertyTypeHouse": "Haus",
+    "propertyTypeLand": "Grundstück",
+    "propertyTypeCommercial": "Gewerbe",
+    "propertyTypeOther": "Sonstiges",
+    "transactionSale": "Zu verkaufen",
+    "transactionRent": "Zu vermieten",
+    "saving": "Wird gespeichert…",
+    "errorTitleRequired": "Titel ist erforderlich",
+    "errorDescriptionRequired": "Beschreibung ist erforderlich",
+    "errorCityRequired": "Stadt ist erforderlich",
+    "errorPricePositive": "Preis muss eine positive Zahl sein",
+    "errorAreaInvalid": "Fläche muss eine gültige Zahl sein",
+    "errorAreaNegative": "Fläche darf nicht negativ sein",
+    "errorRoomsInvalid": "Zimmeranzahl muss eine gültige Zahl sein",
+    "errorRoomsNegative": "Zimmeranzahl darf nicht negativ sein"
   }
 }

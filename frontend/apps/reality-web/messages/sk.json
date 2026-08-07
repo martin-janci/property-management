@@ -963,5 +963,34 @@
         "cancelled": "Zrušené"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Názov",
+    "labelDescription": "Popis",
+    "labelPropertyType": "Typ nehnuteľnosti",
+    "labelTransaction": "Transakcia",
+    "labelPrice": "Cena",
+    "labelCurrency": "Mena",
+    "labelCity": "Mesto",
+    "labelPostalCode": "PSČ",
+    "labelStreet": "Ulica",
+    "labelArea": "Plocha (m²)",
+    "labelRooms": "Izby",
+    "propertyTypeApartment": "Byt",
+    "propertyTypeHouse": "Dom",
+    "propertyTypeLand": "Pozemok",
+    "propertyTypeCommercial": "Komerčné priestory",
+    "propertyTypeOther": "Iné",
+    "transactionSale": "Na predaj",
+    "transactionRent": "Na prenájom",
+    "saving": "Ukladá sa…",
+    "errorTitleRequired": "Názov je povinný",
+    "errorDescriptionRequired": "Popis je povinný",
+    "errorCityRequired": "Mesto je povinné",
+    "errorPricePositive": "Cena musí byť kladné číslo",
+    "errorAreaInvalid": "Plocha musí byť platné číslo",
+    "errorAreaNegative": "Plocha nesmie byť záporná",
+    "errorRoomsInvalid": "Počet izieb musí byť platné číslo",
+    "errorRoomsNegative": "Počet izieb nesmie byť záporný"
   }
 }

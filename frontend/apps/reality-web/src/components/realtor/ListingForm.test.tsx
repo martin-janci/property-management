@@ -38,7 +38,7 @@ describe('ListingForm — numeric field validation', () => {
     fireEvent.change(screen.getByLabelText(/Area/i), { target: { value: '-5' } });
     submit();
 
-    expect(screen.getByText(/Area must not be negative/i)).toBeInTheDocument();
+    expect(screen.getByText('errorAreaNegative')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -50,7 +50,7 @@ describe('ListingForm — numeric field validation', () => {
     fireEvent.change(screen.getByLabelText(/Rooms/i), { target: { value: '-2' } });
     submit();
 
-    expect(screen.getByText(/Rooms must not be negative/i)).toBeInTheDocument();
+    expect(screen.getByText('errorRoomsNegative')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -88,6 +88,19 @@ describe('ListingForm — numeric field validation', () => {
     expect(draft.rooms).toBe(3);
     expect(Number.isNaN(draft.area)).toBe(false);
     expect(Number.isNaN(draft.rooms)).toBe(false);
+  });
+
+  it('renders field labels via next-intl translation keys (no hardcoded English)', () => {
+    // The next-intl mock (src/test/setup.tsx) returns the key verbatim, so a
+    // component wired to useTranslations renders the key. This asserts the
+    // form pulls its labels from the `listingForm` catalog rather than a
+    // hardcoded English literal.
+    render(<ListingForm submitLabel="Save" onSubmit={vi.fn()} />);
+
+    expect(screen.getByText('labelTitle')).toBeInTheDocument();
+    expect(screen.getByText('labelPropertyType')).toBeInTheDocument();
+    expect(screen.getByText('propertyTypeApartment')).toBeInTheDocument();
+    expect(screen.getByText('transactionSale')).toBeInTheDocument();
   });
 
   it('omits empty optional numeric fields (undefined, not NaN)', () => {
