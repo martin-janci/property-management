@@ -7,7 +7,72 @@ use async_trait::async_trait;
 use db::models::action_type;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::future::Future;
+use std::net::{IpAddr, SocketAddr};
+use std::pin::Pin;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+/// Type-erased hostname → IPs resolver used by [`SsrfGuardResolver`].
+///
+/// Injected so the executor's real DNS path and the hermetic
+/// DNS-rebinding regression test share one code path (the test drives a
+/// stateful resolver that returns a public IP first and a private IP on the
+/// connect-time lookup).
+type IpResolver = Arc<
+    dyn Fn(String) -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>>
+        + Send
+        + Sync,
+>;
+
+/// Connect-time SSRF-guard DNS resolver for the workflow HTTP client.
+///
+/// `reqwest`/`hyper` invoke this at **connect** time for the initial request
+/// **and every redirect hop**. It resolves the hostname and validates every
+/// resulting address against the shared SSRF forbidden-range policy, erroring
+/// out (which aborts the connection) if any address is forbidden. Because the
+/// addresses `reqwest` connects to are exactly the ones validated here —
+/// resolved once, at connect, in the same step — this closes the
+/// DNS-rebinding TOCTOU window that a separate pre-flight lookup left open (a
+/// pre-flight lookup and `reqwest`'s own connect-time lookup could disagree,
+/// letting a hostname that first resolved public rebind to a private address
+/// before the socket is opened). It also re-validates redirects, which a
+/// one-shot pre-flight check never covered.
+struct SsrfGuardResolver {
+    resolve_ips: IpResolver,
+}
+
+impl reqwest::dns::Resolve for SsrfGuardResolver {
+    fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+        let resolve_ips = self.resolve_ips.clone();
+        Box::pin(async move {
+            let host = name.as_str().to_string();
+            // The port is irrelevant to SSRF validation (range checks are on
+            // the IP) and `hyper` overrides it with the real destination port
+            // after resolution, so we resolve/validate with 0.
+            let ips = (resolve_ips)(host.clone())
+                .await
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })?;
+            let addrs = common::url_validation::validate_resolved_addrs(&host, 0, &ips)
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })?;
+            let iter: reqwest::dns::Addrs = Box::new(addrs.into_iter());
+            Ok(iter)
+        })
+    }
+}
+
+/// Real DNS resolver used in production: the OS resolver via Tokio's async
+/// wrapper around `getaddrinfo`.
+fn real_ip_resolver() -> IpResolver {
+    Arc::new(
+        |host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+            Box::pin(async move {
+                let addrs = tokio::net::lookup_host((host.as_str(), 0)).await?;
+                Ok(addrs.map(|sa| sa.ip()).collect::<Vec<IpAddr>>())
+            })
+        },
+    )
+}
 
 /// HTTP method for the API call.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -114,18 +179,56 @@ fn default_true() -> bool {
 /// API call action executor.
 pub struct ApiCallExecutor {
     client: reqwest::Client,
+    /// The same resolver the HTTP client uses at connect time, kept so the
+    /// fail-fast pre-flight check and the connect-time re-validation observe
+    /// one DNS path (and so the rebinding regression test can inject a
+    /// stateful resolver that drives both).
+    resolve_ips: IpResolver,
 }
 
 impl ApiCallExecutor {
-    /// Create a new API call executor.
+    /// Create a new API call executor backed by the real OS DNS resolver.
     pub fn new() -> Self {
+        Self::with_ip_resolver(real_ip_resolver())
+    }
+
+    /// Build an executor whose HTTP client resolves and SSRF-validates every
+    /// connection (initial request + redirects) through `resolve_ips`. The
+    /// connect-time [`SsrfGuardResolver`] is what closes the DNS-rebinding
+    /// TOCTOU: `reqwest` connects only to addresses this resolver validated.
+    fn with_ip_resolver(resolve_ips: IpResolver) -> Self {
+        // Re-validate every redirect hop's URL statically before following it.
+        // The connect-time `SsrfGuardResolver` already blocks any hop that
+        // resolves to a forbidden IP (including rebinds), but the static
+        // `validate_external_url` additionally rejects a redirect that
+        // downgrades to plain `http://`, or targets a blocked hostname /
+        // `.local` / `.internal` TLD, which an IP-range check alone would not
+        // catch. Fail closed: an invalid hop aborts the request.
+        let redirect_policy = reqwest::redirect::Policy::custom(|attempt| {
+            const MAX_REDIRECTS: usize = 10;
+            if attempt.previous().len() >= MAX_REDIRECTS {
+                return attempt.error("too many redirects");
+            }
+            match common::url_validation::validate_external_url(attempt.url().as_str()) {
+                Ok(_) => attempt.follow(),
+                Err(e) => attempt.error(e),
+            }
+        });
+
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(60))
             .user_agent("PPT-Workflow/1.0")
+            .redirect(redirect_policy)
+            .dns_resolver(Arc::new(SsrfGuardResolver {
+                resolve_ips: resolve_ips.clone(),
+            }))
             .build()
             .expect("Failed to create HTTP client");
 
-        Self { client }
+        Self {
+            client,
+            resolve_ips,
+        }
     }
 
     /// Parse and validate the API call configuration.
@@ -241,16 +344,35 @@ impl ActionExecutor for ApiCallExecutor {
         // SSRF via DNS: `validate_external_url` only inspects the literal
         // string — a hostname with no literal-IP form (e.g.
         // "attacker.example.com") that resolves to a private/internal
-        // address at request time sailed straight through it. Resolve now,
-        // right before the request is issued, and reject if *any* resolved
-        // address falls in a forbidden range. Fails closed: a resolution
-        // error also rejects.
+        // address at request time sails straight through it. Two layers guard
+        // the DNS path:
+        //
+        //   1. This fail-fast pre-flight: resolve now and reject if *any*
+        //      resolved address is forbidden, so an obviously-internal or
+        //      unresolvable host is rejected with a clean `ConfigurationError`
+        //      before a request is ever built.
+        //   2. The connect-time `SsrfGuardResolver` wired into `self.client`
+        //      (see `with_ip_resolver`), which re-resolves-and-validates at
+        //      the moment `reqwest` opens the socket, for the initial request
+        //      and every redirect hop. THIS is what actually closes the
+        //      DNS-rebinding TOCTOU: a hostname that resolves public here but
+        //      rebinds to a private address before connect is rejected at
+        //      connect, because the client connects only to addresses the
+        //      resolver validated. Both layers share `self.resolve_ips`, so
+        //      the pre-flight and the connection observe one DNS code path.
+        //
+        // Fails closed: a resolution error also rejects.
         let host = parsed_url.host_str().ok_or_else(|| {
             ActionError::ConfigurationError("API call URL must have a host".to_string())
         })?;
         let port = parsed_url.port_or_known_default().unwrap_or(443);
-        common::url_validation::validate_resolved_host(host, port)
-            .await
+        let resolved_ips = (self.resolve_ips)(host.to_string()).await.map_err(|e| {
+            ActionError::ConfigurationError(
+                common::url_validation::UrlValidationError::ResolutionFailed(e.to_string())
+                    .to_string(),
+            )
+        })?;
+        common::url_validation::validate_resolved_addrs(host, port, &resolved_ips)
             .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
 
         // Build request
@@ -619,5 +741,73 @@ mod tests {
 
         assert!(!truncated, "a small body must not be flagged truncated");
         assert_eq!(text.as_bytes(), payload.as_slice());
+    }
+
+    /// IG3 regression (SSRF DNS-rebinding TOCTOU, #2703): the pre-fix executor
+    /// resolved+validated the host **once** in a pre-flight lookup, then let
+    /// `reqwest` resolve the same host **again** at connect time. An attacker
+    /// controlling DNS could answer the first lookup with a public IP (passing
+    /// validation) and the second with a private/link-local IP (the socket the
+    /// client actually opens) — a classic time-of-check/time-of-use bypass of
+    /// the anti-SSRF gate.
+    ///
+    /// The fix wires a connect-time `SsrfGuardResolver` into the HTTP client so
+    /// the addresses `reqwest` connects to are exactly the ones re-validated at
+    /// connect. This test models the rebind with a hermetic, stateful resolver
+    /// (no real network): the **first** resolution — the pre-flight — returns a
+    /// public IP so validation passes, and the **second** — `reqwest`'s
+    /// connect-time lookup — returns `10.0.0.5`. The request must be rejected,
+    /// and the resolver must have been consulted at least twice (proving the
+    /// connect-time layer ran and observed the rebind).
+    ///
+    /// Fails on `dev`: there the client uses its own default resolver, so a
+    /// rebind to a private IP at connect is not re-validated and the request
+    /// would proceed to open a socket to the private address rather than being
+    /// rejected here.
+    #[tokio::test]
+    async fn execute_rejects_dns_rebinding_to_private_ip_at_connect() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let calls_in_resolver = calls.clone();
+
+        // Stateful rebinding resolver: lookup #0 (pre-flight validation) →
+        // public; lookup #1+ (connect-time) → private.
+        let resolver: IpResolver = Arc::new(
+            move |_host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+                let calls = calls_in_resolver.clone();
+                Box::pin(async move {
+                    let n = calls.fetch_add(1, Ordering::SeqCst);
+                    let ip: IpAddr = if n == 0 {
+                        "93.184.216.34".parse().unwrap() // public — first (pre-flight) lookup
+                    } else {
+                        "10.0.0.5".parse().unwrap() // private — connect-time rebind
+                    };
+                    Ok(vec![ip])
+                })
+            },
+        );
+
+        let executor = ApiCallExecutor::with_ip_resolver(resolver);
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({ "url": "https://rebind.attacker.example/webhook" });
+
+        let result = executor.execute(&config, &context).await;
+
+        assert!(
+            result.is_err(),
+            "a host that rebinds to a private IP at connect must be rejected, got: {result:?}"
+        );
+        assert!(
+            calls.load(Ordering::SeqCst) >= 2,
+            "expected the connect-time resolver to re-resolve after the pre-flight \
+             lookup (rebinding observed), but it was consulted {} time(s)",
+            calls.load(Ordering::SeqCst)
+        );
     }
 }

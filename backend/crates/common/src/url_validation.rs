@@ -23,15 +23,27 @@
 //! returned address against the same forbidden ranges, failing closed
 //! (resolution error, empty result, or any forbidden address => reject).
 //!
-//! Note this still leaves a narrow DNS-rebinding window between the
-//! `validate_resolved_host` lookup and the HTTP client's own connect-time
-//! lookup (TOCTOU) since the underlying HTTP client, not this module, owns
-//! the socket connect. Closing that fully would require pinning the
-//! validated IP for the connection (a custom resolver/connector), which is
-//! out of scope here; re-resolving immediately before the request narrows
-//! the window to the two lookups happening back-to-back.
+//! A one-shot pre-flight [`validate_resolved_host`] on its own still leaves a
+//! narrow DNS-rebinding window between that lookup and the HTTP client's own
+//! connect-time lookup (TOCTOU): the two lookups can disagree, and the client
+//! owns the socket connect. To close that window a caller must ensure the
+//! addresses the client actually *connects to* are the validated ones. Two
+//! building blocks here support that:
+//!
+//! * [`resolve_and_validate_host`] resolves once and returns the concrete,
+//!   validated [`SocketAddr`]s so a caller can pin them into its HTTP client
+//!   (e.g. `reqwest`'s custom resolver / `resolve_to_addrs`), guaranteeing the
+//!   connect targets the exact addresses that passed validation.
+//! * [`validate_resolved_addrs`] validates an already-resolved address set —
+//!   the primitive a connect-time custom resolver calls so that validation and
+//!   connection observe the *same* resolution (no second, unvalidated lookup),
+//!   and so every redirect hop is re-validated too.
+//!
+//! `backend/servers/api-server/src/services/actions/api_call.rs` wires the
+//! workflow HTTP client this way (connect-time SSRF-guard resolver), which is
+//! what actually closes the TOCTOU for that path.
 
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use url::{Host, Url};
 
 /// Structured error returned when a URL fails SSRF validation.
@@ -176,16 +188,64 @@ pub async fn validate_resolved_host(host: &str, port: u16) -> Result<(), UrlVali
     validate_resolved_host_with(host.to_string(), port, resolve_host).await
 }
 
+/// Resolve `host`/`port` and return the **validated** set of socket
+/// addresses. Same policy and fail-closed semantics as
+/// [`validate_resolved_host`], but returns the concrete addresses so a caller
+/// can pin them into its HTTP client and connect only to addresses that
+/// passed validation — closing the DNS-rebinding TOCTOU window that a lookup
+/// which merely returns `Ok(())` leaves open (the client would otherwise
+/// perform its own, second, unvalidated lookup at connect time).
+///
+/// Fails closed: resolution error, empty result set, or any single forbidden
+/// address in the result causes rejection.
+pub async fn resolve_and_validate_host(
+    host: &str,
+    port: u16,
+) -> Result<Vec<SocketAddr>, UrlValidationError> {
+    resolve_and_validate_host_with(host.to_string(), port, resolve_host).await
+}
+
+/// Validate an already-resolved address set against the SSRF forbidden-range
+/// policy, returning the corresponding [`SocketAddr`]s (with `port`) on
+/// success.
+///
+/// This is the primitive a connect-time custom resolver (e.g. `reqwest`'s
+/// [`dns::Resolve`]) calls so that the addresses validated here are *exactly*
+/// the ones the HTTP client connects to — there is no second, unvalidated
+/// lookup between check and use, which is what closes the DNS-rebinding
+/// TOCTOU. Fails closed on an empty set or any forbidden address.
+///
+/// [`dns::Resolve`]: https://docs.rs/reqwest/latest/reqwest/dns/trait.Resolve.html
+pub fn validate_resolved_addrs(
+    host: &str,
+    port: u16,
+    addrs: &[IpAddr],
+) -> Result<Vec<SocketAddr>, UrlValidationError> {
+    if addrs.is_empty() {
+        return Err(UrlValidationError::ResolutionFailed(format!(
+            "no addresses found for host '{}'",
+            host
+        )));
+    }
+
+    let mut out = Vec::with_capacity(addrs.len());
+    for &ip in addrs {
+        if let Err(reason) = is_forbidden_ip(ip) {
+            return Err(UrlValidationError::ResolvedToPrivateIp(format!(
+                "{} resolves to {} ({})",
+                host, ip, reason
+            )));
+        }
+        out.push(SocketAddr::new(ip, port));
+    }
+
+    Ok(out)
+}
+
 /// Same as [`validate_resolved_host`] but with the resolver injected, so
 /// tests can exercise the private-IP-rejection path with a fake resolver
 /// instead of depending on live DNS/network access (which CI/sandbox
 /// runners may not have).
-///
-/// `host` is owned (`String`) rather than borrowed: an `F: FnOnce(&str, ..)
-/// -> Fut` bound ties `Fut` to the elided lifetime of that borrow, which
-/// rustc can't unify with the higher-ranked lifetime the call site needs
-/// (`implementation of FnOnce is not general enough`). Taking ownership
-/// sidesteps the borrow-checker issue entirely.
 async fn validate_resolved_host_with<F, Fut>(
     host: String,
     port: u16,
@@ -195,27 +255,34 @@ where
     F: FnOnce(String, u16) -> Fut,
     Fut: std::future::Future<Output = std::io::Result<Vec<IpAddr>>>,
 {
+    resolve_and_validate_host_with(host, port, resolve)
+        .await
+        .map(|_| ())
+}
+
+/// Resolve-and-validate with the resolver injected (returns the validated
+/// addresses). Backs both [`resolve_and_validate_host`] and, via
+/// [`validate_resolved_host_with`], [`validate_resolved_host`].
+///
+/// `host` is owned (`String`) rather than borrowed: an `F: FnOnce(&str, ..)
+/// -> Fut` bound ties `Fut` to the elided lifetime of that borrow, which
+/// rustc can't unify with the higher-ranked lifetime the call site needs
+/// (`implementation of FnOnce is not general enough`). Taking ownership
+/// sidesteps the borrow-checker issue entirely.
+async fn resolve_and_validate_host_with<F, Fut>(
+    host: String,
+    port: u16,
+    resolve: F,
+) -> Result<Vec<SocketAddr>, UrlValidationError>
+where
+    F: FnOnce(String, u16) -> Fut,
+    Fut: std::future::Future<Output = std::io::Result<Vec<IpAddr>>>,
+{
     let addrs = resolve(host.clone(), port)
         .await
         .map_err(|e| UrlValidationError::ResolutionFailed(e.to_string()))?;
 
-    if addrs.is_empty() {
-        return Err(UrlValidationError::ResolutionFailed(format!(
-            "no addresses found for host '{}'",
-            host
-        )));
-    }
-
-    for ip in addrs {
-        if let Err(reason) = is_forbidden_ip(ip) {
-            return Err(UrlValidationError::ResolvedToPrivateIp(format!(
-                "{} resolves to {} ({})",
-                host, ip, reason
-            )));
-        }
-    }
-
-    Ok(())
+    validate_resolved_addrs(&host, port, &addrs)
 }
 
 /// Default resolver: real DNS via the OS resolver (through Tokio's async
@@ -555,5 +622,47 @@ mod tests {
             result,
             Err(UrlValidationError::ResolutionFailed(_))
         ));
+    }
+
+    /// `validate_resolved_addrs` (the primitive a connect-time custom resolver
+    /// calls) returns the validated `SocketAddr`s — carrying the requested
+    /// port — when every resolved IP is public.
+    #[test]
+    fn validate_resolved_addrs_returns_socket_addrs_for_public_ips() {
+        let ips: Vec<IpAddr> = vec!["93.184.216.34".parse().unwrap()];
+        let out = validate_resolved_addrs("example.com", 8443, &ips).expect("public IP accepted");
+        assert_eq!(out, vec![SocketAddr::new(ips[0], 8443)]);
+    }
+
+    /// Fail-closed for a connect-time resolver too: if any resolved address is
+    /// forbidden, the whole set is rejected so the client never connects.
+    #[test]
+    fn validate_resolved_addrs_rejects_when_any_ip_is_forbidden() {
+        let ips: Vec<IpAddr> = vec![
+            "93.184.216.34".parse().unwrap(),
+            "10.0.0.5".parse().unwrap(),
+        ];
+        assert!(matches!(
+            validate_resolved_addrs("multi.example", 443, &ips),
+            Err(UrlValidationError::ResolvedToPrivateIp(_))
+        ));
+    }
+
+    /// `resolve_and_validate_host` hands back the concrete validated addresses
+    /// (so a caller can pin them into its HTTP client), not just `Ok(())`.
+    #[tokio::test]
+    async fn resolve_and_validate_host_returns_validated_addrs() {
+        async fn fake_resolve(_host: String, port: u16) -> std::io::Result<Vec<IpAddr>> {
+            let _ = port;
+            Ok(vec!["93.184.216.34".parse().unwrap()])
+        }
+
+        let out = resolve_and_validate_host_with("example.com".to_string(), 443, fake_resolve)
+            .await
+            .expect("public IP accepted");
+        assert_eq!(
+            out,
+            vec![SocketAddr::new("93.184.216.34".parse().unwrap(), 443)]
+        );
     }
 }
