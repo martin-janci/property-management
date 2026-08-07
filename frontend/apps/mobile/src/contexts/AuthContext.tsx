@@ -7,12 +7,18 @@ import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { resetLocalData } from '../services/resetLocalData';
+import { isJwtExpired } from '../utils/jwt';
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 const USER_KEY = 'ppt_user';
 const BIOMETRIC_ENABLED_KEY = 'ppt_biometric_enabled';
+
+// Treat an access token that expires within this many seconds as already stale,
+// so a restored session refreshes it proactively instead of handing the app a
+// bearer that dies on (or moments after) the first request.
+const TOKEN_REFRESH_SKEW_SECONDS = 30;
 
 export interface User {
   id: string;
@@ -69,49 +75,6 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     biometricEnabled: false,
     biometricAvailable: false,
   });
-
-  // Check biometric availability and load stored auth on mount
-  useEffect(() => {
-    async function initialize() {
-      try {
-        // Check biometric availability
-        const compatible = await LocalAuthentication.hasHardwareAsync();
-        const enrolled = await LocalAuthentication.isEnrolledAsync();
-        const biometricAvailable = compatible && enrolled;
-
-        // Load stored tokens
-        const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-        const userJson = await SecureStore.getItemAsync(USER_KEY);
-        const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
-
-        if (accessToken && userJson) {
-          const user = JSON.parse(userJson) as User;
-          setState({
-            isLoading: false,
-            isAuthenticated: true,
-            user,
-            accessToken,
-            biometricEnabled: biometricEnabled === 'true',
-            biometricAvailable,
-          });
-        } else {
-          setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            biometricAvailable,
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
-      }
-    }
-
-    initialize();
-  }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -301,11 +264,27 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
         if (accessToken && userJson) {
           const user = JSON.parse(userJson) as User;
+          // The device may have sat locked past the access-token TTL, so the
+          // stored bearer can be expired even though the refresh token is still
+          // valid. Refresh it before restoring the session — but preserve the
+          // #2399 intent above: only the *token* is refreshed here, we still do
+          // NOT refetch the user's cached data.
+          let activeToken = accessToken;
+          if (isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
+            try {
+              await refreshToken();
+              activeToken = (await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)) ?? accessToken;
+            } catch {
+              // refreshToken() already logged out (clearing SecureStore) when
+              // the refresh failed — the session is dead, fall back to login.
+              return false;
+            }
+          }
           setState((prev) => ({
             ...prev,
             isAuthenticated: true,
             user,
-            accessToken,
+            accessToken: activeToken,
           }));
           return true;
         }
@@ -316,7 +295,85 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Biometric authentication failed:', error);
       return false;
     }
-  }, [state.biometricEnabled, state.biometricAvailable, t]);
+  }, [state.biometricEnabled, state.biometricAvailable, t, refreshToken]);
+
+  // Check biometric availability and load any stored session on mount. This
+  // runs after the callbacks above so it can reuse `refreshToken()` when a
+  // restored access token has expired (rather than duplicating refresh logic).
+  useEffect(() => {
+    async function initialize() {
+      try {
+        // Check biometric availability
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        const biometricAvailable = compatible && enrolled;
+
+        // Load stored tokens
+        const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+        const userJson = await SecureStore.getItemAsync(USER_KEY);
+        const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+
+        if (accessToken && userJson) {
+          const user = JSON.parse(userJson) as User;
+          const biometricEnabledFlag = biometricEnabled === 'true';
+
+          // Access tokens are short-lived: a cold start after the TTL would
+          // otherwise restore `isAuthenticated: true` with an already-expired
+          // bearer. Refresh it first when the stored token is expired/near
+          // expiry, and only trust the session once a fresh token is in hand.
+          if (isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
+            try {
+              await refreshToken();
+              const refreshed = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+              setState({
+                isLoading: false,
+                isAuthenticated: true,
+                user,
+                accessToken: refreshed,
+                biometricEnabled: biometricEnabledFlag,
+                biometricAvailable,
+              });
+            } catch {
+              // refreshToken() already ran logout() (clearing SecureStore +
+              // caches) on failure; drop to the login screen.
+              setState((prev) => ({
+                ...prev,
+                isLoading: false,
+                isAuthenticated: false,
+                user: null,
+                accessToken: null,
+                biometricEnabled: biometricEnabledFlag,
+                biometricAvailable,
+              }));
+            }
+          } else {
+            setState({
+              isLoading: false,
+              isAuthenticated: true,
+              user,
+              accessToken,
+              biometricEnabled: biometricEnabledFlag,
+              biometricAvailable,
+            });
+          }
+        } else {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            biometricAvailable,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+        }));
+      }
+    }
+
+    initialize();
+  }, [refreshToken]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
