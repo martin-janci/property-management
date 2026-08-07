@@ -963,5 +963,34 @@
         "cancelled": "Zrušeno"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Název",
+    "labelDescription": "Popis",
+    "labelPropertyType": "Typ nemovitosti",
+    "labelTransaction": "Transakce",
+    "labelPrice": "Cena",
+    "labelCurrency": "Měna",
+    "labelCity": "Město",
+    "labelPostalCode": "PSČ",
+    "labelStreet": "Ulice",
+    "labelArea": "Plocha (m²)",
+    "labelRooms": "Pokoje",
+    "propertyTypeApartment": "Byt",
+    "propertyTypeHouse": "Dům",
+    "propertyTypeLand": "Pozemek",
+    "propertyTypeCommercial": "Komerční prostory",
+    "propertyTypeOther": "Jiné",
+    "transactionSale": "Na prodej",
+    "transactionRent": "K pronájmu",
+    "saving": "Ukládání…",
+    "errorTitleRequired": "Název je povinný",
+    "errorDescriptionRequired": "Popis je povinný",
+    "errorCityRequired": "Město je povinné",
+    "errorPricePositive": "Cena musí být kladné číslo",
+    "errorAreaInvalid": "Plocha musí být platné číslo",
+    "errorAreaNegative": "Plocha nesmí být záporná",
+    "errorRoomsInvalid": "Počet pokojů musí být platné číslo",
+    "errorRoomsNegative": "Počet pokojů nesmí být záporný"
   }
 }

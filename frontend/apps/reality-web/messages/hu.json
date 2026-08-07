@@ -956,5 +956,34 @@
         "cancelled": "Törölve"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Cím",
+    "labelDescription": "Leírás",
+    "labelPropertyType": "Ingatlan típusa",
+    "labelTransaction": "Tranzakció",
+    "labelPrice": "Ár",
+    "labelCurrency": "Pénznem",
+    "labelCity": "Város",
+    "labelPostalCode": "Irányítószám",
+    "labelStreet": "Utca",
+    "labelArea": "Terület (m²)",
+    "labelRooms": "Szobák",
+    "propertyTypeApartment": "Lakás",
+    "propertyTypeHouse": "Ház",
+    "propertyTypeLand": "Telek",
+    "propertyTypeCommercial": "Üzlethelyiség",
+    "propertyTypeOther": "Egyéb",
+    "transactionSale": "Eladó",
+    "transactionRent": "Kiadó",
+    "saving": "Mentés…",
+    "errorTitleRequired": "A cím megadása kötelező",
+    "errorDescriptionRequired": "A leírás megadása kötelező",
+    "errorCityRequired": "A város megadása kötelező",
+    "errorPricePositive": "Az árnak pozitív számnak kell lennie",
+    "errorAreaInvalid": "A területnek érvényes számnak kell lennie",
+    "errorAreaNegative": "A terület nem lehet negatív",
+    "errorRoomsInvalid": "A szobák számának érvényes számnak kell lennie",
+    "errorRoomsNegative": "A szobák száma nem lehet negatív"
   }
 }
