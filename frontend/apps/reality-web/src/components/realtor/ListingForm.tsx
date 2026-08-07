@@ -37,6 +37,24 @@ interface FieldErrors {
   description?: string;
   price?: string;
   city?: string;
+  area?: string;
+  rooms?: string;
+}
+
+/**
+ * Parse an optional numeric field from raw input.
+ *
+ * Empty input is valid and yields `undefined` (the field is optional).
+ * Non-numeric input (which `Number()` would coerce to `NaN`) and negative
+ * values are rejected so the form never submits `NaN` or a negative measure.
+ */
+function parseOptionalNonNegative(raw: string): { value?: number; error?: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { value: undefined };
+  const num = Number(trimmed);
+  if (!Number.isFinite(num)) return { error: 'must be a valid number' };
+  if (num < 0) return { error: 'must not be negative' };
+  return { value: num };
 }
 
 export function ListingForm({
@@ -71,6 +89,10 @@ export function ListingForm({
     if (!city.trim()) next.city = 'City is required';
     const priceNum = Number(price);
     if (!Number.isFinite(priceNum) || priceNum <= 0) next.price = 'Price must be a positive number';
+    const areaResult = parseOptionalNonNegative(area);
+    if (areaResult.error) next.area = `Area ${areaResult.error}`;
+    const roomsResult = parseOptionalNonNegative(rooms);
+    if (roomsResult.error) next.rooms = `Rooms ${roomsResult.error}`;
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -84,8 +106,8 @@ export function ListingForm({
       city: city.trim(),
       street: street.trim() || undefined,
       postalCode: postalCode.trim() || undefined,
-      area: area ? Number(area) : undefined,
-      rooms: rooms ? Number(rooms) : undefined,
+      area: areaResult.value,
+      rooms: roomsResult.value,
     });
   };
 
@@ -225,8 +247,9 @@ export function ListingForm({
             value={area}
             onChange={(e) => setArea(e.target.value)}
             disabled={isSubmitting}
-            className="input"
+            className={`input ${errors.area ? 'input-error' : ''}`}
           />
+          {errors.area && <span className="error">{errors.area}</span>}
         </label>
         <label className="field">
           <span className="label">Rooms</span>
@@ -236,8 +259,9 @@ export function ListingForm({
             value={rooms}
             onChange={(e) => setRooms(e.target.value)}
             disabled={isSubmitting}
-            className="input"
+            className={`input ${errors.rooms ? 'input-error' : ''}`}
           />
+          {errors.rooms && <span className="error">{errors.rooms}</span>}
         </label>
       </div>
 
