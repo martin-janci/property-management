@@ -37,23 +37,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-auth-restore-stale-token",
-      "action": "mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-server-inquiries-no-ratelimit",
       "action": "reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc...",
       "owner_role": "pm-backend",
@@ -73,23 +56,6 @@
     {
       "id": "code-review-reality-server-inquiry-email-stub",
       "action": "reality-server: a shipped-but-non-functional notification path.",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-orphan-listinghandler-stub-detail",
-      "action": "reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl...",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -138,23 +104,6 @@
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
       "action": "Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 workflow NOT-group fix)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-07T04:07:19Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
-      "action": "Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",

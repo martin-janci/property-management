@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-07T10:19:50Z",
+  "generated": "2026-08-07T12:30:18Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -24,34 +24,12 @@
       "merge_attempted_at": "2026-08-07T00:11:32Z"
     },
     {
-      "task_id": "code-review-mobile-rn-auth-restore-stale-token",
-      "branch": "auto-impl/code-review-mobile-rn-auth-restore-stale-49311340",
-      "status": "review",
-      "claimed_at": "2026-08-06T20:12:56Z",
-      "last_updated": "2026-08-07T10:19:50Z",
-      "status_changed_at": "2026-08-06T20:46:50Z",
-      "pr_number": 2690,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2690",
-      "merged_at": null,
-      "specialist": "react-native",
-      "implementer_summary": "pr=2690 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=isJwtExpired; initialize+biometric refresh expired token before restore, preserves #2399 no-refetch; 622/622 mobile tests (45 new); drift owner-label only; one pre-existing DocumentUploadScreen dev flake noted",
-      "reviewer_summary": "verdict=approve note=hot-path-auth-clean-exp-check-refresh-reuse-solid-tests",
-      "last_reviewed_oid": "3ed3fb4d889c3d4732cff09b81155e9d12943b7e",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-08-07T00:11:32Z"
-    },
-    {
       "task_id": "code-review-reality-server-inquiries-no-ratelimit",
       "branch": "auto-impl/code-review-reality-server-inquiries-no-e541d1a2",
       "status": "in-progress",
       "claimed_at": "2026-08-06T20:12:56Z",
-      "last_updated": "2026-08-07T10:19:50Z",
-      "status_changed_at": "2026-08-07T08:21:08Z",
+      "last_updated": "2026-08-07T12:30:18Z",
+      "status_changed_at": "2026-08-07T12:30:18Z",
       "pr_number": 2698,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2698",
       "merged_at": null,
@@ -88,28 +66,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-07T00:11:32Z"
-    },
-    {
-      "task_id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
-      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-bffaab3a",
-      "status": "in-progress",
-      "claimed_at": "2026-08-07T04:11:14Z",
-      "last_updated": "2026-08-07T10:19:50Z",
-      "status_changed_at": "2026-08-07T08:09:54Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     },
     {
       "task_id": "gh-issue-2703",

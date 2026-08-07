@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-07T08:15:43Z",
+  "archived_at": "2026-08-07T12:45:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1482,6 +1482,30 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
+      "action": "Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-07T12:45:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-07T12:45:53Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
       "action": "Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
       "owner_role": "pm-tech-lead",
@@ -2639,6 +2663,30 @@
       "last_updated": "2026-07-22T08:13:07Z"
     },
     {
+      "id": "code-review-mobile-rn-auth-restore-stale-token",
+      "action": "mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-07T12:45:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2690,
+        "merged_at": "2026-08-07T12:34:29Z",
+        "at": "2026-08-07T12:45:53Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-biometric-prompt-i18n",
       "action": "mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog...",
       "owner_role": "pm-backend",
@@ -3472,6 +3520,30 @@
         "merged_pr": 2692,
         "merged_at": "2026-08-07T00:08:27Z",
         "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-orphan-listinghandler-stub-detail",
+      "action": "reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-07T12:23:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2697,
+        "merged_at": "2026-08-07T10:19:50Z",
+        "at": "2026-08-07T12:23:57Z"
       }
     },
     {
