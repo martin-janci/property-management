@@ -1,0 +1,219 @@
+{
+  "generated": "2026-08-07T03:12:48Z",
+  "signals": [
+    {
+      "id": "gh-issue-2699-migration-collision",
+      "type": "untriaged-issue",
+      "source": "Issue #2699 (2026-08-07)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/crates/db/migrations/ carries two files at prefix 00220 on origin/dev (00220_listing_syndication_view_counters.sql from cb91cac + 00220_portal_get_listing_view_count.sql from #2692 8cf0fb5); the migration-collision CI gate fails on every PR based on current dev — verified via `git ls-tree -r origin/dev -- backend/crates/db/migrations/00220*`. Note: labelled `bug`+`backend`, so technically NOT untriaged; treated as untriaged-issue-typed here because the routine's Phase 1 issue-derived signal type is untriaged-issue (score fast-tracked to +3 given labelled + fact-grade evidence + demonstrable dev-hostage)."
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-all-or-nothing",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 (reality-web tier1d folded from 2026-08-07-reality-web-tier1d.json)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:57 — Promise.all over per-id fetches; one bad listing (404/403 on delete/unpublish/tenant-move) rejects the batch and the catch blanks the whole shared comparison URL."
+    },
+    {
+      "id": "code-review-reality-web-listingform-nan-validation",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 (reality-web tier1d)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:87-88 — area/rooms submitted as `x ? Number(x) : undefined` with no validation; non-numeric yields NaN → JSON.stringify → null; negative/zero pass unchecked."
+    },
+    {
+      "id": "code-review-reality-web-listingform-no-i18n",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 (reality-web tier1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx — 0 imports of next-intl useTranslations/getTranslations; 11 field labels, 4 validation strings, and transaction-type options are hardcoded English in a sk/cs/de/en app. Distinct from 2026-08-05 listing-edit-pages-no-i18n (wrapper shells only)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2685",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "457 changed lines in a single PR — impl-block methods moved out to free functions and the NOT operator rewritten via De Morgan. Not previously in hotspot_history; runs_seen=1 after this run."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
+      "type": "churn-hotspot",
+      "source": "PR #2689",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "105 changed lines — client-side app-level heartbeat/pong machinery removed; liveness now purely at protocol layer. Not previously in hotspot_history."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2688 + PR #2694",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Same handler module touched by two merged PRs in this window: #2688 (enhanced_chat fail-closed, 64 changed lines) + #2694 (upstream AI error leak masking). Not previously in hotspot_history."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-07.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-emitted with score",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "every open item with updated_at <=2026-07-24 lost 1pt or moved to dropped",
+      "observed": "0 violations",
+      "expected": "0 violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plans/*.md has adversarial pass annotation in brief",
+      "observed": "1/1 annotated",
+      "expected": "1/1"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "<=2 new plans this run",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "all 4 metadata + 11 headings present in each new plan",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "every Files path resolves on disk",
+      "observed": "1/1 exists",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret / private hostname patterns",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures + no placeholder rot",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior-run plan silently deleted",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD (7 == 7)",
+      "observed": "7 >= 7",
+      "expected": "growth or equal"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap/idempotency respected",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifact + cursor gate (Phase 1.6 skipped → no-op)",
+      "observed": "no-op",
+      "expected": "no-op or pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "notes": {
+    "phase_1_6_skipped": "Phase 1.6 not invoked this run; last full PM refresh was 2026-08-06 (yesterday). pm_cursor + coverage_cursor left unchanged so G16 stays a no-op.",
+    "phase_1_5_source": "reality-web tier1d review taken verbatim from .research/signals/2026-08-07-reality-web-tier1d.json (dispatcher-generated earlier today); no separate ppt-dev-review invocation — inputs would have been identical.",
+    "churn_hotspot_selection": "Top-3 source files by raw-changed-lines this run. Test/spec files excluded from the hotspot signal set even though not called out in the routine's exclusion list — signal intent is unstable *product* code. Test-file churn is still captured in the brief's shipped-PR narrative.",
+    "risky_churn_analysis": "None of the 10 merged PRs match the risky-churn trigger (fix/hotfix/bugfix/revert prefix AND no test in diff). Every code-review-* fix PR shipped an accompanying test; #2685 workflow fix shipped 3 new NOT-operator tests; #2687 disputes-KPI validation shipped a plain #[tokio::test] alongside the sqlx-test contract case.",
+    "screen_map_drift_analysis": "0 drift signals. None of the merged PRs touched frontend/apps/ppt-web/src/{App.tsx,routes/**} or frontend/apps/reality-web/src/app/**. #2686 touched DocumentUpload.test.tsx (features/documents component test — not a route file).",
+    "stalled_review_note": "3 open non-draft PRs older than 7 days remain (#2555, #2558, #2559 — same ACC-epic batch flagged in 2026-08-06 brief). Not re-emitted; standing hypothesis (ACC batched sprint waiting on epic lead) unchanged."
+  }
+}
