@@ -7173,13 +7173,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2709",
         "Tier1d review 2026-08-07 (reality-web)"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx — 0 imports of next-intl useTranslations/getTranslations. Hardcoded copy: transaction-type 'For sale'/'For rent' (:31-32), 11 field labels (:100-231), 4 validation strings (:69-73).",
-        "Distinct from 2026-08-05 code-review-reality-web-listing-edit-pages-no-i18n (wrapper shells). Fix: route all copy through next-intl under realtor.listingForm namespace."
+        "Distinct from 2026-08-05 code-review-reality-web-listing-edit-pages-no-i18n (wrapper shells). Fix: route all copy through next-intl under realtor.listingForm namespace.",
+        "resolved: PR #2709 merged 2026-08-07 16:18 — fix(reality-web): i18n ListingForm strings via next-intl catalogs (8 files: 6 messages/*.json + ListingForm.tsx + ListingForm.test.tsx)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx"
@@ -7194,12 +7196,14 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2685"
+        "PR #2685",
+        "PR #2708"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/workflow_executor.rs — 457 changed lines in PR #2685 (workflow NOT-group fix): moved evaluate_condition_group/evaluate_single_condition/get_field_value/traverse_json/compare_numeric out of impl block to free fns and rewrote NOT to negate the full conjunction via De Morgan."
+        "backend/servers/api-server/src/services/workflow_executor.rs — 457 changed lines in PR #2685 (workflow NOT-group fix): moved evaluate_condition_group/evaluate_single_condition/get_field_value/traverse_json/compare_numeric out of impl block to free fns and rewrote NOT to negate the full conjunction via De Morgan.",
+        "resolved: PR #2708 merged 2026-08-07 16:18 — fix(api-server): reject non-finite numbers in workflow condition compare — dispatcher-spawned hardening on the churn hotspot (+91 lines, 4 inline #[test] blocks). Signal-shape retired."
       ],
       "files": [
         "backend/servers/api-server/src/services/workflow_executor.rs"
@@ -7239,13 +7243,15 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2688",
-        "PR #2694"
+        "PR #2694",
+        "PR #2706"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/ai/llm.rs — 64 line changes in #2688 (enhanced_chat now returns 501 instead of fabricated 200) plus PR #2694 also touched the file (ai upstream error leak fix). Both changes hit the same handler module."
+        "backend/servers/api-server/src/routes/ai/llm.rs — 64 line changes in #2688 (enhanced_chat now returns 501 instead of fabricated 200) plus PR #2694 also touched the file (ai upstream error leak fix). Both changes hit the same handler module.",
+        "resolved: PR #2706 merged 2026-08-07 16:18 — fix(api-server): fail closed on partial RAG embedding batch in /rag/index — dispatcher-spawned hardening (+71 lines, 1 inline #[test]). Third fail-closed on this file after #2688 + #2694; hotspot retired."
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai/llm.rs"
