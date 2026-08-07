@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-07T00:27:18Z",
+  "generated": "2026-08-07T00:32:14Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -48,18 +48,18 @@
     {
       "task_id": "code-review-reality-server-inquiries-no-ratelimit",
       "branch": "auto-impl/code-review-reality-server-inquiries-no-e541d1a2",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-06T20:12:56Z",
-      "last_updated": "2026-08-07T00:11:32Z",
-      "status_changed_at": "2026-08-07T00:11:32Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-07T00:32:14Z",
+      "status_changed_at": "2026-08-07T00:32:14Z",
+      "pr_number": 2698,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2698",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2698 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=per-IP inquiry throttle via existing TenantRateLimiterSet; RateLimited now live; 429 on trip; local compile blocked by known swagger-ui egress, CI backend.yml gates",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
