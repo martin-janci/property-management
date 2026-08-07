@@ -3,15 +3,18 @@
 //! Handles listing inquiries, contact forms, and viewing scheduling.
 //! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
+use crate::handlers::inquiries::{InquiriesHandler, InquiryResult};
 use crate::state::AppState;
 use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
 use db::models::{CreateListingInquiry, ListingInquiry, SendInquiryMessage};
 use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -52,6 +55,84 @@ fn validate_inquiry_lengths(
         return Err("Message is too long (max 5000 characters)");
     }
     Ok(())
+}
+
+/// Derive a stable, **spoof-resistant** per-client bucket key for the anonymous
+/// inquiry throttle.
+///
+/// reality-server sits behind a known chain of `trusted_hops` reverse proxies,
+/// so the peer socket is the innermost proxy, not the visitor. We therefore
+/// read the client address from `X-Forwarded-For` — but the LEFTMOST hop is
+/// attacker-controlled: a client can send `X-Forwarded-For: 1.2.3.4` and our
+/// proxy simply appends the real peer to the right. Trusting the leftmost hop
+/// lets an attacker mint unlimited distinct keys (bypassing the throttle) or
+/// frame another IP. Instead we count `trusted_hops` from the RIGHT: each
+/// trusted proxy appended exactly one entry, so the entry our OUTERMOST trusted
+/// proxy wrote — index `len - trusted_hops` — is the address it actually
+/// observed for its peer, i.e. the real client. Everything an attacker injects
+/// sits to the left of that and is ignored.
+///
+/// Fail-safe: if the header is absent, unparsable, or has FEWER hops than the
+/// trusted chain should have produced (a sign of a misconfigured proxy or a
+/// direct connection bypassing it), we do NOT fall back to an attacker-chosen
+/// value — we collapse to a single shared `"unknown"` bucket that is throttled
+/// collectively. Never fail-open. The chosen address is hashed into a `Uuid`
+/// (the key type of the reused `TenantRateLimiterSet`) so no raw IP is stored.
+///
+/// `trusted_hops` MUST match the real deployment topology
+/// (`INQUIRY_TRUSTED_PROXY_HOPS`, default 1). If a proxy is added/removed in
+/// front of reality-server, update that env var or the key derivation degrades:
+/// too-low trusts an attacker-supplied hop; too-high collapses everyone into
+/// the shared bucket (safe but over-throttling).
+fn client_ip_bucket(headers: &HeaderMap, trusted_hops: usize) -> Uuid {
+    let trusted_hops = trusted_hops.max(1);
+
+    let client = headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|xff| {
+            let hops: Vec<&str> = xff
+                .split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .collect();
+            // Need at least `trusted_hops` entries; the outermost trusted proxy
+            // wrote index `len - trusted_hops`. Fewer entries ⇒ topology
+            // mismatch ⇒ fail safe (return None → shared "unknown" bucket).
+            hops.len()
+                .checked_sub(trusted_hops)
+                .and_then(|idx| hops.get(idx).copied())
+        })
+        .unwrap_or("unknown");
+
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    client.hash(&mut hasher);
+    // High half is a fixed namespace tag so these IP buckets never collide
+    // with real org UUIDs (they live in a separate limiter set regardless).
+    Uuid::from_u64_pair(0x0000_0000_494e_5150, hasher.finish())
+}
+
+/// Enforce the per-IP anonymous inquiry throttle. Returns `Err(429)` when the
+/// client has exceeded the quota (see `AppState::inquiry_rate_limiters`),
+/// constructing/​matching `InquiryResult::RateLimited` so the abuse control is
+/// live rather than dead code.
+async fn enforce_inquiry_rate_limit(
+    state: &AppState,
+    headers: &HeaderMap,
+    listing_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let key = client_ip_bucket(headers, state.inquiry_trusted_proxy_hops);
+    let decision = state.inquiry_rate_limiters.check(key).await;
+    match InquiriesHandler::rate_limit_result(decision) {
+        Some(InquiryResult::RateLimited) => {
+            tracing::warn!(%listing_id, "Anonymous inquiry rate limit tripped");
+            Err((
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Too many requests. Please try again in a minute.".to_string(),
+            ))
+        }
+        _ => Ok(()),
+    }
 }
 
 /// Create inquiries router.
@@ -180,8 +261,14 @@ pub struct InquiryMessageResponse {
 pub async fn send_contact_message(
     State(state): State<AppState>,
     Path(listing_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<ContactMessageRequest>,
 ) -> Result<Json<ContactMessageResponse>, (axum::http::StatusCode, String)> {
+    // Per-IP throttle FIRST: an anonymous flood must be rejected before any
+    // validation, DB connection, listing lookup, row insert, or realtor
+    // notification (the spam / DB-exhaustion vector this endpoint exposed).
+    enforce_inquiry_rate_limit(&state, &headers, listing_id).await?;
+
     // H6: length caps before semantic validation — reject oversize bodies
     // before they bloat the request body / DB row.
     if let Err(msg) =
@@ -298,8 +385,12 @@ pub async fn send_contact_message(
 pub async fn request_viewing(
     State(state): State<AppState>,
     Path(listing_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<ViewingRequest>,
 ) -> Result<Json<ViewingRequestResponse>, (axum::http::StatusCode, String)> {
+    // Per-IP throttle FIRST (same anonymous abuse vector as the contact form).
+    enforce_inquiry_rate_limit(&state, &headers, listing_id).await?;
+
     // H6: cap fields BEFORE we concatenate them into the outgoing message.
     if req.name.len() > MAX_INQUIRY_NAME_LEN {
         return Err((
@@ -680,4 +771,82 @@ pub async fn respond_to_inquiry(
         message: message.message,
         created_at: message.created_at.to_rfc3339(),
     }))
+}
+
+#[cfg(test)]
+mod client_key_tests {
+    use super::client_ip_bucket;
+    use axum::http::HeaderMap;
+    use uuid::Uuid;
+
+    fn xff(value: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert("x-forwarded-for", value.parse().unwrap());
+        h
+    }
+
+    fn unknown_bucket() -> Uuid {
+        // The key an empty/absent/underlength header collapses to.
+        client_ip_bucket(&HeaderMap::new(), 1)
+    }
+
+    /// With one trusted proxy, the client key comes from the RIGHTMOST hop
+    /// (the one our proxy appended), NOT the attacker-supplied leftmost hop.
+    #[test]
+    fn single_proxy_uses_rightmost_hop() {
+        // Attacker sends "1.2.3.4"; our proxy appends the real client 9.9.9.9.
+        let spoofed = client_ip_bucket(&xff("1.2.3.4, 9.9.9.9"), 1);
+        // Same real client, no spoof — must land in the SAME bucket.
+        let honest = client_ip_bucket(&xff("9.9.9.9"), 1);
+        assert_eq!(
+            spoofed, honest,
+            "rightmost (trusted) hop must drive the key; injected left hops are ignored"
+        );
+    }
+
+    /// An attacker cannot mint unlimited distinct buckets by varying the
+    /// leftmost hop: the key is stable as long as the real (rightmost) client
+    /// is the same.
+    #[test]
+    fn spoofed_left_hops_do_not_change_bucket() {
+        let a = client_ip_bucket(&xff("1.1.1.1, 9.9.9.9"), 1);
+        let b = client_ip_bucket(&xff("2.2.2.2, 9.9.9.9"), 1);
+        let c = client_ip_bucket(&xff("aaaa, bbbb, cccc, 9.9.9.9"), 1);
+        assert_eq!(a, b);
+        assert_eq!(a, c);
+    }
+
+    /// Distinct real clients still land in distinct buckets (throttle is
+    /// per-client, not global).
+    #[test]
+    fn distinct_real_clients_differ() {
+        let x = client_ip_bucket(&xff("9.9.9.9"), 1);
+        let y = client_ip_bucket(&xff("8.8.8.8"), 1);
+        assert_ne!(x, y);
+    }
+
+    /// Two trusted proxies: the real client is the second-from-right hop.
+    #[test]
+    fn two_proxies_count_from_the_right() {
+        // client=9.9.9.9, proxyA peer appended, proxyB peer appended.
+        let key = client_ip_bucket(&xff("spoof, 9.9.9.9, 10.0.0.1"), 2);
+        let honest = client_ip_bucket(&xff("9.9.9.9, 10.0.0.1"), 2);
+        assert_eq!(key, honest);
+    }
+
+    /// Fail-safe: a header with FEWER hops than the trusted chain implies a
+    /// topology mismatch (bypassed proxy / spoof) — collapse to the shared
+    /// "unknown" bucket rather than trusting an attacker value.
+    #[test]
+    fn underlength_header_fails_safe_to_shared_bucket() {
+        // trusted_hops=2 but only one hop present.
+        assert_eq!(client_ip_bucket(&xff("1.2.3.4"), 2), unknown_bucket());
+    }
+
+    /// Absent / empty header ⇒ shared bucket (never fail-open).
+    #[test]
+    fn missing_header_uses_shared_bucket() {
+        assert_eq!(client_ip_bucket(&HeaderMap::new(), 1), unknown_bucket());
+        assert_eq!(client_ip_bucket(&xff("   ,  "), 1), unknown_bucket());
+    }
 }
