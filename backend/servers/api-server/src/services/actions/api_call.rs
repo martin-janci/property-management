@@ -83,6 +83,22 @@ pub struct ApiCallConfig {
     pub include_response: bool,
 }
 
+/// Maximum number of response-body bytes the API-call action will buffer into
+/// memory. A workflow action issues one small outbound request but then reads
+/// the *entire* upstream response with `response.text()`, which buffers with no
+/// ceiling — a malicious or misbehaving endpoint can reply with a multi-GB (or,
+/// via chunked transfer with no `Content-Length`, effectively unbounded) body
+/// and amplify a trivial request into an out-of-memory DoS on the worker. We
+/// cap the read at this many bytes; anything beyond is dropped and the stored
+/// body is marked truncated. 8 MiB comfortably covers legitimate JSON webhook
+/// responses while bounding worst-case allocation per in-flight action.
+const MAX_RESPONSE_BODY_BYTES: usize = 8 * 1024 * 1024;
+
+/// Appended to a response body that was cut off at `MAX_RESPONSE_BODY_BYTES`,
+/// so the persisted workflow-execution record makes the truncation explicit
+/// instead of silently storing a partial payload.
+const RESPONSE_TRUNCATION_MARKER: &str = "\u{2026}[truncated: response exceeded 8 MiB cap]";
+
 fn default_timeout_seconds() -> u64 {
     30
 }
@@ -138,6 +154,56 @@ impl ApiCallExecutor {
             ),
             other => other.clone(),
         }
+    }
+
+    /// Read an upstream response body while hard-capping how many bytes are
+    /// buffered, defending against a memory-amplification DoS (a small request
+    /// provoking an enormous reply). Returns `(body_text, truncated)`.
+    ///
+    /// Two layers of defence:
+    /// 1. **`Content-Length` pre-check** — if the upstream already advertises a
+    ///    body larger than the cap, refuse to buffer any of it.
+    /// 2. **Streaming bounded read** — otherwise pull the body chunk-by-chunk
+    ///    and stop the moment the accumulated size would exceed the cap. This
+    ///    is what protects against a chunked-transfer body with no (or a lying)
+    ///    `Content-Length`, which the pre-check alone cannot catch.
+    ///
+    /// A mid-stream network error keeps whatever was read so far (best-effort),
+    /// mirroring the previous `unwrap_or_default()` behaviour.
+    async fn read_capped_body(mut response: reqwest::Response) -> (String, bool) {
+        // Layer 1: honest oversized Content-Length — never start buffering.
+        if let Some(len) = response.content_length() {
+            if len > MAX_RESPONSE_BODY_BYTES as u64 {
+                return (RESPONSE_TRUNCATION_MARKER.to_string(), true);
+            }
+        }
+
+        // Layer 2: bounded streaming read.
+        let mut buf: Vec<u8> = Vec::new();
+        let mut truncated = false;
+        loop {
+            match response.chunk().await {
+                Ok(Some(chunk)) => {
+                    let remaining = MAX_RESPONSE_BODY_BYTES.saturating_sub(buf.len());
+                    if chunk.len() > remaining {
+                        buf.extend_from_slice(&chunk[..remaining]);
+                        truncated = true;
+                        break;
+                    }
+                    buf.extend_from_slice(&chunk);
+                }
+                Ok(None) => break,
+                // Network error mid-read: keep the partial body, don't fail the
+                // whole action on it (matches prior best-effort semantics).
+                Err(_) => break,
+            }
+        }
+
+        let mut text = String::from_utf8_lossy(&buf).into_owned();
+        if truncated {
+            text.push_str(RESPONSE_TRUNCATION_MARKER);
+        }
+        (text, truncated)
     }
 }
 
@@ -253,9 +319,18 @@ impl ActionExecutor for ApiCallExecutor {
         // Check if status code indicates success
         let is_success = api_config.success_codes.contains(&status);
 
-        // Get response body
+        // Get response body — capped read so an oversized/unbounded upstream
+        // reply cannot amplify into an out-of-memory DoS on the worker.
         let response_body = if api_config.include_response {
-            let text = response.text().await.unwrap_or_default();
+            let (text, truncated) = Self::read_capped_body(response).await;
+            if truncated {
+                tracing::warn!(
+                    workflow_id = %context.workflow_id,
+                    execution_id = %context.execution_id,
+                    cap_bytes = MAX_RESPONSE_BODY_BYTES,
+                    "Workflow API-call response body exceeded cap; truncated before persisting"
+                );
+            }
             if api_config.parse_json_response {
                 serde_json::from_str(&text).unwrap_or(serde_json::Value::String(text))
             } else {
@@ -484,5 +559,65 @@ mod tests {
                  unresolvable host, got: {other:?}"
             ),
         }
+    }
+
+    /// Regression (memory-amplification DoS): the executor used to buffer the
+    /// *entire* upstream response with `response.text().await` and no ceiling,
+    /// so a small outbound request could provoke a multi-GB (or, via chunked
+    /// transfer, effectively unbounded) reply and OOM the worker. `read_capped_body`
+    /// now hard-caps the buffered bytes at `MAX_RESPONSE_BODY_BYTES` and marks
+    /// the result truncated.
+    ///
+    /// Hermetic: we hand `read_capped_body` a synthesized over-limit response
+    /// (built via `http::Response` → `reqwest::Response`) instead of standing
+    /// up a network server — the SSRF validator would reject a `127.0.0.1`
+    /// loopback server anyway, so a real request is not an option here.
+    /// Fails on `dev` (the old code returned the full body, so the non-marker
+    /// payload length would exceed the cap and `truncated` would be false).
+    #[tokio::test]
+    async fn read_capped_body_truncates_oversized_response() {
+        use axum::http;
+
+        // A body deliberately larger than the cap.
+        let oversized = vec![b'a'; MAX_RESPONSE_BODY_BYTES + 4096];
+        let http_response = http::Response::builder()
+            .status(200)
+            .body(oversized)
+            .expect("build synthetic http::Response");
+        let response = reqwest::Response::from(http_response);
+
+        let (text, truncated) = ApiCallExecutor::read_capped_body(response).await;
+
+        assert!(truncated, "an over-limit body must be reported truncated");
+        assert!(
+            text.ends_with(RESPONSE_TRUNCATION_MARKER),
+            "truncated body must carry the truncation marker"
+        );
+        // The retained payload (excluding the marker) must never exceed the cap
+        // — i.e. the full body was NOT buffered.
+        let payload_len = text.len() - RESPONSE_TRUNCATION_MARKER.len();
+        assert!(
+            payload_len <= MAX_RESPONSE_BODY_BYTES,
+            "buffered payload {payload_len} must not exceed cap {MAX_RESPONSE_BODY_BYTES}"
+        );
+    }
+
+    /// Companion: a body comfortably under the cap is returned verbatim and is
+    /// not flagged truncated (guards against an over-eager cap).
+    #[tokio::test]
+    async fn read_capped_body_passes_small_response_through() {
+        use axum::http;
+
+        let payload = b"{\"ok\":true}".to_vec();
+        let http_response = http::Response::builder()
+            .status(200)
+            .body(payload.clone())
+            .expect("build synthetic http::Response");
+        let response = reqwest::Response::from(http_response);
+
+        let (text, truncated) = ApiCallExecutor::read_capped_body(response).await;
+
+        assert!(!truncated, "a small body must not be flagged truncated");
+        assert_eq!(text.as_bytes(), payload.as_slice());
     }
 }
