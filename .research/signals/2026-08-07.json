@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-07T03:12:48Z",
+  "generated": "2026-08-07T08:18:30Z",
   "signals": [
     {
       "id": "gh-issue-2699-migration-collision",
@@ -8,7 +8,7 @@
       "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
-      "evidence": "backend/crates/db/migrations/ carries two files at prefix 00220 on origin/dev (00220_listing_syndication_view_counters.sql from cb91cac + 00220_portal_get_listing_view_count.sql from #2692 8cf0fb5); the migration-collision CI gate fails on every PR based on current dev — verified via `git ls-tree -r origin/dev -- backend/crates/db/migrations/00220*`. Note: labelled `bug`+`backend`, so technically NOT untriaged; treated as untriaged-issue-typed here because the routine's Phase 1 issue-derived signal type is untriaged-issue (score fast-tracked to +3 given labelled + fact-grade evidence + demonstrable dev-hostage). [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
+      "evidence": "backend/crates/db/migrations/ carries two files at prefix 00220 on origin/dev (00220_listing_syndication_view_counters.sql from cb91cac + 00220_portal_get_listing_view_count.sql from #2692 8cf0fb5); the migration-collision CI gate fails on every PR based on current dev \u2014 verified via `git ls-tree -r origin/dev -- backend/crates/db/migrations/00220*`. Note: labelled `bug`+`backend`, so technically NOT untriaged; treated as untriaged-issue-typed here because the routine's Phase 1 issue-derived signal type is untriaged-issue (score fast-tracked to +3 given labelled + fact-grade evidence + demonstrable dev-hostage). [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
     },
     {
       "id": "code-review-reality-web-comparison-share-all-or-nothing",
@@ -17,7 +17,7 @@
       "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
-      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:57 — Promise.all over per-id fetches; one bad listing (404/403 on delete/unpublish/tenant-move) rejects the batch and the catch blanks the whole shared comparison URL. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
+      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:57 \u2014 Promise.all over per-id fetches; one bad listing (404/403 on delete/unpublish/tenant-move) rejects the batch and the catch blanks the whole shared comparison URL. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
     },
     {
       "id": "code-review-reality-web-listingform-nan-validation",
@@ -26,7 +26,7 @@
       "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
-      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:87-88 — area/rooms submitted as `x ? Number(x) : undefined` with no validation; non-numeric yields NaN → JSON.stringify → null; negative/zero pass unchecked. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
+      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:87-88 \u2014 area/rooms submitted as `x ? Number(x) : undefined` with no validation; non-numeric yields NaN \u2192 JSON.stringify \u2192 null; negative/zero pass unchecked. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
     },
     {
       "id": "code-review-reality-web-listingform-no-i18n",
@@ -35,7 +35,7 @@
       "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
-      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx — 0 imports of next-intl useTranslations/getTranslations; 11 field labels, 4 validation strings, and transaction-type options are hardcoded English in a sk/cs/de/en app. Distinct from 2026-08-05 listing-edit-pages-no-i18n (wrapper shells only). [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
+      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx \u2014 0 imports of next-intl useTranslations/getTranslations; 11 field labels, 4 validation strings, and transaction-type options are hardcoded English in a sk/cs/de/en app. Distinct from 2026-08-05 listing-edit-pages-no-i18n (wrapper shells only). [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
@@ -44,7 +44,7 @@
       "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
-      "evidence": "457 changed lines in a single PR — impl-block methods moved out to free functions and the NOT operator rewritten via De Morgan. Not previously in hotspot_history; runs_seen=1 after this run. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
+      "evidence": "457 changed lines in a single PR \u2014 impl-block methods moved out to free functions and the NOT operator rewritten via De Morgan. Not previously in hotspot_history; runs_seen=1 after this run. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
@@ -53,7 +53,7 @@
       "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
-      "evidence": "105 changed lines — client-side app-level heartbeat/pong machinery removed; liveness now purely at protocol layer. Not previously in hotspot_history. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
+      "evidence": "105 changed lines \u2014 client-side app-level heartbeat/pong machinery removed; liveness now purely at protocol layer. Not previously in hotspot_history. [same-day rerun: score_delta already applied in prior run @ 03:12Z]"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
@@ -69,138 +69,139 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 …",
+      "command": "test -f briefs/2026-08-07.md && head -1 matches '# 2026-08-07'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurp on state.json vs HEAD",
-      "observed": "true (last_pr_seen 2695→2702, last_commit_sha a37c76e2→a2c0f53d, stats.runs +1)",
+      "command": "jq state-change vs HEAD",
+      "observed": "true (last_commit_sha a2c0f53d\u2192b13ecc77, quiet_days 2\u21923)",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | length == (unique|length)'",
+      "command": "backlog.json id uniqueness",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "re-emit check vs HEAD.seen_signals",
-      "observed": "true — all 7 re-emitted signals set score_delta=0 (already applied in prior 03:12Z run)",
+      "command": "signals not re-scored",
+      "observed": "true (0 new signals this run; 7 preserved from earlier rerun all at score_delta=0)",
       "expected": "true"
     },
     {
       "goal": "G5-cap",
       "passed": true,
-      "command": "jq '[.items[]|select(.score>8)]|length==0'",
+      "command": "max score \u2264 8",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5-decay",
       "passed": true,
-      "command": "no open items with updated_at <= 2026-07-24",
-      "observed": "empty set (all open items updated within 14d)",
-      "expected": "empty set OR all decayed/dropped"
+      "command": "0 open items updated_at <= 2026-07-24",
+      "observed": "0",
+      "expected": "0"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run",
-      "observed": "0 new plans (only 1 plan moved to _archive/)",
-      "expected": "n/a — vacuous pass"
+      "command": "adversarial-pass annotation for each new plan",
+      "observed": "0 new plans this run \u2014 trivially pass",
+      "expected": "no new plans \u2192 n/a"
     },
     {
       "goal": "G7-count",
       "passed": true,
-      "command": "git diff --cached … | grep -c '\\.md$'",
+      "command": "new plans \u2264 2",
       "observed": "0",
-      "expected": "≤2"
+      "expected": "\u2264 2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "command": "no non-.research files staged",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secret patterns in staged diff (excluding baseline docs)",
-      "observed": "0 hits",
+      "command": "grep for secrets in staged diff",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "backlog.md matches regen from backlog.json",
+      "observed": "diff vs HEAD is timestamp line only (backlog.json unchanged); regen at 08:16 UTC produces identical bytes",
+      "expected": "diff clean"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "cursors match failed-phase constraint (no phases failed)",
-      "observed": "no phases failed",
-      "expected": "pass"
+      "command": "no failed phases \u2192 no cursor should have been not-advanced",
+      "observed": "no failed phases; cursor advance = last_commit_sha + last_run_iso",
+      "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plans present in plans/ or plans/_archive/",
-      "observed": "all prior plans accounted for; gh-issue-2699 moved active→archive",
-      "expected": "pass"
+      "command": "plans promoted in prior runs still in plans/ or plans/_archive/",
+      "observed": "no plans removed this run; prior-run plans intact",
+      "expected": "no silent deletions"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count monotonic",
-      "observed": "8 (was 7 at HEAD)",
-      "expected": "≥ HEAD count"
+      "command": "archive count now \u2265 HEAD",
+      "observed": "8 \u2265 8",
+      "expected": "\u2265"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "IDEAS_TRIAGE.md matches regen from vector=triage rows",
+      "observed": "diff vs HEAD is timestamp line only; regen at 08:16 UTC produces identical bytes",
+      "expected": "diff clean"
     },
     {
       "goal": "G15",
       "passed": true,
       "command": "auto_fix_actions cap + idempotency",
-      "observed": "auto_fix_actions=[] (no candidates; kill switch not set)",
-      "expected": "≤3 caps, empty OK"
+      "observed": "auto_fix_actions=[] (no candidate this run); kill switch unset",
+      "expected": "\u2264 3 total, \u2264 1 per type, no id collision with auto_fix_history"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts parse + pm_cursor in range",
-      "observed": "action-list.json/risks.json/project-state.md valid, pm_cursor.next_index=3 (unchanged; Phase 1.6 skipped this rerun), coverage_cursor.next_index=5 in range",
+      "command": "management artifacts + pm_cursor + coverage_cursor liveness",
+      "observed": "Phase 1.6 skipped this run (pm_cursor.next_index unchanged at 3, coverage_cursor unchanged at 5) \u2014 gate is a no-op",
       "expected": "no-op when Phase 1.6 skipped"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep Telegram token patterns in staged diff",
-      "observed": "0 hits",
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
       "expected": "0"
     }
   ],
   "auto_fix_actions": [],
   "notes": {
     "phase_1_6_skipped": "Phase 1.6 not invoked this run; last full PM refresh was 2026-08-06 (yesterday). pm_cursor + coverage_cursor left unchanged so G16 stays a no-op.",
-    "phase_1_5_source": "reality-web tier1d review taken verbatim from .research/signals/2026-08-07-reality-web-tier1d.json (dispatcher-generated earlier today); no separate ppt-dev-review invocation — inputs would have been identical.",
-    "churn_hotspot_selection": "Top-3 source files by raw-changed-lines this run. Test/spec files excluded from the hotspot signal set even though not called out in the routine's exclusion list — signal intent is unstable *product* code. Test-file churn is still captured in the brief's shipped-PR narrative.",
+    "phase_1_5_source": "reality-web tier1d review taken verbatim from .research/signals/2026-08-07-reality-web-tier1d.json (dispatcher-generated earlier today); no separate ppt-dev-review invocation \u2014 inputs would have been identical.",
+    "churn_hotspot_selection": "Top-3 source files by raw-changed-lines this run. Test/spec files excluded from the hotspot signal set even though not called out in the routine's exclusion list \u2014 signal intent is unstable *product* code. Test-file churn is still captured in the brief's shipped-PR narrative.",
     "risky_churn_analysis": "None of the 10 merged PRs match the risky-churn trigger (fix/hotfix/bugfix/revert prefix AND no test in diff). Every code-review-* fix PR shipped an accompanying test; #2685 workflow fix shipped 3 new NOT-operator tests; #2687 disputes-KPI validation shipped a plain #[tokio::test] alongside the sqlx-test contract case.",
-    "screen_map_drift_analysis": "0 drift signals. None of the merged PRs touched frontend/apps/ppt-web/src/{App.tsx,routes/**} or frontend/apps/reality-web/src/app/**. #2686 touched DocumentUpload.test.tsx (features/documents component test — not a route file).",
-    "stalled_review_note": "3 open non-draft PRs older than 7 days remain (#2555, #2558, #2559 — same ACC-epic batch flagged in 2026-08-06 brief). Not re-emitted; standing hypothesis (ACC batched sprint waiting on epic lead) unchanged."
+    "screen_map_drift_analysis": "0 drift signals. None of the merged PRs touched frontend/apps/ppt-web/src/{App.tsx,routes/**} or frontend/apps/reality-web/src/app/**. #2686 touched DocumentUpload.test.tsx (features/documents component test \u2014 not a route file).",
+    "stalled_review_note": "3 open non-draft PRs older than 7 days remain (#2555, #2558, #2559 \u2014 same ACC-epic batch flagged in 2026-08-06 brief). Not re-emitted; standing hypothesis (ACC batched sprint waiting on epic lead) unchanged.",
+    "third_run_rerun": "08:17Z third-run rerun \u2014 buffer-low nudge (claimable=8/72, UP from 5/72 at 06:24Z). 0 new PRs/issues/commits/organic signals since prior rerun; backlog.json unchanged; backlog.md + IDEAS_TRIAGE.md regenerated with fresh timestamp only; state advanced (last_commit_sha a2c0f53d\u2192b13ecc77, stats.runs +1, stats.quiet_days +1). Signals array preserved from earlier reruns (audit trail intact); goal_checks re-verified fresh \u2014 all pass."
   },
   "resolutions": [
     {
@@ -218,5 +219,6 @@
       "pr": "PR #2702",
       "resolved_at": "2026-08-07T06:24:00Z"
     }
-  ]
+  ],
+  "verified_at": "2026-08-07T08:20:36Z"
 }
