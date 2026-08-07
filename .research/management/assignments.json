@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-07T22:17:53Z",
+  "generated": "2026-08-07T22:27:22Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -92,18 +92,18 @@
     {
       "task_id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30-retry1",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-layout-3be8d9fc",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-07T18:12:19Z",
-      "last_updated": "2026-08-07T22:17:53Z",
-      "status_changed_at": "2026-08-07T22:17:53Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-07T22:27:22Z",
+      "status_changed_at": "2026-08-07T22:27:22Z",
+      "pr_number": 2713,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2713",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": "[phase2 sandbox-reclaim: branch missing after 120m+ timeout; reclaim_attempts=1, respawned same specialist via Phase 4 machinery]",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2713 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=layout admin dedupe mirrors PR#2711 (625->517); single-file diff; fmt green, clippy/test rely on CI backend.yml (utoipa egress); drift=docs-only owner-map false-positive [phase4 reclaim fast-path: PR opened synchronously]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
