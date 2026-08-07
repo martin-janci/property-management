@@ -7080,6 +7080,153 @@
         "assignment_status": "merged",
         "pr_number": 2693
       }
+    },
+    {
+      "id": "gh-issue-2699-migration-collision",
+      "title": "dev CI broken: duplicate SQLx migration 00220 — renumber portal_get_listing_view_count to 00227",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2699",
+        "PR #2692 (2026-08-07 00:08)"
+      ],
+      "evidence": [
+        "backend/crates/db/migrations/ carries two files at prefix 00220 on dev: 00220_listing_syndication_view_counters.sql (from 2026-08-06 dispatcher batch cb91cac) and 00220_portal_get_listing_view_count.sql (from #2692 merged 2026-08-07 00:08 8cf0fb5). Confirmed on origin/dev via git ls-tree.",
+        "Migration-collision CI gate now fails on every PR based on current dev (backend check/test/test-shard set). Observed on PR #2697 check job run 31134619480.",
+        "Mechanical fix: `git mv 00220_portal_get_listing_view_count.sql 00227_portal_get_listing_view_count.sql` (00221–00226 all used); rerun `cargo sqlx prepare`."
+      ],
+      "files": [
+        "backend/crates/db/migrations/00220_portal_get_listing_view_count.sql"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": "plans/gh-issue-2699-migration-collision.md"
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-all-or-nothing",
+      "title": "reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared comparison URL",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-07 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:57 — loadSharedListings uses Promise.all over per-id fetches that throw on non-ok; one deleted/unpublished/moved listing rejects the whole batch and the catch (:62-64) sets the generic loadError so NONE render.",
+        "Fix: switch to Promise.allSettled and add only fulfilled results (the `if (listing)` guard at :55 already anticipates partial results but can never fire under Promise.all)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listingform-nan-validation",
+      "title": "reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-07 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:87-88 submits area/rooms as `x ? Number(x) : undefined` with no validation. handleSubmit (:66-73) checks only title/description/city/price. Non-numeric strings yield NaN → JSON.stringify(NaN)=null; negative/zero pass unchecked.",
+        "Fix: validate area/rooms with the same Number.isFinite && value > 0 guard used for price."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listingform-no-i18n",
+      "title": "reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-07 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx — 0 imports of next-intl useTranslations/getTranslations. Hardcoded copy: transaction-type 'For sale'/'For rent' (:31-32), 11 field labels (:100-231), 4 validation strings (:69-73).",
+        "Distinct from 2026-08-05 code-review-reality-web-listing-edit-pages-no-i18n (wrapper shells). Fix: route all copy through next-intl under realtor.listingForm namespace."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 workflow NOT-group fix)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2685"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs — 457 changed lines in PR #2685 (workflow NOT-group fix): moved evaluate_condition_group/evaluate_single_condition/get_field_value/traverse_json/compare_numeric out of impl block to free fns and rewrote NOT to negate the full conjunction via De Morgan."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2689"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts — 105 line changes in PR #2689 (drop redundant client app-level WS heartbeat). Removed startHeartbeat/stopHeartbeat/sendPing/handlePong; liveness now purely at protocol layer."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + upstream error masking #2694)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2688",
+        "PR #2694"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/llm.rs — 64 line changes in #2688 (enhanced_chat now returns 501 instead of fabricated 200) plus PR #2694 also touched the file (ai upstream error leak fix). Both changes hit the same handler module."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/llm.rs"
+      ],
+      "created_at": "2026-08-07",
+      "updated_at": "2026-08-07",
+      "plan": null
     }
   ]
 }
