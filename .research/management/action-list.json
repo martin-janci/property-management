@@ -37,24 +37,6 @@
       }
     },
     {
-      "id": "code-review-api-core-workflow-not-group-drops-conds",
-      "action": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirel",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
       "id": "gh-issue-2575-retry1",
       "action": "Follow-up: /disputes/kpis has no window-ordering validation and its only test is quarantined (PR #2572) (Closes #2575) [retry 1/2 of failed gh-issue-2575]",
       "owner_role": "pm-tech-lead",
@@ -91,23 +73,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
-      "action": "ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa...",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-handlers-enhanced-chat-stub",
       "action": "api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data....",
       "owner_role": "pm-backend",
@@ -127,23 +92,6 @@
     {
       "id": "code-review-mobile-rn-auth-restore-stale-token",
       "action": "mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
-      "action": "ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche...",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",

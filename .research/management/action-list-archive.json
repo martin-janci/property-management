@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-06T22:20:20Z",
+  "archived_at": "2026-08-07T00:18:03Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2054,6 +2054,30 @@
       }
     },
     {
+      "id": "code-review-api-core-workflow-not-group-drops-conds",
+      "action": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirel",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core) | dev-reconcile 2026-08-07T00:11:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "412ed35c328fc45fe3403382452a64d333772dc8",
+        "subject": "code-review-api-core-workflow-not-group-drops-conds: NOT condition group evaluates full condition set (#2685)",
+        "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-community-cross-tenant-idor",
       "action": "SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs",
       "owner_role": "pm-security",
@@ -2983,6 +3007,52 @@
         "merged_pr": 2646,
         "merged_at": "2026-08-03T22:18:47Z",
         "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
+      "action": "ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-07T00:11:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4356bec22febc0d623f6e3cfd57b02f53922f27f",
+        "subject": "code-review-ppt-web-core-ws-giveup-no-resume: resume WebSocket reconnection after the retry budget is exhausted (#2691)",
+        "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
+      "action": "ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa...",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=3 conf=high vector=bug) | dev-reconcile 2026-08-07T00:11:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4caa49171c49173c2c741c2000393bba33665653",
+        "subject": "code-review-ppt-web-core-ws-pong-timeout-drop: drop redundant client app-level WS heartbeat (#2689)",
+        "at": "2026-08-07T00:11:53Z"
       }
     },
     {
