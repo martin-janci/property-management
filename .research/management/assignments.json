@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-07T14:28:37Z",
+  "generated": "2026-08-07T14:31:43Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2703",
       "branch": "auto-impl/gh-issue-2703-470a23f7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-07T08:15:35Z",
-      "last_updated": "2026-08-07T14:11:01Z",
-      "status_changed_at": "2026-08-07T14:11:01Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-07T14:31:43Z",
+      "status_changed_at": "2026-08-07T14:31:43Z",
+      "pr_number": 2710,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2710",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2710 status=done specialist=rust-backend scope_drift=true note=connect-time reqwest dns::Resolve closes DNS-rebinding TOCTOU + per-redirect revalidation; common tests/clippy/fmt green, api-server compile via CI (swagger-ui egress); reclaim landed",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
