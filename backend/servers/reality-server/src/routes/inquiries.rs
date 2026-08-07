@@ -3,15 +3,18 @@
 //! Handles listing inquiries, contact forms, and viewing scheduling.
 //! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
+use crate::handlers::inquiries::{InquiriesHandler, InquiryResult};
 use crate::state::AppState;
 use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
 use db::models::{CreateListingInquiry, ListingInquiry, SendInquiryMessage};
 use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -52,6 +55,61 @@ fn validate_inquiry_lengths(
         return Err("Message is too long (max 5000 characters)");
     }
     Ok(())
+}
+
+/// Derive a stable per-client bucket key for the anonymous inquiry throttle.
+///
+/// reality-server sits behind a reverse proxy, so the peer socket is the
+/// proxy, not the visitor — we read the forwarded client address from
+/// `X-Forwarded-For` (first hop) or `X-Real-IP`. The address is hashed into a
+/// `Uuid` (the key type of the reused `TenantRateLimiterSet`) rather than
+/// stored verbatim, so no raw IP lives in the limiter map. A missing/garbled
+/// header collapses to one shared "unknown" bucket, which is still throttled
+/// collectively — fail-safe, never fail-open.
+fn client_ip_bucket(headers: &HeaderMap) -> Uuid {
+    let ip = headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(',').next())
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .or_else(|| {
+            headers
+                .get("x-real-ip")
+                .and_then(|v| v.to_str().ok())
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+        })
+        .unwrap_or("unknown");
+
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    ip.hash(&mut hasher);
+    // High half is a fixed namespace tag so these IP buckets never collide
+    // with real org UUIDs (they live in a separate limiter set regardless).
+    Uuid::from_u64_pair(0x0000_0000_494e_5150, hasher.finish())
+}
+
+/// Enforce the per-IP anonymous inquiry throttle. Returns `Err(429)` when the
+/// client has exceeded the quota (see `AppState::inquiry_rate_limiters`),
+/// constructing/​matching `InquiryResult::RateLimited` so the abuse control is
+/// live rather than dead code.
+async fn enforce_inquiry_rate_limit(
+    state: &AppState,
+    headers: &HeaderMap,
+    listing_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let key = client_ip_bucket(headers);
+    let decision = state.inquiry_rate_limiters.check(key).await;
+    match InquiriesHandler::rate_limit_result(decision) {
+        Some(InquiryResult::RateLimited) => {
+            tracing::warn!(%listing_id, "Anonymous inquiry rate limit tripped");
+            Err((
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Too many requests. Please try again in a minute.".to_string(),
+            ))
+        }
+        _ => Ok(()),
+    }
 }
 
 /// Create inquiries router.
@@ -180,8 +238,14 @@ pub struct InquiryMessageResponse {
 pub async fn send_contact_message(
     State(state): State<AppState>,
     Path(listing_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<ContactMessageRequest>,
 ) -> Result<Json<ContactMessageResponse>, (axum::http::StatusCode, String)> {
+    // Per-IP throttle FIRST: an anonymous flood must be rejected before any
+    // validation, DB connection, listing lookup, row insert, or realtor
+    // notification (the spam / DB-exhaustion vector this endpoint exposed).
+    enforce_inquiry_rate_limit(&state, &headers, listing_id).await?;
+
     // H6: length caps before semantic validation — reject oversize bodies
     // before they bloat the request body / DB row.
     if let Err(msg) =
@@ -298,8 +362,12 @@ pub async fn send_contact_message(
 pub async fn request_viewing(
     State(state): State<AppState>,
     Path(listing_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<ViewingRequest>,
 ) -> Result<Json<ViewingRequestResponse>, (axum::http::StatusCode, String)> {
+    // Per-IP throttle FIRST (same anonymous abuse vector as the contact form).
+    enforce_inquiry_rate_limit(&state, &headers, listing_id).await?;
+
     // H6: cap fields BEFORE we concatenate them into the outgoing message.
     if req.name.len() > MAX_INQUIRY_NAME_LEN {
         return Err((

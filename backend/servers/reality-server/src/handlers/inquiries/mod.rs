@@ -3,6 +3,7 @@
 //! Implements contact validation, email notifications,
 //! and viewing scheduling functionality.
 
+use api_core::middleware::RateLimitDecision;
 use db::models::{CreateListingInquiry, ListingInquiry, ViewingSchedule};
 use db::repositories::RealityPortalRepository;
 use uuid::Uuid;
@@ -170,14 +171,40 @@ impl InquiriesHandler {
         cleaned[1..].chars().all(|c| c.is_ascii_digit())
     }
 
+    /// Translate a per-IP / per-listing rate-limit decision into the
+    /// short-circuit [`InquiryResult::RateLimited`].
+    ///
+    /// Extracted as a pure associated fn (no `&self`, no DB) so the throttle
+    /// path is unit-testable without a DB-backed handler instance, and so the
+    /// public POST routes can enforce the same abuse control they mount the
+    /// limiter for. Returns `Some(RateLimited)` when the caller must answer
+    /// HTTP 429, `None` when the request may proceed.
+    pub fn rate_limit_result(decision: RateLimitDecision) -> Option<InquiryResult> {
+        match decision {
+            RateLimitDecision::DenyTooManyRequests => Some(InquiryResult::RateLimited),
+            RateLimitDecision::Allow => None,
+        }
+    }
+
     /// Create a new inquiry.
+    ///
+    /// `rate_limit` is the decision from the per-IP inquiry limiter
+    /// (`AppState::inquiry_rate_limiters`); a denial short-circuits to
+    /// [`InquiryResult::RateLimited`] before any validation or DB work so an
+    /// anonymous flood cannot persist rows or fan out realtor notifications.
     pub async fn create_inquiry(
         &self,
+        rate_limit: RateLimitDecision,
         listing_id: Uuid,
         realtor_id: Uuid,
         user_id: Option<Uuid>,
         data: CreateListingInquiry,
     ) -> InquiryResult {
+        // Abuse control (dead-code-no-more): reject before touching the DB.
+        if let Some(limited) = Self::rate_limit_result(rate_limit) {
+            return limited;
+        }
+
         // Validate contact info
         let validation = Self::validate_contact(
             &data.name,
@@ -341,4 +368,58 @@ pub mod preferred_contact {
     pub const EMAIL: &str = "email";
     pub const PHONE: &str = "phone";
     pub const WHATSAPP: &str = "whatsapp";
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use api_core::middleware::TenantRateLimiterSet;
+
+    /// IG3 regression: a rate-limit denial constructs `InquiryResult::RateLimited`
+    /// (the variant was previously dead — never constructed nor matched).
+    #[test]
+    fn deny_decision_constructs_rate_limited() {
+        assert!(matches!(
+            InquiriesHandler::rate_limit_result(RateLimitDecision::DenyTooManyRequests),
+            Some(InquiryResult::RateLimited)
+        ));
+    }
+
+    /// An allowed decision does not short-circuit the create flow.
+    #[test]
+    fn allow_decision_lets_request_through() {
+        assert!(InquiriesHandler::rate_limit_result(RateLimitDecision::Allow).is_none());
+    }
+
+    /// IG3 regression, end-to-end on the reused primitive: bursting the same
+    /// per-IP key through the real `TenantRateLimiterSet` eventually yields a
+    /// denial that maps to `InquiryResult::RateLimited` — proving the public
+    /// inquiry POST throttle returns 429 under flood instead of persisting rows.
+    #[tokio::test]
+    async fn burst_on_one_key_trips_rate_limited() {
+        // Low quota so the burst is exhausted quickly and deterministically.
+        let limiter = TenantRateLimiterSet::with_default(5);
+        let ip_key = Uuid::from_u64_pair(0xABCD, 0x1234);
+
+        let mut tripped = false;
+        for _ in 0..50 {
+            let decision = limiter.check(ip_key).await;
+            if let Some(InquiryResult::RateLimited) = InquiriesHandler::rate_limit_result(decision)
+            {
+                tripped = true;
+                break;
+            }
+        }
+        assert!(
+            tripped,
+            "a per-key burst must eventually construct InquiryResult::RateLimited"
+        );
+
+        // Isolation: a different IP key is unaffected by the first key's flood.
+        let fresh_key = Uuid::from_u64_pair(0xABCD, 0x5678);
+        assert!(
+            InquiriesHandler::rate_limit_result(limiter.check(fresh_key).await).is_none(),
+            "a different IP bucket must still be allowed"
+        );
+    }
 }

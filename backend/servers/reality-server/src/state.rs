@@ -859,7 +859,21 @@ pub struct AppState {
     /// Holds the SAME `Arc` the middleware uses; admin handlers can install
     /// per-tenant overrides via `tenant_rate_limiters.set_override(org, rpm)`.
     pub tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Per-IP throttle for the UNAUTHENTICATED inquiry POST endpoints
+    /// (`send_contact_message`, `request_viewing`). The per-tenant limiter
+    /// above keys on a resolved org and therefore does not cover anonymous
+    /// inquiry traffic, which persists rows and fires realtor notifications;
+    /// this set keys on a hash of the client IP so an anonymous flood is
+    /// answered with HTTP 429 (see `InquiriesHandler::rate_limit_result`).
+    /// Default quota comes from `INQUIRY_RATE_LIMIT_RPM` (env override).
+    pub inquiry_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
 }
+
+/// Default per-IP quota (requests/minute) for the anonymous inquiry POST
+/// endpoints. Deliberately low — no legitimate visitor submits more than a
+/// handful of contact/viewing requests per minute from one address, while a
+/// spam/DB-exhaustion bot needs far more. Override with `INQUIRY_RATE_LIMIT_RPM`.
+pub const INQUIRY_RATE_LIMIT_RPM: u32 = 12;
 
 impl AppState {
     /// Create a new AppState with database pool.
@@ -887,6 +901,17 @@ impl AppState {
         let user_service = UserService::new(db.clone());
         let session_service = SessionService::new(db.clone(), jwt_secret);
 
+        // Per-IP throttle for anonymous inquiry POSTs. Independent of the
+        // per-tenant set: anonymous traffic has no resolved org to key on.
+        let inquiry_rpm = std::env::var("INQUIRY_RATE_LIMIT_RPM")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(INQUIRY_RATE_LIMIT_RPM);
+        let inquiry_rate_limiters = Arc::new(
+            api_core::middleware::TenantRateLimiterSet::with_default(inquiry_rpm),
+        );
+
         Self {
             db,
             portal_repo,
@@ -904,6 +929,8 @@ impl AppState {
             tenant_resolution_cache,
             // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
             tenant_rate_limiters,
+            // Per-IP throttle for unauthenticated inquiry POSTs.
+            inquiry_rate_limiters,
         }
     }
 
