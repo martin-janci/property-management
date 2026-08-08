@@ -1,12 +1,100 @@
 //! Inquiry handlers - contact forms and viewing requests.
 //!
-//! Implements contact validation, email notifications,
+//! Implements contact validation, best-effort out-of-band notifications,
 //! and viewing scheduling functionality.
+//!
+//! Notifications go through the [`InquiryNotifier`] seam. reality-server has no
+//! real email/push transport wired yet, so the default is a logging stub
+//! ([`LogInquiryNotifier`]) — the same injectable-transport approach already
+//! used by the saved-search alert drainer
+//! (`services::search_alert_drainer::AlertEmailTransport`). Delivery is
+//! best-effort: a transport failure is logged and never fails the inquiry,
+//! which is already persisted and also visible in-app via the realtor's
+//! inquiry list.
 
 use api_core::middleware::RateLimitDecision;
+use async_trait::async_trait;
 use db::models::{CreateListingInquiry, ListingInquiry, ViewingSchedule};
 use db::repositories::RealityPortalRepository;
+use std::sync::Arc;
 use uuid::Uuid;
+
+/// Out-of-band notification transport for inquiry events (new contact request,
+/// realtor response, viewing reminder).
+///
+/// The default is a logging stub ([`LogInquiryNotifier`]); a real email/push
+/// adapter can be injected via [`InquiriesHandler::with_notifier`]. This mirrors
+/// the transport-trait seam already used by the saved-search alert drainer
+/// (`services::search_alert_drainer::AlertEmailTransport`), which exists for the
+/// same reason: reality-server has no real email service wired yet.
+///
+/// All methods are **best-effort**. An `Err` is a delivery failure that the
+/// caller logs and swallows — it must never fail the originating request, since
+/// the inquiry/response is already persisted.
+#[async_trait]
+pub trait InquiryNotifier: Send + Sync {
+    /// Notify the realtor that a new inquiry (contact/viewing request) arrived.
+    async fn notify_new_inquiry(&self, inquiry: &ListingInquiry) -> Result<(), String>;
+
+    /// Notify the inquirer that the realtor responded.
+    async fn notify_inquiry_response(&self, inquiry_id: Uuid) -> Result<(), String>;
+
+    /// Remind both parties of an upcoming viewing.
+    async fn notify_viewing_reminder(&self, viewing: &ViewingSchedule) -> Result<(), String>;
+}
+
+/// Logging stub notifier — records what *would* be sent. Used until a real
+/// email/push transport is wired into reality-server.
+///
+/// TODO(code-review-reality-server-inquiry-email-stub): replace the stub with a
+/// real transport. When reality-server gains an email/notification service, add
+/// an adapter implementing [`InquiryNotifier`] and inject it via
+/// [`InquiriesHandler::with_notifier`] — no handler logic needs to change. Note
+/// that the public contact endpoint (`routes::inquiries::send_contact_message`)
+/// currently persists via the repository directly and does not route through
+/// [`InquiriesHandler`]; wiring it through this handler is the companion
+/// follow-up so realtors actually receive the notification promised by the
+/// endpoint's "the realtor will respond soon" response.
+pub struct LogInquiryNotifier;
+
+#[async_trait]
+impl InquiryNotifier for LogInquiryNotifier {
+    async fn notify_new_inquiry(&self, inquiry: &ListingInquiry) -> Result<(), String> {
+        // A real transport would email the realtor: inquirer name/email/phone,
+        // message content, listing details, and a link to respond.
+        tracing::info!(
+            target: "reality.inquiries",
+            inquiry_id = %inquiry.id,
+            realtor_id = %inquiry.realtor_id,
+            listing_id = %inquiry.listing_id,
+            "(stub) new-inquiry notification dispatched",
+        );
+        Ok(())
+    }
+
+    async fn notify_inquiry_response(&self, inquiry_id: Uuid) -> Result<(), String> {
+        // A real transport would email the inquirer: the realtor's response, a
+        // link to view the conversation, and listing details.
+        tracing::info!(
+            target: "reality.inquiries",
+            inquiry_id = %inquiry_id,
+            "(stub) inquiry-response notification dispatched",
+        );
+        Ok(())
+    }
+
+    async fn notify_viewing_reminder(&self, viewing: &ViewingSchedule) -> Result<(), String> {
+        // A real transport would email both parties: viewing date/time, property
+        // address, contact details, and cancellation instructions.
+        tracing::info!(
+            target: "reality.inquiries",
+            viewing_id = %viewing.id,
+            scheduled_at = %viewing.scheduled_at,
+            "(stub) viewing-reminder notification dispatched",
+        );
+        Ok(())
+    }
+}
 
 /// Inquiry validation result.
 #[derive(Debug)]
@@ -43,12 +131,25 @@ pub enum InquiryResult {
 #[derive(Clone)]
 pub struct InquiriesHandler {
     repo: RealityPortalRepository,
+    notifier: Arc<dyn InquiryNotifier>,
 }
 
 impl InquiriesHandler {
-    /// Create a new InquiriesHandler.
+    /// Create a new InquiriesHandler with the default logging-stub notifier.
     pub fn new(repo: RealityPortalRepository) -> Self {
-        Self { repo }
+        Self {
+            repo,
+            notifier: Arc::new(LogInquiryNotifier),
+        }
+    }
+
+    /// Create a new InquiriesHandler with an injected notifier (for a real
+    /// email/push transport, or a fake in tests).
+    pub fn with_notifier(
+        repo: RealityPortalRepository,
+        notifier: Arc<dyn InquiryNotifier>,
+    ) -> Self {
+        Self { repo, notifier }
     }
 
     /// Validate inquiry contact information.
@@ -221,8 +322,8 @@ impl InquiriesHandler {
             .await
         {
             Ok(inquiry) => {
-                // Send notification email (async, don't block)
-                Self::send_inquiry_notification(&inquiry).await;
+                // Best-effort notification; failure must not fail the inquiry.
+                Self::dispatch_new_inquiry(self.notifier.as_ref(), &inquiry).await;
                 InquiryResult::Created(Box::new(inquiry))
             }
             Err(e) => {
@@ -291,57 +392,50 @@ impl InquiriesHandler {
             .map_err(|e| e.to_string())?
             .ok_or_else(|| "Inquiry not found".to_string())?;
 
-        // Send notification to inquirer (async)
-        Self::send_response_notification(inquiry_id).await;
+        // Best-effort notification to the inquirer; failure must not fail the response.
+        Self::dispatch_inquiry_response(self.notifier.as_ref(), inquiry_id).await;
 
         Ok(response)
     }
 
-    /// Send notification email for new inquiry.
-    async fn send_inquiry_notification(inquiry: &ListingInquiry) {
-        // In production, this would send an email via email service
-        tracing::info!(
-            inquiry_id = %inquiry.id,
-            realtor_id = %inquiry.realtor_id,
-            listing_id = %inquiry.listing_id,
-            "Sending inquiry notification email"
-        );
-
-        // Email would include:
-        // - Inquirer's name, email, phone
-        // - Message content
-        // - Listing details
-        // - Link to respond
+    /// Best-effort: dispatch the new-inquiry notification through `notifier`.
+    /// A transport failure is logged and swallowed — the inquiry is already
+    /// persisted, so notification delivery must never fail the request.
+    async fn dispatch_new_inquiry(notifier: &dyn InquiryNotifier, inquiry: &ListingInquiry) {
+        if let Err(err) = notifier.notify_new_inquiry(inquiry).await {
+            tracing::warn!(
+                target: "reality.inquiries",
+                inquiry_id = %inquiry.id,
+                realtor_id = %inquiry.realtor_id,
+                error = %err,
+                "new-inquiry notification failed; inquiry is persisted, delivery not retried",
+            );
+        }
     }
 
-    /// Send notification email for inquiry response.
-    async fn send_response_notification(inquiry_id: Uuid) {
-        // In production, this would send an email to the inquirer
-        tracing::info!(
-            inquiry_id = %inquiry_id,
-            "Sending response notification email"
-        );
-
-        // Email would include:
-        // - Realtor's response
-        // - Link to view conversation
-        // - Listing details
+    /// Best-effort: dispatch the inquiry-response notification through `notifier`.
+    async fn dispatch_inquiry_response(notifier: &dyn InquiryNotifier, inquiry_id: Uuid) {
+        if let Err(err) = notifier.notify_inquiry_response(inquiry_id).await {
+            tracing::warn!(
+                target: "reality.inquiries",
+                inquiry_id = %inquiry_id,
+                error = %err,
+                "inquiry-response notification failed; response is persisted, delivery not retried",
+            );
+        }
     }
 
-    /// Send reminder email for upcoming viewing.
-    pub async fn send_viewing_reminder(viewing: &ViewingSchedule) {
-        // In production, this would send reminder emails to both parties
-        tracing::info!(
-            viewing_id = %viewing.id,
-            scheduled_at = %viewing.scheduled_at,
-            "Sending viewing reminder"
-        );
-
-        // Email would include:
-        // - Viewing date/time
-        // - Property address
-        // - Contact details
-        // - Cancellation instructions
+    /// Best-effort: dispatch a viewing reminder to both parties through the
+    /// handler's notifier.
+    pub async fn send_viewing_reminder(&self, viewing: &ViewingSchedule) {
+        if let Err(err) = self.notifier.notify_viewing_reminder(viewing).await {
+            tracing::warn!(
+                target: "reality.inquiries",
+                viewing_id = %viewing.id,
+                error = %err,
+                "viewing-reminder notification failed; delivery not retried",
+            );
+        }
     }
 }
 
@@ -371,6 +465,8 @@ pub mod preferred_contact {
 mod tests {
     use super::*;
     use api_core::middleware::TenantRateLimiterSet;
+    use chrono::Utc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// IG3 regression: a rate-limit denial constructs `InquiryResult::RateLimited`
     /// (the variant was previously dead — never constructed nor matched).
@@ -418,5 +514,94 @@ mod tests {
             InquiriesHandler::rate_limit_result(limiter.check(fresh_key).await).is_none(),
             "a different IP bucket must still be allowed"
         );
+    }
+
+    /// Fake notifier that counts successful `notify_new_inquiry` calls.
+    struct CountingNotifier {
+        new_inquiry_calls: AtomicUsize,
+    }
+
+    #[async_trait]
+    impl InquiryNotifier for CountingNotifier {
+        async fn notify_new_inquiry(&self, _inquiry: &ListingInquiry) -> Result<(), String> {
+            self.new_inquiry_calls.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+        async fn notify_inquiry_response(&self, _inquiry_id: Uuid) -> Result<(), String> {
+            Ok(())
+        }
+        async fn notify_viewing_reminder(&self, _viewing: &ViewingSchedule) -> Result<(), String> {
+            Ok(())
+        }
+    }
+
+    /// Fake notifier whose every method fails — models a down transport.
+    struct FailingNotifier;
+
+    #[async_trait]
+    impl InquiryNotifier for FailingNotifier {
+        async fn notify_new_inquiry(&self, _inquiry: &ListingInquiry) -> Result<(), String> {
+            Err("transport unavailable".to_string())
+        }
+        async fn notify_inquiry_response(&self, _inquiry_id: Uuid) -> Result<(), String> {
+            Err("transport unavailable".to_string())
+        }
+        async fn notify_viewing_reminder(&self, _viewing: &ViewingSchedule) -> Result<(), String> {
+            Err("transport unavailable".to_string())
+        }
+    }
+
+    fn sample_inquiry() -> ListingInquiry {
+        ListingInquiry {
+            id: Uuid::new_v4(),
+            listing_id: Uuid::new_v4(),
+            realtor_id: Uuid::new_v4(),
+            user_id: None,
+            name: "Jane Buyer".to_string(),
+            email: "jane@example.com".to_string(),
+            phone: None,
+            message: "Is this still available?".to_string(),
+            inquiry_type: inquiry_types::INFO.to_string(),
+            preferred_contact: preferred_contact::EMAIL.to_string(),
+            preferred_time: None,
+            status: inquiry_status::NEW.to_string(),
+            read_at: None,
+            responded_at: None,
+            source: None,
+            utm_source: None,
+            utm_medium: None,
+            created_at: Utc::now(),
+        }
+    }
+
+    #[tokio::test]
+    async fn dispatch_new_inquiry_invokes_notifier() {
+        let notifier = CountingNotifier {
+            new_inquiry_calls: AtomicUsize::new(0),
+        };
+        InquiriesHandler::dispatch_new_inquiry(&notifier, &sample_inquiry()).await;
+        assert_eq!(notifier.new_inquiry_calls.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn dispatch_new_inquiry_swallows_transport_failure() {
+        // Must complete without panicking or propagating the error: the inquiry
+        // is already persisted, so notification delivery is best-effort.
+        InquiriesHandler::dispatch_new_inquiry(&FailingNotifier, &sample_inquiry()).await;
+    }
+
+    #[tokio::test]
+    async fn dispatch_inquiry_response_swallows_transport_failure() {
+        InquiriesHandler::dispatch_inquiry_response(&FailingNotifier, Uuid::new_v4()).await;
+    }
+
+    #[tokio::test]
+    async fn log_stub_notifier_reports_success() {
+        let notifier = LogInquiryNotifier;
+        assert!(notifier.notify_new_inquiry(&sample_inquiry()).await.is_ok());
+        assert!(notifier
+            .notify_inquiry_response(Uuid::new_v4())
+            .await
+            .is_ok());
     }
 }
