@@ -21,6 +21,8 @@ mod caddy_ask_tests;
 mod community_cross_tenant_idor_tests;
 #[path = "suites/community_happy_path_tests.rs"]
 mod community_happy_path_tests;
+#[path = "suites/community_unauthenticated_reads_tests.rs"]
+mod community_unauthenticated_reads_tests;
 #[path = "suites/compliance_wave1b_tests.rs"]
 mod compliance_wave1b_tests;
 #[path = "suites/data_residency_tests.rs"]
