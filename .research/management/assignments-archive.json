@@ -3649,6 +3649,28 @@
       "merge_attempted_at": "2026-08-07T14:24:13Z"
     },
     {
+      "task_id": "code-review-reality-server-inquiry-email-stub",
+      "branch": "auto-impl/code-review-reality-server-inquiry-email-7bb5bd71",
+      "status": "merged",
+      "claimed_at": "2026-08-06T22:20:10Z",
+      "last_updated": "2026-08-08T06:27:05Z",
+      "status_changed_at": "2026-08-08T06:27:05Z",
+      "pr_number": 2696,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2696",
+      "merged_at": "2026-08-08T06:16:35Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2696 status=done specialist=rust-backend note=mirrored search_alert_drainer transport seam (InquiryNotifier+LogInquiryNotifier) best-effort+tests; NOTE live route send_contact_message bypasses handler (documented follow-up code-review-reality-server-inquiry-notify-route-wiring)",
+      "reviewer_summary": "verdict=approve note=re-review-clean-seam-refactor-tests-present (head 4fb9d000 post-rebase; CI green; mergeable=clean); merged squash e7ca162b",
+      "last_reviewed_oid": "4fb9d000c158089d2de15f42b96976be9604db0d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 3,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-08T06:27:05Z"
+    },
+    {
       "task_id": "code-review-reality-server-invite-authz",
       "branch": "auto-impl/code-review-reality-server-invite-authz-b22a516b",
       "status": "merged",
@@ -10801,6 +10823,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2703",
+      "branch": "auto-impl/gh-issue-2703-470a23f7",
+      "status": "merged",
+      "claimed_at": "2026-08-07T08:15:35Z",
+      "last_updated": "2026-08-08T06:27:05Z",
+      "status_changed_at": "2026-08-08T06:27:05Z",
+      "pr_number": 2710,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2710",
+      "merged_at": "2026-08-08T06:17:40Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2710 status=done specialist=rust-backend scope_drift=true note=connect-time reqwest dns::Resolve closes DNS-rebinding TOCTOU + per-redirect revalidation (Closes #2703); respawn rebased onto dev, real-code conflict resolved, security preserved (head ece5b24e)",
+      "reviewer_summary": "verdict=approve note=rebase-preserved-ssrf-fix+ig3-test; prior unused-SocketAddr blocker resolved; backend CI green; scope-drift justified (security hot-path); merged squash after draft auto-promote",
+      "last_reviewed_oid": "ece5b24e39b271d1d94a456a0dfe41cd8b0c126e",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 2,
+      "reclaim_attempts": 1,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-08T06:27:05Z"
+    },
+    {
       "task_id": "gh-issue-2704",
       "branch": "auto-impl/gh-issue-2704-74777f32",
       "status": "merged",
@@ -11043,6 +11087,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "refactor-churn-hotspot-api-server-auth-2026-07-31-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-auth-2-0670397d",
+      "status": "merged",
+      "claimed_at": "2026-08-08T04:15:06Z",
+      "last_updated": "2026-08-08T06:27:05Z",
+      "status_changed_at": "2026-08-08T06:27:05Z",
+      "pr_number": 2715,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2715",
+      "merged_at": "2026-08-08T06:20:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2715 status=done specialist=rust-backend note=behavior-preserving auth error-boilerplate dedupe (AuthError alias + err_response builder, -83 lines) mirroring merged layout-admin #2713; head 98b99fa7",
+      "reviewer_summary": "verdict=approve note=behavior-preserving-auth-dedupe-ci-green; no route/status/message change; merged squash 8ca25aa",
+      "last_reviewed_oid": "98b99fa7404cae6003315e0f1e47900fb34c2158",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-08T06:27:05Z"
     },
     {
       "task_id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
@@ -12819,5 +12885,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T04:28:17Z"
+  "archived_at": "2026-08-08T06:28:47Z"
 }
