@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-08T02:26:40Z",
+  "generated": "2026-08-08T02:47:18Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -70,18 +70,18 @@
     {
       "task_id": "gh-issue-2612-retry1",
       "branch": "auto-impl/gh-issue-2612-retry1-a27f7e7f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-08T02:12:19Z",
-      "last_updated": "2026-08-08T02:12:19Z",
-      "status_changed_at": "2026-08-08T02:12:19Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-08T02:47:18Z",
+      "status_changed_at": "2026-08-08T02:47:18Z",
+      "pr_number": 2714,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2714",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2714 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=decoupled publish/activate/close from notify via notified_at watermarks + retrying dispatch passes; migration 00228 additive w/ backfill; 3 IG3 sqlx tests; fmt+db-clippy green, api-server clippy/test deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
