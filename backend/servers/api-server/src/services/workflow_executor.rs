@@ -1309,7 +1309,7 @@ mod tests {
     /// to fail closed (returns `ConditionError`, never `Ok(true)`).
     fn assert_fails_closed(value: serde_json::Value) {
         let executor = test_executor();
-        let result = executor.evaluate_conditions(&[value.clone()], &empty_context());
+        let result = executor.evaluate_conditions(std::slice::from_ref(&value), &empty_context());
         match result {
             Err(WorkflowError::ConditionError(msg)) => {
                 assert!(
