@@ -19,6 +19,23 @@ use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 use crate::services::AuthService;
 use crate::state::AppState;
 
+/// The error half of every auth handler's `Result`: an HTTP status paired with
+/// a JSON [`ErrorResponse`] body. Collapses the `(StatusCode, Json<ErrorResponse>)`
+/// tuple that every handler signature and error site in this module (and its
+/// submodules, via `use super::*`) previously spelled out by hand.
+type AuthError = (StatusCode, Json<ErrorResponse>);
+
+/// Build the standard auth error tuple. Every failure path in `routes::auth`
+/// returns `(status, Json(ErrorResponse::new(code, message)))`; centralizing the
+/// construction keeps the emitted status code and JSON body byte-for-byte
+/// identical while removing dozens of verbatim copies of the multi-line tuple.
+///
+/// Validation errors that attach `.with_details(...)` are the only sites that
+/// need the richer body, so they stay inline rather than routing through here.
+fn err_response(status: StatusCode, code: &'static str, message: impl Into<String>) -> AuthError {
+    (status, Json(ErrorResponse::new(code, message)))
+}
+
 // ── Email-keyed throttle for unauthenticated email-dispatch surfaces ────────
 //
 // `POST /api/v1/auth/forgot-password` and `POST /api/v1/auth/resend-verification`
@@ -79,13 +96,11 @@ fn resend_verification_rate_allowed(email: &str) -> bool {
 
 /// Shared 429 body for the email-dispatch surfaces. Kept generic (no
 /// account-specific detail) so it does not become an enumeration oracle.
-fn email_dispatch_rate_limited() -> (StatusCode, Json<ErrorResponse>) {
-    (
+fn email_dispatch_rate_limited() -> AuthError {
+    err_response(
         StatusCode::TOO_MANY_REQUESTS,
-        Json(ErrorResponse::new(
-            "RATE_LIMITED",
-            "Too many requests for this email. Please try again later.",
-        )),
+        "RATE_LIMITED",
+        "Too many requests for this email. Please try again later.",
     )
 }
 
@@ -230,7 +245,7 @@ pub async fn login(
     axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<std::net::SocketAddr>,
     headers: axum::http::HeaderMap,
     Json(req): Json<LoginRequest>,
-) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<axum::response::Response, AuthError> {
     use axum::response::IntoResponse;
     let ip_address = addr.ip().to_string();
     let user_agent = headers
@@ -248,15 +263,13 @@ pub async fn login(
                 remaining_secs = remaining,
                 "Login attempt blocked due to rate limiting"
             );
-            return Err((
+            return Err(err_response(
                 StatusCode::TOO_MANY_REQUESTS,
-                Json(ErrorResponse::new(
-                    "RATE_LIMITED",
-                    format!(
-                        "Too many failed login attempts. Please try again in {} minutes.",
-                        remaining / 60 + 1
-                    ),
-                )),
+                "RATE_LIMITED",
+                format!(
+                    "Too many failed login attempts. Please try again in {} minutes.",
+                    remaining / 60 + 1
+                ),
             ));
         }
         Err(e) => {
@@ -279,19 +292,18 @@ pub async fn login(
                 email_hash = %common::email_log_hash(&req.email),
                 "Login failed: user not found"
             );
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "INVALID_CREDENTIALS",
-                    "Invalid email or password",
-                )),
+                "INVALID_CREDENTIALS",
+                "Invalid email or password",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding user");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Login failed")),
+                "DATABASE_ERROR",
+                "Login failed",
             ));
         }
     };
@@ -302,12 +314,10 @@ pub async fn login(
             .session_repo
             .record_login_attempt(&req.email, &ip_address, false)
             .await;
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "ACCOUNT_SUSPENDED",
-                "Account suspended. Contact support.",
-            )),
+            "ACCOUNT_SUSPENDED",
+            "Account suspended. Contact support.",
         ));
     }
 
@@ -323,9 +333,10 @@ pub async fn login(
                 .session_repo
                 .record_login_attempt(&req.email, &ip_address, false)
                 .await;
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Login failed")),
+                "INTERNAL_ERROR",
+                "Login failed",
             ));
         }
     };
@@ -339,12 +350,10 @@ pub async fn login(
             user_id = %user.id,
             "Login failed: invalid password"
         );
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "INVALID_CREDENTIALS",
-                "Invalid email or password",
-            )),
+            "INVALID_CREDENTIALS",
+            "Invalid email or password",
         ));
     }
 
@@ -359,12 +368,10 @@ pub async fn login(
             .session_repo
             .record_login_attempt(&req.email, &ip_address, false)
             .await;
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "EMAIL_NOT_VERIFIED",
-                "Please verify your email first",
-            )),
+            "EMAIL_NOT_VERIFIED",
+            "Please verify your email first",
         ));
     }
 
@@ -389,12 +396,10 @@ pub async fn login(
                         .decrypt_secret(&mfa_record.secret)
                         .map_err(|e| {
                             tracing::error!(error = %e, "Failed to decrypt TOTP secret");
-                            (
+                            err_response(
                                 StatusCode::INTERNAL_SERVER_ERROR,
-                                Json(ErrorResponse::new(
-                                    "DECRYPTION_ERROR",
-                                    "Failed to verify MFA code",
-                                )),
+                                "DECRYPTION_ERROR",
+                                "Failed to verify MFA code",
                             )
                         })?;
 
@@ -422,12 +427,10 @@ pub async fn login(
                             .session_repo
                             .record_login_attempt(&req.email, &ip_address, false)
                             .await;
-                        return Err((
+                        return Err(err_response(
                             StatusCode::UNAUTHORIZED,
-                            Json(ErrorResponse::new(
-                                "INVALID_MFA_CODE",
-                                "Invalid verification code",
-                            )),
+                            "INVALID_MFA_CODE",
+                            "Invalid verification code",
                         ));
                     }
 
@@ -502,19 +505,18 @@ pub async fn login(
         match err {
             crate::services::AuthPolicyError::MfaRequired(role) => {
                 tracing::info!(user_id = %user.id, role = %role, "Login blocked: org policy demands MFA for role");
-                return Err((
+                return Err(err_response(
                     StatusCode::UNAUTHORIZED,
-                    Json(ErrorResponse::new(
-                        "MFA_REQUIRED",
-                        format!("MFA required by org policy for role '{}'", role),
-                    )),
+                    "MFA_REQUIRED",
+                    format!("MFA required by org policy for role '{}'", role),
                 ));
             }
             other => {
                 tracing::error!(error = %other, user_id = %user.id, "Auth policy check at login failed");
-                return Err((
+                return Err(err_response(
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("AUTH_POLICY_ERROR", "Login failed")),
+                    "AUTH_POLICY_ERROR",
+                    "Login failed",
                 ));
             }
         }
@@ -538,12 +540,10 @@ pub async fn login(
         Ok(token) => token,
         Err(e) => {
             tracing::error!(error = %e, "Failed to generate access token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "TOKEN_ERROR",
-                    "Failed to create session",
-                )),
+                "TOKEN_ERROR",
+                "Failed to create session",
             ));
         }
     };
@@ -557,12 +557,10 @@ pub async fn login(
             Ok(result) => result,
             Err(e) => {
                 tracing::error!(error = %e, "Failed to generate refresh token");
-                return Err((
+                return Err(err_response(
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "TOKEN_ERROR",
-                        "Failed to create session",
-                    )),
+                    "TOKEN_ERROR",
+                    "Failed to create session",
                 ));
             }
         };
@@ -580,12 +578,10 @@ pub async fn login(
 
     if let Err(e) = state.session_repo.create_refresh_token(create_token).await {
         tracing::error!(error = %e, "Failed to store refresh token");
-        return Err((
+        return Err(err_response(
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "DATABASE_ERROR",
-                "Failed to create session",
-            )),
+            "DATABASE_ERROR",
+            "Failed to create session",
         ));
     }
 
@@ -843,7 +839,7 @@ pub async fn refresh_token(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<RefreshTokenRequest>,
-) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<LoginResponse>, AuthError> {
     // P0-12 (additive): prefer the HttpOnly cookie over the JSON body
     // when present. localStorage-based clients still send the token
     // in the body; cookie-based clients send only the cookie and an
@@ -851,12 +847,10 @@ pub async fn refresh_token(
     // be removed.
     let token_str = resolve_refresh_token(&headers, &req.refresh_token);
     if token_str.is_empty() {
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "MISSING_TOKEN",
-                "Refresh token not provided in cookie or body",
-            )),
+            "MISSING_TOKEN",
+            "Refresh token not provided in cookie or body",
         ));
     }
 
@@ -865,12 +859,10 @@ pub async fn refresh_token(
         Ok(claims) => claims,
         Err(e) => {
             tracing::debug!(error = %e, "Invalid refresh token");
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "INVALID_TOKEN",
-                    "Invalid or expired refresh token",
-                )),
+                "INVALID_TOKEN",
+                "Invalid or expired refresh token",
             ));
         }
     };
@@ -941,50 +933,46 @@ pub async fn refresh_token(
                     "Failed to fan-out-revoke after refresh-token replay"
                 );
             }
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "TOKEN_REVOKED",
-                    "This session has been revoked",
-                )),
+                "TOKEN_REVOKED",
+                "This session has been revoked",
             ));
         }
         Ok(Some(token)) => token, // active path
         Ok(None) => {
             tracing::warn!(user_id = %claims.sub, "Refresh token not found in database");
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "TOKEN_REVOKED",
-                    "This session has been revoked",
-                )),
+                "TOKEN_REVOKED",
+                "This session has been revoked",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding refresh token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to validate session",
-                )),
+                "DATABASE_ERROR",
+                "Failed to validate session",
             ));
         }
     };
 
     // Check if token is still valid
     if !stored_token.is_valid() {
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("TOKEN_EXPIRED", "Session has expired")),
+            "TOKEN_EXPIRED",
+            "Session has expired",
         ));
     }
 
     // Parse user ID from claims
     let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
+        err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
+            "INVALID_TOKEN",
+            "Invalid token format",
         )
     })?;
 
@@ -992,22 +980,18 @@ pub async fn refresh_token(
     let user = match state.user_repo.find_by_id(user_id).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "USER_NOT_FOUND",
-                    "User account no longer exists",
-                )),
+                "USER_NOT_FOUND",
+                "User account no longer exists",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding user");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to validate user",
-                )),
+                "DATABASE_ERROR",
+                "Failed to validate user",
             ));
         }
     };
@@ -1015,12 +999,10 @@ pub async fn refresh_token(
     if user.status != "active" {
         // Revoke the token since user is no longer active
         let _ = state.session_repo.revoke_token(stored_token.id).await;
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "ACCOUNT_INACTIVE",
-                "Account is no longer active",
-            )),
+            "ACCOUNT_INACTIVE",
+            "Account is no longer active",
         ));
     }
 
@@ -1042,12 +1024,10 @@ pub async fn refresh_token(
         Ok(token) => token,
         Err(e) => {
             tracing::error!(error = %e, "Failed to generate access token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "TOKEN_ERROR",
-                    "Failed to create session",
-                )),
+                "TOKEN_ERROR",
+                "Failed to create session",
             ));
         }
     };
@@ -1060,12 +1040,10 @@ pub async fn refresh_token(
         Ok(result) => result,
         Err(e) => {
             tracing::error!(error = %e, "Failed to generate refresh token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "TOKEN_ERROR",
-                    "Failed to create session",
-                )),
+                "TOKEN_ERROR",
+                "Failed to create session",
             ));
         }
     };
@@ -1083,12 +1061,10 @@ pub async fn refresh_token(
 
     if let Err(e) = state.session_repo.create_refresh_token(create_token).await {
         tracing::error!(error = %e, "Failed to store new refresh token");
-        return Err((
+        return Err(err_response(
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "DATABASE_ERROR",
-                "Failed to create session",
-            )),
+            "DATABASE_ERROR",
+            "Failed to create session",
         ));
     }
 
@@ -1147,7 +1123,7 @@ pub async fn logout(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<LogoutRequest>,
-) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<axum::response::Response, AuthError> {
     use axum::response::IntoResponse;
     // P0-12 (additive): accept cookie too.
     let token_str = resolve_refresh_token(&headers, &req.refresh_token);
@@ -1292,28 +1268,24 @@ pub struct UpdateMeRequest {
 pub async fn get_me(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-) -> Result<Json<AuthUserResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<AuthUserResponse>, AuthError> {
     let user_id = authenticated_user_id(&state, &headers)?;
 
     let user = match state.user_repo.find_by_id(user_id).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "USER_NOT_FOUND",
-                    "User account no longer exists",
-                )),
+                "USER_NOT_FOUND",
+                "User account no longer exists",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error loading current user");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to load profile",
-                )),
+                "DATABASE_ERROR",
+                "Failed to load profile",
             ));
         }
     };
@@ -1350,28 +1322,24 @@ pub async fn update_me(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateMeRequest>,
-) -> Result<Json<AuthUserResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<AuthUserResponse>, AuthError> {
     let user_id = authenticated_user_id(&state, &headers)?;
 
     // Validate displayName (if provided) — must be non-blank, <= 120 chars.
     if let Some(name) = req.display_name.as_ref() {
         let trimmed = name.trim();
         if trimmed.is_empty() {
-            return Err((
+            return Err(err_response(
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "INVALID_DISPLAY_NAME",
-                    "displayName cannot be empty",
-                )),
+                "INVALID_DISPLAY_NAME",
+                "displayName cannot be empty",
             ));
         }
         if trimmed.chars().count() > 120 {
-            return Err((
+            return Err(err_response(
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "INVALID_DISPLAY_NAME",
-                    "displayName exceeds 120 characters",
-                )),
+                "INVALID_DISPLAY_NAME",
+                "displayName exceeds 120 characters",
             ));
         }
     }
@@ -1392,22 +1360,18 @@ pub async fn update_me(
     let user = match state.user_repo.update(user_id, update).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "USER_NOT_FOUND",
-                    "User account no longer exists",
-                )),
+                "USER_NOT_FOUND",
+                "User account no longer exists",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, user_id = %user_id, "Failed to update profile");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to update profile",
-                )),
+                "DATABASE_ERROR",
+                "Failed to update profile",
             ));
         }
     };
@@ -1429,26 +1393,23 @@ pub async fn update_me(
 // ==================== Helper Functions ====================
 
 /// Extract bearer token from Authorization header.
-fn extract_bearer_token(
-    headers: &axum::http::HeaderMap,
-) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
+fn extract_bearer_token(headers: &axum::http::HeaderMap) -> Result<String, AuthError> {
     let auth_header = headers
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|h| h.to_str().ok())
         .ok_or_else(|| {
-            (
+            err_response(
                 StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_TOKEN",
-                    "Authorization header required",
-                )),
+                "MISSING_TOKEN",
+                "Authorization header required",
             )
         })?;
 
     if !auth_header.starts_with("Bearer ") {
-        return Err((
+        return Err(err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Bearer token required")),
+            "INVALID_TOKEN",
+            "Bearer token required",
         ));
     }
 
@@ -1459,15 +1420,13 @@ fn extract_bearer_token(
 fn validate_access_token(
     state: &AppState,
     token: &str,
-) -> Result<crate::services::jwt::Claims, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<crate::services::jwt::Claims, AuthError> {
     state.jwt_service.validate_access_token(token).map_err(|e| {
         tracing::debug!(error = %e, "Invalid access token");
-        (
+        err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "INVALID_TOKEN",
-                "Invalid or expired token",
-            )),
+            "INVALID_TOKEN",
+            "Invalid or expired token",
         )
     })
 }
@@ -1484,13 +1443,14 @@ fn validate_access_token(
 fn authenticated_user_id(
     state: &AppState,
     headers: &axum::http::HeaderMap,
-) -> Result<uuid::Uuid, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<uuid::Uuid, AuthError> {
     let token = extract_bearer_token(headers)?;
     let claims = validate_access_token(state, &token)?;
     claims.sub.parse().map_err(|_| {
-        (
+        err_response(
             StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
+            "INVALID_TOKEN",
+            "Invalid token format",
         )
     })
 }
