@@ -1,0 +1,258 @@
+{
+  "generated": "2026-08-08T02:45:00Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-email-notif-actions-noop",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating review 2026-08-08 (api-core)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-101 \u2014 EmailExecutor::execute logs then returns ActionResult::success() unconditionally; comment at line 96 admits 'For now, we consider the action successful' \u2014 no EmailService call anywhere.",
+        "backend/servers/api-server/src/services/actions/notification.rs:182-198 \u2014 NotificationExecutor::execute same pattern; comment at 193 says 'In production, this would actually send notifications via the notification service'.",
+        "backend/servers/api-server/src/services/actions/mod.rs:204-207 \u2014 ActionRegistry::new() registers EmailExecutor and NotificationExecutor as the live production handlers for send_email / send_notification (not test doubles).",
+        "backend/servers/api-server/src/services/workflow_executor.rs:912 \u2014 WorkflowExecutorTask::run() calls executor.execute(...) directly on the registry, so any workflow (e.g. fault-alert or announcement automation per Epic 94) marked COMPLETED with no delivery \u2014 100%-reproducing silent no-op on a documented user-facing feature."
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-rs-duration-overflow",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating review 2026-08-08 (api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-61 \u2014 DelayConfig::to_duration() computes self.duration * 3600 / * 86400 on raw untrusted u64 with no checked_mul/saturating_mul.",
+        "delay.rs:100-108 (execute) and 144-150 (validate_config) \u2014 both call to_duration() first then check duration.as_secs() > MAX_DELAY_SECONDS (604800s/7d), so the cap check runs on an already-wrapped value.",
+        "Reproducer: {\"duration\": 144115188075855872, \"unit\": \"days\"} wraps duration * 86400 to exactly 0 (mod 2^64), passes both validate_config and execute-time <=604800s check, collapses to 0-second delay \u2014 the overflow defeats the very bound the check exists to enforce.",
+        "Debug builds (overflow-checks default on) panic instead of wrapping ('attempt to multiply with overflow') \u2014 a crafted delay config can crash the executing task in non-release builds."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2559 (feat(acc): PAY by square QR endpoint UC-ACC-05.8) opened 2026-07-28, last update 2026-07-30 06:19Z, no reviewDecision, not draft \u2014 9d idle in the accounting MVP-loop trio."
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) opened 2026-07-28, last update ~2026-07-30, no reviewDecision, not draft \u2014 9d idle in the accounting MVP-loop trio."
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) opened 2026-07-28, last update ~2026-07-30, no reviewDecision, not draft \u2014 9d idle in the accounting MVP-loop trio."
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: bump expo-secure-store 56.0.4\u219257.0.1 (open 8d, javascript). Log-only per routine rules."
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: bump expo-device 56.0.4\u219257.0.1 (open 8d, javascript). Log-only."
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: bump @testing-library/react-native 13.3.3\u219214.x (open 8d, javascript). Log-only."
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: bump expo-status-bar 56.0.4\u219257.0.1 (open 8d, javascript). Log-only."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2707",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/services/actions/api_call.rs \u2014 +137/-2 (139 lines) in PR #2707 (workflow api_call DoS cap: MAX_RESPONSE_BODY_BYTES = 8 MiB, streaming read + Content-Length pre-check, RESPONSE_TRUNCATION_MARKER, 2 new tests). Not previously in hotspot_history; runs_seen=1 after this run."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/realtor/ListingForm.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2709",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/reality-web/src/components/realtor/ListingForm.tsx \u2014 +43/-34 (77 lines) in PR #2709 (all field labels + validation strings + option labels routed through useTranslations('listingForm'); 6 catalog files updated). Not previously in hotspot_history; runs_seen=1 after this run."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2708",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/services/workflow_executor.rs \u2014 +84/-7 (91 lines) in PR #2708 (compare_numeric rejects non-finite via coerce_finite_f64). Cumulative-type re-emit (ID already in seen_signals from 2026-08-07 run \u2014 PR #2685 refactor); score_delta=0 per routine rules."
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/workflow_executor.rs",
+      "type": "repeated-churn",
+      "source": "PR #2685 + PR #2708",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/services/workflow_executor.rs \u2014 hotspot_history.runs_seen advances 1\u21922 after this run's PR #2708 (+84/-7 non-finite compare fix) on top of the 457-line 2026-08-07 impl-block extraction (PR #2685). File volatility proxy; substantive change in two consecutive routine windows."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 \u2026",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state.json vs HEAD",
+      "observed": "true (last_pr_seen 2702\u21922712, last_commit_sha a2c0f53\u21921f2a351, seen_signals 376\u2192388, stats.runs +1)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal dedup w/ delta check",
+      "observed": "true (only workflow_executor churn-hotspot re-emit was cumulative-type; score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap \u22648; decay -1 for open items updated_at < today-14d",
+      "observed": "0 items over cap; 0 items decay-eligible (all open items updated \u2265 2026-07-25)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan file annotated with 'adversarial pass:' in brief",
+      "observed": "plans/bug-api-core-email-notif-actions-noop.md \u00b7 adversarial pass: passed",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans \u22642; each has 4 metadata fields + 11 headings + capability tick + Mode line + files-on-disk",
+      "observed": "1 new plan; all 15 sections present; 3 capability ticks; Mode: cloud-ok; all 4 files exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private-hosts in staged diff (excluding 4 baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md; diff against staged",
+      "observed": "byte-identical (diff exit 0)",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run; cursors advanced correctly",
+      "observed": "no phase failures; last_pr_seen/last_issue_seen/last_commit_sha all advanced",
+      "expected": "no failed phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "now=8 head=7 (added bug-api-core-email-notif-actions-noop-adjacent \u2014 wait NO, actually now=8 head=8 no change this run)",
+      "expected": "now \u2265 head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md; diff against staged",
+      "observed": "byte-identical (diff exit 0)",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap check (\u22641 PR, \u22641 issue, \u22641 comment)",
+      "observed": "true (empty \u2014 no candidate met certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor GC7 clause",
+      "observed": "action-list/risks parse; project-state.md non-empty; pm_cursor 3\u21924 (in 0..7); coverage_cursor 5\u21926 (in 0..13; advanced since pm advanced)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

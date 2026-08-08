@@ -103,3 +103,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 - **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-08 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-08-08, pm-scrum-master):** Accounting MVP-loop trio (#2555 / #2558 / #2559) has now been draft-ready 8+ days with zero reviewer engagement (up from 2 days at the 2026-07-30 check-in) — the reviewer-slot policy raised then was never actioned. Needs a firm go/no-go this window: assign an explicit reviewer or formally deprioritize the trio. Owner: pm-tech-lead.
+- **NEW (2026-08-08, pm-scrum-master):** Draft PR #2705 (dependabot rust-toolchain 1.94.1→1.100.0) has been CI-red since it opened — fix-forward (investigate the break) vs close as unsafe-to-bump this cycle? Owner: pm-devops.
+- **NEW (2026-08-08, pm-scrum-master):** sprint-status.yaml's epic-80 rollup (`stories_completed: 1`) has been stale against both coverage.json and the per-story `development_status` block (which show all 3 stories done since 2026-06-25/07-15) for at least 2 upkeep cycles. Owner: pm-scrum-master to correct the summary block directly rather than re-flagging it each rotation.
+- **NEW (2026-08-08, pm-qa):** Epic-80 (Dispute Resolution) shows conflicting completion signals — sprint-status.yaml says partial (1/3), coverage.json says done (3/3). Should QA sign-off gate on a fresh full-epic regression pass before either document is trusted as authoritative? Owner: pm-qa + pm-scrum-master.

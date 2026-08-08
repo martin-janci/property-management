@@ -1,54 +1,57 @@
-# Role: pm-scrum-master — 2026-07-30
+# pm-scrum-master — Delivery lead / coordinator (2026-08-08)
 
-> Delivery lead / coordinator. Always runs. Static read-only.
+_Always-on role. Read-only static analysis of sprint-status + merged PRs + open PRs + issues + research backlog._
 
-## Summary
-Very productive 2-day window: 17 PRs merged (post-merge-review batch of 2026-07-28 is now fully closed except #2528 booking-webhook parity), plus 3 fresh follow-up issues opened on this window's own PRs (#2573 DELETE-by-file-key regression, #2574 Android SSO CSRF half-wired, #2575 dispute KPI window validation). Coverage still at 47/49 done; the two long-standing 84-x frontend partials are unchanged.
+## Role JSON
 
-## Sprint progress
-- Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth**
-- epics_done: **3 / 5**
+```json
+{
+  "role": "pm-scrum-master",
+  "summary": "6 PRs merged this window — mostly security/DoS hardening (workflow api_call cap, RAG fail-closed, non-finite condition compare) plus a dispute audit-event backfill and a reality-web i18n fix. Delivery is otherwise stable at 47/49 coverage stories done; the two open blockers are process, not code: an 8-day-stalled accounting trio and a stale sprint-status.yaml rollup for epic-80.",
+  "next_actions": [
+    {"action": "Shepherd/unblock accounting MVP-loop trio (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY-by-square QR) — stalled 8+ days with zero reviewer engagement", "priority": "high", "dependency": "none", "definition_of_done": "At least one of the three has an assigned reviewer and a merge/defer decision within 24h."},
+    {"action": "Resolve CI-red on draft PR #2705 (dependabot rust-toolchain 1.94.1→1.100.0)", "priority": "medium", "dependency": "none", "definition_of_done": "PR is green and merged, or closed with a documented reason (unsafe-to-bump this cycle)."},
+    {"action": "Reconcile sprint-status.yaml epic-80 summary (stories_completed: 1/3) against coverage.json and per-story development_status, all of which show 80-1/80-2/80-3 done", "priority": "medium", "dependency": "none", "definition_of_done": "epics.epic-80.stories_completed = 3 and status flipped to done (or a documented reason it stays partial)."},
+    {"action": "Batch-triage the 12 pending dependabot chore(deps) PRs (#2588/#2589/#2590/#2591 stalled 8d expo-*; #2581/#2583/#2584/#2585/#2586/#2673/#2674/#2675 fresh 1d)", "priority": "low", "dependency": "none", "definition_of_done": "Each PR is merged, closed, or has an explicit defer note with a re-review date."},
+    {"action": "Follow-up hardening audit on services/actions/api_call.rs beyond #2707 (response-body cap) and #2710 (SSRF DNS-rebinding) — repeated churn hotspot on the workflow outbound-HTTP surface", "priority": "medium", "dependency": "none", "definition_of_done": "A short audit note lists any remaining outbound-HTTP hardening gaps (redirect handling, header injection, timeout bounds) or confirms none remain."},
+    {"action": "Audit sibling reality-web forms for the same missing-i18n pattern just fixed in ListingForm by PR #2709", "priority": "low", "dependency": "none", "definition_of_done": "Every reality-web form component is confirmed to route strings through next-intl catalogs, or a gap list is filed."}
+  ],
+  "risks": [
+    {"risk": "Accounting MVP-loop trio (#2555/#2558/#2559) has been draft-ready 8+ days with zero reviewer engagement — the MVP revenue-loop feature set cannot progress", "probability": "high", "impact": "high", "mitigation": "Assign an explicit reviewer slot; escalate to pm-tech-lead for a reviewer-rotation policy"},
+    {"risk": "sprint-status.yaml epic-80 rollup is stale (1/3) vs coverage.json (3/3 done) — risks mis-sequencing planning off the wrong source of truth", "probability": "medium", "impact": "medium", "mitigation": "Reconcile the epic-80 summary block this window"},
+    {"risk": "12 dependabot chore(deps) PRs pending with no decision (4 stalled 8d) — security/dependency patches accumulate un-landed", "probability": "medium", "impact": "medium", "mitigation": "Batch-triage this window; consider a weekly dependency-triage cadence"},
+    {"risk": "Reviewer-slot policy raised 2026-07-30 for the same accounting trio was never actioned — the gap has grown from 2 days to 8+ days unaddressed", "probability": "medium", "impact": "medium", "mitigation": "Treat this decision as blocking, not advisory — set a hard 24h SLA this time"}
+  ],
+  "open_questions": [
+    "Is the accounting trio still product-prioritized for this MVP window, or has it slipped scope silently by starving on review?",
+    "Does PR #2705's CI-red reflect a genuine incompatibility with the pinned rust-version = 1.75 toolchain floor, or a transient CI issue?"
+  ],
+  "decisions_needed": [
+    "Accounting MVP-loop trio (#2555/#2558/#2559): assign an explicit reviewer now vs formally deprioritize — owner: pm-tech-lead",
+    "Draft PR #2705 (rust-toolchain bump): fix-forward vs close as unsafe-to-bump this cycle — owner: pm-devops",
+    "sprint-status.yaml epic-80 rollup correction — who owns editing the YAML directly vs re-flagging it each rotation — owner: pm-scrum-master"
+  ],
+  "shipped_since_last_run": [
+    "#2712 feat(pm-data): dispute add_evidence access-audit event",
+    "#2711 refactor: dedupe layout tenant-override handlers",
+    "#2709 fix(reality-web): i18n ListingForm via next-intl catalogs",
+    "#2707 fix(api-server): cap workflow api_call response-body read (8 MiB) — closes #2704 (memory-amplification DoS)",
+    "#2706 fix(api-server): fail closed on partial RAG embedding batch",
+    "#2708 fix(api-server): reject non-finite numbers in workflow condition compare"
+  ],
+  "sprint_progress": {"sprint": "Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth", "epics_done": 2, "epics_total": 6},
+  "blockers": [
+    {"item": "Accounting MVP-loop trio (#2555/#2558/#2559)", "reason": "8+ days, zero reviewer engagement", "owner_role": "pm-tech-lead"},
+    {"item": "Draft PR #2705 (rust-toolchain bump)", "reason": "CI red since opened", "owner_role": "pm-devops"},
+    {"item": "sprint-status.yaml epic-80 rollup", "reason": "stale vs coverage.json (1/3 vs 3/3 stories done)", "owner_role": "pm-scrum-master"}
+  ]
+}
+```
 
-## Shipped since last run (17 PRs)
-- PR #2576 gh-issue-2563: schedule layout_change_events retention prune
-- PR #2572 gh-issue-2562: wire get_dispute_kpis into a reporting endpoint
-- PR #2571 gh-issue-2564: org-scoped DELETE-by-file_key for direct-upload orphan cleanup
-- PR #2570 gh-issue-2557: dedupe private seed_org/set_ctx in db test suites
-- PR #2569 dx: run SDK drift gate on client + workflow changes
-- PR #2568 code-review mobile-native-kmp: Android SSO CSRF state verification
-- PR #2567 code-review api-core: clear scheduler global-read RLS GUC before pool return (retry1)
-- PR #2566 gh-issue-2561: version-bump rebase+retry to fix GH006 on concurrent dev merges
-- PR #2565 gh-issue-2560: reality-web Docker build fix (api-client node_modules in builder stage)
-- PR #2554 chore(research): refill starved dispatcher stack (7 new vectors, 14 promoted)
-- PR #2553 code-review ppt-web-core: AuthContext cold-boot routes through refreshTokenInternal (stale-role fix)
-- PR #2549 gh-issue-2532: layout publish/webhook/revalidate event emission + sink
-- PR #2504 fix(api-server): signature-request list/create — mount as document sub-resource (BIT-313)
-- PR #2491 chore(deps): npm-minor-patch group (5 updates)
-- PR #2482 refactor: reconcile docs/repo-map.md with current tree
-- PR #2478 fix(layout): review-hardening sweep (authz, publish TOCTOU, webhook replay, defensive rendering)
-- PR #2433 feat(mobile-native): iOS listing detail renders through the shared resolved layout
+## Notes
 
-## Next actions
-1. **[high]** Address #2573 — DELETE /documents/by-file-key can delete a still-referenced object within the same org (regression from PR #2571) — owner: pm-backend — DoD: reference-check added before delete; regression test covering shared-file-key same-org case.
-2. **[high]** Address #2574 — Android SSO CSRF guard half-wired (SsoStateStore.mint() has no call site so every reality://sso callback is rejected) — owner: pm-mobile / react-native — DoD: mint() wired at deep-link entry; integration test covers the happy path.
-3. **[medium]** Address #2575 — /disputes/kpis has no window-ordering validation, only test is quarantined (PR #2572) — owner: pm-backend — DoD: reject window_end < window_start with 400; un-quarantine the KPIs test.
-4. **[medium]** Merge or triage the accounting MVP-loop trio (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — all draft-ready since 2026-07-28 — owner: pm-backend / pm-tech-lead — DoD: reviewed + green + merged, or explicitly re-scoped.
-5. **[high]** Finish long-standing 84-1 direct-to-S3 wiring in ppt-web (POST /documents/upload-url consumer) — owner: pm-frontend — DoD: api-client binding + UploadDocument integration + regression test.
-6. **[high]** Finish long-standing 84-2 signer-facing document-sign page (screen-map planned→shipped, API complete) — owner: pm-frontend — DoD: page shipped, signature-request email delivery verified end-to-end.
-
-## Risks
-- **[med prob / high impact]** PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row — mitigation: land a reference-count guard + integration test before any client wires the endpoint.
-- **[high prob / high impact]** PR #2568 CSRF state fix is non-functional (#2574) — mint() has no call site so every SSO deep-link is rejected — mitigation: wire mint() at the SSO deep-link entry point (fresh subagent on the mobile-native slice).
-- **[med prob / med impact]** Accounting MVP-loop trio (3 open PRs) has been sitting 2 days with no reviewer engagement — dispatcher stack starving on reviewer capacity, not implementer capacity — mitigation: explicit reviewer slot for the trio next 24h; document reviewer-slot rotation for large-scope PRs.
-
-## Open questions
-- Should the accounting MVP-loop epic be added to coverage.json (currently outside the 13-epic set)?
-- Should the layout epic (scheduler.rs + tenant.rs + admin.rs are top churn this window) be promoted to its own coverage epic entry?
-
-## Decisions needed
-- Reviewer-slot policy for large-scope feature PRs (accounting trio blocking) — owner: pm-tech-lead.
-
-## Blockers
-- **#2574 Android SSO CSRF half-wired** — the freshly-merged CSRF fix (#2568) has no call site — every reality://sso callback is now rejected; blocks any Android SSO usage until re-wired — owner: pm-mobile.
-- **#2573 DELETE-by-file-key same-org reference gap** — new endpoint can delete a still-referenced S3 object within the same org (regression from PR #2571); blocks safe client wiring for 84-1 direct-to-S3 — owner: pm-backend.
-- **Accounting trio (#2555 / #2558 / #2559)** — no reviewer engagement in 2 days; dispatcher can't advance the MVP-loop — owner: pm-tech-lead.
+- `sprint_progress.epics_done/epics_total` (2/6) is computed directly from `_bmad-output/implementation-artifacts/sprint-status.yaml`'s `epics:` block (epic-6, epic-7a, epic-8a, epic-10a, epic-10b, epic-80 — done: epic-8a, epic-10a). This differs from the broader `coverage.json` extended-scope view (47/49 stories done across 13 epics) — the two numbers answer different questions (core-sprint epics vs full delivered-story inventory) and both are reported to avoid conflating them.
+- Cross-referenced the 6 merged PRs against `coverage.json`: only #2712 (epic-80 story 80-1) and #2706 (epic-84 story 84-5) map to a tracked story; #2711/#2709/#2707/#2708 are infra/security hardening outside the tracked story set and were not force-mapped.
+- Six `next_actions` appended to `action-list.json` with `source = "pm-analysis 2026-08-08"`. Four risks dedup-checked against existing risk IDs and appended to `risks.json`.
+- Flagged the epic-80 sprint-status.yaml drift as a recurring theme: coverage.json has shown 80-1/80-2/80-3 as done since 2026-06-25/07-04/07-15 respectively, but the epic-level `stories_completed: 1` rollup was never updated — this is a documentation-hygiene gap, not a delivery gap.
+- The accounting-trio reviewer-starvation risk was already raised on 2026-07-30 (2 days stalled then); it has now compounded to 8+ days without resolution — escalating from "risk" to "decision needed" this run.

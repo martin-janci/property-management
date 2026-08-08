@@ -1,4 +1,4 @@
-# pm-qa — QA / Test lens (2026-06-15)
+# pm-qa — QA / Test lens (2026-08-08)
 
 _Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues._
 
@@ -7,41 +7,34 @@ _Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + 
 ```json
 {
   "role": "pm-qa",
-  "summary": "Dev CI unblocked by #1379 ends a 3-day red streak; 18 fresh follow-up issues from yesterday's merge surge are the new QA front, concentrated on missing test coverage (RLS, IDOR, OAuth, realtime sync, payment atomicity).",
+  "summary": "This window's 6 merged PRs are dominated by security/DoS hardening fixes (response-body cap, RAG fail-closed, non-finite condition compare) with no confirmed regression tests in the available evidence — that's the top QA gap. Separately, epic-80 (Dispute Resolution) has a completion-status disagreement between sprint-status.yaml and coverage.json that should be resolved before treating it as release-ready.",
   "next_actions": [
-    {"action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Failing-on-main test landed; passes once #1361 fix lands."},
-    {"action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Decoder tests pin known variants and error-path for unknown."},
-    {"action": "Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "UI test confirms older paginated response doesn't clobber newer page-N state."},
-    {"action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Frontend test asserts autosave fires once per debounce window; i18n key lookups present."},
-    {"action": "Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Concurrent-tx test asserts no negative-balance and COALESCE-guarded aggregates."},
-    {"action": "Pin cron validator surface with fixture-based test (#1368) to guard against #616 regression", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Validator test fixture covers known-good + known-bad expressions; Epic 81 promotion gates on it."}
+    {"action": "Add regression test for PR #2707 workflow api_call 8 MiB response-body cap — boundary (exactly 8 MiB) + over-cap rejection cases", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test asserts a response body just under 8 MiB is accepted and just over is rejected with the expected error, not a silent truncation."},
+    {"action": "Add regression test for PR #2706 RAG embedding partial-batch fail-closed behavior in /rag/index", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test asserts a batch with one failing embedding aborts the whole batch rather than persisting a mixed-quality set."},
+    {"action": "Add regression test for PR #2708 non-finite (NaN/Infinity) rejection in workflow condition compare", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test asserts NaN/Infinity/-Infinity operands are rejected (not silently coerced) in evaluate_conditions()."},
+    {"action": "Add regression coverage for PR #2712 dispute add_evidence access-audit event", "priority": "low", "dependency": "rust-backend", "definition_of_done": "Test asserts the audit_logs event is emitted with the correct actor/dispute_id payload on a successful add_evidence call, and NOT emitted on a rejected cross-org attempt."},
+    {"action": "Release-readiness: run a full Dispute Resolution (epic-80) regression pass before treating the epic as fully shipped — sprint-status.yaml (1/3) and coverage.json (3/3 done) disagree", "priority": "medium", "dependency": "none", "definition_of_done": "Full dispute test suite (currently 152 tests per prior evidence) re-run and green; sprint-status.yaml and coverage.json reconciled to the same number."},
+    {"action": "Build a risk-based regression suite for workflow_executor.rs condition evaluation — repeated-churn hotspot (runs_seen 2) with 2 distinct bug classes fixed this window", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Property-based/fuzz test suite covers condition-compare edge cases (non-finite numbers, malformed JSON, deeply nested groups) as a standing regression gate."}
   ],
   "risks": [
-    {"risk": "18 follow-up issues (#1360–#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.", "probability": "high", "impact": "medium", "mitigation": "pm-scrum-master triages the batch this run — assign owner or close as won't-fix."},
-    {"risk": "record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.", "probability": "medium", "impact": "high", "mitigation": "Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test."},
-    {"risk": "Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) — current tests don't pin the validator surface.", "probability": "medium", "impact": "medium", "mitigation": "Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it."},
-    {"risk": "Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured — wastes implementer cycles claiming gap stories already shipped.", "probability": "high", "impact": "medium", "mitigation": "pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings."},
-    {"risk": "Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) — old credentials can linger and be used post-rotation.", "probability": "medium", "impact": "high", "mitigation": "Implement atomic credential swap + add OAuth handler/CSRF test coverage."}
+    {"risk": "workflow_executor.rs is a 2-run repeated-churn hotspot with 2 distinct bug classes fixed this window (fail-open condition parsing pending via PR #2684, non-finite numeric compare via #2708) but no consolidated regression suite for condition evaluation", "probability": "high", "impact": "medium", "mitigation": "Build a property-based/fuzz test suite for condition-compare edge cases (queued this run)"},
+    {"risk": "Epic-80 completion status disagrees between sprint-status.yaml (1/3) and coverage.json (3/3 done) — if release sign-off trusts sprint-status, the epic could ship without a confirmed full regression pass", "probability": "medium", "impact": "medium", "mitigation": "Run the full dispute-flow regression suite and reconcile status before treating epic-80 as release-ready"},
+    {"risk": "3 security/DoS fixes merged this window (#2707 response-body cap, #2706 RAG fail-closed, #2708 non-finite reject) have no confirmed regression test per available evidence — a later refactor could silently reintroduce any of the three", "probability": "medium", "impact": "medium", "mitigation": "Land the 3 queued regression tests before the next refactor of these files"}
   ],
   "open_questions": [
-    "Does #1377 (document download/preview test gap) require new presigned-URL minting test infra, or can it be folded into the existing forms RLS suite?",
-    "Should the pre-push fmt/clippy gate (#1375) be local-only or also enforced as a CI status check?",
-    "Is the realtime preference-sync publish leg (#1376) coverable as a deterministic integration test, or does it need a flake-tolerant smoke test?",
-    "Are stale draft PRs #1316 (verify-document-folder-organization-backend-promote) and #1197 (test-oauth-authorization-server-integration) salvageable, or should they be closed and re-opened?"
+    "Do #2707/#2706/#2708 already carry in-PR test coverage that simply wasn't surfaced in the Phase-1 PR summary, or is regression coverage genuinely absent? (Static read-only pass could not confirm test-file diffs from the summary alone.)",
+    "Is the 152-test dispute suite figure (from the 2026-06-25 80-3 promotion note) still current, or has it drifted since?"
   ],
   "decisions_needed": [
-    "Pre-push fmt/clippy gate (#1375): local hook only, CI-status, or both? — owner: pm-tech-lead",
-    "Triage protocol for the 18 follow-up issues #1360-#1377: bulk-assign by theme to per-role queues, or per-issue triage? — owner: pm-scrum-master",
-    "Promotion-gate policy: should each high-severity coverage gap (atomicity, IDOR, RLS) block its source epic's done-promotion until a failing-on-main test exists? — owner: pm-tech-lead + pm-qa"
+    "Epic-80 (Dispute Resolution): should QA sign-off gate on a fresh full-epic regression pass before either sprint-status.yaml or coverage.json is trusted as authoritative? — owner: pm-qa + pm-scrum-master"
   ]
 }
 ```
 
 ## Notes
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-07-06 (assuming 1-per-day cadence with 8 roles).
-- Five new pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-06-15"`.
-- Five risks dedup-checked against existing pm-qa risk IDs and appended.
-- Coverage epic-85 (rotation idx 10) refreshed: gap-85-2 evidence added from PR #1383; "app icon variants" + "app.config.ts" gaps removed.
-- Phase 1.5 finding (vote partial_cmp NaN) already tracked in prior run via `pm-qa-vote-partial-cmp-nan-fuzz` — kept open.
-- Phase 1.5 finding (`OsRng.try_fill_bytes().expect()` low-sev in crypto.rs) noted; below threshold for new action this run.
+- Rotation idx 3 of 8; last pm-qa run was 2026-06-15 (54 days stale) — this run brings the rotation current.
+- Six `next_actions` appended to `action-list.json` with `source = "pm-analysis 2026-08-08"`, all targeting confirmed regression-test gaps on this window's 6 merged PRs plus the workflow_executor.rs repeated-churn hotspot.
+- Three risks dedup-checked against existing pm-qa risk IDs and appended to `risks.json`.
+- Coverage epic-80 (rotation idx 5, this run's rotating epic) re-checked: all 3 stories remain `done`; evidence appended to 80-1 for PR #2712 (add_evidence access-audit event) and to 84-5 for PR #2706 (RAG fail-closed). No status flips — the gap here is documentation (sprint-status.yaml drift), not implementation, which is why it's raised as a decision rather than a coverage-status change.
+- Static read-only pass: could not directly confirm whether #2707/#2706/#2708 shipped with their own regression tests (PR diff/test-file contents weren't in the Phase-1 summary) — treated the absence of evidence as a gap rather than assuming coverage exists, per the "no invention" operating contract; flagged as an `open_question` rather than a certainty.

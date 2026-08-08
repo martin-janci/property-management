@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T18:35:16Z",
+  "generated": "2026-08-08T02:34:20Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -983,11 +983,12 @@
         "screen-map ppt/disputes.md shipped",
         "feat(epic-80) commits merged",
         "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers (add_evidence follow-up #2483 remains; PR #2490 open)",
-        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked"
+        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked",
+        "PR #2712 (merged 2026-08-08, pm-data): dispute add_evidence access-audit event added to platform-admin audit_logs stream (DisputeRepository::add_evidence, backend/crates/db/src/repositories/dispute.rs) \u2014 closes the outstanding add_evidence follow-up noted above (#2483/#2490)."
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-08",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -1027,7 +1028,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-08",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -1056,7 +1057,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-08",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",
@@ -1330,11 +1331,12 @@
       "evidence": [
         "PR #2291: POST /api/v1/ai/llm/rag/migrate wired",
         "PR #2312: migration 00215 provenance stamp + set-based UPDATE fixes embedding-space mixing",
-        "rag_migrate_pgvector_tests.rs coverage"
+        "rag_migrate_pgvector_tests.rs coverage",
+        "PR #2706 (merged 2026-08-08): fail closed on partial RAG embedding batch in routes/ai/llm.rs \u2014 hardens the /rag/index path against silent partial-embedding corruption."
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-08",
       "screen_refs": []
     }
   ]
