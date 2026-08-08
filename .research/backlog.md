@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-07 06:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-08 18:14 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -31,12 +31,18 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-api-core-delay-duration-overflow-before-cap` | api-core delay.rs: DelayConfig::to_duration multiplies before cap — u64 overflow with attacker-contr | open | 2026-08-08 |  |
+| 2 | bug | `code-review-api-core-accounting-line-multimatch` | api-core accounting.rs: payment auto-matcher's inner loop can emit multiple PaymentMatch rows per pa | open | 2026-08-08 |  |
+| 2 | bug | `code-review-api-handlers-reports-unwrap-or-default-silent-zero` | api-handlers reports/mod.rs: four report handlers use .unwrap_or_default() on DB errors — serve HTTP | open | 2026-08-08 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-submit-stub` | mobile-native-kmp: Create-Listing screen wired to a hardcoded NotImplementedError — every submit fai | open | 2026-08-08 |  |
+| 2 | bug | `code-review-sso-rs-negcache-transient-fail` | reality-server sso.rs: introspect_pm_token neg-caches ANY non-2xx as inactive — PM 5xx logs users ou | open | 2026-08-08 |  |
+| 2 | bug | `code-review-sso-rs-client-no-timeout-pool` | reality-server sso.rs: OAuth helpers build reqwest::Client::new() per call — no timeout, hung upstre | open | 2026-08-08 |  |
 | 2 | bug | `code-review-reality-web-comparison-share-all-or-nothing` | reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared compa | done | 2026-08-07 |  |
 | 2 | bug | `code-review-reality-web-listingform-nan-validation` | reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently | done | 2026-08-07 |  |
 | 2 | bug | `code-review-api-handlers-enhanced-chat-stub` | api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data.... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-ppt-web-core-ws-giveup-no-resume` | ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-reality-server-listing-viewcount-hardcoded-zero` | reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-mobile-rn-offline-terminal-drop-dataloss` | mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 r | done | 2026-08-04 |  |
 | 2 | bug | `code-review-ppt-web-core-logout-cache-purge-gap` | ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentim | done | 2026-08-04 |  |
@@ -125,14 +131,24 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | open | 2026-08-07 |  |
+| 1 | bug | `code-review-api-core-quiet-hours-db-error-fail-open` | api-core notification_pipeline.rs: quiet-hours DB error fails open — notifications ignore user sched | open | 2026-08-08 |  |
+| 1 | bug | `code-review-api-core-accounting-vs-only-amount-ignored` | api-core accounting.rs: Variable-Symbol match alone crosses 0.5 threshold with amount ignored — paym | open | 2026-08-08 |  |
+| 1 | test-gap | `code-review-api-core-accounting-no-tests` | api-core accounting.rs (339 lines, payment matcher hot-path): zero tests | open | 2026-08-08 |  |
+| 1 | refactor | `code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug` | mobile-native-kmp: ApiClient class is dead code and its healthCheck() returns .toString() debug stri | open | 2026-08-08 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs` | Churn hotspot: backend/servers/api-server/src/services/scheduler/mod.rs (backend/servers/api-server/ | open | 2026-08-08 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs` | Churn hotspot: backend/servers/reality-server/src/routes/inquiries.rs (backend/servers/reality-serve | open | 2026-08-08 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/reality-server/src/handlers/inquiries/mod.rs` | Churn hotspot: backend/servers/reality-server/src/handlers/inquiries/mod.rs (backend/servers/reality | open | 2026-08-08 |  |
+| 1 | dx | `stalled-review-pr-2555` | PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) — open 9 days, no reviewDec | open | 2026-08-08 |  |
+| 1 | dx | `stalled-review-pr-2558` | PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) — open 9 days, no reviewDecision. Auth | open | 2026-08-08 |  |
+| 1 | dx | `stalled-review-pr-2559` | PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) — open 9 days, no reviewDecision | open | 2026-08-08 |  |
+| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | dropped | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | done | 2026-08-07 |  |
 | 1 | security | `code-review-api-handlers-ai-upstream-error-leak` | api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-rn-biometric-prompt-i18n` | mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog... | done | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | open | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | open | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | done | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-reality-server-orphan-schedule-viewing-stub` | reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout` | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no c | dropped | 2026-08-04 |  |
 | 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx` | Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-0 | dropped | 2026-08-04 |  |

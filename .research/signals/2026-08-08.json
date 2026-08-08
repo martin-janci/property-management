@@ -1,0 +1,401 @@
+{
+  "generated": "2026-08-08T18:14:00Z",
+  "run_type": "incremental",
+  "trigger": "buffer-low",
+  "signals": [
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(self.duration * 60)` (Minutes, :57), `* 3600` (Hours, :58), `* 86400` (Days, :59). The multiplication has no `checked_mul`/`saturating_mul` and no upper-bound check on `self.duration`.",
+        "The 7-day cap that is supposed to bound the delay runs AFTER the overflow-prone multiply, not before: in `execute()` the order is `let duration = delay_config.to_duration();` (delay.rs:100) then `if duration.as_secs() > MAX_DELAY_SECONDS { return Err(...) }` (delay.rs:103-105). So a large `duration` (e.g. Days with `duration >= u64::MAX/86400 + 1`) overflows inside `to_duration()` before the guard can reject it.",
+        "backend/Cargo.toml [profile.release] (lines 176-179) does not set `overflow-checks`, so release builds use the default (off): `self.duration * 86400` silently WRAPS to a small/incorrect value that then PASSES the `> MAX_DELAY_SECONDS` check — bypassing the intended validation and running a wrong-length delay. Debug/test builds (overflow-checks on by default) instead PANIC on the same input, which can crash the workflow worker.",
+        "Config is user-authored: `DelayConfig` is deserialized from the workflow action config JSON (Epic 94, Story 94.1), so `duration` reaches this multiply from manager-created workflow definitions.",
+        "Contrast with the sibling retry-backoff path, which is guarded correctly: `compute_backoff_seconds` (workflow_executor.rs:35-45) uses `saturating_mul` and caps the exponent, and `execute_action` clamps `retry_delay_seconds`/`retry_count` to `MAX_RETRY_DELAY_SECONDS`/`MAX_RETRY_COUNT` BEFORE use (workflow_executor.rs:896-897). delay.rs is the inconsistent outlier.",
+        "Fix: validate `self.duration` against the per-unit maximum (or use `checked_mul` and reject `None`) inside `to_duration()` before constructing the `Duration`, so the 7-day cap is enforced regardless of build profile and no arithmetic overflow is reachable."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().map(...)`. The `.ok()` collapses a DB/pool `Err` into `None`, which is indistinguishable from 'user has no quiet-hours schedule'.",
+        "Consequence is fail-open against a user preference: on a transient DB error while fetching the schedule, `quiet` becomes `None`, so the Push channel is delivered immediately (notification_pipeline.rs:533+ only holds the push when `Some(state)` with `state.active`). A user who configured quiet hours can therefore receive a push during their quiet window purely because a secondary query hit a transient error.",
+        "This is a graceful-degradation choice, but it is silent: no `tracing::warn!` distinguishes 'no schedule configured' from 'schedule fetch failed', so the preference violation is invisible in logs and un-monitorable. The nearby 8h-horizon fallback at :540-542 is explicitly commented as intentional; the `.ok()` swallow is not.",
+        "Fix: match on the `Result` — treat `Ok(None)` as no-schedule (deliver normally) but log/observe `Err(e)` (and consider fail-closed by holding the push, since quiet hours are a user-set preference), instead of silently discarding the error with `.ok()`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 — the payment auto-matcher's inner `for invoice in &open_invoices` loop (accounting.rs:129) creates a `PaymentMatch` for EVERY invoice whose confidence reaches the 0.5 threshold, with NO `break` after the first accepted match and NO in-memory update of `line.match_state`.",
+        "The outer per-line guard (`if line.match_state != \"unmatched\" && line.match_state != \"suggested\" { continue }`, accounting.rs:125-126) reads the DB-loaded `line` copy, which is never mutated inside the loop. The DB `update_bank_statement_line_match_state_rls(... \"suggested\")` call (accounting.rs:170) does not touch the local `line`, so subsequent iterations of the SAME line keep matching. Result: one bank statement line is suggested-matched to multiple invoices in a single pass.",
+        "Reachable precondition: two or more open invoices (status Issued/PartiallyPaid) that share the same non-empty `variable_symbol`. Variable Symbol alone contributes 0.8 (accounting.rs:135-138) which crosses the 0.5 acceptance threshold, so every open invoice carrying that VS produces a duplicate `PaymentMatch` (state Suggested) for the one incoming payment. Nothing in the schema enforces VS uniqueness across open invoices (partial payments, reissues, tenant data-entry errors make collisions plausible).",
+        "Consequence: duplicate/conflicting suggested matches for a single payment; a manager reconciling the statement sees the same incoming amount proposed against several invoices, and any downstream 'accept highest-confidence per invoice' step could book one payment against multiple invoices.",
+        "Fix: `break` after the first accepted match (or select the single best-confidence invoice for the line), and/or mark the line consumed in-memory so later iterations skip it."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 — a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance threshold (accounting.rs:150) with NO amount corroboration required. The amount branch only ADDS confidence (+0.15 exact, +0.05 within-range, accounting.rs:143-146); a gross amount mismatch subtracts nothing.",
+        "So a bank line whose `amount` is wildly different from the invoice's `remaining_amount = total_amount - paid_amount` (accounting.rs:142) — e.g. a large credit against a small invoice, or an amount far exceeding the outstanding balance — is still suggested at 0.8 purely on the VS. The amount-only path can never reach 0.5 on its own (max 0.15), so acceptance is effectively 'VS matches, amount ignored'.",
+        "Combined with the multi-match bug in the same loop, this widens the blast radius: an incoming payment with a shared/reused VS but an implausible amount is proposed against invoices it cannot plausibly settle.",
+        "Fix: gate acceptance on amount plausibility (e.g. require `line.amount <= remaining_amount`, or withhold the suggestion when the amount exceeds the outstanding balance by a large margin) rather than accepting on VS alone; VS should raise confidence, not bypass the amount check entirely."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(test)]` module and no test cases anywhere (grep for `#[cfg(test)]` / `#[test]` / `fn test` in the file returns nothing) — the payment auto-matching logic is entirely untested.",
+        "Untested surface includes the confidence weighting constants (0.8 VS / 0.15 exact-amount / 0.05 in-range, accounting.rs:135-146), the 0.5 acceptance threshold (accounting.rs:150), and the per-line/per-invoice iteration that the two bug findings above concern — exactly the logic where a regression would silently mis-book money.",
+        "There is also an unfinished `// TODO: Date proximity, IBAN match` (accounting.rs:148) placeholder in the confidence scoring; that TODO should not be filled in without first pinning current behaviour behind regression tests.",
+        "Fix: add unit tests for `suggest_matches` covering (a) exact VS+amount match, (b) VS match with mismatched amount, (c) VS collision across two open invoices, (d) below-threshold no-match, using in-memory or fixture repo doubles."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of surfacing the failure. The tell is intra-handler inconsistency: the PRIMARY query in each handler propagates errors via `.map_err(...)?` (e.g. `get_statistics` at :615), but the SECONDARY data queries in the SAME handler discard the `Result`.",
+        "get_fault_statistics_report: `get_monthly_fault_counts` (reports/mod.rs:633) and `get_monthly_resolution_times` (reports/mod.rs:640) — a transient DB error yields empty `monthly_counts` / `resolution_time_trend` trend arrays, so the fault report renders as if there were zero faults over time while the primary statistics block is populated — an internally contradictory, plausible-looking report.",
+        "get_voting_participation_report: `get_participation_report` (reports/mod.rs:715) — on DB error `participation_data` becomes an empty Vec, so `total_votes = participation_data.len()` computes to 0 and the derived quorum/participation summary is silently wrong (0% participation reported for a building that may have full turnout).",
+        "get_occupancy_report: `get_occupancy_report` (reports/mod.rs:827) and its year-over-year sibling call (reports/mod.rs:844) — a DB error produces a defaulted `OccupancyReport` with `summary.total_person_months == 0`; the year-over-year change_percentage is then computed against zeroed current/previous totals and served as authoritative occupancy data.",
+        "get_consumption_report: `get_consumption_report` (reports/mod.rs:949) and `detect_consumption_anomalies` (reports/mod.rs:962) — a DB error silently drops all consumption rows and anomalies, so a monitoring/billing consumption report can show zero usage and zero anomalies on a partial backend failure.",
+        "Impact: these are manager-facing analytical reports (fault trends, voting quorum, occupancy, utility consumption) that drive decisions; a transient DB/pool error on a secondary query degrades to a confident wrong answer (HTTP 200 with zeros) rather than a 5xx the caller can retry. Tenant isolation itself is fine — every handler validates `query.organization_id != rls.tenant_id()` before the repo calls (reports/mod.rs:596,694,806,922).",
+        "Fix: replace `.unwrap_or_default()` on these repository calls with the same `.map_err(...)?` -> 500 pattern the primary query already uses (or, if empty-on-error is a deliberate graceful-degradation choice, make it explicit and consistent and annotate the partial-data condition in the response so consumers can distinguish 'no data' from 'query failed')."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }). The realtor 'Create Listing' screen is fully reachable in production navigation (composable(Screen.CreateListing.route) { ... }, reached from the MyListings flow), but every submit returns a hardcoded failure — a user fills in the create-listing form, taps submit, and always gets an error. This is a shipped, user-facing broken feature, not a hidden/disabled path.",
+        "The data layer to back it is entirely absent: PortalListingsRepository (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics — there is no create/submit method, and no other repository provides one (grep 'fun create' / 'fun submit' over mobile-native/shared/src/commonMain returns nothing). So the fix is not merely to swap the lambda; it requires building a create-listing repository call against the reality-server API and wiring it through.",
+        "Impact: the CreateListing route should either be gated behind a feature flag / hidden until the API exists, or the data-layer method built and wired. As-is it presents a functional-looking form that can never succeed. Recommend a follow-up implementer task to (a) add a createListing repository method, (b) wire onSubmit to it with proper Result handling in CreateListingScreen, or (c) hide the route until the endpoint lands."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/**.kt returns only the class definition (ApiClient.kt:27) and a doc-comment reference in a test (ListingDetailRepositoryTest.kt:172). All live repositories (ListingRepository, FavoritesRepository, InquiryRepository, PortalListingsRepository, etc.) issue their own Ktor calls via HttpClientProvider.client and never route through ApiClient. It is ~100 lines of dead, duplicated API logic (listings search/detail, favorites, inquiry) that drifts from the real repositories and adds maintenance noise.",
+        "The dead class also carries a latent bug that would bite if it were ever wired: healthCheck() (ApiClient.kt:39) returns client.get(\"$baseUrl/health\") { configureRequest() }.toString() — .toString() on the Ktor HttpResponse object yields a debug string like 'HttpResponse[...]', not the health-endpoint body. It should await .body<String>() (or .bodyAsText()). Additionally healthCheck() is the only method in the class with no try/catch, so a network exception propagates uncaught instead of being folded into a Result like every sibling method (getListings/getListing wrap in try/catch → Result).",
+        "Recommend deleting ApiClient (and its exception type if unused elsewhere) to remove dead code and the duplication risk; if it is intended as the future canonical client, it should instead replace the ad-hoc per-repository HttpClientProvider calls and fix healthCheck first. Either way the current state — unreferenced + buggy — is pure liability."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !response.status().is_success() { ... state.token_cache.set(token, false, None, None).await; return Err(...) }`. A transient PM-API failure (503/502/500 during a deploy or overload) is thus conflated with a genuinely-inactive token.",
+        "Consequence: a legitimate, still-valid session token that hits the cache-miss path during a brief PM outage is negatively cached as inactive for up to 60s. Because introspect_pm_token feeds the SSO auth hot path, the user is denied/logged-out for up to a minute AFTER PM has already recovered — an availability regression driven by transient upstream errors, not by real token state.",
+        "The comment 'Cache inactive tokens too (to prevent repeated failed validations)' assumes non-2xx == inactive, but introspection RFC 7662 returns 200 with {active:false} for a genuinely inactive token; a 5xx is a server error, not an inactivity signal. Suggested fix: only negative-cache when the introspection call SUCCEEDS (200) and the body reports active=false; on 5xx/network errors, propagate the error WITHOUT writing a false entry (fail-open to a re-check on the next request, or short-TTL/no-cache)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` per invocation. `Client::new()` has NO request timeout, so a hung/slow PM OAuth server on the token-exchange / userinfo / introspection calls will block the awaiting request indefinitely (only bounded by whatever axum/OS imposes), risking worker/connection exhaustion under a stalled upstream.",
+        "Contrast: backend/servers/reality-server/src/state.rs:753-761 (PmApiClient::new) deliberately builds a pooled client WITH `.timeout(Duration::from_secs(timeout_seconds))`. The SSO helpers bypass that pattern, so they get neither the timeout nor connection-pool / TLS-session reuse across the hot introspection path.",
+        "Suggested fix: build one timeout-configured reqwest::Client at startup, store it on AppState (alongside PmApiClient), and share it across all three SSO helpers instead of `reqwest::Client::new()` per call — fixes both the missing timeout and the per-request pool/TLS churn in one change."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "phase-1-churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs — 482 line churn this run (PR #2714 decouple scheduled notification dispatch, follow-up to issue #2612). runs_seen=1."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs",
+      "type": "churn-hotspot",
+      "source": "phase-1-churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs — 408 line churn this run (PR #2698 rate-limit + PR #2719 handler-wiring refactor). runs_seen=1."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/handlers/inquiries/mod.rs",
+      "type": "churn-hotspot",
+      "source": "phase-1-churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/inquiries/mod.rs — 359 line churn this run (PR #2696 injectable notifier seam). runs_seen=1."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) — open 9 days, no reviewDecision. Author martin-janci."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) — open 9 days, no reviewDecision. Author martin-janci."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) — open 9 days, no reviewDecision. Author martin-janci."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2588 dependabot: bump expo-status-bar 56.0.4 → 57.0.1 (frontend/mobile)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2589 dependabot: bump @testing-library/react-native 13.3.3 → 14.0.1 (frontend/mobile)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2590 dependabot: bump expo-device 56.0.4 → 57.0.1 (frontend/mobile)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2591 dependabot: bump expo-secure-store 56.0.4 → 57.0.1 (frontend/mobile)."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-08.md && head -1 matches ^# 2026-08-08$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD:state.json ...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cross-check seen_signals dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay checks",
+      "observed": "no scores >8; no open items past 14d cutoff",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no plans promoted this run",
+      "observed": "0 new plans",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans + validate",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached outside .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "diff --cached secret grep (exempt 4 baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phase failed; no missing cursor advances",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present or archived",
+      "observed": "no rollbacks",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count",
+      "observed": "now=8 head=8",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regen byte diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor (Phase 1.6 no-op this run)",
+      "observed": "pm_cursor unchanged; no-op",
+      "expected": "no-op ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

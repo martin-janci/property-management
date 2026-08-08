@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-07T06:24:00Z",
-  "last_run_ms": 2000,
-  "last_pr_seen": 2702,
-  "last_issue_seen": 2699,
-  "last_commit_sha": "a2c0f53d4d66886ea14fcb6fd43478c4c4022fa9",
+  "last_run_iso": "2026-08-08T18:14:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2721,
+  "last_issue_seen": 2704,
+  "last_commit_sha": "a82eeb684aebcfd1023ee4e064bee3abcfe52c88",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -441,6 +441,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-07",
       "recent_churn": 64
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-08",
+      "recent_churn": 482
+    },
+    "backend/servers/reality-server/src/routes/inquiries.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-08",
+      "recent_churn": 408
+    },
+    "backend/servers/reality-server/src/handlers/inquiries/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-08",
+      "recent_churn": 359
     }
   },
   "seen_signals": [
@@ -819,22 +834,42 @@
     "code-review-reality-web-listingform-no-i18n",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
-    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
+    "code-review-api-core-delay-duration-overflow-before-cap",
+    "code-review-api-core-quiet-hours-db-error-fail-open",
+    "code-review-api-core-accounting-line-multimatch",
+    "code-review-api-core-accounting-vs-only-amount-ignored",
+    "code-review-api-core-accounting-no-tests",
+    "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+    "code-review-mobile-native-kmp-create-listing-submit-stub",
+    "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+    "code-review-sso-rs-negcache-transient-fail",
+    "code-review-sso-rs-client-no-timeout-pool",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+    "churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs",
+    "churn-hotspot-backend/servers/reality-server/src/handlers/inquiries/mod.rs",
+    "stalled-review-pr-2555",
+    "stalled-review-pr-2558",
+    "stalled-review-pr-2559",
+    "dep-update-noise-pr-2588",
+    "dep-update-noise-pr-2589",
+    "dep-update-noise-pr-2590",
+    "dep-update-noise-pr-2591"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-06",
-    "api-core": "2026-08-04",
-    "reality-server": "2026-08-06",
+    "api-handlers": "2026-08-08",
+    "api-core": "2026-08-08",
+    "reality-server": "2026-08-08",
     "ppt-web-ui": "2026-08-06",
     "ppt-web-core": "2026-08-06",
     "reality-web": "2026-08-07",
-    "mobile-rn": "2026-08-06",
-    "mobile-native-kmp": "2026-08-04"
+    "mobile-rn": "2026-08-08",
+    "mobile-native-kmp": "2026-08-08"
   },
   "stats": {
-    "runs": 62,
-    "vectors_created": 284,
+    "runs": 63,
+    "vectors_created": 300,
     "plans_created": 22,
     "quiet_days": 2,
     "auto_fix_count": 0
