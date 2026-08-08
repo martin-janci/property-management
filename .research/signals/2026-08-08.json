@@ -1,0 +1,357 @@
+{
+  "generated": "2026-08-08T16:21:32Z",
+  "run_type": "daily-incremental",
+  "source": "routine-phase-1",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-tenant-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-08-07T06:24Z..2026-08-08T16:07Z",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "cumulative re-emit \u2014 3 changes this run (PRs #2711, #2721, plus intermediate) \u2014 hotspot_history.runs_seen incremented to 2. score_delta suppressed per cumulative-type rule."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-inquiries-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-08-07T06:24Z..2026-08-08T16:07Z",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "3 changes in this run: c8021753 (route anonymous inquiry POSTs through InquiryNotifier seam), cf0b46d9 (tenant_ops shim), reality-server inquiry route churning."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-state-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-08-07T06:24Z..2026-08-08T16:07Z",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "3 changes in this run: PmApiClient + InquiryNotifier state-layout adjustments across #2719 and dispatcher fast-paths."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "PR #2555 feat(acc): wire sent/cancelled invoice lifecycle (UC-ACC-05.17) \u2014 9.4d old, self-COMMENT-review approval blocked, Copilot bot quota-exhausted, no outside reviewer requested."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "PR #2558 feat(acc): invoice PDF render endpoint (UC-ACC-05.9) \u2014 9.4d old, same review pattern as #2555."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "PR #2559 feat(acc): PAY by square payment QR endpoint (UC-ACC-05.8) \u2014 9.4d old, same review pattern as #2555."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588 dependabot expo-status-bar 56\u219257",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot bump, 9.3d idle"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589 dependabot @testing-library/react-native",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot bump, 9.3d idle"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590 dependabot expo-device 56\u219257",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot bump, 9.3d idle"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591 dependabot expo-secure-store 56\u219257",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot bump, 9.3d idle"
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-api-core-tier1d-2.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 \u2014 inner loop creates PaymentMatch for every invoice that clears 0.5 threshold, no break, no in-memory line-state update; VS collision \u2192 duplicate suggestions for one bank line."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-api-core-tier1d-2.json)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 \u2014 VS alone (0.8) crosses 0.5 threshold; amount is additive only. Wildly implausible amounts still Suggested."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-api-core-tier1d-2.json)",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs \u2014 339 lines, zero tests; payment auto-match logic entirely uncovered."
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-api-core-tier1d.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 \u2014 unchecked *86400; 7d cap runs AFTER multiply; release-profile overflow wraps silently past guard."
+      ]
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-api-core-tier1d.json)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 \u2014 .ok() collapses Err \u2192 None; push delivered during user's quiet window on transient DB error."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-api-handlers-tier1d.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs \u2014 4 handlers (fault stats, voting participation, occupancy, consumption) .unwrap_or_default() on secondary DB queries \u2192 HTTP 200 with silently-zeroed data."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-mobile-native-kmp-tier1d.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "mobile-native/androidApp/.../navigation/Navigation.kt:493 \u2014 CreateListing.onSubmit hardcoded to Result.failure(NotImplementedError); reachable from MyListings production nav; no repository create method exists."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-mobile-native-kmp-tier1d.json)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "mobile-native/shared/.../api/ApiClient.kt:27 \u2014 class never instantiated in production; healthCheck() returns .toString() debug string not body."
+      ]
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-reality-server.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 \u2014 negatively caches active=false for full 60s TTL on any non-success (incl. 5xx); PM outage \u2192 user logged out for a minute post-recovery."
+      ]
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (signals/2026-08-08-reality-server.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682/706/743 \u2014 reqwest::Client::new() per call, no timeout, no pool/TLS reuse; stalled PM upstream \u2192 worker exhaustion."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$T.md && head-1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (cap)",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (decay)",
+      "passed": true,
+      "command": "no open item >14d without decay",
+      "observed": "no items >14d open",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a \u2014 no plans promoted",
+      "observed": "0 new plans",
+      "expected": "0 or matching adversarial annotations"
+    },
+    {
+      "goal": "G7 (count)",
+      "passed": true,
+      "command": "git diff --cached ... .research/plans/",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v '^.research/'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' vs cursor advances",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count HEAD vs now",
+      "observed": "now=8 head=8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps",
+      "observed": "true (empty)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor unchanged (Phase 1.6 skipped)",
+      "observed": "next_index=3 both HEAD and now",
+      "expected": "unchanged when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}

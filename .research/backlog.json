@@ -7273,6 +7273,271 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "title": "Accounting payment auto-matcher: single line produces duplicate suggestions when multiple invoices share a Variable Symbol",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 — inner `for invoice in &open_invoices` loop creates PaymentMatch for EVERY invoice whose confidence >= 0.5, with no `break` and no in-memory update to line.match_state.",
+        "Precondition: two open invoices share the same non-empty variable_symbol; VS alone contributes 0.8 (>= 0.5 threshold), so both produce duplicate Suggested matches for one bank line.",
+        "Fix: break after first accepted match, or select best-confidence invoice, or mark the line consumed in-memory."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "title": "Accounting matcher accepts VS-only match (0.8 score) with amount wildly mismatched",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 — VS alone gives 0.8 (>= 0.5 acceptance); amount is only additive (+0.15/+0.05), never subtractive. A gross amount mismatch is still Suggested.",
+        "Combined with the multi-match bug, an incoming payment with reused VS but implausible amount is proposed against invoices it cannot settle.",
+        "Fix: gate acceptance on amount plausibility (e.g. line.amount <= remaining_amount) rather than accepting on VS alone."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "title": "accounting.rs (339 lines, payment auto-matching) has no unit tests at all",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs has no #[cfg(test)] and no #[test] anywhere; entire payment auto-matching untested.",
+        "Weighting constants (0.8 VS / 0.15 exact / 0.05 in-range), 0.5 threshold, and per-line/per-invoice iteration all uncovered — same code where the two bug findings live.",
+        "Fix: add unit tests for suggest_matches covering exact-match, mismatched amount, VS collision, below-threshold, using in-memory/fixture doubles."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "title": "DelayConfig::to_duration multiplies unchecked before 7d cap — overflow bypasses guard in release",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `self.duration * 86400` (Days) has no checked_mul; the 7-day cap in execute() runs AFTER to_duration().",
+        "Cargo.toml [profile.release] does not set overflow-checks, so release builds wrap silently and can pass the > MAX_DELAY_SECONDS check with the wrong length; debug builds panic.",
+        "Config is user-authored (workflow action config JSON, Epic 94.1). Sibling retry-backoff (workflow_executor.rs:35-45) uses saturating_mul + pre-clamp — delay.rs is inconsistent.",
+        "Fix: validate self.duration or use checked_mul inside to_duration() before constructing Duration."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "title": "notification_pipeline: DB error on quiet-hours lookup silently .ok()-swallows, delivers push during user's quiet window",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — `get_user_schedule(user_id).await.ok().flatten()` collapses Err → None, indistinguishable from 'no schedule'.",
+        "Fail-open: transient DB error → quiet becomes None → push delivered even during user's configured quiet window. No warn! log makes this un-monitorable.",
+        "Fix: match on Result; log Err(e) distinctly, consider fail-closed by holding push."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "title": "reports/mod.rs: 4 report handlers .unwrap_or_default() on secondary queries, serve 200 with silently-zeroed data",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — inconsistent: primary query uses .map_err()?, secondary queries use .unwrap_or_default().",
+        "Affected: get_fault_statistics_report (lines 633,640), get_voting_participation_report (line 715), get_occupancy_report (lines 827,844), get_consumption_report (lines 949,962).",
+        "Impact: manager-facing analytical reports return HTTP 200 with zero-filled data on a transient DB error — a wrong-answer surface, not retryable at the client.",
+        "Fix: replace .unwrap_or_default() with .map_err()? -> 500 pattern, or annotate partial-data condition in response."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "title": "mobile-native realtor CreateListing screen: submit hardcoded to Result.failure(NotImplementedError) in production nav",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — Screen.CreateListing wired as onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, reachable from MyListings.",
+        "PortalListingsRepository has no create/submit method; no other repo provides one (grep 'fun create'/'fun submit' returns nothing across mobile-native/shared/src/commonMain).",
+        "Options: (a) build createListing repo + wire; (b) hide route until endpoint lands; (c) gate behind feature flag."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "title": "mobile-native ApiClient.kt is dead code (~100 lines) with latent healthCheck() .toString() bug",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class never instantiated in production; only used in one test doc-comment.",
+        "Live repos issue their own Ktor calls via HttpClientProvider.client; ApiClient is duplicated dead surface.",
+        "healthCheck() (line 39) returns client.get(...).toString() — yields 'HttpResponse[...]' debug string, not the body; should be .bodyAsText(). Also the only method with no try/catch, so exceptions escape rather than folding into Result.",
+        "Options: delete class + its exception type; OR consolidate all repos onto it and fix healthCheck first."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "title": "reality-server SSO introspect_pm_token: negatively caches active=false for 60s on 5xx/network error (transient PM outage → user logged out for a minute after PM recovers)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() calls state.token_cache.set(token, false, None, None) on any non-2xx response. A 5xx during a PM deploy is thus recorded as 'inactive'.",
+        "RFC 7662 returns 200 with {active:false} for a genuinely inactive token; a 5xx is a server error, not an inactivity signal.",
+        "Fix: only negative-cache on 200 + body active=false; on 5xx/network, propagate error without writing the false entry."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "title": "reality-server SSO helpers construct reqwest::Client::new() per call — no timeout, no pool/TLS reuse (hang risk if PM stalls)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d code-review 2026-08-08 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682, :706, :743 — exchange_code_for_tokens/get_user_info/introspect_pm_token each build reqwest::Client::new(); no request timeout, no shared pool.",
+        "Contrast: state.rs:753-761 PmApiClient::new builds pooled client WITH .timeout(...). SSO helpers bypass the pattern.",
+        "Fix: build one timeout-configured reqwest::Client at startup, store on AppState, share across all three helpers."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-inquiries-rs",
+      "title": "Churn hotspot: reality-server/src/routes/inquiries.rs (3 changes this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "merged PRs since 2026-08-07: #2719, plus 2 dispatcher-triggered rewrites"
+      ],
+      "evidence": [
+        "3 changes in this run: c8021753 (route anonymous inquiry through InquiryNotifier seam), cf0b46d9 (add tenant_ops shim), reality-server/src/routes/inquiries.rs churned 3x."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-state-rs",
+      "title": "Churn hotspot: reality-server/src/state.rs (3 changes this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "merged PRs since 2026-08-07: #2719, #2696, cf0b46d9"
+      ],
+      "evidence": [
+        "3 changes in this run: inquiry notifier seam + tenant_ops wiring; PmApiClient / InquiryNotifier state layout churn."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
     }
   ]
 }
