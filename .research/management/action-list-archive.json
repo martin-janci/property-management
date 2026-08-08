@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-08T02:26:53Z",
+  "archived_at": "2026-08-08T04:28:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -933,6 +933,20 @@
         "merged_at": null,
         "at": "2026-07-31T22:03:09Z"
       }
+    },
+    {
+      "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry2",
+      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 2/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=chore-triage-untriaged-issues-750s-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T20:13:32Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
+      "retry_round": 2
     },
     {
       "id": "chore-uc-33-dispute-subuc-links-2026-07-23",
@@ -11764,6 +11778,28 @@
         ]
       },
       "last_updated": "2026-08-01T00:20:00Z"
+    },
+    {
+      "id": "gh-issue-2612-retry1",
+      "action": "Follow-up: scheduled announcement / vote-started notifications are fire-once — a transient target-resolution error permanently drops them (PR #2608) (Closes #2612) [retry 1/2 of failed gh-issue-2612]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=gh-issue-2612 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T00:04:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "gh-issue-2612",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2612,
+        "url": "https://github.com/martin-janci/property-management/issues/2612",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     },
     {
       "id": "gh-issue-2621",

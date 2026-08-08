@@ -1043,6 +1043,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "chore-triage-untriaged-issues-750s-2026-07-23-retry2",
+      "branch": "auto-impl/chore-triage-untriaged-issues-750s-2026-a268a3e6",
+      "status": "failed",
+      "claimed_at": "2026-08-08T04:15:06Z",
+      "last_updated": "2026-08-08T04:25:12Z",
+      "status_changed_at": "2026-08-08T04:25:12Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked note=issues-749-779-already-closed-triaged; no code/doc deliverable; issue-mutation unavailable (retry 2/2 exhausted)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "chore-uc-33-dispute-subuc-links-2026-07-23",
       "branch": "auto-impl/chore-uc-33-dispute-subuc-links-2026-07-7cf3454a",
       "status": "failed",
@@ -10537,6 +10559,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2612-retry1",
+      "branch": "auto-impl/gh-issue-2612-retry1-a27f7e7f",
+      "status": "merged",
+      "claimed_at": "2026-08-08T02:12:19Z",
+      "last_updated": "2026-08-08T04:25:12Z",
+      "status_changed_at": "2026-08-08T04:25:12Z",
+      "pr_number": 2714,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2714",
+      "merged_at": "2026-08-08T04:25:12Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2714 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=decoupled publish/activate/close from notify via notified_at watermarks + retrying dispatch passes; migration 00228 additive w/ backfill; 3 IG3 sqlx tests; fmt+db-clippy green, api-server clippy/test deferred to CI",
+      "reviewer_summary": "verdict=approve note=clean-decoupled-notify-fix,additive-migration-00228,3-IG3-tests-green-on-CI",
+      "last_reviewed_oid": "2fc3071b94541ddcd410d750b939e0b9f9f0605b",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gh-issue-2621",
       "branch": "auto-impl/gh-issue-2621-50d47ce6",
       "status": "merged",
@@ -12775,5 +12819,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T02:26:53Z"
+  "archived_at": "2026-08-08T04:28:17Z"
 }
