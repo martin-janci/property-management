@@ -419,8 +419,13 @@ pub async fn create_group(
 )]
 pub async fn get_group(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(path): Path<GroupIdPath>,
 ) -> Result<Json<CommunityGroup>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY: without RequestPrincipal this read ran unauthenticated and
+    // leaked any tenant's group by UUID. Require a verified principal and
+    // reject a cross-tenant id with 404 (via verify_group_access).
+    verify_group_access(&state, &principal, path.id).await?;
     let group = state.community_repo.get_group(path.id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to get group");
         (
@@ -526,9 +531,15 @@ pub async fn leave_group(
 )]
 pub async fn list_posts(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(path): Path<GroupPostsPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<CommunityPost>>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY: without RequestPrincipal this read ran unauthenticated and
+    // leaked another tenant's posts by guessing a group UUID. Verify the
+    // group belongs to the caller's org (404 on a cross-tenant miss) before
+    // returning any of its posts.
+    verify_group_access(&state, &principal, path.group_id).await?;
     let posts = state
         .community_repo
         .get_group_posts(path.group_id, query.limit, query.offset)
@@ -865,8 +876,13 @@ pub async fn create_item(
 )]
 pub async fn get_item(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(path): Path<ItemIdPath>,
 ) -> Result<Json<MarketplaceItem>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY: without RequestPrincipal this read ran unauthenticated and
+    // leaked any tenant's marketplace item by UUID. Require a verified
+    // principal and reject a cross-tenant id with 404 (via verify_item_access).
+    verify_item_access(&state, &principal, path.id).await?;
     let item = state.community_repo.get_item(path.id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to get item");
         (
