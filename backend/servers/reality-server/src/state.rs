@@ -16,6 +16,7 @@ use db::{
     DbPool,
 };
 
+use crate::handlers::inquiries::{InquiriesHandler, LogInquiryNotifier};
 use crate::routes::sso::{OAuthTokens, PendingSsoSession, SessionInfo, SsoUserInfo};
 
 /// Application configuration.
@@ -833,6 +834,14 @@ pub struct AppState {
     pub portal_repo: PortalRepository,
     /// Reality Portal Professional repository (agencies, realtors, inquiries)
     pub reality_portal_repo: RealityPortalRepository,
+    /// Shared inquiries handler. The public anonymous POST routes
+    /// (`send_contact_message`, `request_viewing`) create inquiries through
+    /// this handler rather than the repository directly, so the best-effort
+    /// realtor notification fires via the injected [`InquiryNotifier`] seam.
+    /// Built with [`LogInquiryNotifier`] via [`InquiriesHandler::with_notifier`]
+    /// until a real email/push transport is wired — swapping the notifier here
+    /// is then the single change needed to light up delivery.
+    pub inquiries_handler: InquiriesHandler,
     /// Portal password-reset token repository (UC-44.3)
     pub portal_password_reset_repo: PortalPasswordResetRepository,
     /// Application configuration
@@ -908,6 +917,14 @@ impl AppState {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
         let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
+
+        // Public inquiry POSTs go through this handler so the best-effort realtor
+        // notification fires. `with_notifier` makes the transport injectable:
+        // today it is the logging stub; a real email/push adapter drops in here.
+        let inquiries_handler = InquiriesHandler::with_notifier(
+            reality_portal_repo.clone(),
+            Arc::new(LogInquiryNotifier),
+        );
         let config = AppConfig::from_env();
         let jwt_secret = config.jwt_secret.clone();
 
@@ -958,6 +975,7 @@ impl AppState {
             db,
             portal_repo,
             reality_portal_repo,
+            inquiries_handler,
             portal_password_reset_repo,
             config,
             sso_sessions: Arc::new(Mutex::new(HashMap::new())),
