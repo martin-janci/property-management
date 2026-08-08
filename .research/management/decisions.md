@@ -103,3 +103,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 - **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-08 (Phase 1.6 — pm-qa + pm-scrum-master)
+
+- **NEW (2026-08-08, pm-qa):** Elevate the 2026-07-30 pm-backend hotfix-no-test standard to a hard merge-gate: any PR closing a `security` / `data-loss` / `follow-up`-labelled issue MUST include a named regression test, enforceable as a CI status check (not just a reviewer checklist). Recurring slips this window: PR #2707 (memory-DoS body cap, closes #2704) and PR #2712 (dispute add_evidence audit event) both shipped test-less. Owner: pm-tech-lead + pm-qa.
+- **NEW (2026-08-08, pm-qa):** Sequencing convention for seam-PR + wire-PR pairs: add a `blocks-alone` label (or equivalent PR-body banner) on both PRs so a reviewer merging one without the other trips an explicit gate. Triggered by #2696 (inquiry-email notifier seam, ready-to-merge) whose live-endpoint wire (`code-review-reality-server-inquiry-notify-route-wiring`) is a separate open item. Owner: pm-scrum-master.
+- **NEW (2026-08-08, pm-qa):** Local pre-flight for api-server crate: vendor the utoipa-swagger-ui zip (or allowlist the specific download through the sandbox proxy) so `cd backend && cargo test -p api-server` succeeds offline. Every api-server refactor PR this window (#2711, #2713) marks tests DEFERRED-TO-CI, leaving the biggest crate without a local verify. Owner: pm-devops.

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T18:35:16Z",
+  "generated": "2026-08-08T06:35:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -983,11 +983,12 @@
         "screen-map ppt/disputes.md shipped",
         "feat(epic-80) commits merged",
         "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers (add_evidence follow-up #2483 remains; PR #2490 open)",
-        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked"
+        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked",
+        "PR #2712 (2026-08-07): DisputeRepository::add_evidence now emits an access-audit event on audit_logs (AuditRead-gated) — completes the who-added-evidence-to-which-dispute observability leg alongside the #2450 IDOR wave"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-08",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -1023,11 +1024,12 @@
         "screen-map ppt/file-dispute.md shipped/complete, AC-4 noted SHIPPED",
         "useDraftStorage imported+called in FileDisputePage.tsx (lines 20,124) \u2014 07-13 'unwired' finding was a false positive (route wrapper delegates)",
         "gap-80-2 task archived already-satisfied 2026-07-13, 37 tests pass",
-        "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers used by filing flow"
+        "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers used by filing flow",
+        "Re-check 2026-08-08 (cursor idx 5): filing flow unchanged in the 2026-07-30\u21922026-08-08 window; PR #2712 add_evidence audit event backfills observability for the flow's evidence-upload leg"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-08",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -1052,11 +1054,12 @@
         "sprint-status: done (promoted 2026-06-25)",
         "party-submission endpoints wired both sides",
         "152 dispute tests green",
-        "PR #2450 (2026-07-22): mediation-adjacent IDOR handlers hardened (5 endpoints)"
+        "PR #2450 (2026-07-22): mediation-adjacent IDOR handlers hardened (5 endpoints)",
+        "Re-check 2026-08-08 (cursor idx 5): mediation flow unchanged in the 2026-07-30→2026-08-08 window; no regressions"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-08",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",

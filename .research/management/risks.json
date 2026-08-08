@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-08T06:35:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -9,6 +9,8 @@
       "impact": "high",
       "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23"
     },
     {
@@ -18,6 +20,8 @@
       "impact": "medium",
       "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23"
     },
     {
@@ -27,6 +31,8 @@
       "impact": "high",
       "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23 (#2483)"
     },
     {
@@ -34,8 +40,10 @@
       "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
       "probability": "medium",
       "impact": "high",
-      "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
+      "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy (pm-qa-announce-fanout-real-sql-test queued 2026-08-08)",
       "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23 (#2484)"
     },
     {
@@ -45,6 +53,8 @@
       "impact": "medium",
       "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
       "source": "pm-data 2026-07-23 rotating role"
     },
     {
@@ -54,6 +64,8 @@
       "impact": "medium",
       "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
       "source": "pm-data 2026-07-23"
     },
     {
@@ -63,6 +75,8 @@
       "impact": "medium",
       "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
       "source": "pm-data 2026-05-28 (reopened 2026-07-23)"
     },
     {
@@ -72,6 +86,8 @@
       "impact": "high",
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
       "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open",
       "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)"
     },
     {
@@ -117,6 +133,61 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-qa-hotfix-no-test-recurring-2026-08-08",
+      "risk": "Hotfix-no-test pattern recurring: PR #2707 (memory-DoS body cap, closes #2704) and PR #2712 (dispute add_evidence audit event) shipped this window without a named regression test — exactly the standard pm-backend proposed on 2026-07-30. Without a merge-gate, the next similar security/data-loss fix will slip.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Adopt the 2026-07-30 pm-backend standard as a PR-template checklist item + reviewer gate; retro-backfill this window's two gaps (pm-qa-hotfix-no-test-backfill-2707-2712 queued 2026-08-08)",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-08 (rotation)"
+    },
+    {
+      "id": "pm-qa-inquiry-seam-alone-silent-success-2026-08-08",
+      "risk": "PR #2696 (inquiry-email notifier seam) is ready-to-merge, but the live public endpoint routes::inquiries::send_contact_message bypasses the InquiriesHandler seam. A reviewer approving #2696 in isolation ships a 'success message, no notification' regression — the pattern is subtle in review because the seam is correct code.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Sequence-lock #2696 with code-review-reality-server-inquiry-notify-route-wiring; add DO NOT MERGE SOLO banner to PR body; add route-level test asserting notifier fires on the live endpoint.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-08 (rotation)"
+    },
+    {
+      "id": "pm-qa-api-server-verify-defers-to-ci-2026-08-08",
+      "risk": "Sandbox blocks github.com egress, which the utoipa-swagger-ui build script needs. Every api-server PR (this window: #2711, #2713) marks cargo test / clippy DEFERRED-TO-CI. The biggest crate has no local pre-flight — silent CI-only failures land as noise or blocked merges, and the sandboxed refactor loop can't verify locally.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Vendor the swagger-ui zip in the repo, or allowlist that specific download via the sandbox proxy. Track as pm-qa-vendor-utoipa-swagger-ui-zip.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-08 (rotation)"
+    },
+    {
+      "id": "pm-qa-ssrf-2703-live-vuln-2026-08-08",
+      "risk": "SSRF DNS-rebinding TOCTOU (#2703) is a live high-severity vulnerability in shipped workflow api_call.rs code. Draft PR #2710 has been open >24h and is still not merged. Workflow engine is on the critical path.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Top-slot PR #2710 for the implementer + reviewer this window; require a resolver-spoof regression test before merge; do not close #2703 until it merges.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-08 (rotation)"
+    },
+    {
+      "id": "pm-qa-sprint-yaml-coverage-drift-2026-08-08",
+      "risk": "sprint-status.yaml still lists epics 6/7a/10b/80 as in-progress despite coverage.json showing all stories done for weeks. Any planner or role agent that reads sprint-yaml first will under-report progress and mis-prioritize (e.g. keep the epics on 'active' lists).",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "pm-scrum-master reconciles sprint-yaml against coverage.json in a housekeeping PR (pm-qa-sprint-yaml-reconcile-coverage queued 2026-08-08).",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-08 (rotation)"
     }
   ]
 }

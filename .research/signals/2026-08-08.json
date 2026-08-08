@@ -1,0 +1,240 @@
+{
+  "generated": "2026-08-08T04:34:03Z",
+  "since_iso": "2026-08-07T06:24:00Z",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeouts",
+      "type": "code-review-finding",
+      "source": "phase-1.5-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 \u2014 HttpClient { install(ContentNegotiation) { json(json) }; install(Logging) { level = LogLevel.NONE }; defaultRequest { contentType(...) } }. No HttpTimeout plugin is installed and grep 'HttpTimeout' across mobile-native/ returns zero matches. Ktor 3.x does NOT install HttpTimeout by default; without it, request/connect/socket timeouts fall through to platform defaults (effectively unbounded on a hung TCP connection).",
+        "Every repository shares this client \u2014 ApiClient.kt:32, ListingRepository.kt:18, FavoritesRepository.kt:18, InquiryRepository.kt:18, NotificationRepository.kt:18, PortalListingsRepository.kt:25, AgencyRepository.kt:20, RealtorRepository.kt:20, SsoService.kt:25 \u2014 so a stalled server leaves every screen's spinner spinning forever with no CancellationException surfaced.",
+        "Fix: install(HttpTimeout) { requestTimeoutMillis = 30_000; connectTimeoutMillis = 10_000; socketTimeoutMillis = 30_000 } in HttpClientProvider.kt \u2014 one-line change covers the entire mobile fleet."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profile-stats-serial-fetch",
+      "type": "code-review-finding",
+      "source": "phase-1.5-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "perf",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/account/ProfileStats.kt:42-45 \u2014 load() runs three independent suspend calls sequentially: favoritesRepository.getFavorites(), favoritesRepository.getSavedSearches(), inquiryRepository.getInquiries(). Each awaits the previous.",
+        "The three endpoints are independent; coroutineScope { async { ... }.awaitAll() } would fold latency to max() instead of sum(). On a 500 ms P95 backend round-trip this is 1.5 s vs 500 ms on the Account screen open."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs \u2014 four report handlers swallow repository DB errors with .unwrap_or_default() and serve HTTP 200 with silently-zeroed/empty data. Intra-handler inconsistency: primary query uses .map_err(...)?, secondary queries in the SAME handler discard the Result.",
+        "get_fault_statistics_report: get_monthly_fault_counts (:633) and get_monthly_resolution_times (:640) \u2014 transient DB error yields empty monthly_counts / resolution_time_trend arrays; report shows zero faults over time while primary stats block is populated.",
+        "get_voting_participation_report: get_participation_report (:715) \u2014 DB error makes participation_data an empty Vec; total_votes computes to 0 and quorum/participation summary is silently wrong.",
+        "get_occupancy_report (:827) and year-over-year sibling (:844) \u2014 DB error produces defaulted OccupancyReport with total_person_months == 0; year-over-year change_percentage computed against zeroed totals.",
+        "get_consumption_report (:949) and detect_consumption_anomalies (:962) \u2014 DB error silently drops all consumption rows/anomalies; monitoring/billing report shows zero usage on partial backend failure.",
+        "Impact: manager-facing analytical reports (fault trends, voting quorum, occupancy, utility consumption) degrade to HTTP 200 with zeros on transient DB error rather than 5xx the caller can retry. Fix: replace .unwrap_or_default() with .map_err(...)? -> 500."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) is 10 days old with no reviewDecision, not draft."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) is 10 days old with no reviewDecision, not draft."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) is 10 days old with no reviewDecision, not draft."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
+      "type": "repeated-churn",
+      "source": "commit range a2c0f53..dev",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs \u2014 330 lines churned this run (PR #2713 dedupe refactor); previously seen at 2026-07-30 (240 lines). runs_seen: 1 -> 2.",
+        "re-emit (seen 2026-07-30) \u2014 score_delta=0 per G4 dedup rule"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-inquiries-rs",
+      "type": "churn-hotspot",
+      "source": "commit range a2c0f53..dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs \u2014 169 lines churned this run (PR #2698 rate-limit rewiring). First-time hotspot."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Dispatcher closed dependabot PR #2705 (bump dtolnay/rust-toolchain 1.94.1 -> 1.100.0) \u2014 invalid tag; toolchain 1.100.0 does not exist. Noise-only signal (\u03940)."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met certainty bar (score>=3 backlog item + high confidence + allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json cursor advancement vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emitted signal delta guard",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "no >8, no decay-eligible items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "each new plan matched in brief"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research/ paths staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md byte-identity",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief cursor + phases-that-failed consistency",
+      "observed": "none failed, cursors advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or plans/_archive/",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-shrinking",
+      "observed": "count unchanged (7)",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "empty auto_fix_actions (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor advanced",
+      "observed": "action-list.items OK, risks.items OK, project-state.md non-empty, pm_cursor 3->4, coverage_cursor 5->6",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token literal in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}
