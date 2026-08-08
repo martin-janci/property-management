@@ -37,20 +37,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-inquiry-notify-route-wiring",
-      "action": "reality-server: the live public endpoint routes::inquiries::send_contact_message persists via state.reality_portal_repo.create_inquiry(...) directly and does NOT route through InquiriesHandler, so the new InquiryNotifier seam (added in PR #2696) is never reached on the live path — realtors still get no notification. Wire send_contact_message (and the viewing-request route if it shares the bypass) through InquiriesHandler::with_notifier so the best-effort notification fires. Touches routes/inquiries.rs + handler state wiring.",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "implementer-secondary-finding PR#2696 (inquiry-email-stub) 2026-08-06T22:36:16Z",
-      "deadline": null,
-      "dependency": "code-review-reality-server-inquiry-email-stub (PR #2696 seam must land first)",
-      "depends_on": [
-        "code-review-reality-server-inquiry-email-stub"
-      ],
-      "first_open_at": "2026-08-06T22:36:16Z"
-    },
-    {
       "id": "code-review-reality-web-listingform-no-i18n",
       "action": "reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app",
       "owner_role": "pm-backend",
@@ -129,20 +115,6 @@
       "retry_round": 1
     },
     {
-      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers) [retry 1/2 of failed refactor-churn-hotspot-api-server-reports-2026-07-31]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-reports-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-08T04:07:24Z",
-      "retry_of": "refactor-churn-hotspot-api-server-reports-2026-07-31",
-      "retry_round": 1
-    },
-    {
       "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30-retry1",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-tenant-2026-07-30]",
       "owner_role": "pm-tech-lead",
@@ -155,20 +127,6 @@
       "first_open_at": "2026-08-08T06:23:37Z",
       "retry_of": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
       "retry_round": 1
-    },
-    {
-      "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry2",
-      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 2/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-08T06:23:37Z (retry_of=sec-layout-webhook-hmac-verify-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T06:14:40Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-08T06:23:37Z",
-      "retry_of": "sec-layout-webhook-hmac-verify-2026-07-23",
-      "retry_round": 2
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

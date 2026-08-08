@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-08T06:37:59Z",
+  "archived_at": "2026-08-08T10:16:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3555,6 +3555,27 @@
         "commit": "e7ca162b8d7fa6fc079c769807cb6c733d3052fc",
         "subject": "code-review-reality-server-inquiry-email-stub: route inquiry notifications through an injectable notifier seam (#2696)",
         "at": "2026-08-08T06:22:30Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-notify-route-wiring",
+      "action": "reality-server: the live public endpoint routes::inquiries::send_contact_message persists via state.reality_portal_repo.create_inquiry(...) directly and does NOT route through InquiriesHandler, so the new InquiryNotifier seam (added in PR #2696) is never reached on the live path — realtors still get no notification. Wire send_contact_message (and the viewing-request route if it shares the bypass) through InquiriesHandler::with_notifier so the best-effort notification fires. Touches routes/inquiries.rs + handler state wiring.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "implementer-secondary-finding PR#2696 (inquiry-email-stub) 2026-08-06T22:36:16Z | gc1-reconcile 2026-08-08T10:13:28Z",
+      "deadline": null,
+      "dependency": "code-review-reality-server-inquiry-email-stub (PR #2696 seam must land first)",
+      "depends_on": [
+        "code-review-reality-server-inquiry-email-stub"
+      ],
+      "first_open_at": "2026-08-06T22:36:16Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2719,
+        "merged_at": "2026-08-08T08:19:00Z",
+        "at": "2026-08-08T10:13:28Z"
       }
     },
     {
@@ -12968,6 +12989,26 @@
       "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
     },
     {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers) [retry 1/2 of failed refactor-churn-hotspot-api-server-reports-2026-07-31]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-reports-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z) | dev-reconcile 2026-08-08T10:13:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "refactor-churn-hotspot-api-server-reports-2026-07-31",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4db58a07a72e78904ad3698e5366bb6e9b556e61",
+        "subject": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1: extract reports helpers into helpers.rs (#2720)",
+        "at": "2026-08-08T10:13:28Z"
+      }
+    },
+    {
       "id": "refactor-churn-hotspot-api-server-routes-auth",
       "action": "api-server routes/auth.rs — repeated hotspot + 3 static-review findings this run",
       "owner_role": "pm-tech-lead",
@@ -13846,6 +13887,27 @@
         "archive_status": "failed",
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry2",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 2/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T06:23:37Z (retry_of=sec-layout-webhook-hmac-verify-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T06:14:40Z) | gc1-reconcile 2026-08-08T10:13:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T06:23:37Z",
+      "retry_of": "sec-layout-webhook-hmac-verify-2026-07-23",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2718,
+        "merged_at": "2026-08-08T08:18:30Z",
+        "at": "2026-08-08T10:13:28Z"
       }
     },
     {

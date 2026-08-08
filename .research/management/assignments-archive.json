@@ -11243,6 +11243,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-layout-de1cdc08",
+      "status": "merged",
+      "claimed_at": "2026-08-08T08:12:30Z",
+      "last_updated": "2026-08-08T10:16:42Z",
+      "status_changed_at": "2026-08-08T10:16:42Z",
+      "pr_number": 2721,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2721",
+      "merged_at": "2026-08-08T10:16:42Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2721 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=extracted acquire_public_conn (mirrors admin.rs); fmt clean; clippy/test blocked by utoipa-swagger-ui egress, CI authoritative; prior dedup already merged as #2711 (stale branch force-updated)",
+      "reviewer_summary": "verdict=approve note=code-review-clean; CI green at 0b6eb152; merged squash 21d9143f",
+      "last_reviewed_oid": "0b6eb152ea26a89f73e6f0a5da4f729b4384c790",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-reports-2026-07-27",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-report-ef42efab",
       "status": "merged",
@@ -11284,6 +11306,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-report-43ac8a2b",
+      "status": "merged",
+      "claimed_at": "2026-08-08T08:12:30Z",
+      "last_updated": "2026-08-08T10:16:42Z",
+      "status_changed_at": "2026-08-08T10:16:42Z",
+      "pr_number": 2720,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2720",
+      "merged_at": "2026-08-08T10:16:42Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2720 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=extracted 4 report helpers to helpers.rs (2460->2185); fmt clean; clippy blocked by utoipa-swagger-ui egress, CI-gated (scope-check area-map mismatch: pm-tech-lead maps docs/.research but target is api-server file — benign)",
+      "reviewer_summary": "verdict=approve note=unused-import fixed (super:: path); CI green at 4d253269; behavior-preserving helper extraction; merged squash 4db58a07",
+      "last_reviewed_oid": "4d253269e7ff250472aafb8c6118d6cf5116aa9e",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
@@ -12973,5 +13017,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T08:17:09Z"
+  "archived_at": "2026-08-08T10:16:52Z"
 }
