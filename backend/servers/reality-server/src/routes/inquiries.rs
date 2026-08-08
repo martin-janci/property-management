@@ -135,6 +135,45 @@ async fn enforce_inquiry_rate_limit(
     }
 }
 
+/// Map the shared [`InquiriesHandler::create_inquiry`] result onto the public
+/// contact/viewing HTTP surface, returning the new inquiry id on success.
+///
+/// Both anonymous POST routes (`send_contact_message`, `request_viewing`) now
+/// create through the handler rather than calling the repository directly, so
+/// the best-effort realtor notification fires via the handler's
+/// [`InquiryNotifier`](crate::handlers::inquiries::InquiryNotifier) seam. This
+/// helper hoists the single `InquiryResult` → status mapping both routes share
+/// and keeps it unit-testable without a database. `ctx` labels the server-side
+/// log line for the database-error branch.
+fn inquiry_result_to_id(
+    ctx: &str,
+    result: InquiryResult,
+) -> Result<Uuid, (axum::http::StatusCode, String)> {
+    match result {
+        InquiryResult::Created(inquiry) => Ok(inquiry.id),
+        // The route already resolved the realtor from an ACTIVE listing before
+        // calling the handler, so a foreign-key failure here means the
+        // listing/realtor vanished concurrently — surface it as the same 404
+        // the pre-wiring code returned for a missing listing.
+        InquiryResult::ListingNotFound | InquiryResult::RealtorNotFound => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Listing not found".to_string(),
+        )),
+        InquiryResult::ValidationFailed(errors) => {
+            let errors: Vec<String> = errors.iter().map(|e| e.message.clone()).collect();
+            Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")))
+        }
+        // `create_inquiry` never returns `RateLimited` (the per-IP throttle runs
+        // earlier, at the route layer, via `enforce_inquiry_rate_limit`). Map it
+        // defensively rather than panic if a future change routes it here.
+        InquiryResult::RateLimited => Err((
+            axum::http::StatusCode::TOO_MANY_REQUESTS,
+            "Too many requests. Please try again in a minute.".to_string(),
+        )),
+        InquiryResult::DatabaseError(e) => Err(crate::util::errors::db_error(ctx, e)),
+    }
+}
+
 /// Create inquiries router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -338,35 +377,26 @@ pub async fn send_contact_message(
         preferred_time: None,
     };
 
-    match state
-        .reality_portal_repo
-        .create_inquiry(listing_id, realtor_id, None, inquiry_data)
-        .await
-    {
-        Ok(inquiry) => {
-            tracing::info!(
-                inquiry_id = %inquiry.id,
-                listing_id = %listing_id,
-                "Contact message sent"
-            );
+    // Create through the shared handler (not the repo directly) so the
+    // best-effort new-inquiry notification fires for the realtor.
+    let inquiry_id = inquiry_result_to_id(
+        "send contact message",
+        state
+            .inquiries_handler
+            .create_inquiry(listing_id, realtor_id, None, inquiry_data)
+            .await,
+    )?;
 
-            Ok(Json(ContactMessageResponse {
-                message: "Your message has been sent. The realtor will respond soon.".to_string(),
-                inquiry_id: inquiry.id,
-            }))
-        }
-        Err(e) => {
-            let error_str = e.to_string();
-            if error_str.contains("violates foreign key") {
-                Err((
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Listing not found".to_string(),
-                ))
-            } else {
-                Err(crate::util::errors::db_error("send contact message", e))
-            }
-        }
-    }
+    tracing::info!(
+        inquiry_id = %inquiry_id,
+        listing_id = %listing_id,
+        "Contact message sent"
+    );
+
+    Ok(Json(ContactMessageResponse {
+        message: "Your message has been sent. The realtor will respond soon.".to_string(),
+        inquiry_id,
+    }))
 }
 
 /// Request a viewing for a listing.
@@ -515,35 +545,28 @@ pub async fn request_viewing(
         preferred_time: None,
     };
 
-    match state
-        .reality_portal_repo
-        .create_inquiry(listing_id, realtor_id, None, inquiry_data)
-        .await
-    {
-        Ok(inquiry) => {
-            tracing::info!(
-                inquiry_id = %inquiry.id,
-                listing_id = %listing_id,
-                "Viewing request sent"
-            );
+    // Create through the shared handler (not the repo directly) so the
+    // best-effort new-inquiry notification fires for the realtor.
+    let inquiry_id = inquiry_result_to_id(
+        "send viewing request",
+        state
+            .inquiries_handler
+            .create_inquiry(listing_id, realtor_id, None, inquiry_data)
+            .await,
+    )?;
 
-            Ok(Json(ViewingRequestResponse {
-                message: "Your viewing request has been sent. The realtor will contact you to confirm the time.".to_string(),
-                inquiry_id: inquiry.id,
-            }))
-        }
-        Err(e) => {
-            let error_str = e.to_string();
-            if error_str.contains("violates foreign key") {
-                Err((
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Listing not found".to_string(),
-                ))
-            } else {
-                Err(crate::util::errors::db_error("send viewing request", e))
-            }
-        }
-    }
+    tracing::info!(
+        inquiry_id = %inquiry_id,
+        listing_id = %listing_id,
+        "Viewing request sent"
+    );
+
+    Ok(Json(ViewingRequestResponse {
+        message:
+            "Your viewing request has been sent. The realtor will contact you to confirm the time."
+                .to_string(),
+        inquiry_id,
+    }))
 }
 
 /// List my inquiries (as a realtor or user).
@@ -771,6 +794,106 @@ pub async fn respond_to_inquiry(
         message: message.message,
         created_at: message.created_at.to_rfc3339(),
     }))
+}
+
+#[cfg(test)]
+mod inquiry_result_mapping_tests {
+    //! Regression guard for the notify-route wiring: both anonymous inquiry
+    //! POSTs now create through `InquiriesHandler` (which fires the realtor
+    //! notification) and translate its `InquiryResult` via
+    //! [`inquiry_result_to_id`]. These tests pin that translation without a DB.
+    use super::inquiry_result_to_id;
+    use crate::handlers::inquiries::{
+        inquiry_status, inquiry_types, preferred_contact, InquiryResult, ValidationError,
+    };
+    use axum::http::StatusCode;
+    use chrono::Utc;
+    use db::models::ListingInquiry;
+    use uuid::Uuid;
+
+    fn sample_inquiry(id: Uuid) -> ListingInquiry {
+        ListingInquiry {
+            id,
+            listing_id: Uuid::new_v4(),
+            realtor_id: Uuid::new_v4(),
+            user_id: None,
+            name: "Jane Buyer".to_string(),
+            email: "jane@example.com".to_string(),
+            phone: None,
+            message: "Is this still available?".to_string(),
+            inquiry_type: inquiry_types::INFO.to_string(),
+            preferred_contact: preferred_contact::EMAIL.to_string(),
+            preferred_time: None,
+            status: inquiry_status::NEW.to_string(),
+            read_at: None,
+            responded_at: None,
+            source: None,
+            utm_source: None,
+            utm_medium: None,
+            created_at: Utc::now(),
+        }
+    }
+
+    /// A created inquiry surfaces its id to the caller (the success path that
+    /// now runs through the handler + notifier instead of the repo directly).
+    #[test]
+    fn created_yields_inquiry_id() {
+        let id = Uuid::new_v4();
+        let got = inquiry_result_to_id("ctx", InquiryResult::Created(Box::new(sample_inquiry(id))));
+        assert_eq!(got.expect("created must return the inquiry id"), id);
+    }
+
+    /// A vanished listing/realtor (FK failure inside the handler) becomes a 404,
+    /// preserving the pre-wiring public contract.
+    #[test]
+    fn listing_or_realtor_not_found_maps_to_404() {
+        for result in [
+            InquiryResult::ListingNotFound,
+            InquiryResult::RealtorNotFound,
+        ] {
+            let err = inquiry_result_to_id("ctx", result).expect_err("must be an error");
+            assert_eq!(err.0, StatusCode::NOT_FOUND);
+            assert_eq!(err.1, "Listing not found");
+        }
+    }
+
+    /// Validation errors from the handler are joined into a 400 body.
+    #[test]
+    fn validation_failed_maps_to_400_with_messages() {
+        let result = InquiryResult::ValidationFailed(vec![
+            ValidationError {
+                field: "email".to_string(),
+                message: "Invalid email format".to_string(),
+            },
+            ValidationError {
+                field: "message".to_string(),
+                message: "Message is required".to_string(),
+            },
+        ]);
+        let err = inquiry_result_to_id("ctx", result).expect_err("must be an error");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert_eq!(err.1, "Invalid email format, Message is required");
+    }
+
+    /// Defensive mapping: a `RateLimited` result (unreachable today) is a 429,
+    /// never a panic.
+    #[test]
+    fn rate_limited_maps_to_429() {
+        let err = inquiry_result_to_id("ctx", InquiryResult::RateLimited).expect_err("error");
+        assert_eq!(err.0, StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    /// Database errors are hidden behind a generic 500 (never leaked to clients).
+    #[test]
+    fn database_error_maps_to_500_generic() {
+        let err = inquiry_result_to_id(
+            "ctx",
+            InquiryResult::DatabaseError("relation \"listings\" does not exist".to_string()),
+        )
+        .expect_err("must be an error");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.1, "Internal server error");
+    }
 }
 
 #[cfg(test)]
