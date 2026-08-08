@@ -17,12 +17,13 @@ pub mod audit;
 pub mod features;
 pub mod oauth;
 pub mod ops;
+pub mod settings;
 pub mod tenants;
 
 use admin_core::{require_capability, Capability};
 use axum::{
     http::StatusCode,
-    routing::{delete, get, post, put},
+    routing::{delete, get, patch, post, put},
     Json, Router,
 };
 use common::errors::ErrorResponse;
@@ -50,6 +51,7 @@ pub use ops::{
     get_thresholds, get_upcoming_maintenance, get_upcoming_maintenance_admin,
     list_system_announcements, schedule_maintenance, update_system_announcement, update_threshold,
 };
+pub use settings::{get_platform_settings, update_platform_settings};
 pub use tenants::{
     get_organization, get_platform_stats, list_organizations, reactivate_organization,
     suspend_organization,
@@ -220,6 +222,16 @@ pub fn router() -> Router<AppState> {
         .route(
             "/onboarding-config",
             get(get_onboarding_config).layer(require_capability(Capability::SiteSettingsRead)),
+        )
+        // Platform settings (global operator settings — admin-web /admin/platform)
+        .route(
+            "/settings",
+            get(get_platform_settings).layer(require_capability(Capability::SiteSettingsRead)),
+        )
+        .route(
+            "/settings",
+            patch(update_platform_settings)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
         )
         // Agency provisioning (Phase 1: Tenant Resolution).
         // Merged in from `agency_provisioning` so the new

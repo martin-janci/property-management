@@ -28,7 +28,7 @@
 
 use crate::models::fault::StatusCount as FaultStatusCount;
 use crate::models::platform_admin::{
-    AdminOrganizationDetail, OrganizationDetailMetrics, OrganizationMetrics,
+    AdminOrganizationDetail, OrganizationDetailMetrics, OrganizationMetrics, PlatformSettings,
 };
 use crate::models::Organization;
 use crate::repositories::fault::fault_counts_by_status;
@@ -47,6 +47,51 @@ impl PlatformAdminRepository {
     /// Create a new PlatformAdminRepository.
     pub fn new(pool: DbPool) -> Self {
         Self { pool }
+    }
+
+    /// Read the singleton platform settings row (migration 00228).
+    ///
+    /// The row is seeded by the migration, so this always returns a row on a
+    /// migrated database.
+    pub async fn get_platform_settings(&self) -> Result<PlatformSettings, SqlxError> {
+        sqlx::query_as::<_, PlatformSettings>(
+            r#"
+            SELECT maintenance_mode, signup_enabled, support_email, updated_at, updated_by
+            FROM platform_settings
+            WHERE id = 1
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Patch the singleton platform settings row. `None` fields are left
+    /// unchanged (partial `PATCH` semantics). Returns the updated row.
+    pub async fn update_platform_settings(
+        &self,
+        maintenance_mode: Option<bool>,
+        signup_enabled: Option<bool>,
+        support_email: Option<String>,
+        actor: Uuid,
+    ) -> Result<PlatformSettings, SqlxError> {
+        sqlx::query_as::<_, PlatformSettings>(
+            r#"
+            UPDATE platform_settings
+            SET maintenance_mode = COALESCE($1, maintenance_mode),
+                signup_enabled   = COALESCE($2, signup_enabled),
+                support_email    = COALESCE($3, support_email),
+                updated_by       = $4,
+                updated_at       = NOW()
+            WHERE id = 1
+            RETURNING maintenance_mode, signup_enabled, support_email, updated_at, updated_by
+            "#,
+        )
+        .bind(maintenance_mode)
+        .bind(signup_enabled)
+        .bind(support_email)
+        .bind(actor)
+        .fetch_one(&self.pool)
+        .await
     }
 
     /// List all organizations with metrics (platform admin view).

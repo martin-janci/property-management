@@ -99,6 +99,27 @@ pub struct ReactivateOrganizationRequest {
     pub note: Option<String>,
 }
 
+// ==================== Platform Settings Models ====================
+
+/// Global, operator-controlled platform settings (singleton).
+///
+/// Backs the `platform_settings` table (migration 00228). Unlike the
+/// per-tenant `tenant_settings` store, this is a single row shared across the
+/// whole deployment, written via `PATCH /api/v1/platform-admin/settings`.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct PlatformSettings {
+    /// Whether the platform is in maintenance mode.
+    pub maintenance_mode: bool,
+    /// Whether public sign-up is enabled.
+    pub signup_enabled: bool,
+    /// Operator support contact email (may be empty).
+    pub support_email: String,
+    /// When the settings were last written.
+    pub updated_at: DateTime<Utc>,
+    /// Operator who last wrote the settings (null after operator deletion).
+    pub updated_by: Option<Uuid>,
+}
+
 // ==================== Feature Flag Models ====================
 
 /// Feature flag entity.

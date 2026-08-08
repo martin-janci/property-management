@@ -122,8 +122,16 @@ async fn patch_platform_settings_persists(pool: PgPool) {
     );
 
     let body = resp.json_value();
-    assert_eq!(body["platform.maintenance_mode"], json!(true), "body: {body}");
-    assert_eq!(body["platform.signup_enabled"], json!(false), "body: {body}");
+    assert_eq!(
+        body["platform.maintenance_mode"],
+        json!(true),
+        "body: {body}"
+    );
+    assert_eq!(
+        body["platform.signup_enabled"],
+        json!(false),
+        "body: {body}"
+    );
     assert_eq!(
         body["platform.support_email"],
         json!("ops@example.com"),
@@ -187,7 +195,11 @@ async fn patch_platform_settings_partial_update(pool: PgPool) {
     );
     let body = resp.json_value();
     // Untouched fields keep their prior values.
-    assert_eq!(body["platform.maintenance_mode"], json!(true), "body: {body}");
+    assert_eq!(
+        body["platform.maintenance_mode"],
+        json!(true),
+        "body: {body}"
+    );
     assert_eq!(body["platform.signup_enabled"], json!(true), "body: {body}");
     // The patched field changed.
     assert_eq!(
