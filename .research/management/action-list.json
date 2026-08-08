@@ -130,6 +130,70 @@
       "first_open_at": "2026-08-07T18:08:20Z",
       "retry_of": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
       "retry_round": 1
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-tenant-2026-07-30]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=refactor-churn-hotspot-api-server-layout-tenant-2026-07-30 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:09:17Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "retry_round": 1
+    },
+    {
+      "id": "data-audit-add-evidence-idor-fix-2026-07-23-retry2",
+      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern) [retry 2/2 of failed data-audit-add-evidence-idor-fix-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=data-audit-add-evidence-idor-fix-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:23:52Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "data-audit-add-evidence-idor-fix-2026-07-23",
+      "retry_round": 2
+    },
+    {
+      "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry2",
+      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 2/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=chore-triage-untriaged-issues-750s-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T20:13:32Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
+      "retry_round": 2
+    },
+    {
+      "id": "gh-issue-2612-retry1",
+      "action": "Follow-up: scheduled announcement / vote-started notifications are fire-once — a transient target-resolution error permanently drops them (PR #2608) (Closes #2612) [retry 1/2 of failed gh-issue-2612]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=gh-issue-2612 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T00:04:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "gh-issue-2612",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2612,
+        "url": "https://github.com/martin-janci/property-management/issues/2612",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

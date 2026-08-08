@@ -7173,7 +7173,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Tier1d review 2026-08-07 (reality-web)"
       ],
@@ -7186,7 +7186,12 @@
       ],
       "created_at": "2026-08-07",
       "updated_at": "2026-08-07",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-08T00:06:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2709
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
@@ -7194,7 +7199,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2685"
       ],
@@ -7206,7 +7211,12 @@
       ],
       "created_at": "2026-08-07",
       "updated_at": "2026-08-07",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-08T00:06:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2708
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
@@ -7239,7 +7249,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2688",
         "PR #2694"
@@ -7252,7 +7262,12 @@
       ],
       "created_at": "2026-08-07",
       "updated_at": "2026-08-07",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-08T00:06:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2706
+      }
     }
   ]
 }
