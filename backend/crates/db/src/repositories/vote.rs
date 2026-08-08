@@ -808,7 +808,18 @@ impl VoteRepository {
                 eligible_count = $4,
                 published_by = $5,
                 published_at = NOW(),
-                updated_at = NOW()
+                updated_at = NOW(),
+                -- A manual publish straight to `active` stamps the started
+                -- watermark = NOW() (issue #2612) so the scheduler's decoupled
+                -- vote-started dispatch pass (selects `active AND
+                -- started_notified_at IS NULL`) does NOT re-notify it —
+                -- preserving the pre-existing behaviour that manual publish did
+                -- not fan out a vote-started notification. Publishing to
+                -- `scheduled` leaves it NULL so activation notifies later.
+                started_notified_at = CASE
+                    WHEN $2::vote_status = 'active'::vote_status THEN NOW()
+                    ELSE NULL
+                END
             WHERE id = $1 AND status = 'draft'
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
@@ -893,7 +904,15 @@ impl VoteRepository {
                 quorum_met = $3,
                 results = $4,
                 results_calculated_at = NOW(),
-                updated_at = NOW()
+                updated_at = NOW(),
+                -- Stamp the closed watermark = NOW() (issue #2612). This is the
+                -- shared close path (manager route AND the scheduler's
+                -- `close_expired_votes`). A manual close is thereby suppressed
+                -- from the scheduler's closed-vote dispatch pass, preserving the
+                -- pre-existing behaviour that manual close did not fan out a
+                -- result notification. `close_expired_votes` re-clears this to
+                -- NULL for the votes IT closes so the scheduler still notifies.
+                closed_notified_at = NOW()
             WHERE id = $1
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
@@ -924,10 +943,15 @@ impl VoteRepository {
 
     /// Activate scheduled votes that have reached their start time.
     pub async fn activate_scheduled_votes(&self) -> Result<Vec<Vote>, SqlxError> {
+        // `started_notified_at = NULL` marks the activated vote as "needs a
+        // vote-started notification" (issue #2612). Activation only flips the
+        // state; the scheduler's decoupled dispatch pass resolves eligible
+        // voters, notifies, and stamps the watermark only on success — so a
+        // transient failure retries instead of dropping the notification.
         let votes = sqlx::query_as::<_, Vote>(
             r#"
             UPDATE votes
-            SET status = 'active', updated_at = NOW()
+            SET status = 'active', updated_at = NOW(), started_notified_at = NULL
             WHERE status = 'scheduled' AND start_at <= NOW()
             RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
@@ -955,7 +979,80 @@ impl VoteRepository {
             closed.push(id);
         }
 
+        // `close()` (shared with the manager route) stamps `closed_notified_at`
+        // = NOW() to suppress manual closes from the dispatch pass. Re-clear it
+        // to NULL for the votes the SCHEDULER just closed, marking them "needs a
+        // closed-vote result notification" (issue #2612). The dispatch pass then
+        // notifies and re-stamps on success.
+        if !closed.is_empty() {
+            sqlx::query("UPDATE votes SET closed_notified_at = NULL WHERE id = ANY($1)")
+                .bind(&closed)
+                .execute(&self.pool)
+                .await?;
+        }
+
         Ok(closed)
+    }
+
+    /// Active votes whose vote-started notification has not yet been dispatched
+    /// (`status = 'active' AND started_notified_at IS NULL`). Backs the
+    /// decoupled dispatch pass (issue #2612): activation and notification are
+    /// separate, so a transient failure leaves the watermark NULL and the vote
+    /// is re-selected here next tick. Oldest-first so a backlog drains in order.
+    pub async fn find_active_pending_started_notification(&self) -> Result<Vec<Vote>, SqlxError> {
+        let votes = sqlx::query_as::<_, Vote>(
+            r#"
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
+            FROM votes
+            WHERE status = 'active' AND started_notified_at IS NULL
+            ORDER BY start_at ASC NULLS FIRST
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(votes)
+    }
+
+    /// Stamp a vote's started-notification watermark after a successful dispatch
+    /// (issue #2612). Guarded on `started_notified_at IS NULL` (idempotent).
+    /// Returns rows stamped (0 or 1).
+    pub async fn mark_started_notified(&self, id: Uuid) -> Result<u64, SqlxError> {
+        let result =
+            sqlx::query("UPDATE votes SET started_notified_at = NOW() WHERE id = $1 AND started_notified_at IS NULL")
+                .bind(id)
+                .execute(&self.pool)
+                .await?;
+        Ok(result.rows_affected())
+    }
+
+    /// Ids of closed votes whose result notification has not yet been dispatched
+    /// (`status = 'closed' AND closed_notified_at IS NULL`). Only votes closed
+    /// by the scheduler (`close_expired_votes` cleared the watermark) qualify;
+    /// manual closes keep the NOW() stamp `close()` set. Oldest-first.
+    pub async fn find_closed_pending_notification(&self) -> Result<Vec<Uuid>, SqlxError> {
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT id FROM votes
+            WHERE status = 'closed' AND closed_notified_at IS NULL
+            ORDER BY end_at ASC NULLS FIRST
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
+    /// Stamp a vote's closed-notification watermark after a successful dispatch
+    /// (issue #2612). Guarded on `closed_notified_at IS NULL` (idempotent).
+    /// Returns rows stamped (0 or 1).
+    pub async fn mark_closed_notified(&self, id: Uuid) -> Result<u64, SqlxError> {
+        let result =
+            sqlx::query("UPDATE votes SET closed_notified_at = NOW() WHERE id = $1 AND closed_notified_at IS NULL")
+                .bind(id)
+                .execute(&self.pool)
+                .await?;
+        Ok(result.rows_affected())
     }
 
     // ========================================================================
