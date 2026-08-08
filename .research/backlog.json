@@ -6997,7 +6997,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator"
       ],
@@ -7009,7 +7009,12 @@
       ],
       "created_at": "2026-08-06",
       "updated_at": "2026-08-06",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-08T08:06:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2696
+      }
     },
     {
       "id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
