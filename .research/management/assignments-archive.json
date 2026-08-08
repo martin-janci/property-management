@@ -3671,6 +3671,28 @@
       "merge_attempted_at": "2026-08-08T06:27:05Z"
     },
     {
+      "task_id": "code-review-reality-server-inquiry-notify-route-wiring",
+      "branch": "auto-impl/code-review-reality-server-inquiry-notif-afc76610",
+      "status": "merged",
+      "claimed_at": "2026-08-08T06:27:05Z",
+      "last_updated": "2026-08-08T08:20:00Z",
+      "status_changed_at": "2026-08-08T08:20:00Z",
+      "pr_number": 2719,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2719",
+      "merged_at": "2026-08-08T08:19:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "[fast-path recovered] implementer pushed branch + opened draft PR #2719 (route anonymous inquiry POSTs through InquiriesHandler)",
+      "reviewer_summary": "verdict=approve note=wiring-verified-notifier-fires-on-live-anon-path-auth/ratelimit/validation-preserved-CI-green (self-approve blocked; posted as comment)",
+      "last_reviewed_oid": "1ac69d5df05360eaaeb6da12a354bddc9c0e1d70",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-08T08:12:30Z"
+    },
+    {
       "task_id": "code-review-reality-server-invite-authz",
       "branch": "auto-impl/code-review-reality-server-invite-authz-b22a516b",
       "status": "merged",
@@ -4793,6 +4815,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "dx-fixme-admin-web-mobile-config-patch-endpoint-retry1",
+      "branch": "auto-impl/dx-fixme-admin-web-mobile-config-patch-e-d0c5cb22",
+      "status": "merged",
+      "claimed_at": "2026-08-08T04:15:06Z",
+      "last_updated": "2026-08-08T08:20:00Z",
+      "status_changed_at": "2026-08-08T08:20:00Z",
+      "pr_number": 2717,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2717",
+      "merged_at": "2026-08-08T08:18:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "implementer pushed 2 commits (feat PATCH/GET /api/v1/admin/mobile-config + migration 00228 + IG3 test) but no PR; dispatcher created draft PR #2717. [phase5.7 respawn round 1 dispatched 2026-08-08T06:27Z: renumber migration 00228->00230 (collides with merged #2714 on dev)]",
+      "reviewer_summary": "verdict=approve note=migration-renumber-00230-verified-collision-free-ci-green",
+      "last_reviewed_oid": "554eabc69ea77623f4954b61c2fb3bf700890e0c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-08T08:12:30Z"
     },
     {
       "task_id": "dx-fixme-admin-web-platform-settings-patch-endpoint",
@@ -12131,6 +12175,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "sec-layout-webhook-hmac-verify-2026-07-23-retry2",
+      "branch": "auto-impl/sec-layout-webhook-hmac-verify-2026-07-2-268687ef",
+      "status": "merged",
+      "claimed_at": "2026-08-08T06:27:05Z",
+      "last_updated": "2026-08-08T08:20:00Z",
+      "status_changed_at": "2026-08-08T08:20:00Z",
+      "pr_number": 2718,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2718",
+      "merged_at": "2026-08-08T08:18:30Z",
+      "specialist": "pm-security",
+      "implementer_summary": "[fast-path recovered] implementer pushed branch + opened draft PR #2718 (layout webhook HMAC parity + body-binding test)",
+      "reviewer_summary": "verdict=approve note=hmac-verify-constant-time-and-body-binding-test-confirmed-parity-ok (self-approve blocked; posted as comment)",
+      "last_reviewed_oid": "3496015a49b291f906f8eee42bd58cc9a3c6be3a",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-08T08:12:30Z"
+    },
+    {
       "task_id": "sec-layout-webhook-integration-test-2026-07-23",
       "branch": "auto-impl/sec-layout-webhook-integration-test-2026-64f0f687",
       "status": "failed",
@@ -12907,5 +12973,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T06:37:59Z"
+  "archived_at": "2026-08-08T08:17:09Z"
 }
