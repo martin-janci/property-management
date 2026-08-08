@@ -87,7 +87,14 @@ pub enum ComparisonOperator {
 }
 
 /// A single condition to evaluate.
+///
+/// `deny_unknown_fields` is load-bearing for the fail-closed contract in
+/// [`WorkflowExecutor::evaluate_conditions`]: a stored object carrying keys
+/// that are not part of this shape must FAIL to deserialize here (rather than
+/// silently dropping the unknown keys) so the corrupt rule falls through to
+/// the error branch instead of masquerading as a valid condition.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Condition {
     /// Field path to evaluate (e.g., "trigger.amount", "action_1.status")
     pub field: String,
@@ -108,7 +115,15 @@ pub enum LogicalOperator {
 }
 
 /// A group of conditions with a logical operator.
+///
+/// `deny_unknown_fields` rejects objects that carry stray keys, so a corrupt
+/// or unknown stored rule cannot deserialize into an (otherwise all-default)
+/// empty group and thereby fail open. Note that `deny_unknown_fields` alone is
+/// insufficient — an object with *no* recognised keys at all (e.g. `{}`) still
+/// parses as a structurally empty group; [`ConditionGroup::is_empty`] plus the
+/// guard in [`evaluate_condition_group`] close that hole.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ConditionGroup {
     /// Logical operator to combine conditions
     #[serde(default)]
@@ -119,6 +134,17 @@ pub struct ConditionGroup {
     /// Nested condition groups
     #[serde(default)]
     pub groups: Vec<ConditionGroup>,
+}
+
+impl ConditionGroup {
+    /// A group that carries neither a direct condition nor a nested group is
+    /// structurally empty. Such a group evaluates vacuously (`And` over
+    /// nothing → `true`), which is exactly the fail-open behaviour we must
+    /// avoid, so callers treat an empty group as a corrupt rule and fail
+    /// closed instead.
+    fn is_empty(&self) -> bool {
+        self.conditions.is_empty() && self.groups.is_empty()
+    }
 }
 
 /// Event that can trigger workflows.
@@ -466,7 +492,12 @@ impl WorkflowExecutor {
         }
 
         for condition_json in conditions {
-            // Try to parse as a condition group
+            // Try to parse as a condition group. Both `ConditionGroup` and
+            // `Condition` use `deny_unknown_fields`, so a corrupt/unknown
+            // object fails BOTH parses and lands in the fail-closed `else`
+            // branch rather than silently deserializing into an all-default
+            // empty group. A syntactically-valid-but-empty group is caught one
+            // level down by `evaluate_condition_group`'s emptiness guard.
             if let Ok(group) = serde_json::from_value::<ConditionGroup>(condition_json.clone()) {
                 if !evaluate_condition_group(&group, context)? {
                     return Ok(false);
@@ -479,10 +510,20 @@ impl WorkflowExecutor {
                     return Ok(false);
                 }
             } else {
+                // Fail CLOSED: a stored condition that deserializes as neither
+                // a ConditionGroup nor a Condition is a corrupt/unknown rule.
+                // Treating it as satisfied (the old behaviour) would run the
+                // workflow's actions unguarded — surface it as an error so the
+                // execution is halted and the misconfiguration is visible,
+                // rather than silently skipping the gate.
                 tracing::warn!(
                     condition = ?condition_json,
-                    "Could not parse condition, skipping"
+                    "Unparseable workflow condition — failing closed (not satisfied)"
                 );
+                return Err(WorkflowError::ConditionError(format!(
+                    "Unparseable condition (neither ConditionGroup nor Condition): {}",
+                    condition_json
+                )));
             }
         }
 
@@ -504,6 +545,22 @@ fn evaluate_condition_group(
     group: &ConditionGroup,
     context: &ActionContext,
 ) -> Result<bool, WorkflowError> {
+    // Fail CLOSED on a structurally empty group. Without this an empty
+    // group (e.g. `{}`, `{"operator":"and"}`, or `{"conditions":[]}`) that
+    // deserialized cleanly would evaluate vacuously to `true` and run the
+    // workflow's actions unguarded. This guard also covers empty *nested*
+    // groups because the recursion routes through here.
+    if group.is_empty() {
+        tracing::warn!(
+            ?group,
+            "Empty workflow condition group — failing closed (not satisfied)"
+        );
+        return Err(WorkflowError::ConditionError(
+            "Unparseable condition (empty condition group carries no conditions or nested groups)"
+                .to_string(),
+        ));
+    }
+
     match group.operator {
         LogicalOperator::And => evaluate_conjunction(group, context),
         LogicalOperator::Or => {
@@ -1224,5 +1281,123 @@ mod tests {
             compute_backoff_seconds(MAX_RETRY_DELAY_SECONDS, 1),
             MAX_RETRY_DELAY_SECONDS as u64
         );
+    }
+
+    // ------------------------------------------------------------------
+    // Unparseable-condition handling: must FAIL CLOSED, not fail open.
+    // ------------------------------------------------------------------
+
+    /// Build an executor whose pool is lazily connected — the condition
+    /// evaluation path is pure and never touches the DB, so no live Postgres
+    /// is required for these tests.
+    fn test_executor() -> WorkflowExecutor {
+        let pool = sqlx::PgPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting");
+        WorkflowExecutor::new(RlsPool::new(pool.clone()), WorkflowRepository::new(pool))
+    }
+
+    fn empty_context() -> ActionContext {
+        ActionContext::new(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            serde_json::json!({}),
+        )
+    }
+
+    /// Assert that a single stored condition value causes `evaluate_conditions`
+    /// to fail closed (returns `ConditionError`, never `Ok(true)`).
+    fn assert_fails_closed(value: serde_json::Value) {
+        let executor = test_executor();
+        let result = executor.evaluate_conditions(&[value.clone()], &empty_context());
+        match result {
+            Err(WorkflowError::ConditionError(msg)) => {
+                assert!(
+                    msg.contains("Unparseable condition"),
+                    "unexpected error message for {value}: {msg}"
+                );
+            }
+            other => panic!("expected fail-closed ConditionError for {value}, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_unknown_shape_condition_fails_closed() {
+        // An object whose keys match NEITHER shape. Before `deny_unknown_fields`
+        // this deserialized into an all-default (empty) `ConditionGroup` and
+        // evaluated to `Ok(true)` — the exact fail-open bug. It must now route
+        // to the `else` error branch.
+        assert_fails_closed(serde_json::json!({ "totally": "unknown", "shape": 42 }));
+    }
+
+    #[test]
+    fn test_partial_condition_fields_fail_closed() {
+        // A `field` with no `operator` is not a valid `Condition`, and the
+        // stray `field` key means it is not a valid `ConditionGroup` either.
+        assert_fails_closed(serde_json::json!({ "field": "trigger.amount" }));
+        // Bad discriminant: a group-shaped object with a comparison operator
+        // that is not a valid `LogicalOperator`.
+        assert_fails_closed(serde_json::json!({ "operator": "gt" }));
+    }
+
+    #[test]
+    fn test_empty_group_fails_closed() {
+        // These all deserialize CLEANLY into a structurally empty
+        // `ConditionGroup` (all fields default / explicitly empty). Without the
+        // emptiness guard an `And` over nothing evaluates to `true`, so the
+        // workflow's actions would run unguarded. Each must fail closed.
+        assert_fails_closed(serde_json::json!({}));
+        assert_fails_closed(serde_json::json!({ "operator": "and" }));
+        assert_fails_closed(serde_json::json!({ "operator": "or", "conditions": [] }));
+        assert_fails_closed(serde_json::json!({ "conditions": [], "groups": [] }));
+    }
+
+    #[test]
+    fn test_nested_empty_group_fails_closed() {
+        // The emptiness guard must reach nested groups too, via the recursion
+        // through `evaluate_condition_group`.
+        assert_fails_closed(serde_json::json!({
+            "operator": "and",
+            "groups": [ { "operator": "or" } ]
+        }));
+    }
+
+    #[test]
+    fn test_valid_group_still_evaluates_without_error() {
+        // Guard against over-tightening: a well-formed group with a real
+        // condition must still evaluate (here to `Ok(true)` — the field is
+        // absent from the empty context, so `is_null` holds) and NEVER error.
+        let executor = test_executor();
+        let good = serde_json::json!({
+            "operator": "and",
+            "conditions": [ { "field": "trigger.nonexistent", "operator": "is_null" } ]
+        });
+        assert!(
+            executor
+                .evaluate_conditions(&[good], &empty_context())
+                .expect("well-formed condition group must evaluate without error"),
+            "is_null on an absent field should be satisfied"
+        );
+    }
+
+    #[test]
+    fn test_valid_single_condition_still_evaluates_without_error() {
+        // A bare `Condition` (not wrapped in a group) must still parse and
+        // evaluate — proving `deny_unknown_fields` did not break the happy path.
+        let executor = test_executor();
+        let good = serde_json::json!({ "field": "trigger.nonexistent", "operator": "is_null" });
+        assert!(executor
+            .evaluate_conditions(&[good], &empty_context())
+            .expect("well-formed single condition must evaluate without error"));
+    }
+
+    #[test]
+    fn test_empty_conditions_still_satisfied() {
+        // Regression guard: the fail-closed change must not affect the
+        // "no conditions" fast-path, which is legitimately satisfied.
+        let executor = test_executor();
+        assert!(executor
+            .evaluate_conditions(&[], &empty_context())
+            .expect("empty conditions evaluate"));
     }
 }
