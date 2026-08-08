@@ -58,12 +58,13 @@ const REGISTER_GENERIC_MESSAGE: &str = "Check your email to verify your account"
 pub async fn register(
     State(state): State<AppState>,
     Json(req): Json<RegisterRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<impl IntoResponse, AuthError> {
     // Validate email format
     if !AuthService::validate_email(&req.email) {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("INVALID_EMAIL", "Invalid email format")),
+            "INVALID_EMAIL",
+            "Invalid email format",
         ));
     }
 
@@ -88,9 +89,10 @@ pub async fn register(
 
     // Validate name is not empty
     if req.name.trim().is_empty() {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("INVALID_NAME", "Name cannot be empty")),
+            "INVALID_NAME",
+            "Name cannot be empty",
         ));
     }
 
@@ -116,12 +118,10 @@ pub async fn register(
         Ok(false) => {}
         Err(e) => {
             tracing::error!(error = %e, "Database error checking email");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to check email",
-                )),
+                "DATABASE_ERROR",
+                "Failed to check email",
             ));
         }
     }
@@ -131,12 +131,10 @@ pub async fn register(
         Ok(hash) => hash,
         Err(e) => {
             tracing::error!(error = %e, "Failed to hash password");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to process password",
-                )),
+                "INTERNAL_ERROR",
+                "Failed to process password",
             ));
         }
     };
@@ -165,12 +163,10 @@ pub async fn register(
                 email_hash = %common::email_log_hash(&req.email),
                 "Failed to create user"
             );
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create account",
-                )),
+                "DATABASE_ERROR",
+                "Failed to create account",
             ));
         }
     };
@@ -245,7 +241,7 @@ pub struct VerifyEmailResponse {
 pub async fn verify_email(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<VerifyEmailQuery>,
-) -> Result<Json<VerifyEmailResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<VerifyEmailResponse>, AuthError> {
     // Hash the token to look it up
     let token_hash = state.auth_service.hash_token(&query.token);
 
@@ -253,34 +249,28 @@ pub async fn verify_email(
     let verification_token = match state.user_repo.find_verification_token(&token_hash).await {
         Ok(Some(token)) => token,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "INVALID_TOKEN",
-                    "This verification link is invalid or has already been used",
-                )),
+                "INVALID_TOKEN",
+                "This verification link is invalid or has already been used",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding verification token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to verify token",
-                )),
+                "DATABASE_ERROR",
+                "Failed to verify token",
             ));
         }
     };
 
     // Check if token is expired
     if verification_token.is_expired() {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "TOKEN_EXPIRED",
-                "This verification link has expired. Please request a new one.",
-            )),
+            "TOKEN_EXPIRED",
+            "This verification link has expired. Please request a new one.",
         ));
     }
 
@@ -305,21 +295,17 @@ pub async fn verify_email(
                 message: "Your email has been verified. You can now log in.".to_string(),
             }))
         }
-        Ok(None) => Err((
+        Ok(None) => Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "USER_NOT_FOUND",
-                "User account not found or already verified",
-            )),
+            "USER_NOT_FOUND",
+            "User account not found or already verified",
         )),
         Err(e) => {
             tracing::error!(error = %e, "Failed to verify email");
-            Err((
+            Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to verify email",
-                )),
+                "DATABASE_ERROR",
+                "Failed to verify email",
             ))
         }
     }
@@ -356,7 +342,7 @@ pub struct ResendVerificationResponse {
 pub async fn resend_verification(
     State(state): State<AppState>,
     Json(req): Json<ResendVerificationRequest>,
-) -> Result<Json<ResendVerificationResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<ResendVerificationResponse>, AuthError> {
     // Throttle per email before doing any work: this endpoint sends an email
     // and rotates the recipient's verification token on every call, so it is a
     // mailbomb / token-clobber surface (see limiter docs above).
