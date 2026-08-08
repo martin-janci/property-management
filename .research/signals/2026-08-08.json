@@ -1,0 +1,72 @@
+{
+  "generated": "2026-08-08T03:15:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/layout/admin.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2713",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "330 changed lines (+112/-218) in a single PR — helpers require_super_admin / acquire_public_conn / load_config dedupe'd across 10 layout-admin handlers; mirrors the tenant.rs pattern from PR #2711. Not previously in hotspot_history under this slash-form id; runs_seen becomes 1 after this run."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2707",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "139 changed lines (+137/-2) — MAX_RESPONSE_BODY_BYTES=8 MiB cap + Content-Length pre-check + streaming bounded read + RESPONSE_TRUNCATION_MARKER to close memory-amplification DoS (Closes #2704). Two regression tests added (oversized truncated / small passes through). Not previously in hotspot_history; runs_seen becomes 1 after this run. Note: PR #2710 (open, draft) will bring further churn (DNS-rebinding TOCTOU fix — same file, Closes #2703)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2708",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Re-emit (cumulative type): 91 changed lines (+84/-7) — compare_numeric now rejects NaN/±inf coerced from strings via coerce_finite_f64; four regression tests added. Prior runs_seen=1 (2026-08-07, 457 lines from PR #2685); becomes runs_seen=2 after this run. Cumulative re-emit — score_delta held at 0 per Phase 1 dedup rule."
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705 (closed 2026-08-08 02:21Z, unmerged)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "dependabot bump dtolnay/rust-toolchain 1.94.1 → 1.100.0 (retry2 of #2385) closed unmerged. PR body verified 9 workflow-file pins (backend.yml + gates) still on @1.94.1 and NOT superseded. Closure looks like dispatcher-abandon — worth deciding whether the toolchain bump is deferred intentionally or should re-open; .github/workflows/deploy-server.yml uses @stable and was left untouched by design."
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 (api-handlers tier1d — folded from .research/signals/2026-08-08-api-handlers-tier1d.json)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers (get_fault_statistics_report at :615, get_voting_participation_report at :715, get_occupancy_report at :827+:844, get_consumption_report at :949+:962) use `.unwrap_or_default()` on SECONDARY repository calls (trend arrays / participation vec / OccupancyReport / consumption+anomalies). The PRIMARY query in each handler already propagates via `.map_err(...)?`, so a transient DB/pool error hits ONLY the secondary and degrades to HTTP 200 with silently-zeroed trend data / 0% participation / zero consumption + zero anomalies — a confident wrong answer instead of a 5xx callers can retry. Fix: replace .unwrap_or_default() with the same .map_err(...)? → 500 pattern the primary uses. Tenant isolation unaffected."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-08.md && head -1 | grep '^# 2026-08-08$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq slurp on state.json vs HEAD", "observed": "true (last_pr_seen 2702→2713, last_issue_seen 2699→2704, seen_signals +4, hotspot_history bumped, stats.runs 62→63)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique|length)'", "observed": "true (297 unique ids)", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "re-emit check vs HEAD.seen_signals", "observed": "true — only re-emit is workflow_executor.rs (churn-hotspot, cumulative allowlist) with score_delta=0", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "true (cap ok; no decay applied — no open item older than 14d)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run → no-op", "observed": "0 new plans", "expected": "no-op" },
+    { "goal": "G7", "passed": true, "command": "count of new plans under .research/plans/", "observed": "0 (≤2)", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secret / private-hostname grep on staged diff (baseline docs excluded per routine spec)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phases reported failure this run → no-op", "observed": "all phases OK; Phase 1.6 skipped explicitly (dispatcher already refreshed management artifacts today), pm_cursor/coverage_cursor deliberately not advanced", "expected": "no-op" },
+    { "goal": "G12", "passed": true, "command": "each HEAD plan slug still in plans/ or _archive/", "observed": "18/18 prior plans still present", "expected": "18/18" },
+    { "goal": "G13", "passed": true, "command": "archive count now >= prev", "observed": "8 >= 8", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency check", "observed": "empty auto_fix_actions[] (no candidate this run)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run → no-op", "observed": "pm_cursor/coverage_cursor unchanged vs HEAD; management artifacts untouched by routine (dispatcher owns them today)", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep for Telegram bot-token literal in staged diff", "observed": "0", "expected": "0" }
+  ]
+}

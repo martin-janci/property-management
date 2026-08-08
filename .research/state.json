@@ -5,10 +5,10 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-07T06:24:00Z",
-  "last_run_ms": 2000,
-  "last_pr_seen": 2702,
-  "last_issue_seen": 2699,
+  "last_run_iso": "2026-08-08T03:15:00Z",
+  "last_run_ms": 5100,
+  "last_pr_seen": 2713,
+  "last_issue_seen": 2704,
   "last_commit_sha": "a2c0f53d4d66886ea14fcb6fd43478c4c4022fa9",
   "paused": false,
   "hotspot_history": {
@@ -408,9 +408,9 @@
       "recent_churn": 262
     },
     "backend/servers/api-server/src/routes/layout/admin.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-30",
-      "recent_churn": 240
+      "runs_seen": 2,
+      "last_seen": "2026-08-08",
+      "recent_churn": 330
     },
     "frontend/apps/ppt-web/src/routes/groups/rentals.tsx": {
       "runs_seen": 1,
@@ -428,9 +428,9 @@
       "recent_churn": 2
     },
     "backend/servers/api-server/src/services/workflow_executor.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-07",
-      "recent_churn": 457
+      "runs_seen": 2,
+      "last_seen": "2026-08-08",
+      "recent_churn": 91
     },
     "frontend/apps/ppt-web/src/lib/websocket.ts": {
       "runs_seen": 1,
@@ -441,6 +441,11 @@
       "runs_seen": 1,
       "last_seen": "2026-08-07",
       "recent_churn": 64
+    },
+    "backend/servers/api-server/src/services/actions/api_call.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-08",
+      "recent_churn": 139
     }
   },
   "seen_signals": [
@@ -819,11 +824,15 @@
     "code-review-reality-web-listingform-no-i18n",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
-    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/layout/admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+    "closed-not-merged-pr-2705",
+    "code-review-api-handlers-reports-unwrap-or-default-silent-zero"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-06",
+    "api-handlers": "2026-08-08",
     "api-core": "2026-08-04",
     "reality-server": "2026-08-06",
     "ppt-web-ui": "2026-08-06",
@@ -833,8 +842,8 @@
     "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 62,
-    "vectors_created": 284,
+    "runs": 63,
+    "vectors_created": 288,
     "plans_created": 22,
     "quiet_days": 2,
     "auto_fix_count": 0

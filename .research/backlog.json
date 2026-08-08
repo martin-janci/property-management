@@ -5482,10 +5482,12 @@
       "status": "dropped",
       "sources": [
         "PR #2478",
-        "PR #2549"
+        "PR #2549",
+        "PR #2713 (merged)"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/layout/admin.rs: 240 lines changed across PRs [2478, 2549] — Rank 3/3 for 2026-07-28..2026-07-30 window"
+        "backend/servers/api-server/src/routes/layout/admin.rs: 240 lines changed across PRs [2478, 2549] — Rank 3/3 for 2026-07-28..2026-07-30 window",
+        "2026-08-08: PR #2713 landed the refactor (helpers dedupe'd across 10 handlers, +112/-218) — task accomplished. Kept as dropped since the retry chain already yielded merged work under a different id."
       ],
       "files": [
         "backend/servers/api-server/src/routes/layout/admin.rs"
@@ -7201,10 +7203,12 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "PR #2685"
+        "PR #2685",
+        "PR #2708"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/workflow_executor.rs — 457 changed lines in PR #2685 (workflow NOT-group fix): moved evaluate_condition_group/evaluate_single_condition/get_field_value/traverse_json/compare_numeric out of impl block to free fns and rewrote NOT to negate the full conjunction via De Morgan."
+        "backend/servers/api-server/src/services/workflow_executor.rs — 457 changed lines in PR #2685 (workflow NOT-group fix): moved evaluate_condition_group/evaluate_single_condition/get_field_value/traverse_json/compare_numeric out of impl block to free fns and rewrote NOT to negate the full conjunction via De Morgan.",
+        "2026-08-08: cumulative re-emit — PR #2708 added compare_numeric NaN/±inf rejection via coerce_finite_f64 (+84/-7). Runs_seen becomes 2 after this run. No score change (done)."
       ],
       "files": [
         "backend/servers/api-server/src/services/workflow_executor.rs"
@@ -7268,6 +7272,92 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/layout/admin.rs",
+      "title": "layout/admin.rs churn hotspot — 330 lines dedupe'd across 10 handlers (PR #2713)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2713"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs — 330 changed lines (+112/-218) in PR #2713 introducing require_super_admin / acquire_public_conn / load_config / error_response / forbidden / unknown_screen helpers dedupe'd across 10 layout-admin handlers. Mirrors PR #2711's tenant.rs pattern. Prior runs_seen=1 (2026-07-30, 240 lines); runs_seen=2 after this run — repeated-churn threshold not yet met (fires at >=2 BEFORE the current run)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "title": "api_call.rs churn hotspot — 139 lines closing memory-DoS + upcoming DNS-rebinding (PR #2707, #2710)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2707",
+        "PR #2710 (open draft)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs — 139 changed lines (+137/-2) in PR #2707: MAX_RESPONSE_BODY_BYTES=8 MiB cap + Content-Length pre-check + streaming bounded read + RESPONSE_TRUNCATION_MARKER (Closes #2704 memory-amp DoS). Two regression tests added. Open draft PR #2710 will bring further churn (Closes #2703 SSRF DNS-rebinding TOCTOU). Not previously in hotspot_history; runs_seen becomes 1 after this run. Watch for repeated-churn on next tick."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "title": "Closed unmerged: retry2 bump dtolnay/rust-toolchain 1.94.1 → 1.100.0 (PR #2705)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2705 (closed unmerged 2026-08-08)",
+        "PR #2385 (original dependabot)"
+      ],
+      "evidence": [
+        "PR #2705 (retry2 of #2385) closed unmerged 2026-08-08 02:21Z. Author's investigation confirmed 9 workflow-file pins still on @1.94.1 (backend.yml + backend-fmt-clippy-gate.yml + backend-dev-push-gate.yml) and the pin was NOT superseded — the closure was manual/dispatcher-abandon, not resolved-by-supersession. Decide whether the toolchain bump is deferred intentionally or should re-open; .github/workflows/deploy-server.yml uses @stable and was left untouched by design."
+      ],
+      "files": [
+        ".github/workflows/backend.yml",
+        ".github/workflows/backend-fmt-clippy-gate.yml",
+        ".github/workflows/backend-dev-push-gate.yml"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "title": "reports/mod.rs — 4 report handlers use .unwrap_or_default() on secondary DB queries; serve HTTP 200 with silently-zeroed data on transient errors",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 (api-handlers tier1d 2026-08-08 — dispatcher-generator)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers (get_fault_statistics_report at :615, get_voting_participation_report at :715, get_occupancy_report at :827+:844, get_consumption_report at :949+:962) use `.unwrap_or_default()` on SECONDARY repository calls (trend arrays / participation vec / OccupancyReport / consumption+anomalies). The PRIMARY query in each handler already propagates via `.map_err(...)?`, so a transient DB/pool error hits ONLY the secondary and degrades to HTTP 200 with silently-zeroed trend data / 0% participation / zero consumption + zero anomalies — a confident wrong answer instead of a 5xx callers can retry.",
+        "Impact: manager-facing analytical reports (fault trends, voting quorum, occupancy, utility consumption) that drive decisions. Tenant isolation itself is fine — every handler validates query.organization_id != rls.tenant_id() before the repo calls (reports/mod.rs:596,694,806,922).",
+        "Fix: replace `.unwrap_or_default()` on these repository calls with the same `.map_err(...)?` → 500 pattern the primary query already uses; or, if empty-on-error is a deliberate graceful-degradation choice, make it explicit and annotate the partial-data condition in the response so consumers can distinguish 'no data' from 'query failed'."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
     }
   ]
 }
