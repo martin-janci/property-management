@@ -9,7 +9,7 @@
 //! [`Capability::MobileConfigWrite`] via the `RequireCapability` tower layer —
 //! the same platform-principal + MFA + active-grant triple enforced across the
 //! Phase 5 admin tree. Persistence is the platform-global singleton
-//! `mobile_config` row (migration 00228), accessed through
+//! `mobile_config` row (migration 00230), accessed through
 //! [`MobileConfigRepository`].
 
 use admin_core::{require_capability, Capability, RequireCapability};

@@ -1,4 +1,4 @@
--- Migration: 00228_create_mobile_config.sql
+-- Migration: 00230_create_mobile_config.sql
 --
 -- Backs the admin-console mobile-config Save flow
 -- (`PATCH /api/v1/admin/mobile-config`). Stores platform-global mobile app

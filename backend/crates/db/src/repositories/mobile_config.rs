@@ -2,7 +2,7 @@
 //!
 //! Backs the admin-console mobile-config Save flow
 //! (`PATCH /api/v1/admin/mobile-config`). Reads/writes the platform-global
-//! singleton `mobile_config` row (migration 00228): force-update version
+//! singleton `mobile_config` row (migration 00230): force-update version
 //! floors plus React Native feature flags.
 //!
 //! Uses runtime `sqlx::query_as` (no compile-time-checked `query!` macros), so
