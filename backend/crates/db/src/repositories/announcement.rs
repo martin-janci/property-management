@@ -608,13 +608,21 @@ impl AnnouncementRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // A manual publish stamps `notified_at = NOW()` (issue #2612) so the
+        // scheduler's decoupled notification pass — which selects
+        // `published AND notified_at IS NULL` — does NOT fan out a
+        // published-announcement notification for it. This preserves the
+        // pre-existing behaviour that a manager-driven publish did not trigger a
+        // scheduler notification (only auto-published *scheduled* announcements
+        // did). Auto-publish (`publish_scheduled_rls`) leaves it NULL instead.
         let announcement = sqlx::query_as::<_, Announcement>(
             r#"
             UPDATE announcements
             SET
                 status = 'published',
                 published_at = NOW(),
-                updated_at = NOW()
+                updated_at = NOW(),
+                notified_at = NOW()
             WHERE id = $1 AND status IN ('draft', 'scheduled')
             RETURNING
                 id, organization_id, author_id, title, content,
@@ -699,10 +707,18 @@ impl AnnouncementRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // `notified_at = NULL` is the "needs notification" marker (issue #2612):
+        // publishing only flips the state, leaving the dispatch to a separate
+        // scheduler pass that resolves targets, notifies, and stamps
+        // `notified_at` only on success. Set explicitly (not merely relying on
+        // the column default) so a row that carried a stale non-NULL watermark
+        // — e.g. a draft backfilled to NOW() by migration 00228 that was later
+        // scheduled — is reset to "needs notification" when it publishes.
         let announcements = sqlx::query_as::<_, Announcement>(
             r#"
             UPDATE announcements
-            SET status = 'published', published_at = NOW(), updated_at = NOW()
+            SET status = 'published', published_at = NOW(), updated_at = NOW(),
+                notified_at = NULL
             WHERE status = 'scheduled' AND scheduled_at <= NOW()
             RETURNING
                 id, organization_id, author_id, title, content,
@@ -716,6 +732,55 @@ impl AnnouncementRepository {
         .await?;
 
         Ok(announcements)
+    }
+
+    /// Announcements that are published but whose scheduler notification has not
+    /// yet been dispatched (`status = 'published' AND notified_at IS NULL`).
+    ///
+    /// Backs the decoupled dispatch pass added for issue #2612: publishing and
+    /// notifying are separate steps, so a transient target-resolution/dispatch
+    /// failure leaves `notified_at` NULL and the row is re-selected here on the
+    /// next tick instead of being dropped fire-once. Ordered oldest-first so a
+    /// backlog drains in publish order.
+    pub async fn find_published_pending_notification(
+        &self,
+    ) -> Result<Vec<Announcement>, SqlxError> {
+        let announcements = sqlx::query_as::<_, Announcement>(
+            r#"
+            SELECT
+                id, organization_id, author_id, title, content,
+                target_type::text as target_type, target_ids,
+                status::text as status, scheduled_at, published_at,
+                pinned, pinned_at, pinned_by, comments_enabled,
+                acknowledgment_required, created_at, updated_at
+            FROM announcements
+            WHERE status = 'published' AND notified_at IS NULL
+            ORDER BY published_at ASC NULLS FIRST
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(announcements)
+    }
+
+    /// Stamp an announcement's notification watermark after a successful
+    /// dispatch (issue #2612). Idempotent guard on `notified_at IS NULL` so a
+    /// concurrent stamp cannot double-count. Returns the number of rows stamped
+    /// (0 or 1).
+    pub async fn mark_notified(&self, id: Uuid) -> Result<u64, SqlxError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE announcements
+            SET notified_at = NOW()
+            WHERE id = $1 AND notified_at IS NULL
+            "#,
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected())
     }
 
     // ------------------------------------------------------------------------
