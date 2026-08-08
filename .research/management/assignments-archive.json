@@ -5745,6 +5745,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-84-2-document-sign-page-2026-07-23-retry2",
+      "branch": "auto-impl/gap-84-2-document-sign-page-2026-07-23-r-cfd10ddb",
+      "status": "done",
+      "claimed_at": "2026-08-08T06:27:05Z",
+      "last_updated": "2026-08-08T06:40:00Z",
+      "status_changed_at": "2026-08-08T06:40:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": "2026-08-08T06:40:00Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=GHOST-RECONCILED already shipped on dev via merged PR #2347 (gap-84-2-build-document-sign-page): DocumentSignPage.tsx + /sign route + esignature client hooks + i18n all present; screen-map ppt/document-sign buildStatus=shipped; send_signature_request_email wired. Retry redundant, no diff to open. Dev-truth guard missed it (slug mismatch: #2347 subject != retry stem).",
+      "reviewer_summary": "verdict=n/a note=ghost-reconciled-to-done (work already on dev via #2347); no PR opened",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-84-2-document-sign-page-2026-07-23-retry3",
       "branch": "auto-impl/gap-84-2-document-sign-page-2026-07-23-r-585b3ef4",
       "status": "failed",
@@ -12885,5 +12907,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T06:28:47Z"
+  "archived_at": "2026-08-08T06:37:59Z"
 }

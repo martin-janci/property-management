@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-08T06:27:05Z",
+  "generated": "2026-08-08T06:40:00Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -65,28 +65,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gap-84-2-document-sign-page-2026-07-23-retry2",
-      "branch": "auto-impl/gap-84-2-document-sign-page-2026-07-23-r-cfd10ddb",
-      "status": "in-progress",
-      "claimed_at": "2026-08-08T06:27:05Z",
-      "last_updated": "2026-08-08T06:27:05Z",
-      "status_changed_at": "2026-08-08T06:27:05Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {

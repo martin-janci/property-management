@@ -157,20 +157,6 @@
       "retry_round": 1
     },
     {
-      "id": "gap-84-2-document-sign-page-2026-07-23-retry2",
-      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery (84-2 partial; prior attempt failed no-PR) [retry 1/2 of failed gap-84-2-document-sign-page-2026-07-23-retry3] [retry 2/2 of failed gap-84-2-document-sign-page-2026-07-23-retry1]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-08T06:23:37Z (retry_of=gap-84-2-document-sign-page-2026-07-23-retry1 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T06:14:40Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-08T06:23:37Z",
-      "retry_of": "gap-84-2-document-sign-page-2026-07-23-retry1",
-      "retry_round": 2
-    },
-    {
       "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry2",
       "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 2/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
       "owner_role": "pm-security",
