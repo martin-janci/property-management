@@ -2,7 +2,7 @@
 //!
 //! Backs the admin-web `/admin/platform` page. These are global,
 //! operator-controlled settings (never tenant-facing) persisted in the
-//! `platform_settings` singleton table (migration 00228).
+//! `platform_settings` singleton table (migration 00229).
 //!
 //! Both handlers are gated by the platform-admin capability middleware
 //! (`RequireCapability(SiteSettingsWrite)` on the route) plus the

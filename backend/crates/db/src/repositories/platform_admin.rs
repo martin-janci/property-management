@@ -49,7 +49,7 @@ impl PlatformAdminRepository {
         Self { pool }
     }
 
-    /// Read the singleton platform settings row (migration 00228).
+    /// Read the singleton platform settings row (migration 00229).
     ///
     /// The row is seeded by the migration, so this always returns a row on a
     /// migrated database.

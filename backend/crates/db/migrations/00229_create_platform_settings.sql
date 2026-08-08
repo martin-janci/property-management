@@ -1,4 +1,4 @@
--- Migration: 00228_create_platform_settings.sql
+-- Migration: 00229_create_platform_settings.sql
 --
 -- Global, operator-controlled platform settings backing the admin-web
 -- `/admin/platform` page (`PATCH /api/v1/platform-admin/settings`).

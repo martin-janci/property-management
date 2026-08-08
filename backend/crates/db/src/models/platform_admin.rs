@@ -103,7 +103,7 @@ pub struct ReactivateOrganizationRequest {
 
 /// Global, operator-controlled platform settings (singleton).
 ///
-/// Backs the `platform_settings` table (migration 00228). Unlike the
+/// Backs the `platform_settings` table (migration 00229). Unlike the
 /// per-tenant `tenant_settings` store, this is a single row shared across the
 /// whole deployment, written via `PATCH /api/v1/platform-admin/settings`.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
