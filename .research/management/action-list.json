@@ -113,6 +113,34 @@
       "first_open_at": "2026-08-08T04:07:24Z",
       "retry_of": "refactor-churn-hotspot-api-server-auth-2026-07-31",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-api-handlers-community-unauthenticated-reads-retry2",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read [retry 2/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-08T16:05:19Z (retry_of=code-review-api-handlers-community-unauthenticated-reads reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T14:08:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T16:05:19Z",
+      "retry_of": "code-review-api-handlers-community-unauthenticated-reads",
+      "retry_round": 2
+    },
+    {
+      "id": "data-announcement-fanout-metric-2026-07-23-retry2",
+      "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model) [retry 2/2 of failed data-announcement-fanout-metric-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-08T16:05:19Z (retry_of=data-announcement-fanout-metric-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T14:08:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T16:05:19Z",
+      "retry_of": "data-announcement-fanout-metric-2026-07-23",
+      "retry_round": 2
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
