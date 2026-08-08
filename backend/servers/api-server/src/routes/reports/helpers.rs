@@ -11,7 +11,6 @@ use chrono::NaiveDate;
 use common::errors::ErrorResponse;
 use uuid::Uuid;
 
-use super::DEFAULT_FAULT_REPORT_DAYS;
 use crate::state::AppState;
 
 /// Get building name by ID if provided.
