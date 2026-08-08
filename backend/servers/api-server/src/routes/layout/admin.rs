@@ -148,7 +148,7 @@ pub async fn get_config(
     require_super_admin(&headers, &state)?;
     let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
-    let cfg = load_config(&repo, &mut **conn, &q.screen).await?;
+    let cfg = load_config(&repo, &mut conn, &q.screen).await?;
     let versions = repo
         .list_versions(&mut **conn, &q.screen)
         .await
@@ -263,7 +263,7 @@ pub async fn publish(
     let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
 
-    let cfg_row = load_config(&repo, &mut **conn, &req.screen).await?;
+    let cfg_row = load_config(&repo, &mut conn, &req.screen).await?;
 
     let draft: layout_core::ScreenConfig =
         serde_json::from_value(cfg_row.draft.clone()).map_err(|e| {
