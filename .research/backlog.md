@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-07 06:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-08 10:23 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -34,9 +34,9 @@
 | 2 | bug | `code-review-reality-web-comparison-share-all-or-nothing` | reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared compa | done | 2026-08-07 |  |
 | 2 | bug | `code-review-reality-web-listingform-nan-validation` | reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently | done | 2026-08-07 |  |
 | 2 | bug | `code-review-api-handlers-enhanced-chat-stub` | api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data.... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-ppt-web-core-ws-giveup-no-resume` | ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-reality-server-listing-viewcount-hardcoded-zero` | reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-mobile-rn-offline-terminal-drop-dataloss` | mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 r | done | 2026-08-04 |  |
 | 2 | bug | `code-review-ppt-web-core-logout-cache-purge-gap` | ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentim | done | 2026-08-04 |  |
@@ -125,14 +125,17 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | open | 2026-08-07 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs` | Refactor: backend/servers/api-server/src/routes/integrations/webhook.rs — top churn hotspot (2799+ l | open | 2026-08-08 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-servers-api-server-src-routes-financial-rs` | Refactor: backend/servers/api-server/src/routes/financial.rs — top churn hotspot (>2300 lines/14d) | open | 2026-08-08 |  |
+| 1 | refactor | `refactor-churn-hotspot-backend-servers-api-server-src-routes-buildings-rs` | Refactor: backend/servers/api-server/src/routes/buildings.rs — top churn hotspot (>2300 lines/14d) | open | 2026-08-08 |  |
+| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | dropped | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | done | 2026-08-07 |  |
 | 1 | security | `code-review-api-handlers-ai-upstream-error-leak` | api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-rn-biometric-prompt-i18n` | mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog... | done | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | open | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | open | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | done | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-reality-server-orphan-schedule-viewing-stub` | reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout` | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no c | dropped | 2026-08-04 |  |
 | 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx` | Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-0 | dropped | 2026-08-04 |  |

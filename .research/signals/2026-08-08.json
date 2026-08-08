@@ -1,0 +1,172 @@
+{
+  "date": "2026-08-08",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "14-day churn scan 2026-08-08",
+      "score_delta": 0,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs \u2014 2799 lines churned (adds+dels) in last 14d across 2 commits (top-1 non-test source file). Previously flagged 2026-05-30 (runs=1); this run bumps runs_seen=2."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2",
+      "score_delta": 1,
+      "evidence": [
+        "webhook.rs is now runs_seen=2 (previous 2026-05-30, current 2026-08-08). Instability proxy \u2014 same route module keeps churning across months without stabilising."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/financial.rs",
+      "type": "churn-hotspot",
+      "source": "14-day churn scan 2026-08-08",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/financial.rs \u2014 2411 lines churned (adds+dels) in last 14d. Top-4 non-test source file this scan. First appearance in hotspot_history."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/buildings.rs",
+      "type": "churn-hotspot",
+      "source": "14-day churn scan 2026-08-08",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/buildings.rs \u2014 2347 lines churned (adds+dels) in last 14d. Top-5 non-test source file this scan. First appearance in hotspot_history."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-08.md && head -1 | grep -q '^# 2026-08-08$'",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advancement check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored non-cumulative signals",
+      "observed": "true",
+      "expected": "true",
+      "notes": "webhook.rs churn-hotspot re-emit had score_delta=0 (cumulative type allowlisted); no other IDs in seen_signals"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "0 items >8; 0 items decayed",
+      "expected": "no items >8; open items >14d decay by 1"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A \u2014 no new plans this run",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial pass line"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans in staged diff",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed vs cursor advance",
+      "observed": "no phases failed",
+      "expected": "no phases failed OR cursor pinned"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "no plans deleted",
+      "expected": "no silent deletion"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows monotonically",
+      "observed": "same count",
+      "expected": "count >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix action caps",
+      "observed": "0 actions",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor liveness",
+      "observed": "phase 1.6 skipped this run; PM/CC unchanged (GC7 no-op)",
+      "expected": "when 1.6 skipped, gate is no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
