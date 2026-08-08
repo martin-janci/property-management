@@ -1,0 +1,333 @@
+{
+  "generated_at": "2026-08-08T22:07:08Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
+      "type": "churn-hotspot",
+      "source": "phase1-churn-analysis",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs \u2014 482 lines churned across merged PR range #2703-#2723 (this run)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-actions-api_call-rs",
+      "type": "churn-hotspot",
+      "source": "phase1-churn-analysis",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs \u2014 345 lines churned across merged PR range #2703-#2723 (this run)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-layout-admin-rs",
+      "type": "churn-hotspot",
+      "source": "phase1-churn-analysis",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/admin.rs \u2014 330 lines churned across merged PR range #2703-#2723 (this run)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 \u2014 `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(self.duration * 60)` (Minutes, :57), `* 3600` (Hours, :58), `* 86400` (Days, :59). The multiplication has no `checked_mul`/`saturating_mul` and no upper-bound check on `self.duration`.",
+        "The 7-day cap that is supposed to bound the delay runs AFTER the overflow-prone multiply, not before: in `execute()` the order is `let duration = delay_config.to_duration();` (delay.rs:100) then `if duration.as_secs() > MAX_DELAY_SECONDS { return Err(...) }` (delay.rs:103-105). So a large `duration` (e.g. Days with `duration >= u64::MAX/86400 + 1`) overflows inside `to_duration()` before the guard can reject it.",
+        "backend/Cargo.toml [profile.release] (lines 176-179) does not set `overflow-checks`, so release builds use the default (off): `self.duration * 86400` silently WRAPS to a small/incorrect value that then PASSES the `> MAX_DELAY_SECONDS` check \u2014 bypassing the intended validation and running a wrong-length delay. Debug/test builds (overflow-checks on by default) instead PANIC on the same input, which can crash the workflow worker.",
+        "Config is user-authored: `DelayConfig` is deserialized from the workflow action config JSON (Epic 94, Story 94.1), so `duration` reaches this multiply from manager-created workflow definitions.",
+        "Contrast with the sibling retry-backoff path, which is guarded correctly: `compute_backoff_seconds` (workflow_executor.rs:35-45) uses `saturating_mul` and caps the exponent, and `execute_action` clamps `retry_delay_seconds`/`retry_count` to `MAX_RETRY_DELAY_SECONDS`/`MAX_RETRY_COUNT` BEFORE use (workflow_executor.rs:896-897). delay.rs is the inconsistent outlier.",
+        "Fix: validate `self.duration` against the per-unit maximum (or use `checked_mul` and reject `None`) inside `to_duration()` before constructing the `Duration`, so the 7-day cap is enforced regardless of build profile and no arithmetic overflow is reachable."
+      ],
+      "expert": "rust",
+      "_source_file": ".research/signals/2026-08-08-api-core-tier1d.json"
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 \u2014 the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().map(...)`. The `.ok()` collapses a DB/pool `Err` into `None`, which is indistinguishable from 'user has no quiet-hours schedule'.",
+        "Consequence is fail-open against a user preference: on a transient DB error while fetching the schedule, `quiet` becomes `None`, so the Push channel is delivered immediately (notification_pipeline.rs:533+ only holds the push when `Some(state)` with `state.active`). A user who configured quiet hours can therefore receive a push during their quiet window purely because a secondary query hit a transient error.",
+        "This is a graceful-degradation choice, but it is silent: no `tracing::warn!` distinguishes 'no schedule configured' from 'schedule fetch failed', so the preference violation is invisible in logs and un-monitorable. The nearby 8h-horizon fallback at :540-542 is explicitly commented as intentional; the `.ok()` swallow is not.",
+        "Fix: match on the `Result` \u2014 treat `Ok(None)` as no-schedule (deliver normally) but log/observe `Err(e)` (and consider fail-closed by holding the push, since quiet hours are a user-set preference), instead of silently discarding the error with `.ok()`."
+      ],
+      "expert": "rust",
+      "_source_file": ".research/signals/2026-08-08-api-core-tier1d.json"
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs \u2014 four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of surfacing the failure. The tell is intra-handler inconsistency: the PRIMARY query in each handler propagates errors via `.map_err(...)?` (e.g. `get_statistics` at :615), but the SECONDARY data queries in the SAME handler discard the `Result`.",
+        "get_fault_statistics_report: `get_monthly_fault_counts` (reports/mod.rs:633) and `get_monthly_resolution_times` (reports/mod.rs:640) \u2014 a transient DB error yields empty `monthly_counts` / `resolution_time_trend` trend arrays, so the fault report renders as if there were zero faults over time while the primary statistics block is populated \u2014 an internally contradictory, plausible-looking report.",
+        "get_voting_participation_report: `get_participation_report` (reports/mod.rs:715) \u2014 on DB error `participation_data` becomes an empty Vec, so `total_votes = participation_data.len()` computes to 0 and the derived quorum/participation summary is silently wrong (0% participation reported for a building that may have full turnout).",
+        "get_occupancy_report: `get_occupancy_report` (reports/mod.rs:827) and its year-over-year sibling call (reports/mod.rs:844) \u2014 a DB error produces a defaulted `OccupancyReport` with `summary.total_person_months == 0`; the year-over-year change_percentage is then computed against zeroed current/previous totals and served as authoritative occupancy data.",
+        "get_consumption_report: `get_consumption_report` (reports/mod.rs:949) and `detect_consumption_anomalies` (reports/mod.rs:962) \u2014 a DB error silently drops all consumption rows and anomalies, so a monitoring/billing consumption report can show zero usage and zero anomalies on a partial backend failure.",
+        "Impact: these are manager-facing analytical reports (fault trends, voting quorum, occupancy, utility consumption) that drive decisions; a transient DB/pool error on a secondary query degrades to a confident wrong answer (HTTP 200 with zeros) rather than a 5xx the caller can retry. Tenant isolation itself is fine \u2014 every handler validates `query.organization_id != rls.tenant_id()` before the repo calls (reports/mod.rs:596,694,806,922).",
+        "Fix: replace `.unwrap_or_default()` on these repository calls with the same `.map_err(...)?` -> 500 pattern the primary query already uses (or, if empty-on-error is a deliberate graceful-degradation choice, make it explicit and consistent and annotate the partial-data condition in the response so consumers can distinguish 'no data' from 'query failed')."
+      ],
+      "expert": "rust",
+      "_source_file": ".research/signals/2026-08-08-api-handlers-tier1d.json"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }). The realtor 'Create Listing' screen is fully reachable in production navigation (composable(Screen.CreateListing.route) { ... }, reached from the MyListings flow), but every submit returns a hardcoded failure \u2014 a user fills in the create-listing form, taps submit, and always gets an error. This is a shipped, user-facing broken feature, not a hidden/disabled path.",
+        "The data layer to back it is entirely absent: PortalListingsRepository (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics \u2014 there is no create/submit method, and no other repository provides one (grep 'fun create' / 'fun submit' over mobile-native/shared/src/commonMain returns nothing). So the fix is not merely to swap the lambda; it requires building a create-listing repository call against the reality-server API and wiring it through.",
+        "Impact: the CreateListing route should either be gated behind a feature flag / hidden until the API exists, or the data-layer method built and wired. As-is it presents a functional-looking form that can never succeed. Recommend a follow-up implementer task to (a) add a createListing repository method, (b) wire onSubmit to it with proper Result handling in CreateListingScreen, or (c) hide the route until the endpoint lands."
+      ],
+      "expert": "kotlin",
+      "_source_file": ".research/signals/2026-08-08-mobile-native-kmp-tier1d.json"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 \u2014 class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/**.kt returns only the class definition (ApiClient.kt:27) and a doc-comment reference in a test (ListingDetailRepositoryTest.kt:172). All live repositories (ListingRepository, FavoritesRepository, InquiryRepository, PortalListingsRepository, etc.) issue their own Ktor calls via HttpClientProvider.client and never route through ApiClient. It is ~100 lines of dead, duplicated API logic (listings search/detail, favorites, inquiry) that drifts from the real repositories and adds maintenance noise.",
+        "The dead class also carries a latent bug that would bite if it were ever wired: healthCheck() (ApiClient.kt:39) returns client.get(\"$baseUrl/health\") { configureRequest() }.toString() \u2014 .toString() on the Ktor HttpResponse object yields a debug string like 'HttpResponse[...]', not the health-endpoint body. It should await .body<String>() (or .bodyAsText()). Additionally healthCheck() is the only method in the class with no try/catch, so a network exception propagates uncaught instead of being folded into a Result like every sibling method (getListings/getListing wrap in try/catch \u2192 Result).",
+        "Recommend deleting ApiClient (and its exception type if unused elsewhere) to remove dead code and the duplication risk; if it is intended as the future canonical client, it should instead replace the ad-hoc per-repository HttpClientProvider calls and fix healthCheck first. Either way the current state \u2014 unreferenced + buggy \u2014 is pure liability."
+      ],
+      "expert": "tester",
+      "_source_file": ".research/signals/2026-08-08-mobile-native-kmp-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 \u2014 parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :205). isNetworkError (errorHandler.ts:394-416) does case-insensitive substring sniffing on ANY object's `.message`: message.includes('network') || message.includes('failed to fetch') || message.includes('network request failed') || message.includes('networkerror').",
+        "This misclassifies genuine structured backend errors as generic connectivity errors whenever the backend's human message happens to contain a network keyword. The transformed ApiError from lib/api.ts:152-169 is an Error instance whose `.message` is set directly from the backend body (`data?.message`), so an ApiError is exactly the object shape that trips isNetworkError. Concrete failure: backend returns 422 { error:'VALIDATION_ERROR', message:'Network name must be unique', requestId:'abc', details:[{field:'network_name', message:'...'}] }; the axios interceptor (api.ts:transformError) builds ApiError(message='Network name must be unique'); a UI calling parseApiError(apiError) hits isNetworkError \u2192 returns the canned NETWORK_ERROR ('check your connection') and DROPS statusCode, code, requestId, and validationErrors. The user sees a bogus 'connection problem' instead of the field-level validation, and error telemetry loses the requestId.",
+        "Root cause is ordering + heuristic scope: message-substring detection is only safe for the axios TOP-LEVEL error.message (e.g. 'Network Error' from axios itself), not for a field that also carries server-authored text. Fix: gate the network heuristic to the true no-response case (axios error with code==='ERR_NETWORK' or !error.response, and TypeError 'fetch' path) and move the generic message-keyword check AFTER isAxiosError/isErrorResponse structured parsing, or restrict it so a structured ErrorResponse (has `error` + `message` string fields) is never swallowed by the network branch. Add a regression test: parseApiError of a 422 ApiError whose message contains 'network' must return code='VALIDATION_ERROR' with validationErrors intact."
+      ],
+      "expert": "frontend",
+      "_source_file": ".research/signals/2026-08-08-ppt-web-core-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 \u2014 the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `handler` (handler is read via handlerRef to avoid re-subscribing on identity changes).",
+        "Edge case: if a consumer calls useWebSocket(eventType, handler) with a STABLE eventType but `handler` initially undefined (e.g. gated on a not-yet-ready callback: useWebSocket('message:new', ready ? onMsg : undefined)), the effect runs once at mount, sees handlerRef.current === undefined, returns without subscribing, and never re-runs when handler later becomes defined \u2014 because neither eventType nor subscribe changed. The subscription is silently never established, so realtime events for that eventType are dropped for the component's lifetime.",
+        "The optional `handler?` in the signature (useWebSocket.ts:74) advertises undefined as a supported input, making this a real API-contract gap rather than a misuse. Low severity because the common call site passes an always-defined inline handler; but the fix is cheap: include a boolean `hasHandler = handler != null` in the dep array (or subscribe unconditionally and no-op inside wrappedHandler when handlerRef.current is undefined) so a handler transitioning undefined\u2192defined re-arms the subscription."
+      ],
+      "expert": "frontend",
+      "_source_file": ".research/signals/2026-08-08-ppt-web-core-tier1d.json"
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 \u2014 introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !response.status().is_success() { ... state.token_cache.set(token, false, None, None).await; return Err(...) }`. A transient PM-API failure (503/502/500 during a deploy or overload) is thus conflated with a genuinely-inactive token.",
+        "Consequence: a legitimate, still-valid session token that hits the cache-miss path during a brief PM outage is negatively cached as inactive for up to 60s. Because introspect_pm_token feeds the SSO auth hot path, the user is denied/logged-out for up to a minute AFTER PM has already recovered \u2014 an availability regression driven by transient upstream errors, not by real token state.",
+        "The comment 'Cache inactive tokens too (to prevent repeated failed validations)' assumes non-2xx == inactive, but introspection RFC 7662 returns 200 with {active:false} for a genuinely inactive token; a 5xx is a server error, not an inactivity signal. Suggested fix: only negative-cache when the introspection call SUCCEEDS (200) and the body reports active=false; on 5xx/network errors, propagate the error WITHOUT writing a false entry (fail-open to a re-check on the next request, or short-TTL/no-cache)."
+      ],
+      "expert": "rust",
+      "_source_file": ".research/signals/2026-08-08-reality-server.json"
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) \u2014 each SSO OAuth helper constructs a fresh `reqwest::Client::new()` per invocation. `Client::new()` has NO request timeout, so a hung/slow PM OAuth server on the token-exchange / userinfo / introspection calls will block the awaiting request indefinitely (only bounded by whatever axum/OS imposes), risking worker/connection exhaustion under a stalled upstream.",
+        "Contrast: backend/servers/reality-server/src/state.rs:753-761 (PmApiClient::new) deliberately builds a pooled client WITH `.timeout(Duration::from_secs(timeout_seconds))`. The SSO helpers bypass that pattern, so they get neither the timeout nor connection-pool / TLS-session reuse across the hot introspection path.",
+        "Suggested fix: build one timeout-configured reqwest::Client at startup, store it on AppState (alongside PmApiClient), and share it across all three SSO helpers instead of `reqwest::Client::new()` per call \u2014 fixes both the missing timeout and the per-request pool/TLS churn in one change."
+      ],
+      "expert": "rust",
+      "_source_file": ".research/signals/2026-08-08-reality-server.json"
+    },
+    {
+      "id": "lag-warning-2026-08-08",
+      "type": "lag_warning",
+      "source": "phase1-lag-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-08-07T06:24:00Z; now 2026-08-08T22:07:08Z (39h ago, >36h threshold)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no eligible high-confidence + score>=3 allowlisted signals this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-08.md && head -1 == '# 2026-08-08'",
+      "observed": "# 2026-08-08",
+      "expected": "# 2026-08-08"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (bash-verified)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique .items[].id",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emitted with score_delta!=0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + decay applied",
+      "observed": "cap_ok=True decay_fails=0",
+      "expected": "true, 0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated with adversarial pass",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<= 2 new plans",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-.research staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists 'Phases that failed: none'",
+      "observed": "present",
+      "expected": "present"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans exist in plans/ or plans/_archive/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + kill-switch",
+      "observed": "actions=0",
+      "expected": "<=3 and per-type <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor unchanged -> Phase 1.6 skipped, no-op",
+      "observed": "prev=3 now=3",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
