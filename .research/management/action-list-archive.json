@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-07T16:21:27Z",
+  "archived_at": "2026-08-08T02:12:45Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12773,6 +12773,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-31T16:04:41Z"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-tenant-2026-07-30]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=refactor-churn-hotspot-api-server-layout-tenant-2026-07-30 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:09:17Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "landing_commit": "5931d56",
+        "pr": 2711,
+        "subject": "refactor(api-server): dedupe layout tenant-override handlers (#2711)",
+        "reconciled_at": "2026-08-08T02:12:19Z",
+        "note": "ghost retry: tenant-override layout dedupe already landed out-of-band; retry-remint dev-truth guard missed it (non-<id>: subject)"
       }
     },
     {
