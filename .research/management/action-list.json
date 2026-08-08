@@ -113,20 +113,6 @@
       "first_open_at": "2026-08-08T04:07:24Z",
       "retry_of": "refactor-churn-hotspot-api-server-auth-2026-07-31",
       "retry_round": 1
-    },
-    {
-      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-tenant-2026-07-30]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-08T06:23:37Z (retry_of=refactor-churn-hotspot-api-server-layout-tenant-2026-07-30 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:09:17Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-08T06:23:37Z",
-      "retry_of": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
-      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

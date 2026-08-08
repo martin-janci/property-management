@@ -1,49 +1,29 @@
 {
-  "generated": "2026-08-08T10:16:42Z",
+  "generated": "2026-08-08T12:08:50Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
       "branch": "auto-impl/code-review-api-core-workflow-cond-parse-dd416f1f",
-      "status": "in-progress",
+      "status": "quarantined",
       "claimed_at": "2026-08-06T12:07:31Z",
-      "last_updated": "2026-08-08T10:16:42Z",
-      "status_changed_at": "2026-08-08T10:16:42Z",
+      "last_updated": "2026-08-08T12:08:50Z",
+      "status_changed_at": "2026-08-08T12:08:50Z",
       "pr_number": 2684,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2684",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "followup round 1 applied (commit 49dc28429): deny_unknown_fields on Condition+ConditionGroup, empty-group fail-closed guard, tests fixed/expanded. Re-armed for re-review of new SHA. [phase5.5 ci-retrigger: PR reopened to fire backend.yml] [phase5.7 respawn round 2 dispatched 2026-08-08T06:27Z: CI red at 7b79989e (fmt-clippy+check+test+test-shard all FAIL) — implementer respawned to fix the backend build; outcome reconciles next Phase 2] [dispatcher respawn round3: pushed clippy fix cloned_ref_to_slice_refs->std::slice::from_ref @workflow_executor.rs:1312 (commit 926afe8); CI re-running]",
-      "reviewer_summary": "verdict=changes note=CI red at 7b79989e — backend fmt-clippy+check+test+test-shard(1-4) all FAILURE; respawn to fix build (prior approve at 49dc2842 is stale; head rebased+respawned since)",
-      "last_reviewed_oid": "7b79989eba63a9d910295f60d8f7c9f4c5cc023c",
+      "reviewer_summary": "verdict=changes note=CI red on 926afe8 — backend test-shard(1-4) FAILURE after round3 clippy fix; fmt-clippy+check green; fix_rounds=3 exhausted → quarantine",
+      "last_reviewed_oid": "926afe8a775acd5993a3f0354bfca5e14d89a2c1",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 3,
       "reclaim_attempts": 1,
       "fix_rounds": 3,
-      "merge_attempted_at": "2026-08-07T00:11:32Z"
-    },
-    {
-      "task_id": "dx-fixme-admin-web-platform-settings-patch-endpoint-retry1",
-      "branch": "auto-impl/dx-fixme-admin-web-platform-settings-pat-326ef1bf",
-      "status": "in-progress",
-      "claimed_at": "2026-08-08T04:15:06Z",
-      "last_updated": "2026-08-08T10:16:42Z",
-      "status_changed_at": "2026-08-08T10:16:42Z",
-      "pr_number": 2716,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2716",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "implementer opened draft PR #2716 (PATCH/GET /api/v1/platform-admin/settings + migration 00228). [phase5.7 respawn round 1 dispatched 2026-08-08T06:27Z: renumber migration 00228->00229 (collides with merged #2714 on dev)] [dispatcher respawn round2: renumbered migration 00228->00229 (00228 taken by #2714); CI re-running]",
-      "reviewer_summary": "verdict=changes note=migration-00228-version-collision (taken on dev by merged #2714); renumber to 00229 (sibling #2717 takes 00230)",
-      "last_reviewed_oid": "0627edc20ef5074560f096941ccccaa4cd913083",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 2,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-08-07T00:11:32Z",
+      "quarantined_at": "2026-08-08T12:08:50Z",
+      "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
     }
   ]
 }
