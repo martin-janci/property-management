@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-08T08:42:00Z",
+  "generated": "2026-08-08T08:46:00Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -72,15 +72,15 @@
       "branch": "auto-impl/refactor-churn-hotspot-api-server-layout-de1cdc08",
       "status": "review",
       "claimed_at": "2026-08-08T08:12:30Z",
-      "last_updated": "2026-08-08T08:36:00Z",
+      "last_updated": "2026-08-08T08:46:00Z",
       "status_changed_at": "2026-08-08T08:36:00Z",
       "pr_number": 2721,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2721",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2721 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=extracted acquire_public_conn (mirrors admin.rs); fmt clean; clippy/test blocked by utoipa-swagger-ui egress, CI authoritative; prior dedup already merged as #2711 (stale branch force-updated)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=code-review-clean; dedup verified genuinely-additional (NOT reland of merged #2711); behavior-preserving acquire_public_conn hoist; scope_drift benign. CI-gated: backend.yml in_progress (fmt-clippy/test-build not yet green) at review time \u2014 Phase 5.5 to merge once CI green (reviewer's literal verdict was CI-scoped changes; no code change needed)",
+      "last_reviewed_oid": "0b6eb152ea26a89f73e6f0a5da4f729b4384c790",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
