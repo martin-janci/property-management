@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-08T08:36:00Z",
+  "generated": "2026-08-08T08:42:00Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -48,23 +48,23 @@
     {
       "task_id": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-report-43ac8a2b",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-08-08T08:12:30Z",
-      "last_updated": "2026-08-08T08:35:00Z",
-      "status_changed_at": "2026-08-08T08:35:00Z",
+      "last_updated": "2026-08-08T08:42:00Z",
+      "status_changed_at": "2026-08-08T08:42:00Z",
       "pr_number": 2720,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2720",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2720 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=extracted 4 report helpers to helpers.rs (2460->2185); fmt clean; clippy blocked by utoipa-swagger-ui egress, CI-gated (scope-check area-map mismatch: pm-tech-lead maps docs/.research but target is api-server file \u2014 benign)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=changes note=unused `use super::DEFAULT_FAULT_REPORT_DAYS` in helpers.rs will fail clippy -D warnings in backend.yml; extraction otherwise verbatim, scope_drift benign",
+      "last_reviewed_oid": "44a192a975a8473c5e3a40f46682d350bed6a1de",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
