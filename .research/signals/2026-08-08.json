@@ -1,0 +1,247 @@
+{
+  "generated": "2026-08-08T12:21:00Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-auth-mfa-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:388 — `if let Ok(Some(mfa_record)) = state.two_factor_repo.get_by_user_id(user.id).await` silently collapses the Err arm into 'no MFA required'. A user with personal 2FA enabled and no org MFA policy who hits a transient DB error on this lookup (pool exhaustion, statement timeout, RLS glitch on the deprecated path) has the entire MFA verification block skipped; `mfa_presented` stays false; `AuthPolicyEnforcer::check_login` short-circuits (no policy demands MFA); the handler mints access/refresh tokens on email+password alone — a second-factor bypass triggered by a recoverable DB error.",
+        "Fix: treat Err as fail-closed (return 500 INTERNAL_ERROR or retry) rather than falling through the `if let Ok(Some(...))` pattern. Add a regression test that seeds a user with 2FA enabled, injects a repository error for `get_by_user_id`, and asserts the login returns 500 instead of a token pair."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "phase-1-churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "482 lines changed since 2026-08-07 cursor via PR #2714 (scheduler notified_at watermarks + retrying dispatch, migration 00228). Predecessor path scheduler.rs saw 347-line churn on 2026-07-30 as well — reorganized-then-churned pattern."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs",
+      "type": "churn-hotspot",
+      "source": "phase-1-churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "408 lines changed since 2026-08-07 cursor via PR #2719 (route anonymous inquiry POSTs through InquiriesHandler notifier seam)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/handlers/inquiries/mod.rs",
+      "type": "churn-hotspot",
+      "source": "phase-1-churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "359 lines changed since 2026-08-07 cursor via PR #2719 (shared InquiriesHandler with LogInquiryNotifier stub)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `DelayConfig::to_duration()` multiplies user-supplied `duration: u64` by an unchecked constant (60/3600/86400) with no `checked_mul`, then applies the 7-day cap AFTER the multiply in `execute()` (line 100 vs 103). Release build (overflow-checks off) wraps to a small value that passes the cap check, bypassing the intended limit.",
+        "Fix: validate `self.duration` against per-unit maximum inside `to_duration()` via `checked_mul` before constructing `Duration`. Sibling retry-backoff (workflow_executor.rs:35-45) already uses `saturating_mul` — this file is the outlier.",
+        "Source: dispatcher tier1d generator, `.research/signals/2026-08-08-api-core-tier1d.json`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — quiet-hours lookup uses `.ok().flatten()` which collapses transient DB errors into 'no schedule', silently delivering pushes during a user's quiet window. No `tracing::warn!` distinguishes 'no schedule' from 'schedule fetch failed', making the preference violation unobservable.",
+        "Fix: match on Result, deliver on Ok(None), log/observe on Err (consider fail-closed by holding the push since quiet-hours is a user preference).",
+        "Source: dispatcher tier1d generator."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "reports handler uses `unwrap_or_default()` on aggregation results — a DB error silently returns HTTP 200 with zero rows (loss of user-facing correctness signal).",
+        "Source: dispatcher tier1d generator, `.research/signals/2026-08-08-api-handlers-tier1d.json`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListingScreen wired to `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Route is fully reachable in production navigation from MyListings; every submit fails with a hardcoded error.",
+        "Data layer absent: PortalListingsRepository has no create/submit method. Fix requires (a) create-listing repository method + reality-server endpoint or (b) gating route behind feature flag until API lands.",
+        "Source: dispatcher tier1d generator."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "dispatcher-tier1d",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "mobile-native ApiClient: healthcheck path dead code with a minor bug — no call sites, buggy branch never reached in production.",
+        "Source: dispatcher tier1d generator, `.research/signals/2026-08-08-mobile-native-kmp-tier1d.json`."
+      ],
+      "expert": "kotlin"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-08.md && H1 == '# 2026-08-08'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signals dedup vs seen_signals (cumulative allowlist honored)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no scores >8; no items eligible for decay this run",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation on promoted plan",
+      "observed": "plans/code-review-api-core-auth-mfa-fail-open.md — adversarial pass: passed",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each has 4 metadata + 11 headings + capability tick + Mode + files exist",
+      "observed": "1 new plan; 4 meta / 11 headings / 2 caps ticked / Mode: cloud-ok / both files exist",
+      "expected": "all checks pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files under .research/ only",
+      "observed": "0 files outside .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures this run",
+      "observed": "all phases completed",
+      "expected": "cursors advanced for successful phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence — prior plans still present in plans/ or _archive/",
+      "observed": "18 prior slugs, all present",
+      "expected": "no silent deletion"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotone",
+      "observed": "staged=8 HEAD=8",
+      "expected": "staged >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch respected + cap + idempotency + certainty bar + verify gate)",
+      "observed": "no auto-fix actions this run (no allowlist match); auto_fix_actions=[]",
+      "expected": "cap not exceeded"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor 0..7 + coverage_cursor advanced with pm_cursor",
+      "observed": "action-list.json items ok, risks.json items ok, project-state.md non-empty, pm_cursor=4 (was 3), coverage_cursor=6 of 13 (was 5)",
+      "expected": "all valid + cursors advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

@@ -127,7 +127,73 @@
       "first_open_at": "2026-08-08T06:23:37Z",
       "retry_of": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
       "retry_round": 1
+    },
+    {
+      "id": "pm-qa-vote-scheduler-notified-at-regression-test",
+      "action": "Add regression test for vote scheduler notified_at watermark: simulate dispatch failure, assert started_notified_at/closed_notified_at stays NULL so next tick retries",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-08"
+    },
+    {
+      "id": "pm-qa-inquiry-notifier-fanout-test",
+      "action": "Add notifier/fanout assertion test for anonymous inquiries now routed through InquiriesHandler (#2719)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-08"
+    },
+    {
+      "id": "pm-qa-ssrf-toctou-regression-test",
+      "action": "Confirm/name the DNS-rebinding TOCTOU regression test tied to #2710/#2703 (not just general SSRF allow/deny unit tests)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-08"
+    },
+    {
+      "id": "pm-qa-accounting-trio-review-decision",
+      "action": "Get reviewer engagement or explicit defer/close decision on #2555/#2558/#2559 (accounting MVP-loop, 10+ days stalled)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-08"
+    },
+    {
+      "id": "pm-qa-ci-migration-collision-check",
+      "action": "Add CI check that flags duplicate/out-of-order migration numbers before merge (manual 00228->00229 renumbering required by #2716 shows recurring race risk)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "rust-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-08"
+    },
+    {
+      "id": "code-review-api-core-auth-mfa-fail-open",
+      "action": "Fix MFA fail-open on transient DB error in login handler (routes/auth/mod.rs:388)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "research-plan 2026-08-08"
     }
   ],
-  "generated": "2026-07-30T03:23:02Z"
+  "generated": "2026-08-08T12:26:01Z"
 }

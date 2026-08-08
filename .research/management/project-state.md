@@ -1,75 +1,64 @@
 # PPT Project State
 
-_Generated: 2026-08-06 — routine Phase 1.6 lightweight upkeep (pm-frontend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 2 → 3 (pm-frontend → pm-qa next), coverage_cursor idx 4 → 5 (epic-7a re-checked, no material change; advances to epic-80). Sprint window 2026-08-04..08-06 shipped 25 PRs — most of the code-review/security backlog cleared; buffer-low fired from dispatcher for planner refill._
+_Generated: 2026-08-08 12:21 UTC — routine Phase 1.6 rotating slot (pm-qa). Coverage `scan_kind=upkeep`; pm_cursor idx 3 → 4 (pm-qa → pm-devops next), coverage_cursor idx 5 → 6 (epic-80 re-checked next; this run refreshed epic re-check schedule only). Payload: `buffer-low: claimable=1/72 — refill planner` — routine added 9 backlog vectors + promoted 1 security plan._
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (the 84-1 direct-to-S3 upload wiring and 84-2 sign page). The 2026-07-28→07-30 window shipped **17 PRs** — a mix of dispatcher follow-up work (post-merge-review issues #2560/#2561/#2562/#2563/#2564/#2557 all closed) and security/DX hardening (Android SSO CSRF #2568, scheduler RLS-leak #2567, layout review-hardening #2478, ppt-web AuthContext stale-role #2553).
-- **Layout epic is now fully wired end-to-end:** PR #2549 landed publish/webhook/revalidate event emission + sink (closes #2532); PR #2478 hardened authz + publish TOCTOU + webhook replay; PR #2576 scheduled `layout_change_events` retention prune (closes #2563).
-- **Documents / e-signature side:** PR #2571 added org-scoped DELETE-by-file_key for direct-upload orphan cleanup (closes #2564); PR #2504 mounted signature-request list/create as a document sub-resource (BIT-313). 84-1 (direct-to-S3 frontend wiring) and 84-2 (signer page) remain the last 2 partial stories.
-- **Auto-review loop caught 3 same-window regressions:** #2573 (DELETE-by-file-key can nuke still-referenced same-org object), #2574 (Android SSO CSRF guard is half-wired — mint() has no call site so every callback is rejected), #2575 (/disputes/kpis has no window ordering validation, only test quarantined). All 3 are now queued for pm-backend / pm-mobile fixes.
-- **CI + release tooling fixes:** PR #2566 (version-bump rebase+retry — closes #2561 GH006), PR #2565 (reality-web Docker build fix — closes #2560, unblocks 6-week frontend-image gap), PR #2569 (SDK drift gate runs on client + workflow changes).
-- **Open PRs (3): accounting MVP-loop trio** (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY-by-square QR) — draft-ready since 2026-07-28 with zero reviewer engagement. This is now the top delivery blocker after the auto-fix follow-ups.
+- **Delivery still 47/49 stories done, 2 partial** (Epic 84-1 direct-to-S3 upload wiring, 84-2 sign page). Between 2026-08-07 and 2026-08-08 the merge pipeline shipped **9 more PRs** — heavy dispatcher pass on backend hardening + churn-hotspot refactors.
+- **Shipped this window:** SSRF DNS-rebinding TOCTOU close (#2710, closes #2703), scheduler `notified_at` watermark + retrying dispatch (#2714, closes #2612), platform-admin PATCH/GET settings endpoint (#2716), admin mobile-config PATCH endpoint (#2717), layout webhook HMAC parity regression (#2718), inquiry-notifier routing for anonymous POSTs (#2719), reports helpers.rs extraction (#2720), acquire_public_conn dedupe in layout-tenant (#2721), auth error-boilerplate dedupe (#2715).
+- **Migration collision recovery:** three PRs (#2714, #2716, #2717) all initially picked migration `00228`; manual renumbering to `00229`/`00230` unblocked them. Same-day parallel-implementer race with no cross-branch coordination — pm-qa surfaced it as a repeatable risk this run.
+- **New security finding (promoted immediately via fast-track):** rotating Rust expert review of `api-core` found MFA fail-open in `routes/auth/mod.rs:388` — `if let Ok(Some(mfa_record))` collapses the Err arm into "skip MFA", so a transient DB error during 2FA lookup bypasses the second factor entirely when no org policy demands MFA. Score 3 / confidence high / vector security. Plan: `plans/code-review-api-core-auth-mfa-fail-open.md`.
+- **Buffer refill:** dispatcher tier1d generator added 5 code-review-findings today (2 api-core, 1 api-handlers, 2 mobile-native-kmp) but did not fold them into `backlog.json`; this run fixed that — all 5 now open backlog rows for the dispatcher to claim next cycle.
+- **Open PRs unchanged:** the 3 accounting-trio PRs (#2555, #2558, #2559) still 10+ days stalled with no reviewer engagement — pm-qa flagged for explicit disposition decision.
 
-## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
+## Sprint progress
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run. Extended-scope epics (10B, 80, 81, 82, 83, 84, 85, 79, 8A, 9) folded into `coverage.json` and largely done.
+Current sprint: **"Epic 6, 7A, 8A & 10A"** · **3/5 epics done in sprint window**; extended-scope epics all done in `coverage.json` except 84 (3/5, 2 partial).
 
 | Epic | Sprint status | Coverage status (13 epics) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress | 6/6 stories done in coverage |
-| 7A — Basic Document Management | in-progress | 5/5 stories done in coverage (7a-1 evidence refreshed via #2571) |
+| 6 — Announcements & Communication | in-progress | 6/6 stories done |
+| 7A — Basic Document Management | in-progress | 5/5 stories done |
 | 8A — Basic Notification Preferences | done | 3/3 stories done |
 | 10A — OAuth Provider Foundation | done | 3/3 stories done |
 | 10B — Platform Administration | in-progress | 7/7 stories done |
-| 80 — Dispute Resolution | partial | 3/3 stories done in coverage; sprint-status still says partial (pending reconciliation) |
-| 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1 direct-S3 wiring, 84-2 sign page); 84-1 evidence refreshed via #2571 |
-| 82 / 83 / 85 / 79 / 81 / 8a / 9 | (extended) | all done in coverage; **79 re-checked this run (all 4 stories done, 79-2 evidence refreshed with PR #2553)** |
+| 80 — Dispute Resolution | partial | 3/3 stories done in coverage; sprint-status still says partial |
+| 84 — Documents / e-signature | extended | 3/5 done, 2 partial (84-1 direct-S3, 84-2 sign page) |
+| 79 / 81 / 82 / 83 / 85 / 8a / 9 | extended | all done |
 
-## Shipped since last run (17 PRs > #2552)
+## Shipped since last run (9 PRs)
 
-- **#2576** — gh-issue-2563: schedule layout_change_events retention prune
-- **#2572** — gh-issue-2562: wire get_dispute_kpis into a reporting endpoint (spawned #2575)
-- **#2571** — gh-issue-2564: org-scoped DELETE-by-file_key for direct-upload orphan cleanup (spawned #2573)
-- **#2570** — gh-issue-2557: dedupe seed_org/set_ctx in db test suites
-- **#2569** — dx: run SDK drift gate on client + workflow changes
-- **#2568** — code-review mobile-native-kmp: Android SSO CSRF state verification (spawned #2574)
-- **#2567** — code-review api-core: clear scheduler global-read RLS GUC before pool return (retry1)
-- **#2566** — gh-issue-2561: version-bump rebase+retry to fix GH006 on concurrent dev merges
-- **#2565** — gh-issue-2560: reality-web Docker build fix (unblocks 6-week frontend image gap)
-- **#2554** — chore(research): refill starved dispatcher stack (7 new vectors, 14 promoted)
-- **#2553** — code-review ppt-web-core: AuthContext cold-boot routes through refreshTokenInternal (stale-role fix)
-- **#2549** — gh-issue-2532: layout publish/webhook/revalidate event emission + sink
-- **#2504** — fix(api-server): signature-request list/create — mount as document sub-resource (BIT-313)
-- **#2491** — chore(deps): npm-minor-patch group (5 updates)
-- **#2482** — refactor: reconcile docs/repo-map.md with current tree
-- **#2478** — fix(layout): review-hardening sweep (authz, publish TOCTOU, webhook replay, defensive rendering)
-- **#2433** — feat(mobile-native): iOS listing detail renders through the shared resolved layout
+- **#2710** — gh-issue-2703 close SSRF DNS-rebinding TOCTOU in workflow `api_call.rs` (connect-time SSRF-guard DNS resolver + validate_external_url redirect policy + IG3 rebind regression test) [SECURITY HIGH]
+- **#2714** — decouple scheduled notification dispatch from publish/activate/close (announcements + votes `notified_at` watermarks, migration 00228, closes #2612) [DURABILITY]
+- **#2715** — dedupe auth handler error boilerplate (private AuthError alias + err_response builder, -83 lines)
+- **#2716** — add PATCH/GET `/api/v1/platform-admin/settings` (migration 00229 after collision-renumber; unblocks admin-web platform Save)
+- **#2717** — add PATCH/GET `/api/v1/admin/mobile-config` (migration 00230; unblocks admin-web mobile-config Save)
+- **#2718** — layout webhook HMAC body-binding regression test (asserts sig over different body is rejected, mirrors esignature tamper-rejection suite)
+- **#2719** — route anonymous inquiry POSTs through InquiriesHandler notifier seam (fixes never-notified realtors on `send_contact_message` / `request_viewing`)
+- **#2720** — extract reports helpers.rs from routes/reports/mod.rs (2460→2185 lines; churn-hotspot refactor)
+- **#2721** — extract acquire_public_conn helper in routes/layout/tenant.rs (mirrors #2713 dedupe pattern)
 
-## What's next (top 5 actions from ranked backlog)
+## What's next
 
-1. **[high] Fix #2573** — DELETE /documents/by-file-key can delete a still-referenced object within the same org (regression from PR #2571) — **owner: pm-backend**. Adds a reference-check guard before delete; needed before any client wires 84-1.
-2. **[high] Fix #2574** — Android SSO CSRF guard half-wired (SsoStateStore.mint() has no call site so every reality://sso callback is rejected) — **owner: pm-mobile / react-native**.
-3. **[medium] Fix #2575** — /disputes/kpis has no window-ordering validation, only test is quarantined — **owner: pm-backend**.
-4. **[medium] Shepherd accounting MVP-loop trio merge** (#2555, #2558, #2559) — 2-day reviewer starvation blocking the accounting stack — **owner: pm-tech-lead**.
-5. **[high] Finish 84-1** direct-to-S3 wiring in ppt-web (POST /documents/upload-url consumer) — **owner: pm-frontend**. Depends on #2573.
+Ranked from `action-list.json` (top 5, deduped by owner where possible):
+
+1. **[HIGH pm-security]** Fix MFA fail-open on transient DB error in login handler (`code-review-api-core-auth-mfa-fail-open` — plan promoted this run).
+2. **[HIGH pm-qa]** Add regression test for vote scheduler `notified_at` watermark: simulate dispatch failure, assert watermark stays NULL so next tick retries.
+3. **[HIGH pm-qa]** Add notifier/fanout assertion test for anonymous inquiries now routed through InquiriesHandler (#2719).
+4. **[MED pm-qa]** Get reviewer engagement or explicit defer/close decision on accounting-trio PRs #2555/#2558/#2559 (10+ days stalled).
+5. **[MED pm-qa]** Confirm/name the DNS-rebinding TOCTOU regression test tied to #2710/#2703 (not just general SSRF allow/deny unit tests).
 
 ## Blockers
 
-- **#2574 Android SSO CSRF half-wired** — the freshly-merged CSRF fix (#2568) has no call site; every reality://sso callback is now rejected until re-wired. Owner: pm-mobile.
-- **#2573 DELETE-by-file-key same-org reference gap** — new endpoint can delete a still-referenced S3 object within the same org (regression from PR #2571). Blocks safe client wiring for 84-1. Owner: pm-backend.
-- **Accounting trio (#2555 / #2558 / #2559)** — no reviewer engagement in 2 days; dispatcher can't advance the MVP-loop. Owner: pm-tech-lead.
+- **Buffer starvation** — dispatcher `claimable=1/72` triggered this run's payload; refilled with 9 new backlog rows + 1 promoted plan. Next dispatcher cycle should pull the fresh rows.
+- **Accounting-trio review stall** — no reviewer engagement in 10+ days; PM decision needed.
 
-## Role focus today: **pm-backend** (rotation idx 1; last 2026-06-06, 54d stale) + pm-scrum-master always-on
+## Role focus today
 
-- **pm-scrum-master** (always-on): produced the delivery synthesis above. Headline = the auto-review loop shipped 17 PRs in 2 days and caught 3 of its own regressions inside 24h — the loop is genuinely closing. Reviewer capacity is now the tighter constraint than implementer capacity (accounting trio starving).
-- **pm-backend** (rotation): flagged the 3 fresh regressions (#2573 data-loss, #2575 quarantined-test, #2547 hotfix-no-test carryover) as backend hygiene priorities. Also recommends investigating repeated churn on services/scheduler.rs — extract retention/prune jobs to a dedicated module. Sees the accounting trio as needing pm-tech-lead reviewer attention rather than more backend work.
+- **pm-qa** (rotating slot this run) — surfaced 4 test-coverage risks + 5 next actions.
+- **Rotating expert review (Rust)** on `api-core` segment — 1 finding (MFA fail-open, HIGH), promoted immediately.
+- **Dispatcher tier1d generator** — 5 pre-existing code-review findings from today's runs (api-core delay overflow, api-core quiet-hours fail-open, api-handlers reports silent-zero, mobile-native-kmp create-listing stub, mobile-native-kmp ApiClient dead code) folded into backlog.
 
-## Coverage (upkeep this run — 2026-07-30)
+## Per-role summary (roles that ran this run)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped, no re-scan.
-- **Epic re-check: epic-79** — cursor idx 3. All 4 stories still `done`; evidence entry added to 79-2 for PR #2553 (AuthContext cold-boot stale-role fix). `last_checked = 2026-07-30` stamped on all 4 stories.
-- **Merged-PR evidence added:** 84-1 (PR #2571 orphan cleanup), 7a-1 (PR #2571 lifecycle complement). No status flips.
-- **`coverage_cursor` advances 3 → 4** (epic-79 → epic-7a next run).
-- **`pm_cursor` advances 1 → 2** (pm-backend → pm-frontend next run). role_last_run["pm-backend"] = 2026-07-30.
-- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. Same 3 missing UC links (UC-33.x — 2 queued into action-list this run, 1 remaining). Zero orphan screens, zero validation errors.
+- **pm-qa** — coverage is generally solid but two of today's shipped fixes (vote-scheduler `notified_at` retry, anonymous-inquiry notifier fanout) have no dedicated regression test; SSRF TOCTOU fix and migration renumbering check clean; accounting-trio PRs remain an unresolved process signal. See `roles/pm-qa.md`.

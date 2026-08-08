@@ -103,3 +103,10 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 - **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+## Decisions needed (open)
+
+### 2026-08-08 — pm-qa (this run)
+
+- **Block release cut until scheduler-watermark + anonymous-inquiry-notifier regression tests land?** (owner: rust-backend)
+- **Disposition of stalled accounting-trio PRs #2555/#2558/#2559** (10+ days, no reviewer): review, defer, or close? (owner: PM)

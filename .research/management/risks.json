@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-08T12:26:16Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -117,6 +117,56 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-qa-scheduler-watermark-untested",
+      "risk": "Scheduler stamp-only-on-success watermark (votes.rs) has no direct failure-path test; a future refactor could silently break retry/no-duplicate-notification guarantees",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add dedicated failure/retry regression test before next scheduler-touching change",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-inquiry-notifier-fanout-untested",
+      "risk": "Anonymous-inquiry notifier fanout (#2719) is untested — anonymous inquiries could silently fail to notify or double-notify",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add integration test asserting notifier invocation for the anonymous path",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-migration-collision-race",
+      "risk": "Manual migration renumbering during concurrent same-day merges (#2714/#2716/#2717) worked this time but is a repeatable collision risk with no automated guard",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add CI migration-number-uniqueness check",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-accounting-trio-stalled",
+      "risk": "3 accounting-trio PRs stalled >10 days with no reviewer engagement — unclear if abandoned, blocked, or unstaffed ahead of a release cut",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "PM to explicitly schedule review or defer/close",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "code-review-api-core-auth-mfa-fail-open-risk",
+      "risk": "MFA fail-open on transient DB error: user with personal 2FA enabled bypasses second factor when repo call errors — silent second-factor skip under load",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Landed plan `plans/code-review-api-core-auth-mfa-fail-open.md` — convert `if let Ok(Some(...))` to explicit match, fail closed on Err with 500 + MFA_LOOKUP_FAILED",
+      "owner_role": "pm-security",
+      "trigger": "DB pool exhaustion or statement timeout on any /api/v1/auth/login call",
+      "status": "open"
     }
   ]
 }
