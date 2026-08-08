@@ -26,10 +26,10 @@
 
 use crate::models::announcement::{
     announcement_status, AcknowledgmentStats, Announcement, AnnouncementAttachment,
-    AnnouncementComment, AnnouncementListQuery, AnnouncementRead, AnnouncementStatistics,
-    AnnouncementSummary, AnnouncementWithDetails, CommentWithAuthor, CommentWithAuthorRow,
-    CreateAnnouncement, CreateAnnouncementAttachment, CreateComment, DeleteComment,
-    UpdateAnnouncement, UserAcknowledgmentStatus,
+    AnnouncementComment, AnnouncementFanoutMetrics, AnnouncementListQuery, AnnouncementRead,
+    AnnouncementStatistics, AnnouncementSummary, AnnouncementWithDetails, CommentWithAuthor,
+    CommentWithAuthorRow, CreateAnnouncement, CreateAnnouncementAttachment, CreateComment,
+    DeleteComment, UpdateAnnouncement, UserAcknowledgmentStatus,
 };
 use crate::DbPool;
 use chrono::{DateTime, Utc};
@@ -1191,6 +1191,104 @@ impl AnnouncementRepository {
             acknowledged_count: stats.1,
             pending_count: pending_count.max(0),
         })
+    }
+
+    /// Compute delivered / read / acknowledged fan-out metrics for a single
+    /// announcement, scoped to its targeting audience (issue #2484 data-quality
+    /// follow-up to PR #2455).
+    ///
+    /// `delivered` resolves the announcement's *real* audience for its
+    /// `target_type` with the same cross-tenant-safe joins the notification
+    /// fan-out uses (`Scheduler::get_announcement_target_users`) — so the count
+    /// this metric emits is the count the targeting SQL actually reaches:
+    ///
+    /// - `all`      → active members of the announcement's organization.
+    /// - `building` → distinct active residents of the target buildings,
+    ///   AND-scoped to the announcement's org via `buildings.organization_id`
+    ///   (a foreign-org building id in `target_ids` contributes nobody).
+    /// - `units`    → distinct active residents of the target units, org-scoped
+    ///   through `unit_residents -> units -> buildings` the same way.
+    /// - `roles`    → active members whose `user_memberships.role` is one of the
+    ///   target role names. This mirrors the canonical read-path targeting
+    ///   predicate (`announcement_targeting_predicate!`, issue #920/#999), which
+    ///   is the single source of truth for "is this user targeted" in the db
+    ///   layer; membership containment is expressed with the same sargable
+    ///   `target_ids @> to_jsonb(<value>::text)` form the predicate uses.
+    ///
+    /// `read` / `acknowledged` come straight from `announcement_reads`. Returns
+    /// `None` when the announcement id does not exist. Unknown target types
+    /// resolve `delivered = 0` (never panics) — consistent with the scheduler's
+    /// fail-safe empty audience for an unrecognised scope.
+    pub async fn get_fanout_metrics_rls<'e, E>(
+        &self,
+        executor: E,
+        announcement_id: Uuid,
+    ) -> Result<Option<AnnouncementFanoutMetrics>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let metrics = sqlx::query_as::<_, AnnouncementFanoutMetrics>(
+            r#"
+            SELECT
+                a.id AS announcement_id,
+                a.target_type::text AS scope,
+                CASE a.target_type
+                    WHEN 'all' THEN (
+                        SELECT COUNT(DISTINCT u.id)
+                        FROM users u
+                        JOIN user_memberships m ON m.user_id = u.id
+                        WHERE m.organization_id = a.organization_id
+                          AND m.revoked_at IS NULL
+                          AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                          AND u.status = 'active'
+                    )
+                    WHEN 'building' THEN (
+                        SELECT COUNT(DISTINCT ur.user_id)
+                        FROM unit_residents ur
+                        JOIN units un ON ur.unit_id = un.id
+                        JOIN buildings b ON un.building_id = b.id
+                        WHERE b.organization_id = a.organization_id
+                          AND ur.end_date IS NULL
+                          AND a.target_ids @> to_jsonb(un.building_id::text)
+                    )
+                    WHEN 'units' THEN (
+                        SELECT COUNT(DISTINCT ur.user_id)
+                        FROM unit_residents ur
+                        JOIN units un ON ur.unit_id = un.id
+                        JOIN buildings b ON un.building_id = b.id
+                        WHERE b.organization_id = a.organization_id
+                          AND ur.end_date IS NULL
+                          AND a.target_ids @> to_jsonb(ur.unit_id::text)
+                    )
+                    WHEN 'roles' THEN (
+                        SELECT COUNT(DISTINCT m.user_id)
+                        FROM user_memberships m
+                        JOIN users u ON u.id = m.user_id
+                        WHERE m.organization_id = a.organization_id
+                          AND m.revoked_at IS NULL
+                          AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                          AND u.status = 'active'
+                          AND a.target_ids @> to_jsonb(m.role::text)
+                    )
+                    ELSE 0::bigint
+                END AS delivered,
+                (
+                    SELECT COUNT(*) FROM announcement_reads ar
+                    WHERE ar.announcement_id = a.id
+                ) AS read,
+                (
+                    SELECT COUNT(*) FROM announcement_reads ar
+                    WHERE ar.announcement_id = a.id AND ar.acknowledged_at IS NOT NULL
+                ) AS acknowledged
+            FROM announcements a
+            WHERE a.id = $1
+            "#,
+        )
+        .bind(announcement_id)
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(metrics)
     }
 
     /// Get list of users with their acknowledgment status with RLS context.
