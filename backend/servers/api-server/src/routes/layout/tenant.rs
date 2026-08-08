@@ -7,7 +7,7 @@ use axum::Json;
 use common::TenantRole;
 use db::models::layout::LayoutConfigRow;
 use db::repositories::LayoutRepository;
-use db::RlsPool;
+use db::{PublicConnection, RlsPool};
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
@@ -64,6 +64,18 @@ fn require_org_admin(org_id: Uuid, role: TenantRole) -> Result<(), ErrorResponse
     Ok(())
 }
 
+/// Acquire the sanctioned public/global (no-RLS) connection for the global
+/// layout tables, mapping a pool failure to 500. Acquiring clears any stale RLS
+/// context, so this is safe to call after an org-scoped connection was released.
+/// Mirrors the sibling `admin.rs` helper so both tenant-override handlers share
+/// one acquisition site instead of repeating the pool dance inline.
+async fn acquire_public_conn(state: &AppState) -> Result<PublicConnection, ErrorResponse> {
+    RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(internal_error)
+}
+
 /// Load a screen's layout config from a public/global (no-RLS) connection,
 /// mapping a missing row to 404 and any sqlx failure to 500. Shared by both
 /// handlers so the fetch + not-found mapping stays in one place.
@@ -108,10 +120,7 @@ pub async fn get_tenant_override(
     rls.release().await;
     let ov = ov.map_err(internal_error)?;
     // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut pub_conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+    let mut pub_conn = acquire_public_conn(&state).await?;
     let cfg = load_screen_config(&repo, &mut **pub_conn, &q.screen).await?;
     let manifest_row = repo
         .get_manifest(&mut **pub_conn, "web")
@@ -179,7 +188,7 @@ pub async fn put_tenant_override(
     // Phase 1: public/global reads (config + rails), no RLS connection held.
     // Global no-RLS layout tables — sanctioned public connection (clears stale context).
     let (base, rails_value) = {
-        let mut pub_conn = rls_pool.acquire_public().await.map_err(internal_error)?;
+        let mut pub_conn = acquire_public_conn(&state).await?;
         let cfg = load_screen_config(&repo, &mut **pub_conn, &req.screen).await?;
         let published = cfg.published.clone().ok_or_else(|| {
             error_response(StatusCode::NOT_FOUND, "screen has no published config")
