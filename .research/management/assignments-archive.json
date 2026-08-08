@@ -4245,6 +4245,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-announcement-fanout-metric-2026-07-23-retry2",
+      "branch": "auto-impl/data-announcement-fanout-metric-2026-07-c553a5fb",
+      "status": "merged",
+      "claimed_at": "2026-08-08T16:06:41Z",
+      "last_updated": "2026-08-08T20:11:04Z",
+      "status_changed_at": "2026-08-08T20:11:04Z",
+      "pr_number": 2723,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2723",
+      "merged_at": "2026-08-08T20:10:41Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2723(auto-opened) status=partial specialist=rust-backend scope_drift=false note=db slice complete+pushed (get_fanout_metrics_rls delivered/read/ack per scope, real-SQL #2484 test PASSES on live PG); fmt+clippy(8 crates)+affected tests green; local gate red ONLY on pre-existing unrelated api-server test execute_rejects_dns_rebinding_to_private_ip_at_connect (#2710 SSRF; needs real DNS absent in runner) — dispatcher auto-opened draft PR for CI adjudication",
+      "reviewer_summary": "verdict=approve note=in-scope-db-slice, #2484-cross-tenant-guard-correct, real-SQL-test-covers-all-scopes, CI-green; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "bb91749032727c2ba34be43e5ef4129e5570eb43",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-08T20:10:14Z"
+    },
+    {
       "task_id": "data-audit-add-evidence-idor-fix-2026-07-23",
       "branch": "auto-impl/data-audit-add-evidence-idor-fix-2026-07-12fb2325",
       "status": "failed",
@@ -13061,5 +13083,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T18:17:12Z"
+  "archived_at": "2026-08-08T20:12:34Z"
 }

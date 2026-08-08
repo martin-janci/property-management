@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-08-08T00:00:00Z",
+  "generated": "2026-08-08T00:00:00Z",
+  "segment": "ppt-web-core",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Cursor-oldest segments api-core (2026-08-04) and mobile-native-kmp (2026-08-04) were each already sliced today this dispatch cycle (2026-08-08-api-core-tier1d{,-2,-3}, 2026-08-08-mobile-native-kmp-tier1d); re-slicing them yields duplicate vectors against a starved backlog. ppt-web-core (cursor 2026-08-06) is the oldest-unreviewed segment not yet covered this cycle, and a distinct frontend-core domain from today's backend/kmp/mobile-rn slices — maximizes fresh work vectors. Backlog saturation check: only 1 open item repo-wide, no code-review-finding saturation for any segment. Static analysis only; no compile/test run.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :205). isNetworkError (errorHandler.ts:394-416) does case-insensitive substring sniffing on ANY object's `.message`: message.includes('network') || message.includes('failed to fetch') || message.includes('network request failed') || message.includes('networkerror').",
+        "This misclassifies genuine structured backend errors as generic connectivity errors whenever the backend's human message happens to contain a network keyword. The transformed ApiError from lib/api.ts:152-169 is an Error instance whose `.message` is set directly from the backend body (`data?.message`), so an ApiError is exactly the object shape that trips isNetworkError. Concrete failure: backend returns 422 { error:'VALIDATION_ERROR', message:'Network name must be unique', requestId:'abc', details:[{field:'network_name', message:'...'}] }; the axios interceptor (api.ts:transformError) builds ApiError(message='Network name must be unique'); a UI calling parseApiError(apiError) hits isNetworkError → returns the canned NETWORK_ERROR ('check your connection') and DROPS statusCode, code, requestId, and validationErrors. The user sees a bogus 'connection problem' instead of the field-level validation, and error telemetry loses the requestId.",
+        "Root cause is ordering + heuristic scope: message-substring detection is only safe for the axios TOP-LEVEL error.message (e.g. 'Network Error' from axios itself), not for a field that also carries server-authored text. Fix: gate the network heuristic to the true no-response case (axios error with code==='ERR_NETWORK' or !error.response, and TypeError 'fetch' path) and move the generic message-keyword check AFTER isAxiosError/isErrorResponse structured parsing, or restrict it so a structured ErrorResponse (has `error` + `message` string fields) is never swallowed by the network branch. Add a regression test: parseApiError of a 422 ApiError whose message contains 'network' must return code='VALIDATION_ERROR' with validationErrors intact."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `handler` (handler is read via handlerRef to avoid re-subscribing on identity changes).",
+        "Edge case: if a consumer calls useWebSocket(eventType, handler) with a STABLE eventType but `handler` initially undefined (e.g. gated on a not-yet-ready callback: useWebSocket('message:new', ready ? onMsg : undefined)), the effect runs once at mount, sees handlerRef.current === undefined, returns without subscribing, and never re-runs when handler later becomes defined — because neither eventType nor subscribe changed. The subscription is silently never established, so realtime events for that eventType are dropped for the component's lifetime.",
+        "The optional `handler?` in the signature (useWebSocket.ts:74) advertises undefined as a supported input, making this a real API-contract gap rather than a misuse. Low severity because the common call site passes an always-defined inline handler; but the fix is cheap: include a boolean `hasHandler = handler != null` in the dep array (or subscribe unconditionally and no-op inside wrappedHandler when handlerRef.current is undefined) so a handler transitioning undefined→defined re-arms the subscription."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

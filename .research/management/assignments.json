@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-08T18:17:12Z",
+  "generated": "2026-08-08T20:12:34Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -24,28 +24,6 @@
       "merge_attempted_at": "2026-08-07T00:11:32Z",
       "quarantined_at": "2026-08-08T12:08:50Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
-    },
-    {
-      "task_id": "data-announcement-fanout-metric-2026-07-23-retry2",
-      "branch": "auto-impl/data-announcement-fanout-metric-2026-07-c553a5fb",
-      "status": "review",
-      "claimed_at": "2026-08-08T16:06:41Z",
-      "last_updated": "2026-08-08T18:11:49Z",
-      "status_changed_at": "2026-08-08T18:11:49Z",
-      "pr_number": 2723,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2723",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2723(auto-opened) status=partial specialist=rust-backend scope_drift=false note=db slice complete+pushed (get_fanout_metrics_rls delivered/read/ack per scope, real-SQL #2484 test PASSES on live PG); fmt+clippy(8 crates)+affected tests green; local gate red ONLY on pre-existing unrelated api-server test execute_rejects_dns_rebinding_to_private_ip_at_connect (#2710 SSRF; needs real DNS absent in runner) — dispatcher auto-opened draft PR for CI adjudication",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ]
 }
