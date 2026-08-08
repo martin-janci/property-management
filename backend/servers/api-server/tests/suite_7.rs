@@ -17,6 +17,8 @@ mod platform_admin_authz_batch2_tests;
 mod platform_admin_authz_batch3_tests;
 #[path = "suites/platform_admin_authz_tests.rs"]
 mod platform_admin_authz_tests;
+#[path = "suites/platform_settings_patch_tests.rs"]
+mod platform_settings_patch_tests;
 #[path = "suites/portal_webhook_signature_tests.rs"]
 mod portal_webhook_signature_tests;
 #[path = "suites/predictive_maintenance_happy_path_tests.rs"]
