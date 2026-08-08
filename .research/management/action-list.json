@@ -85,20 +85,6 @@
       }
     },
     {
-      "id": "dx-closed-not-merged-pr-2385-retry2",
-      "action": "PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup [retry 2/2 of failed dx-closed-not-merged-pr-2385]",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-07T04:07:19Z (retry_of=dx-closed-not-merged-pr-2385 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T02:31:15Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-07T04:07:19Z",
-      "retry_of": "dx-closed-not-merged-pr-2385",
-      "retry_round": 2
-    },
-    {
       "id": "gh-issue-2703",
       "action": "Security: SSRF DNS-rebinding TOCTOU in workflow action api_call.rs — anti-rebinding gate is bypassable (Closes #2703)",
       "owner_role": "pm-tech-lead",
@@ -116,34 +102,6 @@
           "follow-up"
         ]
       }
-    },
-    {
-      "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30-retry1",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-admin-2026-07-30]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-08-07T18:08:20Z (retry_of=refactor-churn-hotspot-api-server-layout-admin-2026-07-30 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T18:04:11Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-07T18:08:20Z",
-      "retry_of": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
-      "retry_round": 1
-    },
-    {
-      "id": "data-audit-add-evidence-idor-fix-2026-07-23-retry2",
-      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern) [retry 2/2 of failed data-audit-add-evidence-idor-fix-2026-07-23]",
-      "owner_role": "pm-data",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=data-audit-add-evidence-idor-fix-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:23:52Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-08T00:08:13Z",
-      "retry_of": "data-audit-add-evidence-idor-fix-2026-07-23",
-      "retry_round": 2
     },
     {
       "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry2",

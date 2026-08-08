@@ -1,9 +1,50 @@
 {
-  "generated": "2026-08-06T18:19:51Z",
+  "generated": "2026-08-08T02:22:56Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-08T02:22:56Z",
+      "prs_scanned": 15,
+      "clean": [
+        2688,
+        2690,
+        2691,
+        2692,
+        2697,
+        2698,
+        2700,
+        2701,
+        2702,
+        2706,
+        2707,
+        2708,
+        2709,
+        2711,
+        2712
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed in this runner -> GitHub MCP (mcp__github__*) for every network call. Window merged-to-dev 14d (>=2026-07-25), base=dev, max_prs=15. Prior run (2026-08-06T18:19Z) scanned #2666-#2683; this run scanned the 15 NEWEST never-reviewed merged-to-dev PRs after it (by merged_at desc): #2688,#2690,#2691,#2692,#2697,#2698,#2700,#2701,#2702,#2706,#2707,#2708,#2709,#2711,#2712 (exactly the max_prs cap). Two closed-unmerged dependabot PRs (#2587,#2582) excluded (merged_at null). The still-unreviewed older stragglers #2663/#2664/#2665 and the #2685/#2686/#2687/#2689/#2693/#2694/#2695 mid-tier (all merged 2026-08-06T23:22..2026-08-07T00:08) fall just outside the newest-15 and roll to the next run. ALL 15 CLEAN, 0 net-new issues -- another unusually strong batch: every PR is an auto-impl code-review security/correctness/i18n fix shipped WITH a targeted regression test. Highlights: #2698 (reality-server anonymous-inquiry throttle: new TenantRateLimiterSet::with_default_bounded w/ inline LRU+TTL eviction so a rotating-IP flood can't balloon the map; spoof-resistant client key reads X-Forwarded-For counting trusted_hops FROM THE RIGHT, fail-safe to a shared 'unknown' bucket on underlength/absent header -- never fail-open; wired FIRST on send_contact_message + request_viewing before any DB work; exhaustive route+key unit tests). #2707 (workflow api_call memory-DoS: read_capped_body caps response buffering at 8 MiB via Content-Length pre-check + bounded streaming read, closes the unbounded response.text() amplification; truncation-marked + warn-logged; hermetic synth-response tests). #2706 (RAG index_document fails closed 502 on embedding-count!=chunk-count instead of silently zip-truncating to a partial index). #2708 (workflow condition compare: coerce_finite_f64 rejects stringified NaN/inf/infinity that Rust's f64 parser otherwise accepts -> routed to uncomparable, not a non-antisymmetric ordering). #2688 (ai/llm enhanced_chat now fails closed 501 instead of returning a fabricated confidence:0.85/tokens_used:150/escalated payload built from no real RAG/LLM call; OpenAPI 200->501; test asserts 501 + absence of fabricated fields). #2692 (public listing view_count: SECURITY DEFINER portal_get_listing_view_count bypasses org-only FORCE-RLS on listing_analytics for portal listings org_id=NULL -> real total instead of hardcoded 0; NOBYPASSRLS-role FORCE-RLS regression test proves direct SUM reads 0 while definer reads the real total). #2712 (dispute add_evidence emits a resource_created/dispute_evidence access-audit row on audit_logs, mirroring membership.rs pattern; test asserts actor/org/dispute_id). #2711 (behavior-preserving layout tenant.rs dedupe: extracted require_org_admin + load_screen_config, nil-org 400 / non-admin 403 semantics preserved, connection still released on reject). #2690 (mobile-rn cold-start & biometric-unlock now refresh an expired stored access token via isJwtExpired(skew=30s) before trusting the restored session -- #2399 no-refetch intent preserved; malformed/missing-exp defers to server 401, never fail-open; broad integration + util tests). #2691 (ppt-web WS resume-after-give-up: connect() resets the reconnect budget via resetReconnectAttempts while the internal backoff loop calls openConnection() directly so the cap can still be reached; network-status effect re-arms on regained connectivity while authenticated; maxRetriesExceeded surfaced for a reconnect affordance; fake-WebSocket fake-timer tests cover both halves). #2709 (reality-web ListingForm i18n via next-intl across all 6 catalogs sk/cs/de/en/hu/pl, precursor #2702 added NaN/negative area/rooms guards + tests). #2701 (shared-comparison URL: Promise.all->allSettled so one bad listing id is dropped and the good ones still load; error state only when nothing loads). #2697 (removed orphaned reality-server ListingHandler stub module + its geo helpers -- dead code, no live callers). #2700 (pure migration-file renumber 00220->00227 resolving a version collision introduced by #2692's new migration; the function is referenced by NAME not number and CREATE OR REPLACE is idempotent, so the rename is safe). Dedup / considered-but-not-filed: (a) #2690's initialize() useEffect now depends on the memoized refreshToken callback -- if its deps ever churn the effect could re-run and re-read SecureStore; refreshToken is a stable useCallback so this is not a live bug, not filed. (b) #2698's InquiriesHandler::create_inquiry remains uncalled by live routes (throttle+repo path bypass it) but that pre-dates this PR and is explicitly documented; not a net-new gap. (c) #2700 renumber COULD checksum-conflict a DB that already applied the old 00220, but #2692/#2700 merged the same day well before any release and the function body is idempotent -- process nit, not code-shape actionable. Labeling: GitHub MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history is the dedup record for the next run (same precedent as every prior run). NET-NEW actionable issues: 0.",
+      "focus_prs": [
+        2688,
+        2690,
+        2691,
+        2692,
+        2697,
+        2698,
+        2700,
+        2701,
+        2702,
+        2706,
+        2707,
+        2708,
+        2709,
+        2711,
+        2712
+      ]
+    },
     {
       "run_at": "2026-08-06T18:19:51Z",
       "prs_scanned": 15,
@@ -579,24 +620,6 @@
           "note": "cross-org /rag/migrate RLS test runs as #[sqlx::test] superuser -> passes vacuously w.r.t. the 00216 super-admin policy; adopt #2340's NOBYPASSRLS role-switch to make it a real regression guard"
         }
       ]
-    },
-    {
-      "run_at": "2026-07-17T16:12:50Z",
-      "prs_scanned": 11,
-      "clean": [
-        2416,
-        2415,
-        2414,
-        2412,
-        2411,
-        2410,
-        2409,
-        2408,
-        2407,
-        2372,
-        2371
-      ],
-      "with_issues": []
     }
   ]
 }

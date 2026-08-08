@@ -4201,6 +4201,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "data-audit-add-evidence-idor-fix-2026-07-23-retry2",
+      "branch": "auto-impl/data-audit-add-evidence-idor-fix-2026-07-e7099c80",
+      "status": "done",
+      "claimed_at": "2026-08-08T02:12:19Z",
+      "last_updated": "2026-08-08T02:26:40Z",
+      "status_changed_at": "2026-08-08T02:26:40Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked already-implemented-on-dev (PR #2712 / commit a598a8f: add_evidence access-audit event + IG3 test both present) [ghost-reconciled to done]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "data-audit-oauth-token-usage-2026-07-23",
       "branch": "auto-impl/data-audit-oauth-token-usage-2026-07-23-00db1231",
       "status": "merged",
@@ -4616,6 +4638,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "dx-closed-not-merged-pr-2385-retry2",
+      "branch": "auto-impl/dx-closed-not-merged-pr-2385-retry2-080e07f5",
+      "status": "failed",
+      "claimed_at": "2026-08-07T14:11:01Z",
+      "last_updated": "2026-08-08T02:26:40Z",
+      "status_changed_at": "2026-08-08T02:26:40Z",
+      "pr_number": 2705,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2705",
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2705 status=done specialist=rust-backend note=not-superseded; re-applied dtolnay/rust-toolchain 1.94.1->1.100.0 across 9 refs; @stable left as-is [phase5.7 respawn round=1: followup driver spawned to address verdict=changes] [phase5.7 round=2: dispatcher landed direct MCP-driven fix commit aed7cb0 — corrected 1.97.1->1.100.0 across all 9 refs; awaiting re-review] [PR #2705 closed without merge — task invalid: rust-toolchain 1.100.0 is a nonexistent version (404 at install); dispatcher auto-closed, no further retries]",
+      "reviewer_summary": "verdict=changes note=rust-1.100.0-nonexistent-toolchain-404-all-backend-jobs-fail-at-install",
+      "last_reviewed_oid": "aed7cb01d772defef84ab23ee8c62fade61ff1e3",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {
@@ -10979,6 +11023,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30-retry1",
+      "branch": "auto-impl/refactor-churn-hotspot-api-server-layout-3be8d9fc",
+      "status": "merged",
+      "claimed_at": "2026-08-07T18:12:19Z",
+      "last_updated": "2026-08-08T02:26:40Z",
+      "status_changed_at": "2026-08-08T02:26:40Z",
+      "pr_number": 2713,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2713",
+      "merged_at": "2026-08-08T02:22:05Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2713 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=layout admin dedupe mirrors PR#2711 (625->517); single-file diff; fmt green, clippy/test rely on CI backend.yml (utoipa egress); drift=docs-only owner-map false-positive [phase4 reclaim fast-path: PR opened synchronously] [dispatcher-autofix: resolved 2 clippy explicit_auto_deref errors (admin.rs:151,266) blocking CI check+fmt-clippy; pushed ef825e4 to re-trigger backend.yml]",
+      "reviewer_summary": "verdict=approve note=behavior-preserving layout/admin.rs dedupe; auth+RLS+error-mapping preserved; scope single-file; CI green",
+      "last_reviewed_oid": "ef825e4497311867f23aadf867e4542d6fe23a96",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-08T02:26:40Z"
+    },
+    {
       "task_id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
       "branch": "auto-impl/refactor-churn-hotspot-api-server-layout-1339b1aa",
       "status": "failed",
@@ -12709,5 +12775,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-07T16:21:27Z"
+  "archived_at": "2026-08-08T02:26:53Z"
 }
