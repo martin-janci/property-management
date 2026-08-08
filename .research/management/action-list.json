@@ -108,7 +108,7 @@
       "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 2/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
       "owner_role": "pm-scrum-master",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=chore-triage-untriaged-issues-750s-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T20:13:32Z)",
       "deadline": null,
       "dependency": null,
@@ -138,6 +138,62 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "dx-fixme-admin-web-mobile-config-patch-endpoint-retry1",
+      "action": "admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing [retry 1/2 of failed dx-fixme-admin-web-mobile-config-patch-endpoint]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=dx-fixme-admin-web-mobile-config-patch-endpoint reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "dx-fixme-admin-web-mobile-config-patch-endpoint",
+      "retry_round": 1
+    },
+    {
+      "id": "dx-fixme-admin-web-platform-settings-patch-endpoint-retry1",
+      "action": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing [retry 1/2 of failed dx-fixme-admin-web-platform-settings-patch-endpoint]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=dx-fixme-admin-web-platform-settings-patch-endpoint reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "dx-fixme-admin-web-platform-settings-patch-endpoint",
+      "retry_round": 1
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-auth-2026-07-31-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet) [retry 1/2 of failed refactor-churn-hotspot-api-server-auth-2026-07-31]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-auth-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "refactor-churn-hotspot-api-server-auth-2026-07-31",
+      "retry_round": 1
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers) [retry 1/2 of failed refactor-churn-hotspot-api-server-reports-2026-07-31]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-reports-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "refactor-churn-hotspot-api-server-reports-2026-07-31",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
