@@ -7273,6 +7273,154 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "security-ssrf-hardening-followup-outbound-callers",
+      "title": "extend connect-time SSRF-guard resolver to workflow/webhook/signatures outbound HTTP callers",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "PR #2710"
+      ],
+      "evidence": [
+        "PR #2710 body Notes: 'Other outbound-fetch callers (workflow_executor.rs, signatures.rs, webhook.rs) currently only run the static validate_external_url; hardening those the same way is out of scope for #2703 and worth a follow-up.'"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/signatures.rs",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "backend/crates/integrations/src/workflow_executor.rs",
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": "plans/security-ssrf-hardening-outbound-callers.md"
+    },
+    {
+      "id": "dx-admin-web-platform-save-still-readonly",
+      "title": "admin-web: re-enable platform.tsx Save (wire to new PATCH /platform-admin/settings)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2716"
+      ],
+      "evidence": [
+        "PR #2716 body: 'the admin-web platform.tsx re-enable (flip readOnly → real Save) is a separate frontend follow-up (needs api-client regen); this PR unblocks it.' Backend endpoint landed; frontend Save still readOnly."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/platform.tsx"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "dx-admin-web-mobile-config-save-still-readonly",
+      "title": "admin-web: re-enable MobileConfigPage Save (wire to new PATCH /admin/mobile-config)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2717"
+      ],
+      "evidence": [
+        "PR #2717 backend PATCH /api/v1/admin/mobile-config landed. Frontend still readOnly per test comment referencing admin-web/src/pages/MobileConfigPage.tsx."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-api-server-services-actions-api-call-rs",
+      "title": "api-call.rs is a two-week security hotspot (SSRF #2710 + DoS cap #2707) — hardening/fuzz sweep",
+      "vector": "security",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2707",
+        "PR #2710"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs touched by two consecutive security fixes in one week (#2707 response-body DoS cap, #2710 SSRF DNS-rebinding TOCTOU close)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-api-server-routes-layout-tenant-rs",
+      "title": "layout/tenant.rs churn: helper extraction incomplete after #2711+#2721 — consolidate into layout::common",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2711",
+        "PR #2721"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs touched twice for churn-hotspot extraction in the same week; same-week rework suggests a matching layout::common consolidation pass is unfinished."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs",
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "dx-reality-web-listingform-parent-pages-i18n-gap",
+      "title": "reality-web: i18n realtor listing new/edit pages (submitLabel + page titles)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2709"
+      ],
+      "evidence": [
+        "PR #2709 body Notes: 'The two parent pages (realtor/listings/new, .../[id]/edit) still pass English submitLabel / page-title literals — a separate finding, out of scope here.' next-intl app with hardcoded strings."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
+    },
+    {
+      "id": "dx-migration-collision-guard-ci",
+      "title": "add CI check preventing SQLx migration-number collisions across concurrent PRs",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2717"
+      ],
+      "evidence": [
+        "PR #2717 body: 'Renumbered from 00228 → 00230 to resolve a collision with 00228_announcement_vote_notified_at.sql already merged onto dev via PR #2714; 00229 is reserved for sibling PR #2716.' Three concurrent additive migrations racing for the same number without a CI guard."
+      ],
+      "files": [
+        "backend/crates/db/migrations/",
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-08-08",
+      "updated_at": "2026-08-08",
+      "plan": null
     }
   ]
 }

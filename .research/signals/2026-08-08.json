@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-08-08T14:23:00Z",
+  "run_context": {
+    "trigger_text": "",
+    "since_iso": "2026-08-07T06:24:00Z",
+    "lag_hours": 32,
+    "buffer_low_payload": "claimable=0/72 — refill planner (all deterministic tiers dry: coverage 0 open stories, backlog avail=0, retry-remint avail=0)"
+  },
+  "signals": [
+    {
+      "id": "security-ssrf-hardening-followup-outbound-callers",
+      "type": "unchecked-todo",
+      "source": "PR #2710",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "PR #2710 body Notes: 'Other outbound-fetch callers (workflow_executor.rs, signatures.rs, webhook.rs) currently only run the static validate_external_url; hardening those the same way is out of scope for #2703 and worth a follow-up.' Verified by grep — the three sibling files still call validate_external_url only.",
+      "files": [
+        "backend/servers/api-server/src/routes/signatures.rs",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "backend/crates/integrations/src/workflow_executor.rs",
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ]
+    },
+    {
+      "id": "dx-admin-web-platform-save-still-readonly",
+      "type": "unchecked-todo",
+      "source": "PR #2716",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2716 body: 'the admin-web platform.tsx re-enable (flip readOnly → real Save) is a separate frontend follow-up (needs api-client regen); this PR unblocks it.' Grep confirms readOnly still present in platform.tsx.",
+      "files": ["frontend/apps/admin-web/src/pages/platform.tsx"]
+    },
+    {
+      "id": "dx-admin-web-mobile-config-save-still-readonly",
+      "type": "unchecked-todo",
+      "source": "PR #2717",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2717 landed backend PATCH /api/v1/admin/mobile-config; test file comment references MobileConfigPage.tsx as rendered read-only. Grep confirms readOnly still in MobileConfigPage.tsx.",
+      "files": ["frontend/apps/admin-web/src/pages/MobileConfigPage.tsx"]
+    },
+    {
+      "id": "churn-hotspot-api-server-services-actions-api-call-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2707, PR #2710",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/services/actions/api_call.rs touched by two consecutive security fixes in one week (#2707 unbounded response-body DoS cap; #2710 SSRF DNS-rebinding TOCTOU close). Two-week security hotspot; hardening/fuzz sweep worth queueing.",
+      "files": ["backend/servers/api-server/src/services/actions/api_call.rs"]
+    },
+    {
+      "id": "churn-hotspot-api-server-routes-layout-tenant-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2711, PR #2721",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/layout/tenant.rs touched twice for churn-hotspot extraction this week (#2711 introduced helpers; #2721 hoisted acquire_public_conn). Same-week rework signals unfinished consolidation into layout::common.",
+      "files": [
+        "backend/servers/api-server/src/routes/layout/tenant.rs",
+        "backend/servers/api-server/src/routes/layout/admin.rs"
+      ]
+    },
+    {
+      "id": "dx-reality-web-listingform-parent-pages-i18n-gap",
+      "type": "unchecked-todo",
+      "source": "PR #2709",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #2709 body Notes: 'The two parent pages (realtor/listings/new, .../[id]/edit) still pass English submitLabel / page-title literals — a separate finding, out of scope here.'",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx"
+      ]
+    },
+    {
+      "id": "dx-migration-collision-guard-ci",
+      "type": "unchecked-todo",
+      "source": "PR #2717",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "PR #2717 body: 'Renumbered from 00228 → 00230 to resolve a collision with 00228_announcement_vote_notified_at.sql already merged onto dev via PR #2714; 00229 is reserved for sibling PR #2716.' Three concurrent additive migrations racing for the same number with no CI guard.",
+      "files": [
+        "backend/crates/db/migrations/",
+        ".github/workflows/backend.yml"
+      ]
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-08-08.md && H1 matches", "observed": "H1='# 2026-08-08'", "expected": "H1='# 2026-08-08'" },
+    { "goal": "G2",  "passed": true, "command": "jq state advanced vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true, "command": "jq unique backlog ids", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "jq dedup non-cumulative signals", "observed": "true", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "jq cap+decay", "observed": "true (no items over 8; no open items older than 14d)", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "brief annotation grep", "observed": "adversarial pass: passed for security-ssrf-hardening-outbound-callers", "expected": "adversarial pass annotation present" },
+    { "goal": "G7",  "passed": true, "command": "count + metadata + 11 headings + capability + mode + files-exist", "observed": "count=1 (≤2); all 4 metadata + 11 headings present; C6 ticked; Mode: cloud-ok; 4/4 files resolve", "expected": "all pass" },
+    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true, "command": "secret/private-hostname grep on staged (excluding baselines)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md regen", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "brief phase-failures parse", "observed": "none reported", "expected": "no rollback needed" },
+    { "goal": "G12", "passed": true, "command": "prior plan slugs present in plans/ or _archive/", "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count now vs HEAD", "observed": "8 == 8", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md regen", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap+dedup", "observed": "true (empty array — no auto-fix candidate)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + pm_cursor", "observed": "no-op — Phase 1.6 skipped this run (pm_cursor.next_index unchanged at 3)", "expected": "no-op when skipped" },
+    { "goal": "G17", "passed": true, "command": "Telegram token literal grep", "observed": "0", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the single score-3 item is a cross-file security refactor outside the auto-fix allowlist (doc-stub / orphan-remove / lockfile-bump / fixme-issue / stalled-review)",
+  "phase_status": {
+    "phase_1_observe": "success",
+    "phase_1_5_rotating_review": "skipped (buffer-low priority + token budget)",
+    "phase_1_6_project_management": "skipped (buffer-low priority + token budget)",
+    "phase_2_decide": "success (7 new items appended)",
+    "phase_3_promote": "success (1 plan promoted; second slot unfilled by design)",
+    "phase_3_5_adversarial": "passed",
+    "phase_4_write": "success",
+    "phase_5_auto_fix": "no candidate",
+    "phase_6_commit": "in progress"
+  }
+}
