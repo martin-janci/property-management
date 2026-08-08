@@ -1,0 +1,19 @@
+[
+  {
+    "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "expert": "rust",
+    "evidence": [
+      "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 — `send_vote_reminders()` selects every `status='active'` vote with `end_at <= now + vote_reminder_days_before` and `end_at > NOW()` (SQL at :447-457), then calls `notify_vote_reminder(&vote, &users_not_voted)` for all eligible owners who have not voted. It records NO per-vote/per-user 'reminder already sent' watermark, so nothing bounds how many times a given owner is reminded across ticks.",
+      "The scheduler tick runs every 60s (backend/servers/api-server/src/services/scheduler/mod.rs:81 `interval_secs: 60`) and `send_vote_reminders` is invoked unconditionally on every tick (mod.rs:337-339). The reminder window is `vote_reminder_days_before` = 1 DAY by default (mod.rs:83). So for the final ~24h of every vote's life the same owners are re-selected on every tick.",
+      "The only thing throttling the resend is the generic in-memory notification dedup cache, whose window is just 300s (backend/servers/api-server/src/services/notification.rs:108-116 `dedup_window_secs: 300`; keyed by (user_id, notification_type, entity_id) at should_deduplicate :177-197). `should_deduplicate` only suppresses when `Utc::now() - entry.sent_at < 300s` and `record_sent` refreshes sent_at only on an actual send — so after each 5-minute window the next tick re-sends. Net effect: an owner who hasn't voted receives a fresh 'You haven't voted yet' In-App + Push notification (notification.rs:646-668, channels InApp+Push) roughly every 5 minutes for the whole reminder window (~288 duplicate notifications per owner per vote), and worse (in-memory cache is lost on process restart / not shared across replicas).",
+      "This is the un-tracked instance of a known bug class the same file already fixes elsewhere: signature reminders enforce a persistent 12h min-interval via a `last_reminder_at` column (mod.rs:38 `SIGNATURE_REMINDER_MIN_INTERVAL_HOURS = 12`, guard at :774-786, stamp at :869); meter/payment reminders acknowledge the identical cross-tick-dedup gap in-doc and track it under #1769/#1790/#1772 (mod.rs:900-911). Vote reminders have neither a watermark nor a tracking note. Vote-started / vote-closed notifications in the SAME votes.rs use `started_notified_at`/`closed_notified_at` watermarks (votes.rs:33-129, 137-289) — only the reminder path lacks one.",
+      "Suggested fix: add a durable per-(vote,user) or per-vote `reminder_last_sent_at` watermark (mirroring the signature-reminder 12h min-interval pattern) so an owner is reminded at most once per configured cadence instead of once per ~5-minute dedup window. Traced full path: 60s tick -> send_vote_reminders (no watermark) -> notify_vote_reminder -> send_to_users -> 300s dedup only."
+    ]
+  }
+]

@@ -2323,6 +2323,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-community-unauthenticated-reads-retry2",
+      "branch": "auto-impl/code-review-api-handlers-community-unaut-44018899",
+      "status": "merged",
+      "claimed_at": "2026-08-08T16:06:41Z",
+      "last_updated": "2026-08-08T18:17:12Z",
+      "status_changed_at": "2026-08-08T18:17:12Z",
+      "pr_number": 2722,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2722",
+      "merged_at": "2026-08-08T18:10:42Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2722 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=added RequestPrincipal+verify_group/item_access to get_group/list_posts/get_item; 7 new anon-401/xtenant-404 tests pass (16/16); clippy+fmt green; drift=security fix in routes/community.rs outside narrow pm-security area",
+      "reviewer_summary": "verdict=approve note=security-fix-correct-complete-ci-green-approve-posted-as-comment-self-pr",
+      "last_reviewed_oid": "5cc9d14928dfcf1d823ce76390db1683a010c8b5",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-enhanced-chat-stub",
       "branch": "auto-impl/code-review-api-handlers-enhanced-chat-s-daae5bb3",
       "status": "merged",
@@ -13039,5 +13061,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-08T12:09:23Z"
+  "archived_at": "2026-08-08T18:17:12Z"
 }
