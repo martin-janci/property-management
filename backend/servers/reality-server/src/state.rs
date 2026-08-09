@@ -844,6 +844,11 @@ pub struct AppState {
     pub inquiries_handler: InquiriesHandler,
     /// Portal password-reset token repository (UC-44.3)
     pub portal_password_reset_repo: PortalPasswordResetRepository,
+    /// Password-reset email transport (UC-44.3). Selected from the environment:
+    /// a real SMTP transport when `SMTP_*` is configured, otherwise a logging
+    /// fallback that reports `is_configured() == false` so the request handler
+    /// never falsely claims a reset link was delivered.
+    pub password_reset_mailer: Arc<dyn crate::services::PasswordResetMailer>,
     /// Application configuration
     pub config: AppConfig,
     /// Pending SSO sessions (OAuth flow state)
@@ -917,6 +922,10 @@ impl AppState {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
         let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
+        // UC-44.3: pick the reset email transport from the environment. Without
+        // SMTP_* this returns a logging fallback (delivery disabled) so the
+        // request handler can refuse to claim a link was sent in production.
+        let password_reset_mailer = crate::services::build_password_reset_mailer();
 
         // Public inquiry POSTs go through this handler so the best-effort realtor
         // notification fires. `with_notifier` makes the transport injectable:
@@ -977,6 +986,7 @@ impl AppState {
             reality_portal_repo,
             inquiries_handler,
             portal_password_reset_repo,
+            password_reset_mailer,
             config,
             sso_sessions: Arc::new(Mutex::new(HashMap::new())),
             user_service,
