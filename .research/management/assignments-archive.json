@@ -3671,6 +3671,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-db-error-leak-to-client-retry1",
+      "branch": "auto-impl/code-review-reality-server-db-error-leak-b242a892",
+      "status": "merged",
+      "claimed_at": "2026-08-09T06:11:42Z",
+      "last_updated": "2026-08-09T08:15:47Z",
+      "status_changed_at": "2026-08-09T08:15:47Z",
+      "pr_number": 2724,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2724",
+      "merged_at": "2026-08-09T08:13:43Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2724 status=partial specialist=rust-backend scope_drift=true code_reuse_warn=none note=23 leak sites in 6 reality-server routes routed through existing util::errors::db_error + 3 unit tests; fmt clean but clippy/tests couldn't run locally (utoipa-swagger-ui build-dep download 403 by egress policy, unrelated to change); CI must confirm green",
+      "reviewer_summary": "verdict=approve head_oid=3f13ac888c8817a43037f78d81f5b239f4bacb2f note=all-23-route-db-leak-sites-consolidated-onto-existing-db_error; scope-drift-justified; reuse-confirmed; tests-added; CI-green",
+      "last_reviewed_oid": "3f13ac888c8817a43037f78d81f5b239f4bacb2f",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-09T08:12:08Z"
+    },
+    {
       "task_id": "code-review-reality-server-inquiries-no-ratelimit",
       "branch": "auto-impl/code-review-reality-server-inquiries-no-e541d1a2",
       "status": "merged",
@@ -3867,6 +3889,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-password-reset-no-transport-retry1",
+      "branch": "auto-impl/code-review-reality-server-password-rese-db2d54a8",
+      "status": "merged",
+      "claimed_at": "2026-08-09T06:11:42Z",
+      "last_updated": "2026-08-09T08:15:47Z",
+      "status_changed_at": "2026-08-09T08:15:47Z",
+      "pr_number": 2725,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2725",
+      "merged_at": "2026-08-09T08:14:11Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2725 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=impl complete+pushed+draft PR; verify gate unrunnable in cloud (utoipa-swagger-ui build-script github.com egress blocked -> crate won't compile; no DB either); fmt clean; needs backend.yml CI to close clippy+tests",
+      "reviewer_summary": "verdict=approve head_oid=97765f9a386c027dbf5be245c4ac2870cf1c1f17 note=reset-transport-wired; enumeration-safe-503-on-global-state-only; CI-green",
+      "last_reviewed_oid": "97765f9a386c027dbf5be245c4ac2870cf1c1f17",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-09T08:12:08Z"
     },
     {
       "task_id": "code-review-reality-server-sso-backslash-redirect",
@@ -13127,5 +13171,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-09T06:24:50Z"
+  "archived_at": "2026-08-09T08:16:56Z"
 }
