@@ -7273,6 +7273,747 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth/mod.rs",
+      "title": "churn-hotspot: mod.rs — auth/mod.rs churn 326 lines this run — PR #2715 dedupe of auth handler error mappers",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 2026-08-07"
+      ],
+      "evidence": [
+        "auth/mod.rs churn 326 lines this run — PR #2715 dedupe of auth handler error mappers"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports/mod.rs",
+      "title": "churn-hotspot: mod.rs — reports/mod.rs churn 287 lines — PR #2720 extracted helpers.rs; previous churn history 4 runs (as `r",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 2026-08-07"
+      ],
+      "evidence": [
+        "reports/mod.rs churn 287 lines — PR #2720 extracted helpers.rs; previous churn history 4 runs (as `reports.rs` old path)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs",
+      "title": "churn-hotspot: inquiries.rs — inquiries.rs churn 239 lines — PR #2719 routed anonymous POSTs through InquiriesHandler",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn since 2026-08-07"
+      ],
+      "evidence": [
+        "inquiries.rs churn 239 lines — PR #2719 routed anonymous POSTs through InquiriesHandler"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "title": "api-core: LineMatcher.match returns first candidate on multi-match — silently mis-links reconciliations",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 — the payment auto-matcher's inner `for invoice in &open_invoices` loop (accounting.rs:129) creates a `PaymentMatch` for EVERY invoice whose confidence reaches the 0.5 threshold, with NO `break` after the first accepted match and NO in-memory update of `line.match_state`."
+      ],
+      "files": [
+        "backend/crates/api-core/src/accounting/matcher.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "title": "api-core: accounting matcher/reconciler has zero unit tests — logic-heavy code un-covered",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(test)]` module and no test cases anywhere (grep for `#[cfg(test)]` / `#[test]` / `fn test` in the file returns nothing) — the payment auto-matching logic is entirely untested."
+      ],
+      "files": [
+        "backend/crates/api-core/src/accounting/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "title": "api-core: accounting variance-split only-amount branch drops metadata — history rows lose context",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 — a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance threshold (accounting.rs:150) with NO amount corroboration required. The amount branch only ADDS confidence (+0.15 exact, +0.05 within-range, accounting.rs:143-146); a gross amount mismatch subtracts nothing."
+      ],
+      "files": [
+        "backend/crates/api-core/src/accounting/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-authz-mw-guest-fail-open",
+      "title": "api-core: require_permission middleware defaults unauth requests to Guest role — silently authorizes",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:176-180 — `require_permission` reads the caller's role from request extensions with `.get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)`: an ABSENT role (no authenticating extractor ran, or it failed to insert a TenantRole) is silently treated as `Guest` rather than rejected."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "title": "api-core: DelayConfig::to_duration multiplies unchecked u64 — release build wraps and bypasses 7-day cap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(self.duration * 60)` (Minutes, :57), `* 3600` (Hours, :58), `* 86400` (Days, :59). The multiplication has no `checked_mul`/`saturating_mul` and no upper-bound check on `self.duration`."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-idempotency-tx-across-handler",
+      "title": "api-core: idempotency middleware holds pg tx across next.run — handler acquires SEPARATE conn (advisory-lock leak)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:95-179 — `handle_idempotent_request` opens a DB transaction `pool.begin()` (line 95), takes a `pg_advisory_xact_lock` (line 108), and then HOLDS that transaction (and therefore one pooled connection) open across the entire downstream request: `next.run(request).await` at line 148, committing only afterward (line 177). The wrapped handler independently acquires its OWN pooled connection(s) (e.g. via the `RlsConnection` extractor) to do its work."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/idempotency.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "title": "api-core: notification_pipeline swallows quiet-hours DB error with .ok() — silent fail-open on user preference",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().map(...)`. The `.ok()` collapses a DB/pool `Err` into `None`, which is indistinguishable from 'user has no quiet-hours schedule'."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "title": "api-core: require_permission defaults missing TenantRole to Guest — unauth requests may pass gate",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:170-201 — `require_permission` derives the caller role with `request.extensions().get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)` (lines 176-180). For an UNAUTHENTICATED request (no `TenantRole` in extensions) the role defaults to `Guest`, whose `level()` is 10 (backend/crates/common/src/tenant.rs:125)."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-rls-context-deprecated-exported",
+      "title": "api-core: deprecated set_rls_context() still exported — footgun for new routes bypassing per-conn scoping",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed and should NOT be used' (middleware runs before extractors; setting RLS on the pool does not affect the connection the handler later borrows). Despite that, it is still a live `pub mod rls_context;` (middleware/mod.rs:7) AND glob re-exported `pub use rls_context::*;` (middleware/mod.rs:16), so `rls_context_middleware` and `require_rls_context` are part of api-core's public surface.",
+        "resolved: superseded by rls-context-pool-not-conn (same underlying trap — delete the deprecated module)"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "title": "api-core: require_rls_context sets RLS on a transient pooled conn — handler queries run on DIFFERENT conn without GUCs (silent tenant-isolation gap)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but it enforces NOTHING: it calls `db::tenant_context::set_request_context(pool.as_ref(), Some(tenant_id), Some(user_id), is_super_admin)` (line 232) then runs the handler via `next.run(request)` (line 245). `set_request_context<E: Executor>` (backend/crates/db/src/tenant_context.rs:18) issues its `set_config`/SET on a connection sqlx transiently checks out of the POOL and immediately returns; the handler later acquires a DIFFERENT pooled connection where the RLS GUCs are unset. Result: tenant-isolation is silently NOT applied to the handler's queries — a cross-tenant data-exposure footgun for any route that adopts this middleware believing the doc."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": "plans/code-review-api-core-rls-context-pool-not-conn.md"
+    },
+    {
+      "id": "code-review-api-core-syndication-fake-synced",
+      "title": "api-core: syndication marks external listing 'synced' before external POST completes — fake success on failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-360 — `process_syndication_job` never calls any portal API yet writes `syndication_status::SYNCED` to the DB for every operation: PUBLISH generates a mock external id `format!(\"{}_{}\", portal, Uuid::new_v4())` (:318) and calls `update_syndication_status(..., SYNCED, Some(&external_id), None)` (:321-330); STATUS_CHANGE and UPDATE likewise stamp SYNCED. The doc comment (:285-288) admits 'This is a placeholder for the actual portal API integration.'"
+      ],
+      "files": [
+        "backend/crates/api-core/src/syndication/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-noop-isolation",
+      "title": "api-core: tenant_filter for a subset of routes is a no-op — relies on caller passing tenant that isn't validated",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 — `tenant_filter` is named and documented ('ensure tenant isolation') as an isolation guard, but its body only checks that `X-Tenant-ID` parses as a UUID and then calls `next.run(request)`; the actual checks are an inline TODO comment: '// In production, validate: 1. Tenant exists and is active 2. User has access to this tenant 3. Rate limiting' (tenant_filter.rs:31-34). It enforces nothing about whether the caller may act for that tenant."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-announce-fake-success",
+      "title": "api-core: voice announce action returns Ok without confirming provider ack — fake success in workflow",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:385-413 — `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, announcements: [] }`; the body never reads the announcement store (line 390: 'In a real implementation, this would query the announcement repository'). A resident with unread building announcements is always told there are none."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/voice_announce.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-meter-fake-success",
+      "title": "api-core: voice meter-reading action returns Ok before provider confirms — silent workflow success",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:437-466 — `action_check_meter` returns `success: true` with the response 'Your latest meter readings have been recorded. There are no pending readings.' and `data: { pending_readings: 0 }`, but the body never queries anything: line 442 is the comment 'In a real implementation, this would query the meter repository'. It is a fabricated-success stub that makes an affirmative factual claim (readings recorded / none pending) to the resident."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/voice_meter.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "title": "api-core: vote-reminders scheduler has no cross-tick dedup — a slow tick can re-emit reminders next tick",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 — `send_vote_reminders()` selects every `status='active'` vote with `end_at <= now + vote_reminder_days_before` and `end_at > NOW()` (SQL at :447-457), then calls `notify_vote_reminder(&vote, &users_not_voted)` for all eligible owners who have not voted. It records NO per-vote/per-user 'reminder already sent' watermark, so nothing bounds how many times a given owner is reminded across ticks."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-doc-summary-not-persisted",
+      "title": "api-handlers: document summary AI response not persisted — user sees output once, gone on refresh",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — after an expensive LLM summarization call, the handler persists the result with `let _ = state.document_repo.update_summary(id, &summary, key_points_json, None, None, Some(word_count), Some(language)).await;`. The Result is discarded, so a DB write failure is completely silent."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-listings-detail-photos-swallow",
+      "title": "api-handlers: listing-detail photos query swallows DB error with .unwrap_or_default() — silent empty",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 and :343 — the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped) fetches the listing itself with the correct `.map_err(...)? / .ok_or_else(...)?` error-propagation pattern (find_by_id_and_org at :321-336), but then swallows the two secondary reads with `.unwrap_or_default()`."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/listings/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "title": "api-handlers: reports aggregate uses unwrap_or_default() — silent zero on DB error (misleading dashboard)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of surfacing the failure. The tell is intra-handler inconsistency: the PRIMARY query in each handler propagates errors via `.map_err(...)?` (e.g. `get_statistics` at :615), but the SECONDARY data queries in the SAME handler discard the `Result`."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-workflow-import-partial-silent",
+      "title": "api-handlers: workflow import partial-failure returns 200 with silent count mismatch — user sees no error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:687-693 — the workflow-template import handler adds each imported action inside a loop with `if let Err(e) = state.workflow_repo.add_action(rls.conn(), tenant_id, create_action).await { tracing::warn!(...); }`. A failed add_action is logged at warn and the loop continues, so the import completes with HTTP 200 while silently dropping one or more actions — the created workflow is partial and internally inconsistent with the template the caller asked to import."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/workflows/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "title": "mobile-native-kmp: ApiClient class is dead code (~100 lines) that duplicates repositories — remove",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/**.kt returns only the class definition (ApiClient.kt:27) and a doc-comment reference in a test (ListingDetailRepositoryTest.kt:172). All live repositories (ListingRepository, FavoritesRepository, InquiryRepository, PortalListingsRepository, etc.) issue their own Ktor calls via HttpClientProvider.client and never route through ApiClient. It is ~100 lines of dead, duplicated API logic (listings search/detail, favorites, inquiry) that drifts from the real repositories and adds maintenance noise."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "title": "mobile-native-kmp: 57 repo catch (e: Exception) sites swallow CancellationException — breaks cooperative cancellation",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in try/catch uses a bare `catch (e: Exception)` and folds the throwable into `Result.failure(e)` WITHOUT first rethrowing kotlinx.coroutines.CancellationException. In Kotlin coroutines, CancellationException is an Exception, so `catch (e: Exception)` swallows it — this breaks structured/cooperative cancellation. Affected files (57 catch sites total): favorites/FavoritesRepository.kt (11), auth/SsoService.kt (9), notifications/NotificationRepository.kt (9), inquiry/InquiryRepository.kt (8), listing/ListingRepository.kt (6), agency/AgencyRepository.kt (4), realtor/PortalListingsRepository.kt (2, lines 62 & 97), realtor/RealtorRepository.kt (2, lines 41 & 61)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "title": "mobile-native-kmp: Compose screens re-assert null-checked state with !! (10+ sites) — replace with smart-cast",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`if` null-guard instead of smart-casting a locally captured val: androidApp/.../ui/listing/ListingDetailScreen.kt:121 (state.errorMessage!!), :125/:149/:160 (state.listing!!), :132 (state.listing!!.realtor?...); ui/account/AccountScreen.kt:174 (notificationPrefs!!); ui/inquiries/InquiriesScreen.kt:169 (errorMessage!!); ui/favorites/FavoritesScreen.kt:164 (errorMessage!!)."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "title": "mobile-native-kmp: CreateListing screen submit returns hardcoded Result.failure — user-facing broken feature",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }). The realtor 'Create Listing' screen is fully reachable in production navigation (composable(Screen.CreateListing.route) { ... }, reached from the MyListings flow), but every submit returns a hardcoded failure — a user fills in the create-listing form, taps submit, and always gets an error. This is a shipped, user-facing broken feature, not a hidden/disabled path."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "title": "mobile-native-kmp: LayoutRepository uses raw println() in commonMain — untagged shipping-build noise",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...)` for diagnostic logging in commonMain (shared production KMP code) at three sites: line 48 ('falling back to default layout: HTTP ...'), line 57 ('...: unexpected screen echo ...'), and line 68 ('...: ${e.message}'). println in commonMain writes uncontrolled output to stdout on Android (logcat System.out) and to the device console on iOS with no tag, level, or ability to disable it in release builds."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "title": "ppt-web-core: parseApiError runs isNetworkError substring sniff FIRST — misclassifies structured errors as network",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :205). isNetworkError (errorHandler.ts:394-416) does case-insensitive substring sniffing on ANY object's `.message`: message.includes('network') || message.includes('failed to fetch') || message.includes('network request failed') || message.includes('networkerror')."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "title": "ppt-web-core: useWebSocket subscribe effect early-return may skip subscribing (stale handlerRef on remount)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `handler` (handler is read via handlerRef to avoid re-subscribing on identity changes)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "title": "ppt-web-ui: AutomationRulesPage mutations run without try/catch — errors silently ignored",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` with NO try/catch, and the page renders error UI only for the list query (`error` at :178) — deleteRule.error / updateRule.error / runRule.error are never surfaced anywhere in the component."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "title": "ppt-web-ui: ConditionBuilder Number(input) coerces empty to 0 — silent 'unset' → 0 conversion",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 — the number-typed value input does `onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}`. `Number('')` is `0`, so clearing the field silently persists the condition value as 0 rather than empty/unset."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "title": "ppt-web-ui: workflow-automation feature only 3/15 files use useTranslation — hardcoded English",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePreviewModal, TriggerSelector, ExecutionDetailsModal, ExecutionMonitoringPage partial); every page renders hardcoded English. This is a react-i18next-enabled app (root CLAUDE.md: react-i18next 16), so these strings never localize."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+      "title": "reality-server: TokenValidationCache stores introspection result without honoring token exp — expired tokens cached as active for 60s",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:735-748 — TokenValidationCache::set() stores every introspection result with `expires_at: Instant::now() + Duration::from_secs(self.ttl_seconds)`, a fixed TTL (default 60s, state.rs:947 `TokenValidationCache::new(60, 10000)`). The TTL is NOT derived from the PM access token's own `exp`."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-journal-mock-content-shipped",
+      "title": "reality-web: /journal renders _mock content in production — placeholder shipping to real users",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_PICKS, MOCK_ARTICLES, MOST_READ` from `./_mock` and renders the ENTIRE journal/magazine index from them (featured at :108, latest at :109, editorsPicks at :110, mostRead at :111). `_mock.ts` is 90 lines of hardcoded placeholder Slovak articles (6 fixed records, ids '1'–'6', authors 'Martin Kováč'/'Jana Horáková', external unsplash.com imageUrls). There is no fetch / reality-server call anywhere on this route — the whole feature is fabricated content."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+      "title": "reality-web: layout section boundary swallows errors silently — invisible failure paths",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx — `SectionBoundary` (a minimal class error boundary wrapping every listing-detail layout section) implements `componentDidCatch(_error, _info)` with an empty body and the comment `// Intentionally swallowed — console.error suppressed by tests` (~:68). The error and errorInfo are discarded entirely: no telemetry, no logging, no error-reporting sink."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "title": "reality-server: SSO helpers construct reqwest::Client::new() per call — no timeout, can block indefinitely on stalled PM",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` per invocation. `Client::new()` has NO request timeout, so a hung/slow PM OAuth server on the token-exchange / userinfo / introspection calls will block the awaiting request indefinitely (only bounded by whatever axum/OS imposes), risking worker/connection exhaustion under a stalled upstream."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "title": "reality-server: introspect_pm_token caches active=false 60s on ANY non-2xx — transient 5xx becomes 60s auth outage",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d review 2026-08-09"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !response.status().is_success() { ... state.token_cache.set(token, false, None, None).await; return Err(...) }`. A transient PM-API failure (503/502/500 during a deploy or overload) is thus conflated with a genuinely-inactive token."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
     }
   ]
 }
