@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-09T08:16:56Z",
+  "generated": "2026-08-09T10:14:19Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
       "branch": "auto-impl/code-review-api-core-workflow-cond-parse-dd416f1f",
       "status": "quarantined",
       "claimed_at": "2026-08-06T12:07:31Z",
-      "last_updated": "2026-08-08T12:08:50Z",
+      "last_updated": "2026-08-09T10:14:19Z",
       "status_changed_at": "2026-08-08T12:08:50Z",
       "pr_number": 2684,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2684",
@@ -24,28 +24,6 @@
       "merge_attempted_at": "2026-08-07T00:11:32Z",
       "quarantined_at": "2026-08-08T12:08:50Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
-    },
-    {
-      "task_id": "code-review-reality-server-sso-session-invalidate-swallowed-retry1",
-      "branch": "auto-impl/code-review-reality-server-sso-session-i-831bfd6c",
-      "status": "review",
-      "claimed_at": "2026-08-09T06:11:42Z",
-      "last_updated": "2026-08-09T08:16:56Z",
-      "status_changed_at": "2026-08-09T06:41:14Z",
-      "pr_number": 2726,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2726",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2726 status=partial specialist=rust-backend scope_drift=true code_reuse_warn=none note=fix+3 unit tests green (fmt/clippy/lib-tests pass; 3 new+84 existing); full cargo test -p reality-server blocked by no-DB sqlx::test suites, deferred to CI [followup round 1: relocated helper, utoipa::path rebound to sync_session, pushed 543a0be; awaiting re-review on new head]",
-      "reviewer_summary": "verdict=changes head_oid=95ea21f139a7ff843405a85f0b86f0023a8c292f note=security-fix-correct but utoipa::path attr detached from sync_session handler onto private helper; move helper out of the attr block",
-      "last_reviewed_oid": "95ea21f139a7ff843405a85f0b86f0023a8c292f",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
     }
   ]
 }

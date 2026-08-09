@@ -3957,6 +3957,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-sso-session-invalidate-swallowed-retry1",
+      "branch": "auto-impl/code-review-reality-server-sso-session-i-831bfd6c",
+      "status": "merged",
+      "claimed_at": "2026-08-09T06:11:42Z",
+      "last_updated": "2026-08-09T10:14:19Z",
+      "status_changed_at": "2026-08-09T10:14:19Z",
+      "pr_number": 2726,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2726",
+      "merged_at": "2026-08-09T10:12:23Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2726 status=partial specialist=rust-backend scope_drift=true code_reuse_warn=none note=fix+3 unit tests green (fmt/clippy/lib-tests pass; 3 new+84 existing); full cargo test -p reality-server blocked by no-DB sqlx::test suites, deferred to CI [followup round 1: relocated helper, utoipa::path rebound to sync_session, pushed 543a0be; awaiting re-review on new head]",
+      "reviewer_summary": "verdict=approve head_oid=543a0be04377b5292f26a03744e3aacb1de8b4c0 note=followup-resolved-utoipa-rebound-to-sync_session; security-fix-correct; CI green; merged via MCP (gh/ppt-pr-merge inoperable — no gh in cloud runner)",
+      "last_reviewed_oid": "543a0be04377b5292f26a03744e3aacb1de8b4c0",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
       "branch": "auto-impl/code-review-reality-server-ssrf-ipv4-map-f2701af9",
       "status": "merged",
@@ -13171,5 +13193,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-09T08:16:56Z"
+  "archived_at": "2026-08-09T10:14:39Z"
 }
