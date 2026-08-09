@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-08T10:16:52Z",
+  "archived_at": "2026-08-09T06:17:42Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -833,6 +833,21 @@
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
       }
+    },
+    {
+      "id": "bug-scheduler-notifications-fire-once-retry1",
+      "action": "Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications [retry 1/2 of failed bug-scheduler-notifications-fire-once]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=bug-scheduler-notifications-fire-once reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T06:08:18Z",
+      "retry_of": "bug-scheduler-notifications-fire-once",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T06:16:59Z"
     },
     {
       "id": "bug-webhook-airbnb-dup-sync-jobs",
