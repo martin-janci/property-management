@@ -58,12 +58,7 @@ async fn resolve_agency(
         .reality_portal_repo
         .get_active_agency_for_user(user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to resolve agency: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("resolve agency", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::FORBIDDEN,
@@ -131,12 +126,7 @@ pub async fn list_import_jobs(
             query.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list import jobs: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list import jobs", e))?;
 
     let total = jobs.len() as i64;
 
@@ -164,12 +154,7 @@ pub async fn create_import_job(
         .reality_portal_repo
         .create_import_job(principal.user_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create import job: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("create import job", e))?;
 
     Ok(Json(ImportJobResponse { job }))
 }
@@ -194,12 +179,7 @@ pub async fn get_import_job(
         .reality_portal_repo
         .get_import_job(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get import job: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get import job", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -337,12 +317,7 @@ pub async fn list_feeds(
         .reality_portal_repo
         .list_feed_subscriptions(agency_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list feeds: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list feed subscriptions", e))?;
 
     let total = feeds.len() as i64;
 
@@ -371,12 +346,7 @@ pub async fn create_feed(
         .reality_portal_repo
         .create_feed_subscription(agency_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create feed: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("create feed subscription", e))?;
 
     Ok(Json(FeedResponse { feed }))
 }
@@ -402,12 +372,7 @@ pub async fn get_feed(
         .reality_portal_repo
         .get_feed_subscription(id, agency_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get feed: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get feed subscription", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,

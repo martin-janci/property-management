@@ -283,24 +283,14 @@ pub async fn search(
         .portal_repo
         .search_listings(&query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to search listings: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("search listings", e))?;
 
     // Count total
     let total = state
         .portal_repo
         .count_listings(&query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to count listings: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("count listings", e))?;
 
     // Convert to response types
     let listings: Vec<ListingSummary> = listings.into_iter().map(Into::into).collect();
@@ -477,12 +467,7 @@ pub async fn get_suggestions(
         .portal_repo
         .get_nearby_cities(city, 10)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get cities: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("get nearby cities", e))?;
 
     Ok(Json(SuggestionsResponse {
         cities,
