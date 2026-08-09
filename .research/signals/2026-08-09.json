@@ -1,0 +1,164 @@
+{
+  "generated": "2026-08-09T06:20:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-09",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "last_run_iso=2026-08-07T06:24:00Z; now=2026-08-09T06:20Z; lag ~48h (>36h). Missed the 2026-08-08 daily tick \u2014 no brief exists at .research/briefs/2026-08-08.md. Under 3-day threshold so no stale_routine_alert."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2714",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "482 lines changed in scheduler/mod.rs (+375/-107 in #2714 fire-once fix). Post-split file path (was services/scheduler.rs runs_seen=1 2026-07-30, churn 347); new-path runs_seen=1 after this run."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2719, PR #2698",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "408 lines changed across two PRs: #2698 (+169 wiring rate-limit) and #2719 (+181/-58 route to InquiriesHandler). Not previously in hotspot_history."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/handlers/inquiries/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2696, PR #2698",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "359 lines changed across two PRs: #2696 (+233/-48 injectable notifier seam) and #2698 (+78 rate-limit wiring). Not previously in hotspot_history."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal met confidence=high + score>=3 this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-09.md && head -1 | grep '^# 2026-08-09$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-vs-HEAD advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8; open items age <14d \u2014 n/a",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "n/a (0 plans)",
+      "expected": "0 or matching brief line"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A .research/plans/",
+      "observed": "0 new",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "n/a",
+      "expected": "cursors match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "18 in plans/ + 8 in _archive/",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive count",
+      "observed": "now=8, head=8",
+      "expected": ">= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions len<=3, per-type<=1",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 no-op gate",
+      "observed": "n/a (skipped)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram tokens in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
