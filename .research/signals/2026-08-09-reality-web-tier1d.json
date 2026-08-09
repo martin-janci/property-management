@@ -1,0 +1,33 @@
+[
+  {
+    "id": "code-review-reality-web-journal-mock-content-shipped",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-web",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "completeness",
+    "evidence": [
+      "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_PICKS, MOCK_ARTICLES, MOST_READ` from `./_mock` and renders the ENTIRE journal/magazine index from them (featured at :108, latest at :109, editorsPicks at :110, mostRead at :111). `_mock.ts` is 90 lines of hardcoded placeholder Slovak articles (6 fixed records, ids '1'–'6', authors 'Martin Kováč'/'Jana Horáková', external unsplash.com imageUrls). There is no fetch / reality-server call anywhere on this route — the whole feature is fabricated content.",
+      "This is not a dev-only or flagged page: it is linked from the primary site navigation (frontend/apps/reality-web/src/components/ui/Header.tsx:86 and :232, `href=\"/journal\"`) AND listed in the crawler sitemap (frontend/apps/reality-web/src/app/sitemap.ts:14, '/journal'). So a public, SEO-indexed route serves invented articles with fake bylines and dates to real visitors and search engines — a credibility / correctness problem, not merely an unfinished stub.",
+      "The article cards are also inert: `ArticleCard` (page.tsx ~:22 onward, rendered at :197/:273/:294) emits no `<Link>`/`href` at all, and although `_mock.ts` gives each article a `slug`, no `journal/[slug]` detail route exists (only `journal/page.tsx` + `journal/layout.tsx` under app/[locale]/journal). Every article is therefore unclickable dead content.",
+      "Fix: back the journal index with a real content source (reality-server endpoint / CMS) before exposing `/journal` in nav + sitemap, or gate the route (noindex + remove nav link) until real content lands. The file already carries a `// TODO: replace ... once real journal content lands via CMS / reality-server` note, confirming this is known-incomplete but currently shipped as production-navigable."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-web",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx — `SectionBoundary` (a minimal class error boundary wrapping every listing-detail layout section) implements `componentDidCatch(_error, _info)` with an empty body and the comment `// Intentionally swallowed — console.error suppressed by tests` (~:68). The error and errorInfo are discarded entirely: no telemetry, no logging, no error-reporting sink.",
+      "Behaviourally the boundary renders `<Placeholder />` on `getDerivedStateFromError` so siblings survive (good), but because the caught error is thrown away, a section component that crashes in production silently degrades to a blank placeholder with ZERO operational signal. A recurring render bug in one listing-detail section (JSON-LD, gallery, price block, etc.) would be invisible to monitoring — no way to know which section, on which listing, for how many users.",
+      "The stated reason ('console.error suppressed by tests') conflates test-noise suppression with production observability: tests can silence console.error via a spy without the component needing to drop the error. Fix: forward `_error`/`_info` to the app's error-reporting channel (or at minimum `console.error` outside test env) so section crashes are observable; keep the graceful `<Placeholder />` fallback. Low severity (reliability/observability gap, not a user-facing crash)."
+    ],
+    "expert": "frontend"
+  }
+]
