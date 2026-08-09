@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-09T12:35:59Z",
+  "generated": "2026-08-09T12:39:39Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -30,15 +30,15 @@
       "branch": "auto-impl/code-review-reality-server-agency-member-474db822",
       "status": "review",
       "claimed_at": "2026-08-09T12:08:27Z",
-      "last_updated": "2026-08-09T12:35:59Z",
+      "last_updated": "2026-08-09T12:39:39Z",
       "status_changed_at": "2026-08-09T12:35:59Z",
       "pr_number": 2727,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2727",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2727 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=list_members now requires agency membership (401/403/404); fmt+clippy green, DB tests deferred to CI (no local pg; swagger-ui egress-blocked); draft",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=idor-fix-matches-sibling-membership-gate-401/403/404-tests-sound; approve posted as COMMENT (self-approve blocked — same account authors+reviews)",
+      "last_reviewed_oid": "06ed3fe7e98f149cfd16849087339a9b238ca2d3",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
