@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-07T06:24:00Z",
-  "last_run_ms": 2000,
-  "last_pr_seen": 2702,
-  "last_issue_seen": 2699,
-  "last_commit_sha": "a2c0f53d4d66886ea14fcb6fd43478c4c4022fa9",
+  "last_run_iso": "2026-08-09T10:31:22Z",
+  "last_run_ms": 60000,
+  "last_pr_seen": 2726,
+  "last_issue_seen": 2704,
+  "last_commit_sha": "98ac7b1b4b1b0c38e4441594b69c6c97e4fdbd64",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -441,6 +441,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-07",
       "recent_churn": 64
+    },
+    "backend/servers/api-server/src/routes/reports/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-09",
+      "recent_churn": 2747
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-09",
+      "recent_churn": 2746
+    },
+    "backend/servers/api-server/src/routes/auth/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-09",
+      "recent_churn": 2283
     }
   },
   "seen_signals": [
@@ -819,7 +834,46 @@
     "code-review-reality-web-listingform-no-i18n",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
-    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
+    "lag-warning-2026-08-09",
+    "churn-hotspot-backend/servers/api-server/src/routes/reports/mod.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/auth/mod.rs",
+    "closed-not-merged-pr-2705",
+    "stalled-review-pr-2559",
+    "stalled-review-pr-2558",
+    "stalled-review-pr-2555",
+    "screen-map-drift-pr-2718-reality",
+    "code-review-api-core-accounting-line-multimatch",
+    "code-review-api-core-accounting-vs-only-amount-ignored",
+    "code-review-api-core-accounting-no-tests",
+    "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+    "code-review-api-core-rls-context-deprecated-exported",
+    "code-review-api-core-authz-mw-guest-fail-open",
+    "code-review-api-core-tenant-filter-noop-isolation",
+    "code-review-api-core-delay-duration-overflow-before-cap",
+    "code-review-api-core-quiet-hours-db-error-fail-open",
+    "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+    "code-review-mobile-native-kmp-create-listing-submit-stub",
+    "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+    "code-review-ppt-web-core-errorhandler-network-misclassify",
+    "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+    "code-review-sso-rs-negcache-transient-fail",
+    "code-review-sso-rs-client-no-timeout-pool",
+    "code-review-api-core-rls-context-pool-not-conn",
+    "code-review-api-core-require-auth-guest-default",
+    "code-review-api-core-idempotency-tx-across-handler",
+    "code-review-api-core-voice-meter-fake-success",
+    "code-review-api-core-voice-announce-fake-success",
+    "code-review-api-core-syndication-fake-synced",
+    "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+    "code-review-mobile-native-kmp-layoutrepo-println-logging",
+    "code-review-mobile-native-kmp-compose-state-bang-bang",
+    "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+    "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+    "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+    "code-review-reality-web-journal-mock-content-shipped",
+    "code-review-reality-web-layout-section-boundary-swallows-errors"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -833,9 +887,9 @@
     "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 62,
-    "vectors_created": 284,
-    "plans_created": 22,
+    "runs": 63,
+    "vectors_created": 319,
+    "plans_created": 23,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
