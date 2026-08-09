@@ -7273,6 +7273,277 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "title": "workflow delay action multiplies duration before 7-day cap — silent overflow in release, panic in debug",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — DelayConfig::to_duration() multiplies self.duration by 60/3600/86400 with no checked_mul; the MAX_DELAY_SECONDS guard in execute() runs AFTER the multiply, so a wrapping release-build overflow bypasses the cap and a debug-build overflow panics."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "title": "notification quiet-hours check fails open on DB error — silent delivery outside quiet window",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — quiet-hours check treats a DB error as 'not in quiet hours' and proceeds to send; a transient outage lets notifications through the user-configured quiet window."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "title": "accounting payment matcher accepts the first ambiguous invoice-line hit — silently allocates payments to the wrong line",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 — payment-line matcher returns the first row whose amount equals the payment amount, with no tiebreak on invoice/owner, so a fresh payment can bind to a stale invoice line of the same amount."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "title": "accounting VS-only match branch ignores amount — variable-symbol collisions allocate incorrect payment sums",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 — VS-only fallback returns the first invoice-line for a matching variable-symbol regardless of amount; a colliding VS from a different owner absorbs the payment silently."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "title": "payment matcher in accounting.rs has zero tests — regressions ship silently",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs — no unit or integration tests exercise the payment-matcher heuristics; both live bugs (line-multimatch, vs-only-amount-ignored) would have been caught by ~20 lines of table-driven tests."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "title": "vote reminders scheduler has no cross-tick dedup — restarts and slow ticks fan out duplicate reminders",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 — reminder loop marks 'sent' only after the fan-out completes and has no idempotency key on (vote_id, reminder_kind, tick); a worker restart mid-fan-out or overlapping ticks re-send reminders to already-notified members."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "title": "reports handler uses unwrap_or_default on Result — DB failures reported as valid empty/zero payloads",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — the reports aggregation path unwrap_or_default()s repository results, turning connection/query errors into an all-zero 200 OK response instead of surfacing 500 or a partial-result flag."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "title": "realtor Create Listing screen's onSubmit hardcoded to failure — shipped broken user flow",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Rotating expert review 2026-08-08 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }); the realtor 'Create Listing' entry point in the MyListings flow is fully reachable in production but every submit returns a hardcoded error."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "title": "mobile-native ApiClient is never instantiated — ~100 lines of dead duplicate API logic",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Rotating expert review 2026-08-08 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient never instantiated anywhere in production code; live repositories issue their own Ktor calls via HttpClientProvider.client. Drifts vs the real repositories and adds maintenance noise."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "title": "parseApiError runs isNetworkError() first and substring-sniffs any message — structured errors are silently reclassified as network faults",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Rotating expert review 2026-08-08 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) as its FIRST branch (before isAxiosError at :162, isErrorResponse at :205). isNetworkError (:394-416) matches substrings ('network', 'failed to fetch', 'network request failed', 'networkerror') on ANY object's .message, so backend errors mentioning those words in prose get reclassified as network faults and shown to the user as 'connection lost' toasts."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "title": "useWebSocket subscribe effect omits handler from deps — stale-handler closures can silently drop early messages",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Rotating expert review 2026-08-08 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — subscribe effect early-returns when handlerRef.current is unset and lists deps [eventType, subscribe] (excludes handler intentionally). On mount race where the first handler render assigns handlerRef AFTER the subscribe effect runs, subsequent messages are silently dropped until the next dep change."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-dead-middleware-cleanup",
+      "title": "api-core exports 3 dead-but-dangerous middleware layers (rls_context, authorization, tenant_filter) — remove or gate to prevent silent isolation/auth bypass",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 5,
+      "status": "ready",
+      "sources": [
+        "Tier1d dispatcher-generator 2026-08-08 (api-core): code-review-api-core-rls-context-deprecated-exported",
+        "Tier1d dispatcher-generator 2026-08-08 (api-core): code-review-api-core-authz-mw-guest-fail-open",
+        "Tier1d dispatcher-generator 2026-08-08 (api-core): code-review-api-core-tenant-filter-noop-isolation"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — module header documents itself as DEPRECATED (sets RLS on the pool, not the borrowed connection; trusts client-supplied X-Tenant-ID with no principal check), yet still `pub mod` and glob-re-exported via middleware/mod.rs:7,16. Superseded by host_tenant.rs + RlsConnection extractor.",
+        "backend/crates/api-core/src/middleware/authorization.rs:176-180 — require_permission reads TenantRole via .unwrap_or(TenantRole::Guest); Guest.level()=10 satisfies AUTHENTICATED(level>=1), so require_authenticated is fail-open for callers with no principal at all. Still pub mod + glob-re-exported (middleware/mod.rs:3,12).",
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 — named/documented as isolation guard but body only validates X-Tenant-ID parses as UUID; real checks are an inline TODO. pub mod + glob-re-exported (middleware/mod.rs:9,18).",
+        "Sibling-issue linkage: each of the three signals explicitly names the other two as related — a single cleanup PR removes/gates all three (delete + drop pub use; or #[cfg(test)] + #[deprecated])."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs",
+        "backend/crates/api-core/src/middleware/authorization.rs",
+        "backend/crates/api-core/src/middleware/tenant_filter.rs",
+        "backend/crates/api-core/src/middleware/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": "plans/code-review-api-core-dead-middleware-cleanup.md"
+    },
+    {
+      "id": "code-review-reality-server-sso-oauth-helpers-harden",
+      "title": "reality-server SSO OAuth helpers: no request timeout on reqwest client + 60s negative-cache on transient PM failures",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 4,
+      "status": "ready",
+      "sources": [
+        "Rotating expert review 2026-08-08 (reality-server): code-review-sso-rs-negcache-transient-fail",
+        "Rotating expert review 2026-08-08 (reality-server): code-review-sso-rs-client-no-timeout-pool"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint (503/502/500 during a PM deploy get conflated with genuinely-inactive tokens; users see 60s of false negatives after a blip).",
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each helper constructs a fresh reqwest::Client::new() with NO request timeout; a hung/slow PM OAuth server blocks the awaiting request indefinitely, risking worker/connection exhaustion under a stalled upstream.",
+        "Both signals target the same three helper functions; a single PR wires timeouts (client-level or per-request) and confines the neg-cache to unambiguous 'inactive' responses (skip cache on 5xx / connect/read timeouts)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": "plans/code-review-reality-server-sso-oauth-helpers-harden.md"
     }
   ]
 }

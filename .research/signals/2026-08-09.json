@@ -1,0 +1,231 @@
+{
+  "date": "2026-08-09",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-09",
+      "type": "lag_warning",
+      "source": "routine-scheduler",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "Last routine run at 2026-08-07T06:24:00Z; now 2026-08-09T00:18Z → 41h lag (> 36h threshold). One scheduled run missed."
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — DelayConfig::to_duration() multiplies self.duration by 60/3600/86400 with no checked_mul; the MAX_DELAY_SECONDS guard runs AFTER the multiply."
+      ]
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — quiet-hours DB error treated as 'not in quiet hours', notifications escape the user-configured window on transient DB failure."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 — payment-line matcher returns first equal-amount hit with no invoice/owner tiebreak; a fresh payment can bind to a stale invoice line of the same amount."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 — VS-only fallback returns first invoice-line for a matching variable-symbol regardless of amount; a colliding VS from a different owner absorbs the payment silently."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs — no unit/integration tests exercise the payment matcher; the two live bugs (line-multimatch, vs-only-amount-ignored) are unguarded by regression coverage."
+      ]
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 — reminder loop marks 'sent' only after fan-out completes; no (vote, kind, tick) idempotency key means a mid-flight restart or overlapping ticks re-send reminders."
+      ]
+    },
+    {
+      "id": "code-review-api-core-rls-context-deprecated-exported",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — module documented DEPRECATED but still `pub mod` + glob-re-exported (middleware/mod.rs:7,16). Trusts client-supplied X-Tenant-ID and sets RLS on the pool, not the borrowed connection — silent isolation break if wired."
+      ]
+    },
+    {
+      "id": "code-review-api-core-authz-mw-guest-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:176-180 — .unwrap_or(TenantRole::Guest) treats absent principal as Guest (level 10) which satisfies AUTHENTICATED (level >= 1); require_authenticated is fail-open. Still pub mod + glob-re-exported."
+      ]
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-noop-isolation",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 — named/documented as isolation guard but only validates X-Tenant-ID parses as UUID; real checks are an inline TODO. Still pub mod + glob-re-exported."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — reports aggregation uses unwrap_or_default() on repository Results; DB errors surface as 200 OK all-zeros instead of 500 or partial-result flag."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — Screen.CreateListing wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }; the realtor Create Listing entry is fully reachable in production but every submit fails."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient never instantiated in production; live repositories use HttpClientProvider.client directly. ~100 lines of dead duplicate API logic."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) FIRST, before isAxiosError / isErrorResponse. isNetworkError substring-sniffs any object's .message for 'network' / 'failed to fetch' etc., so backend errors mentioning those words in prose are reclassified as network faults."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — subscribe effect early-returns when handlerRef.current is unset, deps [eventType, subscribe] excludes handler; a mount race that assigns handlerRef after subscribe runs silently drops early messages until the next dep change."
+      ]
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success PM response; transient 5xx during PM deploy causes 60s of false negatives for valid tokens."
+      ]
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682, :706, :743 — exchange_code_for_tokens, get_user_info, introspect_pm_token each build a fresh reqwest::Client::new() with no request timeout; a hung PM OAuth server blocks the awaiter indefinitely."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — every 2026-08-09 signal is code-review-finding, not in the Phase 5 allowlist",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-08-09.md && head -1 grep '^# 2026-08-09$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq compare staged state vs HEAD",                                        "observed": "true",   "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",         "observed": "true",   "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "jq no-double-scoring check against prior seen_signals",                    "observed": "true",   "expected": "true" },
+    { "goal": "G5-cap", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'",                    "observed": "true",   "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "no open items older than 14 days on 2026-08-09",                      "observed": "0 candidates", "expected": "0 candidates or decayed" },
+    { "goal": "G6", "passed": true,  "command": "adversarial-pass annotation for each new plan in brief",                   "observed": "2/2 present", "expected": "N/N" },
+    { "goal": "G7-count", "passed": true, "command": "≤2 new plans added under .research/plans/",                            "observed": "2",      "expected": "≤2" },
+    { "goal": "G7-schema", "passed": true, "command": "all metadata + 11 headings + capability tick + Mode declared + files-exist",  "observed": "both plans PASS", "expected": "PASS" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",         "observed": "0",      "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "secret/private-hostname scan on staged diff (excluding baseline docs)",   "observed": "0",      "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",                       "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "placeholder-rot grep on plans + brief",                                    "observed": "0",      "expected": "0" },
+    { "goal": "G12", "passed": true, "command": "prior plan slugs still present in plans/ or plans/_archive/",              "observed": "18/18",  "expected": "N/N" },
+    { "goal": "G13", "passed": true, "command": "archive count now >= HEAD count",                                          "observed": "8 >= 8", "expected": "now >= head" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",             "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions[] cap + idempotency + kill-switch checks",                "observed": "auto_fix_actions=[] (no candidate)", "expected": "≤3 total, ≤1 per type, idempotent" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 was skipped this run (pm_cursor unchanged) → G16 no-op",         "observed": "pm_cursor.next_index=3 (unchanged)", "expected": "no-op when skipped" },
+    { "goal": "G17", "passed": true, "command": "Telegram bot-token literal scan on staged added lines",                    "observed": "0",      "expected": "0" }
+  ]
+}
