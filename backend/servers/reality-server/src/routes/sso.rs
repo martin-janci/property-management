@@ -1006,20 +1006,6 @@ pub struct SyncSessionResponse {
     pub status: String,
 }
 
-/// Synchronize session state between PM and Reality Portal.
-///
-/// This ensures that logout in PM invalidates the Reality Portal session,
-/// and that role changes are propagated.
-#[utoipa::path(
-    post,
-    path = "/api/v1/sso/sync",
-    tag = "SSO",
-    request_body = SyncSessionRequest,
-    responses(
-        (status = 200, description = "Session synchronized", body = SyncSessionResponse),
-        (status = 401, description = "PM session invalid", body = SsoError)
-    )
-)]
 /// Decide the response when a PM token is found inactive during session sync,
 /// given the outcome of the portal-session invalidation attempt.
 ///
@@ -1058,6 +1044,20 @@ fn inactive_pm_token_response(
     }
 }
 
+/// Synchronize session state between PM and Reality Portal.
+///
+/// This ensures that logout in PM invalidates the Reality Portal session,
+/// and that role changes are propagated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/sso/sync",
+    tag = "SSO",
+    request_body = SyncSessionRequest,
+    responses(
+        (status = 200, description = "Session synchronized", body = SyncSessionResponse),
+        (status = 401, description = "PM session invalid", body = SsoError)
+    )
+)]
 pub async fn sync_session(
     State(state): State<AppState>,
     Json(request): Json<SyncSessionRequest>,
