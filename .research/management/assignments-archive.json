@@ -3649,6 +3649,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-agency-members-unauth-idor-retry1",
+      "branch": "auto-impl/code-review-reality-server-agency-member-474db822",
+      "status": "merged",
+      "claimed_at": "2026-08-09T12:08:27Z",
+      "last_updated": "2026-08-09T16:07:26Z",
+      "status_changed_at": "2026-08-09T16:07:26Z",
+      "pr_number": 2727,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2727",
+      "merged_at": "2026-08-09T16:03:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2727 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=list_members now requires agency membership (401/403/404); fmt+clippy green, DB tests deferred to CI (no local pg; swagger-ui egress-blocked); draft [phase5.5 2026-08-09: un-drafted (ready_for_review); auto-merge deferred — CI re-running on ready event, same green SHA 06ed3fe; next run lands on green]",
+      "reviewer_summary": "verdict=approve note=idor-fix-matches-sibling-membership-gate-401/403/404-tests-sound; approve posted as COMMENT (self-approve blocked — same account authors+reviews)",
+      "last_reviewed_oid": "06ed3fe7e98f149cfd16849087339a9b238ca2d3",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-09T14:11:09Z"
+    },
+    {
       "task_id": "code-review-reality-server-db-error-leak-to-client",
       "branch": "auto-impl/code-review-reality-server-db-error-leak-c6f5df44",
       "status": "failed",
@@ -13193,5 +13215,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-09T10:14:39Z"
+  "archived_at": "2026-08-09T16:08:53Z"
 }

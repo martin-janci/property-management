@@ -1,9 +1,50 @@
 {
-  "generated": "2026-08-08T02:22:56Z",
+  "generated": "2026-08-09T16:10:13Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-09T16:10:13Z",
+      "prs_scanned": 15,
+      "clean": [
+        2727,
+        2726,
+        2725,
+        2724,
+        2723,
+        2722,
+        2716,
+        2720,
+        2721,
+        2719,
+        2718,
+        2717,
+        2715,
+        2710,
+        2696
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-26), base=dev, max_prs=15. Reviewed-set max before this run was #2712; scanned the NEWEST-15 never-reviewed merged-to-dev PRs by merged_at desc: #2727,#2726,#2725,#2724,#2723,#2722,#2716,#2720,#2721,#2719,#2718,#2717,#2715,#2710,#2696 (exactly the max_prs cap). Rolled to next run (outside newest-15): #2714,#2713 and the older mid-tier stragglers #2685/#2686/#2687/#2689/#2693/#2694/#2695 (same roll-over precedent as prior runs). #2705 excluded (closed-not-merged, merged_at null). ALL 15 CLEAN, 0 net-new issues -- another strong auto-impl batch: every PR is a code-review security/correctness/refactor fix shipped WITH a targeted regression test. Security highlights: #2727 (reality-server list_members IDOR: was unauthenticated + ungated, leaked agency-internal member PII to the internet; now RequestPrincipal + shared check_agency_membership gate -> 401 anon / 403 non-member / 404 unknown; 401+403+200 regression tests). #2726 (SSO sync_session no longer swallows portal-session invalidation failure: extracted inactive_pm_token_response returns 500 on Err so a failed teardown can't masquerade as a successful 401 'invalidated'; 3 unit tests). #2725 (password-reset email transport UC-44.3: real SMTP mailer + log fallback behind PasswordResetMailer seam; delivery_decision guard returns 503 in release when no transport instead of falsely claiming a link was sent; locale-prefixed token-encoded reset URL; truth-table + url-encode tests). #2724 (reality-server DB-error leak: routes raw sqlx/serde errors through util::errors::db_error -> generic 500, scrubbing constraint/column/host/dbname/sslmode detail across agencies/imports/layout/listings/price_map/realtors; leak-scrub unit tests). #2722 (api-server community get_group/list_posts/get_item were unauthenticated cross-tenant reads: add RequestPrincipal + verify_group_access/verify_item_access -> 401 anon / 404 cross-tenant; full anon+x-tenant+same-tenant suite). #2710 (SSRF DNS-rebinding TOCTOU #2703: connect-time SsrfGuardResolver wired into the workflow reqwest client validates every connect+redirect hop via validate_resolved_addrs so the client connects only to validated IPs; hermetic stateful-rebind regression test asserts reject + >=2 resolver calls). Feature/refactor highlights: #2723 (announcement fan-out delivered/read/ack metrics scoped by target_type via real cross-tenant-safe targeting SQL; RLS test proves org-B ids in target_ids contribute nobody). #2716 (platform_settings singleton PATCH/GET + migration 00229, capability-gated, partial-update + persist tests). #2717 (mobile_config singleton PATCH/GET + migration 00230, FOR UPDATE merge, flags-merge PATCH semantics, route-exists/authz tests). #2719 (route anonymous inquiry POSTs through InquiriesHandler so the realtor notification fires; shared inquiry_result_to_id mapping with DB-error->generic-500 + 404/400/429 tests). #2696 (injectable InquiryNotifier seam + LogInquiryNotifier default; best-effort delivery swallows transport failure). #2718 (reality-web layout-revalidate HMAC-binds-body parity test, test-only). #2721 (behavior-preserving layout tenant acquire_public_conn extraction). #2720 (behavior-preserving reports helpers.rs extraction). #2715 (auth handler AuthError alias + err_response helper, byte-for-byte identical status/body, validation .with_details sites left inline). Migration-numbering watch (process nit, not filed): #2716 adds 00229, #2717 adds 00230 -- sequential, distinct, both merged same day pre-release; consistent with #2700's prior 00227 renumber. No collision observed between them. NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history remains the dedup record for the next run (same precedent as every prior run).",
+      "focus_prs": [
+        2727,
+        2726,
+        2725,
+        2724,
+        2723,
+        2722,
+        2716,
+        2720,
+        2721,
+        2719,
+        2718,
+        2717,
+        2715,
+        2710,
+        2696
+      ]
+    },
     {
       "run_at": "2026-08-08T02:22:56Z",
       "prs_scanned": 15,
@@ -595,31 +636,6 @@
         2419
       ],
       "with_issues": []
-    },
-    {
-      "run_at": "2026-07-17T22:12:33Z",
-      "prs_scanned": 5,
-      "clean": [
-        2339,
-        2336,
-        2334
-      ],
-      "with_issues": [
-        {
-          "pr": 2340,
-          "issue": 2417,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \u2014 docs-only, scheduler.rs is correct"
-        },
-        {
-          "pr": 2335,
-          "issue": 2418,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "cross-org /rag/migrate RLS test runs as #[sqlx::test] superuser -> passes vacuously w.r.t. the 00216 super-admin policy; adopt #2340's NOBYPASSRLS role-switch to make it a real regression guard"
-        }
-      ]
     }
   ]
 }

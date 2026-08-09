@@ -1,0 +1,18 @@
+[
+  {
+    "id": "code-review-api-core-announce-roles-legacy-membership-table",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/scheduler/mod.rs:663-706 — inside a single function, `Scheduler::get_announcement_target_users`, the `\"roles\"` target branch (lines ~665-680) resolves recipients from the LEGACY `organization_members` table (`SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id = $1 AND om.role_id = ANY($2) AND om.status = 'active'`), whereas the sibling `\"all\"` branch (lines ~587-599) was deliberately migrated to the NEW canonical spine `user_memberships` — its inline comment states: 'membership lives in `user_memberships` (migration 00128, the canonical authz spine)'.",
+      "migration 00128_user_memberships.sql documents that `user_memberships` is 'the new authorization spine' and that it 'runs SIDE-BY-SIDE with the legacy `organization_members` for one phase' and 'the legacy table is retired in a later phase.' So the two announcement-targeting branches now read from two different membership sources of truth. During the side-by-side phase this is not yet a live incident (00128 backfills user_memberships FROM organization_members), but it is a latent migration-completeness gap: once the legacy table stops being written/synced or is dropped, `\"roles\"`-targeted announcement fan-out silently targets zero (or stale) recipients while `\"all\"` continues to work — a silent under-delivery with no error, since the branch returns Ok(empty) and the scheduler loop is fail-safe.",
+      "Confirmed `organization_members` (migration 00005_create_organization_members.sql) does expose the `role_id UUID` and `status VARCHAR(20)` columns the query binds, so the query is currently valid — the issue is the divergent source of truth, not a broken column reference. Note also `user_memberships` keys authority on a `role VARCHAR(64)` name column (not a `role_id` UUID), so the migration is not a mechanical table-name swap: the `\"roles\"` branch would need target_ids re-modeled to role names (or a role_id→role-name join) when it is moved onto the canonical spine.",
+      "Fix: migrate the `\"roles\"` branch (and any other announcement-targeting leg still on `organization_members`) onto `user_memberships` before the legacy table is retired, mirroring what the `\"all\"` branch already did — OR add an explicit comment + tracking issue that the `\"roles\"` leg is intentionally pinned to the legacy table until a follow-up phase, so the divergence is diagnosable. A cross-tenant fan-out test already exists for the building/units legs (scheduler/mod.rs ~1753+); add an equivalent role-targeting test that asserts recipients resolve from the intended membership source."
+    ],
+    "expert": "rust"
+  }
+]
