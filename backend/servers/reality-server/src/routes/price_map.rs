@@ -147,12 +147,10 @@ pub async fn get_price_map(
         }
     }
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
 
     // Aggregate current-period avg price/m² by city.
     // size_sqm is the listings column; price/size_sqm gives €/m².
@@ -211,12 +209,7 @@ pub async fn get_price_map(
         .bind(&city_pattern)
         .fetch_all(&mut *conn)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to aggregate price map data: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("aggregate price map data", e))?;
 
     let districts: Vec<DistrictPriceData> = rows
         .into_iter()
