@@ -3,11 +3,11 @@
 //! Drives the real Axum router (routes::agencies) end-to-end via `oneshot`.
 //!
 //! Public endpoints (no RequestPrincipal): list_agencies, get_agency,
-//! get_agency_by_slug, list_members — return non-401 without a token.
+//! get_agency_by_slug — return non-401 without a token.
 //!
 //! Protected endpoints (RequestPrincipal): create_agency, update_agency,
-//! create_invitation, accept_invitation — return 401 without a token and
-//! non-401 with a seeded user token.
+//! list_members, create_invitation, accept_invitation — return 401 without a
+//! token and non-401 with a seeded user token.
 
 use crate::common::{make_app_state, mint_token, send, send_json};
 use axum::{http::Method, Router};
@@ -161,10 +161,14 @@ async fn get_agency_by_slug_unauthenticated_returns_non_401(pool: PgPool) {
     );
 }
 
-// ── list_members (public) ─────────────────────────────────────────────────────
+// ── list_members (protected) ──────────────────────────────────────────────────
 
+// SECURITY regression (members-idor audit): the member roster is agency-internal
+// PII. `list_members` had NO auth extractor and NO membership gate, so anyone on
+// the internet could enumerate any agency's members. An unauthenticated request
+// must now be rejected with 401 (auth required), not served the roster.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn list_members_unauthenticated_returns_non_401(pool: PgPool) {
+async fn list_members_unauthenticated_returns_401(pool: PgPool) {
     let id = Uuid::new_v4();
     let app = agencies_router(pool);
     let status = send(
@@ -174,9 +178,56 @@ async fn list_members_unauthenticated_returns_non_401(pool: PgPool) {
         None,
     )
     .await;
-    assert_ne!(
+    assert_eq!(
         status, 401,
-        "list_members must not require auth (may return empty list or 404)"
+        "list_members must require auth (member roster is agency-internal PII), got {status}"
+    );
+}
+
+// SECURITY regression (members-idor audit): an authenticated user who is NOT a
+// member of the target agency must NOT be able to enumerate its members — the
+// cross-agency IDOR. Uses a `platform` caller so the request clears the
+// `RequestPrincipal` extractor and the 403 can only come from the handler's own
+// `check_agency_membership` gate.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_members_non_member_returns_403(pool: PgPool) {
+    let outsider = seed_platform_user(&pool, "members-outsider").await;
+    let agency_id = seed_agency(&pool, "members-403").await;
+    // NB: no membership seeded for `outsider` in this agency.
+    let token = mint_token(outsider);
+    let app = agencies_router(pool);
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/agencies/{agency_id}/members"),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(
+        status, 403,
+        "a non-member must NOT be able to enumerate an agency's members, got {status}"
+    );
+}
+
+// Companion: the gate must not over-reject — an active member of the agency is
+// allowed past the membership check and receives the roster (200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_members_member_returns_200(pool: PgPool) {
+    let member = seed_platform_user(&pool, "members-member").await;
+    let agency_id = seed_agency(&pool, "members-ok").await;
+    seed_membership(&pool, agency_id, member).await;
+    let token = mint_token(member);
+    let app = agencies_router(pool);
+    let status = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/agencies/{agency_id}/members"),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(
+        status, 200,
+        "an active member must be able to list the agency's members, got {status}"
     );
 }
 
