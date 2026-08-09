@@ -1,0 +1,50 @@
+[
+  {
+    "id": "code-review-api-core-voice-meter-fake-success",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/voice_commands.rs:437-466 — `action_check_meter` returns `success: true` with the response 'Your latest meter readings have been recorded. There are no pending readings.' and `data: { pending_readings: 0 }`, but the body never queries anything: line 442 is the comment 'In a real implementation, this would query the meter repository'. It is a fabricated-success stub that makes an affirmative factual claim (readings recorded / none pending) to the resident.",
+      "This is a LIVE webhook path, not dead code: `execute_action` dispatches `voice_intent::CHECK_METER => self.action_check_meter(...)` (voice_commands.rs:163), and the processor is wired into real routes `routes/voice_webhooks.rs` and `routes/ai/voice.rs`.",
+      "Same defect class the codebase already de-stubbed elsewhere in this very file: `action_check_balance` (voice_commands.rs:255-264) was changed to `success: false` + 'not yet available' precisely because 'a resident could be told they owe nothing when the actual balance was never queried' (with regression test at :752-785), and `action_book_facility` (:420-434) returns 'not yet available'. `action_check_meter` was missed by that cleanup and still fabricates success.",
+      "Fix: mirror the check_balance/book_facility remediation — return `success: false` with a 'meter readings via voice are not yet available, use the app/portal' message (and drop the fabricated `pending_readings: 0`) until a meter repository is actually wired, so the assistant never asserts an unverified meter state."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-voice-announce-fake-success",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/voice_commands.rs:385-413 — `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, announcements: [] }`; the body never reads the announcement store (line 390: 'In a real implementation, this would query the announcement repository'). A resident with unread building announcements is always told there are none.",
+      "Live path: dispatched via `execute_action` at voice_commands.rs:159-160 (`voice_intent::CHECK_ANNOUNCEMENTS => self.action_check_announcements(...)`), reachable through `routes/voice_webhooks.rs` / `routes/ai/voice.rs`.",
+      "Same fabricated-success class as the already-fixed `action_check_balance` (:255-264, with regression test :752-785). This handler and `action_check_meter` are the two survivors of that cleanup that still return `success: true` with invented data instead of honestly reporting 'not yet available'.",
+      "Fix: either wire the announcement repository, or (matching check_balance) return `success: false` with a 'not yet available via voice' message and no fabricated `count: 0`, so residents are not falsely reassured there are no announcements."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-syndication-fake-synced",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/syndication.rs:289-360 — `process_syndication_job` never calls any portal API yet writes `syndication_status::SYNCED` to the DB for every operation: PUBLISH generates a mock external id `format!(\"{}_{}\", portal, Uuid::new_v4())` (:318) and calls `update_syndication_status(..., SYNCED, Some(&external_id), None)` (:321-330); STATUS_CHANGE and UPDATE likewise stamp SYNCED. The doc comment (:285-288) admits 'This is a placeholder for the actual portal API integration.'",
+      "Effect: listings are persisted as SYNCED to external portals (Sreality/Bezrealitky/Nehnutelnosti/etc.) and surface as 'published' in the UI, when in fact nothing was ever transmitted — an operator-facing false state that masks that syndication is unimplemented, and stores a fake external reference other code may later treat as a real portal id.",
+      "Unlike the SSRF-hardened `actions/api_call.rs` outbound path, this worker fabricates the success rather than failing closed. Lower severity because it is a documented not-yet-built background-worker integration, but the misleading persisted SYNCED status is the concrete defect.",
+      "Fix: until a real portal client is wired, mark these jobs with a non-terminal/pending status (or fail the job) rather than SYNCED, and do not persist a mock external id — so dashboards and downstream code do not treat a listing as live on a portal it was never sent to."
+    ],
+    "expert": "rust"
+  }
+]
