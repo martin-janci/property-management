@@ -7273,6 +7273,249 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/announcement.rs",
+      "title": "churn hotspot: backend/crates/db/src/repositories/announcement.rs — investigate for refactor/coverage gaps",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-2026-08-09"
+      ],
+      "evidence": [
+        "2 PRs touched this file (2714, 2723); first-time hotspot"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/layout/tenant.rs",
+      "title": "churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — investigate for refactor/coverage gaps",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-2026-08-09"
+      ],
+      "evidence": [
+        "2 PRs touched this file this run (2711 refactor + 2721 refactor)"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "title": "churn hotspot: backend/servers/api-server/src/services/actions/api_call.rs — investigate for refactor/coverage gaps",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-2026-08-09"
+      ],
+      "evidence": [
+        "2 PRs touched this file (2707 memory-DoS cap + 2710 SSRF fix); both no-test"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/layout/tenant.rs",
+      "title": "repeated churn: backend/servers/api-server/src/routes/layout/tenant.rs — investigate for refactor/coverage gaps",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history"
+      ],
+      "evidence": [
+        "hotspot_history.runs_seen advances from 1 to 2 (previously 2026-07-30, now 2026-08-09)"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "test-gap-pr-2707-regression",
+      "title": "add regression test for workflow api_call.rs memory-DoS body cap (PR #2707 merged with no test)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 4,
+      "status": "dropped",
+      "sources": [
+        "PR #2707"
+      ],
+      "evidence": [
+        "PR #2707 (gh-issue-2704 memory-DoS cap in workflow api_call.rs) merged with no *test* file in diff (only api_call.rs touched)",
+        "PR #2707 (gh-issue-2704 memory-DoS cap) modified backend/servers/api-server/src/services/actions/api_call.rs — a top-churn file — with no test diff",
+        "false positive (2026-08-09): pm-qa deep analysis confirms inline `#[cfg(test)] mod tests` in `api_call.rs` contains `read_capped_body_truncates_oversized_response` — hotfix-no-test heuristic (file basename match) missed the inline module"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "test-gap-pr-2710-regression",
+      "title": "add regression test for workflow api_call.rs SSRF DNS-rebinding TOCTOU fix (PR #2710 merged with no test)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 4,
+      "status": "dropped",
+      "sources": [
+        "PR #2710"
+      ],
+      "evidence": [
+        "PR #2710 (gh-issue-2703 SSRF DNS-rebinding TOCTOU) merged with no *test* file in diff (touched api_call.rs + url_validation.rs only)",
+        "PR #2710 (gh-issue-2703 SSRF fix) modified backend/servers/api-server/src/services/actions/api_call.rs — a top-churn file — with no test diff",
+        "false positive (2026-08-09): pm-qa deep analysis confirms inline `#[cfg(test)] mod tests` in `api_call.rs` contains `execute_rejects_dns_rebinding_to_private_ip_at_connect` (IG3-shaped) — hotfix-no-test heuristic missed it; promotion rolled back",
+        "promotion rolled back: plan file deleted; heuristic-widening action tracked separately in action-list.json as pm-qa-inline-cfgtest-heuristic-fix-2026-08-09"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs",
+        "backend/crates/common/src/url_validation.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "test-gap-pr-2714-regression",
+      "title": "add regression test for scheduled announcement/vote notification decouple (PR #2714 merged with no test)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 4,
+      "status": "dropped",
+      "sources": [
+        "PR #2714"
+      ],
+      "evidence": [
+        "PR #2714 (gh-issue-2612 scheduled notification dispatch decouple) merged; 5 files touched, none matched *test* pattern",
+        "PR #2714 (gh-issue-2612 scheduled notification decouple) modified backend/crates/db/src/repositories/announcement.rs — a top-churn file — with no test diff",
+        "false positive (2026-08-09): pm-qa deep analysis confirms PR touched `services/scheduler/mod.rs` and `db/src/repositories/vote.rs`, both of which carry inline `#[sqlx::test]` regression cases — hotfix-no-test heuristic missed inline test modules"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/announcement.rs",
+        "backend/crates/db/src/repositories/vote.rs",
+        "backend/crates/db/migrations/00228_announcement_vote_notified_at.sql"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "title": "PR #2705 (rust-toolchain 1.94.1 → 1.100.0 retry2) closed unmerged — CI incompatibility with 1.100.0; keep pin or investigate root cause",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2705"
+      ],
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 -> 1.100.0) closed unmerged on 2026-08-08 — 2nd failed attempt after original #2385"
+      ],
+      "files": [
+        ".github/workflows/backend-dev-push-gate.yml",
+        ".github/workflows/backend-fmt-clippy-gate.yml",
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "title": "stalled review: PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) — 10 days idle since 2026-07-30",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2559"
+      ],
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) open since 2026-07-28, last updated 2026-07-30 — 10 days no activity"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "title": "stalled review: PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) — 10 days idle since 2026-07-30",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2558"
+      ],
+      "evidence": [
+        "PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) open since 2026-07-28, last updated 2026-07-30 — 10 days no activity"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "title": "stalled review: PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) — 12 days idle since 2026-07-30",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2555"
+      ],
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) open since 2026-07-28, last updated 2026-07-30 — 12 days no activity"
+      ],
+      "files": [],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-email-notification-action-executors-are-stubs",
+      "title": "api-core: workflow send_email/send_notification action executors are silent no-ops — configured emails/notifications never deliver in production",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:87 — EmailExecutor::execute only tracing::info!s the email and returns ActionResult::success without invoking any SMTP transport (real lettre-based EmailService exists at services/email.rs but is never called from this path)",
+        "backend/servers/api-server/src/services/actions/notification.rs:183 — NotificationExecutor::execute only tracing::info!s and returns ActionResult::success; real NotificationService (services/notification.rs) is never called",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — ActionRegistry::new() registers both stubs under action_type send_email / send_notification, and WorkflowExecutorTask (workflow_executor.rs:886) dispatches production workflow actions through this registry, so user-configured 'send email on fault' / 'notify manager' actions record success while delivering nothing",
+        "backend/crates/db/src/models/workflow_templates.rs — ships templates using send_email and send_notification action types, so the codepath is exercised in the shipping product"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs",
+        "backend/servers/api-server/src/services/actions/notification.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": "plans/code-review-api-core-email-notification-action-executors-are-stubs.md"
     }
   ]
 }

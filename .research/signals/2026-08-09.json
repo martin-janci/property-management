@@ -1,0 +1,386 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-09",
+      "type": "lag_warning",
+      "source": "routine-lag",
+      "score_delta": 0,
+      "evidence": [
+        "44h since last_run_iso=2026-08-07T06:24:00Z (> 36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/announcement.rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-08-09",
+      "score_delta": 1,
+      "evidence": [
+        "2 PRs touched this file (2714, 2723); first-time hotspot"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/layout/tenant.rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-08-09",
+      "score_delta": 1,
+      "evidence": [
+        "2 PRs touched this file this run (2711 refactor + 2721 refactor)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-08-09",
+      "score_delta": 1,
+      "evidence": [
+        "2 PRs touched this file (2707 memory-DoS cap + 2710 SSRF fix); both no-test"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/layout/tenant.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": [
+        "hotspot_history.runs_seen advances from 1 to 2 (previously 2026-07-30, now 2026-08-09)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-2707",
+      "type": "hotfix-no-test",
+      "source": "PR #2707",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2707 (gh-issue-2704 memory-DoS cap in workflow api_call.rs) merged with no *test* file in diff (only api_call.rs touched)",
+        "FALSE POSITIVE (2026-08-09): pm-qa deep analysis confirmed inline `#[cfg(test)]` test exists; heuristic missed inline test modules. Backlog item dropped."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "false_positive": true
+    },
+    {
+      "id": "hotfix-no-test-pr-2710",
+      "type": "hotfix-no-test",
+      "source": "PR #2710",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2710 (gh-issue-2703 SSRF DNS-rebinding TOCTOU) merged with no *test* file in diff (touched api_call.rs + url_validation.rs only)",
+        "FALSE POSITIVE (2026-08-09): pm-qa deep analysis confirmed inline `#[cfg(test)]` test exists; heuristic missed inline test modules. Backlog item dropped."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs",
+        "backend/crates/common/src/url_validation.rs"
+      ],
+      "false_positive": true
+    },
+    {
+      "id": "hotfix-no-test-pr-2714",
+      "type": "hotfix-no-test",
+      "source": "PR #2714",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2714 (gh-issue-2612 scheduled notification dispatch decouple) merged; 5 files touched, none matched *test* pattern",
+        "FALSE POSITIVE (2026-08-09): pm-qa deep analysis confirmed inline `#[cfg(test)]` test exists; heuristic missed inline test modules. Backlog item dropped."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/src/repositories/announcement.rs",
+        "backend/crates/db/src/repositories/vote.rs",
+        "backend/crates/db/migrations/00228_announcement_vote_notified_at.sql"
+      ],
+      "false_positive": true
+    },
+    {
+      "id": "risky-churn-pr-2707-api_call",
+      "type": "risky-churn",
+      "source": "PR #2707",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2707 (gh-issue-2704 memory-DoS cap) modified backend/servers/api-server/src/services/actions/api_call.rs — a top-churn file — with no test diff",
+        "FALSE POSITIVE (2026-08-09): pm-qa deep analysis confirmed inline `#[cfg(test)]` test exists; heuristic missed inline test modules. Backlog item dropped."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "false_positive": true
+    },
+    {
+      "id": "risky-churn-pr-2710-api_call",
+      "type": "risky-churn",
+      "source": "PR #2710",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2710 (gh-issue-2703 SSRF fix) modified backend/servers/api-server/src/services/actions/api_call.rs — a top-churn file — with no test diff",
+        "FALSE POSITIVE (2026-08-09): pm-qa deep analysis confirmed inline `#[cfg(test)]` test exists; heuristic missed inline test modules. Backlog item dropped."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "false_positive": true
+    },
+    {
+      "id": "risky-churn-pr-2714-announcement",
+      "type": "risky-churn",
+      "source": "PR #2714",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2714 (gh-issue-2612 scheduled notification decouple) modified backend/crates/db/src/repositories/announcement.rs — a top-churn file — with no test diff",
+        "FALSE POSITIVE (2026-08-09): pm-qa deep analysis confirmed inline `#[cfg(test)]` test exists; heuristic missed inline test modules. Backlog item dropped."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/announcement.rs"
+      ],
+      "false_positive": true
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 -> 1.100.0) closed unmerged on 2026-08-08 — 2nd failed attempt after original #2385"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "files": [
+        ".github/workflows/backend-dev-push-gate.yml",
+        ".github/workflows/backend-fmt-clippy-gate.yml",
+        ".github/workflows/backend.yml"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) open since 2026-07-28, last updated 2026-07-30 — 10 days no activity"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) open since 2026-07-28, last updated 2026-07-30 — 10 days no activity"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) open since 2026-07-28, last updated 2026-07-30 — 12 days no activity"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-api-core-email-notification-action-executors-are-stubs",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:87 — EmailExecutor::execute only tracing::info!s the email and returns ActionResult::success without invoking any SMTP transport (real lettre-based EmailService exists at services/email.rs but is never called from this path)",
+        "backend/servers/api-server/src/services/actions/notification.rs:183 — NotificationExecutor::execute only tracing::info!s and returns ActionResult::success; real NotificationService (services/notification.rs) is never called",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — ActionRegistry::new() registers both stubs under action_type send_email / send_notification, and WorkflowExecutorTask (workflow_executor.rs:886) dispatches production workflow actions through this registry, so user-configured 'send email on fault' / 'notify manager' actions record success while delivering nothing",
+        "backend/crates/db/src/models/workflow_templates.rs — ships templates using send_email and send_notification action types, so the codepath is exercised in the shipping product"
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs",
+        "backend/servers/api-server/src/services/actions/notification.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-09.md ...",
+      "observed": "brief exists with H1 '# 2026-08-09'",
+      "expected": "exists w/ H1 match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare staged state.json to HEAD",
+      "observed": "true — cursors and seen_signals advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique|length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no seen_signal collision on non-cumulative types",
+      "observed": "true — 16 signals emitted, all IDs fresh",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotates each new plans/<slug>.md with 'adversarial pass: ...'",
+      "observed": "brief annotates plans/code-review-api-core-email-notification-action-executors-are-stubs.md with adversarial pass: passed; test-gap-pr-2710-regression rolled back with 'adversarial pass: rolled-back'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "1 new plan (code-review-api-core-email-notification-action-executors-are-stubs.md)",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 ## headings present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "capability ticked",
+      "observed": "true (C1 + C6)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "Mode: local-only or cloud-ok",
+      "observed": "cloud-ok",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "all Files paths resolve on disk",
+      "observed": "5 paths, all exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research/ files staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 secret matches in staged diff",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "backlog.md matches regeneration (byte-identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases",
+      "observed": "true — no phase failures this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "none missing",
+      "expected": "empty"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "7",
+      "expected": "≥7"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/regen.md",
+      "observed": "IDEAS_TRIAGE.md matches regeneration (byte-identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "auto_fix_actions=[] (no candidate met certainty bar); kill switch unset",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors in range",
+      "observed": "action-list.items:True, risks.items:True, project-state:True, pm_cursor:4(0..7), coverage_cursor:6(0..13) → True",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no bot-token value in staged diff",
+      "observed": "0 bot-token value matches in staged diff",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "run_date": "2026-08-09"
+}

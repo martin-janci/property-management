@@ -103,3 +103,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 - **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-09 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-08-09, pm-qa):** Adopt "inline `#[cfg(test)]` counts as test coverage" for the routine's `hotfix-no-test` heuristic. Rationale: 3 of 3 fix PRs this window (#2707 memory-DoS, #2710 SSRF, #2714 scheduled-notification) were flagged by the file-count heuristic as missing tests, but each carries `#[tokio::test]` / `#[sqlx::test]` regressions inline in the modified source file. The mis-flag biases the dispatcher's planning toward retry loops that are already satisfied. Owner: pm-tech-lead.
+- **NEW (2026-08-09, pm-qa):** Downgrade or close `risk-announcement-fanout-test-fidelity-2026-07-23` after a spot-check that #2723's `announcement_fanout_metrics_tests.rs` (295 LOC, real SQL) exercises the RLS visibility predicate itself, not only the metric-aggregation query. If yes, the risk moves from open → closed. Owner: pm-qa (self).
+- **NEW (2026-08-09, pm-scrum-master):** Reviewer-verdict prompt should distinguish "refactor — no new test acceptable" from "fix/feat — new regression test required" — 5 pure-refactor PRs (#2711/#2713/#2715/#2720/#2721) legitimately landed without new tests this window, but the same pattern hid the #2547 gap earlier. Owner: pm-tech-lead.

@@ -1,47 +1,66 @@
-# pm-qa — QA / Test lens (2026-06-15)
+# pm-qa — 2026-08-09
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues._
+**Role:** pm-qa (rotating; last run 2026-06-15, 55d stale)
 
-## Role JSON
+## Summary
 
-```json
-{
-  "role": "pm-qa",
-  "summary": "Dev CI unblocked by #1379 ends a 3-day red streak; 18 fresh follow-up issues from yesterday's merge surge are the new QA front, concentrated on missing test coverage (RLS, IDOR, OAuth, realtime sync, payment atomicity).",
-  "next_actions": [
-    {"action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Failing-on-main test landed; passes once #1361 fix lands."},
-    {"action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Decoder tests pin known variants and error-path for unknown."},
-    {"action": "Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "UI test confirms older paginated response doesn't clobber newer page-N state."},
-    {"action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Frontend test asserts autosave fires once per debounce window; i18n key lookups present."},
-    {"action": "Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Concurrent-tx test asserts no negative-balance and COALESCE-guarded aggregates."},
-    {"action": "Pin cron validator surface with fixture-based test (#1368) to guard against #616 regression", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Validator test fixture covers known-good + known-bad expressions; Epic 81 promotion gates on it."}
-  ],
-  "risks": [
-    {"risk": "18 follow-up issues (#1360–#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.", "probability": "high", "impact": "medium", "mitigation": "pm-scrum-master triages the batch this run — assign owner or close as won't-fix."},
-    {"risk": "record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.", "probability": "medium", "impact": "high", "mitigation": "Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test."},
-    {"risk": "Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) — current tests don't pin the validator surface.", "probability": "medium", "impact": "medium", "mitigation": "Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it."},
-    {"risk": "Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured — wastes implementer cycles claiming gap stories already shipped.", "probability": "high", "impact": "medium", "mitigation": "pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings."},
-    {"risk": "Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) — old credentials can linger and be used post-rotation.", "probability": "medium", "impact": "high", "mitigation": "Implement atomic credential swap + add OAuth handler/CSRF test coverage."}
-  ],
-  "open_questions": [
-    "Does #1377 (document download/preview test gap) require new presigned-URL minting test infra, or can it be folded into the existing forms RLS suite?",
-    "Should the pre-push fmt/clippy gate (#1375) be local-only or also enforced as a CI status check?",
-    "Is the realtime preference-sync publish leg (#1376) coverable as a deterministic integration test, or does it need a flake-tolerant smoke test?",
-    "Are stale draft PRs #1316 (verify-document-folder-organization-backend-promote) and #1197 (test-oauth-authorization-server-integration) salvageable, or should they be closed and re-opened?"
-  ],
-  "decisions_needed": [
-    "Pre-push fmt/clippy gate (#1375): local hook only, CI-status, or both? — owner: pm-tech-lead",
-    "Triage protocol for the 18 follow-up issues #1360-#1377: bulk-assign by theme to per-role queues, or per-issue triage? — owner: pm-scrum-master",
-    "Promotion-gate policy: should each high-severity coverage gap (atomicity, IDOR, RLS) block its source epic's done-promotion until a failing-on-main test exists? — owner: pm-tech-lead + pm-qa"
-  ]
-}
-```
+Test coverage on the 19-PR window is **materially stronger than the orchestrator's file-count heuristic reports**. All three fix PRs the orchestrator flagged (`#2707`, `#2710`, `#2714`) DO ship regression tests — they live as `#[cfg(test)] mod tests` at the bottom of the modified source files, not under `tests/`. The real gaps are (a) five pure-refactor churn dedupes on auth/layout/reports with no new behavioural test but no new behaviour either, and (b) `#2547` scheduler retention prune still flagged `hotfix-no-test` (carryover, not new).
 
-## Notes
+## Coverage audit (PR-by-PR, this window)
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-07-06 (assuming 1-per-day cadence with 8 roles).
-- Five new pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-06-15"`.
-- Five risks dedup-checked against existing pm-qa risk IDs and appended.
-- Coverage epic-85 (rotation idx 10) refreshed: gap-85-2 evidence added from PR #1383; "app icon variants" + "app.config.ts" gaps removed.
-- Phase 1.5 finding (vote partial_cmp NaN) already tracked in prior run via `pm-qa-vote-partial-cmp-nan-fuzz` — kept open.
-- Phase 1.5 finding (`OsRng.try_fill_bytes().expect()` low-sev in crypto.rs) noted; below threshold for new action this run.
+| PR | Kind | Test file present | Coverage verdict |
+|----|------|-------------------|------------------|
+| #2707 memory DoS cap | fix | inline `read_capped_body_truncates_oversized_response` + `..verbatim_under_limit` in `api_call.rs` | OK — over/under boundary |
+| #2710 SSRF DNS-rebind TOCTOU | fix | inline `execute_rejects_dns_rebinding_to_private_ip_at_connect` (`#[tokio::test]`) in `api_call.rs` — IG3-shaped (fails on dev pre-fix) | OK |
+| #2712 dispute add_evidence audit | feat | `dispute_lifecycle_tests.rs` +80 LOC — `add_evidence_writes_access_audit_event` (IG3: fails on dev) | OK |
+| #2714 scheduled notification decouple | fix | inline `#[sqlx::test]`: `test_announcement_notification_retries_after_transient_error`, `test_..stamps_empty_audience`, `test_vote_started_notification_retries_after_transient_error` | OK |
+| #2716 platform-settings PATCH/GET | feat | dedicated `platform_settings_patch_tests.rs` (+210 LOC) | OK |
+| #2717 mobile-config PATCH/GET | feat | dedicated `mobile_config_route_tests.rs` (+87 LOC) | OK |
+| #2718 layout webhook HMAC parity | test | `layout-revalidate/route.test.ts` +23 LOC (parity assertion) | Thin — pins body-binding only; does not close #2485 replay-guard risk |
+| #2719 inquiry notify route wiring | fix | none new — refactor onto existing `InquiriesHandler` seam covered by #2696 tests | Marginal — relies on prior test seam |
+| #2722 community reads gate | security | dedicated `community_unauthenticated_reads_tests.rs` +302 LOC (auth-gate matrix) | OK |
+| #2723 announcement fan-out metrics | feat | dedicated `announcement_fanout_metrics_tests.rs` +295 LOC — real SQL, not pure-Rust re-model | OK — partially closes `risk-announcement-fanout-test-fidelity` |
+| #2709 ListingForm i18n | fix | updated `ListingForm.test.tsx` +17 LOC | OK |
+| #2711 layout tenant dedupe | refactor | none new — behaviour identical | Acceptable |
+| #2713 layout admin dedupe | refactor | none new | Acceptable |
+| #2715 auth-handler dedupe | refactor | none new (2950 LOC file; behaviour identical) | Acceptable but see risk below |
+| #2720 reports helpers extract | refactor | none new | Acceptable |
+| #2721 acquire_public_conn extract | refactor | none new | Acceptable |
+| #2696 inquiry notifier seam | refactor | inline DB-free unit tests (notifier invoked, failing transport swallowed) | OK |
+
+Verdict: **10/11 code-changing PRs ship regression tests**; refactor-only PRs (5) legitimately reuse existing coverage.
+
+## Systemic-gap assessment
+
+The orchestrator's "three fix PRs had NO test files" claim is a **file-count heuristic false positive** — the dispatcher counts standalone files under `tests/` and misses `#[cfg(test)] mod tests { ... }` inline blocks, which is where the api-server crate co-locates unit-scale regressions. This is worth surfacing to `pm-tech-lead` so the heuristic can be widened (grep `#[cfg(test)]` in modified source files, or count `#[tokio::test]` / `#[sqlx::test]` occurrences in the diff).
+
+## Release-readiness signal
+
+**GREEN** on the current window. No high-severity gap introduced. Two carryover concerns:
+
+1. **#2547 scheduler retention prune** still tagged `hotfix-no-test` — a regression test is queued in `bug-hotfix-no-test-pr-2547` (owner: pm-backend).
+2. **`risk-announcement-fanout-test-fidelity-2026-07-23`** — the SQL-integration test recommendation is now **materially satisfied** by #2723's `announcement_fanout_metrics_tests.rs` (real SQL, not model). Recommend downgrading the risk from "medium × high" to "low × high" or closing it after a quick spot-check that the RLS predicate itself (not just the metric read) is exercised.
+
+## `next_actions`
+
+1. **Widen the routine's `hotfix-no-test` heuristic to count inline `#[cfg(test)]` blocks** — high-value token-level fix; today the daily digest reports false-positive test gaps that mislead planning. — priority: medium — dep: pm-tech-lead — DoD: heuristic PR; digest re-run reports the correct 0/19 count on this window.
+2. **Add a nonce+timestamp replay-guard test to layout webhook** (#2485 still open) — PR #2718 only pinned body-binding parity; the replay window is still untested. — priority: medium — dep: pm-security — DoD: `layout_webhook_replay_tests.rs` fails on dev pre-fix.
+3. **Close out `bug-hotfix-no-test-pr-2547`** — scheduler retention prune regression test. — priority: medium — dep: pm-backend — DoD: dedicated test file exercises prune boundary conditions.
+4. **Spot-check announce fan-out RLS predicate coverage in #2723's suite** — verify SQL-level RLS is exercised, not only the metric-aggregation query. If it is, close `risk-announcement-fanout-test-fidelity-2026-07-23`. — priority: low — dep: pm-qa — DoD: risk row `status=closed` with a one-line evidence pointer.
+5. **Auth.rs (2950 LOC) still monolithic after #2715 dedupe** — dedupe reduced boilerplate but the module split (`code-review-ppt-web-ui-...`, `repeated-churn-...auth-rs`) is still open. Push for a module-split plan before the next churn cycle. — priority: low — dep: pm-tech-lead — DoD: split plan in `.research/plans/`.
+
+## `risks`
+
+1. **Refactor-without-test on churn hotspots** — 5 pure-refactor PRs (`#2711/#2713/#2715/#2720/#2721`) landed on auth/layout/reports (all top-10 churn hotspots) with no new test asserting behavioural equivalence. If existing suites drift or have coverage holes, a silent regression could ship. — probability: low — impact: medium — mitigation: mandate a "refactor delta covered by ≥1 existing test" check in reviewer verdicts.
+2. **Layout webhook replay window still unguarded** (#2485) — `risk-layout-webhook-replay-2026-07-23` unchanged this window; #2718 pinned body-binding but the replay path is untested and unimplemented. — probability: medium — impact: high — mitigation: (see next_action 2).
+3. **Inline-test heuristic gap** biases planning — the daily digest and dispatcher may deprioritise pm-qa followups because it "thinks" tests are missing when they aren't, and conversely may miss real gaps that hide under a passing file-count. — probability: high — impact: low — mitigation: (see next_action 1).
+
+## `open_questions`
+
+1. Are the `#[cfg(test)]` tests in `api_call.rs` and `scheduler/mod.rs` actually run by `just verify` / CI, or gated behind a feature flag? (Suspected yes based on cargo defaults, but not verified in this window.)
+2. Does the reviewer-verdict prompt distinguish "refactor — no new test acceptable" from "fix — new regression test required"? PR #2547 slipped without a test; #2568/#2571 also had follow-ups.
+
+## `decisions_needed`
+
+- Adopt "inline `#[cfg(test)]` counts as test coverage" for the routine's hotfix-no-test signal — owner: pm-tech-lead.
+- Downgrade or close `risk-announcement-fanout-test-fidelity-2026-07-23` after spot-checking #2723's suite — owner: pm-qa (self).

@@ -41,7 +41,7 @@
       "action": "reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -51,14 +51,16 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "resolved_by": "PR #2709",
+      "resolved_at": "2026-08-09"
     },
     {
       "id": "gh-issue-2703",
       "action": "Security: SSRF DNS-rebinding TOCTOU in workflow action api_call.rs — anti-rebinding gate is bypassable (Closes #2703)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-08-07T08:10:30Z (#2703)",
       "deadline": null,
       "dependency": null,
@@ -70,78 +72,134 @@
         "labels": [
           "follow-up"
         ]
-      }
+      },
+      "resolved_by": "PR #2710",
+      "resolved_at": "2026-08-09"
     },
     {
       "id": "dx-fixme-admin-web-mobile-config-patch-endpoint-retry1",
       "action": "admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing [retry 1/2 of failed dx-fixme-admin-web-mobile-config-patch-endpoint]",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=dx-fixme-admin-web-mobile-config-patch-endpoint reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-08-08T04:07:24Z",
       "retry_of": "dx-fixme-admin-web-mobile-config-patch-endpoint",
-      "retry_round": 1
+      "retry_round": 1,
+      "resolved_by": "PR #2717",
+      "resolved_at": "2026-08-09"
     },
     {
       "id": "dx-fixme-admin-web-platform-settings-patch-endpoint-retry1",
       "action": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing [retry 1/2 of failed dx-fixme-admin-web-platform-settings-patch-endpoint]",
       "owner_role": "pm-devops",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=dx-fixme-admin-web-platform-settings-patch-endpoint reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-08-08T04:07:24Z",
       "retry_of": "dx-fixme-admin-web-platform-settings-patch-endpoint",
-      "retry_round": 1
+      "retry_round": 1,
+      "resolved_by": "PR #2716",
+      "resolved_at": "2026-08-09"
     },
     {
       "id": "refactor-churn-hotspot-api-server-auth-2026-07-31-retry1",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet) [retry 1/2 of failed refactor-churn-hotspot-api-server-auth-2026-07-31]",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-auth-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-08-08T04:07:24Z",
       "retry_of": "refactor-churn-hotspot-api-server-auth-2026-07-31",
-      "retry_round": 1
+      "retry_round": 1,
+      "resolved_by": "PR #2715 (dedupe; module split still tracked as repeated-churn-...auth-rs-2026-07-28)",
+      "resolved_at": "2026-08-09"
     },
     {
       "id": "code-review-api-handlers-community-unauthenticated-reads-retry2",
       "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read [retry 2/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
       "owner_role": "pm-security",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-retry-remint 2026-08-08T16:05:19Z (retry_of=code-review-api-handlers-community-unauthenticated-reads reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T14:08:29Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-08-08T16:05:19Z",
       "retry_of": "code-review-api-handlers-community-unauthenticated-reads",
-      "retry_round": 2
+      "retry_round": 2,
+      "resolved_by": "PR #2722",
+      "resolved_at": "2026-08-09"
     },
     {
       "id": "data-announcement-fanout-metric-2026-07-23-retry2",
       "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model) [retry 2/2 of failed data-announcement-fanout-metric-2026-07-23]",
       "owner_role": "pm-data",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-retry-remint 2026-08-08T16:05:19Z (retry_of=data-announcement-fanout-metric-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T14:08:29Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-08-08T16:05:19Z",
       "retry_of": "data-announcement-fanout-metric-2026-07-23",
-      "retry_round": 2
+      "retry_round": 2,
+      "resolved_by": "PR #2723",
+      "resolved_at": "2026-08-09"
+    },
+    {
+      "id": "pm-qa-inline-cfgtest-heuristic-fix-2026-08-09",
+      "action": "Widen routine hotfix-no-test heuristic to count inline #[cfg(test)] mod blocks (grep '#[cfg(test)]' or '#[tokio::test]'/'#[sqlx::test]' occurrences in diff) — false-positive flagged 3 fix PRs this window (#2707/#2710/#2714)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "dependency": "none",
+      "depends_on": [],
+      "deadline": null,
+      "source": "pm-qa 2026-08-09 (rotating role)"
+    },
+    {
+      "id": "pm-qa-layout-webhook-replay-guard-test-2026-08-09",
+      "action": "Add nonce+timestamp replay-guard regression test to layout webhook — PR #2718 pinned body-binding only; #2485 replay window still untested and unimplemented",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "dependency": "none",
+      "depends_on": [],
+      "deadline": null,
+      "source": "pm-qa 2026-08-09"
+    },
+    {
+      "id": "pm-qa-fanout-rls-spotcheck-2026-08-09",
+      "action": "Spot-check #2723 announcement_fanout_metrics_tests.rs — verify the RLS visibility predicate itself (not only the metric-aggregation query) is exercised; if yes, close risk-announcement-fanout-test-fidelity-2026-07-23",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "dependency": "none",
+      "depends_on": [],
+      "deadline": null,
+      "source": "pm-qa 2026-08-09"
+    },
+    {
+      "id": "pm-scrum-master-close-2573-blocks-84-1-2026-08-09",
+      "action": "Close #2573 (DELETE-by-file-key reference-check gap) — hard blocker on 84-1 direct-to-S3 upload wiring; #2573 must land before ppt-web can safely consume the endpoint",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "dependency": "none",
+      "depends_on": [],
+      "deadline": null,
+      "source": "pm-scrum-master 2026-08-09"
     }
   ],
-  "generated": "2026-07-30T03:23:02Z"
+  "generated": "2026-08-09T00:00:00Z"
 }

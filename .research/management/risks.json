@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-09T00:00:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -32,11 +32,12 @@
     {
       "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
       "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
-      "probability": "medium",
+      "probability": "low",
       "impact": "high",
-      "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
+      "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy — PARTIALLY SATISFIED by PR #2723 announcement_fanout_metrics_tests.rs (295 LOC real-SQL suite, 2026-08-09); pending pm-qa spot-check of RLS predicate itself",
       "owner_role": "pm-qa",
-      "source": "post-merge review 2026-07-23 (#2484)"
+      "source": "post-merge review 2026-07-23 (#2484)",
+      "status": "mitigating"
     },
     {
       "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
@@ -117,6 +118,28 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-qa-refactor-no-test-churn-hotspots-2026-08-09",
+      "risk": "Five pure-refactor PRs (#2711/#2713/#2715/#2720/#2721) landed on churn hotspots (auth/layout/reports) with no new behavioural-equivalence test; if existing suites have coverage holes, a silent regression could ship",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Add reviewer-verdict check: refactor delta must be covered by ≥1 existing test path referenced in the PR body",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-09"
+    },
+    {
+      "id": "pm-qa-inline-test-heuristic-blind-2026-08-09",
+      "risk": "Routine hotfix-no-test heuristic mis-flags inline #[cfg(test)] blocks as missing coverage — 3 of 3 fix PRs this window were false-positive-flagged (#2707/#2710/#2714), biasing dispatcher planning",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "Widen heuristic to count '#[cfg(test)]', '#[tokio::test]', '#[sqlx::test]' occurrences in the diff",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-09"
     }
   ]
 }
