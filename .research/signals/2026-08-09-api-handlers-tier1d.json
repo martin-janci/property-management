@@ -1,0 +1,52 @@
+[
+  {
+    "id": "code-review-api-handlers-listings-detail-photos-swallow",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/listings.rs:338 and :343 — the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped) fetches the listing itself with the correct `.map_err(...)? / .ok_or_else(...)?` error-propagation pattern (find_by_id_and_org at :321-336), but then swallows the two secondary reads with `.unwrap_or_default()`.",
+      "`let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();` (listings.rs:338) — a transient DB/pool error on the photos query silently yields an EMPTY Vec, so the endpoint serves HTTP 200 with `photos: []` for a listing that may in fact have photos. The client cannot distinguish 'listing has no photos' from 'photos query failed'.",
+      "`get_syndications(id).await.unwrap_or_default()` (listings.rs:339-343) — same defect on the syndications read: a failed query degrades to an empty syndications array served as authoritative.",
+      "Impact: intra-handler inconsistency (primary query surfaces 5xx, secondary queries silently zero out) — identical failure class to the reports/mod.rs finding from 2026-08-08 but in a different handler. A partial backend failure renders a photo-less / syndication-less listing detail rather than a retryable 500.",
+      "Fix: replace `.unwrap_or_default()` on get_photos / get_syndications with the same `.map_err(|e| (INTERNAL_SERVER_ERROR, ...))?` pattern the listing fetch already uses, or make the graceful-degradation explicit and flag partial data in the response."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-handlers-workflow-import-partial-silent",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/ai/workflows.rs:687-693 — the workflow-template import handler adds each imported action inside a loop with `if let Err(e) = state.workflow_repo.add_action(rls.conn(), tenant_id, create_action).await { tracing::warn!(...); }`. A failed add_action is logged at warn and the loop continues, so the import completes with HTTP 200 while silently dropping one or more actions — the created workflow is partial and internally inconsistent with the template the caller asked to import.",
+      "backend/servers/api-server/src/routes/ai/workflows.rs:697-713 — the subsequent 'enable if requested' step discards its result entirely: `let _ = state.workflow_repo.update(&mut **rls.conn(), workflow.id, tenant_id, UpdateWorkflow { enabled: Some(true), .. }).await;`. If the enable write fails, the workflow is left DISABLED but the caller receives a success response indicating the requested `enabled: true` state.",
+      "Impact: template import is a manager-facing 'create automation from marketplace template' action; a transient DB error yields a silently broken automation (missing actions and/or not actually enabled) reported as fully successful. No signal reaches the client to retry or reconcile.",
+      "Fix: propagate add_action / update errors (fail the import with a 5xx, or roll back / report which actions were skipped) instead of `tracing::warn!` + `let _ =`; at minimum return a partial-success payload enumerating the skipped actions and the actual enabled state."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-handlers-doc-summary-not-persisted",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — after an expensive LLM summarization call, the handler persists the result with `let _ = state.document_repo.update_summary(id, &summary, key_points_json, None, None, Some(word_count), Some(language)).await;`. The Result is discarded, so a DB write failure is completely silent.",
+      "The handler then returns the freshly-computed summary to the caller (HTTP 200) regardless of whether update_summary succeeded, so on a persistence failure the client sees a summary that was never stored. The next request for the same document finds no stored summary and re-runs the costly LLM summarization — silent data loss plus repeated paid-LLM cost.",
+      "Secondary smell same line-region: `let key_points_json = serde_json::to_value(&key_points).ok();` (intelligence.rs:812) — a serialization failure silently drops all key_points (stored as NULL) with no log.",
+      "Impact: document AI summaries are presented as persisted/cached; a swallowed write turns that into a best-effort, un-observable operation with cost and correctness consequences.",
+      "Fix: propagate the update_summary error (map to 5xx or at least `tracing::error!` + surface a 'summary generated but not saved' condition) rather than `let _ =`."
+    ],
+    "expert": "rust"
+  }
+]
