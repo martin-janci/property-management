@@ -47,6 +47,10 @@ argon2 = { workspace = true }
 sqlx = { workspace = true }
 rust_decimal = { workspace = true }
 
+# Password-reset email transport (UC-44.3). Version/features mirror api-server's
+# declaration so the workspace resolves a single lettre build.
+lettre = { version = "0.11", features = ["tokio1-native-tls", "builder", "hostname", "smtp-transport"] }
+
 # Observability (Epic 95)
 opentelemetry = { workspace = true }
 opentelemetry_sdk = { workspace = true }

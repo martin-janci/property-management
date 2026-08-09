@@ -7,6 +7,7 @@ use crate::extractors::auth::extract_session_token;
 use crate::handlers::users::{
     PasswordResetConfirmResult, PasswordResetRequestResult, RegistrationResult, UserHandler,
 };
+use crate::services::{delivery_decision, ResetDelivery};
 use crate::state::AppState;
 use api_core::extractors::RequestPrincipal;
 use axum::{
@@ -14,6 +15,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use db::models::user::Locale;
 use db::models::PortalUser;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -417,21 +419,24 @@ pub struct PasswordResetConfirmResponse {
     pub message: String,
 }
 
-/// Issue a password-reset token and (in production) email it to the user.
+/// Issue a password-reset token and email the reset link to the user.
 ///
-/// The endpoint always returns 200 with the same generic body so callers
-/// can't distinguish "user found" from "user not found" by status or
-/// timing alone. The plaintext token is logged at INFO in development
-/// builds so the dev flow remains testable without an email transport.
+/// On 200 the endpoint returns the same generic body whether or not the account
+/// exists, so callers can't distinguish "user found" from "user not found" by
+/// status or timing alone. When a real email transport is configured the reset
+/// link is delivered; in development builds it falls back to logging the link so
+/// the flow stays testable. If NO transport is configured in a release build the
+/// endpoint returns 503 rather than falsely claiming a link was sent.
 #[utoipa::path(
     post,
     path = "/api/v1/users/password-reset",
     tag = "Users",
     request_body = PasswordResetRequestBody,
     responses(
-        (status = 200, description = "Reset email queued (or user does not exist)",
+        (status = 200, description = "Reset email sent (or user does not exist)",
                        body = PasswordResetRequestResponse),
-        (status = 400, description = "Invalid email format")
+        (status = 400, description = "Invalid email format"),
+        (status = 503, description = "Email transport not configured — reset unavailable")
     )
 )]
 pub async fn request_password_reset(
@@ -445,29 +450,66 @@ pub async fn request_password_reset(
         ));
     }
 
+    // Guard: decide how to answer BEFORE issuing a token. The decision uses
+    // global server state only (transport configured? dev fallback allowed?),
+    // so it never leaks whether the account exists.
+    //
+    // This closes the prod bug where the endpoint always returned
+    // "a reset link has been sent" even though no email transport was wired —
+    // the token was persisted, then discarded, and the user was permanently
+    // stuck with no way to recover their account.
+    let mailer = state.password_reset_mailer.clone();
+    match delivery_decision(mailer.is_configured(), cfg!(debug_assertions)) {
+        ResetDelivery::Unavailable => {
+            // No transport and no dev fallback (release build): refuse rather
+            // than lie. Enumeration-safe — the answer does not depend on the
+            // email argument.
+            tracing::error!(
+                "Password reset requested but no email transport is configured; \
+                 refusing to falsely claim a link was sent (set SMTP_* to enable)"
+            );
+            return Err((
+                axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                "Password reset is temporarily unavailable. Please contact support.".to_string(),
+            ));
+        }
+        // Send (real transport) and LogFallback (dev) both issue the token and
+        // hand it to the mailer; the mailer decides whether it actually leaves
+        // the process.
+        ResetDelivery::Send | ResetDelivery::LogFallback => {}
+    }
+
     let handler = UserHandler::new(state.portal_repo.clone());
     match handler
         .request_password_reset(&state.portal_password_reset_repo, &req.email)
         .await
     {
-        Ok(PasswordResetRequestResult::Sent { plaintext_token }) => {
-            // Email transport hasn't been wired yet for the reality
-            // server. Until it is, surface the token via the tracing
-            // pipeline at INFO so dev/test flows can grab it; production
-            // builds should not log this.
-            #[cfg(debug_assertions)]
-            tracing::info!(
-                email_hash = %common::email_log_hash(&req.email),
-                token = %plaintext_token,
-                "Password reset token issued (dev: token logged for testing)"
-            );
-            #[cfg(not(debug_assertions))]
+        Ok(PasswordResetRequestResult::Sent {
+            plaintext_token,
+            name,
+            locale,
+        }) => {
+            let locale = Locale::parse(&locale);
+            match mailer
+                .send_reset_link(&req.email, &name, &plaintext_token, locale)
+                .await
             {
-                let _ = plaintext_token;
-                tracing::info!(
-                    email_hash = %common::email_log_hash(&req.email),
-                    "Password reset token issued"
-                );
+                Ok(()) => {
+                    tracing::info!(
+                        email_hash = %common::email_log_hash(&req.email),
+                        "Password reset link dispatched"
+                    );
+                }
+                Err(e) => {
+                    // Delivery failed at the transport. Keep the response
+                    // enumeration-safe (generic 200) but log loudly so
+                    // operators notice — we no longer silently drop the token.
+                    tracing::error!(
+                        error = %e,
+                        email_hash = %common::email_log_hash(&req.email),
+                        "Failed to send password reset email"
+                    );
+                }
             }
         }
         Ok(PasswordResetRequestResult::UserNotFound) => {

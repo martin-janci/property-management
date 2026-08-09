@@ -23,8 +23,15 @@ const PASSWORD_RESET_TTL_MINUTES: i64 = 30;
 #[derive(Debug)]
 pub enum PasswordResetRequestResult {
     /// A reset token was generated. The plaintext token is returned so the
-    /// caller can dispatch the email; it is NOT persisted in plaintext.
-    Sent { plaintext_token: String },
+    /// caller can dispatch the email; it is NOT persisted in plaintext. The
+    /// user's `name` and `locale` travel alongside it so the route handler can
+    /// render a properly addressed, localized reset email without a second
+    /// lookup.
+    Sent {
+        plaintext_token: String,
+        name: String,
+        locale: String,
+    },
     /// No such user exists. Returned to the handler so it can log internally
     /// while still returning HTTP 200 to the client.
     UserNotFound,
@@ -563,7 +570,11 @@ impl UserHandler {
             .await
             .map_err(|e| e.to_string())?;
 
-        Ok(PasswordResetRequestResult::Sent { plaintext_token })
+        Ok(PasswordResetRequestResult::Sent {
+            plaintext_token,
+            name: user.name,
+            locale: user.locale,
+        })
     }
 
     /// Verify a reset token and replace the user's password hash.
