@@ -24,6 +24,28 @@
       "merge_attempted_at": "2026-08-07T00:11:32Z",
       "quarantined_at": "2026-08-08T12:08:50Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
+    },
+    {
+      "task_id": "code-review-reality-server-agency-members-unauth-idor-retry1",
+      "branch": "auto-impl/code-review-reality-server-agency-member-474db822",
+      "status": "in-progress",
+      "claimed_at": "2026-08-09T12:08:27Z",
+      "last_updated": "2026-08-09T12:08:27Z",
+      "status_changed_at": "2026-08-09T12:08:27Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
