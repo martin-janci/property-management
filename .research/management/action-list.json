@@ -186,21 +186,6 @@
       "retry_of": "code-review-reality-server-sso-session-invalidate-swallowed",
       "retry_round": 1,
       "last_updated": "2026-08-09T06:11:42Z"
-    },
-    {
-      "id": "test-gap-disputes-kpis-window-validation-retry1",
-      "action": "/disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined [retry 1/2 of failed test-gap-disputes-kpis-window-validation]",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=test-gap-disputes-kpis-window-validation reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-09T06:08:18Z",
-      "retry_of": "test-gap-disputes-kpis-window-validation",
-      "retry_round": 1,
-      "last_updated": "2026-08-09T06:11:42Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -12505,6 +12505,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "test-gap-disputes-kpis-window-validation-retry1",
+      "branch": "auto-impl/test-gap-disputes-kpis-window-validation-c8bcf361",
+      "status": "done",
+      "claimed_at": "2026-08-09T06:11:42Z",
+      "last_updated": "2026-08-09T06:24:50Z",
+      "status_changed_at": "2026-08-09T06:24:50Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-on-dev: 422 window_start>=window_end guard in disputes.rs:429 + pure tokio test dispute_kpis_rejects_inverted_window (connect_lazy, no DB); DB test stays BIT-440-quarantined; 0 commits over dev",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
       "branch": "auto-impl/test-gap-hotfix-no-test-pr-1287-rls-llm-64a02df4",
       "status": "failed",
@@ -13105,5 +13127,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-09T06:17:42Z"
+  "archived_at": "2026-08-09T06:24:50Z"
 }
