@@ -103,3 +103,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 - **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+
+---
+
+## Decisions logged 2026-08-09 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-08-09, pm-scrum-master):** Quarantined-PR retirement policy — after fix_rounds=3 is exhausted (see PR #2684 today), does the task auto-close, escalate to a human triage queue, or re-queue at lower priority? Current behaviour is "quarantined" with no automated exit. Owner: pm-tech-lead.
+- **NEW (2026-08-09, pm-scrum-master):** Post-merge security review cadence — 4 security-adjacent PRs (#2707 DoS cap, #2708 NaN reject, #2710 SSRF, #2722 IDOR) landed in one 24h window and pm-security had no scheduled slot. Should a same-day security regression sweep be added when >=3 security-labelled PRs merge in a window? Owner: pm-security.
+- **NEW (2026-08-09, pm-qa):** Should security fixes co-commit a regression test at PR-open time (mandatory pre-review), or is post-merge follow-up (current practice, driving many follow-up issues) acceptable? #2722 modeled the co-commit pattern; #2707/#2708/#2710 hygiene unclear. Owner: pm-tech-lead + pm-security.
+- **NEW (2026-08-09, pm-qa):** Test-shard budget — how many CI test-shard splits (currently 4) are we willing to maintain vs consolidating? #2684 quarantined after all 4 shards failed post-clippy-fix; may indicate shard-boundary fragility. Owner: pm-devops.

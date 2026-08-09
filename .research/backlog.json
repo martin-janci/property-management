@@ -7273,6 +7273,122 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "code-review-api-core-ssrf-toctou-signatures",
+      "title": "LIVE SSRF DNS-rebinding TOCTOU in signatures.rs::store_signed_document (mounted e-sign webhook) — port PR #2710 fix pattern",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "PR #2710 body (Notes section names signatures.rs as unfixed SSRF sibling)",
+        "Phase 1.5 rotating expert review 2026-08-09 (segment api-core, signal code-review-api-core-ssrf-toctou-signatures)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/signatures.rs:1008 — static-only common::url_validation::validate_external_url(signed_url) before the fetch",
+        "backend/servers/api-server/src/routes/signatures.rs:1016 — reqwest::Client::new() with no dns_resolver / SsrfGuardResolver / redirect::Policy — same TOCTOU class PR #2710 removed from api_call.rs",
+        "backend/servers/api-server/src/routes/signatures.rs:882 — handle_webhook calls store_signed_document(signed_url) on provider-supplied signed_document_url",
+        "backend/servers/api-server/src/lib.rs:169 — /api/v1/signature-requests mounted → LIVE via HTTP",
+        "confidence upgraded medium→high after in-context verification of file:line + router mount"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/signatures.rs",
+        "backend/servers/api-server/src/services/actions/api_call.rs",
+        "backend/crates/common/src/url_validation.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": "plans/security-ssrf-toctou-signatures-rebinding.md"
+    },
+    {
+      "id": "code-review-api-core-ssrf-toctou-webhook",
+      "title": "SSRF DNS-rebinding TOCTOU in integrations/webhook.rs::test_webhook (unmounted; land before Epic-61 mounts CRUD)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "PR #2710 body (Notes section names webhook.rs as unfixed SSRF sibling)",
+        "Phase 1.5 rotating expert review 2026-08-09 (signal code-review-api-core-ssrf-toctou-webhook)",
+        "co-signal: churn-hotspot on the same file this run (+1 stack)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:510-528 — test_webhook builds reqwest::Client::builder() with redirect::Policy::none() + pool_max_idle_per_host(0) but NO dns_resolver; relies on static validate_external_url alone",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:79-95 — router docstring: 'ROADMAP(PAP-122): outbound webhook-subscription CRUD unmounted' — not reachable via HTTP today but vulnerable code stays live",
+        "co-signal: file is a churn hotspot this run (2799 lines) → stacks +1 for score 3",
+        "expert audited workflow_executor.rs (also in PR #2710 note) — does NOT construct its own reqwest client; delegation to already-hardened ApiCallExecutor. PR-note inclusion of that file appears inaccurate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "backend/servers/api-server/src/services/actions/api_call.rs",
+        "backend/crates/common/src/url_validation.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": "plans/security-ssrf-toctou-integrations-webhook.md"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/integrations/webhook.rs (2799 lines this run)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 2026-08-07T06:24 → 2026-08-09T08:30"
+      ],
+      "evidence": [
+        "2799 additions+deletions in the 49h window; first-entry hotspot (runs_seen=1); overlaps the code-review-api-core-ssrf-toctou-webhook finding"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-mod-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reports/mod.rs (2747 lines this run; PR #2720 extracted helpers.rs)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 2026-08-07T06:24 → 2026-08-09T08:30",
+        "PR #2720"
+      ],
+      "evidence": [
+        "2747 additions+deletions in the 49h window; first-entry hotspot after PR #2720 renamed the file from routes/reports.rs into routes/reports/{mod.rs,helpers.rs,schedule_cadence.rs}"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/scheduler/mod.rs (2746 lines this run; PR #2714 fire-once decouple)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 2026-08-07T06:24 → 2026-08-09T08:30",
+        "PR #2714"
+      ],
+      "evidence": [
+        "2746 additions+deletions in the 49h window; first-entry hotspot after PR #2714 added scheduler-side pass for notified_at retry semantics"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-09",
+      "plan": null
     }
   ]
 }

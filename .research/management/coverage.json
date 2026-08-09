@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T18:35:16Z",
+  "generated": "2026-08-09T08:12:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -236,13 +236,14 @@
         "sprint-status: done (verified 2026-06-25)",
         "Backend: POST /api/v1/announcements with targeting validation + RLS-aware create_rls",
         "Frontend: CreateAnnouncementPage + EditAnnouncementPage with TargetSelector",
-        "Screen-maps announcement-new/announcement-edit buildStatus=shipped"
+        "Screen-maps announcement-new/announcement-edit buildStatus=shipped",
+        "PR #2723 (2026-08-08): announcement fan-out delivered/read/ack metrics instrumented (KPI backfill)"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-6",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-09",
       "screen_refs": []
     },
     {
@@ -983,11 +984,12 @@
         "screen-map ppt/disputes.md shipped",
         "feat(epic-80) commits merged",
         "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers (add_evidence follow-up #2483 remains; PR #2490 open)",
-        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked"
+        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked",
+        "PR #2712 (2026-08-08): dispute add_evidence audit event added \u2014 closes #2483 sub-resource audit-trail gap"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-09",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -1027,7 +1029,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-09",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -1056,7 +1058,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-09",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",
@@ -1330,11 +1332,12 @@
       "evidence": [
         "PR #2291: POST /api/v1/ai/llm/rag/migrate wired",
         "PR #2312: migration 00215 provenance stamp + set-based UPDATE fixes embedding-space mixing",
-        "rag_migrate_pgvector_tests.rs coverage"
+        "rag_migrate_pgvector_tests.rs coverage",
+        "PR #2706 (2026-08-08): RAG index partial-batch failing-closed fix (data integrity)"
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-09",
       "screen_refs": []
     }
   ]

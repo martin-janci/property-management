@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-07T06:24:00Z",
-  "last_run_ms": 2000,
-  "last_pr_seen": 2702,
-  "last_issue_seen": 2699,
-  "last_commit_sha": "a2c0f53d4d66886ea14fcb6fd43478c4c4022fa9",
+  "last_run_iso": "2026-08-09T08:30:00Z",
+  "last_run_ms": 2500000,
+  "last_pr_seen": 2726,
+  "last_issue_seen": 2704,
+  "last_commit_sha": "812d00cd93b480ccdb620042474b8adba47b29cd",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -153,9 +153,9 @@
       "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 75
+      "runs_seen": 2,
+      "last_seen": "2026-08-09",
+      "recent_churn": 2799
     },
     "backend/servers/api-server/src/services/oauth.rs": {
       "runs_seen": 1,
@@ -441,6 +441,16 @@
       "runs_seen": 1,
       "last_seen": "2026-08-07",
       "recent_churn": 64
+    },
+    "backend/servers/api-server/src/routes/reports/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-09",
+      "recent_churn": 2747
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-09",
+      "recent_churn": 2746
     }
   },
   "seen_signals": [
@@ -819,12 +829,18 @@
     "code-review-reality-web-listingform-no-i18n",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
-    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
+    "lag-warning-2026-08-09",
+    "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-reports-mod-rs",
+    "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
+    "code-review-api-core-ssrf-toctou-signatures",
+    "code-review-api-core-ssrf-toctou-webhook"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-06",
-    "api-core": "2026-08-04",
+    "api-core": "2026-08-09",
     "reality-server": "2026-08-06",
     "ppt-web-ui": "2026-08-06",
     "ppt-web-core": "2026-08-06",
@@ -833,9 +849,9 @@
     "mobile-native-kmp": "2026-08-04"
   },
   "stats": {
-    "runs": 62,
-    "vectors_created": 284,
-    "plans_created": 22,
+    "runs": 63,
+    "vectors_created": 289,
+    "plans_created": 24,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
@@ -850,12 +866,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
-      "pm-qa": "2026-06-15",
+      "pm-qa": "2026-08-09",
       "pm-devops": "2026-06-16",
       "pm-security": "2026-07-21",
       "pm-data": "2026-07-23",
@@ -863,6 +879,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 5
+    "next_index": 6
   }
 }

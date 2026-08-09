@@ -1,0 +1,104 @@
+{
+  "run_iso": "2026-08-09T08:30:00Z",
+  "trigger_payload": "buffer-low: claimable=1/72 — refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-09",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["49h since last run (previous cursor 2026-08-07T06:24:00Z) — >36h threshold; daily 2026-08-08 tick appears to have been missed"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-08-07T06:24 → 2026-08-09T08:30",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["backend/servers/api-server/src/routes/integrations/webhook.rs: 2799 additions+deletions in the 49h window; first-entry (runs_seen=1)"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reports-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-08-07T06:24 → 2026-08-09T08:30",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["backend/servers/api-server/src/routes/reports/mod.rs: 2747 additions+deletions (PR #2720 extracted helpers.rs; net -281 lines); first-entry (runs_seen=1)"]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-08-07T06:24 → 2026-08-09T08:30",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["backend/servers/api-server/src/services/scheduler/mod.rs: 2746 additions+deletions (PR #2714 gh-issue-2612 fire-once decouple); first-entry (runs_seen=1)"]
+    },
+    {
+      "id": "code-review-api-core-ssrf-toctou-signatures",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/signatures.rs:1008 — static-only common::url_validation::validate_external_url(signed_url) before the fetch",
+        "backend/servers/api-server/src/routes/signatures.rs:1016 — reqwest::Client::new() with no dns_resolver / SsrfGuardResolver / redirect::Policy — TOCTOU bypass identical to what PR #2710 removed from api_call.rs",
+        "backend/servers/api-server/src/routes/signatures.rs:882 — handle_webhook unconditionally calls store_signed_document(&state, &signature_request, signed_url) on provider-supplied signed_document_url",
+        "backend/servers/api-server/src/lib.rs:169 — .nest('/api/v1/signature-requests', routes::signatures::router()) → LIVE via HTTP",
+        "backend/servers/api-server/src/services/actions/api_call.rs:344-362 — the file's own docstring names this vulnerability class and the fix pattern exists in-tree at :41 (SsrfGuardResolver), :207 (redirect::Policy::custom), :222 (.dns_resolver(...))",
+        "confidence upgraded medium→high after in-context verification of file:line + router mount"
+      ]
+    },
+    {
+      "id": "code-review-api-core-ssrf-toctou-webhook",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:510-528 — test_webhook builds reqwest::Client::builder() with redirect::Policy::none() + pool_max_idle_per_host(0) but NO dns_resolver; relies on static validate_external_url alone",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:79-95 — router docstring: 'ROADMAP(PAP-122): outbound webhook-subscription CRUD unmounted' — endpoint not reachable via HTTP today but vulnerable code stays live",
+        "PR #2710 body Notes section explicitly names webhook.rs as an unfixed SSRF sibling",
+        "co-signal: file is a churn hotspot this run (2799 lines) → stacks +1 into the backlog item for score 3",
+        "expert audited workflow_executor.rs (also in PR #2710 note) — does NOT construct its own reqwest client; dispatch is delegated to already-hardened ApiCallExecutor. PR-note inclusion of that file appears inaccurate."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise lockfile-drift / stalled-review). The two security SSRF findings are code changes with non-trivial blast radius; they go through the manual-implementer path with adversarial-reviewed plans.",
+  "goal_checks": [
+    {"goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-09.md && head -1 matches ^# 2026-08-09$", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true,  "command": "jq state advanced vs HEAD",                                       "observed": "true",   "expected": "true"},
+    {"goal": "G3", "passed": true,  "command": "jq unique ids in backlog.json",                                   "observed": "true",   "expected": "true"},
+    {"goal": "G4", "passed": true,  "command": "no new signal id present in prior seen_signals (all 6 IDs new to this run)", "observed": "0 conflicts", "expected": "0"},
+    {"goal": "G5-cap", "passed": true, "command": "jq no score > 8",                                              "observed": "true",   "expected": "true"},
+    {"goal": "G5-decay", "passed": true, "command": "no open item with updated_at <= today-14 lost <1 point (only 1 open pre-run, updated 2026-08-04 = within 14d)", "observed": "n/a — no decay-eligible items", "expected": "conditional-pass"},
+    {"goal": "G6", "passed": true,  "command": "each new plan file has matching 'plans/<slug>.md ... adversarial pass:' line in brief", "observed": "2/2 annotated",  "expected": "all match"},
+    {"goal": "G7-count", "passed": true, "command": "≤2 new plans this run",                                       "observed": "2",       "expected": "≤2"},
+    {"goal": "G7-metadata", "passed": true, "command": "4 metadata fields present in each plan",                   "observed": "4/4 in both", "expected": "4/4"},
+    {"goal": "G7-headings", "passed": true, "command": "11 required ## headings present in each plan",             "observed": "11/11 in both", "expected": "11/11"},
+    {"goal": "G7-capability", "passed": true, "command": "≥1 capability box ticked",                               "observed": "2 ticked in both plans (C1+C6)", "expected": "≥1"},
+    {"goal": "G7-mode", "passed": true, "command": "Mode: local-only|cloud-ok declared",                           "observed": "Mode: cloud-ok in both", "expected": "declared"},
+    {"goal": "G7-files-exist", "passed": true, "command": "every ## Files bullet resolves on disk",                "observed": "4/4 exist in both plans", "expected": "all exist"},
+    {"goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",     "observed": "0",       "expected": "0"},
+    {"goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff (excl. baseline docs)", "observed": "0 matches", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen from backlog.json",             "observed": "diff -q exit 0", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "no placeholder rot in new plans or brief",                         "observed": "0 matches", "expected": "0"},
+    {"goal": "G12", "passed": true, "command": "every prior-run plan slug still in plans/ or plans/_archive/",     "observed": "all present", "expected": "all"},
+    {"goal": "G13", "passed": true, "command": "archive file count now >= HEAD count",                             "observed": "8 >= 8",  "expected": ">="},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen from backlog.json triage rows", "observed": "diff -q exit 0", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions length <= 3 with per-type <=1 caps; no re-processed signal ids", "observed": "0 actions this run", "expected": "≤3 total, ≤1 per type"},
+    {"goal": "G16", "passed": true, "command": "management artifacts parse + pm_cursor in [0,7] + GC7 coverage_cursor advanced", "observed": "action-list=ok risks=ok project-state=ok pm_cursor=4 in [0,7] coverage_cursor 5→6 vs pm_cursor 3→4 both advanced", "expected": "all ok"},
+    {"goal": "G17", "passed": true, "command": "no Telegram bot-token literal in staged diff",                     "observed": "0 matches", "expected": "0"}
+  ]
+}

@@ -1,47 +1,104 @@
-# pm-qa — QA / Test lens (2026-06-15)
+# pm-qa — QA / Test lens (2026-08-09)
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues._
+_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. This-run focus: 18-PR merge surge (2026-08-07T20 -> 08-08T20) + PR #2684 quarantine + 3 in-review reality-server PRs blocked from local verify._
 
 ## Role JSON
 
 ```json
 {
   "role": "pm-qa",
-  "summary": "Dev CI unblocked by #1379 ends a 3-day red streak; 18 fresh follow-up issues from yesterday's merge surge are the new QA front, concentrated on missing test coverage (RLS, IDOR, OAuth, realtime sync, payment atomicity).",
+  "summary": "18-PR merge surge in 24h exposes uneven test-coverage discipline: #2718 (HMAC parity \u2014 verification-only, no fix needed) and #2722 (IDOR added regression tests for cross-tenant reads) modeled the right pattern; #2707/#2708/#2710 landed security fixes with unclear regression-test hygiene; #2684 quarantined with CI test-shard(1-4) RED after 3 respawns. Test-shard reliability plus a security-fix regression-test policy are the top QA levers this run.",
   "next_actions": [
-    {"action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Failing-on-main test landed; passes once #1361 fix lands."},
-    {"action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Decoder tests pin known variants and error-path for unknown."},
-    {"action": "Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "UI test confirms older paginated response doesn't clobber newer page-N state."},
-    {"action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Frontend test asserts autosave fires once per debounce window; i18n key lookups present."},
-    {"action": "Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Concurrent-tx test asserts no negative-balance and COALESCE-guarded aggregates."},
-    {"action": "Pin cron validator surface with fixture-based test (#1368) to guard against #616 regression", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Validator test fixture covers known-good + known-bad expressions; Epic 81 promotion gates on it."}
+    {
+      "action": "Investigate #2684 CI test-shard(1-4) failure \u2014 is it a real regression from clippy fix at workflow_executor.rs:1312 (cloned_ref_to_slice_refs -> std::slice::from_ref) or shard-splitting flake?",
+      "priority": "high",
+      "dependency": "none",
+      "definition_of_done": "test-shard failure reproduced locally on the specific shard; classified real-vs-flake; fix landed or task re-queued at lower priority"
+    },
+    {
+      "action": "Add end-to-end SSRF DNS-rebinding regression test for PR #2710 \u2014 resolve-then-connect race guarded by DNS pin",
+      "priority": "high",
+      "dependency": "none",
+      "definition_of_done": "test asserts DNS resolution + connect use pinned IP; adversarial DNS harness in tests/"
+    },
+    {
+      "action": "Add regression test for DoS body-cap on workflow api_call (PR #2707) \u2014 oversized body rejected with 413 without memory spike",
+      "priority": "medium",
+      "dependency": "none",
+      "definition_of_done": "integration test posts >cap body, asserts 413; heap-usage assertion under cap"
+    },
+    {
+      "action": "Add unit test for workflow_executor NaN condition reject (PR #2708) \u2014 evaluate_conditions with NaN numeric operand returns error, not silently false",
+      "priority": "medium",
+      "dependency": "none",
+      "definition_of_done": "unit test in workflow_executor covers NaN in numeric compare + negative-zero + Infinity"
+    },
+    {
+      "action": "Regression test for scheduled notification retry (PR #2714, closes #2612) \u2014 retry backs off and terminates at max attempts (no infinite loop)",
+      "priority": "medium",
+      "dependency": "none",
+      "definition_of_done": "test asserts retry sequence + terminal-failure state; time-mocked to avoid flake"
+    },
+    {
+      "action": "Codify the #2718 no-fix HMAC-parity outcome as a documented policy \u2014 any webhook fix must ship a parity assertion test + a replay-window test",
+      "priority": "medium",
+      "dependency": "none",
+      "definition_of_done": "docs/testing/webhook-parity-policy.md landed; PR template updated"
+    }
   ],
   "risks": [
-    {"risk": "18 follow-up issues (#1360–#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.", "probability": "high", "impact": "medium", "mitigation": "pm-scrum-master triages the batch this run — assign owner or close as won't-fix."},
-    {"risk": "record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.", "probability": "medium", "impact": "high", "mitigation": "Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test."},
-    {"risk": "Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) — current tests don't pin the validator surface.", "probability": "medium", "impact": "medium", "mitigation": "Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it."},
-    {"risk": "Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured — wastes implementer cycles claiming gap stories already shipped.", "probability": "high", "impact": "medium", "mitigation": "pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings."},
-    {"risk": "Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) — old credentials can linger and be used post-rotation.", "probability": "medium", "impact": "high", "mitigation": "Implement atomic credential swap + add OAuth handler/CSRF test coverage."}
+    {
+      "risk": "Merge pace of 4 security-adjacent PRs in one 24h window (SSRF, IDOR, DoS, NaN) exceeds pm-security's after-the-fact review capacity \u2014 regressions could ship undetected",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add explicit security regression checkpoint to daily post-merge review; require regression test co-committed with security fix"
+    },
+    {
+      "risk": "PR #2684 CI test-shards RED after 3 fix rounds implies systemic test-shard fragility, not per-PR bug \u2014 may block unrelated future PRs unpredictably",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Sample 5 recent test-shard runs for shard-affinity failures; if consistent, extract to isolate test"
+    },
+    {
+      "risk": "#2723 announcement fan-out metrics shipped but the counterpart #2484 real-SQL RLS integration test is still open \u2014 metrics may under/over-count in edge cases the pure-Rust re-model doesn't catch",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Land real-SQL integration test before promoting metrics to production dashboard"
+    },
+    {
+      "risk": "3 in-review reality-server PRs (#2724/#2725/#2726) all report 'verify gate unrunnable in cloud' (utoipa-swagger-ui build blocked by egress) \u2014 retry loop is running blind on CI-only signals",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Mirror utoipa-swagger-ui build deps into cloud egress allow-list OR make verify gate skip-with-report on cloud"
+    },
+    {
+      "risk": "Community-read IDOR fix #2722 added regression tests, but pattern needs an audit sweep for any remaining unauthenticated read routes across other handlers",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "pm-security grep for handlers missing principal extractor; queue remaining hits to action-list"
+    }
   ],
   "open_questions": [
-    "Does #1377 (document download/preview test gap) require new presigned-URL minting test infra, or can it be folded into the existing forms RLS suite?",
-    "Should the pre-push fmt/clippy gate (#1375) be local-only or also enforced as a CI status check?",
-    "Is the realtime preference-sync publish leg (#1376) coverable as a deterministic integration test, or does it need a flake-tolerant smoke test?",
-    "Are stale draft PRs #1316 (verify-document-folder-organization-backend-promote) and #1197 (test-oauth-authorization-server-integration) salvageable, or should they be closed and re-opened?"
+    "Is #2684's test-shard failure a real regression a human should see, or an artifact of shard boundary \u2014 needed before we un-quarantine?",
+    "For #2724/#2725/#2726 that couldn't run CI locally, should reviewer wait on GitHub Actions or shift to a merge-then-monitor stance?",
+    "Should the #2718 no-fix-needed verification outcome be tracked as a distinct outcome in coverage.json, separate from done/partial?",
+    "Are the workflow_executor changes (#2707/#2708) covered end-to-end by a workflow-integration test, or only by unit tests?"
   ],
   "decisions_needed": [
-    "Pre-push fmt/clippy gate (#1375): local hook only, CI-status, or both? — owner: pm-tech-lead",
-    "Triage protocol for the 18 follow-up issues #1360-#1377: bulk-assign by theme to per-role queues, or per-issue triage? — owner: pm-scrum-master",
-    "Promotion-gate policy: should each high-severity coverage gap (atomicity, IDOR, RLS) block its source epic's done-promotion until a failing-on-main test exists? — owner: pm-tech-lead + pm-qa"
+    "Should security fixes co-commit a regression test at PR-open time (mandatory), or is post-merge follow-up acceptable? \u2014 owner: pm-tech-lead + pm-security",
+    "Test-shard budget \u2014 how many shard-splits are we willing to maintain vs consolidating? \u2014 owner: pm-devops"
   ]
 }
 ```
 
 ## Notes
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-07-06 (assuming 1-per-day cadence with 8 roles).
-- Five new pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-06-15"`.
+- Rotation idx 3 of 8; last pm-qa run 2026-06-15 (55 days stale — longest stale slot).
+- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-08-09"`.
 - Five risks dedup-checked against existing pm-qa risk IDs and appended.
-- Coverage epic-85 (rotation idx 10) refreshed: gap-85-2 evidence added from PR #1383; "app icon variants" + "app.config.ts" gaps removed.
-- Phase 1.5 finding (vote partial_cmp NaN) already tracked in prior run via `pm-qa-vote-partial-cmp-nan-fuzz` — kept open.
-- Phase 1.5 finding (`OsRng.try_fill_bytes().expect()` low-sev in crypto.rs) noted; below threshold for new action this run.
+- Merged-PR context for this run:
+  - **Positive test-hygiene models:** #2718 (HMAC parity verification, no fix needed — a valid "verify" outcome), #2722 (IDOR fix with co-committed cross-tenant regression tests per task input).
+  - **Test-hygiene unclear:** #2707 (DoS body cap), #2708 (workflow NaN reject), #2710 (SSRF DNS-rebinding TOCTOU), #2714 (scheduled notification retry). Actions queued to close the gap.
+  - **CI signal broken:** #2684 quarantined after all 4 test-shards RED post-clippy fix (workflow_executor.rs:1312); root cause investigation queued as top-priority action.
+- Coverage epic-80 (upkeep this run): all 3 dispute stories still `done`; 80-1 evidence refreshed with PR #2712 dispute add_evidence audit event.
+- Next pm-qa rotation expected ~ 8 runs from now.
