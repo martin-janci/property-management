@@ -1,0 +1,1285 @@
+{
+  "run": "2026-08-10",
+  "auto_fix_actions": [],
+  "signals": [
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "triage",
+      "evidence": [
+        "PR #2705 'dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 -> 1.100.0' closed 2026-08-08T02:21:45Z without merge"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-10",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Routine last ran 2026-08-07T06:24:00Z \u2014 69h ago (~2.9d), exceeds 36h threshold"
+      ]
+    },
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (issue #766/#816): find_generation_request (:96, `SELECT * FROM llm_generation_requests WHERE id = $1`, no org filter), publish_description (:622, `UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *`, no org filter), plus find_prompt_template (:336), find_listing_description (:531), update_edited_description (:594) and find_photo_enhancement (:1514). Their safe replacements sit right beside them (find_generation_request_for_org :113 and publish_description_for_org :640, both carrying `AND organization_id = $2` with the doc-comment 'a caller in org B cannot read/publish org A's ...').",
+        "The live routes were correctly migrated to the safe variants (backend/servers/api-server/src/routes/ai/llm.rs:1442 calls find_generation_request_for_org, :1085 calls publish_description_for_org), and a grep across all of backend/ (excluding llm_document.rs itself and *_test.rs / tests/) returns ZERO non-test callers for all six un-scoped read/publish methods \u2014 so nothing is exploitable today. But the methods remain `pub` with a generic `E: Executor<'e, Database = Postgres>` bound, meaning a future caller can invoke them on the raw non-RLS `&state.db` pool (not an `acquire_with_rls(...)` guard), which reintroduces the exact cross-tenant read/mutate IDOR that #766/#816 closed \u2014 a latent security regression footgun. (Contrast update_generation_status at :205, also un-scoped `WHERE id = $1` but genuinely safe: its 3 live callers in llm.rs:619/669/975 all run on an org-context RlsPool guard where the Postgres RLS policy enforces isolation.)",
+        "Suggested fix: delete the six now-orphan un-scoped methods (they have no remaining callers), or, if an internal non-RLS use is still intended, gate them behind a narrower non-`pub` visibility / `#[doc(hidden)]` + rename (e.g. `*_unscoped_internal`) so a future route author cannot accidentally pick the IDOR-prone twin over the `_for_org` one. Cross-checked as net-new: no OPEN code-review-finding row currently tags segment=api-core, and the #766/#816 IDOR items in backlog.json cover the ROUTE-level fix, not this leftover-dead-repo-method footgun."
+      ]
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-api-handlers-tier1d.json",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) \u2014 both handlers generate an OFFICIAL LEGAL condominium voting-minutes document (Slovak 'zapisnica' under \u00a714 z. 182/1993 Z.z. / Czech SVJ 'usneseni' under \u00a71206 z. 89/2012 Sb.) but populate nearly every legally-material field with hardcoded placeholder constants instead of the actual vote's data.",
+        "Fabricated fields returned to the caller: meeting_date = NaiveDate 2024-01-15 (constant), meeting_location = 'Spolocenska miestnost, Hlavna 1, Bratislava' / 'Spolecenska mistnost, Hlavni 1, Praha' (constant), Czech svj_name = 'SVJ Hlavni 1' and ico = '12345678' (constant), total_ownership_shares = 10000, participating_shares = 7500, participation_percentage = 75.00, votes_for = 6000, votes_against = 1000, abstentions = 500, quorum_met = true, result_approved = true, participants = [] and questions = [] (empty). Only vote_id, building_id, title and the quorum_rule lookup reflect real data.",
+        "Impact: the endpoint emits a document that asserts a specific quorum was met and the motion was APPROVED with fabricated tallies (6000 for / 1000 against) for ANY vote id the caller can read \u2014 regardless of the vote's real outcome. This is a correctness/compliance defect on a legal artifact, not a cosmetic stub: a rejected or quorum-failed vote would still render as approved. Reachable in production (registered routes GET /api/v1/regional-compliance/slovak|czech vote minutes; vote lookup is RLS-scoped so the handler is live, only the body is fake)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-mobile-rn-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode/getQRCodeAction/parsePPTPayload/parseVCard) and frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts (292 lines, exports parseDeepLink/createDeepLink/DeepLinkManager) have NO dedicated test files anywhere in the repo \u2014 `find . -name 'QRCodeScanner.test.*'` and `DeepLinkHandler.test.*` both return zero hits. The only related tests are deepLinkRouting.test.ts / useDeepLinkRouting.test.tsx (the routing hook pipeline) and universalLinks.test.ts (the URL normalizer) \u2014 none exercise parseQRCode or parseDeepLink directly.",
+        "These are exactly the functions that ingest attacker-controllable input: parseQRCode(content: string) at QRCodeScanner.ts:29 dispatches raw scanned QR payloads across four parsers (ppt:// deep links, {\"ppt\":...} JSON, BEGIN:VCARD vCards, http(s) URLs) and getQRCodeAction routes the result to app navigation. A scanned QR code / opened deep link is untrusted external input, so a parsing bug here is a crash or mis-navigation path (e.g. an auth-required route reached via a crafted link), not a cosmetic issue.",
+        "Suggested fix: add unit tests covering malformed / adversarial inputs for parseQRCode (empty string, oversized payload, malformed JSON with \"ppt\": key, truncated vCard, ppt:// links to requiresAuth routes, javascript:/data: schemes) and parseDeepLink (unknown host, path traversal in :id params, extra query params). This is the highest-value untested surface in the segment."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English user-facing copy instead of react-i18next t(), even though the app is i18n-enabled (23 screens already call useTranslation and the app ships sk/cs/de/en). 7 of the 15 have ZERO useTranslation/t() references \u2014 fully unlocalized: screens/settings/WidgetSettingsScreen.tsx, screens/faults/FaultsListScreen.tsx, screens/buildings/BuildingsScreen.tsx, screens/meters/MetersScreen.tsx, screens/meters/MeterDetailScreen.tsx, screens/messages/MessagesScreen.tsx, screens/messages/ThreadDetailScreen.tsx.",
+        "Concrete literals: FaultsListScreen.tsx:195-196 <Text>'No faults found'</Text> / 'All issues have been addressed'; BuildingsScreen.tsx:136 'No buildings'; MetersScreen.tsx:156 'No unit linked', :171 'No meters'; MeterDetailScreen.tsx:166 'Latest reading', :179 'Reading history', :203 'Submit new reading'; MessagesScreen.tsx:141 'Try again', :147 'No conversations'; WidgetSettingsScreen.tsx renders 'Widget Settings' / 'Widgets Not Available' / 'How to Add Widgets' across :87-192 with no t(). cs/de/sk users see English empty-states, buttons, and section titles across these screens.",
+        "Suggested fix: add useTranslation() to the 7 fully-unlocalized screens (and the empty-state/button literals in the other 8) and migrate the strings into the existing i18n namespaces, matching the pattern already used by the 23 localized screens (e.g. MeterReadingScreen already uses t('meters.*'))."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-untested-nfc-credentials",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines, class NFCAccessController) and frontend/apps/mobile/src/nfc/NFCCredentialManager.ts (321 lines, class NFCCredentialManager) have NO test files in the repo \u2014 the entire nfc/ directory is untested. These classes manage building-access credentials: NFCCredentialManager handles fetch/cache of encrypted credentials with corruption-recovery branches (NFCCredentialManager.ts:72 'Failed to fetch credentials, using cached', :272 'Stored credentials corrupted; discarding', :285 'Legacy credentials corrupted'), and NFCAccessController.ts:376 gates a wallet-add on 'credential has no encrypted data'.",
+        "Credential storage/decryption and corruption-fallback logic is security-sensitive and full of easy-to-regress edge cases (corrupted blob, legacy-format migration, empty encrypted payload). With zero unit coverage, any refactor of the credential cache or the encrypted-data guard ships unverified.",
+        "Suggested fix: add unit tests for NFCCredentialManager covering the corrupted-stored, corrupted-legacy, and cache-fallback paths, and for NFCAccessController's no-encrypted-data guard, so the credential lifecycle is pinned before the next change."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-135 \u2014 FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) but destructures ONLY `isLoading` from each (arLoading/overdueLoading/invoicesLoading); it never reads `isError`/`error`. FinancialDashboardPage (features/financial/pages/FinancialDashboardPage.tsx) has no `error` prop at all (props end at `isLoading?`).",
+        "On any query failure the fallbacks kick in silently: `totals = arReportData?.totals ?? {current:0,...,total:0}` (line ~87), `invoices = invoicesData?.invoices ?? []` (~95), `overdueInvoices = overdueData ?? []` (~96), and `isLoading` resolves to false. The dashboard then renders totalBalance=0, totalOutstanding=0, totalOverdue=0 and an empty invoice/overdue list \u2014 i.e. it presents FALSE '\u20ac0 / no overdue' financial data to a manager instead of an error state. Misleading zeroed data on a money path, not a cosmetic gap.",
+        "This is an inconsistency within the same file: the sibling FinancialReportsPageRoute at financial.tsx:437-438 already threads `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}` into its child, so the correct pattern exists here and only the dashboard route omits it. Suggested fix: capture `isError`/`error` from the three dashboard queries, add an `error` prop to FinancialDashboardPage, and render an error/retry state instead of zeroed metrics when any query fails."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-128 \u2014 the editable Budget Categories list is rendered with `categories.map((category, index) => (<div key={index} ...>`, where each row holds two controlled inputs (category.name text input and category.amount number input).",
+        "The list is mutable: addCategory (BudgetForm.tsx:81) appends and removeCategory (:85) deletes with `setCategories(categories.filter((_, i) => i !== index))`, which re-indexes every subsequent element. Combined with `key={index}`, removing (or reordering) a non-last row makes React reconcile controlled inputs by position, so the deleted row's DOM/input state is reused for the following category \u2014 the classic index-key-on-editable-list bug: values appear to shift onto the wrong row, and in-progress edits/focus land on the wrong field after a mid-list delete.",
+        "Suggested fix: give each category a stable id at creation time (e.g. crypto.randomUUID() in addCategory and in the initial useState seed) and key the row by that id instead of the array index, keeping updateCategory/removeCategory index-based against the current array."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx under frontend/apps/ppt-web/src/features/financial/{components,pages} contain no useTranslation()/i18n reference at all, even though ppt-web ships react-i18next with sk/cs/de/en and the rest of the app (e.g. features/disputes/*) is fully localized. Un-i18n'd files include BudgetForm.tsx, InvoiceForm.tsx, InvoiceList.tsx, PaymentForm.tsx, InvoiceDetail.tsx, ARAgingTable.tsx, BalanceSheetView.tsx, IncomeStatementView.tsx, CashFlowView.tsx, ReconciliationTable.tsx, and the pages FinancialDashboardPage.tsx + FinancialReportsPage.tsx.",
+        "Concrete hardcoded English literals in BudgetForm.tsx: :115 'Budget Categories', :121 '+ Add Category', :133 placeholder=\"Category name\", :148 placeholder=\"0.00'. cs/de/sk managers see English labels, buttons, and placeholders across budgeting, invoicing, payments, and financial reports.",
+        "Suggested fix: add useTranslation() to the 21 financial components/pages and migrate the visible strings into the existing i18n namespaces, matching the pattern already used elsewhere in ppt-web. This is a broad-but-shallow migration best tracked as one localization task for the financial module."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:120-132 \u2014 list_import_jobs (wired GET /api/v1/imports/jobs, PortalPrincipal-authenticated) forwards pagination straight to the repo with NO clamping: query.limit.unwrap_or(20) at :130 and query.offset.unwrap_or(0) at :131. ImportJobsQuery (imports.rs:90-94) types both as Option<i32>, so an attacker-supplied ?limit=2000000000 reaches the SQL LIMIT (unbounded result set / memory-amplification DoS) and ?offset=-1 reaches a Postgres OFFSET, which rejects negatives and surfaces as a 500.",
+        "This handler is the ONLY list endpoint in the reality-server routes that omits the clamp. Every sibling applies the exact guard it is missing: portal_listings.rs:431 `.clamp(1, 100)` + :432 `.max(0)`, reports.rs:290-291, agent_reviews.rs:85-86, realtors.rs:217-218, inquiries.rs:475/527, agencies.rs:124-125 `.clamp(1, 200)`, plus favorites.rs:275-279, saved_searches.rs:317-321 and articles.rs:355-359 which all do `.unwrap_or(DEFAULT).clamp(1, MAX)` on limit and `.max(0)` on offset. list_import_jobs is a straightforward oversight against an established, uniform repo convention.",
+        "Suggested fix: mirror the sibling handlers \u2014 `let limit = query.limit.unwrap_or(20).clamp(1, 100); let offset = query.offset.unwrap_or(0).max(0);` and pass the clamped values into list_import_jobs, so a hostile ?limit/?offset can neither exhaust memory nor trigger a negative-OFFSET 500."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-01-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:97-131 \u2014 get_price_map is PUBLIC and unauthenticated (handler takes only State + Query, no principal). Its process-global cache PRICE_MAP_CACHE (static HashMap<String, CacheEntry>, price_map.rs:32-38) is keyed on `format!(\"{}:{}:{}:{}\", mode, time_window, property_type, city)` at :125-131, where `city` (:53) and `property_type` (:55) are free-form, unvalidated user strings echoed straight into the key.",
+        "The only eviction is expiry-based: on each miss the write path does `cache.retain(|_, v| Instant::now() < v.expires_at)` (price_map.rs:236) then inserts an entry with a 1-hour TTL (:237-243, CACHE_TTL = 3600s at :41). There is NO size cap / LRU. Within any 1-hour window an attacker who varies `?city=` / `?property_type=` across unbounded distinct values inserts an unbounded number of live entries \u2014 retain never culls them because none have expired \u2014 giving a memory-exhaustion DoS on a public endpoint. Each distinct key is also a guaranteed cache miss, so every request additionally runs the heavy AVG(price/size_sqm) GROUP BY aggregation over the listings table (SQL at :158-213): a second, DB-amplification DoS axis.",
+        "Suggested fix: bound the cache (max entry count with LRU/random eviction, or an off-the-shelf bounded cache) AND validate `city`/`property_type` against the known set (or normalize/reject unknown values) before they become a cache key, so an unauthenticated caller cannot mint unbounded distinct keys or force unbounded uncached aggregations."
+      ]
+    },
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_slovak_vote, wired POST /api/v1/regional-compliance/slovak/voting/validate) and :799-805 (validate_czech_vote, wired POST /api/v1/regional-compliance/czech/svj/vote/validate) \u2014 the legal-validity endpoints fall back to a HARDCODED 75.00% participation (`Decimal::new(7500, 2)`) whenever `vote.eligible_count` resolves to 0 (`eligible_count.unwrap_or(0)` at :249-250 / :795-796). A vote whose eligible-voter count was never recorded (NULL/0) is therefore treated as having 75% turnout \u2014 a fabricated value, not derived from any real data.",
+        "Same handlers, :261-279 / :807-825 \u2014 `approval_percentage` defaults to a hardcoded 80.00% (`Decimal::new(8000, 2)`, and an inline `unwrap_or(80.0)`) whenever `vote.results` fails to deserialize into `VoteResults`, or has no questions, or the first question has no options. So an unparseable / empty results blob is scored as 80% approval.",
+        "Impact: `quorum_met = actual_participation >= required_quorum` and `is_valid = quorum_met && approval_percentage >= required_quorum` (:281-282) are computed FROM these fabricated defaults. With required_quorum <= 75/80% (simple_majority seeds 50.01%), a vote that has NO eligible-count and NO parseable results returns `quorum_met=true, is_valid=true` \u2014 a false 'legally valid' verdict emitted from placeholder numbers, on a production compliance endpoint. The validation_notes still assert 'Vote validation computed against seeded database jurisdiction rules', giving false assurance the tallies were real."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-mobile-native-kmp-tier1d.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, so every publish attempt fails.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:107-126 \u2014 the screen is fully built (validation, submit spinner, success->onCreated navigation) and invokes onSubmit in scope.launch; the NotImplementedError is caught by result.fold(onFailure) and surfaced as the generic 'publish failed' banner, making the entire create-listing flow (UC-51.4) a reachable production dead-end.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:22-155 \u2014 the realtor repository exposes only listMyListings + analytics; there is no create/POST method, confirming the create-listing surface was never wired to reality-server and no test covers the submit path."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-mobile-rn-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 \u2014 the central `apiRequest` helper (backing every useQuery/useMutation in the app) reads the bearer token from SecureStore once (:66) and, on any non-ok response, just `throw new Error(message)` (:91). There is NO 401 branch, NO token-refresh attempt, and NO single-retry after refresh. A 401 from an expired access token is surfaced to the UI as a generic error identical to any other HTTP failure.",
+        "The recovery capability EXISTS but is never wired in: contexts/AuthContext.tsx defines `refreshToken()` (:209) that reads `ppt_refresh_token` from SecureStore and POSTs `/api/v1/auth/refresh` (:217-222). Grep across the whole app confirms `refreshToken()` is invoked ONLY from tests (test/integration/auth.integration.test.tsx:405,433,460) \u2014 never from production code. There is no `setInterval`/`setTimeout` proactive refresh and no 401 interceptor in AuthContext or useApi.",
+        "Impact: the backend uses short-lived access tokens with refresh-token rotation (docs/api/README.md). Once the access-token TTL lapses \u2014 which is guaranteed to happen in any normal session \u2014 every authenticated query and mutation fails with a spurious error, even though the client holds a valid refresh token that would transparently restore the session. The user is effectively soft-logged-out until they manually kill and re-login. Fix: in `apiRequest`, on a 401, call `AuthContext.refreshToken()` (or a shared refresh routine) once and retry the request; or add a proactive refresh timer keyed off the access-token `exp` claim (the code already decodes JWT claims via utils/jwt in getTenantId). Confidence medium: the missing-wiring is unambiguous from source; exact TTL-triggered timing is not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-mobile-rn-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 \u2014 `validateAccess` decides credential expiry (`new Date(credential.validUntil) < now`, :275) and time-of-day access windows (:299-336) entirely from device-local `new Date()` (:250, `now.getHours()`/`now.getDay()` :301-303). Device wall-clock is user-controllable; a holder of an expired or time-restricted credential can roll the phone clock back to make `validateAccess` return `granted: true`.",
+        "That client-side `granted` result is not merely advisory display: it GATES the physical transmit \u2014 `NativeNFC.transmitCredential(credential.encryptedData)` is only reached when `validationResult.granted` (NFCAccessController.ts:190-196). So clock tampering directly changes whether the credential is presented to the reader.",
+        "Impact: if the door reader / backend does NOT independently re-validate expiry and time-restrictions server-side, this is a physical-access bypass; if it does, this is still a defense-in-depth gap that lets revoked/expired credentials be transmitted. Fix: derive `now` from a trusted/monotonic or server-synced time source for the expiry + time-restriction checks (or make the reader authoritative and treat the client gate as UX-only). Confidence medium: exploitability depends on reader-side enforcement which is out of this segment's scope, but relying solely on device clock for credential expiry is a confirmed anti-pattern in the source."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files \u2014 `find frontend/apps/mobile -name '*.test.*'` returns no nfc/ entry, and the covered-module list spans components/, config/, hooks/, navigation/, qrcode/, services/, utils/ and screens/{announcements,buildings,dashboard,documents,faults,forms,leases,messages,meters,neighbors,voting} but not nfc/.",
+        "These are the app's most security- and correctness-sensitive modules yet the non-trivial logic is untested: validateAccess's midnight-crossing time-window arithmetic (NFCAccessController.ts:318-321 `if (endMinutes < startMinutes) return currentMinutes >= startMinutes || currentMinutes <= endMinutes`), the status\u2192denial-reason mapping (:256-262), and NFCCredentialManager's one-time SecureStore migration from the legacy AsyncStorage key with corrupt-data discard (NFCCredentialManager.ts:266-293).",
+        "Impact: a regression in the time-window or expiry logic silently grants or denies physical access with no failing test to catch it. Fix: add unit tests for validateAccess (each denial reason, expiry boundary, normal + midnight-crossing time windows) and for the credential-manager load/migrate/corrupt-discard paths. Low severity (test-coverage gap) but on a security-critical module."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-ppt-web-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 \u2014 the effect cleanup ONLY disconnects the PerformanceObservers (`for (const observer of observers) observer.disconnect()`). It never removes the two window event listeners the same effect registers: the `'load'` listener (`collectNavigationTiming`, :142) and, more importantly, the `'visibilitychange'` listener added at :153.",
+        "The `'visibilitychange'` handler at :153-157 is an inline anonymous arrow (`window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') reportMetrics(); })`) \u2014 it has no stored reference, so it can NEVER be removed via removeEventListener even if a cleanup tried. `reportOnUnload` defaults to `true` (:45), so this listener is attached on every normal mount.",
+        "Effect deps are `[onReport, reportOnUnload]` (:165). A consumer that passes an inline/unstable `onReport` callback (the common React pattern) re-runs the effect on every render; each run stacks a brand-new anonymous `visibilitychange` listener on `window` that is never cleaned up. Over the lifetime of a long-lived SPA session this leaks listeners unboundedly, and every one of them fires `reportMetrics()` on each tab-hide \u2014 duplicating reports and holding closures over stale `metricsRef`/`onReport`."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx \u2014 the entire shipped manager-facing dashboard renders from hardcoded module-level mock constants: mockDashboardSummary (:17), mockPropertyCards (:30), mockCashFlowTrend (:78), mockBenchmark (:135), mockAlerts (:182), mockMetrics (:208). There is no useQuery/useMutation and no API call anywhere in the file \u2014 every KPI tile, cash-flow chart, benchmark card, alert, property card and financial-metrics table shows fabricated numbers to the user.",
+        "All interactive controls in the page are no-op stubs: PerformanceAlert onMarkRead (:328) and onResolve (:331) are empty `// TODO: wire to alerts API` bodies; PropertyCard onClick (:365) is `// TODO: navigate to property detail route`; the 'View All Properties' button (:356-358) has no onClick handler at all. A user can click these and nothing happens.",
+        "Impact: a manager viewing the Portfolio Performance dashboard is shown plausible-but-fake portfolio value / equity / NOI / cash-flow / LTV figures with no loading/error/empty states and no live data, which is misleading for a financial screen. Fix: wire the page to the portfolio-performance API (query hooks + real mutations for alert mark-read/resolve and property navigation), or gate the route behind a feature flag / 'coming soon' state until the API is integrated."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 \u2014 free-form window.prompt() text is cast straight to a typed enum with no validation before being POSTed to the moderation API: `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (:143). A typo or unexpected casing ('Remove', 'ban', anything) passes the `if (!actionType) return` guard and is sent verbatim to takeAction.mutate \u2014 the union cast is a compile-time lie, TypeScript does not narrow it at runtime.",
+        "Same pattern at ContentModerationPage.tsx:169-181 \u2014 `decision: decision as 'uphold' | 'overturn'` from window.prompt for appeal decisions; and frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:143 \u2014 `decisionInput` window.prompt cast to the AML decision union ('approve','reject','escalate') then sent to review-assessment.",
+        "Impact: these are compliance / AML / content-moderation write paths (legally significant actions). An invalid enum reaches the backend and either 400s with a raw 'Failed to take action' alert (poor UX, no field-level feedback) or, if the backend is lenient, records a malformed action_type. The `as <union>` casts across the API boundary are exactly the unsafe-cast smell flagged for this segment. Fix: validate the prompt result against the allowed set (or replace window.prompt with a select/modal \u2014 already tracked as the Phase-2 TODO on the adjacent lines) before calling mutate."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-02-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "Numerous user-facing browser-dialog strings are hardcoded English instead of going through react-i18next `t(...)`, even though the surrounding pages import and use useTranslation for other text. Confirm/prompt/alert examples: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,114,157,171 ('Are you sure you want to delete this pet registration?', 'Approve this pet registration?', vehicle variants); accounting/pages/AccountingInvoiceManagementPage.tsx:89 ('Are you sure you want to delete this invoice?'); news/pages/NewsListPage.tsx:73 ('Are you sure you want to delete this article?'); voting/pages/VoteDetailPage.tsx:131 ('Reason for cancelling this vote?'); accounting/components/AccountingInvoiceForm.tsx:76 ('Please fill all required fields').",
+        "Also all compliance dialog + alert copy: ContentModerationPage.tsx:119,130,136,151,169,172,186 and AmlDashboardPage.tsx:116,127,131,143,150,156,169,173 and DsaReportsPage.tsx:108,112,124 use raw English window.prompt/alert strings.",
+        "Contrast with correctly-localized peers that prove the codebase convention: disputes/pages/MediationWorkspacePage.tsx:176 `window.confirm(t('disputes.mediation.sessions.cancelConfirm'))`, layout/DashboardCustomizePage.tsx:95 `t('layout.customize.resetConfirm')`, ai-chat/components/ChatInterface.tsx:79 `t('aiChat.confirmDelete')`."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-03-mobile-native-kmp-tier1d.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Navigation.kt:490-495 \u2014 the composable(Screen.CreateListing.route) destination wires the screen's onSubmit lambda to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit therefore returns a guaranteed failure; the create flow is a permanent no-op in production.",
+        "Full reachable path traced: MyListingsScreen 'Create' button -> Navigation.kt:484 navController.navigate(Screen.CreateListing.route) -> Navigation.kt:490 composable renders CreateListingScreen -> user fills the form and taps submit -> CreateListingScreen.kt:41 onSubmit: suspend (CreateListingInput) -> Result<Unit> is invoked -> the stub returns failure -> CreateListingScreen.kt:121-124 folds it via onFailure into the generic R.string.error_network message. Users see a spurious 'network error' on a fully-filled valid form, and the listing is never created.",
+        "PortalListingsRepository.kt only defines listMyListings (:40), getListingAnalytics (:74), getPortfolioAnalytics (:111) \u2014 there is NO createListing method to wire the screen to, so this is a genuine incomplete feature, not a mis-wire. The POST create-listing endpoint (and its repository method) needs to be added before the screen can function."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listings-limit-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-03-mobile-native-kmp-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Navigation.kt:472 \u2014 MyListings loads via portalListingsRepository.listMyListings(limit = 100) with no offset/paging follow-up; the UI shows at most the first 100 listings and provides no 'load more' path.",
+        "PortalListingsRepository.kt:111-117 \u2014 getPortfolioAnalytics also starts from listMyListings(limit = 100), so a realtor with more than 100 listings gets portfolio totals (views/inquiries/favorites) and the daily trend computed over only the first 100 rows. The roll-up is silently under-counted with no indication to the user.",
+        "listMyListings (PortalListingsRepository.kt:40-65) accepts offset but neither call site iterates pages; the backend response is paginated (limit/offset params at :50-51) so the cap is a client-side omission, not a backend limit. Low severity today (few realtors exceed 100 active listings) but the failure mode is silent data loss, which warrants either full pagination or an explicit 'showing first 100' affordance."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-parse-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:459-489 \u2014 evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup nor Condition, the `else` branch (lines 481-486) only logs `tracing::warn!(\"Could not parse condition, skipping\")` and continues; it does NOT return Ok(false). If every condition in the list is unparseable (or the malformed one is the only gating predicate), the loop falls through to `Ok(true)` at line 489.",
+        "This directly gates side-effecting action execution: the sole caller (workflow_executor.rs:344 `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }`) skips the workflow only when the gate returns false. A malformed/schema-drifted condition therefore causes the workflow's actions (email/notification/api_call \u2014 services/actions/*) to fire UNCONDITIONALLY on every matching trigger event, instead of being blocked.",
+        "Reachable in production via execute/process workflow-event path; conditions are author-supplied JSON persisted on the workflow row (`workflow.conditions.0`), so a new operator, a removed field, or any serde-shape drift silently flips a gated automation into an always-on one. A gate should fail CLOSED on uninterpretable input \u2014 return Ok(false) (or propagate a WorkflowError) when a condition cannot be parsed, rather than skipping it. Note evaluate_single_condition errors already propagate via `?` (fail-closed); only the serde parse path fails open."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-not-group-drops-conds",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:527-538 \u2014 evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirely ignores every remaining entry in `group.conditions` AND all of `group.groups`. The code comment at line 528 even states 'only first condition is considered'.",
+        "Unlike And/Or (lines 499-526) which fold over BOTH `conditions` and nested `groups`, the Not arm has no fold. A workflow author expressing NOT over multiple predicates (e.g. intending NOT(A AND B), or a NOT wrapping a nested group while also carrying a stray condition) gets NOT(A) \u2014 a silently-wrong gate result with no error surfaced.",
+        "Same gating path as the fail-open finding (feeds workflow_executor.rs:344 action-execution decision), so an incorrectly-negated group can either run actions that should be blocked or block actions that should run. Fix: evaluate the Not group's full child set (negate the AND/OR fold of all conditions + nested groups), or reject a Not group carrying more than one child at validation time so the ambiguity cannot be persisted."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-matches-regex-recompile",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:610-621 \u2014 the ComparisonOperator::Matches arm calls `regex::Regex::new(pattern)` (line 618) on every single condition evaluation. Regex compilation is the expensive step in the `regex` crate; recompiling it per evaluate_single_condition call, inside the per-event \u00d7 per-condition workflow-evaluation loop, wastes CPU proportional to (triggered workflows \u00d7 conditions) for each inbound trigger event.",
+        "The compiled Regex depends only on the author-supplied `pattern` string stored on the condition, so it is a natural candidate for a compile-once cache (e.g. a keyed cache on the executor, or precompiling condition regexes when the workflow is loaded). No correctness impact \u2014 efficiency/DX only. (The Rust `regex` crate is backtracking-free, so this is not a ReDoS concern, only a redundant-compilation cost.)"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-api-handlers-tier1d.json",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 \u2014 verify_hmac_signature() FAILS OPEN: line 950 `std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string())`. When the env var is unset, the receiver validates inbound webhook signatures against the hardcoded, source-visible constant \"default_secret\", so any attacker can forge a valid HMAC-SHA256 signature and pass verification.",
+        "Reachable in production: the router is mounted at `/api/v1/webhooks/voice` (backend/servers/api-server/src/lib.rs:339-340 via voice_webhook_router()), exposing POST /verify -> verify_webhook_signature -> verify_hmac_signature (voice_webhooks.rs:71, 712, 948). This is NOT the UNMOUNTED esignature receiver.",
+        "Inconsistent with the fail-closed pattern used by every sibling receiver: DocuSign/Adobe/HelloSign in integrations/webhook.rs:778/808/837 return 500 CONFIG_ERROR when their secret env var is empty, and PORTAL/AIRBNB/STRIPE secrets fail closed per backend/CLAUDE.md. Fix: fail closed (reject) when VOICE_WEBHOOK_SECRET is unset instead of defaulting to a known constant."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-api-handlers-tier1d.json",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:959 \u2014 webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits on the first differing byte, exposing a timing side-channel that can be used to recover a valid signature byte-by-byte.",
+        "The codebase already knows the correct pattern and applies it elsewhere in the same segment: signatures.rs:679 uses `subtle::ct_eq` under a length guard, and caddy_ask.rs:181 uses a length-checked constant-time compare. voice_webhooks.rs is the lone signature-verification path using raw `==`.",
+        "Reachable via the mounted POST /api/v1/webhooks/voice/verify path (lib.rs:339-340 -> voice_webhooks.rs:71 -> 712 -> 959). Fix: compare with a constant-time primitive (subtle::ConstantTimeEq / ct_eq) after a length check, matching signatures.rs."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-api-handlers-tier1d.json",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 \u2014 authenticate_voice_user() performs NO token validation: the `_access_token` parameter is unused (underscore-prefixed) and the function returns whatever device the query `SELECT * FROM voice_assistant_devices WHERE platform = $1 AND is_active = TRUE ORDER BY last_used_at DESC NULLS LAST LIMIT 1` returns \u2014 i.e. an arbitrary active device for the platform, not the device/user bound to the presented token. Any caller is authenticated as some other user's voice device (broken authentication / horizontal privilege escalation).",
+        "Reachable from mounted handlers: the Alexa handler (voice_webhooks.rs:127) and Google Assistant handler (voice_webhooks.rs:243) both call authenticate_voice_user(rls.conn(), token, ...) and then act on the returned device on the request principal's behalf; router mounted at /api/v1/webhooks/voice (lib.rs:339-340).",
+        "The code comments themselves flag it as placeholder ('for now, find any active device', 'In production, you would validate the token and look up the associated user'), confirming the auth check was never implemented. Fix: validate the OAuth/JWT access token and select the device by its owning user, not the first active row for the platform."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-token-cache-evict-arbitrary",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-reality-server-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:698-712 \u2014 TokenValidationCache::set(), when the cache is full after expired-entry eviction, claims to 'remove oldest entries' (inline comment) but actually removes ARBITRARY entries. It builds keys_to_remove from `cache.iter().take(entries_to_remove)` over a std HashMap, whose iteration order is unspecified/randomized. There is no insertion-time or expiry-time ordering captured (CachedTokenValidation stores `expires_at` but it is not consulted in this second pass), so the entries dropped are not the oldest.",
+        "Effect: under sustained load once the 10 000-entry cap (Default::new(60, 10000)) is reached, freshly-validated tokens can be evicted while still-live-but-older entries are retained, degrading the SSO introspection cache hit-rate (Epic 104.2) and pushing extra load back onto the PM introspection endpoint \u2014 the exact thing the cache exists to avoid. No correctness/security impact (a miss just triggers a real introspection), so severity is low; fix is to sort the eviction candidates by `expires_at` (or use a proper LRU) instead of relying on HashMap order."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-listings-page-no-upper-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:28-34 \u2014 clamp_pagination() is documented as the single guard that keeps raw `page`/`limit` query params 'safe before they reach SQL', and it correctly bounds `limit` via `.clamp(1, MAX_LISTINGS_LIMIT)` (100). But `page` is only floored: `page.unwrap_or(1).max(1)` \u2014 there is NO upper bound. A public, unauthenticated caller can pass `?page=2000000000` on GET /api/v1/listings.",
+        "The unbounded page is then wired into PublicListingQuery (build_listing_query, listings.rs:44-49) and turned into a SQL OFFSET downstream (offset = (page-1)*limit in the api-core repository layer). This is both (a) a deep-pagination resource-exhaustion vector on a public endpoint \u2014 a huge OFFSET forces the DB to scan+discard millions of rows per request \u2014 and (b) a latent `(page-1)*limit` i32 multiply that can overflow for large page values (panic in debug / wrap in release), the same class of raw-DB/500 failure the function's own doc-comment says it exists to prevent for negative limits.",
+        "Fix: clamp `page` to a sane maximum in clamp_pagination (mirroring the limit clamp), or compute a max-page from the total count, so an attacker-supplied page cannot drive an unbounded OFFSET / arithmetic overflow. The clamp function already owns pagination safety for this segment, so the guard belongs here."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-dup-alerts",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-04-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:225-238 \u2014 in the per-search scan loop, once new match ids are found the code enqueues the alert (enqueue_search_alert, lines 217-233) and THEN advances the watermark via `let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64).await` at line 235-238. The watermark-advance error is discarded with `let _ =`.",
+        "Ordering bug: the enqueue succeeds (alert is committed to the queue) but if the subsequent mark_saved_search_matched fails, the ignored error means `last_matched_at` is NOT advanced. On the next due poll the loop re-reads the same `since` watermark (line 173) and find_new_match_listing_ids returns the SAME listing ids again, which are enqueued a SECOND time \u2014 the user receives duplicate saved-search notifications for the same listings. The sibling enqueue-failure path (line 224-231) deliberately `continue`s WITHOUT advancing the watermark 'so the next due run retries' \u2014 but that same 'don't advance' behaviour is harmful AFTER a successful enqueue because the work is already done.",
+        "Fix: propagate/handle the mark_saved_search_matched error after a successful enqueue (e.g. log at error and, ideally, perform enqueue+watermark advance in one transaction so they commit atomically), rather than silently swallowing it and risking duplicate alert delivery."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 \u2014 handleTakeAction reads a free-text moderation action from `window.prompt('Enter action type (remove, restrict, warn, approve):', 'approve')` (:130) and then, with no validation, casts the raw string straight to the API union at :143 `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` before `takeAction.mutate`. A user can type anything (or any typo) and it is sent to the moderation backend as a supposedly-typed action_type \u2014 the `as` cast defeats the compiler check at the exact point where untrusted input crosses the API boundary. If the backend does not itself reject unknown action_type values, an invalid/unexpected moderation action is applied.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:169-178 \u2014 the appeal path has the identical shape: `const decision = window.prompt('Enter decision (uphold, overturn):', 'uphold')` (:169) is cast unvalidated at :178 `decision: decision as 'uphold' | 'overturn'` and sent via `decideAppeal.mutate`. Same unchecked cross-boundary cast of free-text input.",
+        "This is a shipped compliance-critical page (content moderation + appeals) whose primary action UX is `window.prompt`/`alert` \u2014 the file's own `TODO(Phase-2)` comments at :128 and :167 acknowledge the prompts are a placeholder to be replaced with a validated modal form. Fix: validate the prompt result against the allowed set (or use a `<select>` in a modal) before mutating, and drop the `as` cast in favour of a narrowed value; the backend contract should also 400 on unknown action_type/decision as defence in depth."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-strings-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "ppt-web is a react-i18next app shipping sk/cs/de/en, yet several shipped feature pages surface hardcoded English user-facing error strings not wrapped in `t()`. frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx: setUpdateError('Failed to update category preference. Please try again.') (:83), 'Failed to update quiet hours. Please try again.' (:303), 'Failed to update digest preferences. Please try again.' (:319), 'Failed to update grouping settings. Please try again.' (:337) \u2014 none use i18n, so non-English users see raw English on every notification-settings failure.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx \u2014 the moderation failure UX uses untranslated native dialogs: alert('Failed to assign case. Please try again.') (:119), alert('Failed to take action. Please try again.') (:151), alert('Failed to decide appeal. Please try again.') (:186), plus the window.prompt label strings at :130/:136/:169/:172 ('Enter action type\u2026', 'Enter rationale\u2026', 'Enter decision\u2026'). All are hardcoded English on a shipped compliance page.",
+        "Distinct from the prior ppt-web-ui aria-label-i18n finding (which covered aria-label *attributes*): this is visible copy in error toasts / alert()/prompt() dialogs. Fix: route these through `t('\u2026')` keys (and prefer the app's toast/error component over native alert()) so the compliance and notification-settings error paths localise like the rest of the app."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-console-error-committed",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Committed production feature code left with raw `console.error(...)` calls that log full error objects to the browser console in prod. Clusters: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:118,150,185; AmlDashboardPage.tsx:130,172; DsaReportsPage.tsx:97,111,123; frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx:60,93,108,128,159; frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx:77,302,318,336.",
+        "AdvancedNotificationSettingsPage.tsx:77 is the sharpest case \u2014 it logs the *update payload* alongside the error: `console.error('Failed to update category notification preference', { category, channel, enabled, error })` \u2014 leaking request context to the prod console (a minor info-exposure / noise concern), not just an error string.",
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:116 \u2014 the OCR catch block does nothing but `console.error('OCR processing failed')` (no user-facing feedback, no rethrow), so the console line is the only trace of the failure."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-link-pm-account-noop",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:360-378 \u2014 UserHandler::link_pm_account() performs its guard checks (already-linked at :360, email-match at :364-367) and then, at the point where it must persist the PM<->portal linkage, does NOT write anything: the block at :369-376 only emits a `tracing::info!(... \"Account linking requested\")` line and immediately returns `LinkResult::Success`. The inline comment is explicit: 'This would need a new repo method to update pm_user_id specifically / For now, we indicate success as the linking logic is in place.'",
+        "This is a silent no-op mutation that reports success. The caller (and any client UI) is told the accounts are linked, but `portal_users.pm_user_id` is never set. On the very next call the already-linked short-circuit at :360 (`if portal_user.pm_user_id.is_some()`) still evaluates false, so the endpoint keeps returning Success forever while the link never materialises \u2014 SSO/account-merge flows that depend on pm_user_id being populated (e.g. cross-app session invalidation, unified profile) will silently misbehave.",
+        "Fix: add the repo method to persist pm_user_id (or route through the unified users write path already used by update_profile at :415-419) and only return LinkResult::Success after the write commits; otherwise return an explicit not-implemented error rather than a false Success."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-pwreset-token-dropped-prod",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:437-488 \u2014 request_password_reset() generates and stores a reset token (handler.request_password_reset returns PasswordResetRequestResult::Sent { plaintext_token } at :453), but there is no email transport wired for the reality server (comment at :454-457). In debug builds the token is surfaced via `tracing::info!(... token = %plaintext_token ...)` (:458-463), but in release builds the `#[cfg(not(debug_assertions))]` arm at :464-471 does `let _ = plaintext_token;` \u2014 the token is discarded and only a token-less 'Password reset token issued' line is logged.",
+        "Net effect in production: a portal user who requests a password reset causes a token to be minted and persisted, but there is no channel (no email, no log) by which they can ever receive it. The reset link/token can never reach the user, so the password-reset feature is non-functional end-to-end in prod while the endpoint still returns 200 'If an account exists ... a reset link has been sent.' (:485-487) \u2014 a misleading success for a dead flow.",
+        "Fix: wire the reality-server email transport (or a shared notification service) so PasswordResetRequestResult::Sent actually dispatches the token to the user; until then the '...a reset link has been sent' copy overpromises. Track as an incomplete-feature blocker for the portal password-reset UC."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-msgs",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-reality-server-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:592-595 \u2014 the inquiry-detail handler (GET inquiry for realtor; ownership verified at :575-584) builds its response as `InquiryDetailResponse { inquiry, messages: vec![] }` with the inline comment `// Would fetch conversation messages`. The messages field is unconditionally an empty vec \u2014 the conversation thread is never loaded from the repository.",
+        "Effect: a realtor opening any inquiry detail always sees an empty message list even when a conversation exists, making the inquiry/messaging UC appear broken or empty. This is a shipped-but-incomplete endpoint (the response type advertises a messages array that is never populated), not a crash \u2014 hence low severity \u2014 but it is a user-facing functional gap distinct from a mere TODO because the endpoint is live and returns a structurally-complete-but-empty payload.",
+        "Fix: fetch the conversation messages for the inquiry (scoped to the same realtor ownership already verified above) and populate `messages`, or remove the field from the response contract until the messaging feature lands."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-export-pdf-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-reality-web-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:151-153 \u2014 handleExportPDF() is a shipped no-op stub: its entire body is a comment `// In a real implementation, this would generate a PDF` (:152) followed by `showToast('PDF export coming soon!', 'info')` (:153). It is wired to a visible, always-enabled `Export PDF` <button> at :212-227 on the public property-comparison page (Epic 51 / Story 51.3). A user who clicks Export PDF gets a 'coming soon' toast and nothing else \u2014 an advertised feature that does nothing in production.",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx \u2014 the whole component ships with ZERO i18n (grep: 0 occurrences of useTranslations/next-intl in the file), so its user-facing copy is hardcoded English on a portal that serves sk/cs/de/en: the button labels `Share` (:210 area) and `Export PDF` (:227), plus the share/export toasts `'Comparison link copied to clipboard!'` (:145), `'Share this URL: <url>'` (:147) and `'PDF export coming soon!'` (:153). Non-English visitors on the comparison surface see raw English.",
+        "Fix: either implement PDF export (client-side generator or a reality-server endpoint) or hide/disable the Export PDF button until it exists \u2014 a shipped button that only toasts 'coming soon' is an incomplete feature reachable in prod, not a placeholder. Separately, route ComparisonView through next-intl `t()` for the Share/Export button labels and the three toasts. Distinct from the prior realtor-profile-mock-data finding (that was mock DATA on the realtor profile; this is a dead ACTION + i18n gap on the comparison view)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-reality-web-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx \u2014 this is a `[locale]`-routed page in a next-intl app (sk/cs/de/en) yet imports NO translation API (grep: 0 useTranslations/getTranslations/next-intl) and hardcodes English throughout: heading `Edit listing` (:74), subtitle `Update the details of your listing.` (:75), `Loading listing\u2026` (:81), `Missing listing id.` (:68), and the two API-failure fallbacks `'Could not load listing.'` (:42) and `'Could not save listing.'` (:61). Every non-English realtor editing a listing sees English chrome and English error copy.",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx \u2014 the owner-side edit wizard has the mirror-image defect: it hardcodes SLOVAK error fallbacks instead of routing through i18n \u2014 `'Na\u010d\u00edtanie inzer\u00e1tu zlyhalo.'` (:166) on load failure and `'Ulo\u017eenie zlyhalo, sk\u00faste znova.'` (:213) on save failure. On this locale-routed page a de/en/cs owner hits a failure and gets Slovak text. So across the two listing-edit surfaces the same UC is un-localised in two opposite directions (English on realtor edit, Slovak on account edit).",
+        "Fix: wrap all user-facing copy + error fallbacks on both edit pages in next-intl `t('\u2026')` keys (the sibling listing/detail and contact surfaces already do this). Distinct from the prior profile-pages-i18n-gap / profile-hardcoded-locale findings, which covered the realtor/account PROFILE pages \u2014 the listing-EDIT pages are separate files not previously reviewed."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-05-reality-web-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx \u2014 a `[locale]`-routed page that DOES call `useTranslations('pages.priceMap')` (:40) but still renders large blocks of hardcoded Slovak that bypass i18n. The property-type filter chips come from a module-level `PROPERTY_OPTIONS` array with literal Slovak labels `'V\u0161etky' / 'Byty' / 'Domy' / 'Pozemky'` (:29-34) and are rendered raw as `{opt.label}` at :189. The insights cards use hardcoded Slovak labels/trends built in the useMemo (:54+) \u2014 e.g. `'Priemern\u00e1 cena / m\u00b2'`, `'Najdrah\u0161ia lokalita'`, `'Najv\u00e4\u010d\u0161\u00ed rast'`, `\"<n> lokal\u00edt\"` \u2014 and are rendered raw at :508/:521. cs/de/en visitors see Slovak labels on an otherwise-localised page.",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:37 and :96 \u2014 number formatting is pinned to the Slovak locale regardless of the active route locale: `formatPrice` does `Math.round(v).toLocaleString('sk-SK')` (:37) and the listings-count insight does `totalListings.toLocaleString('sk-SK')` (:96). Digit grouping/format is therefore always Slovak (e.g. non-breaking-space grouping) for de/en/cs users; the currency glyph `\u20ac` is also hardcoded in the same template. Should use the active `locale` (via next-intl `useLocale()` / `Intl.NumberFormat(locale, \u2026)`) as PriceAlerts.tsx already does.",
+        "Fix: move PROPERTY_OPTIONS + insight labels into the `pages.priceMap` message catalog and resolve them through `t()`, and thread the active locale into `toLocaleString` / `Intl.NumberFormat` instead of the literal 'sk-SK'. Distinct from prior reality-web i18n findings (crm-import, saved-search, profile pages, agency-import, protectedroute) \u2014 the price-map page is a separate, previously-unreviewed surface, and this finding additionally covers a locale-pinned number-format bug, not just untranslated copy."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-policyform-number-coercion",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-06-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/insurance/components/PolicyForm.tsx:108 \u2014 handleChange does `[name]: type === 'number' ? Number(value) : value || undefined`. `Number('')` is 0, so clearing a numeric policy field (coverage amount / premium / deductible) silently coerces it to 0 instead of undefined/empty, and any non-numeric edge value yields NaN \u2014 either way a bad numeric is written into formData and submitted via onSubmit(formData) (:98) to the insurance-policy API with no NaN/empty guard.",
+        "Sibling forms in the SAME feature use the safe pattern: features/insurance/components/ClaimForm.tsx:93 guards `type === 'number' ? (value ? Number(value) : undefined) : ...` and features/leases/components/LeaseForm.tsx:111 guards `value === '' ? undefined : Number(value)`. PolicyForm dropped the empty-string guard, making it an outlier data-integrity regression on a financial (insurance premium/coverage) input surface."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-pages-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-06-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "All four app-wide terminal error screens render hardcoded English with no useTranslation, in an app shipping sk/cs/de/en: features/errors/pages/NotFoundPage.tsx (title=\"Page not found\", description=\"The page you're looking for doesn't exist or has moved.\", buttons \"Go back\" :24 / \"Home\" :27); features/errors/pages/ForbiddenPage.tsx:16 (title=\"Access denied\"); features/errors/pages/SessionExpiredPage.tsx:27 (title=\"Your session has expired\"); features/errors/pages/ServerErrorPage.tsx:23 (title=\"Something went wrong\", \"Retry\" button).",
+        "None of the four files import react-i18next (grep useTranslation/t( -> 0 hits). These are catch-all screens shown app-wide (404 route, 403, session-expired redirect, error boundary fallback), so a non-English user always hits untranslated English on the exact screens meant to orient a confused/blocked user."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-meters-windowopen-tabnab",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-06-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingValidationCard.tsx:122 and :125 \u2014 the meter-reading photo thumbnail opens the stored image via `window.open(reading.photoUrl, '_blank')` with no `'noopener,noreferrer'` window-features argument (both the onClick and the onKeyDown Enter/Space handler). `reading.photoUrl` is server/tenant-supplied data; without noopener the opened tab receives a live `window.opener` reference (reverse-tabnabbing \u2014 the opened document can navigate the manager's app tab to a phishing page). Modern browsers default _blank to noopener, so impact is mitigation-dependent, but the explicit flag is the established safe pattern (sibling links in messaging/documents/disputes use rel=\"noopener noreferrer\")."
+      ]
+    },
+    {
+      "id": "code-review-api-core-fcm-malformed-token-never-evicted",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-07-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:367-376 \u2014 `send_fcm` (FCM HTTP v1) only flags a device token for eviction when the upstream error status matches `\"NOT_REGISTERED\" | \"UNREGISTERED\" | \"INVALID_REGISTRATION\"`. The FCM v1 status `\"INVALID_ARGUMENT\"` (HTTP 400, returned for a permanently malformed/garbage registration token) and `\"NOT_FOUND\"` (HTTP 404) are NOT in the match, so the function returns `(false, false)` \u2014 send failed, token NOT expired.",
+        "The second bool of the returned tuple is the 'evict this token' signal (the caller deletes the stored token only when it is true \u2014 see the APNs sibling at push_fanout.rs:844-959 which evicts on BadDeviceToken/Unregistered). A token that FCM rejects as INVALID_ARGUMENT is therefore never pruned from storage and is re-attempted on every subsequent fanout, producing a permanent per-fanout failed-send + warn log for that device with no self-healing.",
+        "The legacy path `send_fcm_legacy` (push_fanout.rs:449-456) has the same shape: it evicts only on `\"NotRegistered\" | \"InvalidRegistration\"` and would likewise retain a token FCM rejects for other permanent reasons."
+      ]
+    },
+    {
+      "id": "code-review-api-core-push-client-build-expect-panic",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-07-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:280 \u2014 `.expect(\"reqwest client build should not fail\")` and push_fanout.rs:773 \u2014 `.expect(\"reqwest APNs client build should not fail\")`. `reqwest::ClientBuilder::build()` is fallible at runtime (it can error on TLS-backend / native-cert-store initialization, not just on programmer misconfiguration), so these are runtime panics living inside the notification-fanout service rather than compile-time invariants.",
+        "A panic here aborts the calling task/worker on the push path instead of degrading gracefully (skip-send + error metric). The surrounding code already models graceful degradation for every other failure mode in this file (network errors return `(false, false)`, unconfigured providers early-return with a warn), so panicking on client construction is the odd path out.",
+        "Fix: propagate the build error (return a constructor `Result` / mark the provider unconfigured and log) so a TLS/cert init failure disables push fanout instead of crashing the worker."
+      ]
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconstant-time-compare",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-07-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:920-931 \u2014 `verify_pkce` compares the recomputed S256 challenge to the stored `challenge` with the standard `==` operator (`computed == challenge`, line 927), which short-circuits and is not constant-time.",
+        "Practical exploitability is low: the compared value is the base64url of a SHA-256 digest bound to a single-use authorization code, so a timing side-channel does not yield a usable forgery (it would require a SHA-256 preimage, not a byte-by-byte guess). This is a defense-in-depth / hardening nit, not an active auth-bypass \u2014 noted at +1 for consistency with the rest of the OAuth path, which is otherwise well-hardened (PKCE required for all clients, argon2 constant-time client-secret verify, scope re-validation on issuance).",
+        "Fix (optional): use a constant-time comparison (e.g. `subtle::ConstantTimeEq` on equal-length byte slices) for the challenge match to keep the crypto-comparison surface uniform. Low priority."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-2.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 \u2014 the payment auto-matcher's inner `for invoice in &open_invoices` loop (accounting.rs:129) creates a `PaymentMatch` for EVERY invoice whose confidence reaches the 0.5 threshold, with NO `break` after the first accepted match and NO in-memory update of `line.match_state`.",
+        "The outer per-line guard (`if line.match_state != \"unmatched\" && line.match_state != \"suggested\" { continue }`, accounting.rs:125-126) reads the DB-loaded `line` copy, which is never mutated inside the loop. The DB `update_bank_statement_line_match_state_rls(... \"suggested\")` call (accounting.rs:170) does not touch the local `line`, so subsequent iterations of the SAME line keep matching. Result: one bank statement line is suggested-matched to multiple invoices in a single pass.",
+        "Reachable precondition: two or more open invoices (status Issued/PartiallyPaid) that share the same non-empty `variable_symbol`. Variable Symbol alone contributes 0.8 (accounting.rs:135-138) which crosses the 0.5 acceptance threshold, so every open invoice carrying that VS produces a duplicate `PaymentMatch` (state Suggested) for the one incoming payment. Nothing in the schema enforces VS uniqueness across open invoices (partial payments, reissues, tenant data-entry errors make collisions plausible)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-2.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 \u2014 a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance threshold (accounting.rs:150) with NO amount corroboration required. The amount branch only ADDS confidence (+0.15 exact, +0.05 within-range, accounting.rs:143-146); a gross amount mismatch subtracts nothing.",
+        "So a bank line whose `amount` is wildly different from the invoice's `remaining_amount = total_amount - paid_amount` (accounting.rs:142) \u2014 e.g. a large credit against a small invoice, or an amount far exceeding the outstanding balance \u2014 is still suggested at 0.8 purely on the VS. The amount-only path can never reach 0.5 on its own (max 0.15), so acceptance is effectively 'VS matches, amount ignored'.",
+        "Combined with the multi-match bug in the same loop, this widens the blast radius: an incoming payment with a shared/reused VS but an implausible amount is proposed against invoices it cannot plausibly settle."
+      ]
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-2.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(test)]` module and no test cases anywhere (grep for `#[cfg(test)]` / `#[test]` / `fn test` in the file returns nothing) \u2014 the payment auto-matching logic is entirely untested.",
+        "Untested surface includes the confidence weighting constants (0.8 VS / 0.15 exact-amount / 0.05 in-range, accounting.rs:135-146), the 0.5 acceptance threshold (accounting.rs:150), and the per-line/per-invoice iteration that the two bug findings above concern \u2014 exactly the logic where a regression would silently mis-book money.",
+        "There is also an unfinished `// TODO: Date proximity, IBAN match` (accounting.rs:148) placeholder in the confidence scoring; that TODO should not be filled in without first pinning current behaviour behind regression tests."
+      ]
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-3.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 \u2014 `send_vote_reminders()` selects every `status='active'` vote with `end_at <= now + vote_reminder_days_before` and `end_at > NOW()` (SQL at :447-457), then calls `notify_vote_reminder(&vote, &users_not_voted)` for all eligible owners who have not voted. It records NO per-vote/per-user 'reminder already sent' watermark, so nothing bounds how many times a given owner is reminded across ticks.",
+        "The scheduler tick runs every 60s (backend/servers/api-server/src/services/scheduler/mod.rs:81 `interval_secs: 60`) and `send_vote_reminders` is invoked unconditionally on every tick (mod.rs:337-339). The reminder window is `vote_reminder_days_before` = 1 DAY by default (mod.rs:83). So for the final ~24h of every vote's life the same owners are re-selected on every tick.",
+        "The only thing throttling the resend is the generic in-memory notification dedup cache, whose window is just 300s (backend/servers/api-server/src/services/notification.rs:108-116 `dedup_window_secs: 300`; keyed by (user_id, notification_type, entity_id) at should_deduplicate :177-197). `should_deduplicate` only suppresses when `Utc::now() - entry.sent_at < 300s` and `record_sent` refreshes sent_at only on an actual send \u2014 so after each 5-minute window the next tick re-sends. Net effect: an owner who hasn't voted receives a fresh 'You haven't voted yet' In-App + Push notification (notification.rs:646-668, channels InApp+Push) roughly every 5 minutes for the whole reminder window (~288 duplicate notifications per owner per vote), and worse (in-memory cache is lost on process restart / not shared across replicas)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-rls-context-deprecated-exported",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-4.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:1-37 \u2014 the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed and should NOT be used' (middleware runs before extractors; setting RLS on the pool does not affect the connection the handler later borrows). Despite that, it is still a live `pub mod rls_context;` (middleware/mod.rs:7) AND glob re-exported `pub use rls_context::*;` (middleware/mod.rs:16), so `rls_context_middleware` and `require_rls_context` are part of api-core's public surface.",
+        "Both functions derive tenant scope from the CLIENT-supplied `X-Tenant-ID` header: rls_context.rs:87-91 and :207-218 parse `X-Tenant-ID` into the org and pass it straight to `set_request_context(...)` with no verification that the authenticated principal belongs to that org \u2014 a caller could send any org UUID.",
+        "They also call `db::tenant_context::set_request_context(pool.as_ref(), ...)` on the POOL (rls_context.rs:110-116 and :232-238), whereas the current `set_request_context` signature (crates/db/src/tenant_context.rs:18) is connection-scoped and the live path acquires a dedicated connection via the `RlsConnection` extractor. Setting the GUC on a pooled executor mutates a random connection and the handler then queries a different one \u2014 RLS is effectively unset or set on the wrong session."
+      ]
+    },
+    {
+      "id": "code-review-api-core-authz-mw-guest-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-4.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:176-180 \u2014 `require_permission` reads the caller's role from request extensions with `.get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)`: an ABSENT role (no authenticating extractor ran, or it failed to insert a TenantRole) is silently treated as `Guest` rather than rejected.",
+        "`TenantRole::Guest.level()` is 10 (backend/crates/common/src/tenant.rs:125) while `permissions::AUTHENTICATED = Permission::min_level(1, ...)` (authorization.rs:139) only requires level >= 1. So `require_authenticated` (authorization.rs:236-241) \u2014 and any hierarchical gate below level 10 \u2014 is FAIL-OPEN: a request carrying no authenticated principal at all passes the 'Any authenticated user' check because the Guest default (10) >= 1.",
+        "Currently latent, not active: `grep -rn 'require_permission|require_authenticated|is_satisfied_by|permissions::' backend/servers` shows the api-core authorization middleware is not wired anywhere \u2014 routes do their own auth via the `AuthUser` extractor and route-local `require_*` helpers. But the module is `pub mod authorization;` + `pub use authorization::*;` (middleware/mod.rs:3,12), so these authoritative-looking `require_authenticated`/`require_manager` layers are one `.layer(from_fn(...))` away from being adopted as the sole gate on a route."
+      ]
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-noop-isolation",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d-4.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 \u2014 `tenant_filter` is named and documented ('ensure tenant isolation') as an isolation guard, but its body only checks that `X-Tenant-ID` parses as a UUID and then calls `next.run(request)`; the actual checks are an inline TODO comment: '// In production, validate: 1. Tenant exists and is active 2. User has access to this tenant 3. Rate limiting' (tenant_filter.rs:31-34). It enforces nothing about whether the caller may act for that tenant.",
+        "It is `pub mod tenant_filter;` + glob-exported `pub use tenant_filter::*;` (middleware/mod.rs:9,18) and unused: `grep -rn 'tenant_filter' backend/servers` returns no `.layer(...)` wiring. Real isolation lives in host_tenant.rs + the RlsConnection extractor.",
+        "Risk: a dead, exported middleware whose name promises tenant isolation but is a pass-through is a trap \u2014 wiring it (reasonably believing it isolates tenants) would provide a false sense of security while enforcing only header-shape. Sibling issues: rls_context.rs and authorization.rs (same mod.rs) are dead/dangerous-if-wired too; a single cleanup PR can address all three."
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 \u2014 `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(self.duration * 60)` (Minutes, :57), `* 3600` (Hours, :58), `* 86400` (Days, :59). The multiplication has no `checked_mul`/`saturating_mul` and no upper-bound check on `self.duration`.",
+        "The 7-day cap that is supposed to bound the delay runs AFTER the overflow-prone multiply, not before: in `execute()` the order is `let duration = delay_config.to_duration();` (delay.rs:100) then `if duration.as_secs() > MAX_DELAY_SECONDS { return Err(...) }` (delay.rs:103-105). So a large `duration` (e.g. Days with `duration >= u64::MAX/86400 + 1`) overflows inside `to_duration()` before the guard can reject it.",
+        "backend/Cargo.toml [profile.release] (lines 176-179) does not set `overflow-checks`, so release builds use the default (off): `self.duration * 86400` silently WRAPS to a small/incorrect value that then PASSES the `> MAX_DELAY_SECONDS` check \u2014 bypassing the intended validation and running a wrong-length delay. Debug/test builds (overflow-checks on by default) instead PANIC on the same input, which can crash the workflow worker."
+      ]
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 \u2014 the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().map(...)`. The `.ok()` collapses a DB/pool `Err` into `None`, which is indistinguishable from 'user has no quiet-hours schedule'.",
+        "Consequence is fail-open against a user preference: on a transient DB error while fetching the schedule, `quiet` becomes `None`, so the Push channel is delivered immediately (notification_pipeline.rs:533+ only holds the push when `Some(state)` with `state.active`). A user who configured quiet hours can therefore receive a push during their quiet window purely because a secondary query hit a transient error.",
+        "This is a graceful-degradation choice, but it is silent: no `tracing::warn!` distinguishes 'no schedule configured' from 'schedule fetch failed', so the preference violation is invisible in logs and un-monitorable. The nearby 8h-horizon fallback at :540-542 is explicitly commented as intentional; the `.ok()` swallow is not."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs \u2014 four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of surfacing the failure. The tell is intra-handler inconsistency: the PRIMARY query in each handler propagates errors via `.map_err(...)?` (e.g. `get_statistics` at :615), but the SECONDARY data queries in the SAME handler discard the `Result`.",
+        "get_fault_statistics_report: `get_monthly_fault_counts` (reports/mod.rs:633) and `get_monthly_resolution_times` (reports/mod.rs:640) \u2014 a transient DB error yields empty `monthly_counts` / `resolution_time_trend` trend arrays, so the fault report renders as if there were zero faults over time while the primary statistics block is populated \u2014 an internally contradictory, plausible-looking report.",
+        "get_voting_participation_report: `get_participation_report` (reports/mod.rs:715) \u2014 on DB error `participation_data` becomes an empty Vec, so `total_votes = participation_data.len()` computes to 0 and the derived quorum/participation summary is silently wrong (0% participation reported for a building that may have full turnout)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-mobile-native-kmp-tier1d.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }). The realtor 'Create Listing' screen is fully reachable in production navigation (composable(Screen.CreateListing.route) { ... }, reached from the MyListings flow), but every submit returns a hardcoded failure \u2014 a user fills in the create-listing form, taps submit, and always gets an error. This is a shipped, user-facing broken feature, not a hidden/disabled path.",
+        "The data layer to back it is entirely absent: PortalListingsRepository (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics \u2014 there is no create/submit method, and no other repository provides one (grep 'fun create' / 'fun submit' over mobile-native/shared/src/commonMain returns nothing). So the fix is not merely to swap the lambda; it requires building a create-listing repository call against the reality-server API and wiring it through.",
+        "Impact: the CreateListing route should either be gated behind a feature flag / hidden until the API exists, or the data-layer method built and wired. As-is it presents a functional-looking form that can never succeed. Recommend a follow-up implementer task to (a) add a createListing repository method, (b) wire onSubmit to it with proper Result handling in CreateListingScreen, or (c) hide the route until the endpoint lands."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-mobile-native-kmp-tier1d.json",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 \u2014 class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/**.kt returns only the class definition (ApiClient.kt:27) and a doc-comment reference in a test (ListingDetailRepositoryTest.kt:172). All live repositories (ListingRepository, FavoritesRepository, InquiryRepository, PortalListingsRepository, etc.) issue their own Ktor calls via HttpClientProvider.client and never route through ApiClient. It is ~100 lines of dead, duplicated API logic (listings search/detail, favorites, inquiry) that drifts from the real repositories and adds maintenance noise.",
+        "The dead class also carries a latent bug that would bite if it were ever wired: healthCheck() (ApiClient.kt:39) returns client.get(\"$baseUrl/health\") { configureRequest() }.toString() \u2014 .toString() on the Ktor HttpResponse object yields a debug string like 'HttpResponse[...]', not the health-endpoint body. It should await .body<String>() (or .bodyAsText()). Additionally healthCheck() is the only method in the class with no try/catch, so a network exception propagates uncaught instead of being folded into a Result like every sibling method (getListings/getListing wrap in try/catch \u2192 Result).",
+        "Recommend deleting ApiClient (and its exception type if unused elsewhere) to remove dead code and the duplication risk; if it is intended as the future canonical client, it should instead replace the ad-hoc per-repository HttpClientProvider calls and fix healthCheck first. Either way the current state \u2014 unreferenced + buggy \u2014 is pure liability."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-ppt-web-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 \u2014 parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :205). isNetworkError (errorHandler.ts:394-416) does case-insensitive substring sniffing on ANY object's `.message`: message.includes('network') || message.includes('failed to fetch') || message.includes('network request failed') || message.includes('networkerror').",
+        "This misclassifies genuine structured backend errors as generic connectivity errors whenever the backend's human message happens to contain a network keyword. The transformed ApiError from lib/api.ts:152-169 is an Error instance whose `.message` is set directly from the backend body (`data?.message`), so an ApiError is exactly the object shape that trips isNetworkError. Concrete failure: backend returns 422 { error:'VALIDATION_ERROR', message:'Network name must be unique', requestId:'abc', details:[{field:'network_name', message:'...'}] }; the axios interceptor (api.ts:transformError) builds ApiError(message='Network name must be unique'); a UI calling parseApiError(apiError) hits isNetworkError \u2192 returns the canned NETWORK_ERROR ('check your connection') and DROPS statusCode, code, requestId, and validationErrors. The user sees a bogus 'connection problem' instead of the field-level validation, and error telemetry loses the requestId.",
+        "Root cause is ordering + heuristic scope: message-substring detection is only safe for the axios TOP-LEVEL error.message (e.g. 'Network Error' from axios itself), not for a field that also carries server-authored text. Fix: gate the network heuristic to the true no-response case (axios error with code==='ERR_NETWORK' or !error.response, and TypeError 'fetch' path) and move the generic message-keyword check AFTER isAxiosError/isErrorResponse structured parsing, or restrict it so a structured ErrorResponse (has `error` + `message` string fields) is never swallowed by the network branch. Add a regression test: parseApiError of a 422 ApiError whose message contains 'network' must return code='VALIDATION_ERROR' with validationErrors intact."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-08-ppt-web-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 \u2014 the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `handler` (handler is read via handlerRef to avoid re-subscribing on identity changes).",
+        "Edge case: if a consumer calls useWebSocket(eventType, handler) with a STABLE eventType but `handler` initially undefined (e.g. gated on a not-yet-ready callback: useWebSocket('message:new', ready ? onMsg : undefined)), the effect runs once at mount, sees handlerRef.current === undefined, returns without subscribing, and never re-runs when handler later becomes defined \u2014 because neither eventType nor subscribe changed. The subscription is silently never established, so realtime events for that eventType are dropped for the component's lifetime.",
+        "The optional `handler?` in the signature (useWebSocket.ts:74) advertises undefined as a supported input, making this a real API-contract gap rather than a misuse. Low severity because the common call site passes an always-defined inline handler; but the fix is cheap: include a boolean `hasHandler = handler != null` in the dep array (or subscribe unconditionally and no-op inside wrappedHandler when handlerRef.current is undefined) so a handler transitioning undefined\u2192defined re-arms the subscription."
+      ]
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d-2.json",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:185-251 \u2014 `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but it enforces NOTHING: it calls `db::tenant_context::set_request_context(pool.as_ref(), Some(tenant_id), Some(user_id), is_super_admin)` (line 232) then runs the handler via `next.run(request)` (line 245). `set_request_context<E: Executor>` (backend/crates/db/src/tenant_context.rs:18) issues its `set_config`/SET on a connection sqlx transiently checks out of the POOL and immediately returns; the handler later acquires a DIFFERENT pooled connection where the RLS GUCs are unset. Result: tenant-isolation is silently NOT applied to the handler's queries \u2014 a cross-tenant data-exposure footgun for any route that adopts this middleware believing the doc.",
+        "The module's own header (rls_context.rs:1-37) already diagnoses this exact defect ('Setting RLS on the pool doesn't affect individual connections'; 'PostgreSQL session settings are connection-scoped, not pool-scoped') and marks the module DEPRECATED \u2014 yet the file is not `#[deprecated]`, and BOTH broken functions plus `rls_context_middleware` are glob re-exported to consumers via `pub use rls_context::*;` (backend/crates/api-core/src/middleware/mod.rs:16). The contradiction (top says 'do NOT use'; `require_rls_context` docstring says 'use this for routes that MUST have tenant isolation') is the trap.",
+        "Not currently mounted in either server (grep of servers/ finds no call site), so severity is a LATENT bypass rather than a live one \u2014 hence confidence medium, not high. But it is live-ready API surface: a future route author who follows the `require_rls_context` docstring gets a compiling, plausible-looking guard that leaks across tenants with no error."
+      ]
+    },
+    {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d-2.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:170-201 \u2014 `require_permission` derives the caller role with `request.extensions().get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)` (lines 176-180). For an UNAUTHENTICATED request (no `TenantRole` in extensions) the role defaults to `Guest`, whose `level()` is 10 (backend/crates/common/src/tenant.rs:125).",
+        "`require_authenticated` (authorization.rs:236-241) delegates to `permissions::AUTHENTICATED = Permission::min_level(1, ...)` (line 139). `is_satisfied_by(Guest)` = `Guest.level() >= 1` = `10 >= 1` = TRUE. So the middleware literally named 'require authenticated user' GRANTS access to a request that carries NO authenticated identity \u2014 a fail-OPEN default. The higher-tier convenience guards (require_manager=80, require_owner=60, require_admin=90) happen to still deny Guest, so the hole is specific to the AUTHENTICATED gate, i.e. exactly the guard a route would pick to mean 'any logged-in user'.",
+        "Currently these from_fn-style guards are not mounted in servers/ (routes use their own `require_manager_in_org`/`require_platform_admin` helpers), so this is a latent footgun, not a live bypass \u2014 confidence medium. But it is public, documented, example-carrying middleware inviting adoption."
+      ]
+    },
+    {
+      "id": "code-review-api-core-idempotency-tx-across-handler",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d-2.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:95-179 \u2014 `handle_idempotent_request` opens a DB transaction `pool.begin()` (line 95), takes a `pg_advisory_xact_lock` (line 108), and then HOLDS that transaction (and therefore one pooled connection) open across the entire downstream request: `next.run(request).await` at line 148, committing only afterward (line 177). The wrapped handler independently acquires its OWN pooled connection(s) (e.g. via the `RlsConnection` extractor) to do its work.",
+        "Concurrency hazard: with pool size N, N concurrent idempotent requests (distinct keys) each pin one connection in the still-open idempotency transaction and then each block waiting to check out a second connection for their handler \u2014 a classic pool-exhaustion self-deadlock; all N stall until acquire timeouts fire. Even below saturation this doubles the effective connection footprint of every idempotent (mutating POST/PUT) request and stretches the advisory-lock/transaction hold time to the full handler latency (including any slow outbound calls the handler makes).",
+        "The extensive comment at lines 80-94 justifies the xact-scoped lock purely for cancellation-safety (leak avoidance) and does NOT acknowledge the connection-held-across-handler cost, suggesting the pool-pressure interaction was not considered."
+      ]
+    },
+    {
+      "id": "code-review-api-core-announce-roles-legacy-membership-table",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d-3.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:663-706 \u2014 inside a single function, `Scheduler::get_announcement_target_users`, the `\"roles\"` target branch (lines ~665-680) resolves recipients from the LEGACY `organization_members` table (`SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id = $1 AND om.role_id = ANY($2) AND om.status = 'active'`), whereas the sibling `\"all\"` branch (lines ~587-599) was deliberately migrated to the NEW canonical spine `user_memberships` \u2014 its inline comment states: 'membership lives in `user_memberships` (migration 00128, the canonical authz spine)'.",
+        "migration 00128_user_memberships.sql documents that `user_memberships` is 'the new authorization spine' and that it 'runs SIDE-BY-SIDE with the legacy `organization_members` for one phase' and 'the legacy table is retired in a later phase.' So the two announcement-targeting branches now read from two different membership sources of truth. During the side-by-side phase this is not yet a live incident (00128 backfills user_memberships FROM organization_members), but it is a latent migration-completeness gap: once the legacy table stops being written/synced or is dropped, `\"roles\"`-targeted announcement fan-out silently targets zero (or stale) recipients while `\"all\"` continues to work \u2014 a silent under-delivery with no error, since the branch returns Ok(empty) and the scheduler loop is fail-safe.",
+        "Confirmed `organization_members` (migration 00005_create_organization_members.sql) does expose the `role_id UUID` and `status VARCHAR(20)` columns the query binds, so the query is currently valid \u2014 the issue is the divergent source of truth, not a broken column reference. Note also `user_memberships` keys authority on a `role VARCHAR(64)` name column (not a `role_id` UUID), so the migration is not a mechanical table-name swap: the `\"roles\"` branch would need target_ids re-modeled to role names (or a role_id\u2192role-name join) when it is moved onto the canonical spine."
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-meter-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:437-466 \u2014 `action_check_meter` returns `success: true` with the response 'Your latest meter readings have been recorded. There are no pending readings.' and `data: { pending_readings: 0 }`, but the body never queries anything: line 442 is the comment 'In a real implementation, this would query the meter repository'. It is a fabricated-success stub that makes an affirmative factual claim (readings recorded / none pending) to the resident.",
+        "This is a LIVE webhook path, not dead code: `execute_action` dispatches `voice_intent::CHECK_METER => self.action_check_meter(...)` (voice_commands.rs:163), and the processor is wired into real routes `routes/voice_webhooks.rs` and `routes/ai/voice.rs`.",
+        "Same defect class the codebase already de-stubbed elsewhere in this very file: `action_check_balance` (voice_commands.rs:255-264) was changed to `success: false` + 'not yet available' precisely because 'a resident could be told they owe nothing when the actual balance was never queried' (with regression test at :752-785), and `action_book_facility` (:420-434) returns 'not yet available'. `action_check_meter` was missed by that cleanup and still fabricates success."
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-announce-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:385-413 \u2014 `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, announcements: [] }`; the body never reads the announcement store (line 390: 'In a real implementation, this would query the announcement repository'). A resident with unread building announcements is always told there are none.",
+        "Live path: dispatched via `execute_action` at voice_commands.rs:159-160 (`voice_intent::CHECK_ANNOUNCEMENTS => self.action_check_announcements(...)`), reachable through `routes/voice_webhooks.rs` / `routes/ai/voice.rs`.",
+        "Same fabricated-success class as the already-fixed `action_check_balance` (:255-264, with regression test :752-785). This handler and `action_check_meter` are the two survivors of that cleanup that still return `success: true` with invented data instead of honestly reporting 'not yet available'."
+      ]
+    },
+    {
+      "id": "code-review-api-core-syndication-fake-synced",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-360 \u2014 `process_syndication_job` never calls any portal API yet writes `syndication_status::SYNCED` to the DB for every operation: PUBLISH generates a mock external id `format!(\"{}_{}\", portal, Uuid::new_v4())` (:318) and calls `update_syndication_status(..., SYNCED, Some(&external_id), None)` (:321-330); STATUS_CHANGE and UPDATE likewise stamp SYNCED. The doc comment (:285-288) admits 'This is a placeholder for the actual portal API integration.'",
+        "Effect: listings are persisted as SYNCED to external portals (Sreality/Bezrealitky/Nehnutelnosti/etc.) and surface as 'published' in the UI, when in fact nothing was ever transmitted \u2014 an operator-facing false state that masks that syndication is unimplemented, and stores a fake external reference other code may later treat as a real portal id.",
+        "Unlike the SSRF-hardened `actions/api_call.rs` outbound path, this worker fabricates the success rather than failing closed. Lower severity because it is a documented not-yet-built background-worker integration, but the misleading persisted SYNCED status is the concrete defect."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-listings-detail-photos-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 and :343 \u2014 the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped) fetches the listing itself with the correct `.map_err(...)? / .ok_or_else(...)?` error-propagation pattern (find_by_id_and_org at :321-336), but then swallows the two secondary reads with `.unwrap_or_default()`.",
+        "`let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();` (listings.rs:338) \u2014 a transient DB/pool error on the photos query silently yields an EMPTY Vec, so the endpoint serves HTTP 200 with `photos: []` for a listing that may in fact have photos. The client cannot distinguish 'listing has no photos' from 'photos query failed'.",
+        "`get_syndications(id).await.unwrap_or_default()` (listings.rs:339-343) \u2014 same defect on the syndications read: a failed query degrades to an empty syndications array served as authoritative."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-workflow-import-partial-silent",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:687-693 \u2014 the workflow-template import handler adds each imported action inside a loop with `if let Err(e) = state.workflow_repo.add_action(rls.conn(), tenant_id, create_action).await { tracing::warn!(...); }`. A failed add_action is logged at warn and the loop continues, so the import completes with HTTP 200 while silently dropping one or more actions \u2014 the created workflow is partial and internally inconsistent with the template the caller asked to import.",
+        "backend/servers/api-server/src/routes/ai/workflows.rs:697-713 \u2014 the subsequent 'enable if requested' step discards its result entirely: `let _ = state.workflow_repo.update(&mut **rls.conn(), workflow.id, tenant_id, UpdateWorkflow { enabled: Some(true), .. }).await;`. If the enable write fails, the workflow is left DISABLED but the caller receives a success response indicating the requested `enabled: true` state.",
+        "Impact: template import is a manager-facing 'create automation from marketplace template' action; a transient DB error yields a silently broken automation (missing actions and/or not actually enabled) reported as fully successful. No signal reaches the client to retry or reconcile."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-doc-summary-not-persisted",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 \u2014 after an expensive LLM summarization call, the handler persists the result with `let _ = state.document_repo.update_summary(id, &summary, key_points_json, None, None, Some(word_count), Some(language)).await;`. The Result is discarded, so a DB write failure is completely silent.",
+        "The handler then returns the freshly-computed summary to the caller (HTTP 200) regardless of whether update_summary succeeded, so on a persistence failure the client sees a summary that was never stored. The next request for the same document finds no stored summary and re-runs the costly LLM summarization \u2014 silent data loss plus repeated paid-LLM cost.",
+        "Secondary smell same line-region: `let key_points_json = serde_json::to_value(&key_points).ok();` (intelligence.rs:812) \u2014 a serialization failure silently drops all key_points (stored as NULL) with no log."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d-2.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 the CreateListing route wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every realtor 'Create listing' submission therefore fails unconditionally in production; the feature is reachable (MyListingsScreen `onCreateClick` navigates to Screen.CreateListing at Navigation.kt:483) yet non-functional.",
+        "The screen is a complete 399-line implementation: mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt collects a full `CreateListingInput` data class (line 392) and calls `onSubmit(CreateListingInput(...))` (suspend, returns Result<Unit>, line 41/109), rendering onSuccess -> onCreated. All the collected form data is discarded because the injected onSubmit is a hardcoded failure.",
+        "Root cause: the repository has no create method. mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics (grep for `fun create` returns nothing). Fix: add `suspend fun createListing(input): Result<Unit>` (POST /api/v1/my/listings) to PortalListingsRepository and wire it into Navigation.kt:493, or hide the Create Listing entry point until the API is wired. Traced entry->stub->missing-repo end to end, hence confidence high."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d-2.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt \u2014 four inline LaunchedEffect data loaders collapse ALL failures into an empty collection with no error state and no retry affordance: search history `.onFailure { searches = emptyList() }` (:380), inquiries `.onFailure { inquiries = emptyList() }` (:450), my-listings `.onFailure { listings = emptyList() }` (:476), portfolio analytics `.onFailure { metrics = emptyList() }` (:541).",
+        "A real network error (timeout, 5xx, auth loss \u2014 PortalListingException / IOException surfaced via Result.failure) is rendered identically to a legitimately empty result, so the realtor sees a misleading 'no listings / no inquiries / no analytics' empty state instead of an error + retry. This compounds the sibling finding (today's `cancellationexception-swallowed-repos`): repos return Result.failure on cancellation too, so a normal navigation-away also flashes an empty state.",
+        "Fix: give each loader a distinct error UI-state (e.g. an `errorMessage`/`isError` field alongside `isLoading`) and a retry action, mirroring how the KMP ViewModels (e.g. ListingDetailViewModel) already model error state, rather than folding every failure into emptyList(). Medium severity: user-facing but non-crashing, and errors are silently masked rather than surfaced."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d-2.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111 getPortfolioAnalytics() fetches listMyListings(limit = 100) then fires one `async { getListingAnalytics(listing.id) }` per listing inside a single coroutineScope and awaitAll()s them \u2014 an unbounded concurrent fan-out of up to 100 simultaneous GET /api/v1/my/listings/{id}/analytics requests with no chunking or concurrency cap (Semaphore).",
+        "For a realtor with a large portfolio this thundering-herd fires the full batch at once every time the analytics dashboard opens; depending on the Ktor engine's connection pool it either serializes behind the pool (slow dashboard) or floods the server/rate-limiter. Per-listing failures are silently dropped via `.getOrNull()` (documented as intentional), which also means the portfolio totals under-report with no indication when some calls fail.",
+        "Fix: bound the fan-out \u2014 chunk the listing ids (e.g. groups of 5-10) or gate the async calls behind a kotlinx.coroutines Semaphore(permits = N). Low severity / perf-robustness; self-contained in one function."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-nfe-crash",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d-3.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 \u2014 DecimalAsLongSerializer.deserialize() does `raw.substringBefore('.').toLong()` on the raw JSON primitive with no guard. A degenerate-but-syntactically-valid decimal string throws NumberFormatException *inside* deserialize: e.g. \".50\" (no leading zero) -> substringBefore('.') == \"\" -> \"\".toLong() throws; \"2e5\" / \"1,000\" / an empty string / a non-numeric \"N/A\" all throw the same way.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:62 \u2014 DecimalAsDoubleSerializer.deserialize() does `raw.toDouble()` with the same no-guard pattern; any non-Double string (empty, \"N/A\", thousands-separated) throws NumberFormatException.",
+        "Impact/scope: these serializers back the monetary fields of the favorites + price-tracking payload (PortalListingModels.kt, FavoritesModels.kt). A NumberFormatException on ONE field aborts the ENTIRE payload decode \u2014 the exact whole-payload-decode failure mode these serializers were introduced to eliminate (see the file's own doc comment referencing issue #2331 / PR #2350, which only hardened against *fractional* strings, not malformed ones). The exception is caught downstream (PriceTrackingViewModel injects an errorMapper + catch), so the user sees a generic error instead of the app crashing \u2014 hence severity medium, not high \u2014 but a single bad field still blanks the whole favorites/price-tracking screen. Fix: parse via toLongOrNull()/toDoubleOrNull() (or wrap in runCatching) and fall back to 0 / skip, matching the wire-tolerant intent already documented in the file header."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-wire-test-no-malformed",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d-3.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt \u2014 the wire-contract guard for DecimalAsLong/DecimalAsDoubleSerializer covers only the happy paths: valid fractional string (\"200000.00\"/\"-7.50\"), valid numeric wire (200000/-7.5), and null. There is NO negative-input case, so the NumberFormatException crash path in DecimalStringSerializers.kt:46/62 (empty string, \".50\", \"2e5\", non-numeric) is completely untested.",
+        "This is the test-coverage half of the DecimalAsLong/Double robustness gap: a serializer whose whole documented purpose (file header, issue #2331) is wire-tolerance has no test pinning its behaviour on the degenerate inputs that still throw. Add cases asserting the chosen contract (either a defined fallback once the sibling finding is fixed, or an explicit expected-failure) for empty/non-numeric/leading-dot decimal strings, so a future regression in the parse path surfaces at CI rather than on-device on the favorites/price-tracking screen.",
+        "confidence medium: static analysis of the existing test file \u2014 the four @Test methods enumerate only string/number/null happy paths; no malformed-string assertion is present."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in try/catch uses a bare `catch (e: Exception)` and folds the throwable into `Result.failure(e)` WITHOUT first rethrowing kotlinx.coroutines.CancellationException. In Kotlin coroutines, CancellationException is an Exception, so `catch (e: Exception)` swallows it \u2014 this breaks structured/cooperative cancellation. Affected files (57 catch sites total): favorites/FavoritesRepository.kt (11), auth/SsoService.kt (9), notifications/NotificationRepository.kt (9), inquiry/InquiryRepository.kt (8), listing/ListingRepository.kt (6), agency/AgencyRepository.kt (4), realtor/PortalListingsRepository.kt (2, lines 62 & 97), realtor/RealtorRepository.kt (2, lines 41 & 61).",
+        "The correct pattern already exists in this very codebase: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:65-70 does `catch (e: CancellationException) { throw e }` immediately before the generic `catch (e: Exception)`. LayoutRepository is the ONLY of the 10 repos that handles this correctly (grep for CancellationException across commonMain returns only LayoutRepository.kt), which demonstrates the intended convention and that the other 9 repos are inconsistent regressions rather than a deliberate design choice.",
+        "Impact: when a composable's rememberCoroutineScope / viewModelScope is cancelled (user navigates away, screen disposed, or a newer request supersedes an in-flight one), the cancelled Ktor call throws CancellationException which is caught and returned as `Result.failure(e)`. Callers then treat a normal cancellation as a real error \u2014 e.g. Navigation.kt list loaders do `.onFailure { xxx = emptyList() }`, and screens like AccountScreen surface Log.e / error UI. This produces spurious error states/empty-list flashes on navigation and can interfere with cancellation propagation. Fix: add `catch (e: CancellationException) { throw e }` as the first catch clause in each suspend fun's try/catch (mirroring LayoutRepository), or centralize the request+Result wrapping in a shared helper that rethrows CancellationException. Recommend a follow-up implementer task to sweep the 9 repositories."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d.json",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...)` for diagnostic logging in commonMain (shared production KMP code) at three sites: line 48 ('falling back to default layout: HTTP ...'), line 57 ('...: unexpected screen echo ...'), and line 68 ('...: ${e.message}'). println in commonMain writes uncontrolled output to stdout on Android (logcat System.out) and to the device console on iOS with no tag, level, or ability to disable it in release builds.",
+        "It is the only repository in the commonMain layer that logs with println (the sibling repos either return Result.failure with a message or use platform loggers at the call site, e.g. AccountScreen uses Log.e). This is inconsistent and leaks internal fallback behavior to release logs. Fix: route through a shared expect/actual logger (or Kermit/Napier if already available), gate on a debug flag, or drop the println entirely since the fallback is already returned as DEFAULT_LISTING_DETAIL_LAYOUT. Low severity / cleanup, but easy and self-contained."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-mobile-native-kmp-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "cleanup",
+      "evidence": [
+        "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`if` null-guard instead of smart-casting a locally captured val: androidApp/.../ui/listing/ListingDetailScreen.kt:121 (state.errorMessage!!), :125/:149/:160 (state.listing!!), :132 (state.listing!!.realtor?...); ui/account/AccountScreen.kt:174 (notificationPrefs!!); ui/inquiries/InquiriesScreen.kt:169 (errorMessage!!); ui/favorites/FavoritesScreen.kt:164 (errorMessage!!).",
+        "Because `state` is backed by a Compose State/StateFlow, the guard check and the `!!` deref are separate reads of a mutable property; a delegated-property `!!` after a `when (state.x != null)` is not protected by smart-cast and is a latent NPE-on-recomposition smell if the state can change between reads. The idiomatic fix is to capture into a local val inside the guarded branch (e.g. `val listing = state.listing ?: return@... ` or `state.listing?.let { ... }`) so the compiler smart-casts and the `!!` disappears. Repeated across 4 screens; low severity but a consistent maintainability/robustness cleanup for a follow-up task."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 \u2014 confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` with NO try/catch, and the page renders error UI only for the list query (`error` at :178) \u2014 deleteRule.error / updateRule.error / runRule.error are never surfaced anywhere in the component.",
+        "There is no global mutation error handler to catch the rejection: frontend/apps/ppt-web/src/main.tsx:28-35 configures QueryClient defaultOptions with `queries` only (staleTime, retry) \u2014 no `mutations` / MutationCache onError. So a rejected mutateAsync becomes an unhandled promise rejection with zero user feedback.",
+        "Concrete failure: confirmDelete (:56-61) \u2014 if deleteRule.mutateAsync rejects (network drop / 409 / 500), the throw skips `setDeleteConfirm(null)` (:59) so the delete-confirmation modal stays open indefinitely with the button re-enabled and no error message; the user cannot tell the delete failed. handleToggle (:63-68) \u2014 a failed enable/disable toggle reverts the switch visually on the next render with no indication the change was rejected, so the manager believes a rule is paused when it is still live (or vice-versa). handleRun (:70-72) and ExecutionMonitoringPage.handleRetry (ExecutionMonitoringPage.tsx:74-77) share the same no-catch/no-error-surface pattern."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-ppt-web-ui-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 \u2014 the number-typed value input does `onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}`. `Number('')` is `0`, so clearing the field silently persists the condition value as 0 rather than empty/unset.",
+        "addCondition (ConditionBuilder.tsx:81) seeds every new condition with `value: ''`. When the selected field is numeric (e.g. 'payment.amount', 'payment.daysOverdue', 'document.size' \u2014 getFieldType==='number', lines 21-24), a user who adds a condition and never types a value, or types then deletes it, ends up saving `value: 0` with no validation gate anywhere in the builder.",
+        "Effect: a rule like 'Payment Amount greater_than 0' or 'Days Overdue greater_than_or_equals 0' silently matches essentially every record instead of the intended threshold \u2014 an automation that fires far more broadly than the author expects (e.g. dunning/notification actions sent to all payers). There is no min/required check and no distinction between 'blank' and 'zero' in the persisted TriggerCondition."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-ppt-web-ui-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "chore",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/ \u2014 only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePreviewModal, TriggerSelector, ExecutionDetailsModal, ExecutionMonitoringPage partial); every page renders hardcoded English. This is a react-i18next-enabled app (root CLAUDE.md: react-i18next 16), so these strings never localize.",
+        "AutomationRulesPage.tsx: 'Automation Rules' (:82), 'Create and manage automated workflows...' (:84), 'Create Rule' (:101), 'Search rules...' (:133), 'All Status'/'Active'/'Paused' (:150-152), 'No automation rules yet' (:217), 'Failed to load automation rules. Please try again.' (:180), 'Delete Automation Rule'/'This action cannot be undone.' (:285-286), 'Deleting...'/'Delete' (:306) \u2014 all raw literals, no t().",
+        "ExecutionMonitoringPage.tsx: 'Execution Monitoring' (:93), 'No execution logs' (:230), 'No executions match your current filters.' (:234), 'Clear filters' (:246), 'Retrying execution...' (:296). CreateRulePage.tsx: 'Create Automation Rule' (:53), 'Back to Rules' (:57), 'Failed to create automation rule...' (:64). EditRulePage.tsx: 'Loading...'/'Edit: ...' (:79). TemplateLibraryPage.tsx: 'No templates found' (:197)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:735-748 \u2014 TokenValidationCache::set() stores every introspection result with `expires_at: Instant::now() + Duration::from_secs(self.ttl_seconds)`, a fixed TTL (default 60s, state.rs:947 `TokenValidationCache::new(60, 10000)`). The TTL is NOT derived from the PM access token's own `exp`.",
+        "The cache entry (CachedTokenValidation, state.rs:527-538) and the introspection response type (routes/sso.rs:644-652 TokenIntrospectionResponse: active/sub/client_id/scope) carry no expiry/`exp` field, so nothing re-checks token expiry on a cache hit.",
+        "routes/sso.rs:731-738 \u2014 introspect_pm_token() returns the cached `active` verbatim on a hit and short-circuits before contacting the PM introspection endpoint."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-http-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) each build a fresh `reqwest::Client::new()` and call `.send()` with NO `.timeout()`. reqwest's default client has no request timeout, so the outbound call can block indefinitely.",
+        "These are all on the auth-critical SSO path (OAuth callback token exchange, userinfo fetch, and token introspection). A slow or hung PM OAuth/introspection endpoint stalls the awaiting handler for as long as the upstream keeps the socket open, pinning the tokio task/connection and enabling upstream-induced resource exhaustion.",
+        "The codebase already has the correct pattern: state.rs:757-760 `PmApiClient::new` builds its client via `reqwest::Client::builder().timeout(Duration::from_secs(timeout_seconds)).build()`. The SSO helpers bypass it and also skip connection-pool reuse by minting a new client per request. Fix: reuse a shared client with an explicit `.timeout(...)` (and connect timeout) for all three PM calls."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-5xx-neg-cache",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-762 \u2014 introspect_pm_token() treats ANY non-2xx introspection response as an inactive token: `if !response.status().is_success() { state.token_cache.set(token, false, None, None).await; return Err(...) }`. This does not distinguish an authoritative `401/200 active:false` from a transient upstream failure (500/502/503/504).",
+        "When the PM introspection endpoint has a transient outage or 5xx blip, a VALID user token is negatively cached as `active=false` for the full 60s TTL (state.rs:735-748). Because get() serves that cached `active=false` (sso.rs:731-738), the legitimate user keeps getting rejected for up to 60s AFTER the PM API has already recovered.",
+        "Consequence: an availability defect that amplifies a brief upstream hiccup into a 60s per-token lockout. Fix: only negative-cache authoritative inactive results (2xx with active=false, or 401); on 5xx/transport errors return an error WITHOUT caching (fail-open to a re-introspection, not a cached deny)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-journal-mock-content-shipped",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-reality-web-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_PICKS, MOCK_ARTICLES, MOST_READ` from `./_mock` and renders the ENTIRE journal/magazine index from them (featured at :108, latest at :109, editorsPicks at :110, mostRead at :111). `_mock.ts` is 90 lines of hardcoded placeholder Slovak articles (6 fixed records, ids '1'\u2013'6', authors 'Martin Kov\u00e1\u010d'/'Jana Hor\u00e1kov\u00e1', external unsplash.com imageUrls). There is no fetch / reality-server call anywhere on this route \u2014 the whole feature is fabricated content.",
+        "This is not a dev-only or flagged page: it is linked from the primary site navigation (frontend/apps/reality-web/src/components/ui/Header.tsx:86 and :232, `href=\"/journal\"`) AND listed in the crawler sitemap (frontend/apps/reality-web/src/app/sitemap.ts:14, '/journal'). So a public, SEO-indexed route serves invented articles with fake bylines and dates to real visitors and search engines \u2014 a credibility / correctness problem, not merely an unfinished stub.",
+        "The article cards are also inert: `ArticleCard` (page.tsx ~:22 onward, rendered at :197/:273/:294) emits no `<Link>`/`href` at all, and although `_mock.ts` gives each article a `slug`, no `journal/[slug]` detail route exists (only `journal/page.tsx` + `journal/layout.tsx` under app/[locale]/journal). Every article is therefore unclickable dead content."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-09-reality-web-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx \u2014 `SectionBoundary` (a minimal class error boundary wrapping every listing-detail layout section) implements `componentDidCatch(_error, _info)` with an empty body and the comment `// Intentionally swallowed \u2014 console.error suppressed by tests` (~:68). The error and errorInfo are discarded entirely: no telemetry, no logging, no error-reporting sink.",
+        "Behaviourally the boundary renders `<Placeholder />` on `getDerivedStateFromError` so siblings survive (good), but because the caught error is thrown away, a section component that crashes in production silently degrades to a blank placeholder with ZERO operational signal. A recurring render bug in one listing-detail section (JSON-LD, gallery, price block, etc.) would be invisible to monitoring \u2014 no way to know which section, on which listing, for how many users.",
+        "The stated reason ('console.error suppressed by tests') conflates test-noise suppression with production observability: tests can silence console.error via a spy without the component needing to drop the error. Fix: forward `_error`/`_info` to the app's error-reporting channel (or at minimum `console.error` outside test env) so section crashes are observable; keep the graceful `<Placeholder />` fallback. Low severity (reliability/observability gap, not a user-facing crash)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-10-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 \u2014 in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, listings.rs:316-345), the photos sub-fetch swallows all repository errors: `let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();`. `.unwrap_or_default()` collapses an `Err(sqlx/pool error)` into an empty `Vec`, which is indistinguishable from 'this listing genuinely has no photos'.",
+        "backend/servers/api-server/src/routes/listings.rs:340-342 \u2014 the very next call has the identical defect for syndications: `state.listing_repo.get_syndications(id).await.unwrap_or_default()`. Both feed directly into the `ListingWithDetails` response (listings.rs:344+).",
+        "Consequence: on a transient DB/pool error while fetching photos or syndications, the handler still returns HTTP 200 with an empty `photos`/`syndications` array instead of surfacing a 500. The caller (manager UI / API consumer) sees a listing that appears to have lost its photos and syndication targets \u2014 a silent, un-loggable partial-data response. Contrast with the primary `find_by_id_and_org` fetch two lines above (listings.rs:322-330), which correctly maps its error to `INTERNAL_SERVER_ERROR`; the two sub-fetches are the inconsistent outliers."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-10-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:1040-1048 \u2014 in the data-residency dashboard handler, the top-level `compliance_status` field is computed as `if last_verification.as_ref().map(|v| v.is_compliant).unwrap_or(true) { ComplianceStatus::Compliant } else { ComplianceStatus::NonCompliant }`. The `.unwrap_or(true)` is a fail-OPEN default: when `last_verification` is `None`, the org is reported as `Compliant`.",
+        "backend/servers/api-server/src/routes/data_residency.rs:936-941 \u2014 `last_verification` is `None` exactly when `data_residency_repo.get_latest_verification_result(org_id)` returns `None`, i.e. the organization has NEVER run a compliance verification (a fresh org, or one whose verification rows were purged). This branch is reachable in production for every org before its first verification run \u2014 not a hypothetical.",
+        "Consequence: the data-residency compliance dashboard displays `compliance_status: Compliant` for an organization whose compliance has never actually been checked. This is the summary signal most consumers surface; a never-verified tenant looks green. For a GDPR/data-residency compliance feature the correct default is fail-CLOSED \u2014 `Unknown` or `NonCompliant` \u2014 so unverified state is visibly distinct from verified-compliant. Note the sibling per-record mapping at data_residency.rs:953-957 keys strictly off `result.is_compliant`, so only the None case is mis-defaulted."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-generator/2026-08-10-api-handlers-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:736 \u2014 in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let chain_valid = verification[\"chain_valid\"].as_bool().unwrap_or(true);`. The `.unwrap_or(true)` is a fail-OPEN default: if the `verify_audit_chain` result ever lacks a boolean `chain_valid` field (schema drift, an error-shaped JSON, a null), the audit chain is reported as VALID / untampered.",
+        "backend/crates/db/src/repositories/data_residency.rs:552-596 \u2014 the current repo implementation always emits `\"chain_valid\": <bool>`, so today the missing-field branch is not reachable and the practical impact is low. This is a latent wrong-direction defensive default rather than an active exploit \u2014 flagged so a future change to `verify_audit_chain`'s return shape (or a switch to a fallible/partial JSON) does not silently turn a broken tamper check into a green 'chain intact' signal.",
+        "For a tamper-evidence integrity check the safe default is fail-CLOSED. Fix: `.unwrap_or(false)` (an unparseable/absent verification result means the chain could NOT be confirmed valid), and/or `tracing::warn!` when the field is missing so schema drift surfaces instead of being swallowed."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile HEAD state vs current",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique(.items[].id)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no re-scored non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md + adversarial pass line",
+      "observed": "both plans annotated",
+      "expected": "both plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2, metadata + 11 headings + capability tick + mode + files exist",
+      "observed": "2 plans, all 4+11 present, mode declared, all 5 files exist",
+      "expected": "all checks pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed:' line honesty",
+      "observed": "brief documents skipped 1.5/1.6 (not failed) with rationale",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present in plans/ or _archive/",
+      "observed": "23 prior plans present",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "8 >= 8",
+      "expected": "monotone-non-decreasing"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions[] cap + idempotency",
+      "observed": "empty (no candidate)",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 gate is no-op",
+      "observed": "pm_cursor.next_index=3 in range; coverage_cursor unchanged (no PM run)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged +lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
