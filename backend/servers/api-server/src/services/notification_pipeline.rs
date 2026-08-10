@@ -32,8 +32,12 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use db::{
-    models::{CreateHeldNotification, HeldNotification, Locale, NewNotificationEvent, User},
+    models::{
+        CreateHeldNotification, HeldNotification, Locale, NewNotificationEvent,
+        NotificationSchedule, User,
+    },
     repositories::{
         GranularNotificationRepository, NotificationEventRepository,
         NotificationPreferenceRepository, UserRepository,
@@ -50,7 +54,7 @@ use common::notifications::{
 
 use super::email::EmailService;
 use super::push_fanout::CombinedPushAdapter;
-use super::quiet_hours;
+use super::quiet_hours::{self, QuietHoursState};
 
 /// Map a stored `held_notifications.event_type` string back to a category for
 /// re-delivery (best-effort; unknown values become `System`). The string is the
@@ -362,6 +366,41 @@ fn records_to_events(records: &[DeliveryRecord]) -> Vec<NewNotificationEvent> {
         .collect()
 }
 
+/// Issue #980 — decide the Push quiet-hours gate from a schedule lookup result.
+///
+/// Returns `Some(state)` when the Push channel must be **held** (an active
+/// quiet-hours window), or `None` when it may be delivered immediately.
+///
+/// **Fail-closed on a DB error.** Previously the caller did
+/// `get_user_schedule(...).await.ok().flatten()`, which silently mapped a
+/// failed schedule read to `None` and delivered the push *now* — i.e. it failed
+/// OPEN and could ring a user's phone during their configured quiet hours
+/// whenever the schedule query hit a transient DB error. A read error means we
+/// cannot prove the user is *not* in quiet hours, so we treat it as an active
+/// window with an unknown end (`ends_at: None`); the caller's default release
+/// horizon then holds the push for later delivery rather than dropping it.
+///
+/// Kept pure (no `self`, no IO) so the fail-closed contract is unit-testable
+/// without a live database — see `quiet_gate_fails_closed_on_db_error`.
+fn resolve_push_quiet_gate<E>(
+    schedule_result: Result<Option<NotificationSchedule>, E>,
+    now: DateTime<Utc>,
+) -> Option<QuietHoursState> {
+    match schedule_result {
+        Ok(Some(schedule)) => {
+            let state = quiet_hours::evaluate(&schedule, now);
+            state.active.then_some(state)
+        }
+        // No schedule configured — user has no quiet hours; deliver now.
+        Ok(None) => None,
+        // Fail closed: unknown quiet-hours status ⇒ hold the push.
+        Err(_) => Some(QuietHoursState {
+            active: true,
+            ends_at: None,
+        }),
+    }
+}
+
 #[derive(Clone)]
 pub struct NotificationPipeline {
     config: PipelineConfig,
@@ -521,13 +560,17 @@ impl NotificationPipeline {
         let quiet = if matches!(notification.priority, NotificationPriority::Urgent) {
             None
         } else {
-            self.granular_repo
-                .get_user_schedule(user_id)
-                .await
-                .ok()
-                .flatten()
-                .map(|s| quiet_hours::evaluate(&s, chrono::Utc::now()))
-                .filter(|state| state.active)
+            let schedule_result = self.granular_repo.get_user_schedule(user_id).await;
+            if let Err(ref e) = schedule_result {
+                // Fail closed (see `resolve_push_quiet_gate`): a swallowed schedule
+                // read used to deliver the push during possible quiet hours.
+                tracing::warn!(
+                    user_id = %user_id,
+                    error = %e,
+                    "[#980] Failed to read quiet-hours schedule; holding push (fail-closed)"
+                );
+            }
+            resolve_push_quiet_gate(schedule_result, chrono::Utc::now())
         };
         let mut held = 0usize;
 
@@ -862,6 +905,91 @@ mod tests {
         let n = make_notification(uid);
         let event_type = format!("{}.notification", n.category.as_str());
         assert_eq!(event_type, "announcements.notification");
+    }
+
+    fn schedule_active_2200_0700(tz: &str) -> NotificationSchedule {
+        use chrono::NaiveTime;
+        NotificationSchedule {
+            id: Uuid::nil(),
+            user_id: Uuid::nil(),
+            quiet_hours_enabled: true,
+            quiet_hours_start: NaiveTime::from_hms_opt(22, 0, 0),
+            quiet_hours_end: NaiveTime::from_hms_opt(7, 0, 0),
+            timezone: tz.to_string(),
+            weekend_quiet_hours_enabled: false,
+            weekend_quiet_hours_start: None,
+            weekend_quiet_hours_end: None,
+            digest_enabled: false,
+            digest_frequency: None,
+            digest_time: None,
+            digest_day_of_week: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }
+    }
+
+    // 23:00 UTC — inside the 22:00–07:00 UTC quiet window.
+    fn now_inside_window() -> DateTime<Utc> {
+        use chrono::TimeZone;
+        Utc.with_ymd_and_hms(2026, 6, 4, 23, 0, 0).unwrap()
+    }
+
+    // 12:00 UTC — outside the 22:00–07:00 UTC quiet window.
+    fn now_outside_window() -> DateTime<Utc> {
+        use chrono::TimeZone;
+        Utc.with_ymd_and_hms(2026, 6, 4, 12, 0, 0).unwrap()
+    }
+
+    /// Regression (#980): a DB error reading the quiet-hours schedule must FAIL
+    /// CLOSED — the push is held (active window, unknown end), never delivered
+    /// during a possible quiet-hours window. The old
+    /// `get_user_schedule(...).await.ok().flatten()` swallowed the error and
+    /// returned `None`, delivering the push immediately.
+    #[test]
+    fn quiet_gate_fails_closed_on_db_error() {
+        let gate = resolve_push_quiet_gate::<sqlx::Error>(
+            Err(sqlx::Error::PoolClosed),
+            now_outside_window(),
+        );
+        let state = gate.expect("DB error must hold the push (fail closed), not deliver it");
+        assert!(state.active, "held state must be active");
+        assert!(
+            state.ends_at.is_none(),
+            "unknown window end so the caller applies its default release horizon"
+        );
+    }
+
+    #[test]
+    fn quiet_gate_no_schedule_delivers_now() {
+        let gate = resolve_push_quiet_gate::<sqlx::Error>(Ok(None), now_inside_window());
+        assert!(
+            gate.is_none(),
+            "no configured schedule ⇒ deliver push immediately"
+        );
+    }
+
+    #[test]
+    fn quiet_gate_active_schedule_holds() {
+        let gate = resolve_push_quiet_gate::<sqlx::Error>(
+            Ok(Some(schedule_active_2200_0700("UTC"))),
+            now_inside_window(),
+        );
+        assert!(
+            gate.is_some_and(|s| s.active),
+            "inside the quiet window ⇒ hold the push"
+        );
+    }
+
+    #[test]
+    fn quiet_gate_inactive_schedule_delivers_now() {
+        let gate = resolve_push_quiet_gate::<sqlx::Error>(
+            Ok(Some(schedule_active_2200_0700("UTC"))),
+            now_outside_window(),
+        );
+        assert!(
+            gate.is_none(),
+            "outside the quiet window ⇒ deliver push immediately"
+        );
     }
 
     #[test]
