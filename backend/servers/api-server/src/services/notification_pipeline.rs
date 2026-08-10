@@ -687,17 +687,30 @@ impl NotificationPipeline {
     /// Issue #980: deliver a previously held notification on its stored
     /// channels, bypassing the quiet-hours gate (the drain worker only releases
     /// rows whose `release_at` has passed, i.e. quiet hours have ended).
-    /// Returns the number of channels successfully sent.
-    pub async fn deliver_held(&self, held: &HeldNotification) -> usize {
+    ///
+    /// Returns a [`PipelineResult`] summarising the attempt. The drain worker
+    /// keys off `failed`: a non-zero `failed` means at least one channel hit a
+    /// transient error and the held row must be left for the next tick rather
+    /// than marked released (otherwise the notification is permanently dropped
+    /// on a transient failure). A fully-skipped result (`sent == 0 &&
+    /// failed == 0`, e.g. push not configured or unknown user) carries no
+    /// failures and is safe to release — retrying it would never make progress.
+    pub async fn deliver_held(&self, held: &HeldNotification) -> PipelineResult {
         let user = match self.user_repo.find_by_id(held.user_id).await {
             Ok(Some(u)) => u,
             Ok(None) => {
                 tracing::warn!(user_id = %held.user_id, "[#980] Held notification for unknown user; dropping");
-                return 0;
+                // Nothing deliverable and no point retrying — no failure.
+                return PipelineResult::default();
             }
             Err(e) => {
                 tracing::warn!(user_id = %held.user_id, error = %e, "[#980] Failed to resolve user for held notification");
-                return 0;
+                // Transient lookup error — report as a failure so the drain
+                // worker retries on the next tick instead of dropping the row.
+                return PipelineResult {
+                    failed: 1,
+                    ..PipelineResult::default()
+                };
             }
         };
 
@@ -716,7 +729,7 @@ impl NotificationPipeline {
             notification = notification.with_action_url(url);
         }
 
-        let mut sent = 0;
+        let mut result = PipelineResult::default();
         for ch in &held.channels {
             let channel = match ch.as_str() {
                 "push" => NotificationChannel::Push,
@@ -724,17 +737,23 @@ impl NotificationPipeline {
                 "in_app" => NotificationChannel::InApp,
                 other => {
                     tracing::warn!(channel = %other, "[#980] Unknown held channel; skipping");
+                    // Unrecognised channel is a skip, not a failure — it must
+                    // not block the row from being released.
+                    result.skipped += 1;
                     continue;
                 }
             };
             let record = self
                 .deliver_channel(held.user_id, &user, &notification, None, channel)
                 .await;
-            if record.status == DeliveryStatus::Sent {
-                sent += 1;
+            match record.status {
+                DeliveryStatus::Sent => result.sent += 1,
+                DeliveryStatus::Failed => result.failed += 1,
+                DeliveryStatus::Skipped | DeliveryStatus::Pending => result.skipped += 1,
             }
+            result.records.push(record);
         }
-        sent
+        result
     }
 
     // ------------------------------------------------------------------
