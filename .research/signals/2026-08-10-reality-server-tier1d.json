@@ -1,0 +1,51 @@
+{
+  "generated": "2026-08-10T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-get-inquiry-empty-messages",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:708 — the realtor inquiry-detail handler `get_inquiry` (pub async fn at :680, GET /api/v1/inquiries/{id}, returns InquiryDetailResponse) hardcodes `messages: vec![], // Would fetch conversation messages`. The `messages` field of the response is never populated from the DB, so the conversation thread is ALWAYS empty on the realtor's inquiry-detail view regardless of how many messages exist.",
+        "This is a functional gap, not a placeholder in dead code: the handler otherwise does real work (get_inquiry_for_realtor at :690 with ownership check, mark_inquiry_read_for_realtor at :701) and is wired to a documented 200 response body (InquiryDetailResponse at :675). A realtor opening any inquiry sees zero messages. Fix: load the conversation messages for the inquiry (same repo/conn already in scope) and map them into `messages` instead of returning an empty vec. Recommend a follow-up implementer task."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-alert-watermark-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237 — the post-scan watermark advance `let _ = self.repo.mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64).await;` silently discards its Result. Immediately above (:216-234) the enqueue path DOES handle errors (on `enqueue_search_alert` failure it logs and `continue`s to leave the watermark in place for retry), but the subsequent watermark-write error is dropped.",
+        "Consequence: if `enqueue_search_alert` succeeds (alerts queued for delivery) but the following `mark_saved_search_matched` DB write fails, the error is swallowed and `last_matched_at` is not advanced. On the next due poll the same window is re-scanned, `find_new_match_listing_ids` returns the same listing ids as 'new' (watermark unchanged), and they are enqueued again → duplicate alert notifications to the user. Fix: on `mark_saved_search_matched` error, log at warn and treat the scan as incomplete (mirror the enqueue-failure handling) so at-least-once/at-most-once semantics are explicit rather than best-effort-silent. Low severity, bounded blast radius."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-alert-delivery-stub-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:75-116 — the drainer's only wired transports are `LogEmailTransport` and `LogPushTransport`, which merely `tracing` what *would* be sent ('[BIT-139] (stub) email alert dispatched' / '(stub) push alert dispatched'). state.rs:932 confirms the default is the logging stub with no real email/push adapter. saved_search_alerts.rs (the worker) computes matches and `enqueue_search_alert`s them, but the drain path never actually delivers: the whole saved-search-alert feature enqueues + logs, users receive nothing.",
+        "This is a documented/tracked limitation (BIT-139), not a hidden defect, but it is a real completeness gap on a feature that otherwise looks shipped end-to-end (worker + queue + drainer all present). Surfacing as a feature-completion candidate for the backlog: wire a real email/push transport (or gate the feature) so enqueued alerts are delivered. Confidence medium — traced worker->enqueue->drainer->stub-transport statically; not runtime-confirmed."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
