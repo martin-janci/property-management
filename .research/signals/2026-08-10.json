@@ -1,0 +1,173 @@
+{
+  "run_iso": "2026-08-10T12:09:14Z",
+  "trigger_text": "buffer-low: claimable=2/72 — refill planner",
+  "trigger_interpreted_as": "empty (normal incremental run per routine-prompt.md instruction)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-10",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "Routine last run 2026-08-07T06:24:00Z — 78h (3d 06h) since. LAG_HOURS>36 threshold crossed.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-08-10",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "LAG_DAYS=3 — cloud routine scheduler appears to have missed 2026-08-08 and 2026-08-09 daily ticks; dispatcher (separate loop) still ticking on origin/dev. Recommend operator check the routine cron.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-low-alert-2026-08-10",
+      "type": "buffer_low_alert",
+      "source": "trigger payload",
+      "score_delta": 0,
+      "evidence": "Dispatcher fired buffer-low: claimable=2/72 — refill planner. Routine cannot manufacture score>=3 promotable items; readiness gate is load-bearing. Two open backlog items sit at score 1-2 (below threshold, no security fast-track eligibility). Same shape as 2026-08-07 06:24Z rerun.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "backlog_transitions": [
+    {
+      "id": "code-review-api-core-voice-actions-fabricated-empty",
+      "from_status": "open",
+      "to_status": "done",
+      "reason": "PR-body match: PR #2728 title contains verbatim item id; merged 2026-08-10 10:13Z"
+    },
+    {
+      "id": "code-review-api-core-quiet-drain-drops-failed-delivery",
+      "from_status": "open",
+      "to_status": "done",
+      "reason": "PR-body match: PR #2729 title contains verbatim item id; merged 2026-08-10 10:12Z"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no open item at score>=3 or security fast-track; nothing matches allowlist shapes",
+  "phases_skipped": ["1.5", "1.6"],
+  "phases_skipped_reason": "cloud sandbox lacks gh CLI required by ppt-dev-review and ppt-project-management skills",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-10.md && head -1 briefs/2026-08-10.md | grep -q '^# 2026-08-10$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursor advance vs HEAD",
+      "observed": "last_pr_seen 2702→2729, last_issue_seen 2699→2704, last_commit_sha changed, seen_signals length grew",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal ids in seen_signals with score_delta != 0 outside cumulative set",
+      "observed": "0 offenders — all 3 new signals have score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "backlog cap ≤ 8 + decay applied to open items ≥14d old",
+      "observed": "max score 8; no open item older than 14d (oldest open is 2026-08-04 = 6d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans this run vs adversarial-pass annotations in brief",
+      "observed": "0 new plans this run — vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, each meets all 15 sections",
+      "observed": "0 new plans — vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0 (only .research/ paths staged)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep on staged diff (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 after regen with fresh timestamp",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed section vs cursor advancement",
+      "observed": "no phase reported failure; skipped phases (1.5, 1.6) leave their cursors untouched (review_cursor, pm_cursor preserved verbatim)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in plans/ or plans/_archive/",
+      "observed": "no plan deletions this run; convergence preserved",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count this run >= count at HEAD",
+      "observed": "no archive changes this run — count equal",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 after regen with fresh timestamp",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline (cap + idempotency + certainty bar + verify-all + G8)",
+      "observed": "auto_fix_actions=[] — no candidate; kill switch not set; discipline vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (skipped when Phase 1.6 didn't run)",
+      "observed": "Phase 1.6 skipped this run — G16 is a no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
