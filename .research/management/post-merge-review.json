@@ -1,9 +1,50 @@
 {
-  "generated": "2026-08-09T16:10:13Z",
+  "generated": "2026-08-10T18:08:52Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-10T18:08:52Z",
+      "prs_scanned": 15,
+      "clean": [
+        2730,
+        2729,
+        2728,
+        2714,
+        2713,
+        2694,
+        2693,
+        2687,
+        2686,
+        2695,
+        2689,
+        2685,
+        2665,
+        2664,
+        2663
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-27), base=dev, max_prs=15. Prior run (2026-08-09T16:10Z) reviewed the newest-15 up to #2727. This run scanned the COMPLETE never-reviewed in-window set = 3 merged since the last run (#2730,#2729,#2728, all 2026-08-10) + the 12 previously-deferred stragglers (#2714,#2713,#2694,#2693,#2687,#2686,#2695,#2689,#2685,#2665,#2664,#2663) -- exactly the max_prs=15 cap; the roll-over queue is now fully drained. #2705 excluded (closed-not-merged, merged_at null). ALL 15 CLEAN, 0 net-new issues -- another strong auto-impl batch: every PR is a code-review security/correctness/refactor fix or a mock->real wiring, each shipped WITH a targeted regression test. Highlights: #2730 (quiet-hours push gate now FAILS CLOSED on a schedule-read DB error -- old get_user_schedule(...).ok().flatten() failed OPEN, could ring a phone during quiet hours on a transient error; pure resolve_push_quiet_gate + 4 unit tests). #2729 (quiet-hours drain no longer releases a held row when >=1 channel hit a transient Failed -- deliver_held returns PipelineResult, should_mark_released gates on failed==0, so a transient failure retries instead of permanently dropping the notification). #2728 (voice check-announcements/check-meter fail HONESTLY -- were fabricating success:true + empty data on a live webhook path with no repository queried; now success:false, no fabricated data, honest copy; 2 async tests). #2694 (AI lease-gen + voice-OAuth exchange stop leaking upstream provider error text to clients; fixed generic message consts, detail logged server-side; 2 no-leak tests). #2685 (workflow condition NOT operator CORRECTNESS BUG: negated only conditions.first() and dropped the rest -> multi-condition NOT gave wrong results; now De Morgan over the full conjunction incl. nested groups; 3 tests; also methods->free functions). #2689 (ppt-web WS: removed the redundant app-level ping/pong heartbeat that severed a HEALTHY socket every ~40s because the api-server never emits an app-level pong -- liveness is protocol-layer only; fake-timer test asserts the socket survives 60s). #2665 (news_articles AUTHZ HOLE: publish/archive/restore/pin extracted _user but never checked is_manager()/authorship -> any authenticated user could mutate any article's lifecycle; now author-or-manager gate with org-scoped 404-before-403; 4 sqlx 403 tests). #2663 (voice-device auth #2662: adds the MISSING voice_assistant_devices DDL migration 00226 -- same missing-DDL class as portal_webhook_events/00219 -- plus a keyed HMAC-SHA256 access_token_hash indexed-lookup column so authenticate_voice_user selects ONE candidate in SQL instead of AES-GCM-decrypt-and-scanning EVERY active device platform-wide on the unauthenticated webhook path (O(N)-decrypt DoS/amplification); decrypt+constant-time verify stays the authority; NULL-hash rows fall back to linear scan so no device is locked out; RLS intentionally omitted + added to check-rls-coverage.sh EXEMPT_TABLES with rationale; sqlx test proves owner-only selection + priv-esc guard + expired/unknown 401). #2714 (issue #2612: decouple scheduled announcement/vote PUBLISH from NOTIFY via nullable notified_at/started_notified_at/closed_notified_at watermarks + migration 00228 with mass-re-notify-suppressing backfill + partial indexes; manual vs auto transition semantics preserved; idempotent stamps only on success so a transient dispatch blip retries next tick instead of fire-once dropping). #2664 (portfolio dashboard: replace ALL mock data with real TanStack-Query hooks + new @ppt/api-client portfolio-performance module; serde-str Decimal-as-string decoded at the edge; loading/error/empty states + retry). #2695 (mobile-rn biometric OS-dialog copy moved from hardcoded English to i18n across 6 locales; guard tests assert every locale defines the keys + non-EN diverges). #2687 (disputes/kpis rejects inverted/empty window 422 before the repo instead of a degenerate zero-count 200; adds an EXECUTING tokio test outside BIT-440 quarantine + updates the quarantined sqlx case). #2713 (layout admin dedupe: extract require_super_admin/acquire_public_conn/load_config/error_response helpers, behavior-preserving, 403/404/500 semantics preserved). #2693 (remove orphaned schedule_viewing stub + ViewingResult enum, dead code, no live callers -- same class as prior #2697). Considered-but-not-filed process nits: (a) migrations 00226/#2663, 00228/#2714, and prior-run 00229/00230 are all sequential/distinct -- no collision. (b) #2664 num()/optNum() use Number(v) which yields NaN on a malformed decimal string, but the api-server serde-str contract guarantees well-formed decimals -- not a live bug. Existing open follow-ups #2643 and #2366 left as-is (not duplicated). NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
+      "focus_prs": [
+        2730,
+        2729,
+        2728,
+        2714,
+        2713,
+        2694,
+        2693,
+        2687,
+        2686,
+        2695,
+        2689,
+        2685,
+        2665,
+        2664,
+        2663
+      ]
+    },
     {
       "run_at": "2026-08-09T16:10:13Z",
       "prs_scanned": 15,
@@ -626,16 +667,6 @@
           "note": "view-webhook dedup gate correct+tested, but 3 comments (portal_webhooks.rs:741,1343; migration 00220:19) cite migration 00218 for the dedup unique index that actually lives in 00219 (00218 is unrelated report_schedules RLS) -- same class as #2417/#2418"
         }
       ]
-    },
-    {
-      "run_at": "2026-07-18T16:08:31Z",
-      "prs_scanned": 3,
-      "clean": [
-        2421,
-        2420,
-        2419
-      ],
-      "with_issues": []
     }
   ]
 }
