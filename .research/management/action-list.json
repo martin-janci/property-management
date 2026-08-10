@@ -35,23 +35,6 @@
         "vector": "bug",
         "source": "tier1d-signal-bridge"
       }
-    },
-    {
-      "id": "code-review-api-core-quiet-schedule-err-failopen",
-      "action": "Notification pipeline swallows quiet-hours schedule DB error and fails open — push delivered during user's configured quiet hours",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-10T08:05:35Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-10T08:05:35Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -1993,6 +1993,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-quiet-schedule-err-failopen",
+      "branch": "auto-impl/code-review-api-core-quiet-schedule-err-a4812fd8",
+      "status": "merged",
+      "claimed_at": "2026-08-10T08:08:10Z",
+      "last_updated": "2026-08-10T14:11:39Z",
+      "status_changed_at": "2026-08-10T14:11:39Z",
+      "pr_number": 2730,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2730",
+      "merged_at": "2026-08-10T14:11:10Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2730 status=partial specialist=rust-backend — fail-closed quiet-hours gate + regression tests (resolve_push_quiet_gate in notification_pipeline.rs); fmt+clippy+581/581 lib tests green incl 4 new. Local 3-band verify blocked only by 2 pre-existing unrelated env/harness failures (proxy SSRF DNS-rebinding; cargo-test-vs-nextest AIRBNB env-leak). Branch pushed + draft PR opened by dispatcher to preserve work; CI(nextest)+reviewer to gate.",
+      "reviewer_summary": "verdict=approve note=fail-closed-correct-tests-green-ci-green-selfapprove-blocked-posted-as-comment",
+      "last_reviewed_oid": "407da5087466bdeece3230a113b16d18e806a3a0",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-10T14:10:53Z"
+    },
+    {
       "task_id": "code-review-api-core-resolved-rs-leaks-db-error",
       "branch": "auto-impl/code-review-api-core-resolved-rs-leaks-d-b9009be1",
       "status": "merged",
@@ -13259,5 +13281,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-10T12:14:54Z"
+  "archived_at": "2026-08-10T14:14:24Z"
 }

@@ -1,0 +1,55 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "08-06 group; mobile-native-kmp excluded (unlandable in cloud, issue #2652); api-handlers/reality-server/api-core already produced fresh 08-10 tier1d signals this cycle, so skipped as redundant per the skill's saturation-avoidance spirit; among remaining uncovered landable 08-06 segments (ppt-web-ui, ppt-web-core, mobile-rn) ppt-web-ui wins by segment-map table-order tiebreak. Not saturated (0 open code-review findings in backlog).",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:55-66 — handleApprove awaits the approve-booking mutation inside try/catch, and on failure the catch body is ONLY `console.error('Failed to approve booking:', error)`. No setState, no alert, no toast, no error banner. A manager clicks Approve on a pending facility booking; if the API rejects it (409 conflict, RLS denial, network), the UI gives zero feedback — the row silently stays pending and the manager assumes it worked.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:74-84 — handleRejectConfirm has the same shape: on the success path it closes the RejectBookingDialog (setRejectDialogBooking(null)); on the catch path it only console.errors, so a failed rejection leaves the dialog open with no message explaining why nothing happened.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx:67-77 — handleCancel (tenant-initiated booking cancellation) catches and only console.errors; a failed cancel is invisible to the tenant, who believes their booking was cancelled.",
+        "This is a codebase-inconsistency defect, not a style nit: the sibling feature page frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx:106-159 establishes the correct pattern — every mutation catch does `setError(err instanceof Error ? err.message : t('emergency.errors.failed...'))` AND console.error, rendering a visible error. The facilities booking pages omit the user-facing half. Fix: add an error state (or toast) surfaced in the same i18n style, matching EmergencyContactDirectoryPage."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-109 — handlePetDelete confirms via window.confirm then `await deletePetMutation.mutateAsync(id)`; the catch body is ONLY `console.error('Failed to delete pet registration:', error)`. A destructive delete that fails (RLS denial, 404, network) shows the user nothing. The grep-verified fact that the whole file contains no setError / setFormError / alert / toast / notify / onError means EVERY mutation failure on this page is swallowed.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 — handlePetReview (approve) and lines 155-183 handleVehicleDelete / handleVehicleReview repeat the identical silent-catch anti-pattern for the vehicle registry. Four user-facing mutations (2 destructive deletes, 2 approvals), all failing silently.",
+        "Contrast with the established convention in EmergencyContactDirectoryPage.tsx:106-159 (setError + i18n key + console.error) — RegistryPage implements only the console.error half, so a manager whose delete/approve silently fails has no signal to retry. Fix: introduce an error state surfaced in the UI (matching the emergency page), so failed destructive/approval actions are visible."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-review-approve-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 — handlePetReview hardcodes `data: { approve: true }` and is guarded only by `window.confirm('Approve this pet registration?')`. There is no reject path: a manager can approve a pending pet registration but cannot reject one from this screen. Same for handleVehicleReview at lines 168-183.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:113 — the code self-documents the gap: `// Simple approval - in a real app, this would open a modal to approve/reject with reason`. The review API is a two-outcome decision (approve boolean) but the UI wires only the approve=true branch, so the reject half of the moderation workflow is unreachable and no rejection reason can be captured.",
+        "Compare with the facilities feature, which ships a proper RejectBookingDialog capturing a reason (PendingBookingsPage.tsx / components/RejectBookingDialog). The registry review flow should offer an equivalent approve/reject choice with reason capture instead of a confirm-and-approve-only stub. Completeness gap, low severity: managers currently must delete a registration they intend to reject, losing the audit distinction between 'rejected' and 'deleted'."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}
