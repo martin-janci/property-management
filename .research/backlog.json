@@ -7338,17 +7338,65 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator",
-        "api-core segment review 2026-08-10"
+        "api-core segment review 2026-08-10",
+        "PR #2730"
       ],
       "evidence": [
         "backend/servers/api-server/src/services/notification_pipeline.rs:524-531 resolves the user's quiet-hours window with self.granular_repo.get_user_schedule(user_id).await.ok().flatten() — a transient DB error is silently discarded (.ok() -> None) and treated identically to 'user has no quiet-hours schedule'. Consequence: `quiet` is None, so the Push channel is delivered immediately (lines 535-537 only hold when Some(state)), violating the resident's configured quiet-hours preference on any DB hiccup.",
-        "Distinct from the drain-release bug: this is on the primary dispatch path, and it silently swallows a DB error (same swallowed-DB-error class as prior findings resolved-rs-leaks-db-error / admin-rs-swallowed-serialize). Fix: on Err, log and fail conservative (hold the push) rather than fail-open, or propagate."
+        "Distinct from the drain-release bug: this is on the primary dispatch path, and it silently swallows a DB error (same swallowed-DB-error class as prior findings resolved-rs-leaks-db-error / admin-rs-swallowed-serialize). Fix: on Err, log and fail conservative (hold the push) rather than fail-open, or propagate.",
+        "resolved: PR #2730 merged 2026-08-10T14:11Z — fix(api-server): fail closed when quiet-hours schedule read errors. Extracted decision into pure `resolve_push_quiet_gate` helper that fails CLOSED on Err. Evidence-gone confirmed: `get_user_schedule.*ok().flatten()` pattern no longer present on primary dispatch path (line 563 now uses match)."
       ],
       "files": [
         "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-buildings-role-gate-gap",
+      "title": "buildings.rs — unit + owner mutation handlers (6 routes) missing Manager role gate",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-08-10 (api-handlers segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/buildings.rs:1882 — pub async fn assign_unit_owner reads rls.user_id() but never gates on rls.has_role(TenantRole::Manager); sibling create_building at line 501 does: `if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) { ... 403 INSUFFICIENT_ROLE }`.",
+        "Same gap in: update_unit_owner (line 2104), remove_unit_owner (line 2266), create_unit (line 1205), update_unit (line 1429), archive_unit (line 1598) — none of the six unit/owner mutation handlers have the role check that create_building has.",
+        "backend/servers/api-server/src/routes/buildings.rs:38-73 — the six routes above are mounted (POST/PUT/DELETE on `/{building_id}/units/{unit_id}` and `/owners[/{user_id}]`) with no per-route middleware. RlsConnection only validates tenant membership (see backend/crates/api-core/src/extractors/rls_connection.rs:85), not role.",
+        "reachability confirmed — `pub mod buildings;` declared at routes/mod.rs:19, nested at lib.rs:150 (`/api/v1/buildings`); role gate exists at lines 501/672/959 for other mutation paths.",
+        "Consequence: any tenant member — Owner, Tenant, Resident, OwnerDelegate (see common/src/tenant.rs:83 — 11 roles) — can flip unit ownership shares or delete owner records in their own org."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/buildings.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": "plans/code-review-api-handlers-buildings-role-gate-gap.md"
+    },
+    {
+      "id": "qa-rag-partial-batch-handler-regression-2026-08-10",
+      "title": "Add handler-level regression test for RAG partial-embedding-batch fail-closed guard (PR #2706)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "pm-qa lens 2026-08-10 (post-#2706 spot-check)"
+      ],
+      "evidence": [
+        "PR #2706 (fix(api-server): fail closed on partial RAG embedding batch in /rag/index) merged 2026-08-07 with only a pure-function unit test on the extracted helper `embedding_batch_is_complete` + a zip-truncation demo — no test exercises the /rag/index handler with a mocked provider returning a short batch to confirm the route answers 502 EMBEDDING_FAILED.",
+        "backend/servers/api-server/tests/suites/rag_index_embedding_write_tests.rs exists, is DB-backed (`#[sqlx::test]`), and currently has zero cases matching 'partial' / 'mismatch' / 'truncat' — a natural home for the missing regression case."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/rag_index_embedding_write_tests.rs",
+        "backend/servers/api-server/src/routes/ai/llm.rs"
       ],
       "created_at": "2026-08-10",
       "updated_at": "2026-08-10",

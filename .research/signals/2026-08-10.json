@@ -1,0 +1,377 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-10",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-08-07T06:24:00Z; now=2026-08-10T16:15Z; lag_hours=82 (3.4d) — routine missed 2 daily ticks; dispatcher (separate loop) was ticking meanwhile per dispatcher chore commits."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR endpoint (UC-ACC-05.8)) open since 2026-07-28, last updated 2026-07-30 — 12d idle, no reviewDecision."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2558 (feat(acc): invoice PDF render endpoint (UC-ACC-05.9)) open since 2026-07-28, last updated 2026-07-30 — 12d idle, no reviewDecision."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle (UC-ACC-05.17)) open since 2026-07-28, last updated 2026-07-30 — 12d idle, no reviewDecision."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2584 (sentry 0.48.5→0.49.0) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2585 (base64 0.22.1→0.23.0) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2586 (validator 0.20→0.21) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2583 (rust_xlsxwriter 0.96→0.97) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2591 (expo-secure-store 56.0.4→57.0.1) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2590 (expo-device 56.0.4→57.0.1) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2589 (@testing-library/react-native 13→14) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2588 (expo-status-bar 56.0.4→57.0.1) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2581 (gradle-minor-patch group) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2673 (ktor group 7 updates) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2674 (cargo-minor-patch group 2 updates) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR #2675 (npm-minor-patch group 22 updates) open — logged, no scoring."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged 2026-08-08T02:21:45Z with no successor identified in-window."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "top-3 churn window 2026-08-07..2026-08-10",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/packages/sitemap/src/json/sitemap.json: 4207 lines changed since 2026-08-07 across the merged-PR window."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "top-3 churn window 2026-08-07..2026-08-10",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/messages/en.json: 3984 lines changed since 2026-08-07 across the merged-PR window."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn window 2026-08-07..2026-08-10",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs: 3416 lines changed since 2026-08-07 across the merged-PR window."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-handlers-buildings-role-gate-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/buildings.rs:1882 — pub async fn assign_unit_owner reads rls.user_id() but never gates on rls.has_role(TenantRole::Manager); sibling create_building at line 501 does: `if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) { ... 403 INSUFFICIENT_ROLE }`.",
+        "Same gap in update_unit_owner (line 2104), remove_unit_owner (line 2266), create_unit (line 1205), update_unit (line 1429), archive_unit (line 1598).",
+        "reachability confirmed — `pub mod buildings;` in routes/mod.rs:19, nested at lib.rs:150"
+      ],
+      "expert": "security",
+      "novelty_checked": true,
+      "reachability_checked": true
+    },
+    {
+      "id": "qa-rag-partial-batch-handler-regression-2026-08-10",
+      "type": "code-review-finding",
+      "source": "pm-qa-lens",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2706 (fail closed on partial RAG embedding batch) merged 2026-08-07 with only a pure-function unit test on the extracted helper `embedding_batch_is_complete` — no handler-level test asserts the /rag/index route answers 502 EMBEDDING_FAILED with a mocked short-batch provider.",
+        "backend/servers/api-server/tests/suites/rag_index_embedding_write_tests.rs exists, is DB-backed (#[sqlx::test]), has zero 'partial'/'mismatch'/'truncat' cases — natural home for the missing regression."
+      ],
+      "expert": "pm-qa"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-10.md + head -1 == # 2026-08-10",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD changed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "double-counted non-cumulative signals check",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8; decay N/A (only 1 pre-existing open <14d)",
+      "observed": "0 offenders",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md + adversarial pass: on same line in brief",
+      "observed": "match on line 64",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; 4 meta + 11 headings + capability + Mode + Files-exist",
+      "observed": "1 plan, all sections + Mode: cloud-ok + 6/6 Files exist",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private hostnames scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty (no phases failed)",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "staged=8, head=8",
+      "expected": ">= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length + kill-switch respect",
+      "observed": "0 actions, killswitch=unset (no candidate met bar)",
+      "expected": "cap held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor+coverage_cursor in range + advanced this run",
+      "observed": "action-list ok, risks ok, project-state ok, pm_cursor=4/8, coverage_cursor=6/13",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token literal scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
