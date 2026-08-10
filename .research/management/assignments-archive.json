@@ -1971,6 +1971,28 @@
       "merge_attempted_at": "2026-07-04T18:13:02Z"
     },
     {
+      "task_id": "code-review-api-core-quiet-drain-drops-failed-delivery",
+      "branch": "auto-impl/code-review-api-core-quiet-drain-drops-f-5f88340e",
+      "status": "failed",
+      "claimed_at": "2026-08-10T12:08:06Z",
+      "last_updated": "2026-08-10T12:13:38Z",
+      "status_changed_at": "2026-08-10T12:13:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend — already fixed and merged on dev via commit 3096f0f (PR #2729): quiet_hours_drain only marks released when outcome.failed==0; transient sent==0 keeps row held for retry; regression tests present. Empty diff, no new PR. Out-of-band landing (non-id PR subject so dev-reconcile/backlog-reconcile did not auto-match).",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-resolved-rs-leaks-db-error",
       "branch": "auto-impl/code-review-api-core-resolved-rs-leaks-d-b9009be1",
       "status": "merged",
@@ -2167,6 +2189,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-02T12:09:47Z"
+    },
+    {
+      "task_id": "code-review-api-core-voice-actions-fabricated-empty",
+      "branch": "auto-impl/code-review-api-core-voice-actions-fabri-67f35cbb",
+      "status": "failed",
+      "claimed_at": "2026-08-10T12:08:06Z",
+      "last_updated": "2026-08-10T12:13:16Z",
+      "status_changed_at": "2026-08-10T12:13:16Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend — already fixed on dev by merged #2728 (2ac0dbb): voice check-announcements/check-meter now fail honestly + regression tests present; no diff to make (out-of-band landing, non-id PR subject so dev-reconcile did not auto-match). Treated as satisfied, not a build failure.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-api-core-voice-cmd-fabricated-success",
@@ -13215,5 +13259,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-09T16:08:53Z"
+  "archived_at": "2026-08-10T12:14:54Z"
 }
