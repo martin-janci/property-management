@@ -1,0 +1,1028 @@
+{
+  "generated": "2026-08-10T06:15:00Z",
+  "source": "daily-routine",
+  "signals": [
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix (",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes d",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode/getQRCodeAction/parsePPTPayload/parseVCard) and frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts (292 lines, exports ",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English user-facing copy instead of react-i18next t(), even though the app is i18n-enabled (23 screens already call useTranslat",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-untested-nfc-credentials",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines, class NFCAccessController) and frontend/apps/mobile/src/nfc/NFCCredentialManager.ts (321 lines, class NFCCredentialManager) have NO test",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-135 — FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) but destructures ONLY `isLoa",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-128 — the editable Budget Categories list is rendered with `categories.map((category, index) => (<div key={index} ...>`, wher",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx under frontend/apps/ppt-web/src/features/financial/{components,pages} contain no useTranslation()/i18n reference at all, ev",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/imports.rs:120-132 — list_import_jobs (wired GET /api/v1/imports/jobs, PortalPrincipal-authenticated) forwards pagination straight to the repo with NO clampin",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/price_map.rs:97-131 — get_price_map is PUBLIC and unauthenticated (handler takes only State + Query, no principal). Its process-global cache PRICE_MAP_CACHE (",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_slovak_vote, wired POST /api/v1/regional-compliance/slovak/voting/validate) and :799-805 (validate_czech_vote, wired POST",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — the central `apiRequest` helper (backing every useQuery/useMutation in the app) reads the bearer token from SecureStore once (:66) and, on any non-ok r",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 — `validateAccess` decides credential expiry (`new Date(credential.validUntil) < now`, :275) and time-of-day access windows (:299-336) entir",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files — `find frontend/apps/mobile -name '*.test.*'` returns no nfc/ entry, a",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup ONLY disconnects the PerformanceObservers (`for (const observer of observers) observer.disconnect()`). It never re",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing dashboard renders from hardcoded module-level mock constants: mockDashboar",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() text is cast straight to a typed enum with no validation before being POSTed to the mo",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": "Numerous user-facing browser-dialog strings are hardcoded English instead of going through react-i18next `t(...)`, even though the surrounding pages import and use useTranslation for other text. Confi",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Navigation.kt:490-495 — the composable(Screen.CreateListing.route) destination wires the screen's onSubmit lambda to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listings-limit-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Navigation.kt:472 — MyListings loads via portalListingsRepository.listMyListings(limit = 100) with no offset/paging follow-up; the UI shows at most the first 100 listings and provides no 'load more' p",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-parse-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/workflow_executor.rs:459-489 — evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-workflow-not-group-drops-conds",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and,",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-workflow-matches-regex-recompile",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "backend/servers/api-server/src/services/workflow_executor.rs:610-621 — the ComparisonOperator::Matches arm calls `regex::Regex::new(pattern)` (line 618) on every single condition evaluation. Regex com",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 — verify_hmac_signature() FAILS OPEN: line 950 `std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string())`.",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 — authenticate_voice_user() performs NO token validation: the `_access_token` parameter is unused (underscore-prefixed) and the function",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-reality-server-token-cache-evict-arbitrary",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/state.rs:698-712 — TokenValidationCache::set(), when the cache is full after expired-entry eviction, claims to 'remove oldest entries' (inline comment) but actually ",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-listings-page-no-upper-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/listings.rs:28-34 — clamp_pagination() is documented as the single guard that keeps raw `page`/`limit` query params 'safe before they reach SQL', and it corre",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-saved-search-dup-alerts",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/services/saved_search_alerts.rs:225-238 — in the per-search scan loop, once new match ids are found the code enqueues the alert (enqueue_search_alert, lines 217-233)",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 — handleTakeAction reads a free-text moderation action from `window.prompt('Enter action type (remove, restrict, w",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-strings-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "ppt-web is a react-i18next app shipping sk/cs/de/en, yet several shipped feature pages surface hardcoded English user-facing error strings not wrapped in `t()`. frontend/apps/ppt-web/src/features/sett",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-console-error-committed",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Committed production feature code left with raw `console.error(...)` calls that log full error objects to the browser console in prod. Clusters: frontend/apps/ppt-web/src/features/compliance/pages/Con",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-reality-server-link-pm-account-noop",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/handlers/users/mod.rs:360-378 — UserHandler::link_pm_account() performs its guard checks (already-linked at :360, email-match at :364-367) and then, at the point whe",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-pwreset-token-dropped-prod",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/users.rs:437-488 — request_password_reset() generates and stores a reset token (handler.request_password_reset returns PasswordResetRequestResult::Sent { plai",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-msgs",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/inquiries.rs:592-595 — the inquiry-detail handler (GET inquiry for realtor; ownership verified at :575-584) builds its response as `InquiryDetailResponse { in",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-web-comparison-export-pdf-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:151-153 — handleExportPDF() is a shipped no-op stub: its entire body is a comment `// In a real implementation, this would genera",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx — this is a `[locale]`-routed page in a next-intl app (sk/cs/de/en) yet imports NO translation API (grep: 0 useTranslatio",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx — a `[locale]`-routed page that DOES call `useTranslations('pages.priceMap')` (:40) but still renders large blocks of hardcoded Slovak tha",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-ppt-web-ui-policyform-number-coercion",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/insurance/components/PolicyForm.tsx:108 — handleChange does `[name]: type === 'number' ? Number(value) : value || undefined`. `Number('')` is 0, so clearing a numeri",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-pages-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "All four app-wide terminal error screens render hardcoded English with no useTranslation, in an app shipping sk/cs/de/en: features/errors/pages/NotFoundPage.tsx (title=\"Page not found\", description=\"T",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-meters-windowopen-tabnab",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/meters/components/ReadingValidationCard.tsx:122 and :125 — the meter-reading photo thumbnail opens the stored image via `window.open(reading.photoUrl, '_blank')` wit",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-api-core-fcm-malformed-token-never-evicted",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/push_fanout.rs:367-376 — `send_fcm` (FCM HTTP v1) only flags a device token for eviction when the upstream error status matches `\"NOT_REGISTERED\" | \"UNREGISTERE",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-push-client-build-expect-panic",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/push_fanout.rs:280 — `.expect(\"reqwest client build should not fail\")` and push_fanout.rs:773 — `.expect(\"reqwest APNs client build should not fail\")`. `reqwest",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconstant-time-compare",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/api-server/src/services/oauth.rs:920-931 — `verify_pkce` compares the recomputed S256 challenge to the stored `challenge` with the standard `==` operator (`computed == challenge`, line",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/accounting.rs:124-176 — the payment auto-matcher's inner `for invoice in &open_invoices` loop (accounting.rs:129) creates a `PaymentMatch` for EVERY invoice who",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/accounting.rs:135-150 — a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance threshold (accounting.rs:150) with NO amount corroboration ",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(test)]` module and no test cases anywhere (grep for `#[cfg(test)]` / `#[test]` / `fn test` in the file returns nothing) ",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 — `send_vote_reminders()` selects every `status='active'` vote with `end_at <= now + vote_reminder_days_before` and `end_at > NOW()` ",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-rls-context-deprecated-exported",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed and should NOT be used' (middleware runs before extractors; ",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-authz-mw-guest-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/crates/api-core/src/middleware/authorization.rs:176-180 — `require_permission` reads the caller's role from request extensions with `.get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)`",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-noop-isolation",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 — `tenant_filter` is named and documented ('ensure tenant isolation') as an isolation guard, but its body only checks that `X-Tenant-ID` p",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(sel",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().m",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of ",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplem",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `ha",
+      "segment": "ppt-web-core"
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !resp",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` pe",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/crates/api-core/src/middleware/authorization.rs:170-201 — `require_permission` derives the caller role with `request.extensions().get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)` (li",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-idempotency-tx-across-handler",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/crates/api-core/src/middleware/idempotency.rs:95-179 — `handle_idempotent_request` opens a DB transaction `pool.begin()` (line 95), takes a `pg_advisory_xact_lock` (line 108), and then HOLDS t",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-announce-roles-legacy-membership-table",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/scheduler/mod.rs:663-706 — inside a single function, `Scheduler::get_announcement_target_users`, the `\"roles\"` target branch (lines ~665-680) resolves recipient",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-voice-meter-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/voice_commands.rs:437-466 — `action_check_meter` returns `success: true` with the response 'Your latest meter readings have been recorded. There are no pending ",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-voice-announce-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/voice_commands.rs:385-413 — `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, annou",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-core-syndication-fake-synced",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/services/syndication.rs:289-360 — `process_syndication_job` never calls any portal API yet writes `syndication_status::SYNCED` to the DB for every operation: PUBLISH gen",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-handlers-listings-detail-photos-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/listings.rs:338 and :343 — the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped) fetches the listing itself with the correct `.map_err",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-workflow-import-partial-silent",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/ai/workflows.rs:687-693 — the workflow-template import handler adds each imported action inside a loop with `if let Err(e) = state.workflow_repo.add_action(rls.co",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-doc-summary-not-persisted",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — after an expensive LLM summarization call, the handler persists the result with `let _ = state.document_repo.update_summary(id",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing route wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — four inline LaunchedEffect data loaders collapse ALL failures into an empty collection with no error state a",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111 getPortfolioAnalytics() fetches listMyListings(limit = 100) then fires one `async { getList",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-nfe-crash",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 — DecimalAsLongSerializer.deserialize() does `raw.substringBefore('.').toLong()` on the raw JSON",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-wire-test-no-malformed",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt — the wire-contract guard for DecimalAsLong/DecimalAsDoubleSerializer covers only the happy paths: v",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in try/catch uses a bare `catch (e: Exception)` and folds the throwable into `Result.failure(e)` WITHOU",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "cleanup",
+      "evidence": "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...)` for diagnostic logging in commonMain (shared production KMP code) at three sites: line 48 ('fa",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "cleanup",
+      "evidence": "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`if` null-guard instead of smart-casting a locally captured val: androidApp/.../ui/listing/ListingDet",
+      "segment": "mobile-native-kmp"
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` with NO try/catch, and the pa",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 — the number-typed value input does `onChange={(e) => updateCondition(index, { value: Number(e.target.val",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "chore",
+      "evidence": "frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePreviewModal, TriggerSelector, ExecutionDetailsModal, ExecutionMon",
+      "segment": "ppt-web-ui"
+    },
+    {
+      "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/reality-server/src/state.rs:735-748 — TokenValidationCache::set() stores every introspection result with `expires_at: Instant::now() + Duration::from_secs(self.ttl_seconds)`, a fixed T",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-sso-http-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) each build a fresh `reqwest::Client::new()` and call `.send()` with NO",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-5xx-neg-cache",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:753-762 — introspect_pm_token() treats ANY non-2xx introspection response as an inactive token: `if !response.status().is_success() { state.token_cache",
+      "segment": "reality-server"
+    },
+    {
+      "id": "code-review-reality-web-journal-mock-content-shipped",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_PICKS, MOCK_ARTICLES, MOST_READ` from `./_mock` and renders the ENTIRE journal/magazine index from them (featured at :10",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx — `SectionBoundary` (a minimal class error boundary wrapping every listing-detail layout section) implements `componentDidCatch(_er",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/listings.rs:338 — in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, listings.rs:316-345), the photos sub-fetch swallows all repository",
+      "segment": "api-core"
+    },
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/data_residency.rs:1040-1048 — in the data-residency dashboard handler, the top-level `compliance_status` field is computed as `if last_verification.as_ref().map(|",
+      "segment": "api-handlers"
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dev-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/data_residency.rs:736 — in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let chain_valid = verification[\"chain_valid\"].as_bool().unwrap",
+      "segment": "api-handlers"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-10.md && head -1 | grep '^# 2026-08-10$'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq (state.json changed vs HEAD)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5cap",
+      "passed": true,
+      "command": "jq scores<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7count",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "2",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder rot",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal id novelty check",
+      "observed": "novel",
+      "expected": "novel"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotates 'adversarial pass' per new plan",
+      "observed": "annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "unchanged",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "unchanged",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length caps",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (Phase 1.6 skipped)",
+      "observed": "no-op",
+      "expected": "no-op"
+    }
+  ],
+  "auto_fix_actions": []
+}

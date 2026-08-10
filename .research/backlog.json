@@ -7273,6 +7273,1835 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "code-review-api-core-llm-unscoped-idor-footguns",
+      "title": "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-t",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/llm_document.rs still exposes SIX public un-tenant-scoped methods that are the pre-remediation twins of the `_for_org` variants added for the cross-tenant IDOR fix ("
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/llm_document.rs",
+        "backend/servers/api-server/src/routes/ai/llm.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-regional-compliance-hardcoded-vote-minutes",
+      "title": "both handlers generate an OFFICIAL LEGAL condominium voting-minutes d",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:341-361 (get_slovak_vote_minutes) and :893-916 (get_czech_usneseni) — both handlers generate an OFFICIAL LEGAL condominium voting-minutes d",
+        "resolved: in-tree — hardcoded tallies removed — regression test tally_is_sourced_from_persisted_vote_not_hardcoded at regional_compliance.rs:1209"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "title": "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode",
+      "vector": "test",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts (385 lines, exports parseQRCode/getQRCodeAction/parsePPTPayload/parseVCard) and frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts (292 lines, exports "
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts",
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "title": "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-rn"
+      ],
+      "evidence": [
+        "15 of 41 screens under frontend/apps/mobile/src/screens render hardcoded English user-facing copy instead of react-i18next t(), even though the app is i18n-enabled (23 screens already call useTranslat"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-untested-nfc-credentials",
+      "title": "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines, class NFCAccessC",
+      "vector": "test",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines, class NFCAccessController) and frontend/apps/mobile/src/nfc/NFCCredentialManager.ts (321 lines, class NFCCredentialManager) have NO test"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "title": "FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOv",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-135 — FinancialDashboardPageRoute issues three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) but destructures ONLY `isLoa"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "title": "the editable Budget Categories list is rendered with `categories.map((category, ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx:127-128 — the editable Budget Categories list is rendered with `categories.map((category, index) => (<div key={index} ...>`, wher"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-feature-no-i18n",
+      "title": "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx und",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "The financial feature is almost entirely un-internationalized: 21 of 24 .tsx under frontend/apps/ppt-web/src/features/financial/{components,pages} contain no useTranslation()/i18n reference at all, ev"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "title": "list_import_jobs (wired GET /api/v1/imports/jobs, PortalPrincipal-authenticated)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:120-132 — list_import_jobs (wired GET /api/v1/imports/jobs, PortalPrincipal-authenticated) forwards pagination straight to the repo with NO clampin"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "title": "get_price_map is PUBLIC and unauthenticated (handler takes only State + Query, n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:97-131 — get_price_map is PUBLIC and unauthenticated (handler takes only State + Query, no principal). Its process-global cache PRICE_MAP_CACHE ("
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "title": "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_s",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs:253-259 (validate_slovak_vote, wired POST /api/v1/regional-compliance/slovak/voting/validate) and :799-805 (validate_czech_vote, wired POST"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/regional_compliance.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "title": "CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }",
+        "[SUPERSEDED by code-review-mobile-native-kmp-create-listing-submit-stub] duplicate finding on the same CreateListing stub"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "title": "the central `apiRequest` helper (backing every useQuery/useMutation in the app) ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:82-91 — the central `apiRequest` helper (backing every useQuery/useMutation in the app) reads the bearer token from SecureStore once (:66) and, on any non-ok r"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useApi.ts",
+        "docs/api/README.md"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "title": "`validateAccess` decides credential expiry (`new Date(credential.validUntil) < n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:249-346 — `validateAccess` decides credential expiry (`new Date(credential.validUntil) < now`, :275) and time-of-day access windows (:299-336) entir"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "title": "`find frontend/apps/mobile -name '*.test.*'` returns no nfc/ entry, a",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) and nfc/NFCCredentialManager.ts (321 lines) have ZERO test files — `find frontend/apps/mobile -name '*.test.*'` returns no nfc/ entry, a"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-perf-listener-leak",
+      "title": "the effect cleanup ONLY disconnects the PerformanceObservers (`for (const observ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:160-164 — the effect cleanup ONLY disconnects the PerformanceObservers (`for (const observer of observers) observer.disconnect()`). It never re"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-mock",
+      "title": "the entire shipped manager-facing dashboard renders from hardcoded module-level ",
+      "vector": "completeness",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire shipped manager-facing dashboard renders from hardcoded module-level mock constants: mockDashboar"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "title": "free-form window.prompt() text is cast straight to a typed enum with no validati",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — free-form window.prompt() text is cast straight to a typed enum with no validation before being POSTed to the mo"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.ts",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dialog-i18n-gap",
+      "title": "Numerous user-facing browser-dialog strings are hardcoded English instead of goi",
+      "vector": "i18n",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "Numerous user-facing browser-dialog strings are hardcoded English instead of going through react-i18next `t(...)`, even though the surrounding pages import and use useTranslation for other text. Confi"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "title": "the composable(Screen.CreateListing.route) destination wires the screen's onSubm",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "Navigation.kt:490-495 — the composable(Screen.CreateListing.route) destination wires the screen's onSubmit lambda to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit",
+        "[SUPERSEDED by code-review-mobile-native-kmp-create-listing-submit-stub] duplicate finding on the same CreateListing stub"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listings-limit-cap",
+      "title": "MyListings loads via portalListingsRepository.listMyListings(limit = 100) with n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "Navigation.kt:472 — MyListings loads via portalListingsRepository.listMyListings(limit = 100) with no offset/paging follow-up; the UI shows at most the first 100 listings and provides no 'load more' p"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-parse-failopen",
+      "title": "evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored cond",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:459-489 — evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-not-group-drops-conds",
+      "title": "evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and,"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-matches-regex-recompile",
+      "title": "the ComparisonOperator::Matches arm calls `regex::Regex::new(pattern)` (line 618",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:610-621 — the ComparisonOperator::Matches arm calls `regex::Regex::new(pattern)` (line 618) on every single condition evaluation. Regex com"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-default-secret",
+      "title": "verify_hmac_signature() FAILS OPEN: line 950 `std::env::var(\"VOICE_WEBHOOK_SECRE",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers",
+        "PR #2672"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:948-960 — verify_hmac_signature() FAILS OPEN: line 950 `std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string())`.",
+        "resolved: #2672 — fixed by Issue #2658 fail-closed on unset VOICE_WEBHOOK_SECRET"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/servers/api-server/src/lib.rs",
+        "backend/CLAUDE.md"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "title": "webhook signature is verified with a non-constant-time comparison: `Ok(signature",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers",
+        "PR #2672"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256",
+        "resolved: #2672 — fixed by Issue #2658 constant-time compare via ct_eq_str"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-token-authbypass",
+      "title": "authenticate_voice_user() performs NO token validation: the `_access_token` para",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers",
+        "PR #2672"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:963-999 — authenticate_voice_user() performs NO token validation: the `_access_token` parameter is unused (underscore-prefixed) and the function",
+        "resolved: #2672 — fixed by Issue #2658 token-based device lookup via voice_access_token_hash"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-token-cache-evict-arbitrary",
+      "title": "TokenValidationCache::set(), when the cache is full after expired-entry eviction",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:698-712 — TokenValidationCache::set(), when the cache is full after expired-entry eviction, claims to 'remove oldest entries' (inline comment) but actually "
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-listings-page-no-upper-cap",
+      "title": "clamp_pagination() is documented as the single guard that keeps raw `page`/`limi",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:28-34 — clamp_pagination() is documented as the single guard that keeps raw `page`/`limit` query params 'safe before they reach SQL', and it corre"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-saved-search-dup-alerts",
+      "title": "in the per-search scan loop, once new match ids are found the code enqueues the ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:225-238 — in the per-search scan loop, once new match ids are found the code enqueues the alert (enqueue_search_alert, lines 217-233)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-unvalidated",
+      "title": "handleTakeAction reads a free-text moderation action from `window.prompt('Enter ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 — handleTakeAction reads a free-text moderation action from `window.prompt('Enter action type (remove, restrict, w"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-strings-i18n",
+      "title": "ppt-web is a react-i18next app shipping sk/cs/de/en, yet several shipped feature",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "ppt-web is a react-i18next app shipping sk/cs/de/en, yet several shipped feature pages surface hardcoded English user-facing error strings not wrapped in `t()`. frontend/apps/ppt-web/src/features/sett"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.ts",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-console-error-committed",
+      "title": "Committed production feature code left with raw `console.error(...)` calls that ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "Committed production feature code left with raw `console.error(...)` calls that log full error objects to the browser console in prod. Clusters: frontend/apps/ppt-web/src/features/compliance/pages/Con"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.ts",
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.ts",
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.ts",
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-link-pm-account-noop",
+      "title": "UserHandler::link_pm_account() performs its guard checks (already-linked at :360",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:360-378 — UserHandler::link_pm_account() performs its guard checks (already-linked at :360, email-match at :364-367) and then, at the point whe"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-pwreset-token-dropped-prod",
+      "title": "request_password_reset() generates and stores a reset token (handler.request_pas",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:437-488 — request_password_reset() generates and stores a reset token (handler.request_password_reset returns PasswordResetRequestResult::Sent { plai"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-msgs",
+      "title": "the inquiry-detail handler (GET inquiry for realtor; ownership verified at :575-",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:592-595 — the inquiry-detail handler (GET inquiry for realtor; ownership verified at :575-584) builds its response as `InquiryDetailResponse { in"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-export-pdf-stub",
+      "title": "handleExportPDF() is a shipped no-op stub: its entire body is a comment `// In a",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:151-153 — handleExportPDF() is a shipped no-op stub: its entire body is a comment `// In a real implementation, this would genera"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-pages-no-i18n",
+      "title": "this is a `[locale]`-routed page in a next-intl app (sk/cs/de/en) yet imports NO",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx — this is a `[locale]`-routed page in a next-intl app (sk/cs/de/en) yet imports NO translation API (grep: 0 useTranslatio"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-sk",
+      "title": "a `[locale]`-routed page that DOES call `useTranslations('pages.priceMap')` (:40",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx — a `[locale]`-routed page that DOES call `useTranslations('pages.priceMap')` (:40) but still renders large blocks of hardcoded Slovak tha"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-policyform-number-coercion",
+      "title": "handleChange does `[name]: type === 'number' ? Number(value) : value || undefine",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/insurance/components/PolicyForm.tsx:108 — handleChange does `[name]: type === 'number' ? Number(value) : value || undefined`. `Number('')` is 0, so clearing a numeri"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/insurance/components/PolicyForm.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-error-pages-i18n",
+      "title": "All four app-wide terminal error screens render hardcoded English with no useTra",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "All four app-wide terminal error screens render hardcoded English with no useTranslation, in an app shipping sk/cs/de/en: features/errors/pages/NotFoundPage.tsx (title=\"Page not found\", description=\"T"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-meters-windowopen-tabnab",
+      "title": "the meter-reading photo thumbnail opens the stored image via `window.open(readin",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingValidationCard.tsx:122 and :125 — the meter-reading photo thumbnail opens the stored image via `window.open(reading.photoUrl, '_blank')` wit"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingValidationCard.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-fcm-malformed-token-never-evicted",
+      "title": "`send_fcm` (FCM HTTP v1) only flags a device token for eviction when the upstrea",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:367-376 — `send_fcm` (FCM HTTP v1) only flags a device token for eviction when the upstream error status matches `\"NOT_REGISTERED\" | \"UNREGISTERE"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-push-client-build-expect-panic",
+      "title": "`.expect(\"reqwest client build should not fail\")` and push_fanout.rs:773 — `.exp",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:280 — `.expect(\"reqwest client build should not fail\")` and push_fanout.rs:773 — `.expect(\"reqwest APNs client build should not fail\")`. `reqwest"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconstant-time-compare",
+      "title": "`verify_pkce` compares the recomputed S256 challenge to the stored `challenge` w",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:920-931 — `verify_pkce` compares the recomputed S256 challenge to the stored `challenge` with the standard `==` operator (`computed == challenge`, line"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "title": "the payment auto-matcher's inner `for invoice in &open_invoices` loop (accountin",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 — the payment auto-matcher's inner `for invoice in &open_invoices` loop (accounting.rs:129) creates a `PaymentMatch` for EVERY invoice who"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "title": "a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance thr",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:135-150 — a Variable-Symbol match alone contributes 0.8 and crosses the 0.5 acceptance threshold (accounting.rs:150) with NO amount corroboration "
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "title": "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs (339 lines) has NO `#[cfg(test)]` module and no test cases anywhere (grep for `#[cfg(test)]` / `#[test]` / `fn test` in the file returns nothing) "
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "title": "`send_vote_reminders()` selects every `status='active'` vote with `end_at <= now",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs:442-514 — `send_vote_reminders()` selects every `status='active'` vote with `end_at <= now + vote_reminder_days_before` and `end_at > NOW()` "
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs",
+        "backend/servers/api-server/src/services/scheduler/mod.rs",
+        "backend/servers/api-server/src/services/notification.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-rls-context-deprecated-exported",
+      "title": "the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed a",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed and should NOT be used' (middleware runs before extractors; ",
+        "[SUPERSEDED by code-review-api-core-rls-context-pool-not-conn] duplicate finding on rls_context module deprecation"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-authz-mw-guest-fail-open",
+      "title": "`require_permission` reads the caller's role from request extensions with `.get:",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:176-180 — `require_permission` reads the caller's role from request extensions with `.get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)`"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs",
+        "backend/crates/common/src/tenant.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-noop-isolation",
+      "title": "`tenant_filter` is named and documented ('ensure tenant isolation') as an isolat",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 — `tenant_filter` is named and documented ('ensure tenant isolation') as an isolation guard, but its body only checks that `X-Tenant-ID` p"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "title": "`DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by a",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-61 — `DelayConfig::to_duration()` multiplies the config-supplied `duration: u64` by an unchecked constant per unit: `Duration::from_secs(sel"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "title": "the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs:522-528 — the user quiet-hours lookup swallows repository errors: `self.granular_repo.get_user_schedule(user_id).await.ok().flatten().m"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "title": "four report handlers swallow repository DB errors with `.unwrap_or_default()` an",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of "
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "title": "the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> ",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 8,
+      "status": "ready",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplem",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListing route wires onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }",
+        "Navigation.kt:490-495 — the composable(Screen.CreateListing.route) destination wires the screen's onSubmit lambda to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing route wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": "plans/code-review-mobile-native-kmp-create-listing-submit-stub.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "title": "class ApiClient is never instantiated anywhere in production code. grep '\\bApiCl",
+      "vector": "cleanup",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "title": "parseApiError() runs isNetworkError(error) as its FIRST branch, before the struc",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "title": "the subscribe effect early-returns when `!eventType || !handlerRef.current` and ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `ha"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "title": "introspect_pm_token() caches active=false for the full 60s TTL on ANY non-succes",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !resp",
+        "[SUPERSEDED by code-review-reality-server-sso-introspect-5xx-neg-cache] duplicate: SSO introspect neg-cache poisons on transient failure"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "title": "each SSO OAuth helper constructs a fresh `reqwest::Client::new()` pe",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` pe",
+        "[SUPERSEDED by code-review-reality-server-sso-http-client-no-timeout] duplicate: SSO reqwest client missing timeout+pool config"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "title": "`require_rls_context` is documented (lines 181-184) as 'a stricter version ... U",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 5,
+      "status": "ready",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but",
+        "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed and should NOT be used' (middleware runs before extractors; "
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs",
+        "backend/crates/db/src/tenant_context.rs",
+        "backend/crates/api-core/src/middleware/mod.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": "plans/code-review-api-core-rls-context-pool-not-conn.md"
+    },
+    {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "title": "`require_permission` derives the caller role with `request.extensions().get::<Te",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:170-201 — `require_permission` derives the caller role with `request.extensions().get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)` (li"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs",
+        "backend/crates/common/src/tenant.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-idempotency-tx-across-handler",
+      "title": "`handle_idempotent_request` opens a DB transaction `pool.begin()` (line 95), tak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:95-179 — `handle_idempotent_request` opens a DB transaction `pool.begin()` (line 95), takes a `pg_advisory_xact_lock` (line 108), and then HOLDS t"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/idempotency.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-announce-roles-legacy-membership-table",
+      "title": "inside a single function, `Scheduler::get_announcement_target_users`, the `\"role",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:663-706 — inside a single function, `Scheduler::get_announcement_target_users`, the `\"roles\"` target branch (lines ~665-680) resolves recipient"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-meter-fake-success",
+      "title": "`action_check_meter` returns `success: true` with the response 'Your latest mete",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:437-466 — `action_check_meter` returns `success: true` with the response 'Your latest meter readings have been recorded. There are no pending ",
+        "backend/servers/api-server/src/services/voice_commands.rs:385-413 — `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, annou"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-announce-fake-success",
+      "title": "`action_check_announcements` unconditionally returns `success: true`, 'You have ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:385-413 — `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, annou",
+        "[SUPERSEDED by code-review-api-core-voice-meter-fake-success] related: voice command handlers fabricate success responses"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-syndication-fake-synced",
+      "title": "`process_syndication_job` never calls any portal API yet writes `syndication_sta",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-360 — `process_syndication_job` never calls any portal API yet writes `syndication_status::SYNCED` to the DB for every operation: PUBLISH gen"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-listings-detail-photos-swallow",
+      "title": "the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 and :343 — the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped) fetches the listing itself with the correct `.map_err"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-workflow-import-partial-silent",
+      "title": "the workflow-template import handler adds each imported action inside a loop wit",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:687-693 — the workflow-template import handler adds each imported action inside a loop with `if let Err(e) = state.workflow_repo.add_action(rls.co"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-doc-summary-not-persisted",
+      "title": "after an expensive LLM summarization call, the handler persists the result with ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — after an expensive LLM summarization call, the handler persists the result with `let _ = state.document_repo.update_summary(id"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl-stub",
+      "title": "the CreateListing route wires the fully-built CreateListingScreen with `onSubmit",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing route wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure",
+        "[SUPERSEDED by code-review-mobile-native-kmp-create-listing-submit-stub] duplicate finding on the same CreateListing stub"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "title": "four inline LaunchedEffect data loaders collapse ALL failures into an empty coll",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — four inline LaunchedEffect data loaders collapse ALL failures into an empty collection with no error state a"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-unbounded-fanout",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/Por",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111 getPortfolioAnalytics() fetches listMyListings(limit = 100) then fires one `async { getList"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-nfe-crash",
+      "title": "DecimalAsLongSerializer.deserialize() does `raw.substringBefore('.').toLong()` o",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 — DecimalAsLongSerializer.deserialize() does `raw.substringBefore('.').toLong()` on the raw JSON"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-wire-test-no-malformed",
+      "title": "the wire-contract guard for DecimalAsLong/DecimalAsDoubleSerializer covers only ",
+      "vector": "test",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt — the wire-contract guard for DecimalAsLong/DecimalAsDoubleSerializer covers only the happy paths: v"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "title": "Systemic across the commonMain repository layer: every repository that wraps a s",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in try/catch uses a bare `catch (e: Exception)` and folds the throwable into `Result.failure(e)` WITHOU"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "title": "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.k",
+      "vector": "cleanup",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...)` for diagnostic logging in commonMain (shared production KMP code) at three sites: line 48 ('fa"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "title": "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediat",
+      "vector": "cleanup",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=mobile-native-kmp"
+      ],
+      "evidence": [
+        "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`if` null-guard instead of smart-casting a locally captured val: androidApp/.../ui/listing/ListingDet"
+      ],
+      "files": [],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "title": "confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` wi",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` with NO try/catch, and the pa"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.ts",
+        "frontend/apps/ppt-web/src/main.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "title": "the number-typed value input does `onChange={(e) => updateCondition(index, { val",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 — the number-typed value input does `onChange={(e) => updateCondition(index, { value: Number(e.target.val"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "title": "only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePrev",
+      "vector": "chore",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePreviewModal, TriggerSelector, ExecutionDetailsModal, ExecutionMon"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+      "title": "TokenValidationCache::set() stores every introspection result with `expires_at: ",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:735-748 — TokenValidationCache::set() stores every introspection result with `expires_at: Instant::now() + Duration::from_secs(self.ttl_seconds)`, a fixed T"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-http-client-no-timeout",
+      "title": "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens),",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 4,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) each build a fresh `reqwest::Client::new()` and call `.send()` with NO",
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` pe"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-5xx-neg-cache",
+      "title": "introspect_pm_token() treats ANY non-2xx introspection response as an inactive t",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 4,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-762 — introspect_pm_token() treats ANY non-2xx introspection response as an inactive token: `if !response.status().is_success() { state.token_cache",
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !resp"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-journal-mock-content-shipped",
+      "title": "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_",
+      "vector": "completeness",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_PICKS, MOCK_ARTICLES, MOST_READ` from `./_mock` and renders the ENTIRE journal/magazine index from them (featured at :10"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/ui/Header.ts",
+        "frontend/apps/reality-web/src/app/sitemap.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+      "title": "`SectionBoundary` (a minimal class error boundary wrapping every listing-detail ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx — `SectionBoundary` (a minimal class error boundary wrapping every listing-detail layout section) implements `componentDidCatch(_er"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.ts"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "title": "in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, li",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 — in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, listings.rs:316-345), the photos sub-fetch swallows all repository"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "title": "in the data-residency dashboard handler, the top-level `compliance_status` field",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:1040-1048 — in the data-residency dashboard handler, the top-level `compliance_status` field is computed as `if last_verification.as_ref().map(|"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/data_residency.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "title": "in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dev-review segment=api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:736 — in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let chain_valid = verification[\"chain_valid\"].as_bool().unwrap"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/data_residency.rs",
+        "backend/crates/db/src/repositories/data_residency.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
     }
   ]
 }
