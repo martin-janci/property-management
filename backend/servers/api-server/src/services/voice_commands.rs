@@ -387,28 +387,27 @@ impl VoiceCommandProcessor {
         _device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
-        // In a real implementation, this would query the announcement repository
+        // No announcement repository is wired into the voice processor yet, so
+        // there is nothing to query. This used to fabricate a "you have no new
+        // announcements" success response with an empty `data` payload on this
+        // live webhook path (code review: fabricated success) — a resident
+        // could be told there is nothing new when announcements were never
+        // actually queried. Fail honestly instead: tell the caller the feature
+        // isn't available via voice yet rather than asserting an empty inbox.
         let response = match parsed.language.as_str() {
-            "sk" => "Nemate ziadne nove oznamy.",
-            "cs" => "Nemate zadne nove oznameni.",
-            _ => "You have no new announcements.",
+            "sk" => "Kontrola oznamov hlasom momentalne nie je dostupna. Prosim, pouzite mobilnu aplikaciu alebo webovy portal.",
+            "cs" => "Kontrola oznameni hlasem momentalne neni dostupna. Prosim, pouzijte mobilni aplikaci nebo webovy portal.",
+            _ => "Checking announcements is not yet available via voice assistant. Please use the mobile app or web portal.",
         };
 
         Ok(VoiceActionResult {
-            success: true,
+            success: false,
             action_type: voice_intent::CHECK_ANNOUNCEMENTS.to_string(),
             response_text: response.to_string(),
             ssml: Some(format!("<speak>{}</speak>", response)),
-            card: Some(VoiceCard {
-                title: self.localize("Announcements", &parsed.language),
-                content: response.to_string(),
-                image_url: None,
-            }),
+            card: None,
             should_end_session: true,
-            data: Some(json!({
-                "count": 0,
-                "announcements": []
-            })),
+            data: None,
         })
     }
 
@@ -439,29 +438,28 @@ impl VoiceCommandProcessor {
         _device: &VoiceAssistantDevice,
         parsed: &ParsedVoiceCommand,
     ) -> Result<VoiceActionResult, VoiceCommandError> {
-        // In a real implementation, this would query the meter repository
+        // No meter repository is wired into the voice processor yet, so there
+        // is nothing to query. This used to fabricate a "there are no pending
+        // readings" success response with an empty `data` payload on this live
+        // webhook path (code review: fabricated success) — a resident could be
+        // told their readings are up to date when the meter state was never
+        // actually queried. Fail honestly instead: tell the caller the feature
+        // isn't available via voice yet rather than asserting there is nothing
+        // pending.
         let response = match parsed.language.as_str() {
-            "sk" => {
-                "Vase posledne odcitanie meracov bolo zaznamenane. Nemam ziadne cakajuce odcitania."
-            }
-            "cs" => "Vase posledni odecty meracu byly zaznamenany. Nemam zadne cekajici odecty.",
-            _ => "Your latest meter readings have been recorded. There are no pending readings.",
+            "sk" => "Kontrola odcitania meracov hlasom momentalne nie je dostupna. Prosim, pouzite mobilnu aplikaciu alebo webovy portal.",
+            "cs" => "Kontrola odectu meracu hlasem momentalne neni dostupna. Prosim, pouzijte mobilni aplikaci nebo webovy portal.",
+            _ => "Checking meter readings is not yet available via voice assistant. Please use the mobile app or web portal.",
         };
 
         Ok(VoiceActionResult {
-            success: true,
+            success: false,
             action_type: voice_intent::CHECK_METER.to_string(),
             response_text: response.to_string(),
             ssml: Some(format!("<speak>{}</speak>", response)),
-            card: Some(VoiceCard {
-                title: self.localize("Meter Readings", &parsed.language),
-                content: response.to_string(),
-                image_url: None,
-            }),
+            card: None,
             should_end_session: true,
-            data: Some(json!({
-                "pending_readings": 0
-            })),
+            data: None,
         })
     }
 
@@ -783,6 +781,84 @@ mod tests {
         assert!(
             !result.response_text.to_lowercase().contains("zero"),
             "response must not claim a fabricated zero balance"
+        );
+    }
+
+    /// Regression (code-review: voice check-announcements fabricated empty
+    /// success): the handler used to unconditionally report `success: true`
+    /// with a hardcoded "you have no new announcements" response and an empty
+    /// `data` payload on this live webhook path, without ever consulting an
+    /// announcement repository. No announcement service is wired in yet, so it
+    /// must now fail honestly — `success: false`, no fabricated `data`, and a
+    /// response that tells the caller the feature isn't available rather than
+    /// asserting an empty inbox.
+    #[tokio::test]
+    async fn test_check_announcements_fails_honestly_instead_of_fabricating_empty() {
+        let processor = create_test_processor();
+        let device = make_device(Uuid::new_v4(), Uuid::new_v4(), Some(Uuid::new_v4()));
+        let parsed = processor.parse_command("Any new announcements?", "en-US");
+        assert_eq!(parsed.intent, voice_intent::CHECK_ANNOUNCEMENTS);
+
+        // action_check_announcements doesn't touch the database, so it can be
+        // called directly without acquiring a real connection.
+        let result = processor
+            .action_check_announcements(&device, &parsed)
+            .await
+            .expect("check-announcements must not error, it must fail honestly in-band");
+
+        assert!(
+            !result.success,
+            "check-announcements must not report fabricated success"
+        );
+        assert!(
+            result.data.is_none(),
+            "no announcement data must be fabricated when no repository was queried"
+        );
+        assert!(
+            !result
+                .response_text
+                .to_lowercase()
+                .contains("no new announcements"),
+            "response must not claim a fabricated empty inbox"
+        );
+    }
+
+    /// Regression (code-review: voice check-meter fabricated empty success):
+    /// the handler used to unconditionally report `success: true` with a
+    /// hardcoded "there are no pending readings" response and an empty `data`
+    /// payload on this live webhook path, without ever consulting a meter
+    /// repository. No meter service is wired in yet, so it must now fail
+    /// honestly — `success: false`, no fabricated `data`, and a response that
+    /// tells the caller the feature isn't available rather than asserting
+    /// nothing is pending.
+    #[tokio::test]
+    async fn test_check_meter_fails_honestly_instead_of_fabricating_empty() {
+        let processor = create_test_processor();
+        let device = make_device(Uuid::new_v4(), Uuid::new_v4(), Some(Uuid::new_v4()));
+        let parsed = processor.parse_command("Do I have any pending meter readings?", "en-US");
+        assert_eq!(parsed.intent, voice_intent::CHECK_METER);
+
+        // action_check_meter doesn't touch the database, so it can be called
+        // directly without acquiring a real connection.
+        let result = processor
+            .action_check_meter(&device, &parsed)
+            .await
+            .expect("check-meter must not error, it must fail honestly in-band");
+
+        assert!(
+            !result.success,
+            "check-meter must not report fabricated success"
+        );
+        assert!(
+            result.data.is_none(),
+            "no meter data must be fabricated when no repository was queried"
+        );
+        assert!(
+            !result
+                .response_text
+                .to_lowercase()
+                .contains("no pending readings"),
+            "response must not claim fabricated absence of pending readings"
         );
     }
 
