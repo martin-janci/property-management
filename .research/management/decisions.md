@@ -101,5 +101,14 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 ## Decisions logged 2026-07-30 (Phase 1.6 — pm-scrum-master + pm-backend)
 
-- **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
+- **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine. _(2026-08-10 update: still unaddressed; the trio is now at 13 days idle. Same failure mode observed on #2684.)_
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-10 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-08-10, pm-scrum-master):** Formal call: does the announcement fan-out KPI added by PR #2723 satisfy the pm-data `data-announcement-fanout-instrumentation` goal, or do we keep the item open with expanded scope (per-scope delivered/read/ack breakdown)? The action-list item was retired this run pending this decision. Owner: pm-data.
+- **NEW (2026-08-10, pm-scrum-master):** Reviewer-slot policy for human-authored PRs (re-raise) — the accounting trio (#2555/#2558/#2559) is now at **13 days** idle and PR #2684 (workflow-cond-parse-failopen) is at ~2 days; the 2026-07-30 decision on reviewer-slot policy remains unaddressed. The dispatcher's bot loop is consuming all reviewer bandwidth. Owner: pm-tech-lead — 2-week deadline before this escalates to a blocker.
+- **NEW (2026-08-10, pm-qa):** Enforcement mechanism for the "test-with-every-security-fix" policy (2026-06-15 open decision) — the reality-server security batch this window (#2724/#2725/#2726/#2727) shipped code fixes but the merge digest shows no matching failing-on-main tests. Options: (a) CI gate on `security:*` labels requiring a new test file in the diff; (b) PR-review checklist item; (c) scrum-master weekly audit. Owner: pm-tech-lead + pm-qa.
+- **NEW (2026-08-10, pm-qa):** Coverage baseline requirement for churn hotspots (top-3 files by recent churn) before further dedupe passes — reality-server state.rs and routes/agencies.rs need a cargo-llvm-cov baseline before we ship the next split proposal, or we risk the next regression sliding under the covers. Owner: pm-tech-lead.

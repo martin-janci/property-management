@@ -7273,6 +7273,113 @@
         "assignment_status": "merged",
         "pr_number": 2706
       }
+    },
+    {
+      "id": "code-review-reality-server-sso-pending-sessions-unbounded",
+      "title": "reality-server: /api/v1/sso/login grows sso_sessions HashMap unboundedly — memory DoS",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-server 2026-08-10"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:94-101 — sso_login inserts unconditionally",
+        "backend/servers/reality-server/src/routes/sso.rs:234-252 — sso_callback is the only removal path; 10-min expiry only runs for redeemed entries",
+        "backend/servers/reality-server/src/state.rs:855+991 — sso_sessions HashMap unbounded; no sweep, no cap",
+        "backend/servers/reality-server/src/state.rs:461 — SsoTokenService::create_mobile_token demonstrates the fix (issue #820 retain pattern)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": "plans/code-review-reality-server-sso-pending-sessions-unbounded.md"
+    },
+    {
+      "id": "code-review-reality-server-sso-upstream-no-timeout",
+      "title": "reality-server: SSO upstream reqwest clients have no timeout — slow PM OAuth pins handler tasks",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-server 2026-08-10"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682/706/743 — reqwest::Client::new() per request, no timeout",
+        "backend/servers/reality-server/src/state.rs:757-760 — PmApiClient::new demonstrates the correct .timeout(...) pattern; SSO helpers do not use it"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": "plans/code-review-reality-server-sso-upstream-no-timeout.md"
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-total-is-page-length",
+      "title": "reality-server: GET /api/v1/imports/jobs `total` is jobs.len() — silently caps at page size",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-08-10"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:120-133 — list_import_jobs reports total = jobs.len() as i64; on any non-final page, total == limit",
+        "routes/inquiries.rs:597-615 and routes/realtors.rs:210-223 already fixed the same class via tokio::try_join!(get_..., count_...); imports.rs missed the fix and there is no count_import_jobs on RealityPortalRepository"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-state-rs",
+      "title": "hotspot: backend/servers/reality-server/src/state.rs (1201 lines churned across 3 commits)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit window 2026-08-07→2026-08-10"
+      ],
+      "evidence": [
+        "1201 add/del over 3 commits (top churn this run) — churn stacks with sso-timeout + sso-pending-sessions findings; consider a state.rs slimming pass"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-agencies-rs",
+      "title": "hotspot: backend/servers/reality-server/src/routes/agencies.rs (624 lines churned across 3 commits)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit window 2026-08-07→2026-08-10"
+      ],
+      "evidence": [
+        "624 add/del over 3 commits — mostly PR #2727 (agency-members IDOR) + PR #2722 (community reads gate); refactor deferred but note the file is now on the hot list"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs"
+      ],
+      "created_at": "2026-08-10",
+      "updated_at": "2026-08-10",
+      "plan": null
     }
   ]
 }

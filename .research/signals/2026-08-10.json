@@ -1,0 +1,117 @@
+{
+  "generated": "2026-08-10T02:25:06Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-10",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-07T06:24:00Z vs now=2026-08-10T02:25Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine gap 67h (>36h): 2d 19h since last run. Cloud cron may be paused; dispatcher (separate loop) continued to tick — see .research/management/assignments.json on the planning branch for its progress."
+    },
+    {
+      "id": "stale-routine-alert-2026-08-10",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso 3+ days ago",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "state.json last_run_iso=2026-08-07T06:24:00Z is ~3 days old; cloud routine may be paused. Buffer-low fire payload (claimable=1/72) confirms the pipeline was structurally exhausted upstream. This run brings the state.json back current, refills the action-list to 36/36 (Phase 1.6), and promotes 2 security plans."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-state-rs",
+      "type": "churn-hotspot",
+      "source": "commit window 2026-08-07→2026-08-10",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "1201 add/del over 3 commits (top churn this run) — state.rs is the file where the two Phase 1.5 security signals also live (sso_sessions unbounded map + missing SSO client timeouts), so stacked signal here."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-agencies-rs",
+      "type": "churn-hotspot",
+      "source": "commit window 2026-08-07→2026-08-10",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "624 add/del over 3 commits — churn driven by PR #2727 (agency-members IDOR fix) and PR #2722 (community reads gate)."
+    },
+    {
+      "id": "code-review-reality-server-sso-pending-sessions-unbounded",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-08-10 (segment=reality-server, churn-aligned)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:94-101 inserts a PendingSsoSession on every /sso/login unconditionally; the only removal path (sso_callback:234-252) fires when the attacker returns. state.rs:855 holds Arc<Mutex<HashMap>> with no cap, no sweep. Sibling create_mobile_token (state.rs:461) already fixes the same class via tokens.retain(...) — pattern proven, just not applied here."
+    },
+    {
+      "id": "code-review-reality-server-sso-upstream-no-timeout",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-08-10 (segment=reality-server, churn-aligned)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:682/706/743 — exchange_code_for_tokens / get_user_info / introspect_pm_token construct reqwest::Client::new() per request; default has no timeout. state.rs:757-760 PmApiClient::new demonstrates .timeout(Duration::from_secs(timeout_seconds)); apply that shape to the three SSO helpers."
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-total-is-page-length",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-08-10 (segment=reality-server, churn-aligned)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/imports.rs:120-133 — list_import_jobs pages via LIMIT/OFFSET but reports total = jobs.len() as i64, so every non-final page reports total==limit. routes/inquiries.rs:597-615 and routes/realtors.rs:210-223 already fixed the same class via tokio::try_join!(get_..., count_...). No count_import_jobs on RealityPortalRepository yet — new repo method needed."
+    }
+  ],
+  "phase_1_summary": {
+    "since_iso": "2026-08-07T06:24:00Z",
+    "lag_hours": 67,
+    "merged_prs_count": 22,
+    "merged_pr_range": [2706, 2727],
+    "closed_not_merged": ["PR #2705 dx-closed-not-merged-pr-2385-retry2 (rust-toolchain 1.100.0 nonexistent — invalid dependabot bump; dispatcher already handled)"],
+    "issues_new_or_updated": ["#2703 (SSRF TOCTOU, closed by #2710)", "#2704 (api_call unbounded DoS, closed by #2707)", "#2612 (fire-once notifications, closed by #2714)"],
+    "top_churn": [
+      {"file": "backend/servers/reality-server/src/state.rs", "commits": 3, "lines": 1201},
+      {"file": "backend/servers/reality-server/src/routes/agencies.rs", "commits": 3, "lines": 624},
+      {"file": "frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts", "commits": 2, "lines": 486, "note": "test file — logged in brief, not scored as backlog vector"}
+    ],
+    "screen_map_drift_note": "PR #2718 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts (an API-route TEST) — matches the trigger set path but is a test file, not a page route. Drift signal suppressed as heuristic false-positive per the routine's caveat about slug-basename matching."
+  },
+  "phase_15_review": {
+    "segment_reviewed": "reality-server",
+    "reason": "churn-aligned (top-3 churn all under backend/servers/reality-server/)",
+    "expert": "rust+security",
+    "findings": 3,
+    "next_segment_hint": "api-core (last reviewed 2026-08-04) or mobile-native-kmp (2026-08-04)"
+  },
+  "phase_16_pm": {
+    "role_rotation": "pm-qa (index 3 → 4)",
+    "coverage_upkeep_epic_index": "5 → 6 (13 distinct epics)",
+    "action_list_buffer": "36/36 (refilled; was 1/72 on dispatcher side per fire payload)",
+    "role_focus_summary": "pm-qa: 22 PRs shipped a heavy security wave (SSRF/DoS/IDOR/HMAC/session-invalidate); reality-server auth batch #2724-#2727 landed code fixes without matching failing-on-main negative tests — top QA gap this run."
+  },
+  "resolutions": [],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-10.md && head -1 matches # 2026-08-10", "observed": "brief exists with correct H1", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "staged state.json vs HEAD state.json diff (cursors, seen_signals, hotspot_history, stats.quiet_days)", "observed": "last_pr_seen 2702→2727, last_issue_seen 2699→2704, last_commit_sha advanced, +6 seen_signals, +2 hotspot_history keys", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique | length)' backlog.json", "observed": "298 ids, all unique", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative signal ID re-emitted with score_delta != 0", "observed": "all 6 new signal ids are new to seen_signals", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "cap: no score > 8; decay: no open item older than 14d without −1 or dropped", "observed": "max score 6; single open non-terminal item (portfolio-analytics) is 6 days old — no decay due", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "each new plan under plans/ has adversarial pass annotation in brief", "observed": "2 new plans (sso-pending-sessions-unbounded, sso-upstream-no-timeout); adversarial pass: passed for both — noted in brief", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "count ≤2; each plan has 4 metadata + 11 headings + tick + Mode + files exist on disk", "observed": "2 new plans; both pass all structural + file-existence checks", "expected": "true"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (staged diff is .research/-only)", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "no secrets or private hostnames in staged .research/ diff (baseline docs exempt)", "observed": "no matches in scanned added lines", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md <(regenerate)", "observed": "byte-identical (same Python regenerator produced both)", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "each failed phase corresponds to non-advanced cursor", "observed": "no phase failed this run", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "every prior-run plan slug still exists in plans/ or plans/_archive/", "observed": "no plans deleted; both 08-10 plans are new adds", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count staged >= archive count at HEAD", "observed": "no archive changes this run (still same count)", "expected": "true"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regenerate)", "observed": "byte-identical (same Python regenerator produced both)", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix cap + idempotency + kill switch", "observed": "auto_fix_actions=[] (no allowlist match this run — see auto_fix section)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor 0..7 + coverage_cursor advanced", "observed": "action-list.json items=36, risks.json items=16, project-state.md non-empty, pm_cursor.next_index=4 (in 0..7), coverage_cursor.next_index=6 (in [0,13)) — pm advanced 3→4 and coverage advanced 5→6", "expected": "exit 0"},
+    {"goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged added lines", "observed": "no matches", "expected": "0"}
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — (a) the 2 promotable signals this run are Rust logic changes to state.rs / sso.rs, not on Phase 5's allowlist; (b) the standing stalled-review situation (#2555/#2558/#2559 accounting trio, 13d idle) is a known state deliberately not re-emitted since 2026-08-06 brief (author is the repo owner; standing hypothesis is ACC epic waiting on batch lead). Both promotable signals land in the manual-implementer path via the promoted plans."
+}

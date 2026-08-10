@@ -1,4 +1,4 @@
-# pm-qa — QA / Test lens (2026-06-15)
+# pm-qa — QA / Test lens (2026-08-10)
 
 _Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues._
 
@@ -7,41 +7,39 @@ _Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + 
 ```json
 {
   "role": "pm-qa",
-  "summary": "Dev CI unblocked by #1379 ends a 3-day red streak; 18 fresh follow-up issues from yesterday's merge surge are the new QA front, concentrated on missing test coverage (RLS, IDOR, OAuth, realtime sync, payment atomicity).",
+  "summary": "22-PR burn window shipped a heavy security wave (SSRF, DoS, IDOR, HMAC, session-invalidate, unauth reads, RAG fail-closed, workflow-executor NaN guard) — every one of them warrants a matching failing-on-main regression test. Coverage bar for the reality-server security batch (#2724/#2725/#2726/#2727) needs an explicit QA gate before we call the security backlog cleared.",
   "next_actions": [
-    {"action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Failing-on-main test landed; passes once #1361 fix lands."},
-    {"action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Decoder tests pin known variants and error-path for unknown."},
-    {"action": "Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "UI test confirms older paginated response doesn't clobber newer page-N state."},
-    {"action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Frontend test asserts autosave fires once per debounce window; i18n key lookups present."},
-    {"action": "Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Concurrent-tx test asserts no negative-balance and COALESCE-guarded aggregates."},
-    {"action": "Pin cron validator surface with fixture-based test (#1368) to guard against #616 regression", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Validator test fixture covers known-good + known-bad expressions; Epic 81 promotion gates on it."}
+    {"action": "Un-quarantine /disputes/kpis test and add window_start<=window_end validation (400 on inverted window) — follow-up #2575 outstanding 10+ days", "priority": "high", "dependency": "pm-backend", "definition_of_done": "Un-quarantined sqlx::test asserts 400 on inverted window + happy-path payload shape; failing-on-main check confirmed before fix lands."},
+    {"action": "Replace pure-Rust announcement fan-out test with a sqlx integration test that exercises the real RLS predicate (#2484 unresolved)", "priority": "high", "dependency": "pm-backend", "definition_of_done": "Integration test uses actual DB + RLS; deleting the SQL predicate makes it fail."},
+    {"action": "Add regression tests for the reality-server security batch (#2725 password-reset transport, #2726 SSO session-invalidate error swallow, #2727 agency-members unauth IDOR) — code fixes shipped but ship each with a failing-on-main negative test", "priority": "high", "dependency": "pm-backend", "definition_of_done": "One integration test per merged fix asserting the pre-fix vulnerability now returns 401/403/500 as appropriate."},
+    {"action": "Convert workflow_executor.rs unparseable-condition FAIL-OPEN branch to fail-closed (#2708 landed the NaN guard but the parse branch is a separate gap surfaced by tier1d signal)", "priority": "high", "dependency": "pm-backend", "definition_of_done": "Unknown/unparseable condition JSON returns evaluate=false + audit warning + unit test covers it."},
+    {"action": "Add integration test for reality://sso happy-path callback that exercises SsoStateStore.mint() call site (#2574 half-wired regression is the last unclosed follow-up from PR #2568)", "priority": "medium", "dependency": "pm-mobile", "definition_of_done": "Android UI test drives a real SSO deep-link roundtrip and asserts mint()→verify() pair succeeds."},
+    {"action": "Add HMAC-parity regression to all four webhook handlers (booking/airbnb/esignature/layout) — PR #2718 landed the layout leg, extend to the other three so #2528 stays closed system-wide", "priority": "medium", "dependency": "pm-integration", "definition_of_done": "Per-webhook test asserts a forged/timestamp-skewed signature is rejected; failing-on-main on booking + airbnb + esignature until wired."}
   ],
   "risks": [
-    {"risk": "18 follow-up issues (#1360–#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.", "probability": "high", "impact": "medium", "mitigation": "pm-scrum-master triages the batch this run — assign owner or close as won't-fix."},
-    {"risk": "record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.", "probability": "medium", "impact": "high", "mitigation": "Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test."},
-    {"risk": "Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) — current tests don't pin the validator surface.", "probability": "medium", "impact": "medium", "mitigation": "Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it."},
-    {"risk": "Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured — wastes implementer cycles claiming gap stories already shipped.", "probability": "high", "impact": "medium", "mitigation": "pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings."},
-    {"risk": "Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) — old credentials can linger and be used post-rotation.", "probability": "medium", "impact": "high", "mitigation": "Implement atomic credential swap + add OAuth handler/CSRF test coverage."}
+    {"risk": "Security PRs #2724/#2725/#2726/#2727 landed the code fix but no evidence in the merge digest of matching negative regression tests — QA policy (2026-06-15 decisions_needed: 'test file for every security-labelled fix') is not being enforced", "probability": "high", "impact": "high", "mitigation": "Enforce the 2026-06-15 test-with-security-fix policy at PR-review time; QA re-audits the 4 PRs this week and files gap-issues if tests are absent."},
+    {"risk": "workflow_executor evaluate_conditions() FAILS OPEN on unparseable stored condition (tier1d signal, still open) — a corrupted or attacker-crafted JSON can silently satisfy any workflow gate", "probability": "medium", "impact": "high", "mitigation": "Land the fail-closed rewrite + parse-error audit log + negative test."},
+    {"risk": "Dispute KPI endpoint (#2572→#2575) still test-quarantined 10+ days after the follow-up was filed — reporting consumers can regress silently", "probability": "medium", "impact": "medium", "mitigation": "Un-quarantine, add window validation, and add a second contract test the reporting consumer runs against."},
+    {"risk": "Announcement fan-out real-SQL test gap (#2484) unresolved — the pure-Rust re-model can drift from the actual RLS predicate; a fan-out regression would ship undetected", "probability": "medium", "impact": "high", "mitigation": "Replace with a sqlx::test that uses the real query + real RLS policies; delete the pure-Rust duplicate."},
+    {"risk": "Reality-server churn (state.rs 1201 lines, agencies.rs 624 lines) landed 3 code-review fixes this window but no matching test-scope expansion — hotspot without a coverage baseline invites the next regression", "probability": "medium", "impact": "medium", "mitigation": "Establish a per-hotspot coverage baseline via cargo-llvm-cov; require any new PR touching top-3 hotspots to hold or improve coverage."}
   ],
   "open_questions": [
-    "Does #1377 (document download/preview test gap) require new presigned-URL minting test infra, or can it be folded into the existing forms RLS suite?",
-    "Should the pre-push fmt/clippy gate (#1375) be local-only or also enforced as a CI status check?",
-    "Is the realtime preference-sync publish leg (#1376) coverable as a deterministic integration test, or does it need a flake-tolerant smoke test?",
-    "Are stale draft PRs #1316 (verify-document-folder-organization-backend-promote) and #1197 (test-oauth-authorization-server-integration) salvageable, or should they be closed and re-opened?"
+    "Are the reality-server security-batch PRs (#2724-#2727) actually shipping matching regression tests, or is the QA policy silently drifting?",
+    "Should the announcement fan-out metric added by #2723 come with a lightweight metrics-emitted assertion test, or is it observability-only for now?",
+    "Does the #2708 workflow_executor NaN guard cover the same code path as the tier1d unparseable-condition FAIL-OPEN, or are these two orthogonal fixes we've been conflating?",
+    "Do we need a dedicated 'security-fix has a failing-on-main test' CI gate, or is the current review policy sufficient?"
   ],
   "decisions_needed": [
-    "Pre-push fmt/clippy gate (#1375): local hook only, CI-status, or both? — owner: pm-tech-lead",
-    "Triage protocol for the 18 follow-up issues #1360-#1377: bulk-assign by theme to per-role queues, or per-issue triage? — owner: pm-scrum-master",
-    "Promotion-gate policy: should each high-severity coverage gap (atomicity, IDOR, RLS) block its source epic's done-promotion until a failing-on-main test exists? — owner: pm-tech-lead + pm-qa"
+    "Enforcement mechanism for the 'test with every security fix' policy — CI gate, review checklist, or scrum-master audit? — owner: pm-tech-lead + pm-qa",
+    "Coverage baseline requirement for churn hotspots (top-3 files by recent churn) before further dedupe passes — owner: pm-tech-lead"
   ]
 }
 ```
 
 ## Notes
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-07-06 (assuming 1-per-day cadence with 8 roles).
-- Five new pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-06-15"`.
-- Five risks dedup-checked against existing pm-qa risk IDs and appended.
-- Coverage epic-85 (rotation idx 10) refreshed: gap-85-2 evidence added from PR #1383; "app icon variants" + "app.config.ts" gaps removed.
-- Phase 1.5 finding (vote partial_cmp NaN) already tracked in prior run via `pm-qa-vote-partial-cmp-nan-fuzz` — kept open.
-- Phase 1.5 finding (`OsRng.try_fill_bytes().expect()` low-sev in crypto.rs) noted; below threshold for new action this run.
+- Rotation idx 3 of 8; next pm-qa run ~2026-08-18 (assuming 1-per-day cadence with 8 roles).
+- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-08-10"`.
+- Five risks appended to `risks.json` this run (dedup-checked against existing pm-qa risk ids).
+- Coverage epic-80 (cursor idx 5) refreshed this run: PR #2712 evidence added to story 80-1 (add_evidence IDOR fix), all three 80-x stories re-stamped `last_checked=2026-08-10`; no status flips.
+- Post-merge-review batch note: **the reality-server auth batch (#2724/#2725/#2726/#2727) shipped code fixes but the merge digest gives no evidence of matching failing-on-main tests** — flagged as a top risk this run and folded into the top pm-qa next_action.

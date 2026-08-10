@@ -1,14 +1,16 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-10T09:00:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
       "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
-      "probability": "medium",
+      "probability": "low",
       "impact": "high",
-      "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
+      "mitigation": "PR #2718 (2026-08-08) landed HMAC parity test for layout leg — mitigation is now IN-PLACE; downgrade probability. Follow-up: extend the parity test to booking/airbnb/esignature webhooks.",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23"
     },
     {
@@ -18,15 +20,19 @@
       "impact": "medium",
       "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23"
     },
     {
       "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
-      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
+      "risk": "add_evidence dispute sub-resource cross-tenant-writable (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
       "probability": "low",
       "impact": "high",
-      "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
+      "mitigation": "PR #2712 (2026-08-08) landed the fix + dispute audit event — mitigation is now IN-PLACE; risk carried at low probability pending pm-tech-lead close-out of #2483.",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23 (#2483)"
     },
     {
@@ -36,15 +42,19 @@
       "impact": "high",
       "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
       "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
       "source": "post-merge review 2026-07-23 (#2484)"
     },
     {
       "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
-      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
+      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish). Announcement fan-out leg cleared by PR #2723 (2026-08-08); other legs remain.",
       "probability": "high",
       "impact": "medium",
-      "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
+      "mitigation": "Sequence pm-data KPI-definition tasks (6 items in action-list); establish minimum-analytics DoD for future stories",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
       "source": "pm-data 2026-07-23 rotating role"
     },
     {
@@ -54,6 +64,8 @@
       "impact": "medium",
       "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
       "source": "pm-data 2026-07-23"
     },
     {
@@ -63,15 +75,19 @@
       "impact": "medium",
       "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
       "source": "pm-data 2026-05-28 (reopened 2026-07-23)"
     },
     {
       "id": "risk-webhook-cross-integration-drift-2026-07-23",
-      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
+      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — PR #2718 landed layout leg; booking/airbnb/esignature parity still unknown",
       "probability": "medium",
       "impact": "high",
-      "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
+      "mitigation": "Extend PR #2718 parity test template to booking/airbnb/esignature webhooks",
       "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open",
       "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)"
     },
     {
@@ -98,18 +114,18 @@
     },
     {
       "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
-      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement — dispatcher stack is starving on reviewer capacity, not implementer capacity",
-      "probability": "medium",
+      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 13 days with no reviewer engagement — dispatcher stack is starving on reviewer capacity, not implementer capacity",
+      "probability": "high",
       "impact": "medium",
-      "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs",
+      "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs (carried, unresolved)",
       "owner_role": "pm-tech-lead",
       "trigger": null,
       "status": "open",
-      "source": "pm-scrum-master 2026-07-30"
+      "source": "pm-scrum-master 2026-07-30 (re-flagged 2026-08-10 at 13d idle)"
     },
     {
       "id": "pm-backend-disputes-kpis-window-validation-gap-2026-07-30",
-      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
+      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it — open 10+ days",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract",
@@ -117,6 +133,50 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-qa-reality-server-security-batch-tests-missing-2026-08-10",
+      "risk": "Security PRs #2724/#2725/#2726/#2727 landed the code fix but the merge digest shows no evidence of matching failing-on-main negative tests — QA policy (2026-06-15 decision) is not being enforced",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Enforce the 2026-06-15 test-with-security-fix policy at PR-review time; QA re-audits the 4 PRs this week and files gap-issues if tests are absent",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-10"
+    },
+    {
+      "id": "pm-qa-workflow-executor-fail-open-parse-2026-08-10",
+      "risk": "workflow_executor evaluate_conditions() FAILS OPEN on unparseable stored condition (tier1d signal, still open) — a corrupted or attacker-crafted JSON can silently satisfy any workflow gate",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Land the fail-closed rewrite + parse-error audit log + negative test",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-10"
+    },
+    {
+      "id": "pm-qa-churn-hotspot-coverage-baseline-2026-08-10",
+      "risk": "Reality-server churn (state.rs 1201 lines, agencies.rs 624 lines) landed 3 code-review fixes this window but no matching test-scope expansion — hotspot without a coverage baseline invites the next regression",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Establish a per-hotspot coverage baseline via cargo-llvm-cov; require any new PR touching top-3 hotspots to hold or improve coverage",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-08-10"
+    },
+    {
+      "id": "pm-scrum-master-dispatcher-buffer-starvation-2026-08-10",
+      "risk": "Dispatcher-side open buffer at 1/72 and local buffer at 2/36 before this run — implementer capacity was idling while gap candidates went un-ranked",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "This run's refill (34 items surfaced → 36/36 open); one-time recheck that ranker mapping is wired end-to-end",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-scrum-master 2026-08-10"
     }
   ]
 }

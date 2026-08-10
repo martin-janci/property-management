@@ -1,82 +1,75 @@
-# PPT Roadmap — upkeep 2026-07-30
+# PPT Roadmap — upkeep 2026-08-10
 
 ## State of the project
 
-- Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics). Unchanged since 2026-07-15 deep scan.
-- Delta vs 2026-07-27 upkeep: no story-status flips this window. 17 PRs merged (dominated by follow-up hardening + auto-fix loop): all of the 2026-07-24 post-merge-review batch is now closed except #2528 (booking webhook parity). Two same-day merges (#2571 DELETE-by-file-key, #2568 Android SSO CSRF) each spawned a follow-up issue (#2573, #2574) — the auto-review loop is catching regressions inside 24h.
-- Remaining gaps (the last 2 partial stories, both frontend slices on shipped APIs):
-  1. **84-1** — ppt-web still uploads via server proxy; direct-to-S3 endpoint (#2309) has no frontend consumer. Now blocked on #2573 reference-check fix landing first.
+- Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics). Unchanged since 2026-07-15 deep scan (last real flip was 80-3 on 2026-06-25).
+- Delta vs 2026-08-07 upkeep: no story-status flips this window; **22 PRs merged** and **3 tracked issues closed** (#2703 SSRF, #2704 DoS, #2612 notification durability). The dispatcher's auto-fix + post-merge-review loops are now visibly retiring the reality-server auth security batch (#2724/#2725/#2726/#2727 all landed the code fix this window).
+- Remaining coverage gaps (the last 2 partial stories, both frontend slices on shipped APIs):
+  1. **84-1** — ppt-web still uploads via server proxy; direct-to-S3 endpoint has no frontend consumer (blocked-behind: #2320 upload hardening).
   2. **84-2** — signer-facing document-sign page not built (screen-map planned, API complete); prior implementer attempt failed no-PR.
-- Screen coverage: 0 orphan screens · 0 validation errors · 3 missing UC links (UC-33.x dispute sub-UCs — 2 queued this run, 1 remaining).
-- Buffer: **36/36 open** (refilled from 31/36 open pre-run — 6 new items, 1 marked done by PR #2576).
+- Screen coverage: 0 orphan screens · 0 validation errors · 3 missing UC links (UC-33.1/2/3 dispute sub-UCs — all 3 queued this run).
+- **Dispatcher buffer starvation** (routing signal): dispatcher-side open buffer at 1/72; local buffer went 2/36 pre-run → 36/36 post-refill. 34 new items surfaced this run.
 
 ## Ranked plan
 
 ### mvp / finish-what's-started (highest score, 8)
 
-- [high] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial) — owner: pm-frontend — **blocked-on: #2573 reference-check fix**
-- [high] Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery (84-2 partial) — owner: pm-frontend
+- [high] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial) — owner: pm-frontend — **soft-dep: #2320 upload-flow hardening**
+- [high] Build signer-facing document-sign page in ppt-web; flip screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery (84-2 partial) — owner: pm-frontend
 
-### post-merge follow-ups from this window (score 7-8, high priority)
+### post-merge-review follow-ups from this window (score 7-8, high priority)
 
-- [high] Fix #2573 — DELETE /documents/by-file-key can delete a still-referenced object within the same org (data-loss regression from PR #2571) — owner: pm-backend
-- [high] Fix #2574 — Android SSO CSRF guard half-wired: SsoStateStore.mint() has no call site so every reality://sso callback is rejected (regression from PR #2568) — owner: pm-mobile
-- [medium] Fix #2575 — /disputes/kpis has no window-ordering validation, only test is quarantined (from PR #2572) — owner: pm-backend
-- [medium] Add regression test for PR #2547 scheduler retention prune (still flagged hotfix-no-test) — owner: pm-backend/pm-qa
+- [high] Un-quarantine /disputes/kpis test + add window_start <= window_end validation (#2575 open 10+ days) — owner: pm-backend
+- [high] Add failing-on-main regression tests for reality-server security batch (#2725 password-reset transport, #2726 SSO session-invalidate error swallow, #2727 agency-members unauth IDOR, #2724 db_error leak) — owner: pm-backend/pm-qa — why: code fixes shipped but no evidence of matching negative tests
+- [high] Convert workflow_executor.rs unparseable-condition branch to fail-closed (tier1d signal — separate from #2708 NaN guard) — owner: pm-backend
+- [high] Wire Android SsoStateStore.mint() at reality://sso deep-link entry + happy-path integration test (#2574 half-wired regression from #2568) — owner: pm-mobile
+- [high] Replace pure-Rust announcement fan-out test with sqlx integration test exercising real RLS predicate (#2484 unresolved) — owner: pm-backend/pm-qa
 
-### security cross-cutting (score 7, carried)
+### security cross-cutting (score 6-7)
 
-- [high] Cross-cutting webhook hardening audit — booking / airbnb / esignature / layout — #2528 booking webhook is the last unresolved leg from the 2026-07-24 batch — owner: pm-integration
-- [medium] Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature (SECURITY) — owner: pm-security
+- [medium] Extend PR #2718 HMAC parity test to booking / airbnb / esignature webhooks (only layout leg landed) — owner: pm-integration
+- [medium] Alexa voice webhook accepts forged requests — verify_alexa_signature never checks HMAC (SECURITY carried) — owner: pm-security
+- [medium] reality-web layout.tsx inlines tenant-config JSON into `<script>` without escaping — owner: pm-security
 
-### post-merge follow-ups (carried from prior windows, score 5-6)
+### post-merge follow-ups (carried, score 5-6)
 
-- [medium] Follow-up #2483: add_evidence dispute sub-resource cross-tenant-writable — owner: pm-tech-lead (in-progress via PR #2490)
-- [medium] Follow-up #2484: announce fan-out real-SQL integration test — owner: pm-tech-lead
-- [medium] Follow-up #2485: layout publish webhook timestamp/replay protection — owner: pm-tech-lead
-- [medium] Follow-up #2486: mobile LAYOUT_CACHE_KEY tenant scoping — owner: pm-tech-lead
-- [medium] Follow-up #2366 (retry 2/2): direct-to-S3 upload drops building_id — owner: pm-tech-lead
+- [medium] Verify PR #2712 fully covers add_evidence cross-tenant IDOR (#2483) — owner: pm-tech-lead
+- [medium] Follow-up #2486: mobile LAYOUT_CACHE_KEY tenant scoping — owner: pm-mobile
 - [medium] Follow-up #2241 (retry 2): OAuth state single-use not atomic in prod Redis — owner: pm-tech-lead
-- [medium] Follow-up #2318 (retry 2): report-schedule due-work consumer RLS no-op — owner: pm-tech-lead
-- [medium] Follow-up #2320 (retry 2): harden direct-to-S3 upload flow (IDOR at registration, size cap, orphans) — owner: pm-tech-lead
+- [medium] Follow-up #2318 (retry 2): report_schedule due-work consumer RLS no-op — owner: pm-tech-lead
+- [medium] Follow-up #2320 (retry 2): harden direct-to-S3 upload flow (IDOR/size cap/orphans) — owner: pm-tech-lead
 
 ### review + coordination (score 4-5, medium)
 
-- [medium] Review + shepherd merge of accounting MVP-loop trio (#2555, #2558, #2559) — 2-day reviewer starvation — owner: pm-tech-lead
-- [medium] repeated-churn: auth.rs (runs_seen=4, 2950 lines, 2nd-largest route file) — plan a module split — owner: pm-tech-lead
+- [medium] Shepherd merge of accounting MVP trio (#2555, #2558, #2559) — 13 days idle — owner: pm-tech-lead
+- [medium] Shepherd merge of human-authored PR #2684 (workflow-cond-parse-failopen) — owner: pm-tech-lead
 
 ### pm-data KPI gap wave (score 4-5, carried)
 
 - [medium] Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count)
 - [medium] Define dispute-lifecycle KPI set (funnel + TTR percentiles + evidence-per-dispute)
-- [medium] Instrument announcement fan-out with delivered/read/ack per targeting scope
 - [medium] Support-staff read audit event schema
-- [medium] Publish data-retention policy for support-data / audit trail
+- [medium] Publish data-retention policy for support_tooling_events / audit trail
 - [medium] Formalize FaultStatusCount canonical definition
 - [medium] Instrument signup/onboarding-tour completion funnel (10b-6)
 
+_Note: announcement fan-out instrumentation was retired this run — PR #2723 landed the metric (may need scope-expansion follow-up per open question)._
+
 ### Screen-map drift (score 3-4)
 
-- [medium] Link UC-33.1 to a dispute screen-map (missing_use_cases from coverage) — owner: pm-frontend
-- [medium] Link UC-33.2 to a dispute screen-map (missing_use_cases from coverage) — owner: pm-frontend
+- [low] Link UC-33.1 to a dispute screen-map (missing_use_cases from coverage) — owner: pm-frontend
+- [low] Link UC-33.2 to a dispute screen-map (missing_use_cases from coverage) — owner: pm-frontend
+- [low] Link UC-33.3 to a dispute screen-map (missing_use_cases from coverage — third leg queued this run) — owner: pm-frontend
 
 ### churn hotspots + chore (score 1-2, low)
 
-- [low] Investigate services/scheduler.rs churn — extract retention/prune jobs to dedicated module — owner: pm-backend
-- [low] Churn hotspot: routes/reports.rs (3329 lines this window)
-- [low] Churn hotspot: crates/integrations/src/booking/mod.rs (3185 lines this window)
-- [low] Churn hotspot: platform_admin_authz_batch2/org_property_authz_backfill/infra_ops_authz_backfill (BIT-268/557/559 test backfill triage)
-- [low] Follow-up screen-map drift: PR #2497 reality-web/app/api/layout-revalidate/route.ts w/o docs/screens/reality/ update — owner: pm-qa
-- [low] Follow-up: 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod — owner: pm-tech-lead
-- [low] Follow-up: WebSocket not re-authed on token rotation — owner: pm-backend
-- [low] SECURITY: reality-web layout.tsx inlines tenant-config JSON into `<script>` without escaping — owner: pm-security
-- [low] AmlDashboardPage casts raw window.prompt text into review-decision union — owner: pm-backend
-- [low] PortfolioAnalytics inquiriesTrend drops days with inquiries but zero views — owner: pm-backend
-- [low] reality-web listingAnalytics.ts casts untrusted ?source= to ViewSource union — owner: pm-tech-lead
-- [low] Stale TODO(security) headers in faults.rs / critical_notifications.rs — owner: pm-devops
-- [low] admin-web platform-settings + mobile-config Save paths are permanent no-ops — owner: pm-devops
-- [low] Triage closed-not-merged PRs #2385/#2387/#2489 (dependabot supersedes) — owner: pm-devops/pm-tech-lead
-- [low] Cloud routine cadence recovery — reduce 3–4d gaps between runs (retry 2/2)
-- [low] gh-issue-2556: add reality-api-client drift gate (deferred from #2487) — owner: pm-tech-lead
+- [low] Churn hotspot #1: reality-server/src/state.rs (1201 lines) — draft module split proposal — owner: pm-tech-lead
+- [low] Churn hotspot #2: reality-server/src/routes/agencies.rs (624 lines) — split — owner: pm-tech-lead
+- [low] Churn hotspot #3: reality-web layout-revalidate route.test.ts (486 lines) — extract fixtures — owner: pm-tech-lead
+- [low] Triage closed-not-merged PR #2705 (dependabot rust-toolchain 1.100.0 nonexistent) — owner: pm-devops
+- [low] 10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics — owner: pm-tech-lead
+- [low] 12 dependabot PRs open — schedule batch merge window — owner: pm-devops
+- [low] Cloud routine cadence recovery — 3d gap 2026-08-07 → 2026-08-10 — owner: pm-devops
+- [low] gh-issue-2556: add reality-api-client drift gate (extend #2569 pattern) — owner: pm-tech-lead
 
-Buffer: **36/36 open** · project at 47/49 — backlog is again converging on the 2 remaining frontend slices plus a healthy pipeline of freshly-caught follow-ups from this window's own PRs. The auto-review loop is doing its job.
+Buffer: **36/36 open** · 0 candidates ranked but unqueued · project at 47/49 — the huge burn cleared 22 PRs but produced only 3 fresh follow-up issues (all closed same-window as their source PRs), so the queue after refill is dominated by pre-existing pm-data KPI work + this window's test-coverage debt on the security batch.

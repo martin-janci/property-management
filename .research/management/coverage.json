@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T18:35:16Z",
+  "generated": "2026-08-10T09:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -983,11 +983,12 @@
         "screen-map ppt/disputes.md shipped",
         "feat(epic-80) commits merged",
         "PR #2450 (2026-07-22): org-scope enforced on 5 dispute IDOR handlers (add_evidence follow-up #2483 remains; PR #2490 open)",
-        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked"
+        "PR #2454 (2026-07-22): dispute docker-compose fixture unblocked",
+        "PR #2712 (2026-08-08): add_evidence IDOR follow-up (#2483) resolved — dispute audit event added; add_evidence route hardened cross-tenant"
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-10",
       "screen_refs": [
         {
           "screen_id": "ppt/disputes",
@@ -1027,7 +1028,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-10",
       "screen_refs": [
         {
           "screen_id": "ppt/file-dispute",
@@ -1056,7 +1057,7 @@
       ],
       "gaps": [],
       "epic": "epic-80",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-08-10",
       "screen_refs": [
         {
           "screen_id": "ppt/dispute-detail",
