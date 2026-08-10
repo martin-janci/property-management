@@ -7338,7 +7338,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator",
         "api-core segment review 2026-08-10"
@@ -7352,7 +7352,12 @@
       ],
       "created_at": "2026-08-10",
       "updated_at": "2026-08-10",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-10T16:05:11Z",
+        "assignment_status": "merged",
+        "pr_number": 2730
+      }
     }
   ]
 }
