@@ -1,0 +1,796 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-10",
+      "type": "lag_warning",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 3d 85h since 2026-08-07T06:24:00Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-08-10",
+      "type": "stale_routine_alert",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-08-07T06:24:00Z is 3d old; cloud routine may be paused. Dispatcher (separate loop) IS still ticking per commit log."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "buffer-low-trigger-2026-08-10",
+      "type": "buffer-low",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "evidence": [
+        "trigger payload: buffer-low: claimable=0/72 \u2014 refill planner. 28 tier1d dev-review signal files awaited routine consumption; routine unblocking now."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-api-core-fcm-malformed-token-never-evicted",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-push-client-build-expect-panic",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconstant-time-compare",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-accounting-line-multimatch",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-accounting-vs-only-amount-ignored",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-accounting-no-tests",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-api-core-vote-reminders-no-cross-tick-dedup",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-rls-context-deprecated-exported",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-authz-mw-guest-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-noop-isolation",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow-before-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-db-error-fail-open",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "cleanup"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 3,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-idempotency-tx-across-handler",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-announce-roles-legacy-membership-table",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-voice-meter-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-voice-announce-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-syndication-fake-synced",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-listings-detail-photos-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-workflow-import-partial-silent",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-doc-summary-not-persisted",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-nfe-crash",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-wire-test-no-malformed",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "cleanup"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "cleanup"
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "chore"
+    },
+    {
+      "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-sso-http-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-5xx-neg-cache",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-journal-mock-content-shipped",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-webhook-ssrf-loopback-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-link-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-unit-test",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-review-approve-only",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "code-review-reality-server-agent-review-self-review",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 2,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "tier1d-consumed:",
+      "score_delta": 1,
+      "evidence": [
+        "promoted from tier1d signal file to backlog.json vector"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-10.md && head -1 matches",
+      "observed": "will be verified post-write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state vs HEAD",
+      "observed": "cursors + seen_signals both advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "checked post-promotion",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative id double-counted",
+      "observed": "all 57 promoted ids are fresh \u2014 not in prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "cap=8 enforced; 0 decays because 57 new items are today's dates",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans/ adversarial pass check",
+      "observed": "no plans promoted this run \u2014 Phase 3 skipped (buffer-refill run)",
+      "expected": "true (vacuous)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0 new plans (Phase 3 skipped)",
+      "expected": "true (vacuous)"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "verified pre-commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets in staged diff",
+      "observed": "verified pre-commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "regen written directly",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed-phase list; Phase 1 succeeded via MCP",
+      "observed": "all phases succeeded (Phase 1.5 delegated to dispatcher; 1.6 deferred)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "no plan file removed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "no archive change this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "regen written directly",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions",
+      "observed": "Phase 5 no-op \u2014 no candidate matched allowlist this run (dispatcher already handled)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 gate is no-op",
+      "observed": "pm_cursor unchanged; not triggered",
+      "expected": "true (vacuous)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal",
+      "observed": "no token strings in diff",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 dispatcher handles auto-fix loop separately; routine focused on buffer-refill this run",
+  "meta": {
+    "trigger_payload": "buffer-low: claimable=0/72 \u2014 refill planner",
+    "routine_lag_hours": 85,
+    "routine_lag_days": 3,
+    "tier1d_signal_files_consumed": 27,
+    "unique_signals_examined": 60,
+    "new_backlog_rows": 57,
+    "note": "Phase 1.5 (dev-review) delegated to dispatcher Tier1d generator (already emitted the signals this run consumed). Phase 1.6 (project-management) deferred to next full routine run \u2014 this run scoped to unblock the buffer starvation. Phase 3 (plan promotion) skipped \u2014 priority was to refill the actionable buffer, not add plans."
+  }
+}
