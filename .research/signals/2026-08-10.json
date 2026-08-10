@@ -1,0 +1,172 @@
+{
+  "date": "2026-08-10",
+  "signals": [
+    {
+      "id": "lag_warning-2026-08-10",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine last_run_iso=2026-08-07T06:24:00Z; ran 3d after cutoff; likely daily-cron miss",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-08-07T06:24:00Z",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/suites/oauth_integration_tests.rs — 3416 lines added/deleted this window (top-1 code churn)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "evidence": "backend/servers/api-server/src/routes/integrations/webhook.rs — 2799 lines this window; prior sighting 2026-05-30 (runs_seen 1→2). Cumulative re-emit: score_delta suppressed.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat since 2026-08-07T06:24:00Z",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/reports/mod.rs — 2747 lines this window (top-3 code churn; PR #2720 extract helpers)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 1,
+      "evidence": "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1→1.100.0) closed 2026-08-08 without merge; investigated whether prior dependabot pin bump needed retry.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && header check",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal id uniqueness (non-cumulative)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "per-plan adversarial annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plan files",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "cursors match failure list",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "no changes to plans/",
+      "expected": "present-or-archived"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "unchanged",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "0 actions",
+      "expected": "per-run <=1 each type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
