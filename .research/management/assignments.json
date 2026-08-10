@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-10T12:15:42Z",
+  "generated": "2026-08-10T13:11:42Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -28,18 +28,18 @@
     {
       "task_id": "code-review-api-core-quiet-schedule-err-failopen",
       "branch": "auto-impl/code-review-api-core-quiet-schedule-err-a4812fd8",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-10T08:08:10Z",
-      "last_updated": "2026-08-10T12:08:06Z",
-      "status_changed_at": "2026-08-10T12:08:06Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-10T13:11:42Z",
+      "status_changed_at": "2026-08-10T13:11:42Z",
+      "pr_number": 2730,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2730",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": "[reclaim round1 2026-08-10T12:08:06Z: branch missing after >120m sandbox timeout; same specialist re-spawned via Phase 4 machinery]",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2730 status=partial specialist=rust-backend — fail-closed quiet-hours gate + regression tests (resolve_push_quiet_gate in notification_pipeline.rs); fmt+clippy+581/581 lib tests green incl 4 new. Local 3-band verify blocked only by 2 pre-existing unrelated env/harness failures (proxy SSRF DNS-rebinding; cargo-test-vs-nextest AIRBNB env-leak). Branch pushed + draft PR opened by dispatcher to preserve work; CI(nextest)+reviewer to gate.",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
