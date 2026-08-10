@@ -10,6 +10,7 @@
 
 use std::time::Duration;
 
+use common::notifications::PipelineResult;
 use db::{repositories::GranularNotificationRepository, DbPool};
 use tokio::time::interval;
 use tracing::Instrument;
@@ -129,20 +130,89 @@ impl QuietHoursDrainWorker {
 
         let mut released = 0usize;
         for held in due.into_iter().take(self.config.batch_limit) {
-            // Deliver first; only mark released if the row is accounted for so a
-            // transient failure can be retried on the next tick. `deliver_held`
+            // Deliver first, then decide. A held row is marked released ONLY
+            // when delivery left nothing to retry (no channel reported a
+            // transient `Failed`). If any channel failed we leave `released_at`
+            // NULL so the next tick re-attempts, rather than permanently
+            // dropping the notification on a transient failure. `deliver_held`
             // is best-effort per channel and never panics.
-            let sent = self.pipeline.deliver_held(&held).await;
+            let outcome = self.pipeline.deliver_held(&held).await;
+            if !should_mark_released(&outcome) {
+                tracing::warn!(
+                    id = %held.id,
+                    sent = outcome.sent,
+                    failed = outcome.failed,
+                    "[#980] Held notification delivery failed on ≥1 channel; leaving held for retry"
+                );
+                continue;
+            }
             if let Err(e) = self.granular_repo.mark_notification_released(held.id).await {
                 tracing::warn!(id = %held.id, error = %e, "[#980] Delivered held notification but failed to mark released; may re-deliver");
                 continue;
             }
             released += 1;
-            tracing::debug!(id = %held.id, sent = sent, "[#980] Released held notification");
+            tracing::debug!(
+                id = %held.id,
+                sent = outcome.sent,
+                skipped = outcome.skipped,
+                "[#980] Released held notification"
+            );
         }
 
         if released > 0 {
             tracing::info!(released = released, "[#980] Drained held notifications");
         }
+    }
+}
+
+/// Decide whether a drained held-notification row may be marked released.
+///
+/// Releasing is permanent (`released_at` is set once and the row is never
+/// re-fetched), so it must only happen when there is nothing left to retry.
+///
+/// - `failed > 0` — at least one channel hit a transient error. Return `false`
+///   so the row stays held and the next tick re-attempts delivery. Releasing
+///   here is the bug this guards against: a `sent == 0` transient failure would
+///   otherwise mark the row released and lose the notification forever.
+/// - `failed == 0` — everything was either sent or skipped (e.g. push not
+///   configured, unknown user, unrecognised channel). Return `true`: the row is
+///   accounted for and retrying it would loop forever with no progress.
+fn should_mark_released(outcome: &PipelineResult) -> bool {
+    outcome.failed == 0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn result(sent: usize, skipped: usize, failed: usize) -> PipelineResult {
+        PipelineResult {
+            sent,
+            skipped,
+            failed,
+            ..PipelineResult::default()
+        }
+    }
+
+    #[test]
+    fn releases_when_delivered_cleanly() {
+        assert!(should_mark_released(&result(1, 0, 0)));
+        assert!(should_mark_released(&result(2, 1, 0)));
+    }
+
+    #[test]
+    fn releases_when_fully_skipped_nothing_to_retry() {
+        // e.g. push not configured / unknown user — sent==0 but no failure.
+        assert!(should_mark_released(&result(0, 1, 0)));
+        assert!(should_mark_released(&result(0, 0, 0)));
+    }
+
+    #[test]
+    fn holds_for_retry_when_any_channel_failed() {
+        // Regression: a transient failure (sent==0, failed>0) must NOT be
+        // released — it would permanently drop the held notification.
+        assert!(!should_mark_released(&result(0, 0, 1)));
+        // Partial success with a failed channel still retries.
+        assert!(!should_mark_released(&result(1, 0, 1)));
     }
 }
