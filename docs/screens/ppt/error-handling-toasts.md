@@ -44,8 +44,13 @@ The capability spans four shipped pieces:
 
 1. **Toast notifications** — `ToastProvider` + `useToast` (`components/Toast.tsx`),
    mounted high in the app tree (`App.tsx`).
-2. **Global error boundary** — `ErrorBoundary` (`components/ErrorBoundary.tsx`),
-   mounted at the root in `main.tsx`, with an i18n fallback UI + retry/reload.
+2. **Error boundaries (two-tier)** — `ErrorBoundary` (`components/ErrorBoundary.tsx`)
+   with an i18n fallback UI + retry/reload, mounted at two levels: a **global**
+   boundary at the root in `main.tsx` (wraps the whole `<App />`), and a
+   **route-outlet** boundary `RouteErrorBoundary` (`App.tsx`) that wraps
+   `<AppRoutes />` inside `<main>`, keyed on `pathname`, so a single route
+   render / stale-chunk `lazy()` failure is scoped to the content region and
+   cannot unmount the app shell (nav, language switcher, connection status).
 3. **Offline / reconnection indicator** — `OfflineIndicator` +
    `useNetworkStatus` (`components/OfflineIndicator.tsx`, `hooks/useNetworkStatus.ts`).
 4. **API error parsing** — `parseApiError` / `formatValidationErrors` /
@@ -66,11 +71,14 @@ The capability spans four shipped pieces:
 - [x] [w] Timeouts tracked per-toast and cleared on manual dismiss + on provider unmount (no leaked timers)
 - [x] [w] a11y: container `role="region"` + `aria-label`; each toast `role="alert"`; `aria-live="assertive"` for errors, `"polite"` otherwise
 
-### Global error boundary
+### Error boundaries (two-tier)
 - [x] [w] `ErrorBoundary` catches render / lifecycle / constructor errors anywhere in the tree
 - [x] [w] Friendly fallback UI with "try again" + "reload page", i18n strings
 - [x] [w] Optional `onError` reporting callback (Sentry-style) + optional custom `fallback`
-- [x] [w] Mounted at app root in `main.tsx`
+- [x] [w] Global tier: mounted at app root in `main.tsx` (wraps the entire `<App />`)
+- [x] [w] Route-outlet tier: `RouteErrorBoundary` (`App.tsx`) wraps `<AppRoutes />` inside `<main>`, below `<AppNavigation>` — scopes a route render / stale-chunk `lazy()` failure to the content region so the app shell survives
+- [x] [w] Route-outlet boundary is keyed on `pathname`, so navigating to another route after a failure resets it automatically (no full page reload required)
+- [x] [w] Regression coverage: `App.route-error-boundary.test.tsx` (throwing route + stale-chunk `lazy()` rejection + navigate-to-recover)
 
 ### Offline / connectivity
 - [x] [w] `OfflineIndicator` banner shows on offline, "reconnected" message on recovery; `role="alert"` + `aria-live="assertive"`
@@ -90,7 +98,8 @@ The capability spans four shipped pieces:
 - **Validation error**: feature form maps `fieldErrors` to inline messages; a summary toast may also fire.
 - **Offline**: `OfflineIndicator` banner pinned; mutations that fail surface a network-error toast/banner.
 - **Reconnected**: transient "back online" message via `wasOffline`.
-- **Render crash**: `ErrorBoundary` fallback replaces the subtree with retry/reload.
+- **Route render crash**: `RouteErrorBoundary` catches the failure at the route outlet, replaces only the content region with the retry/reload fallback, and keeps the app shell (nav) mounted; navigating away auto-recovers.
+- **Non-recoverable render crash**: an error outside the route outlet propagates to the global `ErrorBoundary` in `main.tsx`, whose fallback replaces the whole UI with retry/reload.
 
 ## Notes
 
@@ -105,6 +114,16 @@ underneath them.
 
 ### Specific (recent)
 
+- 2026-08-11 — PR #2646 added a second error-boundary tier: `RouteErrorBoundary`
+  in `App.tsx` wraps `<AppRoutes />` (inside `<main>`, below `<AppNavigation>`)
+  and is keyed on `pathname`. It reuses the same `ErrorBoundary` component/fallback
+  as the root boundary, but scopes route-render / stale-chunk `lazy()` failures to
+  the content region so the shell (nav, language switcher, connection status) is no
+  longer torn down by a single bad route — the earlier behaviour, where any route
+  failure escaped to the root `main.tsx` boundary and unmounted all of `<App />`.
+  When editing App.tsx routing, keep `RouteErrorBoundary` between `<main>` and the
+  `<Suspense>`/`<AppRoutes>` outlet, and inside `BrowserRouter` (it calls
+  `useLocation`). Covered by `App.route-error-boundary.test.tsx`.
 - 2026-06-28 — coverage-gap verify (task 79-3): implementation confirmed fully
   shipped on `dev` — `ToastProvider`/`useToast`, `ErrorBoundary`, `OfflineIndicator`/
   `useNetworkStatus`, and `lib/errorHandler.parseApiError` all present and wired
@@ -125,4 +144,5 @@ underneath them.
 
 <!-- newest entries on top -->
 
+- 2026-08-11 — agent: reconciled screen-map with PR #2646 (ppt-web route-wrapper change, App.tsx). Documented the new route-outlet-level `RouteErrorBoundary` as a second error-boundary tier alongside the root `main.tsx` boundary: updated the capability description (piece 2 → "Error boundaries (two-tier)"), the checklist, the States section (route render crash keeps the shell mounted; keyed on pathname for auto-recovery), and Notes. Also noted the `App.route-error-boundary.test.tsx` regression coverage. No frontmatter status change — still `buildStatus: shipped`, `error-boundary` already in sharedComponents; non-routed cross-cutting capability so `sitemapRefs {}` unchanged.
 - 2026-06-28 — agent: created screen-map for the orphan "Error Handling & Toast Notifications" capability; verified ppt-web implementation shipped (Toast/ErrorBoundary/OfflineIndicator/errorHandler) and wired in App.tsx + main.tsx; checklist marked shipped; sitemapRefs left `{}` (non-routed cross-cutting capability); related to server-error/session-expired/forbidden.
