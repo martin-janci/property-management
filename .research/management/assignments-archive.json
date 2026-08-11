@@ -12373,6 +12373,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "screen-map-drift-pr-2647-ppt-retry1",
+      "branch": "auto-impl/screen-map-drift-pr-2647-ppt-retry1-ca6b306d",
+      "status": "failed",
+      "claimed_at": "2026-08-11T12:09:41Z",
+      "last_updated": "2026-08-11T12:20:23Z",
+      "status_changed_at": "2026-08-11T12:20:23Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=none status=blocked specialist=generic scope_drift=false code_reuse_warn=none note=no-drift-remaining",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "screen-map-drift-pr-2648-ppt",
       "branch": "auto-impl/screen-map-drift-pr-2648-ppt-76c5f481",
       "status": "merged",
@@ -13325,5 +13347,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-11T10:11:44Z"
+  "archived_at": "2026-08-11T12:20:23Z"
 }

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "code-review-ppt-web-ui-protectedroute-i18n-gap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:104-128 — ProtectedRoute renders user-facing English string literals with no i18n: the loading state hardcodes aria-label=\"Checking authentication\" (line 105) and visible text \"Loading...\" (line 106); the missing-role branch hardcodes an entire access-denied page, `<h1>Access Denied</h1>` (line 125) and `<p>You do not have permission to access this page.</p>` (line 126).",
+      "The component imports no `useTranslation`/`t` at all (grep: t-uses=0), yet every sibling in this segment (AuthCallbackPage, LoginPage, Toast, ConnectionStatus, AuthRequiredGate, PageLoading) uses react-i18next per the project stack (react-i18next 16, locales sk/cs/de/en). Non-English managers hitting an unauthorized route or an auth-hydration delay see English-only copy on a security-relevant page.",
+      "Fix: wrap the strings via `const { t } = useTranslation()` and move them into the ppt-web i18n resource bundles (e.g. `auth.checkingAuthentication`, `common.loading`, `auth.accessDenied`, `auth.accessDeniedBody`)."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-offlineindicator-i18n-gap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:58-60 and :89 — the offline banner text \"You are offline. Some features may be unavailable.\" and the reconnected banner text \"Connection restored\" are hardcoded English string literals. The component uses no i18n (grep: t-uses=0).",
+      "These are app-shell alerts (role=\"alert\"/aria-live) shown to every logged-in user regardless of locale, so under a network drop non-English (sk/cs/de) users get untranslated copy on a component that is otherwise fully locale-aware elsewhere in the app.",
+      "Fix: introduce `useTranslation()` and localize both strings (e.g. `network.offline`, `network.reconnected`) into the ppt-web resource bundles."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-confirmdialog-i18n-gap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 — the confirm button renders `{isLoading ? 'Processing...' : confirmLabel}`. The in-progress label \"Processing...\" is a hardcoded English literal with NO prop to override it, so callers cannot localize it even though they can pass `confirmLabel`/`cancelLabel`. Every confirmation flow (delete, danger actions) shows English \"Processing...\" mid-action regardless of locale.",
+      "Secondary: the default prop values `confirmLabel = 'Confirm'` (line 37) and `cancelLabel = 'Cancel'` (line 38) are English literals; any call site that omits those props renders untranslated buttons. The component imports no i18n.",
+      "Fix: pull the loading label from i18n (e.g. `common.processing`) with an optional `loadingLabel` prop, and either require localized labels or default them via `t('common.confirm')` / `t('common.cancel')`."
+    ],
+    "expert": "frontend"
+  }
+]
