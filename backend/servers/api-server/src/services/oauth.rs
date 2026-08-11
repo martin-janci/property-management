@@ -1008,11 +1008,13 @@ mod tests {
 
     /// With no analytics recorder wired, `record_token_event` short-circuits to
     /// `None` — it neither spawns a task nor touches the DB, so the token path
-    /// is completely untouched. Runs without a database or a Tokio runtime
-    /// (the lazy pool is never connected because the `None` branch returns
-    /// before any query), pinning the "analytics stays optional" contract.
-    #[test]
-    fn record_token_event_without_recorder_returns_none() {
+    /// is completely untouched. Runs without a database (the lazy pool is never
+    /// connected because the `None` branch returns before any query), pinning
+    /// the "analytics stays optional" contract. It still runs under a Tokio
+    /// runtime because `PgPool::connect_lazy` needs a reactor to build the pool,
+    /// mirroring the sibling `record_token_event_runs_off_the_hot_path` test.
+    #[tokio::test]
+    async fn record_token_event_without_recorder_returns_none() {
         // `connect_lazy` never opens a connection until first use; the `None`
         // branch below returns before any query, so no DB is required.
         let pool = sqlx::PgPool::connect_lazy("postgres://ppt:ppt@127.0.0.1/ppt")
