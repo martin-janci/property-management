@@ -11021,6 +11021,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2643-retry1",
+      "branch": "auto-impl/gh-issue-2643-retry1-32a6b849",
+      "status": "merged",
+      "claimed_at": "2026-08-11T06:09:19Z",
+      "last_updated": "2026-08-11T10:10:20Z",
+      "status_changed_at": "2026-08-11T10:10:20Z",
+      "pr_number": 2732,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2732",
+      "merged_at": "2026-08-11T10:09:19Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2732 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=record_token_event now spawns detached tokio task (JoinHandle dropped=fire-and-forget); log-and-ignore + no-dropped-write preserved; unit test proves response returns before write; fmt PASS, clippy/test blocked by swagger-ui egress-403 (CI authoritative, draft); drift is owner-label only (pm-tech-lead=docs vs backend change) [phase5.7 round1 respawn returned status=done: changed record_token_event_without_recorder_returns_none to #[tokio::test] (fix for sqlx tokio-context panic), pushed 907e5f1; re-armed for re-review]",
+      "reviewer_summary": "verdict=approve note=off-hot-path-oauth-recording-clean-ci-all-green",
+      "last_reviewed_oid": "907e5f1cc8fd6c5fbcf2119979d04168ad8cbf63",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-11T10:08:04Z"
+    },
+    {
       "task_id": "gh-issue-2651",
       "branch": "auto-impl/gh-issue-2651-98cecd42",
       "status": "merged",
@@ -13303,5 +13325,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-11T06:08:03Z"
+  "archived_at": "2026-08-11T10:11:44Z"
 }

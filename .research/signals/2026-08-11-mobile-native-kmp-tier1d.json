@@ -1,0 +1,55 @@
+{
+  "generated": "2026-08-11T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "No fresh Phase-1 CHURN_FILES were provided this run (state.json hotspot_history is stale May-2026 api-server data, not current churn), so churn-alignment does not apply. Falling back to review_cursor: mobile-native-kmp (2026-08-04) is the oldest-reviewed segment. Saturation check passed: only 1 open code-review-finding for this segment (code-review-mobile-native-kmp-portfolio-analytics-caps-100), below the >=3 skip threshold. Static analysis only, no compilation/tests. Findings deliberately scoped to avoid duplicating the existing open caps-100 finding.",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing destination wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The submit callback is HARDCODED to always fail; there is no listing-create API call behind it.",
+        "This is a fully non-functional user-facing feature, not dead code. The full form UI exists and is reachable: MyListingsScreen (Navigation.kt:481-488) renders `onCreateClick = { navController.navigate(Screen.CreateListing.route) }`, and CreateListingScreen (mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:41,95-121) is a complete form with input state, an `isSubmitting` spinner, and a `.fold(onSuccess = { onCreated() }, ...)` handler. A realtor fills the form, taps submit, watches the spinner, and ALWAYS gets a silent failure — the `onCreated()`/popBackStack success path at Navigation.kt:495 is unreachable.",
+        "Traced full call path (entry point -> stub): MyListingsScreen.onCreateClick -> navigate(Screen.CreateListing.route) -> CreateListing composable's onSubmit lambda == the NotImplementedError stub. Definitely reachable in production. Fix: back onSubmit with a real create call (reality-server portal-listings has no POST create surface yet per PortalListingsRepository, so this likely needs both a repository method and the backend endpoint) OR hide the create entry point until the API exists, so users are not led into a form that cannot succeed."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-mylistings-truncates-100-no-paging",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:461-489 — the MyListings route loads the realtor's own listings once via `portalListingsRepository.listMyListings(limit = 100)` (Navigation.kt:471) inside a `LaunchedEffect(Unit)` and passes the single page straight into MyListingsScreen. There is no `offset`, no load-more, and no total-count handling. The server clamps limit to 1..100 (PortalListingsRepository.kt:44 doc), so 100 is the hard ceiling.",
+        "The status-chip filter is applied CLIENT-SIDE over that truncated page, which compounds the bug into visible wrongness. MyListingsScreen.kt:76 derives the available chips from `listings.map { it.status }.distinct()` and filters locally (statusFilter at :52, chips at :84-87). For a realtor with >100 listings, any listing past row 100 is invisible AND its status may be absent from the chip strip; filtering to e.g. 'Sold' can render an empty screen even though sold listings exist beyond the first 100 rows.",
+        "Impact: silent data loss on a realtor's own inventory list with no UI affordance to reach the rest, plus a misleading filter. Fix: add offset-based pagination (LazyColumn onReachEnd -> fetch next page) or surface the server's total count with a load-more control; the status filter should drive the server query (listMyListings already accepts a `status` param, Navigation.kt fetches unfiltered by choice) rather than slicing a truncated client page. Distinct from the existing open finding code-review-mobile-native-kmp-portfolio-analytics-caps-100, which concerns the analytics roll-up rather than the MyListings display path."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-123 — getPortfolioAnalytics fans out one analytics HTTP request PER listing with no concurrency cap: `listings.map { listing -> async { getListingAnalytics(listing.id).getOrNull() } }.awaitAll()` (lines 121-122). With listMyListings(limit = 100) at line 113 feeding it, this bursts up to 100 simultaneous in-flight GET /api/v1/my/listings/{id}/analytics requests when the realtor dashboard opens.",
+        "No Semaphore, chunking, or windowing throttles the fan-out. On a large portfolio this hammers the shared HttpClientProvider.client connection pool and the reality-server analytics endpoint at once, risking connection-pool exhaustion, request queueing/latency spikes, and tripping any per-client rate limit — degrading the whole dashboard load. This is a distinct concern from the existing caps-100 open finding (that one is about missing listings beyond 100; this is about the load burst of the concurrent per-listing calls).",
+        "Fix: bound the fan-out — wrap the async calls in a kotlinx.coroutines Semaphore (e.g. permits=6-8) or process listing ids in chunks, or better, add a single portfolio-analytics roll-up endpoint on reality-server so the client issues one request instead of N. Static-analysis finding: not runtime-confirmed, but the unbounded map+async+awaitAll pattern is clear from the source."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
