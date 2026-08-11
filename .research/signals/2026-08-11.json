@@ -1,0 +1,434 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-core-announce-roles-legacy-membership-table",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:663-706 — inside a single function, `Scheduler::get_announcement_target_users`, the `\"roles\"` target branch (lines ~665-680) resolves recipients from the LEGACY `organization_members` table (`SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id = $1 AND om.role_id = ANY($2) AND om.status = 'active'`), whereas the sibling `\"all\"` branch (lines ~587-599) was deliberately migrated to the NEW canonical spine `user_memberships` — its inline comment states: 'membership lives in `user_memberships` (migration 00128, the canonical authz spine)'.",
+        "migration 00128_user_memberships.sql documents that `user_memberships` is 'the new authorization spine' and that it 'runs SIDE-BY-SIDE with the legacy `organization_members` for one phase' and 'the legacy table is retired in a later phase.' So the two announcement-targeting branches now read from two different membership sources of truth. During the side-by-side phase this is not yet a live incident (00128 backfills user_memberships FROM organization_members), but it is a latent migration-completeness gap: once the legacy table stops being written/synced or is dropped, `\"roles\"`-targeted announcement fan-out silently targets zero (or stale) recipients while `\"all\"` continues to work — a silent under-delivery with no error, since the branch returns Ok(empty) and the scheduler loop is fail-safe.",
+        "Confirmed `organization_members` (migration 00005_create_organization_members.sql) does expose the `role_id UUID` and `status VARCHAR(20)` columns the query binds, so the query is currently valid — the issue is the divergent source of truth, not a broken column reference. Note also `user_memberships` keys authority on a `role VARCHAR(64)` name column (not a `role_id` UUID), so the migration is not a mechanical table-name swap: the `\"roles\"` branch would need target_ids re-modeled to role names (or a role_id→role-name join) when it is moved onto the canonical spine.",
+        "Fix: migrate the `\"roles\"` branch (and any other announcement-targeting leg still on `organization_members`) onto `user_memberships` before the legacy table is retired, mirroring what the `\"all\"` branch already did — OR add an explicit comment + tracking issue that the `\"roles\"` leg is intentionally pinned to the legacy table until a follow-up phase, so the divergence is diagnosable. A cross-tenant fan-out test already exists for the building/units legs (scheduler/mod.rs ~1753+); add an equivalent role-targeting test that asserts recipients resolve from the intended membership source."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-syndication-fake-synced",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-360 — `process_syndication_job` never calls any portal API yet writes `syndication_status::SYNCED` to the DB for every operation: PUBLISH generates a mock external id `format!(\"{}_{}\", portal, Uuid::new_v4())` (:318) and calls `update_syndication_status(..., SYNCED, Some(&external_id), None)` (:321-330); STATUS_CHANGE and UPDATE likewise stamp SYNCED. The doc comment (:285-288) admits 'This is a placeholder for the actual portal API integration.'",
+        "Effect: listings are persisted as SYNCED to external portals (Sreality/Bezrealitky/Nehnutelnosti/etc.) and surface as 'published' in the UI, when in fact nothing was ever transmitted — an operator-facing false state that masks that syndication is unimplemented, and stores a fake external reference other code may later treat as a real portal id.",
+        "Unlike the SSRF-hardened `actions/api_call.rs` outbound path, this worker fabricates the success rather than failing closed. Lower severity because it is a documented not-yet-built background-worker integration, but the misleading persisted SYNCED status is the concrete defect.",
+        "Fix: until a real portal client is wired, mark these jobs with a non-terminal/pending status (or fail the job) rather than SYNCED, and do not persist a mock external id — so dashboards and downstream code do not treat a listing as live on a portal it was never sent to."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-voice-announce-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:385-413 — `action_check_announcements` unconditionally returns `success: true`, 'You have no new announcements.', and `data: { count: 0, announcements: [] }`; the body never reads the announcement store (line 390: 'In a real implementation, this would query the announcement repository'). A resident with unread building announcements is always told there are none.",
+        "Live path: dispatched via `execute_action` at voice_commands.rs:159-160 (`voice_intent::CHECK_ANNOUNCEMENTS => self.action_check_announcements(...)`), reachable through `routes/voice_webhooks.rs` / `routes/ai/voice.rs`.",
+        "Same fabricated-success class as the already-fixed `action_check_balance` (:255-264, with regression test :752-785). This handler and `action_check_meter` are the two survivors of that cleanup that still return `success: true` with invented data instead of honestly reporting 'not yet available'.",
+        "Fix: either wire the announcement repository, or (matching check_balance) return `success: false` with a 'not yet available via voice' message and no fabricated `count: 0`, so residents are not falsely reassured there are no announcements."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-voice-meter-fake-success",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:437-466 — `action_check_meter` returns `success: true` with the response 'Your latest meter readings have been recorded. There are no pending readings.' and `data: { pending_readings: 0 }`, but the body never queries anything: line 442 is the comment 'In a real implementation, this would query the meter repository'. It is a fabricated-success stub that makes an affirmative factual claim (readings recorded / none pending) to the resident.",
+        "This is a LIVE webhook path, not dead code: `execute_action` dispatches `voice_intent::CHECK_METER => self.action_check_meter(...)` (voice_commands.rs:163), and the processor is wired into real routes `routes/voice_webhooks.rs` and `routes/ai/voice.rs`.",
+        "Same defect class the codebase already de-stubbed elsewhere in this very file: `action_check_balance` (voice_commands.rs:255-264) was changed to `success: false` + 'not yet available' precisely because 'a resident could be told they owe nothing when the actual balance was never queried' (with regression test at :752-785), and `action_book_facility` (:420-434) returns 'not yet available'. `action_check_meter` was missed by that cleanup and still fabricates success.",
+        "Fix: mirror the check_balance/book_facility remediation — return `success: false` with a 'meter readings via voice are not yet available, use the app/portal' message (and drop the fabricated `pending_readings: 0`) until a meter repository is actually wired, so the assistant never asserts an unverified meter state."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-doc-summary-not-persisted",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — after an expensive LLM summarization call, the handler persists the result with `let _ = state.document_repo.update_summary(id, &summary, key_points_json, None, None, Some(word_count), Some(language)).await;`. The Result is discarded, so a DB write failure is completely silent.",
+        "The handler then returns the freshly-computed summary to the caller (HTTP 200) regardless of whether update_summary succeeded, so on a persistence failure the client sees a summary that was never stored. The next request for the same document finds no stored summary and re-runs the costly LLM summarization — silent data loss plus repeated paid-LLM cost.",
+        "Secondary smell same line-region: `let key_points_json = serde_json::to_value(&key_points).ok();` (intelligence.rs:812) — a serialization failure silently drops all key_points (stored as NULL) with no log.",
+        "Impact: document AI summaries are presented as persisted/cached; a swallowed write turns that into a best-effort, un-observable operation with cost and correctness consequences.",
+        "Fix: propagate the update_summary error (map to 5xx or at least `tracing::error!` + surface a 'summary generated but not saved' condition) rather than `let _ =`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-listings-detail-photos-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 and :343 — the listing-detail handler (returning ListingWithDetails, TenantExtractor-scoped) fetches the listing itself with the correct `.map_err(...)? / .ok_or_else(...)?` error-propagation pattern (find_by_id_and_org at :321-336), but then swallows the two secondary reads with `.unwrap_or_default()`.",
+        "`let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();` (listings.rs:338) — a transient DB/pool error on the photos query silently yields an EMPTY Vec, so the endpoint serves HTTP 200 with `photos: []` for a listing that may in fact have photos. The client cannot distinguish 'listing has no photos' from 'photos query failed'.",
+        "`get_syndications(id).await.unwrap_or_default()` (listings.rs:339-343) — same defect on the syndications read: a failed query degrades to an empty syndications array served as authoritative.",
+        "Impact: intra-handler inconsistency (primary query surfaces 5xx, secondary queries silently zero out) — identical failure class to the reports/mod.rs finding from 2026-08-08 but in a different handler. A partial backend failure renders a photo-less / syndication-less listing detail rather than a retryable 500.",
+        "Fix: replace `.unwrap_or_default()` on get_photos / get_syndications with the same `.map_err(|e| (INTERNAL_SERVER_ERROR, ...))?` pattern the listing fetch already uses, or make the graceful-degradation explicit and flag partial data in the response."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-workflow-import-partial-silent",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:687-693 — the workflow-template import handler adds each imported action inside a loop with `if let Err(e) = state.workflow_repo.add_action(rls.conn(), tenant_id, create_action).await { tracing::warn!(...); }`. A failed add_action is logged at warn and the loop continues, so the import completes with HTTP 200 while silently dropping one or more actions — the created workflow is partial and internally inconsistent with the template the caller asked to import.",
+        "backend/servers/api-server/src/routes/ai/workflows.rs:697-713 — the subsequent 'enable if requested' step discards its result entirely: `let _ = state.workflow_repo.update(&mut **rls.conn(), workflow.id, tenant_id, UpdateWorkflow { enabled: Some(true), .. }).await;`. If the enable write fails, the workflow is left DISABLED but the caller receives a success response indicating the requested `enabled: true` state.",
+        "Impact: template import is a manager-facing 'create automation from marketplace template' action; a transient DB error yields a silently broken automation (missing actions and/or not actually enabled) reported as fully successful. No signal reaches the client to retry or reconcile.",
+        "Fix: propagate add_action / update errors (fail the import with a 5xx, or roll back / report which actions were skipped) instead of `tracing::warn!` + `let _ =`; at minimum return a partial-success payload enumerating the skipped actions and the actual enabled state."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-unvalidated-prompt-cast",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 — handleTakeAction reads a free-text moderation decision via window.prompt() and casts it directly to the typed union with `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (line 143) and submits it via takeAction.mutate. There is NO runtime validation of the prompt string against the allowed union: a typo (e.g. 'aprove') or arbitrary text is sent verbatim to the compliance moderation API as an action_type.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:169-179 — handleDecideAppeal has the identical gap: `decision: decision as 'uphold' | 'overturn'` (line 179) casts the raw window.prompt string with no guard before mutate.",
+        "Contrast: the sibling AmlDashboardPage.handleReview (frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:143-154) was already hardened for exactly this — it trims/lowercases the prompt input and rejects it via `isAmlReviewDecision(decision)` before submitting, with an inline comment 'a typo ... must not reach the API as a decision'. ContentModerationPage was not given the same guard, so the two compliance pages are inconsistent on a security/compliance-relevant surface (content removal / appeal decisions).",
+        "Impact: relies entirely on backend enum validation to reject bad input; on the client the user gets only a generic 'Failed to take action' alert with no indication the value was invalid. Fix: add a type-guard (mirroring isAmlReviewDecision) for the action_type and appeal-decision unions and reject invalid prompt input client-side before mutate, or replace window.prompt with the planned modal form (TODO(Phase-2) at lines 128, 167)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-window-location-nav",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:159-163 — handleViewContent navigates with `window.location.href = `/compliance/moderation/cases/${caseId}`` inside a React SPA (ppt-web is a Vite/react-router-dom SPA). This forces a full page reload rather than a client-side route transition, discarding TanStack Query cache and in-memory app state and adding a full re-bootstrap on every 'view content' click. TODO(Phase-2) at line 160 already acknowledges it ('Use React Router's useNavigate for SPA navigation').",
+        "Fix: replace with react-router-dom `useNavigate()` (e.g. navigate(`/compliance/moderation/cases/${caseId}`)) to keep navigation in-SPA, consistent with the rest of ppt-web routing."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:45-49 — CreateReviewRequest { rating: i32, body: Option<String> }. In create_review the rating is validated (196-201) but body is passed straight into the INSERT (agent_reviews.rs:265, .bind(&data.body)) with no length or content validation — grep for body.len/body.chars/validate/MAX_ in agent_reviews.rs returns zero hits.",
+        "The listing-report sibling on the same server DOES bound its free-text attachment URLs (reports.rs:182-188 validate_image_or_link_url, <= 2048 chars), so unbounded review bodies are an inconsistency in input hardening across the public write surfaces of reality-server.",
+        "Impact: an authenticated portal user can store an arbitrarily large review body (bounded only by the request body limit, if any), which is then served verbatim in ReviewsResponse to every consumer viewing the realtor — storage-amplification / payload-bloat abuse vector on a public read path. Lower severity than the self-review gap because it requires a valid session and does not cross a tenant boundary.",
+        "Fix: add a max-length check on data.body (mirror the reports.rs pattern, e.g. return 400 when body exceeds a sane cap such as 2000-4000 chars) before the INSERT at agent_reviews.rs:252."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-agent-review-self-review",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-269 — create_review (POST /api/v1/realtors/{id}/reviews) lets an authenticated portal principal post a rating+body for realtor_profiles.id = {id}. reviewer_user_id is correctly server-derived from principal.user_id (agent_reviews.rs:263) and rating is bounds-checked 1..=5 (agent_reviews.rs:196-201), but there is NO guard that principal.user_id != the reviewed realtor's owner user_id.",
+        "The realtor's own owner is realtor_profiles.user_id (joined as rp.user_id at agent_reviews.rs:230 for the verified_buyer check), so a realtor who owns profile {id} can call this endpoint on their own profile and insert a self-authored 5-star review. The ON CONFLICT (realtor_id, reviewer_user_id) DO NOTHING (agent_reviews.rs:257) only blocks a second review by the same reviewer — it does not block the first self-review.",
+        "Impact: public realtor rating / avg_rating (ReviewsResponse.avg_rating, agent_reviews.rs:55) is a trust signal shown to consumers browsing agents on the reality portal. A realtor can inflate their own public average by self-reviewing — reputation manipulation on a public-facing surface. verified_buyer would compute false for the self-review, but avg_rating still moves.",
+        "Fix: before the INSERT, reject when principal.user_id equals the realtor's owner — e.g. SELECT user_id FROM realtor_profiles WHERE id = $1 and return 400/403 if it equals principal.user_id (fold into the existing realtor_exists probe at agent_reviews.rs:209-214)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-sso-http-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) each build a fresh `reqwest::Client::new()` and call `.send()` with NO `.timeout()`. reqwest's default client has no request timeout, so the outbound call can block indefinitely.",
+        "These are all on the auth-critical SSO path (OAuth callback token exchange, userinfo fetch, and token introspection). A slow or hung PM OAuth/introspection endpoint stalls the awaiting handler for as long as the upstream keeps the socket open, pinning the tokio task/connection and enabling upstream-induced resource exhaustion.",
+        "The codebase already has the correct pattern: state.rs:757-760 `PmApiClient::new` builds its client via `reqwest::Client::builder().timeout(Duration::from_secs(timeout_seconds)).build()`. The SSO helpers bypass it and also skip connection-pool reuse by minting a new client per request. Fix: reuse a shared client with an explicit `.timeout(...)` (and connect timeout) for all three PM calls."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-5xx-neg-cache",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-762 — introspect_pm_token() treats ANY non-2xx introspection response as an inactive token: `if !response.status().is_success() { state.token_cache.set(token, false, None, None).await; return Err(...) }`. This does not distinguish an authoritative `401/200 active:false` from a transient upstream failure (500/502/503/504).",
+        "When the PM introspection endpoint has a transient outage or 5xx blip, a VALID user token is negatively cached as `active=false` for the full 60s TTL (state.rs:735-748). Because get() serves that cached `active=false` (sso.rs:731-738), the legitimate user keeps getting rejected for up to 60s AFTER the PM API has already recovered.",
+        "Consequence: an availability defect that amplifies a brief upstream hiccup into a 60s per-token lockout. Fix: only negative-cache authoritative inactive results (2xx with active=false, or 401); on 5xx/transport errors return an error WITHOUT caching (fail-open to a re-introspection, not a cached deny)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-sso-token-cache-ignores-exp",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:735-748 — TokenValidationCache::set() stores every introspection result with `expires_at: Instant::now() + Duration::from_secs(self.ttl_seconds)`, a fixed TTL (default 60s, state.rs:947 `TokenValidationCache::new(60, 10000)`). The TTL is NOT derived from the PM access token's own `exp`.",
+        "The cache entry (CachedTokenValidation, state.rs:527-538) and the introspection response type (routes/sso.rs:644-652 TokenIntrospectionResponse: active/sub/client_id/scope) carry no expiry/`exp` field, so nothing re-checks token expiry on a cache hit.",
+        "routes/sso.rs:731-738 — introspect_pm_token() returns the cached `active` verbatim on a hit and short-circuits before contacting the PM introspection endpoint.",
+        "Consequence: a PM access token that is revoked upstream (user logs out of PM / admin revokes) or that expires within the caching window is still treated as `active=true` by reality-server for up to the full 60s TTL after revocation/expiry — a stale-auth acceptance window on the SSO validation path. Fix: bound each cache entry's expires_at by min(ttl, token_exp - now) and/or invalidate on logout."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-journal-mock-content-shipped",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:11 imports `EDITORS_PICKS, MOCK_ARTICLES, MOST_READ` from `./_mock` and renders the ENTIRE journal/magazine index from them (featured at :108, latest at :109, editorsPicks at :110, mostRead at :111). `_mock.ts` is 90 lines of hardcoded placeholder Slovak articles (6 fixed records, ids '1'–'6', authors 'Martin Kováč'/'Jana Horáková', external unsplash.com imageUrls). There is no fetch / reality-server call anywhere on this route — the whole feature is fabricated content.",
+        "This is not a dev-only or flagged page: it is linked from the primary site navigation (frontend/apps/reality-web/src/components/ui/Header.tsx:86 and :232, `href=\"/journal\"`) AND listed in the crawler sitemap (frontend/apps/reality-web/src/app/sitemap.ts:14, '/journal'). So a public, SEO-indexed route serves invented articles with fake bylines and dates to real visitors and search engines — a credibility / correctness problem, not merely an unfinished stub.",
+        "The article cards are also inert: `ArticleCard` (page.tsx ~:22 onward, rendered at :197/:273/:294) emits no `<Link>`/`href` at all, and although `_mock.ts` gives each article a `slug`, no `journal/[slug]` detail route exists (only `journal/page.tsx` + `journal/layout.tsx` under app/[locale]/journal). Every article is therefore unclickable dead content.",
+        "Fix: back the journal index with a real content source (reality-server endpoint / CMS) before exposing `/journal` in nav + sitemap, or gate the route (noindex + remove nav link) until real content lands. The file already carries a `// TODO: replace ... once real journal content lands via CMS / reality-server` note, confirming this is known-incomplete but currently shipped as production-navigable."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-layout-section-boundary-swallows-errors",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx — `SectionBoundary` (a minimal class error boundary wrapping every listing-detail layout section) implements `componentDidCatch(_error, _info)` with an empty body and the comment `// Intentionally swallowed — console.error suppressed by tests` (~:68). The error and errorInfo are discarded entirely: no telemetry, no logging, no error-reporting sink.",
+        "Behaviourally the boundary renders `<Placeholder />` on `getDerivedStateFromError` so siblings survive (good), but because the caught error is thrown away, a section component that crashes in production silently degrades to a blank placeholder with ZERO operational signal. A recurring render bug in one listing-detail section (JSON-LD, gallery, price block, etc.) would be invisible to monitoring — no way to know which section, on which listing, for how many users.",
+        "The stated reason ('console.error suppressed by tests') conflates test-noise suppression with production observability: tests can silence console.error via a spy without the component needing to drop the error. Fix: forward `_error`/`_info` to the app's error-reporting channel (or at minimum `console.error` outside test env) so section crashes are observable; keep the graceful `<Placeholder />` fallback. Low severity (reliability/observability gap, not a user-facing crash)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/agencies.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-analysis-2026-08-07..2026-08-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn in window (3 changes): PR #2724, PR #2727, dispatcher chore. Not in hotspot_history — first appearance."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_pipeline.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-analysis-2026-08-07..2026-08-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn in window (3 changes): PR #2729 (quiet-drain), PR #2730 (schedule fail-closed), dispatcher chore. Two fix PRs on the same service — watch for arch drift."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/util/errors.rs",
+      "type": "churn-hotspot",
+      "source": "git-log-analysis-2026-08-07..2026-08-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Third-tied churn in window (2 changes): PR #2724 (db_error routing addition) + chore. Not in hotspot_history."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-11",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine did not run for 3d 91h between 2026-08-07 06:24Z and 2026-08-11 02:24Z. Cursor lag > 36h threshold. During the gap: 25 PRs merged (#2703..#2730), 2 issues opened+closed (#2703 #2704), 4 days of dispatcher chore commits."
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-08-11",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.json last_run_iso is 3d old (last: 2026-08-07T06:24:00Z). Cloud routine cron may be paused. Dispatcher (separate loop) continued ticking (chore commits through 2026-08-11 02:14Z) so the dispatcher scheduler is healthy — only the daily routine scheduler is affected. See .research/management/assignments.json on planning branch for dispatcher state (not fetched this run)."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-11.md && head -1 | grep '^# 2026-08-11$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev - staged vs HEAD delta",
+      "observed": "cursors advanced (last_pr 2702->2730, last_issue 2699->2704, last_commit_sha changed) + 21 new seen_signals + 3 new hotspot_history entries",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "316 items, 316 unique ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal id vs seen_signals cross-check",
+      "observed": "0 non-cumulative signals re-emitted",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay verified",
+      "observed": "no item > 8; no open item stale > 14 days requiring decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan grep brief for 'adversarial pass'",
+      "observed": "1 plan promoted, brief lists 'adversarial pass: passed'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan section+metadata+files+capability+Mode gates",
+      "observed": "1 new plan under cap; 12 headings (>=11); 4 metadata; capability ticked (3); Mode: cloud-ok; all Files paths resolve",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan against staged diff (excluding baseline docs)",
+      "observed": "no matches for the G9 secret/hostname patterns",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty: no cursors advanced past failing phase",
+      "observed": "no phases reported failure",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still exist in plans/ or _archive/",
+      "observed": "no plan silently deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "archive count unchanged (7 files)",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (per-run cap, idempotency, verify-all)",
+      "observed": "no auto_fix_actions this run (no allowlist signal at high conf+score>=3)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 was SKIPPED this run — gate is no-op",
+      "observed": "pm_cursor + coverage_cursor unchanged; assignments valid where present",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
