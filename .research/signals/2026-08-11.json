@@ -1,0 +1,278 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-11",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "files": [],
+      "evidence": [
+        "routine last ran 2026-08-07T06:24:00Z — 4d 105h lag exceeds 36h threshold"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-08-11",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "files": [],
+      "evidence": [
+        "state.json last_run_iso 2026-08-07 is 4d old; cloud routine may be paused. Dispatcher (planning branch) continues to tick."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_pipeline.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-08-07..2026-08-11",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "evidence": [
+        "3 changes in 4-day window (PRs #2714, #2729, #2730 — scheduled-notify decouple, quiet-drain drop, quiet-hours fail-closed)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-08-07..2026-08-11",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "evidence": [
+        "re-emit (cumulative): 2 more changes this window (PRs #2734, #2735) — hotspot_history runs_seen advances to 2"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-08-07..2026-08-11",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "evidence": [
+        "re-emit (cumulative): 2 more changes this window (PR #2734) — hotspot_history runs_seen advances to 2"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-2728-voice_commands",
+      "type": "risky-churn",
+      "source": "PR #2728",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "evidence": [
+        "PR #2728 (fix) modified voice_commands.rs — no test diff. Fail-honestly semantic change lacks regression test."
+      ]
+    },
+    {
+      "id": "risky-churn-pr-2730-notification_pipeline",
+      "type": "risky-churn",
+      "source": "PR #2730",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "evidence": [
+        "PR #2730 (fix) modified notification_pipeline.rs — top churn file, no test diff. Fail-closed on quiet-hours schedule read error is a behavior change that needs regression coverage."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2735-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2735",
+      "score_delta": 2,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.mappers.test.tsx"
+      ],
+      "evidence": [
+        "PR #2735 touched ppt-web routes (rentals.tsx + regression test) without corresponding docs/screens/ppt/ update"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-restore-session-clears-on-network-error",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "evidence": [
+        "SsoService.kt:322-342 restoreSession() calls getSession() and on ANY failure (network offline, DNS failure, TLS error, server 5xx, non-JSON error body) executes onFailure which sets sessionToken = null and _authState = Unauthenticated — silently logs the user out on cold-start whenever the session probe cannot reach the server; only HttpStatusCode.Unauthorized should invalidate the stored token"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeouts",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "evidence": [
+        "HttpClientProvider.kt:37-43 constructs shared Ktor HttpClient without HttpTimeout — requestTimeoutMillis/connectTimeoutMillis/socketTimeoutMillis fall back to engine defaults; a stalled server or half-open TCP suspends the calling coroutine indefinitely on both Android and iOS with no timeout error surfaced to the UI"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-twofactor-verify-is-client-side-stub",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 1,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "evidence": [
+        "TwoFactorScreen.kt:182-199 Verify button only regex-checks ^\\d{6}$ locally then flips step=Enabled + SuccessBanner — no ssoService call, no HTTP; grep for 2fa|two_factor|totp in backend/servers/reality-server/src/routes returns zero endpoints; composable wired at Navigation.kt:349 but not reachable from any in-app navigate() so it is dead code today that becomes security-theater 2FA the moment any link is added"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-11.md",
+      "observed": "written after this",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile-diff .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal-dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score<=8 + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 plans",
+      "expected": "0 or all-annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<= 2 plans (0 this run)",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "pending",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in diff",
+      "observed": "pending",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "OK",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed → cursor not advanced",
+      "observed": "no phases failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "OK",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "OK",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + coverage_cursor liveness",
+      "observed": "OK",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "pending",
+      "expected": "0 matches"
+    }
+  ],
+  "auto_fix_actions": []
+}

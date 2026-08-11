@@ -7388,6 +7388,186 @@
         "assignment_status": "merged",
         "pr_number": 2731
       }
+    },
+    {
+      "id": "bug-risky-churn-voice-commands-no-test",
+      "title": "voice_commands.rs — fail-honestly change merged without regression test",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2728",
+        "risky-churn-pr-2728-voice_commands"
+      ],
+      "evidence": [
+        "PR #2728 fix(api-server): voice check-announcements/check-meter fail honestly instead of fabricating empty success",
+        "Merged 2026-08-10 with 1 file (voice_commands.rs) — no test file in the diff",
+        "risky-churn correlation: voice_commands.rs is a churn hotspot this window (2 changes)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-notification-pipeline-no-test",
+      "title": "notification_pipeline.rs — fail-closed quiet-hours change merged without regression test",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2730",
+        "risky-churn-pr-2730-notification_pipeline"
+      ],
+      "evidence": [
+        "PR #2730 fix(api-server): fail closed when quiet-hours schedule read errors",
+        "Merged 2026-08-10 with 1 file (notification_pipeline.rs) — no test file in the diff",
+        "risky-churn correlation: notification_pipeline.rs is top churn hotspot (3 changes), plus fail-closed semantic change without a regression test can silently invert to fail-open on future refactor"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2735-ppt",
+      "title": "screen-map drift: PR #2735 touched ppt-web rentals routes without updating docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2735",
+        "screen-map-drift-pr-2735-ppt"
+      ],
+      "evidence": [
+        "PR #2735 test(ppt-web): add regression tests for rentals API↔UI mappers — touched frontend/apps/ppt-web/src/routes/groups/rentals.{tsx,mappers.test.tsx}",
+        "No matching docs/screens/ppt/*.md file was updated in the same PR — screen-map documentation drift"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-notification-pipeline-2026-08-11",
+      "title": "backend/servers/api-server/src/services/notification_pipeline.rs — top churn hotspot (3 changes in 4d)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit-log 2026-08-07..2026-08-11",
+        "churn-hotspot-backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "evidence": [
+        "3 commits touched notification_pipeline.rs this window (PRs #2714 decouple scheduled dispatch, #2729 quiet-drain drops, #2730 quiet-hours fail-closed)",
+        "First appearance in hotspot_history — instability proxy for the announcement/quiet-hours pipeline"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "bug-quarantined-workflow-cond-parse-failopen-pr2684",
+      "title": "PR #2684 quarantined: workflow_executor evaluate_conditions() fail-closed fix — 3 respawn rounds, CI red on test-shard 1-4",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2684",
+        "assignments.json:code-review-api-core-workflow-cond-parse-failopen"
+      ],
+      "evidence": [
+        "Dispatcher quarantined the task after fix_rounds=3 exhausted on 2026-08-08",
+        "PR #2684 head 926afe8: fmt-clippy + check green; backend test-shard(1-4) FAILURE",
+        "Blocks fixing the fail-open semantic bug in workflow_executor.rs:459-489 (unparseable condition today defaults to pass)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-restore-session-clears-on-network-error",
+      "title": "SsoService.restoreSession() silently logs users out on ANY cold-start network error (should only clear on 401)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-08-11 (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "SsoService.kt:322-342 restoreSession() calls getSession() and on ANY onFailure branch (network offline, DNS failure, TLS error, server 5xx, non-JSON error body) sets sessionToken = null and _authState = Unauthenticated",
+        "Only HttpStatusCode.Unauthorized should invalidate the stored token; other errors should keep the session and surface a transient error state"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeouts",
+      "title": "HttpClientProvider constructs Ktor client without HttpTimeout — coroutines suspend indefinitely on hung connections",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-08-11 (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging(NONE) + defaultRequest — no HttpTimeout plugin",
+        "requestTimeoutMillis/connectTimeoutMillis/socketTimeoutMillis fall back to engine defaults (Android engine → HttpURLConnection has no default read timeout; Darwin 60s connect but no request budget)",
+        "A stalled server or half-open TCP suspends the calling coroutine indefinitely on both platforms with no timeout error surfaced to the UI"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-twofactor-verify-is-client-side-stub",
+      "title": "TwoFactorScreen Verify button is client-side only — no server call, security-theater the moment any link routes to it",
+      "vector": "security",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 code-review 2026-08-11 (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "TwoFactorScreen.kt:182-199 Verify button only regex-checks ^\\\\d{6}$ locally then flips step = TwoFactorStep.Enabled + shows a green SuccessBanner",
+        "No ssoService call, no HTTP request; grep for 2fa|two_factor|totp under backend/servers/reality-server/src/routes returns zero endpoints",
+        "Composable wired at Navigation.kt:349 (route auth/two-factor) but not reachable from any in-app navigate() call — dead code today, but becomes security-theater 2FA the moment anything links to it (user believes 2FA is armed, server has no record)"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
     }
   ]
 }
