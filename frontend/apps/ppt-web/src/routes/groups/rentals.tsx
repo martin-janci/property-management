@@ -69,7 +69,9 @@ const TaxReportPage = lazy(() =>
  * Map a generated RentalsRentalPlatform → the page-level BookingSource.
  * The generated platform enum carries 'vrbo' which the page lacks; fold it to 'other'.
  */
-function mapRentalPlatformToSource(platform: RentalsRentalPlatform): RentalBooking['source'] {
+export function mapRentalPlatformToSource(
+  platform: RentalsRentalPlatform
+): RentalBooking['source'] {
   switch (platform) {
     case 'airbnb':
       return 'airbnb';
@@ -83,12 +85,12 @@ function mapRentalPlatformToSource(platform: RentalsRentalPlatform): RentalBooki
 }
 
 /** Map a generated RentalsRentalPlatform → the page PlatformType (airbnb | booking). */
-function mapRentalPlatformToType(platform: RentalsRentalPlatform): RentalPlatformType {
+export function mapRentalPlatformToType(platform: RentalsRentalPlatform): RentalPlatformType {
   return platform === 'booking' ? 'booking' : 'airbnb';
 }
 
 /** Map a generated RentalsSyncStatus → the page ConnectionStatus. */
-function mapSyncStatusToConnectionStatus(
+export function mapSyncStatusToConnectionStatus(
   syncStatus: RentalsSyncStatus,
   isActive: boolean
 ): RentalPlatformConnection['status'] {
@@ -106,7 +108,7 @@ function mapSyncStatusToConnectionStatus(
 }
 
 /** Map a generated RentalsReservation → the page RentalBooking. */
-function mapReservationToBooking(res: RentalsReservation): RentalBooking {
+export function mapReservationToBooking(res: RentalsReservation): RentalBooking {
   return {
     id: res.id,
     unitId: res.unitId,
@@ -130,7 +132,7 @@ function mapReservationToBooking(res: RentalsReservation): RentalBooking {
 }
 
 /** Map a generated RentalsPlatformConnection → the page PlatformConnection. */
-function mapApiConnectionToUi(conn: RentalsPlatformConnection): RentalPlatformConnection {
+export function mapApiConnectionToUi(conn: RentalsPlatformConnection): RentalPlatformConnection {
   return {
     id: conn.id,
     unitId: conn.unitId,
@@ -144,7 +146,7 @@ function mapApiConnectionToUi(conn: RentalsPlatformConnection): RentalPlatformCo
 }
 
 /** Map a generated RentalsGuestRegistration → the page RentalGuest. */
-function mapApiGuestToUi(guest: RentalsGuestRegistration): RentalGuest {
+export function mapApiGuestToUi(guest: RentalsGuestRegistration): RentalGuest {
   return {
     id: guest.id,
     bookingId: guest.reservationId ?? '',
