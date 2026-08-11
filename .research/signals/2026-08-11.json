@@ -1,0 +1,769 @@
+{
+  "date": "2026-08-11",
+  "generated": "2026-08-11T20:15:00Z",
+  "run_reason": "scheduled routine (buffer-low trigger)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-11",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-08-07T06:24Z; now=2026-08-11T20:15Z \u2192 4d 13h lag (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-08-11",
+      "type": "stale-routine-alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-08-07T06:24Z is 4d old; cloud routine may be paused. Dispatcher still ticking on planning branch (assignments.json fresh)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+      "type": "churn-hotspot",
+      "source": "git-log a2c0f53..b30e157",
+      "score_delta": 0,
+      "evidence": [
+        "4207 line-churn since 2026-08-07 across 30 merged PRs (data-file (sitemap regen from screen-map changes))",
+        "re-emit (cumulative type; score_delta zeroed per Phase 1 dedup rule)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/packages/sitemap/src/json/sitemap.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log a2c0f53..b30e157",
+      "score_delta": 0,
+      "evidence": [
+        "3984 line-churn since 2026-08-07 across 30 merged PRs (i18n catalog bulk updates)",
+        "re-emit (cumulative type; score_delta zeroed per Phase 1 dedup rule)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/messages/en.json"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log a2c0f53..b30e157",
+      "score_delta": 1,
+      "evidence": [
+        "3481 line-churn since 2026-08-07 across 30 merged PRs (OAuth test-suite churn during dispatcher refactor sweep)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump sentry from 0.48.5 to 0.49.0 in /backend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump base64 from 0.22.1 to 0.23.0 in /backend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump validator from 0.20.0 to 0.21.0 in /backend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump rust_xlsxwriter from 0.96.0 to 0.97.0 in /backend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump the gradle-minor-patch group across 1 directory with 4 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump expo-secure-store from 56.0.4 to 57.0.1 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump expo-device from 56.0.4 to 57.0.1 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps-dev): bump @testing-library/react-native from 13.3.3 to 14.0.1 in /fr"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot PR open 12d: chore(deps): bump expo-status-bar from 56.0.4 to 57.0.1 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "evidence": [
+        "open 13d with no reviewDecision: feat(acc): PAY by square payment QR endpoint (UC-ACC-05.8) \u2014 author martin-janci"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "evidence": [
+        "open 13d with no reviewDecision: feat(acc): invoice PDF render endpoint (UC-ACC-05.9) \u2014 author martin-janci"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "evidence": [
+        "open 13d with no reviewDecision: feat(acc): wire sent/cancelled invoice lifecycle (UC-ACC-05.17) \u2014 author martin-janci"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 \u2014 in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, listings.rs:316-345), the photos sub-fetch swallows all repository errors: `let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();`. `.unwrap_or_default()` collapses an `Err(sqlx/pool error)` into an empty `Vec`, which is indistinguishable from 'this listing genuinely has no photos'.",
+        "backend/servers/api-server/src/routes/listings.rs:340-342 \u2014 the very next call has the identical defect for syndications: `state.listing_repo.get_syndications(id).await.unwrap_or_default()`. Both feed directly into the `ListingWithDetails` response (listings.rs:344+)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-api-handlers-webhook-ssrf-loopback-failopen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:201-203 (create_webhook_subscription) and :337-339 (update path) derive the SSRF-guard mode as `let is_production = std::env::var(\"RUST_ENV\").map(|v| v == \"production\").unwrap_or(false);`. This value is passed to `integration_repo.create_webhook_subscription(..., is_production)` (:207), which forwards it to `validate_webhook_url(&data.url, is_production)` at backend/crates/db/src/repositories/integration.rs:1352.",
+        "The env detection FAILS OPEN and is INVERTED relative to every other RUST_ENV gate in the same binary. `.unwrap_or(false)` plus an exact `== \"production\"` match means: RUST_ENV unset, or set to anything other than the literal string `\"production\"` (e.g. `prod`, `PRODUCTION`, `staging`, or simply not configured) => `is_production = false` => the webhook-URL validator runs in relaxed/dev mode. Every other environment gate in the crate uses the SAFE convention `RUST_ENV == \"development\"` and defaults to strict when unset: main.rs:483/533/539, services/totp.rs:58, preflight.rs:125, and notably services/actions/api_call.rs:339 (its sibling outbound-request SSRF guard, 'plain-http gated to RUST_ENV=development'). webhook.rs is the lone site that keys strict behavior off `== \"production\"`, so it is the only guard that turns OFF when the var is unset."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-link-failopen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:165-176 (exchange_voice_oauth_tokens, called from link_voice_device :80): when `VoiceOAuthManager::from_env()` reports the platform is not configured (`!oauth_manager.has_platform(voice_platform)`), the handler logs a warn and `return Ok((None, None, None))` \u2014 it then creates a persisted voice device row (:89-109) with NULL access/refresh tokens and responds `201 CREATED` with `oauth_linked: false` (:122-131). There is NO production guard on this degraded path.",
+        "This is inconsistent with the codebase's own established fail-closed convention for the exact same 'dependency not configured in prod' situation. The sibling RAG-indexing handler in ai/llm.rs:250-263 refuses the analogous stub/unconfigured path in production: `let is_production = std::env::var(\"RUST_ENV\").as_deref() == Ok(\"production\"); if is_production && !allow_stub { return Err(SERVICE_UNAVAILABLE ...) }`. voice.rs has no equivalent \u2014 so a production deployment missing the Alexa/Google voice OAuth credentials will silently create voice devices that appear 'linked' in the devices list but hold no OAuth tokens, deferring the failure to first use (authenticate_voice_user falls back to a linear scan per the #2662 note at :103-107) instead of surfacing a clear configuration error at link time."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:1040-1048 \u2014 in the data-residency dashboard handler, the top-level `compliance_status` field is computed as `if last_verification.as_ref().map(|v| v.is_compliant).unwrap_or(true) { ComplianceStatus::Compliant } else { ComplianceStatus::NonCompliant }`. The `.unwrap_or(true)` is a fail-OPEN default: when `last_verification` is `None`, the org is reported as `Compliant`.",
+        "backend/servers/api-server/src/routes/data_residency.rs:936-941 \u2014 `last_verification` is `None` exactly when `data_residency_repo.get_latest_verification_result(org_id)` returns `None`, i.e. the organization has NEVER run a compliance verification (a fresh org, or one whose verification rows were purged). This branch is reachable in production for every org before its first verification run \u2014 not a hypothetical."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:736 \u2014 in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let chain_valid = verification[\"chain_valid\"].as_bool().unwrap_or(true);`. The `.unwrap_or(true)` is a fail-OPEN default: if the `verify_audit_chain` result ever lacks a boolean `chain_valid` field (schema drift, an error-shaped JSON, a null), the audit chain is reported as VALID / untampered.",
+        "backend/crates/db/src/repositories/data_residency.rs:552-596 \u2014 the current repo implementation always emits `\"chain_valid\": <bool>`, so today the missing-field branch is not reachable and the practical impact is low. This is a latent wrong-direction defensive default rather than an active exploit \u2014 flagged so a future change to `verify_audit_chain`'s return shape (or a switch to a fallible/partial JSON) does not silently turn a broken tamper check into a green 'chain intact' signal."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 the production nav graph wires the CreateListing route's submit callback to a hardwired stub: `CreateListingScreen(onBackClick = ..., onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, onCreated = ...)`. The onSubmit is not connected to any repository call; it unconditionally returns failure.",
+        "There is NO createListing method anywhere in the shared module: `grep -rn 'fun createListing' shared/src/commonMain` returns nothing, and PortalListingsRepository (which owns `/api/v1/my/listings`) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics \u2014 no POST/create. So the failure is permanent, not a transient wiring gap."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-unit-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is the most security-critical class in the shared module \u2014 it owns the session-token lifecycle (validateAndLogin, restoreSession, login, register, requestPasswordReset, confirmPasswordReset, getSession, logout) and the mutable `sessionToken` used for every authenticated request via `Authorization Bearer header`. It has NO dedicated unit test: there is no SsoServiceTest.kt anywhere under shared/src/commonTest, and the only references (`grep -rln SsoService commonTest`) are the navigation tests AuthGuardNavigationTest.kt and AndroidDeepLinkDispatchTest.kt, which exercise routing, not the service's own behavior.",
+        "Untested behavior worth locking down: restoreSession (SsoService.kt:318-345) sets `sessionToken = token` BEFORE calling getSession(), and on failure must clear it (`onFailure { sessionToken = null; _authState.value = Unauthenticated }`). There is no test asserting that a failed restore leaves no stale token behind \u2014 precisely the class of regression flagged for the RN app (code-review-mobile-rn-auth-restore-stale-token). The KMP counterpart has the correct clear-on-failure code but zero coverage guarding it."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-401-refresh-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 \u2014 the axios response interceptor has a reactive 401 hook: `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`. `onUnauthorizedCallback` is a module-level var (api.ts:180) set only from `configureApiClient({ onUnauthorized })` (api.ts:196). This is the ONLY reactive session-expiry recovery path in the axios layer (401 is not in the retryable set, so the request otherwise just rejects at api.ts:255).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 \u2014 the sole production `configureApiClient(...)` call passes ONLY `{ getToken: getAccessToken }` and omits `onUnauthorized`. `grep -rn onUnauthorized` across ppt-web/src (excluding lib/api.ts) returns zero wiring \u2014 only two comment references in feature hooks. So `onUnauthorizedCallback` is permanently `undefined` in production and the 401 branch at api.ts:220 is dead code."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:55-66 \u2014 handleApprove awaits the approve-booking mutation inside try/catch, and on failure the catch body is ONLY `console.error('Failed to approve booking:', error)`. No setState, no alert, no toast, no error banner. A manager clicks Approve on a pending facility booking; if the API rejects it (409 conflict, RLS denial, network), the UI gives zero feedback \u2014 the row silently stays pending and the manager assumes it worked.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:74-84 \u2014 handleRejectConfirm has the same shape: on the success path it closes the RejectBookingDialog (setRejectDialogBooking(null)); on the catch path it only console.errors, so a failed rejection leaves the dialog open with no message explaining why nothing happened."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-109 \u2014 handlePetDelete confirms via window.confirm then `await deletePetMutation.mutateAsync(id)`; the catch body is ONLY `console.error('Failed to delete pet registration:', error)`. A destructive delete that fails (RLS denial, 404, network) shows the user nothing. The grep-verified fact that the whole file contains no setError / setFormError / alert / toast / notify / onError means EVERY mutation failure on this page is swallowed.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 \u2014 handlePetReview (approve) and lines 155-183 handleVehicleDelete / handleVehicleReview repeat the identical silent-catch anti-pattern for the vehicle registry. Four user-facing mutations (2 destructive deletes, 2 approvals), all failing silently."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-review-approve-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 \u2014 handlePetReview hardcodes `data: { approve: true }` and is guarded only by `window.confirm('Approve this pet registration?')`. There is no reject path: a manager can approve a pending pet registration but cannot reject one from this screen. Same for handleVehicleReview at lines 168-183.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:113 \u2014 the code self-documents the gap: `// Simple approval - in a real app, this would open a modal to approve/reject with reason`. The review API is a two-outcome decision (approve boolean) but the UI wires only the approve=true branch, so the reject half of the moderation workflow is unreachable and no rejection reason can be captured."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "files": null
+    },
+    {
+      "id": "code-review-reality-server-agent-review-self-review",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-269 \u2014 create_review (POST /api/v1/realtors/{id}/reviews) lets an authenticated portal principal post a rating+body for realtor_profiles.id = {id}. reviewer_user_id is correctly server-derived from principal.user_id (agent_reviews.rs:263) and rating is bounds-checked 1..=5 (agent_reviews.rs:196-201), but there is NO guard that principal.user_id != the reviewed realtor's owner user_id.",
+        "The realtor's own owner is realtor_profiles.user_id (joined as rp.user_id at agent_reviews.rs:230 for the verified_buyer check), so a realtor who owns profile {id} can call this endpoint on their own profile and insert a self-authored 5-star review. The ON CONFLICT (realtor_id, reviewer_user_id) DO NOTHING (agent_reviews.rs:257) only blocks a second review by the same reviewer \u2014 it does not block the first self-review."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-reality-server-agent-review-body-unbounded",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:45-49 \u2014 CreateReviewRequest { rating: i32, body: Option<String> }. In create_review the rating is validated (196-201) but body is passed straight into the INSERT (agent_reviews.rs:265, .bind(&data.body)) with no length or content validation \u2014 grep for body.len/body.chars/validate/MAX_ in agent_reviews.rs returns zero hits.",
+        "The listing-report sibling on the same server DOES bound its free-text attachment URLs (reports.rs:182-188 validate_image_or_link_url, <= 2048 chars), so unbounded review bodies are an inconsistency in input hardening across the public write surfaces of reality-server."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellation-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:63,85,107,137,163,188 \u2014 every suspend network method wraps the Ktor call in `catch (e: Exception) { Result.failure(e) }`. Because kotlinx.coroutines.CancellationException IS an Exception, this SWALLOWS cooperative cancellation: when the enclosing scope is cancelled (e.g. the Compose `rememberCoroutineScope()` the ViewModels launch into is disposed as the screen leaves composition), the CancellationException is caught, converted to a Result.failure, and the coroutine body keeps running past the suspension point instead of unwinding \u2014 breaking structured concurrency.",
+        "Same anti-pattern is repeated in 8 more commonMain files: FavoritesRepository.kt (13 catch sites: getFavorites/addFavorite/removeFavorite/isFavorite/saved-search + alert methods), ListingRepository.kt, InquiryRepository.kt, NotificationRepository.kt, PortalListingsRepository.kt, RealtorRepository.kt, AgencyRepository.kt, and auth/SsoService.kt. grep: `grep -rn 'catch (e: Exception)' shared/src/commonMain` returns 58 sites; none except LayoutRepository rethrow CancellationException."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 \u2014 the single shared Ktor HttpClient installs ContentNegotiation, Logging(NONE), and a defaultRequest content-type, but NO `install(HttpTimeout)`. There is no requestTimeoutMillis, connectTimeoutMillis, or socketTimeoutMillis anywhere in the module (grep -rn 'HttpTimeout\\|requestTimeoutMillis\\|Timeout' shared/src returns nothing).",
+        "Impact on mobile: on a stalled/half-open connection (common on cellular handoff / captive portals) every repository suspend call \u2014 getListingDetail, favorites toggle, SSO validateAndLogin \u2014 hangs indefinitely with no upstream deadline. The UI state-holders flip isLoading=true and never receive a terminal onSuccess/onFailure, so the Compose CircularProgressIndicator (e.g. ListingDetailScreen.kt:116-119) spins forever with no error path and no retry affordance. This compounds the CancellationException-swallow finding: the only escape (scope cancellation) is itself swallowed by the repos."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is a 349-line security-critical auth service (validateAndLogin, createMobileToken, loginWithPassword, register, requestPasswordReset/confirm, getSession, refreshSession, restoreSession, updateProfile, logout) with NO dedicated unit test. find shared/src/commonTest -name '*.kt' shows SsoStateStoreTest and SsoInitiationTest (which cover only the CSRF-nonce store/initiation), but no SsoServiceTest \u2014 none of the token-validation, login, or session-restore success/failure/authState transitions are exercised.",
+        "Every other repository/service in commonMain has behavioural coverage (LayoutRepositoryTest, NotificationRepositoryTest, FavoritesRepositoryTest, PortalListingsRepositoryTest, ProfileStatsLoaderTest, ListingDetailViewModelTest, PriceTrackingViewModelTest, ...), making SsoService the sole untested state-mutating class \u2014 and it is the one that drives AuthState across the whole app."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 the CreateListing destination wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The submit callback is HARDCODED to always fail; there is no listing-create API call behind it.",
+        "This is a fully non-functional user-facing feature, not dead code. The full form UI exists and is reachable: MyListingsScreen (Navigation.kt:481-488) renders `onCreateClick = { navController.navigate(Screen.CreateListing.route) }`, and CreateListingScreen (mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:41,95-121) is a complete form with input state, an `isSubmitting` spinner, and a `.fold(onSuccess = { onCreated() }, ...)` handler. A realtor fills the form, taps submit, watches the spinner, and ALWAYS gets a silent failure \u2014 the `onCreated()`/popBackStack success path at Navigation.kt:495 is unreachable."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-mylistings-truncates-100-no-paging",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:461-489 \u2014 the MyListings route loads the realtor's own listings once via `portalListingsRepository.listMyListings(limit = 100)` (Navigation.kt:471) inside a `LaunchedEffect(Unit)` and passes the single page straight into MyListingsScreen. There is no `offset`, no load-more, and no total-count handling. The server clamps limit to 1..100 (PortalListingsRepository.kt:44 doc), so 100 is the hard ceiling.",
+        "The status-chip filter is applied CLIENT-SIDE over that truncated page, which compounds the bug into visible wrongness. MyListingsScreen.kt:76 derives the available chips from `listings.map { it.status }.distinct()` and filters locally (statusFilter at :52, chips at :84-87). For a realtor with >100 listings, any listing past row 100 is invisible AND its status may be absent from the chip strip; filtering to e.g. 'Sold' can render an empty screen even though sold listings exist beyond the first 100 rows."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallows-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:354-382 \u2014 the private `apiRequest<T>()` used by every widget fetch (fetchNotificationsData, fetchUpcomingMeetingsData, fetchFaultsData, etc.) catches ALL failures and `return {} as T` (:380). This includes the explicit `if (!response.ok) throw new Error(\\`API request failed: ${response.status}\\`)` at :369-371 \u2014 a 401 (the widget's own `authToken` set via setAuthToken at :35 is separate from the main app's token and is never refreshed), 403, or 500 is caught at :374 and converted to an empty object cast to the widget's data type. So an auth/server failure is indistinguishable from a legitimately empty response.",
+        "This silently defeats the intended cache-fallback in `updateAllWidgets()` (:138-173): because `apiRequest` swallows the throw, `fetchWidgetData` never rejects, so `result.success` is always `true` (:159), the `else` branch that restores cached data on failure (:162-167) is UNREACHABLE, and the empty `{}`-derived data is written back via `cacheWidgetData(result.config.id, result.data)` (:160) \u2014 OVERWRITING the last-known-good cache with zeros. e.g. fetchUpcomingMeetingsData maps `response.upcoming_count ?? 0` / `response.meetings?.map(...) ?? []` (:304-311), so on any transient network blip or expired widget token the home-screen widget silently drops to '0 meetings' / '0 notifications' AND clobbers the good cached copy, instead of showing stale data."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-storage-unguarded-jsonparse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:92-95 `getAllWidgetConfigs()` does `return stored ? JSON.parse(stored) : []` and :347-352 `getAllCachedData()` does `return stored ? JSON.parse(stored) : {}` \u2014 both parse AsyncStorage-persisted JSON with NO try/catch. If WIDGET_CONFIG_KEY or WIDGET_DATA_KEY is ever truncated/corrupted (partial write on process kill, storage corruption, schema drift after an app update), JSON.parse throws synchronously.",
+        "The throw is uncaught on the widget-refresh path: `updateAllWidgets()` (:138) calls `getAllWidgetConfigs()` at :139 outside any try/catch, and its cache-fallback calls `getCachedWidgetData()`\u2192`getAllCachedData()` at :164 also outside try/catch \u2014 so a corrupted store rejects the whole background widget update (all widgets fail, not just one) as an unhandled promise rejection rather than degrading gracefully."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 \u2014 the hand-rolled axios client is configured with ONLY the token getter: `configureApiClient({ getToken: getAccessToken })`. The `onUnauthorized` callback is never passed, so the 401 recovery hook in lib/api.ts is dead.",
+        "frontend/apps/ppt-web/src/lib/api.ts:219-221 \u2014 the response interceptor's `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();` branch can never fire: `onUnauthorizedCallback` (module var, line 180) is only assigned from `config.onUnauthorized` (line 196), which AuthContext never provides. On an expired/invalid access token the request just rejects with an ApiError \u2014 no silent refresh, no redirect-to-login, no logout."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-token-snapshot",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:94-99 \u2014 WebSocketWrapper passes `auth={{ accessToken: getAccessToken(), isAuthenticated }}`, i.e. a point-in-time token VALUE evaluated at render, instead of threading the live getter. Contrast AuthContext.tsx:337, where the rest of the app is wired with the getter function `getToken: getAccessToken` so every request reads live localStorage.",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:223 + 208-211 \u2014 the WebSocketService is created with `getToken: () => authRef.current.accessToken`, and authRef is only refreshed by the effect on the `auth` prop (line 209-211). So the socket's getToken serves the snapshot captured at the last WebSocketWrapper render, not the current stored token."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:53-141 \u2014 the entire ERROR_MESSAGES map plus DEFAULT_ERROR are hardcoded English title/message strings ('Authentication Required', 'Too Many Requests', 'An unexpected error occurred.', etc.). parseApiError returns these strings directly for display (ParsedApiError.title/message), with no t()/i18n-key indirection.",
+        "ppt-web ships react-i18next (see root CLAUDE.md frontend table; App.tsx uses useTranslation throughout, e.g. nav labels App.tsx:118-172). Every user-facing API error surface therefore renders English-only regardless of the active locale \u2014 a real i18n gap for the same user base the nav/labels are already translated for."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "quality",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:104-128 \u2014 ProtectedRoute renders user-facing English string literals with no i18n: the loading state hardcodes aria-label=\"Checking authentication\" (line 105) and visible text \"Loading...\" (line 106); the missing-role branch hardcodes an entire access-denied page, `<h1>Access Denied</h1>` (line 125) and `<p>You do not have permission to access this page.</p>` (line 126).",
+        "The component imports no `useTranslation`/`t` at all (grep: t-uses=0), yet every sibling in this segment (AuthCallbackPage, LoginPage, Toast, ConnectionStatus, AuthRequiredGate, PageLoading) uses react-i18next per the project stack (react-i18next 16, locales sk/cs/de/en). Non-English managers hitting an unauthorized route or an auth-hydration delay see English-only copy on a security-relevant page."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-offlineindicator-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:58-60 and :89 \u2014 the offline banner text \"You are offline. Some features may be unavailable.\" and the reconnected banner text \"Connection restored\" are hardcoded English string literals. The component uses no i18n (grep: t-uses=0).",
+        "These are app-shell alerts (role=\"alert\"/aria-live) shown to every logged-in user regardless of locale, so under a network drop non-English (sk/cs/de) users get untranslated copy on a component that is otherwise fully locale-aware elsewhere in the app."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirmdialog-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 \u2014 the confirm button renders `{isLoading ? 'Processing...' : confirmLabel}`. The in-progress label \"Processing...\" is a hardcoded English literal with NO prop to override it, so callers cannot localize it even though they can pass `confirmLabel`/`cancelLabel`. Every confirmation flow (delete, danger actions) shows English \"Processing...\" mid-action regardless of locale.",
+        "Secondary: the default prop values `confirmLabel = 'Confirm'` (line 37) and `cancelLabel = 'Cancel'` (line 38) are English literals; any call site that omits those props renders untranslated buttons. The component imports no i18n."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-unvalidated-prompt-cast",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 \u2014 handleTakeAction reads a free-text moderation decision via window.prompt() and casts it directly to the typed union with `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (line 143) and submits it via takeAction.mutate. There is NO runtime validation of the prompt string against the allowed union: a typo (e.g. 'aprove') or arbitrary text is sent verbatim to the compliance moderation API as an action_type.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:169-179 \u2014 handleDecideAppeal has the identical gap: `decision: decision as 'uphold' | 'overturn'` (line 179) casts the raw window.prompt string with no guard before mutate."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-window-location-nav",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:159-163 \u2014 handleViewContent navigates with `window.location.href = `/compliance/moderation/cases/${caseId}`` inside a React SPA (ppt-web is a Vite/react-router-dom SPA). This forces a full page reload rather than a client-side route transition, discarding TanStack Query cache and in-memory app state and adding a full re-bootstrap on every 'view content' click. TODO(Phase-2) at line 160 already acknowledges it ('Use React Router's useNavigate for SPA navigation').",
+        "Fix: replace with react-router-dom `useNavigate()` (e.g. navigate(`/compliance/moderation/cases/${caseId}`)) to keep navigation in-SPA, consistent with the rest of ppt-web routing."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 \u2014 `const { data, isLoading } = useListings(filters, currentPage);` destructures ONLY data + isLoading. The TanStack Query result's `isError`/`error` are dropped and there is no error branch anywhere in the file (`grep -c isError page.tsx` -> 0).",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:338,341 \u2014 on a failed query `data` is undefined and `isLoading` is false, so `<ListingGrid listings={data?.data ?? []} isLoading={isLoading} />` receives `[]` with isLoading=false."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-reality-web-layoutsections-dup-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx:125 and :136 \u2014 both the placeholder branch and the real-component branch render each row with `key={section.type}` while mapping over `layout.sections`.",
+        "frontend/apps/reality-web/src/lib/layout.ts:85-108 \u2014 `layout.sections` is a server-resolved list of `ResolvedSection` objects distinguished by `type` + `presentation` + `mode` + `props`; nothing enforces `type` uniqueness, and multiple sections of the same type (e.g. repeated 'custom'/'spacer'/'gallery' blocks differentiated by props) are a valid, expected payload. `getResolvedLayout` only filters non-object elements and clamps to MAX_SECTIONS \u2014 it does not dedupe or index types."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    },
+    {
+      "id": "code-review-reality-web-maint-fallback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:158-159 \u2014 the `building_disabled` defense-in-depth branch renders hardcoded English: `<h1>Service temporarily unavailable</h1>` and `<p>{tenantConfig.name} is offline for maintenance. Please check back shortly.</p>` (plus the `<title>` at layout.tsx:146), even though `locale` is in scope and applied at `<html lang={locale}>` (layout.tsx:140). This is a 6-locale portal (en/sk/cs/de/pl/hu per layout.tsx generateMetadata title/description maps).",
+        "frontend/apps/reality-web/src/lib/kill-switch.ts:90-96 \u2014 localized maintenance copy ALREADY exists as `COPY[locale]` (used by the canonical middleware kill-switch path, src/middleware.ts:37-49, which emits a real 503). The SSR fallback branch in layout.tsx duplicates the maintenance UI but hardcodes English instead of reusing that COPY table, so a Slovak/Czech/German user hitting the rare edge-fetch-failed-but-SSR-succeeded fallback gets English."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal met certainty bar (all new items score=2, dispatcher tier1d already consumed; no allowlist-shape action fits)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists w/ today header",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors advanced vs HEAD",
+      "observed": "last_pr_seen 2702->2735; last_commit_sha changed; seen_signals grew",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq via file: /tmp/prev_seen.json \u2192 true",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "score cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no eligible open items >14d this run (only 1 prior open at 7d)",
+      "observed": "no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans",
+      "observed": "0",
+      "expected": "0 (no promotions)"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen byte-identity",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no reported phase failures; cursors match successful phases",
+      "observed": "consistent",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans removed this run; prior plans intact",
+      "observed": "verified",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive size",
+      "observed": "cur=8 head=8",
+      "expected": "cur >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "triage byte-identity",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped (pm_cursor unchanged); no-op",
+      "observed": "pm_cursor=3 unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
