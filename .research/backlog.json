@@ -7388,6 +7388,58 @@
         "assignment_status": "merged",
         "pr_number": 2731
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellation-swallowed",
+      "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-11 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
+        "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
+        "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/favorites/FavoritesRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-untested",
+      "title": "mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-11 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "SsoService.kt (348 lines) has no test file — no commonTest source references SsoService (grep over shared/src/commonTest returns 0 hits).",
+        "It is the security-critical core of the auth surface: validateAndLogin() (deep-link SSO token exchange), loginWithPassword(), register(), requestPasswordReset()/confirmPasswordReset(), refreshSession(), restoreSession(), and 401->logout handling — all untested for success/error/status-mapping branches.",
+        "Contrast: sibling auth pieces SsoStateStore, SsoInitiation and AuthGuard each have dedicated commonTest suites, so the service that actually drives the token/session mutations is the one gap."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
     }
   ]
 }
