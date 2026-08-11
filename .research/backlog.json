@@ -7365,23 +7365,197 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator",
         "rotating-expert-review",
-        "api-handlers segment review 2026-08-10"
+        "api-handlers segment review 2026-08-10",
+        "PR #2731"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/reports/helpers.rs:187-201 (generate_sync_csv_report, \"voting\" arm) writes the user-authored vote title into the CSV with only `v.title.replace(',', \";\")`. It applies NO spreadsheet-formula-injection guard: a vote title beginning with `=`, `+`, `-`, or `@` (e.g. `=HYPERLINK(...)`, `=cmd|...`) is emitted verbatim and executes as a formula when a manager opens the exported report in Excel/LibreOffice. The comma->semicolon swap also fails to escape embedded double-quotes or newlines, so a crafted title can inject extra CSV rows/columns (data corruption).",
         "This bypasses the codebase's own established mitigation: backend/servers/api-server/src/routes/admin/audit.rs:60 defines `sanitize_csv_cell` (documented as an 'M5 fix') that prepends `'` to any cell containing `= + - @`. The reports export path does not use it. Vote titles are authored by ordinary org members (voting is a resident-facing feature), so a low-privilege resident can plant a payload that detonates when a manager exports the voting-participation report \u2014 a cross-privilege attack.",
-        "Reachable path confirmed: routes/reports/mod.rs:832 (sync export) and :932 (fallback) call generate_sync_csv_report and return the CSV to the client as a downloadable file. The faults arm (helpers.rs:146-167) similarly emits `status.status`/`cat.category` breakdown labels unescaped. Fix: route every free-form string cell through a shared csv-cell sanitizer (reuse/relocate sanitize_csv_cell) and use proper CSV quoting for commas/quotes/newlines."
+        "Reachable path confirmed: routes/reports/mod.rs:832 (sync export) and :932 (fallback) call generate_sync_csv_report and return the CSV to the client as a downloadable file. The faults arm (helpers.rs:146-167) similarly emits `status.status`/`cat.category` breakdown labels unescaped. Fix: route every free-form string cell through a shared csv-cell sanitizer (reuse/relocate sanitize_csv_cell) and use proper CSV quoting for commas/quotes/newlines.",
+        "resolved: PR #2731 merged 2026-08-11 \u2014 code-review-api-handlers-reports-csv-injection: sanitize vote titles in reports CSV export"
       ],
       "files": [
         "backend/servers/api-server/src/routes/reports/helpers.rs",
         "backend/servers/api-server/src/routes/admin/audit.rs"
       ],
       "created_at": "2026-08-10",
-      "updated_at": "2026-08-10",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-reality-server-src-services-email-rs",
+      "title": "Churn hotspot: backend/servers/reality-server/src/services/email.rs \u2014 top-3 churn: 368 adds+dels across window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dev commits since 2026-08-07T06:24:00Z"
+      ],
+      "evidence": [
+        "top-3 churn: 368 adds+dels across window"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/email.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-services-notification_pipeline-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/notification_pipeline.rs \u2014 top-3 churn: 181 adds+dels across window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dev commits since 2026-08-07T06:24:00Z"
+      ],
+      "evidence": [
+        "top-3 churn: 181 adds+dels across window"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-backend-servers-api-server-src-services-voice_commands-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/voice_commands.rs \u2014 top-3 churn: 134 adds+dels across window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dev commits since 2026-08-07T06:24:00Z"
+      ],
+      "evidence": [
+        "top-3 churn: 134 adds+dels across window"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "risky-churn-pr-2730-notification_pipeline-rs",
+      "title": "Risky churn (PR #2730): fix-without-tests touched top-3 churn file",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2730"
+      ],
+      "evidence": [
+        "PR #2730 (fix: fail closed when quiet-hours schedule read errors) modified backend/servers/api-server/src/services/notification_pipeline.rs \u2014 a top-3 churn file \u2014 with no test diff"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "risky-churn-pr-2728-voice_commands-rs",
+      "title": "Risky churn (PR #2728): fix-without-tests touched top-3 churn file",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2728"
+      ],
+      "evidence": [
+        "PR #2728 (fix: voice check-announcements/check-meter fail honestly) modified backend/servers/api-server/src/services/voice_commands.rs \u2014 a top-3 churn file \u2014 with no test diff"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "title": "Stalled review: PR #2555",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2555"
+      ],
+      "evidence": [
+        "open PR #2555 'feat(acc): wire sent/cancelled invoice lifecycle (UC-ACC-05.17)' age 13d, no reviewDecision, last updated 2026-07-30"
+      ],
+      "files": [],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "title": "Stalled review: PR #2558",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2558"
+      ],
+      "evidence": [
+        "open PR #2558 'feat(acc): invoice PDF render endpoint (UC-ACC-05.9)' age 13d, no reviewDecision, last updated 2026-07-30"
+      ],
+      "files": [],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "title": "Stalled review: PR #2559",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2559"
+      ],
+      "evidence": [
+        "open PR #2559 'feat(acc): PAY by square payment QR endpoint (UC-ACC-05.8)' age 13d, no reviewDecision, last updated 2026-07-30"
+      ],
+      "files": [],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "title": "Closed-not-merged: PR #2705 (rust-toolchain bump retry)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2705"
+      ],
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 -> 1.x) closed unmerged 2026-08-08"
+      ],
+      "files": [],
+      "created_at": "2026-08-11",
+      "updated_at": "2026-08-11",
       "plan": null
     }
   ]

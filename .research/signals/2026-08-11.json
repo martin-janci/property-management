@@ -1,0 +1,394 @@
+{
+  "run_iso": "2026-08-11T04:15:00Z",
+  "since_iso": "2026-08-07T06:24:00Z",
+  "lag_hours": 93,
+  "phases_ran": [
+    "Phase 1 (observe)",
+    "Phase 2 (decide)",
+    "Phase 3 (promote)",
+    "Phase 4 (write)",
+    "Phase 6 (commit)"
+  ],
+  "phases_skipped": [
+    "Phase 1.5 (rotating expert review) \u2014 deferred: dispatcher tier1d generator produced 3 code-review findings today and yesterday, and the routine catch-up budget is tight",
+    "Phase 1.6 (project management skill) \u2014 deferred: same catch-up budget; pm-qa role is stale (last run 2026-06-15), operator should trigger pm:qa on next run"
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-11",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 3d 93h since last_run_iso=2026-08-07T06:24:00Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-2026-08-11",
+      "type": "stale-routine-alert",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso is 3d old; cloud routine schedule may be stalled between 2026-08-07 and today. Dispatcher on planning branch continued to run."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/services/email.rs",
+      "type": "churn-hotspot",
+      "source": "dev commits since 2026-08-07T06:24:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn: 368 adds+dels across window"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_pipeline.rs",
+      "type": "churn-hotspot",
+      "source": "dev commits since 2026-08-07T06:24:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn: 181 adds+dels across window"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/voice_commands.rs",
+      "type": "churn-hotspot",
+      "source": "dev commits since 2026-08-07T06:24:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "top-3 churn: 134 adds+dels across window"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "risky-churn-pr-2730-notification_pipeline-rs",
+      "type": "risky-churn",
+      "source": "PR #2730",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2730 (fix: fail closed when quiet-hours schedule read errors) modified backend/servers/api-server/src/services/notification_pipeline.rs \u2014 a top-3 churn file \u2014 with no test diff"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-2728-voice_commands-rs",
+      "type": "risky-churn",
+      "source": "PR #2728",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2728 (fix: voice check-announcements/check-meter fail honestly) modified backend/servers/api-server/src/services/voice_commands.rs \u2014 a top-3 churn file \u2014 with no test diff"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "evidence": [
+        "open PR #2555 'feat(acc): wire sent/cancelled invoice lifecycle (UC-ACC-05.17)' age 13d, no reviewDecision, last updated 2026-07-30"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "evidence": [
+        "open PR #2558 'feat(acc): invoice PDF render endpoint (UC-ACC-05.9)' age 13d, no reviewDecision, last updated 2026-07-30"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "evidence": [
+        "open PR #2559 'feat(acc): PAY by square payment QR endpoint (UC-ACC-05.8)' age 13d, no reviewDecision, last updated 2026-07-30"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1 -> 1.x) closed unmerged 2026-08-08"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2581: gradle-minor-patch group"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2583: rust_xlsxwriter 0.96->0.97"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2584: sentry 0.48.5->0.49.0"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2585: base64 0.22.1->0.23.0"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2586: validator 0.20.0->0.21.0"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2588: expo-status-bar 56.0.4->57.0.1"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2589: @testing-library/react-native 13.3.3->14.x"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2590: expo-device 56.0.4->57.0.1"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2591: expo-secure-store 56.0.4->57.0.1"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2673: ktor group"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2674: cargo-minor-patch group"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open PR #2675: npm-minor-patch group"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-11.md && head -1 == '# 2026-08-11'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "dedup: non-cumulative signal re-emit with score_delta\u22600",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap\u22648 + decay for open items older than 14d",
+      "observed": "cap=0 violations, decay=0 violations",
+      "expected": "cap\u22648; decayed or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotations for new plans",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans w/ metadata+headings",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 files outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff (excl. baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases; skipped phases documented in brief",
+      "expected": "failures listed if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD count",
+      "observed": "new=8 old=8",
+      "expected": "new\u2265old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "0 actions this run (no candidate)",
+      "expected": "\u22641 pr, \u22641 issue, \u22641 comment; idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm/coverage cursor",
+      "observed": "Phase 1.6 skipped \u2014 gate is no-op",
+      "expected": "n/a when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist"
+}

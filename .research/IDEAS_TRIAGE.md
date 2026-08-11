@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-08-07 06:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-11 04:15 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -8,6 +8,9 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
+| 1 | Stalled review: PR #2555 | PR #2555 | 2026-08-11 | open |
+| 1 | Stalled review: PR #2558 | PR #2558 | 2026-08-11 | open |
+| 1 | Stalled review: PR #2559 | PR #2559 | 2026-08-11 | open |
 | 1 | PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491 | PR #2489 | 2026-07-23 | dropped |
 | 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061, #1061 closed | 2026-06-07 | done |
 | 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks stagi | #950, PR #1143, issue #950 closed | 2026-06-07 | done |
