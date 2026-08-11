@@ -419,4 +419,79 @@ describe('useOfflineSupport.processQueue — issue #1767', () => {
     });
     expect(readQueue()).toHaveLength(0);
   });
+
+  it('(g) preserves temp→server id linkage for a dependent edit carried past a mid-cycle halt', async () => {
+    // Regression: the temp→server id mapping is in-memory for one cycle only.
+    // If a CREATE resolves its temp id but an UNRELATED action between it and
+    // its dependent UPDATE fails transiently (halting the cycle), the dependent
+    // UPDATE sits *after* the halt point and was never remapped in-loop. Unless
+    // it is remapped before persisting, next cycle the CREATE is gone, the
+    // mapping is lost, and the edit orphans onto a temp id the server never
+    // knew — a silent loss of an offline edit.
+    const TEMP = 'temp-fault-g';
+    seedQueue([
+      makeAction({
+        id: 'create',
+        type: 'CREATE',
+        endpoint: '/api/v1/faults',
+        body: { title: 'leak', localRef: TEMP },
+        localId: TEMP,
+      }),
+      // Unrelated action that fails transiently and halts the cycle — it sits
+      // BETWEEN the create and the dependent update.
+      makeAction({
+        id: 'blocker',
+        type: 'UPDATE',
+        method: 'PUT',
+        endpoint: '/api/v1/announcements/known-id',
+        body: { seen: true },
+      }),
+      // Dependent update targeting the temp id — never reached this cycle.
+      makeAction({
+        id: 'dependent',
+        type: 'UPDATE',
+        method: 'PUT',
+        endpoint: `/api/v1/faults/${TEMP}`,
+        body: { id: TEMP, priority: 'high' },
+        localId: TEMP,
+      }),
+    ]);
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/api/v1/faults')) return ok({ id: 'srv-g' }); // CREATE resolves
+      if (url.includes('/api/v1/announcements/')) return serverError(503); // blocker halts
+      return ok({});
+    });
+
+    await mountHook();
+
+    // Cycle 1: CREATE succeeds and resolves TEMP→srv-g; the blocker 503s and
+    // halts the cycle before the dependent update is reached.
+    await act(async () => {
+      await api.processQueue();
+    });
+
+    // The dependent's persisted endpoint/body must already point at the server
+    // id — the mapping was applied before persisting, not lost with the cycle.
+    const afterHalt = readQueue();
+    const dependent = afterHalt.find((a) => a.id === 'dependent');
+    expect(dependent).toBeDefined();
+    expect(dependent?.endpoint).toBe('/api/v1/faults/srv-g');
+    expect(dependent?.endpoint).not.toContain(TEMP);
+    expect(JSON.stringify(dependent?.body)).toContain('srv-g');
+    expect(JSON.stringify(dependent?.body)).not.toContain(TEMP);
+    // The CREATE is gone (succeeded); blocker + dependent remain, in FIFO order.
+    expect(afterHalt.map((a) => a.id)).toEqual(['blocker', 'dependent']);
+
+    // Cycle 2: the server has recovered — the dependent now hits the real
+    // resource and drains cleanly (rather than orphaning onto the temp id).
+    fetchMock.mockImplementation(async () => ok({}));
+    await act(async () => {
+      await api.processQueue();
+    });
+    const calls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(calls).toContain('https://api.test/api/v1/faults/srv-g');
+    expect(calls.every((u) => !u.includes(TEMP))).toBe(true);
+    expect(readQueue()).toHaveLength(0);
+  });
 });
