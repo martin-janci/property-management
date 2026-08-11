@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-11T06:28:03Z",
+  "generated": "2026-08-11T06:31:17Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -30,15 +30,15 @@
       "branch": "auto-impl/gh-issue-2643-retry1-32a6b849",
       "status": "review",
       "claimed_at": "2026-08-11T06:09:19Z",
-      "last_updated": "2026-08-11T06:28:03Z",
+      "last_updated": "2026-08-11T06:31:17Z",
       "status_changed_at": "2026-08-11T06:28:03Z",
       "pr_number": 2732,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2732",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2732 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=record_token_event now spawns detached tokio task (JoinHandle dropped=fire-and-forget); log-and-ignore + no-dropped-write preserved; unit test proves response returns before write; fmt PASS, clippy/test blocked by swagger-ui egress-403 (CI authoritative, draft); drift is owner-label only (pm-tech-lead=docs vs backend change)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=525399aff35b08c88b7c1aa4b003fc604f177115 note=hot-path fire-and-forget correct; drop() needed for must_use JoinHandle; tests prove off-path+no-dropped-write; scope_drift owner-label-only; CI pending (swagger egress-403 deferred to backend.yml)",
+      "last_reviewed_oid": "525399aff35b08c88b7c1aa4b003fc604f177115",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
