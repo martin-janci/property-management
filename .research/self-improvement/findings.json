@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-11T18:17:41Z",
-  "generated_by": "76f06041b5c24c534295c8065966615e98c696e7",
+  "generated_at": "2026-08-11T20:13:23Z",
+  "generated_by": "31ba28155ea809a04522f885372dd8db1e571728",
   "findings": [
     {
       "finding_id": "rebase-ours-takes-upstream-discards-state",
@@ -103,6 +103,29 @@
       "operator_notes": ""
     },
     {
+      "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
+      "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
+      "first_seen": "2026-07-16T18:20:36Z",
+      "last_seen": "2026-08-11T20:13:23Z",
+      "recurrence": 12,
+      "severity": "high",
+      "category": "infra",
+      "symptom": "The dispatcher-prompt hard-assumes `git push` is proxy-403-blocked and derives from it (a) PUSH_METHOD defaults to MCP push_files and (b) an mcp-push-size-guard that aborts inlining any file >64KiB. In THIS env direct `git push origin dev` SUCCEEDED (only GH007 email-privacy blocked it until the commit author email was set to @users.noreply.github.com). The archive is 333782 bytes (~326KiB), so the 64KiB guard would false-positive and block a push the environment actually permits.",
+      "evidence": [
+        "aa9cc0c2 (this run): Phase-6 fell back to PUSH_METHOD=git and direct git push to origin/dev SUCCEEDED -- the 483KB archive exceeds the 64KiB MCP inline ceiling, so the MCP-primary default + size-guard remain obsolete and direct git push is again the reliable primary in this env.",
+        "0cceb68 (2026-08-02 run): operator confirms direct git-to-dev WORKS in this env (NOT proxy-403'd); only GH007 email-privacy blocks commits authored as the user private address -- commit as <user>@users.noreply.github.com and it lands. MCP push_files still truncates >64KB. The MCP-primary default remains obsolete; direct git is the reliable primary.",
+        "2b04105 (12:16 run): git fetch/push worked through local proxy (state landed via direct git); gh CLI unavailable so reads/merges routed via GitHub MCP — MCP-primary push default remains obsolete in this env.",
+        "c801b17 (2026-08-03 02:14 run): direct git push to origin/dev SUCCEEDED (PUSH_METHOD=git effective) despite the prompt assuming 403; gh CLI absent so reads routed via MCP -- MCP-primary push default + 64KiB size-guard remain obsolete in this env.",
+        "31ba281 (this run, 2026-08-11 20:10): Phase 6 landed 2 commits (91adf07 + 31ba281) to origin/dev via DIRECT git (HEAD==origin/dev after); gh CLI absent, GitHub reads via MCP -- the MCP-primary default + 64KiB size-guard stay obsolete in this env."
+      ],
+      "root_cause": "dispatcher-prompt.md treats 'git push is proxy-403-blocked' as a fixed environmental fact (see finding git-push-blocked-by-proxy) and builds the MCP-primary push default + the 64KiB inline size-guard on top of it. That premise is env-dependent and false here: pushing to dev works (modulo the GH007 email-privacy setting). So the MCP-primary contract adds latency/complexity for no benefit, and its size-guard actively blocks legitimate large-archive commits (the exact collision tracked as mcp-push-cannot-inline-large-archive). Both downstream findings dissolve if push capability is probed rather than assumed.",
+      "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
+      "effort": "medium",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 push-capability probe + Phase 6 push step / mcp-push-size-guard)",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "no-run-level-lock-parallel-overlap",
       "title": "Two dispatcher cycles overlap with no lock, forcing a mid-run reset + re-run on push conflict",
       "severity": "high",
@@ -120,29 +143,6 @@
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
       "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap: new Phase 0.5 — GitHub ref (refs/tags/dispatcher-lock) as an atomic CAS mutex via `gh api POST /git/refs` (201=win, 422=held). TTL+holder ride in the tag object's message so a dead holder is reclaimable; release via DELETE on an EXIT trap covering Phase 6 abort paths. Uses gh REST not git push (the proxy 403s push — finding git-push-blocked-by-proxy), so the lock can actually acquire here. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
-      "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
-      "first_seen": "2026-07-16T18:20:36Z",
-      "last_seen": "2026-08-03T02:15:00Z",
-      "recurrence": 11,
-      "severity": "high",
-      "category": "infra",
-      "symptom": "The dispatcher-prompt hard-assumes `git push` is proxy-403-blocked and derives from it (a) PUSH_METHOD defaults to MCP push_files and (b) an mcp-push-size-guard that aborts inlining any file >64KiB. In THIS env direct `git push origin dev` SUCCEEDED (only GH007 email-privacy blocked it until the commit author email was set to @users.noreply.github.com). The archive is 333782 bytes (~326KiB), so the 64KiB guard would false-positive and block a push the environment actually permits.",
-      "evidence": [
-        "df1cfd7 (this run): env note confirms direct git push WORKS (state landed via git); gh CLI unavailable, GitHub reads via MCP -- MCP-primary push default remains obsolete in this env.",
-        "aa9cc0c2 (this run): Phase-6 fell back to PUSH_METHOD=git and direct git push to origin/dev SUCCEEDED -- the 483KB archive exceeds the 64KiB MCP inline ceiling, so the MCP-primary default + size-guard remain obsolete and direct git push is again the reliable primary in this env.",
-        "0cceb68 (2026-08-02 run): operator confirms direct git-to-dev WORKS in this env (NOT proxy-403'd); only GH007 email-privacy blocks commits authored as the user private address -- commit as <user>@users.noreply.github.com and it lands. MCP push_files still truncates >64KB. The MCP-primary default remains obsolete; direct git is the reliable primary.",
-        "2b04105 (12:16 run): git fetch/push worked through local proxy (state landed via direct git); gh CLI unavailable so reads/merges routed via GitHub MCP — MCP-primary push default remains obsolete in this env.",
-        "c801b17 (2026-08-03 02:14 run): direct git push to origin/dev SUCCEEDED (PUSH_METHOD=git effective) despite the prompt assuming 403; gh CLI absent so reads routed via MCP -- MCP-primary push default + 64KiB size-guard remain obsolete in this env."
-      ],
-      "root_cause": "dispatcher-prompt.md treats 'git push is proxy-403-blocked' as a fixed environmental fact (see finding git-push-blocked-by-proxy) and builds the MCP-primary push default + the 64KiB inline size-guard on top of it. That premise is env-dependent and false here: pushing to dev works (modulo the GH007 email-privacy setting). So the MCP-primary contract adds latency/complexity for no benefit, and its size-guard actively blocks legitimate large-archive commits (the exact collision tracked as mcp-push-cannot-inline-large-archive). Both downstream findings dissolve if push capability is probed rather than assumed.",
-      "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
-      "effort": "medium",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 push-capability probe + Phase 6 push step / mcp-push-size-guard)",
-      "status": "open",
-      "operator_notes": ""
     },
     {
       "finding_id": "stale-in-progress-action-list-decoupled-from-assignments",
@@ -445,6 +445,28 @@
       "operator_notes": ""
     },
     {
+      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
+      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
+      "first_seen": "2026-07-31T12:24:18Z",
+      "last_seen": "2026-08-11T20:13:23Z",
+      "recurrence": 10,
+      "severity": "medium",
+      "category": "goal-check",
+      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
+      "evidence": [
+        "a1e5cf9 (2026-08-03 00:13 run): GC3-buffer-bounds=FAIL (record-only) while backlog LEGITIMATELY exhausted (backlog.json 248 terminal/0 open, coverage 2 partial/0 not-started, retry avail=0); refill machinery healthy (Tier-1d fired 2 findings) -- same hard FAIL as a genuine refill defect.",
+        "c801b17 (2026-08-03 02:14 run): GC3-buffer-bounds=FAIL (enforce rc=0) while backlog LEGITIMATELY exhausted (166 done/81 dropped/0 open, coverage 0 open stories, retry 0 eligible) -- same hard FAIL as a genuine refill defect.",
+        "1e3a56c: goal-check GC3-buffer-bounds=FAIL (enforce rc=0); recurs fc8cce0/a349407/cb0d4d1/16e1e9a",
+        "f1e0f29 (2026-08-11 18:12 run): GC3-buffer-bounds=FAIL (enforce rc=0) while the backlog is legitimately exhausted (claimable=2/72, both gated); reconcilers gc1/dev/backlog all clean and issue-ingest=0 -- GC3 records genuine starvation as a hard FAIL though no dispatcher action can remedy it this run.",
+        "91adf07 (this run, 2026-08-11 20:10): GC3-buffer-bounds=FAIL (enforce rc=0) while backlog legitimately exhausted (claimable=2/72, real-claimable=0 all gated/blocked); reconcilers gc1/dev/backlog all clean, issue-ingest=0 -- same hard FAIL as a genuine refill defect."
+      ],
+      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
+      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "temp-phase-8-past-documented-removal-deadline",
       "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
       "first_seen": "2026-07-18T12:19:52Z",
@@ -464,28 +486,6 @@
       "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (TEMP_PHASE_8 markers ~L2382-2521)",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
-      "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
-      "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
-      "first_seen": "2026-07-31T12:24:18Z",
-      "last_seen": "2026-08-11T18:17:41Z",
-      "recurrence": 9,
-      "severity": "medium",
-      "category": "goal-check",
-      "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
-      "evidence": [
-        "2b04105 (12:16 run): GC3-buffer-bounds=FAIL enforce rc=0 while backlog legitimately dry (backlog.json + retry-remint both empty) — same hard FAIL as a genuine refill defect.",
-        "a1e5cf9 (2026-08-03 00:13 run): GC3-buffer-bounds=FAIL (record-only) while backlog LEGITIMATELY exhausted (backlog.json 248 terminal/0 open, coverage 2 partial/0 not-started, retry avail=0); refill machinery healthy (Tier-1d fired 2 findings) -- same hard FAIL as a genuine refill defect.",
-        "c801b17 (2026-08-03 02:14 run): GC3-buffer-bounds=FAIL (enforce rc=0) while backlog LEGITIMATELY exhausted (166 done/81 dropped/0 open, coverage 0 open stories, retry 0 eligible) -- same hard FAIL as a genuine refill defect.",
-        "1e3a56c: goal-check GC3-buffer-bounds=FAIL (enforce rc=0); recurs fc8cce0/a349407/cb0d4d1/16e1e9a",
-        "f1e0f29 (2026-08-11 18:12 run): GC3-buffer-bounds=FAIL (enforce rc=0) while the backlog is legitimately exhausted (claimable=2/72, both gated); reconcilers gc1/dev/backlog all clean and issue-ingest=0 -- GC3 records genuine starvation as a hard FAIL though no dispatcher action can remedy it this run."
-      ],
-      "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
-      "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
-      "effort": "medium",
       "status": "open",
       "operator_notes": ""
     },
@@ -621,6 +621,26 @@
       "operator_notes": "Fixed in Phase 1 step 1: fetch first, then if local dev is AHEAD of origin/dev (contamination — the dispatcher never leaves work on local dev) hard-reset to origin/dev; if only BEHIND, fast-forward. Replaces the bare `git pull --ff-only` that failed on divergence and forced the reset+re-run. Awaiting next dispatcher run to confirm."
     },
     {
+      "finding_id": "mobile-native-kmp-items-starve-claim-pool-in-cloud",
+      "first_seen": "2026-08-11T16:16:13Z",
+      "last_seen": "2026-08-11T20:13:23Z",
+      "recurrence": 3,
+      "severity": "medium",
+      "category": "claim",
+      "symptom": "Claim pool structurally empty: only claimable action-list items are 2 mobile-native-kmp rows (issue #2652) that pass the gate but are unclaimable in cloud env (no ADB/local Docker), plus 1 quarantined-dup — buffer stuck at claimable=2/72 below floor=36.",
+      "evidence": [
+        "1e3a56c: claim pool empty (2 mobile-native-gated, 1 quarantined-dup); Tier 2 planner kick fired http=200 but pool unchanged",
+        "593ea77: Tier 1d could only generate mobile-native-kmp findings; kmp items require ADB/local env unavailable in cloud",
+        "f1e0f29 (2026-08-11 18:12 run): both claimable opens (portfolio-analytics-caps-100, portfolio-analytics-unbounded-fanout-retry1) are mobile-native-kmp -> gated (AGP egress-blocked in cloud), so effective claim pool = 0 while the buffer metric reads 2/72.",
+        "91adf07 (this run, 2026-08-11 20:10): claimable=2/72 but real-claimable=0 -- both open items (portfolio-analytics-caps-100, portfolio-analytics-unbounded-fanout-retry1) are mobile-native-kmp gated and the 3rd candidate shares an id with the active quarantined row; Tier1b/1c avail=0."
+      ],
+      "root_cause": "mobile-native-gate.sh (or Phase 3 candidate filter) does not exclude mobile-native-kmp action-list items that structurally require a local env (ADB / local Docker) when the dispatcher runs in cloud mode. They pass the gate ('cloud-ungated', tracked by issue #2652) and permanently occupy the claim pool, so the buffer cannot refill and every run reports GC3 FAIL / buffer starved.",
+      "proposed_fix": "Extend mobile-native-gate.sh predicate (and the Phase 3 candidate exclusion) to gate mobile-native-kmp ids when running cloud-mode (no ADB/local Docker), routing them to a parked/deferred lane tracked by issue #2652 instead of leaving them in the claimable pool. Add self-test T33 asserting cloud-mode gate excludes kmp-env-required ids while still allowing mobile-rn.",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "quarantined-assignment-blocks-action-list-twin-claim",
       "title": "An open action-list item whose stem matches a QUARANTINED assignment is permanently unclaimable for the quarantine's lifetime, so the buffer reports claimable=0 even when open>0 — self-inflicted starvation distinct from upstream supply exhaustion",
       "first_seen": "2026-07-18T12:19:52Z",
@@ -662,20 +682,21 @@
       "operator_notes": ""
     },
     {
-      "finding_id": "mobile-native-kmp-items-starve-claim-pool-in-cloud",
-      "first_seen": "2026-08-11T16:16:13Z",
-      "last_seen": "2026-08-11T18:17:41Z",
+      "finding_id": "tier1d-generator-not-gate-aware-wastes-cycles-on-gated-stack",
+      "first_seen": "2026-08-11T18:17:41Z",
+      "last_seen": "2026-08-11T20:13:23Z",
       "recurrence": 2,
       "severity": "medium",
-      "category": "claim",
-      "symptom": "Claim pool structurally empty: only claimable action-list items are 2 mobile-native-kmp rows (issue #2652) that pass the gate but are unclaimable in cloud env (no ADB/local Docker), plus 1 quarantined-dup — buffer stuck at claimable=2/72 below floor=36.",
+      "category": "planner",
+      "symptom": "Tier-1d demand-driven dev-review generator keeps emitting mobile-native-kmp code-review signals that are structurally unlandable in the cloud runner (mobile-native-gate excludes them: AGP egress-blocked), so the generation cycle produces zero claimable, landable work.",
       "evidence": [
-        "1e3a56c: claim pool empty (2 mobile-native-gated, 1 quarantined-dup); Tier 2 planner kick fired http=200 but pool unchanged",
-        "593ea77: Tier 1d could only generate mobile-native-kmp findings; kmp items require ADB/local env unavailable in cloud",
-        "f1e0f29 (2026-08-11 18:12 run): both claimable opens (portfolio-analytics-caps-100, portfolio-analytics-unbounded-fanout-retry1) are mobile-native-kmp -> gated (AGP egress-blocked in cloud), so effective claim pool = 0 while the buffer metric reads 2/72."
+        "593ea77 (2026-08-11 16:13 run): Tier-1d dev-review generator emitted a mobile-native-kmp slice (CancellationException swallowed across ApiClient+8 repos, HttpClientProvider missing HttpTimeout, SsoService untested) -- all gated, none claimable in cloud.",
+        "f1e0f29 (2026-08-11 18:12 run): the two mobile-native-kmp signals present (portfolio-analytics-caps-100, portfolio-analytics-unbounded-fanout-retry1) are gated; the buffer stayed starved 2/72 with effective claimable=0.",
+        "The generator's segment selection (ppt-dev-review) picks the oldest-unreviewed / churn-hotspot segment with NO gate awareness, so it can spend a whole generation cycle on a stack the cloud runner can never land.",
+        "31ba281 (this run, 2026-08-11 20:10): Tier-1d selected oldest-unreviewed segment = mobile-native-kmp AGAIN and emitted 2 gated findings (cancellation-swallowed score 2, ssoservice-untested score 1) -- review_cursor advanced but 0 claimable/landable produced (see run NOTE + issue #2652)."
       ],
-      "root_cause": "mobile-native-gate.sh (or Phase 3 candidate filter) does not exclude mobile-native-kmp action-list items that structurally require a local env (ADB / local Docker) when the dispatcher runs in cloud mode. They pass the gate ('cloud-ungated', tracked by issue #2652) and permanently occupy the claim pool, so the buffer cannot refill and every run reports GC3 FAIL / buffer starved.",
-      "proposed_fix": "Extend mobile-native-gate.sh predicate (and the Phase 3 candidate exclusion) to gate mobile-native-kmp ids when running cloud-mode (no ADB/local Docker), routing them to a parked/deferred lane tracked by issue #2652 instead of leaving them in the claimable pool. Add self-test T33 asserting cloud-mode gate excludes kmp-env-required ids while still allowing mobile-rn.",
+      "root_cause": "The Tier-1d dev-review generator (ppt-dev-review skill) selects its review segment purely by churn/oldest-unreviewed and does not consult mobile-native-gate.sh before generating. In the cloud runner, mobile-native-kmp is gated (AGP egress-blocked), so any KMP slice it produces is born un-claimable -- wasted generation cycles that never relieve starvation.",
+      "proposed_fix": "Make the Tier-1d generator gate-aware at SELECTION time: before choosing a review segment, call .research/mobile-native-gate.sh (already wired for Phase 3 claim exclusion) and, when running in the gated cloud env, drop mobile-native-kmp segments from the candidate rotation so the generator prefers a landable stack (reality-web, ppt-web, mobile-rn, backend). Files: the ppt-dev-review segment-selection step + .research/dispatcher-prompt.md Phase 1.5/Tier-1d invocation. Optionally add self-test T33 asserting no Tier-1d-emitted signal targets a currently-gated stack.",
       "effort": "medium",
       "status": "open",
       "operator_notes": ""
@@ -762,20 +783,19 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "tier1d-generator-not-gate-aware-wastes-cycles-on-gated-stack",
-      "first_seen": "2026-08-11T18:17:41Z",
-      "last_seen": "2026-08-11T18:17:41Z",
+      "finding_id": "pick-target-epic-not-gate-aware-pins-finish-first-to-gated-target",
+      "first_seen": "2026-08-11T20:13:23Z",
+      "last_seen": "2026-08-11T20:13:23Z",
       "recurrence": 1,
       "severity": "medium",
-      "category": "planner",
-      "symptom": "Tier-1d demand-driven dev-review generator keeps emitting mobile-native-kmp code-review signals that are structurally unlandable in the cloud runner (mobile-native-gate excludes them: AGP egress-blocked), so the generation cycle produces zero claimable, landable work.",
+      "category": "claim",
+      "symptom": "finish-first target (objective.json epic_prefix) = code-review-mobile-native-kmp-portfolio-analytics-caps-100 -- a mobile-native-gated, cloud-unlandable epic. pick-target-epic.sh --update elects the finish-first target with no gate awareness, so finish-first is pinned to a target it can never advance while real-claimable work is 0.",
       "evidence": [
-        "593ea77 (2026-08-11 16:13 run): Tier-1d dev-review generator emitted a mobile-native-kmp slice (CancellationException swallowed across ApiClient+8 repos, HttpClientProvider missing HttpTimeout, SsoService untested) -- all gated, none claimable in cloud.",
-        "f1e0f29 (2026-08-11 18:12 run): the two mobile-native-kmp signals present (portfolio-analytics-caps-100, portfolio-analytics-unbounded-fanout-retry1) are gated; the buffer stayed starved 2/72 with effective claimable=0.",
-        "The generator's segment selection (ppt-dev-review) picks the oldest-unreviewed / churn-hotspot segment with NO gate awareness, so it can spend a whole generation cycle on a stack the cloud runner can never land."
+        "31ba281 (this run, 2026-08-11 20:10): objective.json epic_prefix = code-review-mobile-native-kmp-portfolio-analytics-caps-100 (gated); claimed=0, candidate pool empty (2 gated opens + 1 quarantined-dup sibling).",
+        "91adf07 (this run): the Mobile-native gated line lists exactly the two open items (portfolio-analytics-caps-100, portfolio-analytics-unbounded-fanout-retry1) -- the finish-first target is drawn from a set that is 100% gated."
       ],
-      "root_cause": "The Tier-1d dev-review generator (ppt-dev-review skill) selects its review segment purely by churn/oldest-unreviewed and does not consult mobile-native-gate.sh before generating. In the cloud runner, mobile-native-kmp is gated (AGP egress-blocked), so any KMP slice it produces is born un-claimable -- wasted generation cycles that never relieve starvation.",
-      "proposed_fix": "Make the Tier-1d generator gate-aware at SELECTION time: before choosing a review segment, call .research/mobile-native-gate.sh (already wired for Phase 3 claim exclusion) and, when running in the gated cloud env, drop mobile-native-kmp segments from the candidate rotation so the generator prefers a landable stack (reality-web, ppt-web, mobile-rn, backend). Files: the ppt-dev-review segment-selection step + .research/dispatcher-prompt.md Phase 1.5/Tier-1d invocation. Optionally add self-test T33 asserting no Tier-1d-emitted signal targets a currently-gated stack.",
+      "root_cause": "pick-target-epic.sh scores/selects the finish-first target on epic grouping + progress only, with no mobile-native-gate filter. When the only leftover epics are mobile-native-kmp (cloud-gated), it still elects one as the objective, steering every finish-first run at a target it structurally cannot advance.",
+      "proposed_fix": "Make pick-target-epic.sh gate-aware: drop epic_prefixes whose task ids all pass mobile-native-gate.sh (fully cloud-gated) from finish-first candidate selection; when no landable epic is left, set epic_prefix=NONE instead of pinning a gated target. Add self-test T<N>: objective.epic_prefix must not be a fully-gated epic while a non-gated candidate exists. Sibling of tier1d-generator-not-gate-aware (same gate-blindness, different code path).",
       "effort": "medium",
       "status": "open",
       "operator_notes": ""
