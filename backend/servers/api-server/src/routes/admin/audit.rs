@@ -57,7 +57,11 @@ pub fn router() -> Router<AppState> {
 /// spreadsheet UIs. False positives (a legit cell containing `-`) are
 /// acceptable for an audit export — the prefix is harmless when pasted
 /// into a viewer and the operator can strip it.
-fn sanitize_csv_cell(value: &str) -> String {
+///
+/// `pub(crate)` so other CSV exporters (e.g. the reports export in
+/// [`crate::routes::reports`]) reuse this single implementation instead of
+/// re-deriving their own formula-injection guard.
+pub(crate) fn sanitize_csv_cell(value: &str) -> String {
     let dangerous = value.chars().any(|c| matches!(c, '=' | '+' | '-' | '@'));
     if dangerous {
         let mut out = String::with_capacity(value.len() + 1);

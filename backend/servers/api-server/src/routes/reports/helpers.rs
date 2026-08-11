@@ -9,8 +9,10 @@ use api_core::extractors::RlsConnection;
 use axum::{http::StatusCode, Json};
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
+use db::models::VoteParticipationDetail;
 use uuid::Uuid;
 
+use crate::routes::admin::audit::sanitize_csv_cell;
 use crate::state::AppState;
 
 /// Get building name by ID if provided.
@@ -89,6 +91,34 @@ pub(super) async fn estimate_report_row_count(
         }
         _ => 0,
     }
+}
+
+/// Render a single voting-participation row for the CSV export.
+///
+/// The vote `title` is the only user-authored, free-form string in the row
+/// (every other column is a UUID, a system enum, a date, or a number), so it
+/// is routed through the shared [`sanitize_csv_cell`] guard to neutralize
+/// spreadsheet formula injection: a title beginning with `=`, `+`, `-`, or
+/// `@` is prefixed with `'` so Excel/Sheets treat it as text rather than a
+/// formula. Commas are then replaced with `;` so the cell cannot spill into
+/// adjacent columns (this hand-rolled export does not use the `csv` crate's
+/// quoting). Extracted into its own function so the neutralization is unit
+/// testable without a database.
+fn voting_csv_row(v: &VoteParticipationDetail) -> String {
+    format!(
+        "{},{},{},{},{},{},{},{:.1}%,{},{}\n",
+        v.vote_id,
+        sanitize_csv_cell(&v.title).replace(',', ";"),
+        v.status,
+        v.start_at.as_deref().unwrap_or("N/A"),
+        v.end_at,
+        v.eligible_count,
+        v.response_count,
+        v.participation_rate,
+        v.quorum_required
+            .map_or("N/A".to_string(), |q| format!("{:.0}%", q)),
+        if v.quorum_reached { "Yes" } else { "No" }
+    )
 }
 
 /// Generate CSV content for a report synchronously (Story 88.5).
@@ -185,20 +215,7 @@ pub(super) async fn generate_sync_csv_report(
             // Generate CSV
             let mut csv = String::from("Vote ID,Title,Status,Start Date,End Date,Eligible Count,Response Count,Participation Rate,Quorum Required,Quorum Reached\n");
             for v in &votes {
-                csv.push_str(&format!(
-                    "{},{},{},{},{},{},{},{:.1}%,{},{}\n",
-                    v.vote_id,
-                    v.title.replace(',', ";"),
-                    v.status,
-                    v.start_at.as_deref().unwrap_or("N/A"),
-                    v.end_at,
-                    v.eligible_count,
-                    v.response_count,
-                    v.participation_rate,
-                    v.quorum_required
-                        .map_or("N/A".to_string(), |q| format!("{:.0}%", q)),
-                    if v.quorum_reached { "Yes" } else { "No" }
-                ));
+                csv.push_str(&voting_csv_row(v));
             }
 
             Ok(csv)
@@ -294,5 +311,70 @@ pub(super) fn get_content_type_for_format(format: &str) -> &'static str {
         "excel" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "csv" => "text/csv",
         _ => "application/octet-stream",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_vote(title: &str) -> VoteParticipationDetail {
+        VoteParticipationDetail {
+            vote_id: Uuid::nil(),
+            title: title.to_string(),
+            status: "closed".to_string(),
+            start_at: Some("2026-01-01".to_string()),
+            end_at: "2026-01-31".to_string(),
+            eligible_count: 10,
+            response_count: 8,
+            participation_rate: 80.0,
+            quorum_required: Some(50),
+            quorum_reached: true,
+        }
+    }
+
+    /// The title cell is the 2nd comma-separated field of the row.
+    fn title_cell(row: &str) -> String {
+        row.trim_end_matches('\n')
+            .splitn(3, ',')
+            .nth(1)
+            .expect("row has a title cell")
+            .to_string()
+    }
+
+    /// Regression: a user-authored vote title that begins with a spreadsheet
+    /// formula trigger must be neutralized in the exported CSV (leading `'`
+    /// prefix) instead of being written verbatim, closing the CSV/formula
+    /// injection vector that bypassed the repo's `sanitize_csv_cell`.
+    #[test]
+    fn voting_csv_row_neutralizes_formula_trigger_titles() {
+        for trigger in ["=cmd|'/c calc'!A1", "+1+1", "-2+3", "@SUM(A1)"] {
+            let row = voting_csv_row(&sample_vote(trigger));
+            let cell = title_cell(&row);
+            assert!(
+                cell.starts_with('\''),
+                "title {trigger:?} must be prefixed with a quote in cell {cell:?}"
+            );
+            // The dangerous payload must not appear as a leading formula.
+            assert!(
+                !cell.starts_with(trigger.chars().next().unwrap()),
+                "cell {cell:?} still begins with the formula trigger"
+            );
+        }
+    }
+
+    /// A plain title is written through unchanged (aside from comma escaping).
+    #[test]
+    fn voting_csv_row_leaves_plain_titles_untouched() {
+        let row = voting_csv_row(&sample_vote("Annual Budget Vote"));
+        assert_eq!(title_cell(&row), "Annual Budget Vote");
+    }
+
+    /// Commas in a title are escaped to `;` so the cell cannot spill into
+    /// adjacent CSV columns.
+    #[test]
+    fn voting_csv_row_escapes_commas_in_title() {
+        let row = voting_csv_row(&sample_vote("Roof, Facade, Windows"));
+        assert_eq!(title_cell(&row), "Roof; Facade; Windows");
     }
 }
