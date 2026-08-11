@@ -1,0 +1,421 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-11",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-08-07T06:24:00Z; today 2026-08-11 \u2014 lag 111h (4d 15h)"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-08-11",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "cloud routine last_run_iso 2026-08-07T06:24:00Z is 4d old; scheduler may have missed daily fires"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2559 open 14d (12d since last update), no reviewDecision \u2014 PAY by square QR endpoint (UC-ACC-05.8)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2558 open 14d (12d since last update), no reviewDecision \u2014 invoice PDF render endpoint (UC-ACC-05.9)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2555 open 14d (12d since last update), no reviewDecision \u2014 wire sent/cancelled invoice lifecycle (UC-ACC-05.17)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2584: sentry 0.48.5\u21920.49.0"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2585: base64 0.22.1\u21920.23.0"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2586: validator 0.20.0\u21920.21.0"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2675: npm-minor-patch group across 1 directory with 22 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2583: rust_xlsxwriter 0.96.0\u21920.97.0"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2674: cargo-minor-patch group across 1 directory with 2 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2673: ktor group in /mobile-native with 7 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2581: gradle-minor-patch group across 1 directory with 4 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2591: expo-secure-store 56.0.4\u219257.0.1"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2590: expo-device 56.0.4\u219257.0.1"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2589: @testing-library/react-native 13.3.3\u219214.0.1"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2588: expo-status-bar 56.0.4\u219257.0.1"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: bump dtolnay/rust-toolchain 1.94.1\u21921.100.0) closed unmerged 2026-08-08 \u2014 final retry 2/2 of dependabot re-apply, draft/blocked"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2735-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2735",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2735 (test(ppt-web): add regression tests for rentals API\u2194UI mappers) touched frontend/apps/ppt-web/src/routes/groups/rentals.tsx + .mappers.test.tsx without updating docs/screens/ppt/rentals*.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2718-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2718",
+      "score_delta": 2,
+      "confidence": "low",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2718 touched frontend/apps/reality-web/src/app/api/layout-revalidate/route.test.ts \u2014 best-effort heuristic false-positive: this is an API route (webhook), not a user-facing screen, so no docs/screens/reality entry is expected"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports/helpers.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn this run",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/helpers.rs touched by 2 PRs this run (window 2026-08-07..08-11)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_pipeline.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn this run",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs touched by 2 PRs this run (window 2026-08-07..08-11)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/agencies.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn this run",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs touched by 2 PRs this run (window 2026-08-07..08-11)"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-persistent-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:129,144 \u2014 showToast unconditionally appends to state; visibleToasts uses slice(-3) so when more than 3 toasts exist the oldest are hidden but remain in state. Error toasts default to duration=0 (persistent, no auto-dismiss timeout), and hidden toasts render no close button \u2014 pushed-off error toasts accumulate in state unbounded over the session"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-share-revoke-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx:340,346-349 \u2014 Revoke share button + entire ConfirmationDialog (title/message/confirmLabel/cancelLabel) hardcoded English, never wrapped in t(); DocumentSharePanel is the only caller passing zero i18n keys to ConfirmationDialog (compare EmergencyContactDirectoryPage.tsx:276-277 which uses t('common.delete')/t('common.cancel'))",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:37-38,138 \u2014 defaults 'Confirm'/'Cancel' and the isLoading fallback 'Processing...' are hardcoded English; consumers relying on defaults or hitting the loading path leak untranslated text"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "matched",
+      "expected": "matched"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no dup signal id with score_delta re-applied on non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay applied",
+      "observed": "n/a \u2014 no items past threshold",
+      "expected": "correct decay"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "n/a \u2014 0 plans promoted",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures consistent with cursors",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "all present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grows",
+      "observed": "this=8 head=8",
+      "expected": "this \u2265 head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15-cap",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G15-idempotency",
+      "passed": true,
+      "command": "no re-processed signal ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + coverage_cursor advanced",
+      "observed": "pm=3->4 cc=5->6",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal met confidence=high + score>=3 this run"
+}
