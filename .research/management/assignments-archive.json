@@ -1661,6 +1661,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts-retry1",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-src-h-f3e59777",
+      "status": "merged",
+      "claimed_at": "2026-08-11T12:09:41Z",
+      "last_updated": "2026-08-11T14:10:14Z",
+      "status_changed_at": "2026-08-11T14:10:14Z",
+      "pr_number": 2734,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2734",
+      "merged_at": "2026-08-11T14:09:07Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2734 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=fix offline-queue temp-id remap lost past mid-cycle halt; verify green 626/626; drift is owner-hint mismatch",
+      "reviewer_summary": "verdict=approve note=offline-queue data-loss fix correct+tested; CI green; scope_drift is owner-hint artifact; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "06f167a58fcbaed1ba42cfbd0ed69137252adda2",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-11T14:08:58Z"
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-src-s-cd031226",
       "status": "merged",
@@ -1725,6 +1747,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx-retry1",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-965505ef",
+      "status": "merged",
+      "claimed_at": "2026-08-11T12:09:41Z",
+      "last_updated": "2026-08-11T14:10:14Z",
+      "status_changed_at": "2026-08-11T14:10:14Z",
+      "pr_number": 2735,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2735",
+      "merged_at": "2026-08-11T14:09:24Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2735 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added 13 regression tests for rentals API↔UI mappers; verify green 2169 tests; no latent bug",
+      "reviewer_summary": "verdict=approve note=test-only mapper regression coverage; export-only source change; CI green; folds verified vs source; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "b520a333014fefbbb13064abe7e0df39bf0337bf",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-11T14:08:58Z"
     },
     {
       "task_id": "churn-hotspot-mobile-native-listing-detail-kt",
@@ -12351,6 +12395,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "screen-map-drift-pr-2646-ppt-retry1",
+      "branch": "auto-impl/screen-map-drift-pr-2646-ppt-retry1-85cf7dec",
+      "status": "merged",
+      "claimed_at": "2026-08-11T12:09:41Z",
+      "last_updated": "2026-08-11T14:10:14Z",
+      "status_changed_at": "2026-08-11T14:10:14Z",
+      "pr_number": 2733,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2733",
+      "merged_at": "2026-08-11T14:09:30Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=2733 status=done specialist=generic scope_drift=true code_reuse_warn=none note=reconciled ppt/error-handling-toasts screen-map with PR #2646 RouteErrorBoundary; /screens validate 0/0; docs-drift only; scope_drift is owner-map artifact",
+      "reviewer_summary": "verdict=approve note=docs-only screen-map reconcile verified accurate vs App.tsx; scope_drift justified; CI green; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "ad04cc9e4db83f777f974c72bef5a05cfb04829e",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-11T14:08:58Z"
+    },
+    {
       "task_id": "screen-map-drift-pr-2647-ppt",
       "branch": "auto-impl/screen-map-drift-pr-2647-ppt-2b400d6f",
       "status": "failed",
@@ -13347,5 +13413,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-11T12:20:23Z"
+  "archived_at": "2026-08-11T14:12:25Z"
 }

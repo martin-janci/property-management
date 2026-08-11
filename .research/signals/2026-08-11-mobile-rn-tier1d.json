@@ -1,0 +1,41 @@
+{
+  "generated": "2026-08-11T00:00:00Z",
+  "segment": "mobile-rn",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Tier-1d demand-driven (claim buffer starved: 0 landable claimable after Tier 1b/1c). state.review_cursor is stale/unreliable for the frontend segments: it lists ppt-web-ui=2026-08-06 and ppt-web-core=2026-08-06, but the ground-truth signal files show ppt-web-ui was already reviewed 08-09, 08-10, and twice on 08-11, and ppt-web-core on 08-11 — those segments are saturated for today and my initial ppt-web-ui pass surfaced only duplicates (MoveFolderDialog i18n already flagged in 2026-08-05-ppt-web-ui-tier1d.json; government-portal aria-label i18n already flagged in the 2026-07/08 aria-label-i18n finding). By actual last-reviewed date across signal files the oldest-unreviewed LANDABLE segment is mobile-rn (last reviewed 2026-08-08). mobile-native-kmp (last 08-11 per cursor 08-04) was explicitly excluded: KMP/AGP builds are egress-blocked in this cloud runner, so those findings are structurally unclaimable — the task directs preferring a frontend segment. mobile-rn is React Native under frontend/apps/mobile (frontend tech, verifiable via typecheck/jest-expo, no AGP), so it is landable. Segment root: frontend/apps/mobile/src. Frontend + Tester experts (static-only) reviewed the widgets/ and voice/ modules (no prior widget or voice findings exist in any mobile-rn signal file — genuinely unreviewed), plus meters/ and document upload. Deduplicated against prior mobile-rn findings: offline-queue/offline-sync/offline-terminal data-loss, thread-send-silent-fail, hardcoded-empty-error-i18n / hardcoded-i18n-screens / alert-i18n-gap / biometric-prompt-i18n, push-debug-console-log, useapi-no-refresh-retry, auth-restore-stale-token, nfc/qr test gaps. The two findings below are in WidgetDataProvider (never previously reviewed); i18n gaps in voice/VoiceCommands.ts were intentionally NOT emitted because the mobile-rn i18n theme is already covered by 4 prior findings. 3 candidate findings surfaced; kept the 2 highest-severity distinct ones (skipped the duplicative-theme voice i18n gap per the skill's skip-nits / dedup guidance).",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallows-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:354-382 — the private `apiRequest<T>()` used by every widget fetch (fetchNotificationsData, fetchUpcomingMeetingsData, fetchFaultsData, etc.) catches ALL failures and `return {} as T` (:380). This includes the explicit `if (!response.ok) throw new Error(\\`API request failed: ${response.status}\\`)` at :369-371 — a 401 (the widget's own `authToken` set via setAuthToken at :35 is separate from the main app's token and is never refreshed), 403, or 500 is caught at :374 and converted to an empty object cast to the widget's data type. So an auth/server failure is indistinguishable from a legitimately empty response.",
+        "This silently defeats the intended cache-fallback in `updateAllWidgets()` (:138-173): because `apiRequest` swallows the throw, `fetchWidgetData` never rejects, so `result.success` is always `true` (:159), the `else` branch that restores cached data on failure (:162-167) is UNREACHABLE, and the empty `{}`-derived data is written back via `cacheWidgetData(result.config.id, result.data)` (:160) — OVERWRITING the last-known-good cache with zeros. e.g. fetchUpcomingMeetingsData maps `response.upcoming_count ?? 0` / `response.meetings?.map(...) ?? []` (:304-311), so on any transient network blip or expired widget token the home-screen widget silently drops to '0 meetings' / '0 notifications' AND clobbers the good cached copy, instead of showing stale data.",
+        "Compounding: error visibility is `if (__DEV__)` only (:376-378) — in production the failure is completely silent, and the inline comment `// in production, integrate with error reporting` (:375) is an unaddressed acknowledgement of the gap. Fix: let `apiRequest` propagate (rethrow) on `!response.ok` and on network error so `updateAllWidgets`'s existing allSettled + cached-fallback path (:153-168) actually engages and the cache is not overwritten with empty data; report errors outside `__DEV__`."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-storage-unguarded-jsonparse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:92-95 `getAllWidgetConfigs()` does `return stored ? JSON.parse(stored) : []` and :347-352 `getAllCachedData()` does `return stored ? JSON.parse(stored) : {}` — both parse AsyncStorage-persisted JSON with NO try/catch. If WIDGET_CONFIG_KEY or WIDGET_DATA_KEY is ever truncated/corrupted (partial write on process kill, storage corruption, schema drift after an app update), JSON.parse throws synchronously.",
+        "The throw is uncaught on the widget-refresh path: `updateAllWidgets()` (:138) calls `getAllWidgetConfigs()` at :139 outside any try/catch, and its cache-fallback calls `getCachedWidgetData()`→`getAllCachedData()` at :164 also outside try/catch — so a corrupted store rejects the whole background widget update (all widgets fail, not just one) as an unhandled promise rejection rather than degrading gracefully.",
+        "This exact hazard is already guarded elsewhere in the same app: nfc/NFCCredentialManager.ts:272,285 wraps its stored-credential JSON.parse in try/catch and discards on corruption ('Stored credentials corrupted; discarding'). The widget provider should follow that established repo pattern — wrap both parses, discard/reset the corrupted key, and return the empty default. Low trigger probability but zero-cost to harden and consistent with existing code."
+      ],
+      "expert": "tester"
+    }
+  ]
+}
