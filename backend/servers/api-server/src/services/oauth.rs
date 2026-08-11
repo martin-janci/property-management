@@ -194,19 +194,35 @@ impl OAuthService {
 
     /// Best-effort record of an OAuth token lifecycle event (Epic 10A, #2628).
     ///
-    /// Deliberately swallows every error: token issuance / refresh / revocation
-    /// must never fail because analytics could not be persisted. A failure is
-    /// logged at `warn!` and otherwise ignored, matching the repository's
-    /// documented "log-and-ignore" contract.
-    async fn record_token_event(&self, event: CreateOAuthTokenEvent) {
-        if let Some(repo) = &self.token_event_repo {
+    /// The analytics `INSERT` is dispatched to a **detached background task**
+    /// ([`tokio::spawn`]) rather than awaited inline, so the DB round-trip never
+    /// sits on the hot token path (#2643): token issuance / refresh / revocation
+    /// return their `TokenResponse` without waiting on this write. `record`
+    /// itself is called only from inside the spawned task.
+    ///
+    /// Errors are still swallowed: a recording failure is logged at `warn!` and
+    /// otherwise ignored, matching the repository's documented "log-and-ignore"
+    /// contract — it must never alter or fail the token flow.
+    ///
+    /// Returns the spawned task's [`JoinHandle`] when a recorder is wired
+    /// (`None` when analytics is disabled). Production callers drop it —
+    /// fire-and-forget; tests can `.await` it to deterministically observe the
+    /// persisted row without racing the runtime.
+    ///
+    /// [`JoinHandle`]: tokio::task::JoinHandle
+    fn record_token_event(
+        &self,
+        event: CreateOAuthTokenEvent,
+    ) -> Option<tokio::task::JoinHandle<()>> {
+        let repo = self.token_event_repo.clone()?;
+        Some(tokio::spawn(async move {
             if let Err(e) = repo.record(event).await {
                 tracing::warn!(
                     error = %e,
                     "Failed to record OAuth token-usage event (analytics only, ignored)"
                 );
             }
-        }
+        }))
     }
 
     // ==================== Client Management ====================
@@ -511,13 +527,14 @@ impl OAuthService {
             .await?;
 
         // Best-effort token-usage analytics (Epic 10A, #2628): record the
-        // issuance from the already-resolved grant. Never fails the exchange.
-        self.record_token_event(CreateOAuthTokenEvent::issued(
+        // issuance from the already-resolved grant off the hot path (#2643).
+        // The write runs in a detached task; dropping the handle is
+        // fire-and-forget and never fails the exchange.
+        drop(self.record_token_event(CreateOAuthTokenEvent::issued(
             auth_code.client_id.clone(),
             Some(auth_code.user_id),
             auth_code.scopes.0.clone(),
-        ))
-        .await;
+        )));
 
         Ok(TokenResponse {
             access_token,
@@ -600,13 +617,14 @@ impl OAuthService {
             .await?;
 
         // Best-effort token-usage analytics (Epic 10A, #2628): record the
-        // refresh from the already-resolved grant. Never fails the refresh.
-        self.record_token_event(CreateOAuthTokenEvent::refreshed(
+        // refresh from the already-resolved grant off the hot path (#2643).
+        // Detached write; dropping the handle is fire-and-forget and never
+        // fails the refresh.
+        drop(self.record_token_event(CreateOAuthTokenEvent::refreshed(
             client_id,
             Some(refresh_token.user_id),
             refresh_token.scopes.0.clone(),
-        ))
-        .await;
+        )));
 
         Ok(TokenResponse {
             access_token,
@@ -698,14 +716,15 @@ impl OAuthService {
             if access_token.client_id == authenticated_client_id {
                 self.repo.revoke_access_token_by_hash(&token_hash).await?;
                 // Best-effort token-usage analytics (Epic 10A, #2628): record
-                // the revocation from the resolved token row. Never fails the
-                // revoke (RFC 7009 must still return 200).
-                self.record_token_event(CreateOAuthTokenEvent::revoked(
+                // the revocation from the resolved token row off the hot path
+                // (#2643). Detached write; dropping the handle is
+                // fire-and-forget and never fails the revoke (RFC 7009 must
+                // still return 200).
+                drop(self.record_token_event(CreateOAuthTokenEvent::revoked(
                     access_token.client_id.clone(),
                     Some(access_token.user_id),
                     OAuthTokenKind::Access,
-                ))
-                .await;
+                )));
             }
             return Ok(());
         }
@@ -714,13 +733,13 @@ impl OAuthService {
         if let Some(refresh_token) = self.repo.find_refresh_token_by_hash(&token_hash).await? {
             if refresh_token.client_id == authenticated_client_id {
                 self.repo.revoke_refresh_token_by_hash(&token_hash).await?;
-                // Best-effort token-usage analytics (Epic 10A, #2628).
-                self.record_token_event(CreateOAuthTokenEvent::revoked(
+                // Best-effort token-usage analytics (Epic 10A, #2628): detached
+                // write off the hot path (#2643); fire-and-forget.
+                drop(self.record_token_event(CreateOAuthTokenEvent::revoked(
                     refresh_token.client_id.clone(),
                     Some(refresh_token.user_id),
                     OAuthTokenKind::Refresh,
-                ))
-                .await;
+                )));
             }
             return Ok(());
         }
@@ -983,5 +1002,114 @@ mod tests {
         // Should be 22 chars (16 bytes base64url encoded without padding)
         assert_eq!(id1.len(), 22);
         assert_ne!(id1, id2);
+    }
+
+    // ─── #2643: token-usage recording is off the hot token path ──────────────
+
+    /// With no analytics recorder wired, `record_token_event` short-circuits to
+    /// `None` — it neither spawns a task nor touches the DB, so the token path
+    /// is completely untouched. Runs without a database or a Tokio runtime
+    /// (the lazy pool is never connected because the `None` branch returns
+    /// before any query), pinning the "analytics stays optional" contract.
+    #[test]
+    fn record_token_event_without_recorder_returns_none() {
+        // `connect_lazy` never opens a connection until first use; the `None`
+        // branch below returns before any query, so no DB is required.
+        let pool = sqlx::PgPool::connect_lazy("postgres://ppt:ppt@127.0.0.1/ppt")
+            .expect("build lazy pool");
+        let service = OAuthService::new(
+            OAuthRepository::new(pool.clone()),
+            UserRepository::new(pool.clone()),
+            AuthService::new(),
+        );
+        assert!(
+            service
+                .record_token_event(CreateOAuthTokenEvent::issued(
+                    "some-client",
+                    None,
+                    vec!["profile".to_string()],
+                ))
+                .is_none(),
+            "no recorder wired ⇒ no task spawned, nothing recorded"
+        );
+    }
+
+    /// #2643 — the token-usage recording is no longer awaited inline on the hot
+    /// token path. `record_token_event` dispatches the analytics `INSERT` to a
+    /// detached [`tokio::spawn`] task and returns its `JoinHandle`
+    /// *synchronously*, so the token-granting caller regains control (and can
+    /// return its `TokenResponse`) before the write has run.
+    ///
+    /// The test pins both halves of the contract:
+    ///   1. **Off the hot path** — immediately after the (non-`async`) call the
+    ///      spawned task has not completed (`!is_finished()`), proving the write
+    ///      was not awaited inline. On the current-thread test runtime the
+    ///      spawned task cannot have been polled yet (no `.await` happened since
+    ///      the spawn), so the observation is deterministic.
+    ///   2. **No dropped write** — driving the returned handle to completion
+    ///      persists exactly one `oauth_token_events` row, so the recording is
+    ///      preserved on the happy path.
+    ///
+    /// Against the pre-#2643 inline `.await` the caller blocked on the DB
+    /// round-trip and there was no handle to observe (1) with at all.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn record_token_event_runs_off_the_hot_path(pool: sqlx::PgPool) {
+        // oauth_token_events.client_id FKs to oauth_clients — seed the client.
+        let client_id = format!("hotpath-{}", &Uuid::new_v4().to_string()[..8]);
+        sqlx::query(
+            r#"
+            INSERT INTO oauth_clients
+                (client_id, client_secret_hash, name, redirect_uris, scopes,
+                 is_confidential, rotate_refresh_tokens)
+            VALUES ($1, 'unused-hash', 'Hot Path Test',
+                    '["https://app.example.com/cb"]'::jsonb,
+                    '["profile"]'::jsonb, false, false)
+            "#,
+        )
+        .bind(&client_id)
+        .execute(&pool)
+        .await
+        .expect("seed oauth client");
+
+        let service = OAuthService::new(
+            OAuthRepository::new(pool.clone()),
+            UserRepository::new(pool.clone()),
+            AuthService::new(),
+        )
+        .with_token_event_repo(OAuthTokenEventRepository::new(pool.clone()));
+
+        // Synchronous call (no `.await`): spawns the write and hands back the
+        // task handle without touching the DB on the caller's thread.
+        let handle = service
+            .record_token_event(CreateOAuthTokenEvent::issued(
+                client_id.clone(),
+                None,
+                vec!["profile".to_string()],
+            ))
+            .expect("recorder is wired ⇒ Some(handle)");
+
+        // (1) Off the hot path: the analytics INSERT has NOT completed at the
+        // point the caller regains control.
+        assert!(
+            !handle.is_finished(),
+            "token-usage write must not be awaited inline on the hot path (#2643)"
+        );
+
+        // (2) No dropped write: driving the detached task to completion persists
+        // the event exactly once.
+        handle.await.expect("recording task must not panic");
+
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM oauth_token_events \
+             WHERE client_id = $1 AND event_type = 'issued'",
+        )
+        .bind(&client_id)
+        .fetch_one(&pool)
+        .await
+        .expect("count token events");
+        assert_eq!(
+            count, 1,
+            "the detached task must persist exactly one issued event"
+        );
     }
 }
