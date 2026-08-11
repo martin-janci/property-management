@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-11T00:35:12Z",
+  "generated": "2026-08-11T00:40:25Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -30,15 +30,15 @@
       "branch": "auto-impl/code-review-api-handlers-reports-csv-inj-cedaf54e",
       "status": "review",
       "claimed_at": "2026-08-11T00:09:00Z",
-      "last_updated": "2026-08-11T00:35:12Z",
+      "last_updated": "2026-08-11T00:40:25Z",
       "status_changed_at": "2026-08-11T00:35:12Z",
       "pr_number": 2731,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2731",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2731 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fix landed in reports/helpers.rs (sync-CSV moved there on dev via refactor); reused sanitize_csv_cell; verify env-limited (swagger-ui egress 403), fmt clean, CI is gate",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=csv-injection-fix-correct-reuses-sanitize_csv_cell-tests-compile-scope-clean",
+      "last_reviewed_oid": "2020c518009f607d6cdf2196b01666b2f8754af1",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
