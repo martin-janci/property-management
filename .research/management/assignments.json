@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-11T02:13:36Z",
+  "generated": "2026-08-11T06:09:19Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -26,25 +26,25 @@
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
     },
     {
-      "task_id": "code-review-api-handlers-reports-csv-injection",
-      "branch": "auto-impl/code-review-api-handlers-reports-csv-inj-cedaf54e",
-      "status": "review",
-      "claimed_at": "2026-08-11T00:09:00Z",
-      "last_updated": "2026-08-11T02:12:03Z",
-      "status_changed_at": "2026-08-11T00:35:12Z",
-      "pr_number": 2731,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2731",
+      "task_id": "gh-issue-2643-retry1",
+      "branch": "auto-impl/gh-issue-2643-retry1-32a6b849",
+      "status": "in-progress",
+      "claimed_at": "2026-08-11T06:09:19Z",
+      "last_updated": "2026-08-11T06:09:19Z",
+      "status_changed_at": "2026-08-11T06:09:19Z",
+      "pr_number": null,
+      "pr_url": null,
       "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2731 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fix landed in reports/helpers.rs (sync-CSV moved there on dev via refactor); reused sanitize_csv_cell; verify env-limited (swagger-ui egress 403), fmt clean, CI is gate [dispatcher fix-round1 2026-08-11: pushed clippy needless_splitn fix (.splitn(3,,)->.split(,)) @helpers.rs:339, commit cbd8912; reviewer_summary cleared to force fresh re-review of new SHA; CI re-running]",
+      "specialist": null,
+      "implementer_summary": null,
       "reviewer_summary": null,
-      "last_reviewed_oid": "2020c518009f607d6cdf2196b01666b2f8754af1",
-      "scope_drift": false,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     }
   ]

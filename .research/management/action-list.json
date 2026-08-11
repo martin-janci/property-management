@@ -37,20 +37,39 @@
       }
     },
     {
-      "id": "code-review-api-handlers-reports-csv-injection",
-      "action": "Reports CSV export writes user-authored vote titles unescaped — spreadsheet formula injection (bypasses the repo's own sanitize_csv_cell)",
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-11T00:06:12Z (score=2 conf=medium vector=bug)",
+      "source": "dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T04:14:00Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-11T00:06:12Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
+      "first_open_at": "2026-08-11T06:06:45Z",
+      "retry_of": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+      "retry_round": 1
+    },
+    {
+      "id": "gh-issue-2643-retry1",
+      "action": "Follow-up: OAuth token-usage recording is awaited inline on the token hot path (PR #2629) (Closes #2643) [retry 1/2 of failed gh-issue-2643]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=gh-issue-2643 reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T06:05:19Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T06:06:45Z",
+      "retry_of": "gh-issue-2643",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2643,
+        "url": "https://github.com/martin-janci/property-management/issues/2643",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
