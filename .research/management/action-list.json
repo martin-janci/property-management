@@ -51,26 +51,60 @@
       "retry_round": 1
     },
     {
-      "id": "gh-issue-2643-retry1",
-      "action": "Follow-up: OAuth token-usage recording is awaited inline on the token hot path (PR #2629) (Closes #2643) [retry 1/2 of failed gh-issue-2643]",
+      "id": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts-retry1",
+      "action": "Churn hotspot: 2 commits touching frontend/apps/mobile/src/hooks/useOfflineSupport.ts (window 2026-08-03T17:00Z → 2026-08-04T03:00Z) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts]",
       "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=gh-issue-2643 reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T06:05:19Z)",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-11T06:06:45Z",
-      "retry_of": "gh-issue-2643",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2643,
-        "url": "https://github.com/martin-janci/property-management/issues/2643",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts",
+      "retry_round": 1
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx-retry1",
+      "action": "Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z) [retry 1/2 of failed churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
+      "retry_round": 1
+    },
+    {
+      "id": "screen-map-drift-pr-2646-ppt-retry1",
+      "action": "screen-map drift: PR #2646 touched ppt-web route wrapper (App.tsx) without updating docs/screens/ppt/ [retry 1/2 of failed screen-map-drift-pr-2646-ppt]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=screen-map-drift-pr-2646-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "screen-map-drift-pr-2646-ppt",
+      "retry_round": 1
+    },
+    {
+      "id": "screen-map-drift-pr-2647-ppt-retry1",
+      "action": "screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updating docs/screens/ppt/ [retry 1/2 of failed screen-map-drift-pr-2647-ppt]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=screen-map-drift-pr-2647-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "screen-map-drift-pr-2647-ppt",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

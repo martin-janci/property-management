@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-11T06:09:37Z",
+  "archived_at": "2026-08-11T12:10:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12232,6 +12232,35 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-04T08:03:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2643-retry1",
+      "action": "Follow-up: OAuth token-usage recording is awaited inline on the token hot path (PR #2629) (Closes #2643) [retry 1/2 of failed gh-issue-2643]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=gh-issue-2643 reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T06:05:19Z) | gc1-reconcile 2026-08-11T12:05:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T06:06:45Z",
+      "retry_of": "gh-issue-2643",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2643,
+        "url": "https://github.com/martin-janci/property-management/issues/2643",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2732,
+        "merged_at": "2026-08-11T10:09:19Z",
+        "at": "2026-08-11T12:05:29Z"
       }
     },
     {
