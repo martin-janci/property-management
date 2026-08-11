@@ -1,9 +1,30 @@
 {
-  "generated": "2026-08-10T18:08:52Z",
+  "generated": "2026-08-11T20:06:55Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-11T20:06:55Z",
+      "prs_scanned": 5,
+      "clean": [
+        2735,
+        2734,
+        2733,
+        2732,
+        2731
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit/push). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so the 5 PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-28), base=dev, max_prs=15. Prior run (2026-08-10T18:08Z) drained the roll-over queue through #2730; this run scanned exactly the NEW never-reviewed in-window set = 5 PRs merged 2026-08-11 (#2735,#2734,#2733,#2732,#2731) -- well under the cap. #2705 stays excluded (closed-not-merged, no merged_at). Note: list_pull_requests returns merged:false spuriously for confirmed-merged PRs, so merged_at (non-null) is the merge discriminator. ALL 5 CLEAN, 0 net-new issues -- another strong auto-impl batch, each PR a code-review correctness/security/refactor fix or test-coverage add shipped WITH a targeted regression test. Details: #2731 (reports CSV formula-injection: the votes CSV export wrote vote `title` verbatim, bypassing the audit exporter's sanitize_csv_cell -- a title leading with =/+/-/@ was a live Excel/Sheets formula-injection vector; fix promotes sanitize_csv_cell to pub(crate) and REUSES the single shared guard (no re-derived copy), extracts voting_csv_row for DB-free unit testing, + 3 unit tests incl. the classic =cmd|'/c calc'!A1 payload and comma-spill escaping). #2732 (gh-issue-2643: OAuth token-usage analytics INSERT moved OFF the hot token path -- record_token_event now returns Option<JoinHandle> and dispatches the write via detached tokio::spawn instead of awaiting inline, so issuance/refresh/revocation return their TokenResponse without the DB round-trip; prod drops the handle fire-and-forget, tests .await it; log-and-ignore best-effort contract preserved; new #[sqlx::test] asserts !is_finished() right after the sync call (off-hot-path) AND exactly-one persisted row after driving the handle; integration tests switched to a bounded ~2s poll helper await_token_event_count to remove the now-async race. Acceptable residual: a detached best-effort write can be lost on abrupt shutdown -- explicitly analytics-only, matches the documented contract, not filed). #2733 (screen-map reconcile only, docs/screens/ppt/error-handling-toasts.md: documents the two-tier error boundary from PR #2646 -- global main.tsx boundary + new pathname-keyed RouteErrorBoundary at the route outlet; buildStatus stays shipped; follows the screen-map self-management protocol incl. Agent Log entry; no code). #2734 (mobile useOfflineSupport: remapActionIds now applied to CARRIED-FORWARD actions before persisting the offline queue -- a cycle that halts on a head-of-line transient failure breaks the loop before reaching dependent UPDATE/DELETEs queued after the halt, and tempIdToServerId is in-memory-per-cycle only, so a CREATE that resolved its temp id this cycle would lose the mapping and orphan the dependent edit onto a dead temp id -- a silent loss of an offline edit; remap is a no-op for actions with no live temp id so re-applying to already-remapped items is safe; strong regression test (g) proves temp->srv id linkage survives a mid-cycle 503 halt and drains cleanly next cycle). #2735 (ppt-web rentals: TEST-ONLY coverage for the API<->UI mappers on a churn-hotspot file -- pins the lossy folds (vrbo->other for BookingSource, non-booking->airbnb for PlatformType, inactive->disconnected, submittedToAuthorities-> registration status, missing reservationId->empty bookingId); only production change is exporting the 6 mapper fns for import -- no behavior change). Process nits considered-but-not-filed: (a) #2732 spawns one detached task per token op -- cheap single INSERT, no unbounded-concurrency concern. (b) #2731 sanitize runs before the comma->';' replace, ordering correct. NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels and is issue-only), so post-merge-reviewed is NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
+      "focus_prs": [
+        2731,
+        2732,
+        2733,
+        2734,
+        2735
+      ]
+    },
     {
       "run_at": "2026-08-10T18:08:52Z",
       "prs_scanned": 15,
@@ -632,39 +653,6 @@
           "findings": 1,
           "specialist": "rust-backend",
           "note": "layout-core contract crate excellent (resolve+validate well-tested); one low-sev gap: prop VALUES never validated (only keys via rails.prop_whitelist); validate_publish ignores props entirely; types.rs docstring overclaims 'validated against component prop schemas at publish time' -- ppt-web #2429 PropInput sends arbitrary JSON.parse'd values. Mitigated by superadmin-authored whitelist + defensive rendering + React escaping"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-22T08:25:28Z",
-      "prs_scanned": 13,
-      "clean": [
-        2431,
-        2430,
-        2423,
-        2394,
-        2393,
-        2392,
-        2391,
-        2390,
-        2389,
-        2388,
-        2386
-      ],
-      "with_issues": [
-        {
-          "pr": 2426,
-          "issue": 2435,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "put_tenant_override writes updated_by=None (AuthUser bound as _auth, unused) while every other layout write records the actor -> tenant overrides unattributable; RLS itself correct"
-        },
-        {
-          "pr": 2377,
-          "issue": 2434,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "view-webhook dedup gate correct+tested, but 3 comments (portal_webhooks.rs:741,1343; migration 00220:19) cite migration 00218 for the dedup unique index that actually lives in 00219 (00218 is unrelated report_schedules RLS) -- same class as #2417/#2418"
         }
       ]
     }
