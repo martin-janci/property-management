@@ -336,7 +336,7 @@ mod tests {
     /// The title cell is the 2nd comma-separated field of the row.
     fn title_cell(row: &str) -> String {
         row.trim_end_matches('\n')
-            .splitn(3, ',')
+            .split(',')
             .nth(1)
             .expect("row has a title cell")
             .to_string()
