@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-12T16:41:50Z",
+  "generated": "2026-08-12T18:35:00Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -24,28 +24,6 @@
       "merge_attempted_at": "2026-08-07T00:11:32Z",
       "quarantined_at": "2026-08-08T12:08:50Z",
       "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
-    },
-    {
-      "task_id": "code-review-mobile-rn-offline-401-dropped",
-      "branch": "auto-impl/code-review-mobile-rn-offline-401-droppe-3639bd53",
-      "status": "review",
-      "claimed_at": "2026-08-12T08:11:58Z",
-      "last_updated": "2026-08-12T16:41:50Z",
-      "status_changed_at": "2026-08-12T10:10:54Z",
-      "pr_number": 2738,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2738",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": "[phase5.6 rebase round1 2026-08-12T16:41Z: PR was mergeable=CONFLICTING — a real (non-mechanical) additive test conflict in frontend/apps/mobile/src/hooks/useOfflineSupport.test.ts vs sibling PR #2734 (both appended it() cases, colliding on the (g) label). Resolver merged origin/dev keeping BOTH suites (dev's (g) temp-id test + this PR's 401/408/429 tests renamed h-k), verified 12/12 jest + biome clean, pushed a real two-parent merge commit via update_pull_request_branch so dev is now an ancestor. New head b83610c1; CI re-running. last_reviewed_oid now stale -> Phase 2 re-review next run, then Phase 5.5 merge once CI green.]",
-      "reviewer_summary": "verdict=approve — retryable 4xx (401/408/429) correctly retained in offline queue; tested; CI green. Posted as comment review (bot cannot self-approve own PR).",
-      "last_reviewed_oid": "93e1896a955cb6d7e0ffce82bf95264a237bba27",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 1,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-08-12T16:41:50Z"
     }
   ]
 }

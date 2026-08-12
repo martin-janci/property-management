@@ -3163,6 +3163,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-mobile-rn-offline-401-dropped",
+      "branch": "auto-impl/code-review-mobile-rn-offline-401-droppe-3639bd53",
+      "status": "merged",
+      "claimed_at": "2026-08-12T08:11:58Z",
+      "last_updated": "2026-08-12T18:34:45Z",
+      "status_changed_at": "2026-08-12T18:34:45Z",
+      "pr_number": 2738,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2738",
+      "merged_at": "2026-08-12T18:34:13Z",
+      "specialist": null,
+      "implementer_summary": "[phase5.6 rebase round1 2026-08-12T16:41Z: PR was mergeable=CONFLICTING — a real (non-mechanical) additive test conflict in frontend/apps/mobile/src/hooks/useOfflineSupport.test.ts vs sibling PR #2734 (both appended it() cases, colliding on the (g) label). Resolver merged origin/dev keeping BOTH suites (dev's (g) temp-id test + this PR's 401/408/429 tests renamed h-k), verified 12/12 jest + biome clean, pushed a real two-parent merge commit via update_pull_request_branch so dev is now an ancestor. New head b83610c1; CI re-running. last_reviewed_oid now stale -> Phase 2 re-review next run, then Phase 5.5 merge once CI green.]",
+      "reviewer_summary": "verdict=approve head_oid=b83610c143be80e2e11517108edbea6e9690e18b note=re-review-after-2734-merge-clean; both test suites coexist (labels g→k, single clientError helper, CI green); prod change correct; failing E2E(reality-web) on superseded run 31618704922 is an unrelated flake (mobile-only diff, passed on run 31618709024)",
+      "last_reviewed_oid": "b83610c143be80e2e11517108edbea6e9690e18b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-12T18:34:08Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-offline-sync-false-complete",
       "branch": "auto-impl/code-review-mobile-rn-offline-sync-false-157cfa71",
       "status": "merged",
@@ -13549,5 +13571,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-12T16:42:45Z"
+  "archived_at": "2026-08-12T18:35:00Z"
 }

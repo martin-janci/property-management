@@ -83,23 +83,6 @@
         "score": 1,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "code-review-mobile-rn-offline-401-dropped",
-      "action": "mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit) as permanent and drops the queued action, silently losing offline-created content",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=3 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-12T08:05:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "bug"
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

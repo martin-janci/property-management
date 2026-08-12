@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-12T16:43:00Z",
+  "archived_at": "2026-08-12T18:35:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3032,6 +3032,30 @@
         "merged_pr": 2739,
         "merged_at": "2026-08-12T12:19:26Z",
         "at": "2026-08-12T16:05:30Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-offline-401-dropped",
+      "action": "mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit) as permanent and drops the queued action, silently losing offline-created content",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=3 conf=medium vector=bug) | gc1-reconcile 2026-08-12T18:35:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T08:05:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2738,
+        "merged_at": "2026-08-12T18:34:13Z",
+        "at": "2026-08-12T18:35:09Z"
       }
     },
     {
