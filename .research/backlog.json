@@ -7447,7 +7447,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Tier1d review 2026-08-12 (ppt-web-ui)"
       ],
@@ -7461,7 +7461,12 @@
       ],
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-12T08:04:19Z",
+        "assignment_status": "merged",
+        "pr_number": 2737
+      }
     },
     {
       "id": "code-review-ppt-web-ui-offline-ind-i18n",
@@ -7469,7 +7474,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Tier1d review 2026-08-12 (ppt-web-ui)"
       ],
@@ -7482,7 +7487,12 @@
       ],
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-12T08:04:19Z",
+        "assignment_status": "merged",
+        "pr_number": 2736
+      }
     },
     {
       "id": "code-review-mobile-rn-offline-401-dropped",
@@ -7548,6 +7558,54 @@
       ],
       "files": [
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-notif-triggers",
+      "title": "ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incomplete) — user notification-preference cache leaks into the next session",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-387 — AUTHED_QUERY_KEY_ROOTS (the allow-list logout() iterates at contexts/AuthContext.tsx:565-567 to purge session-scoped TanStack caches) contains 'notification-analytics' but NOT 'notification-triggers'. The docstring at :349-352 states the list 'must cover ALL tenant-/user-scoped caches'; any root absent from it is never removed on logout.",
+        "frontend/packages/api-client/src/granular-notifications/hooks.ts:15-17 — notificationTriggerKeys.all = ['notification-triggers'] (root missing from the allow-list). Consumed by ppt-web at frontend/apps/ppt-web/src/features/notification-triggers/index.ts:21 and mounted via a lazy route (frontend/apps/ppt-web/src/routes/lazyRoutes.tsx:330), so the cache is populated with the signed-in user's per-event push/email/in-app preferences.",
+        "ppt-web is an SPA — logout() clears storage and removes only allow-listed roots without a page reload, so the ['notification-triggers'] subtree survives logout→next-login; on a shared workstation user B sees user A's notification-preference data until staleTime lapses. Same class as PR #2650 (which added predictive-maintenance/sentiment/notification-analytics) but that fix overlooked this root and the recommended guard (assert every feature *Keys.all root ∈ AUTHED_QUERY_KEY_ROOTS) was never added.",
+        "Fix: add 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS; better, add a unit assertion enumerating every exported *Keys.all root and requiring membership so future pages can't silently reintroduce the leak."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/notification-triggers/index.ts",
+        "frontend/packages/api-client/src/granular-notifications/hooks.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-perfmetrics-listener-leak",
+      "title": "usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener leak, compounded by effect re-running on inline onReport",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:152-158 — a 'visibilitychange' listener is registered with an anonymous inline arrow (so no reference exists to remove it); the effect cleanup at :160-164 only disconnects the PerformanceObservers, leaving both the visibilitychange handler and the window 'load' listener added at :142 attached after unmount.",
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts:165 — onReport is an effect dependency; a consumer passing an inline callback re-runs the effect every render, re-adding a fresh visibilitychange/load listener each time while the previous ones persist → unbounded listener accumulation, and stale reportMetrics closures continue firing on tab-hide.",
+        "Hook is exported (frontend/apps/ppt-web/src/hooks/index.ts:10) but not yet mounted by any component, so the leak is currently latent; it becomes a live leak the moment a consumer wires it up. Fix: hoist the visibilitychange/load handlers into named refs and remove them (plus removeEventListener('load', ...)) in the cleanup."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
       ],
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
