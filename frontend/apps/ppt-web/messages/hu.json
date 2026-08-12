@@ -1229,6 +1229,10 @@
     "disconnectedDescription": "A valós idejű frissítések nem érhetők el",
     "clickToReconnect": "Kattintson az újracsatlakozáshoz"
   },
+  "offlineIndicator": {
+    "offline": "Nincs internetkapcsolat. Egyes funkciók nem elérhetők.",
+    "reconnected": "A kapcsolat helyreállt"
+  },
   "submissionStatus": {
     "status": {
       "draft": "Vázlat",

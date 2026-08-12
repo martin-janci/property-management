@@ -1256,6 +1256,10 @@
     "disconnectedDescription": "Echtzeit-Updates sind nicht verfügbar",
     "clickToReconnect": "Zum erneuten Verbinden klicken"
   },
+  "offlineIndicator": {
+    "offline": "Sie sind offline. Einige Funktionen sind möglicherweise nicht verfügbar.",
+    "reconnected": "Verbindung wiederhergestellt"
+  },
   "submissionStatus": {
     "status": {
       "draft": "Entwurf",

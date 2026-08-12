@@ -1235,6 +1235,10 @@
     "disconnectedDescription": "Aktualizacje w czasie rzeczywistym są niedostępne",
     "clickToReconnect": "Kliknij, aby połączyć ponownie"
   },
+  "offlineIndicator": {
+    "offline": "Jesteś offline. Niektóre funkcje mogą być niedostępne.",
+    "reconnected": "Połączenie przywrócone"
+  },
   "submissionStatus": {
     "status": {
       "draft": "Wersja robocza",
