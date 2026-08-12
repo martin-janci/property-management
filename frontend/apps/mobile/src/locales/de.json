@@ -400,7 +400,13 @@
     "noUnitText": "Zähler werden angezeigt, sobald Ihr Konto mit einer Einheit verknüpft ist.",
     "detailLoadError": "Zähler konnte nicht geladen werden",
     "noReadingsTitle": "Noch keine Ablesungen",
-    "noReadingsText": "Reichen Sie Ihre erste Ablesung für diesen Zähler ein."
+    "noReadingsText": "Reichen Sie Ihre erste Ablesung für diesen Zähler ein.",
+    "meterFallback": "Zähler",
+    "backToMeters": "Zähler",
+    "latestReading": "Letzter Stand",
+    "usedSincePrevious": "Verbrauch seit letztem Stand: {{amount}} {{unit}}",
+    "readingHistory": "Ableseverlauf",
+    "submitNewReading": "Neuen Stand absenden"
   },
   "esignature": {
     "title": "Unterschriftsanfrage",

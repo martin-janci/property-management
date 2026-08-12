@@ -114,7 +114,7 @@ interface MeterDetailScreenProps {
 
 export function MeterDetailScreen({
   meterId,
-  meterLabel = 'Meter',
+  meterLabel,
   onBack,
   onNavigate,
 }: MeterDetailScreenProps) {
@@ -127,7 +127,7 @@ export function MeterDetailScreen({
 
   const response = parseMeterResponse(data);
   const readings = response ? toUiReadings(response) : [];
-  const label = response?.meter.meter_number?.trim() || meterLabel;
+  const label = response?.meter.meter_number?.trim() || meterLabel || t('meters.meterFallback');
 
   const lastTwo = readings.slice(0, 2);
   const monthDelta = lastTwo.length === 2 ? Math.max(0, lastTwo[0].value - lastTwo[1].value) : null;
@@ -141,7 +141,7 @@ export function MeterDetailScreen({
       <View style={s.header}>
         {onBack && (
           <Pressable onPress={onBack} style={styles.backLink}>
-            <Text style={styles.backLinkText}>← Meters</Text>
+            <Text style={styles.backLinkText}>← {t('meters.backToMeters')}</Text>
           </Pressable>
         )}
         <Text style={s.headerTitle}>{label}</Text>
@@ -165,20 +165,23 @@ export function MeterDetailScreen({
           <>
             {readings.length > 0 && (
               <View style={s.card}>
-                <Text style={styles.metricLabel}>Latest reading</Text>
+                <Text style={styles.metricLabel}>{t('meters.latestReading')}</Text>
                 <Text style={styles.metricValue}>
                   {readings[0].value} {readings[0].unit}
                 </Text>
                 <Text style={s.cardMeta}>{new Date(readings[0].takenAt).toLocaleDateString()}</Text>
                 {monthDelta != null && (
                   <Text style={[s.cardBody, { marginTop: 8 }]}>
-                    Used since previous reading: {monthDelta.toFixed(2)} {readings[0].unit}
+                    {t('meters.usedSincePrevious', {
+                      amount: monthDelta.toFixed(2),
+                      unit: readings[0].unit,
+                    })}
                   </Text>
                 )}
               </View>
             )}
 
-            <Text style={styles.sectionTitle}>Reading history</Text>
+            <Text style={styles.sectionTitle}>{t('meters.readingHistory')}</Text>
             {readings.length === 0 ? (
               <View style={s.emptyState}>
                 <Text style={s.emptyIcon}>📏</Text>
@@ -202,7 +205,7 @@ export function MeterDetailScreen({
               style={s.primaryButton}
               onPress={() => onNavigate?.('MeterReading', { meterId })}
             >
-              <Text style={s.primaryButtonText}>Submit new reading</Text>
+              <Text style={s.primaryButtonText}>{t('meters.submitNewReading')}</Text>
             </Pressable>
           </>
         )}

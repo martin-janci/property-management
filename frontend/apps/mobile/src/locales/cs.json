@@ -440,7 +440,13 @@
     "noUnitText": "Měřiče se zobrazí po přiřazení vašeho účtu k jednotce.",
     "detailLoadError": "Nepodařilo se načíst měřič",
     "noReadingsTitle": "Zatím žádné odečty",
-    "noReadingsText": "Odešlete svůj první odečet pro tento měřič."
+    "noReadingsText": "Odešlete svůj první odečet pro tento měřič.",
+    "meterFallback": "Měřič",
+    "backToMeters": "Měřiče",
+    "latestReading": "Poslední odečet",
+    "usedSincePrevious": "Spotřeba od předchozího odečtu: {{amount}} {{unit}}",
+    "readingHistory": "Historie odečtů",
+    "submitNewReading": "Odeslat nový odečet"
   },
   "esignature": {
     "title": "Zadost o podpis",

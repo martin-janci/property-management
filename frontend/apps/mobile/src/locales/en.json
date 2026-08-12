@@ -440,7 +440,13 @@
     "noUnitText": "Meters appear once your account is linked to a unit.",
     "detailLoadError": "Couldn't load meter",
     "noReadingsTitle": "No readings yet",
-    "noReadingsText": "Submit your first reading for this meter."
+    "noReadingsText": "Submit your first reading for this meter.",
+    "meterFallback": "Meter",
+    "backToMeters": "Meters",
+    "latestReading": "Latest reading",
+    "usedSincePrevious": "Used since previous reading: {{amount}} {{unit}}",
+    "readingHistory": "Reading history",
+    "submitNewReading": "Submit new reading"
   },
   "esignature": {
     "title": "Signature Request",
