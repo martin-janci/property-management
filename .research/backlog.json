@@ -7500,7 +7500,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 3,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Tier1d review 2026-08-12 (mobile-rn)"
       ],
@@ -7515,7 +7515,12 @@
       ],
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-12T22:23:28Z",
+        "assignment_status": "merged",
+        "pr_number": 2738
+      }
     },
     {
       "id": "code-review-mobile-rn-date-locale-en-us",
@@ -7630,6 +7635,52 @@
         "assignment_status": "merged",
         "pr_number": 2742
       }
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
+        "Hardcoded UI text: L104 '<h2>No properties to compare</h2>', L105 'Add properties to your comparison from the listings page.', L107 'Browse Listings', L230 'Clear All', L272 'Remove'",
+        "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' — surfaced to end users via showToast()",
+        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — component DOES use useTranslations elsewhere, but the destructive confirm-remove modal and header subtitle are hardcoded English, so they never localize",
+        "L91 subtitle 'Manage your team of real estate agents', L962 '<span>Are you sure?</span>', L964 'Yes, Remove' (and adjacent 'Cancel') on the realtor-removal confirmation",
+        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
+        "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
+        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
+      ],
+      "expert": "frontend"
     }
   ]
 }
