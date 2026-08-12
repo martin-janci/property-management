@@ -1,0 +1,234 @@
+{
+  "generated": "2026-08-12T18:40:57Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine last ran 2026-08-07T06:24Z; now 2026-08-12 (~5d 12h lag). Cloud cron may be paused or intermittent — surface for operator. Dispatcher is still ticking on planning branch (assignments.json 2026-08-12 16:41)."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "3 commits in 2026-08-07..12 window; portal/vrbo/booking receiver hardening",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2799 line churn in 2026-08-12 window (5-day lag); prior runs_seen=1 (last 2026-05-30)",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2714 (Closes #2612 — decouple scheduled notification dispatch from publish/activate/close)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2532 line churn in 2026-08-12 window (5-day lag); prior runs_seen=0 (new)",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/financial.rs",
+      "type": "churn-hotspot",
+      "source": "invoice + payment lifecycle touchpoints (UC-ACC-05.* line preparation)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2411 line churn in 2026-08-12 window (5-day lag); prior runs_seen=0 (new)",
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-08-12",
+      "type": "dep-update-noise",
+      "source": "gh api pulls?state=open",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "12 open dependabot PRs (backend deps: sentry, base64, validator, rust_xlsxwriter, cargo-minor-patch; frontend deps: npm-minor-patch group, expo-*, testing-library; mobile-native: ktor group, gradle-minor-patch). All from 2026-08-06 or older; none blocked on obvious code conflict per titles."
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "Tier1d review 2026-08-12 (reality-web)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:72 — redirectTo.startsWith('/') && !redirectTo.startsWith('//') accepts /\\evil.com; browsers normalize backslash → protocol-relative external redirect (//evil.com). Sibling auth/callback/page.tsx:117-122 already blocks this class explicitly. Verified: sed lookup of line 72 confirms exact sanitizer shape. UPGRADED confidence medium→high after independent code-verification during signal review.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-css-injection",
+      "type": "code-review-finding",
+      "source": "Tier1d review 2026-08-12 (reality-web)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:64-65 interpolates agency.primaryColor / agency.secondaryColor unescaped into an inline linear-gradient() style. Backend routes/agency_branding.rs validates only URL fields, not color fields. lib/tenant-config.ts already exports sanitizeCssValue and applies it to the tenant-branding path (lines 185/189/193). Two-layer defence available and already precedented in this repo. Verified: grep confirms both call sites. UPGRADED confidence medium→high after independent code-verification.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "backend/servers/reality-server/src/routes/agency_branding.rs",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-reality-web-login-page-zero-tests",
+      "type": "code-review-finding",
+      "source": "Tier1d review 2026-08-12 (reality-web)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "find frontend/apps/reality-web/src/app/[locale]/auth -name '*.test.*' returns only callback/page.test.tsx — the login form has 0 tests despite security-critical ?redirect= sanitization + refreshSession sequencing + 401 error mapping. The finding is a natural companion to the open-redirect fix; the login-page.test.tsx that plan will introduce becomes its resolution.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx"
+      ],
+      "segment": "reality-web"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/date.md && grep '# date'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids-unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen_signals dedup non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score-cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial-pass in brief",
+      "observed": "2 matches",
+      "expected": ">=1 per new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "meta+headings+mode+capability+files-exist",
+      "observed": "2 new plans, all pass",
+      "expected": "each plan passes"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder rot",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grew",
+      "observed": "23 >= 8",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <= caps",
+      "observed": "0",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "notes": [
+    "5-day lag catch-up: only Phase 1.5 code-review subagent spawned this run; Phase 1.6 PM rotation deferred (pm_cursor at index 3 → pm-qa; skipped to keep run tractable).",
+    "Buffer-low context (from fire payload): claimable=4/72 honest=0 — all 4 open backlog items either mobile-native KMP (unlandable in cloud) or already in-flight (PR #2738).",
+    "Mechanical cleanup this run: archived 15 stale plans (done/dropped) from plans/ → plans/_archive/, deleted 2 active-copy duplicates whose _archive twin is authoritative (net +15 archive files, −17 active files)."
+  ],
+  "resolutions": [],
+  "phase_1_5": {
+    "segment_reviewed": "reality-web",
+    "reason": "oldest-unreviewed",
+    "findings_count": 3
+  }
+}

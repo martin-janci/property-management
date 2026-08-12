@@ -124,7 +124,7 @@
       ],
       "created_at": "2026-05-29",
       "updated_at": "2026-06-01",
-      "plan": "plans/security-llm-doc-idor.md",
+      "plan": "plans/_archive/security-llm-doc-idor.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "failed",
@@ -3247,7 +3247,7 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-06-11",
-      "plan": "plans/bug-ios-searchview-uncompilable.md",
+      "plan": "plans/_archive/bug-ios-searchview-uncompilable.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "failed",
@@ -3700,7 +3700,7 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-14",
-      "plan": "plans/code-review-reality-web-share-comparison-404.md",
+      "plan": "plans/_archive/code-review-reality-web-share-comparison-404.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "failed",
@@ -3728,7 +3728,7 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-14",
-      "plan": "plans/code-review-reality-web-listing-page-ssr-crash.md",
+      "plan": "plans/_archive/code-review-reality-web-listing-page-ssr-crash.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "failed",
@@ -3757,7 +3757,7 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-15",
-      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md",
+      "plan": "plans/_archive/code-review-reality-web-realtor-mgmt-untranslated.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "done",
@@ -4047,7 +4047,7 @@
       ],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
-      "plan": "plans/code-review-mobile-rn-report-fault-fake-submit.md",
+      "plan": "plans/_archive/code-review-mobile-rn-report-fault-fake-submit.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "failed",
@@ -4297,7 +4297,7 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
-      "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
+      "plan": "plans/_archive/bug-revoke-all-sessions-cookie-blindness.md",
       "reconciled": {
         "at": "2026-07-11T18:05:18Z",
         "assignment_status": "merged",
@@ -4322,7 +4322,7 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
-      "plan": "plans/security-forgot-password-no-rate-limit.md",
+      "plan": "plans/_archive/security-forgot-password-no-rate-limit.md",
       "reconciled": {
         "at": "2026-07-12T00:07:12Z",
         "assignment_status": "merged",
@@ -4893,7 +4893,7 @@
       ],
       "created_at": "2026-07-23",
       "updated_at": "2026-07-23",
-      "plan": "plans/code-review-api-handlers-community-unauthenticated-reads.md",
+      "plan": "plans/_archive/code-review-api-handlers-community-unauthenticated-reads.md",
       "reconciled": {
         "at": "2026-07-24T04:04:40Z",
         "assignment_status": "failed",
@@ -4925,7 +4925,7 @@
       ],
       "created_at": "2026-07-23",
       "updated_at": "2026-07-23",
-      "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md",
+      "plan": "plans/_archive/code-review-api-handlers-community-cross-tenant-idor.md",
       "reconciled": {
         "at": "2026-07-24T00:06:07Z",
         "assignment_status": "merged",
@@ -5131,7 +5131,7 @@
       ],
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
-      "plan": "plans/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md",
+      "plan": "plans/_archive/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md",
       "reconciled": {
         "at": "2026-07-29T21:27:28Z",
         "assignment_status": "merged",
@@ -5825,7 +5825,7 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-02",
-      "plan": "plans/code-review-reality-server-sso-session-invalidate-swallowed.md",
+      "plan": "plans/_archive/code-review-reality-server-sso-session-invalidate-swallowed.md",
       "reconciled": {
         "at": "2026-08-02T06:04:24Z",
         "assignment_status": "failed",
@@ -5856,7 +5856,7 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-02",
-      "plan": "plans/code-review-reality-server-db-error-leak-to-client.md",
+      "plan": "plans/_archive/code-review-reality-server-db-error-leak-to-client.md",
       "reconciled": {
         "at": "2026-08-02T06:04:24Z",
         "assignment_status": "failed",
@@ -5914,7 +5914,7 @@
       ],
       "created_at": "2026-08-01",
       "updated_at": "2026-08-01",
-      "plan": "plans/bug-scheduler-notifications-fire-once.md",
+      "plan": "plans/_archive/bug-scheduler-notifications-fire-once.md",
       "reconciled": {
         "at": "2026-08-02T06:04:24Z",
         "assignment_status": "failed",
@@ -6925,7 +6925,7 @@
       ],
       "created_at": "2026-08-06",
       "updated_at": "2026-08-06",
-      "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
+      "plan": "plans/_archive/code-review-ppt-web-core-ws-pong-timeout-drop.md",
       "reconciled": {
         "at": "2026-08-07T00:11:53Z",
         "assignment_status": "merged",
@@ -7630,6 +7630,140 @@
         "assignment_status": "merged",
         "pr_number": 2742
       }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs",
+      "title": "churn-hotspot api-server scheduler/mod.rs (2532 lines this window; decouple + hardening)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2714",
+        "hotspot scan 2026-08-12"
+      ],
+      "evidence": [
+        "2532 changed lines in the 2026-08-07..12 window; new to hotspot_history (runs_seen=1).",
+        "PR #2714 decoupled scheduled notification dispatch from publish/activate/close (closes issue #2612) — followup surface is a review-window candidate.",
+        "Owner: pm-backend / rust-backend specialist."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-financial-rs",
+      "title": "churn-hotspot api-server routes/financial.rs (2411 lines this window; invoice+payment lifecycle)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot scan 2026-08-12"
+      ],
+      "evidence": [
+        "2411 changed lines in the 2026-08-07..12 window; new to hotspot_history (runs_seen=1).",
+        "Feature PRs #2555, #2558, #2559 (UC-ACC-05.* invoice/payment lifecycle) still open — the financial.rs handler surface is likely a review-window candidate.",
+        "Owner: pm-backend / rust-backend specialist."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "title": "churn-hotspot api-server routes/integrations/webhook.rs (2799 lines; portal/vrbo/booking receiver hardening)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot scan 2026-08-12"
+      ],
+      "evidence": [
+        "2799 changed lines in the 2026-08-07..12 window; prior hotspot at 2026-05-30 (runs_seen=1 → 2 after this run). Not currently in the repeated-churn class (fires when runs_seen>=2 at signal-derivation time).",
+        "External webhook receivers (portal/vrbo/booking/airbnb/stripe) — signature-verification / replay-defence surface; treat as high sensitivity.",
+        "Owner: pm-backend / rust-backend specialist."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "title": "reality-web login page ?redirect= accepts /\\evil.com → open redirect",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Tier1d review 2026-08-12 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:72 sanitizer rejects // but accepts /\\ (backslash). Browsers normalize  →  (protocol-relative) → external redirect after successful login.",
+        "Sibling auth/callback/page.tsx:117-122 already blocks the same class — the two flows are drifting.",
+        "Independently verified via sed on line 72; matches finding."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": "plans/code-review-reality-web-login-open-redirect-backslash.md"
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-css-injection",
+      "title": "reality-web agency profile page interpolates unsanitized primaryColor/secondaryColor into inline CSS",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Tier1d review 2026-08-12 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:64-65 interpolates agency.primaryColor / agency.secondaryColor unescaped into linear-gradient() inline style.",
+        "Backend backend/servers/reality-server/src/routes/agency_branding.rs validates only URL fields (logo_url/banner_url/watermark_url), not color fields.",
+        "lib/tenant-config.ts exports sanitizeCssValue and applies it on the tenant-branding path (lines 185/189/193) — precedent + reusable helper.",
+        "Independently verified: grep confirms both call sites; sanitizeCssValue is exported."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "backend/servers/reality-server/src/routes/agency_branding.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": "plans/code-review-reality-web-agency-branding-css-injection.md"
+    },
+    {
+      "id": "code-review-reality-web-login-page-zero-tests",
+      "title": "reality-web login page has no test file (redirect sanitizer + submit path uncovered)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (reality-web)"
+      ],
+      "evidence": [
+        "find frontend/apps/reality-web/src/app/[locale]/auth -name '*.test.*' shows only callback/page.test.tsx — login form is uncovered.",
+        "Natural companion to the open-redirect fix; the login-page.test.tsx that plan will add resolves this row."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }

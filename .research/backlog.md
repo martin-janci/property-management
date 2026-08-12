@@ -1,42 +1,51 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-07 06:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-12 18:51 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | open | 2026-08-12 |  |
+| 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
+| 3 | security | `code-review-reality-web-login-open-redirect-backslash` | reality-web login page ?redirect= accepts /\evil.com → open redirect | ready | 2026-08-12 | [plan](plans/code-review-reality-web-login-open-redirect-backslash.md) |
 | 3 | bug | `gh-issue-2699-migration-collision` | dev CI broken: duplicate SQLx migration 00220 — renumber portal_get_listing_view_count to 00227 | done | 2026-08-07 | [plan](plans/_archive/gh-issue-2699-migration-collision.md) |
-| 3 | bug | `code-review-ppt-web-core-ws-pong-timeout-drop` | ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa... | done | 2026-08-06 | [plan](plans/code-review-ppt-web-core-ws-pong-timeout-drop.md) |
-| 3 | security | `code-review-reality-server-sso-session-invalidate-swallowed` | reality-server sync_session swallows invalidate_session error — portal session survives after PM tok | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-sso-session-invalidate-swallowed.md) |
+| 3 | bug | `code-review-ppt-web-core-ws-pong-timeout-drop` | ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa... | done | 2026-08-06 | [plan](plans/_archive/code-review-ppt-web-core-ws-pong-timeout-drop.md) |
+| 3 | security | `code-review-reality-server-sso-session-invalidate-swallowed` | reality-server sync_session swallows invalidate_session error — portal session survives after PM tok | dropped | 2026-08-02 | [plan](plans/_archive/code-review-reality-server-sso-session-invalidate-swallowed.md) |
 | 3 | bug | `code-review-reality-server-agency-members-unauth-idor` | reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated c | dropped | 2026-08-02 |  |
 | 3 | security | `code-review-api-core-ssrf-validator-drift` | api-server workflow api_call.rs has a duplicate SSRF validator that drifts from common::url_validati | done | 2026-08-02 |  |
-| 3 | bug | `bug-scheduler-notifications-fire-once` | Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops a | dropped | 2026-08-01 | [plan](plans/bug-scheduler-notifications-fire-once.md) |
+| 3 | bug | `bug-scheduler-notifications-fire-once` | Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops a | dropped | 2026-08-01 | [plan](plans/_archive/bug-scheduler-notifications-fire-once.md) |
 | 3 | bug | `bug-direct-upload-drops-building-id` | uploadDocumentDirect() silently drops building_id — building-scoped document uploads lose associatio | dropped | 2026-08-01 |  |
 | 3 | refactor | `repeated-churn-api-server-routes-auth-rs-2026-07-28` | auth.rs repeated-churn — runs_seen=4, 2950 lines / ~107K in one module (2nd-largest route file) | dropped | 2026-07-28 |  |
 | 3 | dx | `dx-api-validation-drift-gate-never-runs-on-dev` | SDK drift gate is effectively unenforced — api-validation.yml only fires on docs/api/**, so committe | done | 2026-07-28 |  |
-| 3 | security | `code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state` | SECURITY: Android SSO deep-link handler skips CSRF state check — reality://sso?token=... enables acc | done | 2026-07-27 | [plan](plans/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md) |
-| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant re | dropped | 2026-07-23 | [plan](plans/code-review-api-handlers-community-unauthenticated-reads.md) |
-| 3 | security | `code-review-api-handlers-community-cross-tenant-idor` | SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_i | done | 2026-07-23 | [plan](plans/code-review-api-handlers-community-cross-tenant-idor.md) |
-| 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/bug-revoke-all-sessions-cookie-blindness.md) |
-| 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reac | dropped | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
-| 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
-| 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL | dropped | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
-| 3 | bug | `code-review-reality-web-listing-page-ssr-crash` | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | dropped | 2026-06-14 | [plan](plans/code-review-reality-web-listing-page-ssr-crash.md) |
-| 3 | bug | `bug-ios-searchview-uncompilable` | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupte | dropped | 2026-06-11 | [plan](plans/bug-ios-searchview-uncompilable.md) |
+| 3 | security | `code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state` | SECURITY: Android SSO deep-link handler skips CSRF state check — reality://sso?token=... enables acc | done | 2026-07-27 | [plan](plans/_archive/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md) |
+| 3 | security | `code-review-api-handlers-community-unauthenticated-reads` | SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant re | dropped | 2026-07-23 | [plan](plans/_archive/code-review-api-handlers-community-unauthenticated-reads.md) |
+| 3 | security | `code-review-api-handlers-community-cross-tenant-idor` | SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_i | done | 2026-07-23 | [plan](plans/_archive/code-review-api-handlers-community-cross-tenant-idor.md) |
+| 3 | bug | `bug-revoke-all-sessions-cookie-blindness` | revoke_all_sessions ignores refresh cookie — signs the caller out too | done | 2026-07-09 | [plan](plans/_archive/bug-revoke-all-sessions-cookie-blindness.md) |
+| 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reac | dropped | 2026-06-16 | [plan](plans/_archive/code-review-mobile-rn-report-fault-fake-submit.md) |
+| 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | done | 2026-06-15 | [plan](plans/_archive/code-review-reality-web-realtor-mgmt-untranslated.md) |
+| 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL | dropped | 2026-06-14 | [plan](plans/_archive/code-review-reality-web-share-comparison-404.md) |
+| 3 | bug | `code-review-reality-web-listing-page-ssr-crash` | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | dropped | 2026-06-14 | [plan](plans/_archive/code-review-reality-web-listing-page-ssr-crash.md) |
+| 3 | bug | `bug-ios-searchview-uncompilable` | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupte | dropped | 2026-06-11 | [plan](plans/_archive/bug-ios-searchview-uncompilable.md) |
 | 3 | security | `unchecked-todo-pr-1203` | PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged | dropped | 2026-06-10 |  |
 | 3 | security | `unchecked-todo-pr-1193` | PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merg | dropped | 2026-06-10 |  |
 | 3 | bug | `bug-schema-drift-runtime-sql-issue-1008` | Schema drift: runtime SQL errors from non-existent columns in voting/messaging/notification paths | done | 2026-06-07 |  |
-| 3 | security | `security-llm-doc-idor` | IDOR: ai.rs LLM-doc handlers publish/list/get any tenant's listing descriptions & photo enhancements | dropped | 2026-06-01 | [plan](plans/security-llm-doc-idor.md) |
+| 3 | security | `security-llm-doc-idor` | IDOR: ai.rs LLM-doc handlers publish/list/get any tenant's listing descriptions & photo enhancements | dropped | 2026-06-01 | [plan](plans/_archive/security-llm-doc-idor.md) |
 | 3 | security | `security-realtors-mark-inquiry-read-idor` | IDOR: reality-server realtors mark_inquiry_read flips any realtor's inquiry by ID with no owner scop | done | 2026-05-26 | [plan](plans/_archive/security-realtors-mark-inquiry-read-idor.md) |
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
+| 2 | security | `code-review-reality-web-agency-branding-css-injection` | reality-web agency profile page interpolates unsanitized primaryColor/secondaryColor into inline CSS | ready | 2026-08-12 | [plan](plans/code-review-reality-web-agency-branding-css-injection.md) |
+| 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
+| 2 | bug | `code-review-api-core-voice-actions-fabricated-empty` | Voice check-announcements & check-meter fabricate success with empty data — residents told 'no new a | dropped | 2026-08-10 |  |
+| 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
+| 2 | bug | `code-review-api-handlers-reports-csv-injection` | Reports CSV export writes user-authored vote titles unescaped — spreadsheet formula injection (bypas | done | 2026-08-10 |  |
 | 2 | bug | `code-review-reality-web-comparison-share-all-or-nothing` | reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared compa | done | 2026-08-07 |  |
 | 2 | bug | `code-review-reality-web-listingform-nan-validation` | reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently | done | 2026-08-07 |  |
 | 2 | bug | `code-review-api-handlers-enhanced-chat-stub` | api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data.... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-ppt-web-core-ws-giveup-no-resume` | ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-reality-server-listing-viewcount-hardcoded-zero` | reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-mobile-rn-offline-terminal-drop-dataloss` | mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 r | done | 2026-08-04 |  |
 | 2 | bug | `code-review-ppt-web-core-logout-cache-purge-gap` | ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentim | done | 2026-08-04 |  |
@@ -54,7 +63,7 @@
 | 2 | bug | `code-review-ppt-web-core-route-error-boundary-gap` | ppt-web has no route-outlet ErrorBoundary — a single stale-chunk lazy() rejection unmounts the entir | done | 2026-08-03 |  |
 | 2 | bug | `code-review-ppt-web-core-rentals-auth-nonnull-mutation` | ppt-web rentals mutations dereference `auth!` non-null — mid-session token loss throws uncaught Type | done | 2026-08-03 |  |
 | 2 | test-gap | `screen-map-drift-pr-2636-reality` | docs/screens/reality/agency-import + agency-inquiries out of sync with PR #2636 i18n rewrite | done | 2026-08-03 |  |
-| 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_ | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-db-error-leak-to-client.md) |
+| 2 | security | `code-review-reality-server-db-error-leak-to-client` | reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_ | dropped | 2026-08-02 | [plan](plans/_archive/code-review-reality-server-db-error-leak-to-client.md) |
 | 2 | security | `code-review-api-core-idempotency-client-tenant` | Idempotency middleware trusts client-supplied X-Tenant-ID header for cache-scope key — cross-tenant  | done | 2026-08-02 |  |
 | 2 | test-gap | `test-gap-disputes-kpis-window-validation` | /disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined | dropped | 2026-08-01 |  |
 | 2 | refactor | `refactor-churn-hotspot-integrations-booking-mod-2026-07-31` | Churn hotspot: backend/crates/integrations/src/booking/mod.rs — 3626 lines this window (recently spl | done | 2026-07-31 |  |
@@ -81,7 +90,7 @@
 | 2 | bug | `code-review-ppt-web-ui-actionqueue-mock-shipped` | Dashboard useActionQueue queryFn returns generateMockData — production users see fabricated action i | done | 2026-07-21 |  |
 | 2 | security | `code-review-api-core-scheduler-units-target-cross-tenant` | scheduler.rs units/buildings target queries lack organization_id AND-scope — fan-out can leak across | done | 2026-07-20 |  |
 | 2 | refactor | `refactor-churn-hotspots-api-server-auth-2026-07-12` | Churn hotspot cluster: api-server routes/auth.rs (runs_seen=3) + auth_tests.rs + reality-server rout | done | 2026-07-12 |  |
-| 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | done | 2026-07-09 | [plan](plans/security-forgot-password-no-rate-limit.md) |
+| 2 | security | `security-forgot-password-no-rate-limit` | /forgot-password and /resend-verification have no rate limit — mailbomb / token-clobber | done | 2026-07-09 | [plan](plans/_archive/security-forgot-password-no-rate-limit.md) |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic,  | done | 2026-07-05 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic  | done | 2026-06-16 |  |
@@ -125,14 +134,24 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | open | 2026-08-07 |  |
+| 1 | refactor | `code-review-ppt-web-ui-protectedroute-i18n` | ppt-web-ui: ProtectedRoute hardcodes English 'Access Denied' / 'Loading...' strings instead of using | done | 2026-08-12 |  |
+| 1 | refactor | `code-review-ppt-web-ui-offline-ind-i18n` | ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n | done | 2026-08-12 |  |
+| 1 | bug | `code-review-mobile-rn-date-locale-en-us` | mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dat | done | 2026-08-12 |  |
+| 1 | bug | `code-review-mobile-rn-meterdetail-i18n` | mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling  | done | 2026-08-12 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-scheduler-mod-rs` | churn-hotspot api-server scheduler/mod.rs (2532 lines this window; decouple + hardening) | open | 2026-08-12 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-financial-rs` | churn-hotspot api-server routes/financial.rs (2411 lines this window; invoice+payment lifecycle) | open | 2026-08-12 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs` | churn-hotspot api-server routes/integrations/webhook.rs (2799 lines; portal/vrbo/booking receiver ha | open | 2026-08-12 |  |
+| 1 | test-gap | `code-review-reality-web-login-page-zero-tests` | reality-web login page has no test file (redirect sanitizer + submit path uncovered) | open | 2026-08-12 |  |
+| 1 | test-gap | `code-review-mobile-native-kmp-ssoservice-untested` | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has | open | 2026-08-11 |  |
+| 1 | bug | `code-review-api-core-quiet-schedule-err-failopen` | Notification pipeline swallows quiet-hours schedule DB error and fails open — push delivered during  | done | 2026-08-10 |  |
+| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | dropped | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | done | 2026-08-07 |  |
 | 1 | security | `code-review-api-handlers-ai-upstream-error-leak` | api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-rn-biometric-prompt-i18n` | mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog... | done | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | open | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | open | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | done | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-reality-server-orphan-schedule-viewing-stub` | reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout` | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no c | dropped | 2026-08-04 |  |
 | 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx` | Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-0 | dropped | 2026-08-04 |  |
