@@ -5,6 +5,7 @@
  * Animates smoothly in and out.
  */
 
+import { useTranslation } from 'react-i18next';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import './OfflineIndicator.css';
 
@@ -27,6 +28,7 @@ import './OfflineIndicator.css';
  * ```
  */
 export function OfflineIndicator() {
+  const { t } = useTranslation();
   const { isOnline, wasOffline } = useNetworkStatus();
 
   // Show offline banner
@@ -55,9 +57,7 @@ export function OfflineIndicator() {
             <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
             <line x1="12" y1="20" x2="12.01" y2="20" />
           </svg>
-          <span className="offline-indicator__text">
-            You are offline. Some features may be unavailable.
-          </span>
+          <span className="offline-indicator__text">{t('offlineIndicator.offline')}</span>
         </div>
       </div>
     );
@@ -86,7 +86,7 @@ export function OfflineIndicator() {
             <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
             <line x1="12" y1="20" x2="12.01" y2="20" />
           </svg>
-          <span className="offline-indicator__text">Connection restored</span>
+          <span className="offline-indicator__text">{t('offlineIndicator.reconnected')}</span>
         </div>
       </div>
     );

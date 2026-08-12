@@ -1309,6 +1309,10 @@
     "disconnectedDescription": "Aktualizácie v reálnom čase nie sú dostupné",
     "clickToReconnect": "Kliknutím sa znova pripojíte"
   },
+  "offlineIndicator": {
+    "offline": "Ste offline. Niektoré funkcie nemusia byť dostupné.",
+    "reconnected": "Pripojenie obnovené"
+  },
   "submissionStatus": {
     "status": {
       "draft": "Koncept",
