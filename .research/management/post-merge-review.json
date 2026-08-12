@@ -1,9 +1,34 @@
 {
-  "generated": "2026-08-11T20:06:55Z",
+  "generated": "2026-08-12T20:25:05Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-12T20:25:05Z",
+      "prs_scanned": 7,
+      "clean": [
+        2742,
+        2741,
+        2740,
+        2739,
+        2738,
+        2737,
+        2736
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit/push). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so the 7 PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-29), base=dev, max_prs=15. Prior run (2026-08-11T20:06Z) reviewed through #2735; this run scanned exactly the NEW never-reviewed in-window set = 7 PRs merged 2026-08-12 (#2742,#2741,#2740,#2739,#2738,#2737,#2736) -- well under the cap. #2705 stays excluded (closed-not-merged, no merged_at). Note: list_pull_requests returns merged:false spuriously for confirmed-merged PRs, so merged_at (non-null) is the merge discriminator. ALL 7 CLEAN, 0 net-new issues -- another strong auto-impl batch, each PR a code-review correctness/perf/i18n fix shipped WITH a targeted regression test. Details: #2742 (ppt-web usePerformanceMetrics event-listener leak + stale-closure: onReport was an effect dep, so an inline callback tore down+re-added the PerformanceObserver + visibilitychange/load listeners every render; fix stores onReport in a ref (effect now deps only [reportOnUnload]), names the visibilitychange handler + tracks loadListenerAdded so cleanup removes EXACTLY what it added; 6 vitest cases incl. no-re-subscribe-on-inline-callback and latest-not-stale-onReport-on-hidden). #2741 (ppt-web logout cache purge: adds 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS -- the PR #2650 purge-root sweep missed the granular-notification per-user preference cache, so it leaked into the next session on a shared workstation; queryKeys.ts doc updated + AuthContext regression test seeds ['notification-triggers','events'] and asserts it's purged on logout). #2740 (mobile-rn date locale: new src/i18n/format.ts resolveLocale() derives the Intl locale from the ACTIVE i18next language (strips region subtag, falls back to 'en' for unsupported), replacing hardcoded 'en-US' across ~10 screens (announcements/documents/faults/leases/messages x2/notifications/outages/person-months); dates now localise for sk/cs/de/pl/hu; format.test.ts proves non-en differs from en + region-strip + unsupported-fallback. Minor non-filed nit: the exported formatDate/formatTime/formatDateTime helpers are tested but the screens call resolveLocale() directly with toLocale*; harmless dead-ish convenience wrappers). #2739 (mobile-rn MeterDetailScreen i18n: 6 hardcoded English literals (backToMeters/latestReading/usedSincePrevious/readingHistory/submitNewReading + 'Meter' fallback) moved to meters.* keys across all 6 locale bundles with {{amount}}/{{unit}} interpolation; i18n test asserts KEYS render + old literals gone + every locale defines the keys, is locale-distinct, and preserves placeholders. Minor non-filed nit: the 'Latest reading' date still uses toLocaleDateString() with no locale arg -- unrelated to this i18n-of-literals PR, and picks up device locale). #2738 (mobile-rn offline sync queue: RETRYABLE_HTTP_STATUSES={401,408,429} now RETAINED not dropped -- old code treated EVERY 4xx as permanent and silently discarded offline-created content when the access token expired between enqueue and replay (401); recoverable 4xx now flow the same carry-forward path as 5xx/network (re-attempted, 401 replays after AuthContext refreshes the token), while genuinely-permanent 4xx (400/403/404/409/422) still drop so the queue never blocks forever; 4 new regression cases (h)401-retained (i)429-retained (j)400-dropped (k)400-ahead-of-valid-doesn't-block. Considered-but-not-filed: a 401 that never refreshes (truly logged-out) stays queued -- but it flows the bounded carry-forward retry path, matches offline-resilience intent). #2737 (ppt-web ProtectedRoute i18n: loading spinner aria-label + 'Loading...' + 'Access Denied'/unauthorized copy now via t(); reuses existing common.loading/errors.unauthorized keys and defaultValue-guards two accessibility/errors keys. Considered-but-not-filed: no test added and errors.unauthorized/common.loading passed WITHOUT defaultValue -- but these are core pre-existing keys and the change is a trivial 2-string swap; risk speculative). #2736 (ppt-web OfflineIndicator i18n: the role=alert offline/reconnected banner shipped 2 hardcoded English literals; moved to offlineIndicator.* namespace added to all 6 catalogs cs/de/en/hu/pl/sk + a leaf-key-lockstep vitest that fails on main (namespace absent) and asserts every locale defines non-empty offline/reconnected). NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels and is issue-only), so post-merge-reviewed is NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
+      "focus_prs": [
+        2736,
+        2737,
+        2738,
+        2739,
+        2740,
+        2741,
+        2742
+      ]
+    },
     {
       "run_at": "2026-08-11T20:06:55Z",
       "prs_scanned": 5,
@@ -630,31 +655,6 @@
         2470
       ],
       "with_issues": []
-    },
-    {
-      "run_at": "2026-07-22T16:17:20Z",
-      "prs_scanned": 11,
-      "clean": [
-        2448,
-        2446,
-        2444,
-        2439,
-        2437,
-        2436,
-        2432,
-        2429,
-        2428,
-        2427
-      ],
-      "with_issues": [
-        {
-          "pr": 2424,
-          "issue": 2449,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "layout-core contract crate excellent (resolve+validate well-tested); one low-sev gap: prop VALUES never validated (only keys via rails.prop_whitelist); validate_publish ignores props entirely; types.rs docstring overclaims 'validated against component prop schemas at publish time' -- ppt-web #2429 PropInput sends arbitrary JSON.parse'd values. Mitigated by superadmin-authored whitelist + defensive rendering + React escaping"
-        }
-      ]
     }
   ]
 }
