@@ -28,6 +28,11 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use uuid::Uuid;
 
+/// Client-facing message returned when lease generation fails. The underlying
+/// LLM-provider error is logged server-side in [`generate_lease`] but is never
+/// forwarded to the client, to avoid leaking upstream provider detail.
+const LEASE_GENERATION_FAILED_MESSAGE: &str = "Lease generation failed";
+
 /// Router for LLM document generation (Epic 64).
 pub fn llm_router() -> Router<AppState> {
     Router::new()
@@ -106,6 +111,21 @@ struct IndexDocumentResponse {
 /// Upper bound on chunks per request — guards against unbounded embedding cost
 /// and connection hold time.
 const MAX_INDEX_CHUNKS: usize = 512;
+
+/// Whether an embedding batch is well-formed for indexing: the provider must
+/// return exactly one vector per submitted chunk.
+///
+/// The [`EmbeddingProvider::embed_batch`] contract is one vector per input, but
+/// the production OpenAI backend fulfils it via a remote batch call whose `data`
+/// array length is not guaranteed by the type system. If the provider returns
+/// *fewer* vectors than chunks (a truncated / partial batch response), the write
+/// loop's `chunks.iter().zip(embeddings.iter())` silently drops the surplus
+/// chunks — only a prefix of the document is indexed while the caller still gets
+/// a 201 success, corrupting later similarity retrieval. Verify the counts match
+/// and fail closed instead.
+fn embedding_batch_is_complete(chunk_count: usize, embedding_count: usize) -> bool {
+    chunk_count == embedding_count
+}
 
 /// Index a document into the pgvector RAG store (Story 84.5 / 103.5).
 ///
@@ -264,6 +284,27 @@ async fn index_document(
             ));
         }
     };
+
+    // partial-batch guard: the write loop below zips chunks with embeddings, so a
+    // provider that returns fewer vectors than chunks would silently index only a
+    // prefix of the document and still report success. Fail closed on any
+    // count mismatch rather than persisting a partially-embedded document.
+    if !embedding_batch_is_complete(chunks.len(), embeddings.len()) {
+        tracing::error!(
+            organization_id = %tenant_id,
+            document_id = %req.document_id,
+            chunks = chunks.len(),
+            embeddings = embeddings.len(),
+            "RAG embedding provider returned a mismatched vector count — refusing partial index"
+        );
+        return Err((
+            StatusCode::BAD_GATEWAY,
+            Json(ErrorResponse::new(
+                "EMBEDDING_FAILED",
+                "Embedding provider returned an incomplete result",
+            )),
+        ));
+    }
 
     // Base metadata: caller-provided object (if any) plus an optional title.
     // Per-vector provenance (`embedding_model`) is folded in by the repository's
@@ -684,7 +725,9 @@ async fn generate_lease(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "GENERATION_FAILED",
-                    format!("Failed to generate lease: {}", e),
+                    // Do not leak the upstream LLM-provider error to the client;
+                    // the detail is already logged server-side above.
+                    LEASE_GENERATION_FAILED_MESSAGE,
                 )),
             ))
         }
@@ -1111,51 +1154,43 @@ async fn publish_description(
     path = "/api/v1/ai/llm/chat/enhanced",
     request_body = EnhancedChatRequest,
     responses(
-        (status = 200, description = "Chat response with context"),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 501, description = "Enhanced (RAG) chat not implemented", body = ErrorResponse),
     ),
     tag = "AI LLM"
 )]
 async fn enhanced_chat(
-    State(state): State<AppState>,
     mut rls: RlsConnection,
-    Json(req): Json<EnhancedChatRequest>,
+    Json(_req): Json<EnhancedChatRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = rls.tenant_id();
-
-    // Get escalation config
-    let config = state
-        .llm_document_repo
-        .get_escalation_config(rls.conn(), tenant_id)
-        .await;
+    // Fail closed (code review — code-review-api-handlers-enhanced-chat-stub).
+    //
+    // The RAG pipeline this endpoint promises — (1) search document embeddings
+    // for relevant context, (2) call the LLM with that context, (3) score the
+    // response confidence against the escalation threshold — is NOT implemented.
+    //
+    // The previous placeholder returned a 200 success payload built entirely
+    // from fabricated data: a canned echo `response`, a hardcoded
+    // `confidence: 0.85`, `tokens_used: 150`, an empty `sources: []`, and an
+    // `escalated` flag derived from that fake confidence. Clients — and any
+    // escalation automation reading those metrics — could act on invented data.
+    // Until the real embedding + LLM pipeline lands, return 501 so no caller
+    // mistakes a stub for a real answer.
+    //
+    // `RlsConnection` is still extracted so unauthenticated requests are
+    // rejected with 401 before reaching here; release it immediately as we do
+    // no database work.
     rls.release().await;
-    let config = config.map_err(|e| {
-        tracing::error!("Failed to get escalation config: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get config")),
-        )
-    })?;
 
-    // Placeholder response - real implementation would:
-    // 1. Search document embeddings for relevant context
-    // 2. Call LLM with context
-    // 3. Check confidence against threshold
-    let confidence = 0.85; // Placeholder
-    let escalated = confidence < config.confidence_threshold;
-
-    let response = serde_json::json!({
-        "message_id": Uuid::new_v4(),
-        "response": format!("I understand you're asking about: {}. Let me help you with that.", req.message),
-        "confidence": confidence,
-        "sources": [],
-        "escalated": escalated,
-        "escalation_reason": if escalated { Some("Low confidence in response") } else { None },
-        "language_detected": req.language,
-        "tokens_used": 150
-    });
-
-    Ok(Json(response))
+    Err((
+        StatusCode::NOT_IMPLEMENTED,
+        Json(ErrorResponse::new(
+            "ENHANCED_CHAT_NOT_IMPLEMENTED",
+            "Enhanced (RAG) chat is not yet implemented: the document-embedding \
+             search and LLM pipeline are not wired up, so no chat response, \
+             confidence score, or escalation decision can be produced.",
+        )),
+    ))
 }
 
 async fn get_escalation_config(
@@ -1456,5 +1491,69 @@ async fn get_generation_request(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression guard for the AI upstream-error leak finding: the client-facing
+    /// body for a failed lease generation must carry only the fixed generic
+    /// message and must never contain the raw upstream LLM-provider error
+    /// (which is logged server-side in `generate_lease`).
+    #[test]
+    fn lease_generation_error_does_not_leak_upstream_detail() {
+        // A representative raw provider error that must not reach the client.
+        let upstream_detail = "provider 503: model overloaded (upstream request id abc123)";
+
+        // Mirror the client body built by `generate_lease`'s error branch.
+        let response = ErrorResponse::new("GENERATION_FAILED", LEASE_GENERATION_FAILED_MESSAGE);
+        let body = serde_json::to_string(&response).expect("serialize ErrorResponse");
+
+        assert!(
+            !body.contains(upstream_detail),
+            "client error body leaked the upstream provider detail: {body}"
+        );
+        assert!(
+            !body.contains("Failed to generate lease:"),
+            "client error body still interpolates the upstream error: {body}"
+        );
+        assert_eq!(response.message, LEASE_GENERATION_FAILED_MESSAGE);
+    }
+
+    /// Regression guard for the RAG partial-index gap: a provider that returns
+    /// fewer embedding vectors than submitted chunks must be rejected, because
+    /// the `index_document` write loop zips chunks with embeddings and would
+    /// otherwise silently persist only a prefix of the document.
+    #[test]
+    fn embedding_batch_mismatch_is_rejected_before_write() {
+        let chunks = ["a", "b", "c"];
+        // Provider dropped one vector (truncated / partial batch response).
+        let embeddings = [vec![0.0f32], vec![0.0f32]];
+
+        // Demonstrate the silent-truncation hazard the guard exists to prevent:
+        // zip stops at the shorter side, so only 2 of the 3 chunks would be
+        // written while the caller still gets a success response.
+        let written = chunks.iter().zip(embeddings.iter()).count();
+        assert_eq!(
+            written, 2,
+            "zip truncates to the shorter side — 1 chunk would be silently dropped"
+        );
+
+        // The guard catches the mismatch...
+        assert!(
+            !embedding_batch_is_complete(chunks.len(), embeddings.len()),
+            "mismatched vector count must be treated as incomplete"
+        );
+        // ...and accepts the well-formed 1-vector-per-chunk case.
+        assert!(
+            embedding_batch_is_complete(chunks.len(), chunks.len()),
+            "one vector per chunk is a complete batch"
+        );
+        assert!(
+            embedding_batch_is_complete(0, 0),
+            "an empty batch is trivially complete"
+        );
     }
 }

@@ -7,6 +7,7 @@
  * the submit handler and any post-submit navigation.
  */
 
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import type { ListingDraft } from '@/lib/realtor-api';
 
@@ -18,25 +19,48 @@ interface ListingFormProps {
   onSubmit: (draft: ListingDraft) => void | Promise<void>;
 }
 
-const PROPERTY_TYPES: ReadonlyArray<{ value: ListingDraft['propertyType']; label: string }> = [
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'house', label: 'House' },
-  { value: 'land', label: 'Land' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'other', label: 'Other' },
+const PROPERTY_TYPES: ReadonlyArray<{ value: ListingDraft['propertyType']; labelKey: string }> = [
+  { value: 'apartment', labelKey: 'propertyTypeApartment' },
+  { value: 'house', labelKey: 'propertyTypeHouse' },
+  { value: 'land', labelKey: 'propertyTypeLand' },
+  { value: 'commercial', labelKey: 'propertyTypeCommercial' },
+  { value: 'other', labelKey: 'propertyTypeOther' },
 ];
 
-const TRANSACTION_TYPES: ReadonlyArray<{ value: ListingDraft['transactionType']; label: string }> =
-  [
-    { value: 'sale', label: 'For sale' },
-    { value: 'rent', label: 'For rent' },
-  ];
+const TRANSACTION_TYPES: ReadonlyArray<{
+  value: ListingDraft['transactionType'];
+  labelKey: string;
+}> = [
+  { value: 'sale', labelKey: 'transactionSale' },
+  { value: 'rent', labelKey: 'transactionRent' },
+];
 
 interface FieldErrors {
   title?: string;
   description?: string;
   price?: string;
   city?: string;
+  area?: string;
+  rooms?: string;
+}
+
+/**
+ * Parse an optional numeric field from raw input.
+ *
+ * Empty input is valid and yields `undefined` (the field is optional).
+ * Non-numeric input (which `Number()` would coerce to `NaN`) and negative
+ * values are rejected so the form never submits `NaN` or a negative measure.
+ */
+function parseOptionalNonNegative(raw: string): {
+  value?: number;
+  error?: 'invalid' | 'negative';
+} {
+  const trimmed = raw.trim();
+  if (!trimmed) return { value: undefined };
+  const num = Number(trimmed);
+  if (!Number.isFinite(num)) return { error: 'invalid' };
+  if (num < 0) return { error: 'negative' };
+  return { value: num };
 }
 
 export function ListingForm({
@@ -46,6 +70,7 @@ export function ListingForm({
   generalError,
   onSubmit,
 }: ListingFormProps) {
+  const t = useTranslations('listingForm');
   const [title, setTitle] = useState(initialValue?.title ?? '');
   const [description, setDescription] = useState(initialValue?.description ?? '');
   const [propertyType, setPropertyType] = useState<ListingDraft['propertyType']>(
@@ -66,11 +91,17 @@ export function ListingForm({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const next: FieldErrors = {};
-    if (!title.trim()) next.title = 'Title is required';
-    if (!description.trim()) next.description = 'Description is required';
-    if (!city.trim()) next.city = 'City is required';
+    if (!title.trim()) next.title = t('errorTitleRequired');
+    if (!description.trim()) next.description = t('errorDescriptionRequired');
+    if (!city.trim()) next.city = t('errorCityRequired');
     const priceNum = Number(price);
-    if (!Number.isFinite(priceNum) || priceNum <= 0) next.price = 'Price must be a positive number';
+    if (!Number.isFinite(priceNum) || priceNum <= 0) next.price = t('errorPricePositive');
+    const areaResult = parseOptionalNonNegative(area);
+    if (areaResult.error)
+      next.area = t(areaResult.error === 'negative' ? 'errorAreaNegative' : 'errorAreaInvalid');
+    const roomsResult = parseOptionalNonNegative(rooms);
+    if (roomsResult.error)
+      next.rooms = t(roomsResult.error === 'negative' ? 'errorRoomsNegative' : 'errorRoomsInvalid');
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -84,8 +115,8 @@ export function ListingForm({
       city: city.trim(),
       street: street.trim() || undefined,
       postalCode: postalCode.trim() || undefined,
-      area: area ? Number(area) : undefined,
-      rooms: rooms ? Number(rooms) : undefined,
+      area: areaResult.value,
+      rooms: roomsResult.value,
     });
   };
 
@@ -98,7 +129,7 @@ export function ListingForm({
       )}
 
       <label className="field">
-        <span className="label">Title</span>
+        <span className="label">{t('labelTitle')}</span>
         <input
           type="text"
           value={title}
@@ -110,7 +141,7 @@ export function ListingForm({
       </label>
 
       <label className="field">
-        <span className="label">Description</span>
+        <span className="label">{t('labelDescription')}</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -123,7 +154,7 @@ export function ListingForm({
 
       <div className="row">
         <label className="field">
-          <span className="label">Property type</span>
+          <span className="label">{t('labelPropertyType')}</span>
           <select
             value={propertyType}
             onChange={(e) => setPropertyType(e.target.value as ListingDraft['propertyType'])}
@@ -132,14 +163,14 @@ export function ListingForm({
           >
             {PROPERTY_TYPES.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="field">
-          <span className="label">Transaction</span>
+          <span className="label">{t('labelTransaction')}</span>
           <select
             value={transactionType}
             onChange={(e) => setTransactionType(e.target.value as ListingDraft['transactionType'])}
@@ -148,7 +179,7 @@ export function ListingForm({
           >
             {TRANSACTION_TYPES.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </select>
@@ -157,7 +188,7 @@ export function ListingForm({
 
       <div className="row">
         <label className="field">
-          <span className="label">Price</span>
+          <span className="label">{t('labelPrice')}</span>
           <input
             type="number"
             min="0"
@@ -170,7 +201,7 @@ export function ListingForm({
           {errors.price && <span className="error">{errors.price}</span>}
         </label>
         <label className="field">
-          <span className="label">Currency</span>
+          <span className="label">{t('labelCurrency')}</span>
           <input
             type="text"
             value={currency}
@@ -183,7 +214,7 @@ export function ListingForm({
 
       <div className="row">
         <label className="field">
-          <span className="label">City</span>
+          <span className="label">{t('labelCity')}</span>
           <input
             type="text"
             value={city}
@@ -194,7 +225,7 @@ export function ListingForm({
           {errors.city && <span className="error">{errors.city}</span>}
         </label>
         <label className="field">
-          <span className="label">Postal code</span>
+          <span className="label">{t('labelPostalCode')}</span>
           <input
             type="text"
             value={postalCode}
@@ -206,7 +237,7 @@ export function ListingForm({
       </div>
 
       <label className="field">
-        <span className="label">Street</span>
+        <span className="label">{t('labelStreet')}</span>
         <input
           type="text"
           value={street}
@@ -218,31 +249,33 @@ export function ListingForm({
 
       <div className="row">
         <label className="field">
-          <span className="label">Area (m²)</span>
+          <span className="label">{t('labelArea')}</span>
           <input
             type="number"
             min="0"
             value={area}
             onChange={(e) => setArea(e.target.value)}
             disabled={isSubmitting}
-            className="input"
+            className={`input ${errors.area ? 'input-error' : ''}`}
           />
+          {errors.area && <span className="error">{errors.area}</span>}
         </label>
         <label className="field">
-          <span className="label">Rooms</span>
+          <span className="label">{t('labelRooms')}</span>
           <input
             type="number"
             min="0"
             value={rooms}
             onChange={(e) => setRooms(e.target.value)}
             disabled={isSubmitting}
-            className="input"
+            className={`input ${errors.rooms ? 'input-error' : ''}`}
           />
+          {errors.rooms && <span className="error">{errors.rooms}</span>}
         </label>
       </div>
 
       <button type="submit" className="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving…' : submitLabel}
+        {isSubmitting ? t('saving') : submitLabel}
       </button>
 
       <style jsx>{`

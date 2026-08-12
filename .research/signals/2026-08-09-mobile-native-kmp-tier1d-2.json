@@ -1,0 +1,54 @@
+{
+  "generated": "2026-08-09T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing route wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every realtor 'Create listing' submission therefore fails unconditionally in production; the feature is reachable (MyListingsScreen `onCreateClick` navigates to Screen.CreateListing at Navigation.kt:483) yet non-functional.",
+        "The screen is a complete 399-line implementation: mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt collects a full `CreateListingInput` data class (line 392) and calls `onSubmit(CreateListingInput(...))` (suspend, returns Result<Unit>, line 41/109), rendering onSuccess -> onCreated. All the collected form data is discarded because the injected onSubmit is a hardcoded failure.",
+        "Root cause: the repository has no create method. mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics (grep for `fun create` returns nothing). Fix: add `suspend fun createListing(input): Result<Unit>` (POST /api/v1/my/listings) to PortalListingsRepository and wire it into Navigation.kt:493, or hide the Create Listing entry point until the API is wired. Traced entry->stub->missing-repo end to end, hence confidence high."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — four inline LaunchedEffect data loaders collapse ALL failures into an empty collection with no error state and no retry affordance: search history `.onFailure { searches = emptyList() }` (:380), inquiries `.onFailure { inquiries = emptyList() }` (:450), my-listings `.onFailure { listings = emptyList() }` (:476), portfolio analytics `.onFailure { metrics = emptyList() }` (:541).",
+        "A real network error (timeout, 5xx, auth loss — PortalListingException / IOException surfaced via Result.failure) is rendered identically to a legitimately empty result, so the realtor sees a misleading 'no listings / no inquiries / no analytics' empty state instead of an error + retry. This compounds the sibling finding (today's `cancellationexception-swallowed-repos`): repos return Result.failure on cancellation too, so a normal navigation-away also flashes an empty state.",
+        "Fix: give each loader a distinct error UI-state (e.g. an `errorMessage`/`isError` field alongside `isLoading`) and a retry action, mirroring how the KMP ViewModels (e.g. ListingDetailViewModel) already model error state, rather than folding every failure into emptyList(). Medium severity: user-facing but non-crashing, and errors are silently masked rather than surfaced."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-unbounded-fanout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111 getPortfolioAnalytics() fetches listMyListings(limit = 100) then fires one `async { getListingAnalytics(listing.id) }` per listing inside a single coroutineScope and awaitAll()s them — an unbounded concurrent fan-out of up to 100 simultaneous GET /api/v1/my/listings/{id}/analytics requests with no chunking or concurrency cap (Semaphore).",
+        "For a realtor with a large portfolio this thundering-herd fires the full batch at once every time the analytics dashboard opens; depending on the Ktor engine's connection pool it either serializes behind the pool (slow dashboard) or floods the server/rate-limiter. Per-listing failures are silently dropped via `.getOrNull()` (documented as intentional), which also means the portfolio totals under-report with no indication when some calls fail.",
+        "Fix: bound the fan-out — chunk the listing ids (e.g. groups of 5-10) or gate the async calls behind a kotlinx.coroutines Semaphore(permits = N). Low severity / perf-robustness; self-contained in one function."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

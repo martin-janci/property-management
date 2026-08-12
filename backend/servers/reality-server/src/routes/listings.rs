@@ -283,24 +283,14 @@ pub async fn search(
         .portal_repo
         .search_listings(&query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to search listings: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("search listings", e))?;
 
     // Count total
     let total = state
         .portal_repo
         .count_listings(&query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to count listings: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("count listings", e))?;
 
     // Convert to response types
     let listings: Vec<ListingSummary> = listings.into_iter().map(Into::into).collect();
@@ -379,6 +369,19 @@ pub async fn get_listing(
             // Track the view
             let _ = state.reality_portal_repo.track_view(id, "website").await;
 
+            // Read back the aggregate view total via the SECURITY DEFINER path
+            // (a direct SELECT on this RLS-subject public pool reads zero for
+            // portal-owned listings — see get_view_count / migration 00220).
+            // Best-effort: degrade to 0 rather than failing the public detail
+            // page if analytics are momentarily unavailable.
+            let view_count = match state.reality_portal_repo.get_view_count(id).await {
+                Ok(count) => count,
+                Err(e) => {
+                    tracing::warn!(%id, error = %e, "Failed to read listing view count; defaulting to 0");
+                    0
+                }
+            };
+
             // Get photos for the listing
             let photos: Vec<String> = sqlx::query_scalar(
                 "SELECT url FROM listing_photos WHERE listing_id = $1 ORDER BY display_order",
@@ -429,7 +432,7 @@ pub async fn get_listing(
                 photos,
                 features,
                 published_at: l.published_at.map(|dt| dt.to_rfc3339()).unwrap_or_default(),
-                view_count: 0, // Would need analytics query
+                view_count,
             }))
         }
         None => Err((
@@ -464,12 +467,7 @@ pub async fn get_suggestions(
         .portal_repo
         .get_nearby_cities(city, 10)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get cities: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("get nearby cities", e))?;
 
     Ok(Json(SuggestionsResponse {
         cities,

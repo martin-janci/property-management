@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { resolveLocale } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
 export type FaultStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
@@ -122,7 +123,7 @@ const categoryIcon: Record<FaultCategory, string> = {
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(resolveLocale(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

@@ -47,13 +47,33 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
           return response.json() as Promise<ListingSummary>;
         });
 
-        const loadedListings = await Promise.all(fetchPromises);
+        // Resolve every id independently so one bad/missing listing degrades
+        // gracefully (it is dropped) instead of blanking the whole shared
+        // comparison. `Promise.all` used to reject on the first failure, so a
+        // single stale/invalid id in a shared URL wiped out every listing.
+        const results = await Promise.allSettled(fetchPromises);
 
-        // Add each listing to comparison
-        for (const listing of loadedListings) {
-          if (listing) {
-            addToComparison(listing);
+        const loadedListings: ListingSummary[] = [];
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            if (result.value) {
+              loadedListings.push(result.value);
+            }
+          } else {
+            // Skip the bad id but keep the rest of the comparison intact.
+            console.error('Error loading shared listing:', result.reason);
           }
+        }
+
+        // Add each successfully loaded listing to comparison.
+        for (const listing of loadedListings) {
+          addToComparison(listing);
+        }
+
+        // Only surface the error state when NOTHING could be loaded — a
+        // partial success still yields a usable comparison.
+        if (loadedListings.length === 0) {
+          setError(t('loadError'));
         }
       } catch (err) {
         setError(t('loadError'));

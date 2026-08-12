@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { useFolderTree } from '../../hooks/useFolderTree';
+import { resolveLocale } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 import type { AccessScope } from './DocumentPermissionsScreen';
 import {
@@ -182,7 +183,11 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString(resolveLocale(), {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
   const navigateToFolder = (folder: Document) => {

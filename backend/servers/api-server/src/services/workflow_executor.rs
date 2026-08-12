@@ -675,15 +675,26 @@ fn traverse_json(value: &serde_json::Value, path: &[&str]) -> serde_json::Value 
     current
 }
 
+/// Coerce a JSON value to a **finite** `f64` for numeric comparison.
+///
+/// Accepts JSON numbers directly and numeric strings via `parse`. Non-finite
+/// results (`NaN`, `±inf`) are rejected: Rust's `f64::from_str` happily parses
+/// `"NaN"`, `"inf"`, `"infinity"`, `"-inf"` (case-insensitively), so a
+/// stored/attacker-supplied string field of `"NaN"` would otherwise slip past
+/// the numeric comparators and produce a bogus, non-antisymmetric ordering
+/// (e.g. `"NaN" < 100` == `true` while `"NaN" > 100` == `false`). Returning
+/// `None` here routes such values to `compare_numeric`'s "uncomparable" error
+/// branch, matching how any other non-numeric string is already handled.
+fn coerce_finite_f64(v: &serde_json::Value) -> Option<f64> {
+    v.as_f64()
+        .or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok()))
+        .filter(|n| n.is_finite())
+}
+
 /// Compare two JSON values as numbers.
 fn compare_numeric(a: &serde_json::Value, b: &serde_json::Value) -> Result<i32, WorkflowError> {
-    let a_num = a
-        .as_f64()
-        .or_else(|| a.as_str().and_then(|s| s.parse::<f64>().ok()));
-
-    let b_num = b
-        .as_f64()
-        .or_else(|| b.as_str().and_then(|s| s.parse::<f64>().ok()));
+    let a_num = coerce_finite_f64(a);
+    let b_num = coerce_finite_f64(b);
 
     match (a_num, b_num) {
         (Some(a), Some(b)) => {
@@ -991,6 +1002,72 @@ mod tests {
         let group: ConditionGroup = serde_json::from_value(group_json).unwrap();
         assert_eq!(group.operator, LogicalOperator::And);
         assert_eq!(group.conditions.len(), 2);
+    }
+
+    // ------------------------------------------------------------------
+    // compare_numeric: numeric-string coercion must reject non-finite
+    // values (NaN / ±inf) rather than yielding a bogus ordering.
+    //
+    // Regression: `"NaN".parse::<f64>()` (and `"inf"`, `"infinity"`, …)
+    // succeeds in Rust, so an event payload carrying a stringified "NaN"/
+    // "inf" previously slipped past the numeric comparators — e.g.
+    // `"NaN" < 100` returned `Ok(-1)` and `"NaN" > 100` returned `Ok(false)`,
+    // a non-antisymmetric ordering — instead of being treated as
+    // uncomparable like every other non-numeric string.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_compare_numeric_plain_numbers() {
+        assert_eq!(
+            compare_numeric(&serde_json::json!(5), &serde_json::json!(3)).unwrap(),
+            1
+        );
+        assert_eq!(
+            compare_numeric(&serde_json::json!(3), &serde_json::json!(5)).unwrap(),
+            -1
+        );
+        assert_eq!(
+            compare_numeric(&serde_json::json!(5), &serde_json::json!(5)).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn test_compare_numeric_numeric_strings_still_coerce() {
+        // Legitimate numeric strings must still compare as numbers.
+        assert_eq!(
+            compare_numeric(&serde_json::json!("5"), &serde_json::json!(3)).unwrap(),
+            1
+        );
+        assert_eq!(
+            compare_numeric(&serde_json::json!("2.5"), &serde_json::json!("2.5")).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn test_compare_numeric_rejects_non_finite_strings() {
+        // "NaN"/"inf"/"infinity" must be uncomparable, on either side.
+        for s in ["NaN", "nan", "inf", "-inf", "infinity", "+inf"] {
+            let left = compare_numeric(&serde_json::json!(s), &serde_json::json!(100));
+            assert!(
+                matches!(left, Err(WorkflowError::ConditionError(_))),
+                "compare_numeric({s:?}, 100) must be uncomparable, got {left:?}"
+            );
+            let right = compare_numeric(&serde_json::json!(100), &serde_json::json!(s));
+            assert!(
+                matches!(right, Err(WorkflowError::ConditionError(_))),
+                "compare_numeric(100, {s:?}) must be uncomparable, got {right:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_compare_numeric_rejects_plain_non_numeric() {
+        assert!(matches!(
+            compare_numeric(&serde_json::json!("open"), &serde_json::json!(5)),
+            Err(WorkflowError::ConditionError(_))
+        ));
     }
 
     // ------------------------------------------------------------------

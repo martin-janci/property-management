@@ -19,6 +19,8 @@ mod payment_reminder_dedup_tests;
 mod portal_imports_cross_org_idor_tests;
 #[path = "suites/portal_listing_analytics_force_rls_tests.rs"]
 mod portal_listing_analytics_force_rls_tests;
+#[path = "suites/portal_listing_view_count_force_rls_tests.rs"]
+mod portal_listing_view_count_force_rls_tests;
 #[path = "suites/portal_track_listing_view_force_rls_tests.rs"]
 mod portal_track_listing_view_force_rls_tests;
 #[path = "suites/portal_user_merge_tests.rs"]

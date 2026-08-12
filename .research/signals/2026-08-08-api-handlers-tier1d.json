@@ -1,0 +1,21 @@
+[
+  {
+    "id": "code-review-api-handlers-reports-unwrap-or-default-silent-zero",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/reports/mod.rs — four report handlers swallow repository DB errors with `.unwrap_or_default()` and then serve HTTP 200 with silently-zeroed/empty data instead of surfacing the failure. The tell is intra-handler inconsistency: the PRIMARY query in each handler propagates errors via `.map_err(...)?` (e.g. `get_statistics` at :615), but the SECONDARY data queries in the SAME handler discard the `Result`.",
+      "get_fault_statistics_report: `get_monthly_fault_counts` (reports/mod.rs:633) and `get_monthly_resolution_times` (reports/mod.rs:640) — a transient DB error yields empty `monthly_counts` / `resolution_time_trend` trend arrays, so the fault report renders as if there were zero faults over time while the primary statistics block is populated — an internally contradictory, plausible-looking report.",
+      "get_voting_participation_report: `get_participation_report` (reports/mod.rs:715) — on DB error `participation_data` becomes an empty Vec, so `total_votes = participation_data.len()` computes to 0 and the derived quorum/participation summary is silently wrong (0% participation reported for a building that may have full turnout).",
+      "get_occupancy_report: `get_occupancy_report` (reports/mod.rs:827) and its year-over-year sibling call (reports/mod.rs:844) — a DB error produces a defaulted `OccupancyReport` with `summary.total_person_months == 0`; the year-over-year change_percentage is then computed against zeroed current/previous totals and served as authoritative occupancy data.",
+      "get_consumption_report: `get_consumption_report` (reports/mod.rs:949) and `detect_consumption_anomalies` (reports/mod.rs:962) — a DB error silently drops all consumption rows and anomalies, so a monitoring/billing consumption report can show zero usage and zero anomalies on a partial backend failure.",
+      "Impact: these are manager-facing analytical reports (fault trends, voting quorum, occupancy, utility consumption) that drive decisions; a transient DB/pool error on a secondary query degrades to a confident wrong answer (HTTP 200 with zeros) rather than a 5xx the caller can retry. Tenant isolation itself is fine — every handler validates `query.organization_id != rls.tenant_id()` before the repo calls (reports/mod.rs:596,694,806,922).",
+      "Fix: replace `.unwrap_or_default()` on these repository calls with the same `.map_err(...)?` -> 500 pattern the primary query already uses (or, if empty-on-error is a deliberate graceful-degradation choice, make it explicit and consistent and annotate the partial-data condition in the response so consumers can distinguish 'no data' from 'query failed')."
+    ],
+    "expert": "rust"
+  }
+]

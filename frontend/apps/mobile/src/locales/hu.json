@@ -400,7 +400,13 @@
     "noUnitText": "A mérőórák akkor jelennek meg, ha fiókját egy egységhez társítják.",
     "detailLoadError": "A mérőóra nem tölthető be",
     "noReadingsTitle": "Még nincsenek leolvasások",
-    "noReadingsText": "Küldje be első leolvasását ehhez a mérőórához."
+    "noReadingsText": "Küldje be első leolvasását ehhez a mérőórához.",
+    "meterFallback": "Mérőóra",
+    "backToMeters": "Mérőórák",
+    "latestReading": "Legutóbbi leolvasás",
+    "usedSincePrevious": "Fogyasztás az előző leolvasás óta: {{amount}} {{unit}}",
+    "readingHistory": "Leolvasási előzmények",
+    "submitNewReading": "Új leolvasás beküldése"
   },
   "esignature": {
     "title": "Alairasi keres",

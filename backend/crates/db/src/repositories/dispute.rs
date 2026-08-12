@@ -693,6 +693,36 @@ impl DisputeRepository {
         )
         .await?;
 
+        // Access-audit event (who added evidence to which dispute) on the
+        // platform-admin `audit_logs` stream — the same append-only,
+        // AuditRead-gated table the platform_admin support flow reads (see
+        // `membership.rs`, which emits `org_member_added`/`org_member_removed`
+        // the same way). Mirrors the support-data audit-emission pattern so a
+        // support engineer can trace evidence attachment across tenants. A
+        // generic `resource_created` action over `resource_type =
+        // 'dispute_evidence'` keeps this in the existing enum — no new
+        // `audit_action` value / migration is required.
+        sqlx::query(
+            r#"
+            INSERT INTO audit_logs (
+                user_id, action, resource_type, resource_id, org_id, details
+            )
+            VALUES ($1, 'resource_created'::audit_action, 'dispute_evidence', $2, $3, $4)
+            "#,
+        )
+        .bind(req.uploaded_by)
+        .bind(evidence.id)
+        .bind(org_id)
+        .bind(serde_json::json!({
+            "dispute_id":        req.dispute_id,
+            "evidence_id":       evidence.id,
+            "filename":          req.filename,
+            "original_filename": req.original_filename,
+        }))
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
         Ok(evidence)
     }
 

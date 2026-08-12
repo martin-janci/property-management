@@ -37,189 +37,81 @@
       }
     },
     {
-      "id": "code-review-api-core-workflow-not-group-drops-conds",
-      "action": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirel",
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core)",
+      "source": "dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T04:14:00Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-05T22:12:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug",
-        "source": "tier1d-signal-bridge"
-      }
-    },
-    {
-      "id": "gh-issue-2575-retry1",
-      "action": "Follow-up: /disputes/kpis has no window-ordering validation and its only test is quarantined (PR #2572) (Closes #2575) [retry 1/2 of failed gh-issue-2575]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=gh-issue-2575 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:08:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T18:04:42Z",
-      "retry_of": "gh-issue-2575",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2575,
-        "url": "https://github.com/martin-janci/property-management/issues/2575",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1-retry1",
-      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started) [retry 1/2 of failed pm-scrum-master-wire-ppt-web-direct-s3-84-1]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=pm-scrum-master-wire-ppt-web-direct-s3-84-1 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:29:56Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T18:04:42Z",
-      "retry_of": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
+      "first_open_at": "2026-08-11T06:06:45Z",
+      "retry_of": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
       "retry_round": 1
     },
     {
-      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
-      "action": "ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa...",
+      "id": "code-review-mobile-native-kmp-cancellation-swallowed",
+      "action": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "owner_role": "pm-backend",
-      "priority": "medium",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=3 conf=high vector=bug)",
+      "source": "dispatcher-backlog-refill 2026-08-11T22:04:10Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
+      "first_open_at": "2026-08-11T22:04:10Z",
       "backlog_ref": {
-        "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-untested",
+      "action": "mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-11T22:04:10Z (score=1 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T22:04:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-offline-401-dropped",
+      "action": "mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit) as permanent and drops the queued action, silently losing offline-created content",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=3 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T08:05:18Z",
+      "backlog_ref": {
+        "plan": null,
         "score": 3,
         "vector": "bug"
       }
     },
     {
-      "id": "code-review-api-handlers-enhanced-chat-stub",
-      "action": "api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data....",
+      "id": "code-review-mobile-rn-date-locale-en-us",
+      "action": "mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dates never localize for sk/cs/de users",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=high vector=bug)",
+      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-auth-restore-stale-token",
-      "action": "mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
-      "action": "ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-inquiries-no-ratelimit",
-      "action": "reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
-      "action": "reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-ai-upstream-error-leak",
-      "action": "api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f...",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-biometric-prompt-i18n",
-      "action": "mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
+      "first_open_at": "2026-08-12T08:05:18Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
@@ -227,16 +119,16 @@
       }
     },
     {
-      "id": "code-review-reality-server-inquiry-email-stub",
-      "action": "reality-server: a shipped-but-non-functional notification path.",
+      "id": "code-review-mobile-rn-meterdetail-i18n",
+      "action": "mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling strings use i18n",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
+      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
+      "first_open_at": "2026-08-12T08:05:18Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
@@ -244,52 +136,38 @@
       }
     },
     {
-      "id": "code-review-reality-server-orphan-listinghandler-stub-detail",
-      "action": "reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-orphan-schedule-viewing-stub",
-      "action": "reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da...",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-06T20:08:18Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-inquiry-notify-route-wiring",
-      "action": "reality-server: the live public endpoint routes::inquiries::send_contact_message persists via state.reality_portal_repo.create_inquiry(...) directly and does NOT route through InquiriesHandler, so the new InquiryNotifier seam (added in PR #2696) is never reached on the live path — realtors still get no notification. Wire send_contact_message (and the viewing-request route if it shares the bypass) through InquiriesHandler::with_notifier so the best-effort notification fires. Touches routes/inquiries.rs + handler state wiring.",
+      "id": "code-review-ppt-web-core-logout-purge-notif-triggers",
+      "action": "ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incomplete) — user notification-preference cache leaks into the next session",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
-      "source": "implementer-secondary-finding PR#2696 (inquiry-email-stub) 2026-08-06T22:36:16Z",
+      "source": "dispatcher-backlog-refill 2026-08-12T10:07:43Z (score=3 conf=high vector=bug)",
       "deadline": null,
-      "dependency": "code-review-reality-server-inquiry-email-stub (PR #2696 seam must land first)",
-      "depends_on": [
-        "code-review-reality-server-inquiry-email-stub"
-      ],
-      "first_open_at": "2026-08-06T22:36:16Z"
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T10:07:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-perfmetrics-listener-leak",
+      "action": "usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener leak, compounded by effect re-running on inline onReport",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-12T10:07:43Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T10:07:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -259,12 +259,10 @@ pub async fn update_agency(
     // SECURITY (H2): membership check via the shared helper in
     // `super::agency_imports` — single source of truth for "is this user
     // allowed to mutate this agency's data?".
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
     drop(conn);
 
@@ -313,12 +311,10 @@ pub async fn update_branding(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateAgencyBranding>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
     drop(conn);
 
@@ -332,6 +328,17 @@ pub async fn update_branding(
 }
 
 /// List agency members.
+///
+/// SECURITY (members-idor audit): the member roster is agency-internal PII
+/// (names, emails, roles). Previously this handler had no auth extractor and
+/// no membership gate, so anyone on the internet could enumerate any agency's
+/// members via `GET /api/v1/agencies/{id}/members` — unauthenticated
+/// cross-agency member enumeration (IDOR). We now require an authenticated
+/// principal who is an active member of the target agency, using the same
+/// shared `check_agency_membership` gate the sibling mutators
+/// (`update_agency`, `update_branding`, `create_invitation`) apply: `404` when
+/// the agency doesn't exist and `403` for a non-member (never leaks
+/// cross-agency membership).
 #[utoipa::path(
     get,
     path = "/api/v1/agencies/{id}/members",
@@ -339,13 +346,28 @@ pub async fn update_branding(
     params(("id" = Uuid, Path, description = "Agency ID")),
     responses(
         (status = 200, description = "List of members", body = MembersResponse),
-        (status = 401, description = "Unauthorized")
-    )
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not a member of this agency"),
+        (status = 404, description = "Agency not found")
+    ),
+    security(("session_token" = []))
 )]
 pub async fn list_members(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MembersResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (members-idor): gate on active membership of the target agency
+    // via the shared helper — single source of truth for "is this user allowed
+    // to see this agency's internal data?". Returns 404 (unknown agency) / 403
+    // (non-member) before any member data is read.
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
+    super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
+    drop(conn);
+
     let members = state
         .reality_portal_repo
         .get_agency_members(id)
@@ -392,12 +414,10 @@ pub async fn create_invitation(
     // via the shared helper — single source of truth for "is this user allowed
     // to mutate this agency's data?". Returns 404 (unknown agency) / 403
     // (non-member) before any invitation is created.
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     super::agency_imports::check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
     drop(conn);
 
@@ -463,12 +483,10 @@ pub async fn accept_invitation(
     // SECURITY (invite-email-match): gate on recipient identity before adding
     // membership. See the handler doc-comment above for the escalation this
     // prevents.
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire db connection", e))?;
     verify_invitation_recipient(&mut conn, &token, principal.user_id).await?;
     drop(conn);
 

@@ -7,7 +7,72 @@ use async_trait::async_trait;
 use db::models::action_type;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::future::Future;
+use std::net::IpAddr;
+use std::pin::Pin;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+/// Type-erased hostname → IPs resolver used by [`SsrfGuardResolver`].
+///
+/// Injected so the executor's real DNS path and the hermetic
+/// DNS-rebinding regression test share one code path (the test drives a
+/// stateful resolver that returns a public IP first and a private IP on the
+/// connect-time lookup).
+type IpResolver = Arc<
+    dyn Fn(String) -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>>
+        + Send
+        + Sync,
+>;
+
+/// Connect-time SSRF-guard DNS resolver for the workflow HTTP client.
+///
+/// `reqwest`/`hyper` invoke this at **connect** time for the initial request
+/// **and every redirect hop**. It resolves the hostname and validates every
+/// resulting address against the shared SSRF forbidden-range policy, erroring
+/// out (which aborts the connection) if any address is forbidden. Because the
+/// addresses `reqwest` connects to are exactly the ones validated here —
+/// resolved once, at connect, in the same step — this closes the
+/// DNS-rebinding TOCTOU window that a separate pre-flight lookup left open (a
+/// pre-flight lookup and `reqwest`'s own connect-time lookup could disagree,
+/// letting a hostname that first resolved public rebind to a private address
+/// before the socket is opened). It also re-validates redirects, which a
+/// one-shot pre-flight check never covered.
+struct SsrfGuardResolver {
+    resolve_ips: IpResolver,
+}
+
+impl reqwest::dns::Resolve for SsrfGuardResolver {
+    fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+        let resolve_ips = self.resolve_ips.clone();
+        Box::pin(async move {
+            let host = name.as_str().to_string();
+            // The port is irrelevant to SSRF validation (range checks are on
+            // the IP) and `hyper` overrides it with the real destination port
+            // after resolution, so we resolve/validate with 0.
+            let ips = (resolve_ips)(host.clone())
+                .await
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })?;
+            let addrs = common::url_validation::validate_resolved_addrs(&host, 0, &ips)
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })?;
+            let iter: reqwest::dns::Addrs = Box::new(addrs.into_iter());
+            Ok(iter)
+        })
+    }
+}
+
+/// Real DNS resolver used in production: the OS resolver via Tokio's async
+/// wrapper around `getaddrinfo`.
+fn real_ip_resolver() -> IpResolver {
+    Arc::new(
+        |host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+            Box::pin(async move {
+                let addrs = tokio::net::lookup_host((host.as_str(), 0)).await?;
+                Ok(addrs.map(|sa| sa.ip()).collect::<Vec<IpAddr>>())
+            })
+        },
+    )
+}
 
 /// HTTP method for the API call.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -83,6 +148,22 @@ pub struct ApiCallConfig {
     pub include_response: bool,
 }
 
+/// Maximum number of response-body bytes the API-call action will buffer into
+/// memory. A workflow action issues one small outbound request but then reads
+/// the *entire* upstream response with `response.text()`, which buffers with no
+/// ceiling — a malicious or misbehaving endpoint can reply with a multi-GB (or,
+/// via chunked transfer with no `Content-Length`, effectively unbounded) body
+/// and amplify a trivial request into an out-of-memory DoS on the worker. We
+/// cap the read at this many bytes; anything beyond is dropped and the stored
+/// body is marked truncated. 8 MiB comfortably covers legitimate JSON webhook
+/// responses while bounding worst-case allocation per in-flight action.
+const MAX_RESPONSE_BODY_BYTES: usize = 8 * 1024 * 1024;
+
+/// Appended to a response body that was cut off at `MAX_RESPONSE_BODY_BYTES`,
+/// so the persisted workflow-execution record makes the truncation explicit
+/// instead of silently storing a partial payload.
+const RESPONSE_TRUNCATION_MARKER: &str = "\u{2026}[truncated: response exceeded 8 MiB cap]";
+
 fn default_timeout_seconds() -> u64 {
     30
 }
@@ -98,18 +179,56 @@ fn default_true() -> bool {
 /// API call action executor.
 pub struct ApiCallExecutor {
     client: reqwest::Client,
+    /// The same resolver the HTTP client uses at connect time, kept so the
+    /// fail-fast pre-flight check and the connect-time re-validation observe
+    /// one DNS path (and so the rebinding regression test can inject a
+    /// stateful resolver that drives both).
+    resolve_ips: IpResolver,
 }
 
 impl ApiCallExecutor {
-    /// Create a new API call executor.
+    /// Create a new API call executor backed by the real OS DNS resolver.
     pub fn new() -> Self {
+        Self::with_ip_resolver(real_ip_resolver())
+    }
+
+    /// Build an executor whose HTTP client resolves and SSRF-validates every
+    /// connection (initial request + redirects) through `resolve_ips`. The
+    /// connect-time [`SsrfGuardResolver`] is what closes the DNS-rebinding
+    /// TOCTOU: `reqwest` connects only to addresses this resolver validated.
+    fn with_ip_resolver(resolve_ips: IpResolver) -> Self {
+        // Re-validate every redirect hop's URL statically before following it.
+        // The connect-time `SsrfGuardResolver` already blocks any hop that
+        // resolves to a forbidden IP (including rebinds), but the static
+        // `validate_external_url` additionally rejects a redirect that
+        // downgrades to plain `http://`, or targets a blocked hostname /
+        // `.local` / `.internal` TLD, which an IP-range check alone would not
+        // catch. Fail closed: an invalid hop aborts the request.
+        let redirect_policy = reqwest::redirect::Policy::custom(|attempt| {
+            const MAX_REDIRECTS: usize = 10;
+            if attempt.previous().len() >= MAX_REDIRECTS {
+                return attempt.error("too many redirects");
+            }
+            match common::url_validation::validate_external_url(attempt.url().as_str()) {
+                Ok(_) => attempt.follow(),
+                Err(e) => attempt.error(e),
+            }
+        });
+
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(60))
             .user_agent("PPT-Workflow/1.0")
+            .redirect(redirect_policy)
+            .dns_resolver(Arc::new(SsrfGuardResolver {
+                resolve_ips: resolve_ips.clone(),
+            }))
             .build()
             .expect("Failed to create HTTP client");
 
-        Self { client }
+        Self {
+            client,
+            resolve_ips,
+        }
     }
 
     /// Parse and validate the API call configuration.
@@ -138,6 +257,56 @@ impl ApiCallExecutor {
             ),
             other => other.clone(),
         }
+    }
+
+    /// Read an upstream response body while hard-capping how many bytes are
+    /// buffered, defending against a memory-amplification DoS (a small request
+    /// provoking an enormous reply). Returns `(body_text, truncated)`.
+    ///
+    /// Two layers of defence:
+    /// 1. **`Content-Length` pre-check** — if the upstream already advertises a
+    ///    body larger than the cap, refuse to buffer any of it.
+    /// 2. **Streaming bounded read** — otherwise pull the body chunk-by-chunk
+    ///    and stop the moment the accumulated size would exceed the cap. This
+    ///    is what protects against a chunked-transfer body with no (or a lying)
+    ///    `Content-Length`, which the pre-check alone cannot catch.
+    ///
+    /// A mid-stream network error keeps whatever was read so far (best-effort),
+    /// mirroring the previous `unwrap_or_default()` behaviour.
+    async fn read_capped_body(mut response: reqwest::Response) -> (String, bool) {
+        // Layer 1: honest oversized Content-Length — never start buffering.
+        if let Some(len) = response.content_length() {
+            if len > MAX_RESPONSE_BODY_BYTES as u64 {
+                return (RESPONSE_TRUNCATION_MARKER.to_string(), true);
+            }
+        }
+
+        // Layer 2: bounded streaming read.
+        let mut buf: Vec<u8> = Vec::new();
+        let mut truncated = false;
+        loop {
+            match response.chunk().await {
+                Ok(Some(chunk)) => {
+                    let remaining = MAX_RESPONSE_BODY_BYTES.saturating_sub(buf.len());
+                    if chunk.len() > remaining {
+                        buf.extend_from_slice(&chunk[..remaining]);
+                        truncated = true;
+                        break;
+                    }
+                    buf.extend_from_slice(&chunk);
+                }
+                Ok(None) => break,
+                // Network error mid-read: keep the partial body, don't fail the
+                // whole action on it (matches prior best-effort semantics).
+                Err(_) => break,
+            }
+        }
+
+        let mut text = String::from_utf8_lossy(&buf).into_owned();
+        if truncated {
+            text.push_str(RESPONSE_TRUNCATION_MARKER);
+        }
+        (text, truncated)
     }
 }
 
@@ -175,16 +344,35 @@ impl ActionExecutor for ApiCallExecutor {
         // SSRF via DNS: `validate_external_url` only inspects the literal
         // string — a hostname with no literal-IP form (e.g.
         // "attacker.example.com") that resolves to a private/internal
-        // address at request time sailed straight through it. Resolve now,
-        // right before the request is issued, and reject if *any* resolved
-        // address falls in a forbidden range. Fails closed: a resolution
-        // error also rejects.
+        // address at request time sails straight through it. Two layers guard
+        // the DNS path:
+        //
+        //   1. This fail-fast pre-flight: resolve now and reject if *any*
+        //      resolved address is forbidden, so an obviously-internal or
+        //      unresolvable host is rejected with a clean `ConfigurationError`
+        //      before a request is ever built.
+        //   2. The connect-time `SsrfGuardResolver` wired into `self.client`
+        //      (see `with_ip_resolver`), which re-resolves-and-validates at
+        //      the moment `reqwest` opens the socket, for the initial request
+        //      and every redirect hop. THIS is what actually closes the
+        //      DNS-rebinding TOCTOU: a hostname that resolves public here but
+        //      rebinds to a private address before connect is rejected at
+        //      connect, because the client connects only to addresses the
+        //      resolver validated. Both layers share `self.resolve_ips`, so
+        //      the pre-flight and the connection observe one DNS code path.
+        //
+        // Fails closed: a resolution error also rejects.
         let host = parsed_url.host_str().ok_or_else(|| {
             ActionError::ConfigurationError("API call URL must have a host".to_string())
         })?;
         let port = parsed_url.port_or_known_default().unwrap_or(443);
-        common::url_validation::validate_resolved_host(host, port)
-            .await
+        let resolved_ips = (self.resolve_ips)(host.to_string()).await.map_err(|e| {
+            ActionError::ConfigurationError(
+                common::url_validation::UrlValidationError::ResolutionFailed(e.to_string())
+                    .to_string(),
+            )
+        })?;
+        common::url_validation::validate_resolved_addrs(host, port, &resolved_ips)
             .map_err(|e| ActionError::ConfigurationError(e.to_string()))?;
 
         // Build request
@@ -253,9 +441,18 @@ impl ActionExecutor for ApiCallExecutor {
         // Check if status code indicates success
         let is_success = api_config.success_codes.contains(&status);
 
-        // Get response body
+        // Get response body — capped read so an oversized/unbounded upstream
+        // reply cannot amplify into an out-of-memory DoS on the worker.
         let response_body = if api_config.include_response {
-            let text = response.text().await.unwrap_or_default();
+            let (text, truncated) = Self::read_capped_body(response).await;
+            if truncated {
+                tracing::warn!(
+                    workflow_id = %context.workflow_id,
+                    execution_id = %context.execution_id,
+                    cap_bytes = MAX_RESPONSE_BODY_BYTES,
+                    "Workflow API-call response body exceeded cap; truncated before persisting"
+                );
+            }
             if api_config.parse_json_response {
                 serde_json::from_str(&text).unwrap_or(serde_json::Value::String(text))
             } else {
@@ -484,5 +681,133 @@ mod tests {
                  unresolvable host, got: {other:?}"
             ),
         }
+    }
+
+    /// Regression (memory-amplification DoS): the executor used to buffer the
+    /// *entire* upstream response with `response.text().await` and no ceiling,
+    /// so a small outbound request could provoke a multi-GB (or, via chunked
+    /// transfer, effectively unbounded) reply and OOM the worker. `read_capped_body`
+    /// now hard-caps the buffered bytes at `MAX_RESPONSE_BODY_BYTES` and marks
+    /// the result truncated.
+    ///
+    /// Hermetic: we hand `read_capped_body` a synthesized over-limit response
+    /// (built via `http::Response` → `reqwest::Response`) instead of standing
+    /// up a network server — the SSRF validator would reject a `127.0.0.1`
+    /// loopback server anyway, so a real request is not an option here.
+    /// Fails on `dev` (the old code returned the full body, so the non-marker
+    /// payload length would exceed the cap and `truncated` would be false).
+    #[tokio::test]
+    async fn read_capped_body_truncates_oversized_response() {
+        use axum::http;
+
+        // A body deliberately larger than the cap.
+        let oversized = vec![b'a'; MAX_RESPONSE_BODY_BYTES + 4096];
+        let http_response = http::Response::builder()
+            .status(200)
+            .body(oversized)
+            .expect("build synthetic http::Response");
+        let response = reqwest::Response::from(http_response);
+
+        let (text, truncated) = ApiCallExecutor::read_capped_body(response).await;
+
+        assert!(truncated, "an over-limit body must be reported truncated");
+        assert!(
+            text.ends_with(RESPONSE_TRUNCATION_MARKER),
+            "truncated body must carry the truncation marker"
+        );
+        // The retained payload (excluding the marker) must never exceed the cap
+        // — i.e. the full body was NOT buffered.
+        let payload_len = text.len() - RESPONSE_TRUNCATION_MARKER.len();
+        assert!(
+            payload_len <= MAX_RESPONSE_BODY_BYTES,
+            "buffered payload {payload_len} must not exceed cap {MAX_RESPONSE_BODY_BYTES}"
+        );
+    }
+
+    /// Companion: a body comfortably under the cap is returned verbatim and is
+    /// not flagged truncated (guards against an over-eager cap).
+    #[tokio::test]
+    async fn read_capped_body_passes_small_response_through() {
+        use axum::http;
+
+        let payload = b"{\"ok\":true}".to_vec();
+        let http_response = http::Response::builder()
+            .status(200)
+            .body(payload.clone())
+            .expect("build synthetic http::Response");
+        let response = reqwest::Response::from(http_response);
+
+        let (text, truncated) = ApiCallExecutor::read_capped_body(response).await;
+
+        assert!(!truncated, "a small body must not be flagged truncated");
+        assert_eq!(text.as_bytes(), payload.as_slice());
+    }
+
+    /// IG3 regression (SSRF DNS-rebinding TOCTOU, #2703): the pre-fix executor
+    /// resolved+validated the host **once** in a pre-flight lookup, then let
+    /// `reqwest` resolve the same host **again** at connect time. An attacker
+    /// controlling DNS could answer the first lookup with a public IP (passing
+    /// validation) and the second with a private/link-local IP (the socket the
+    /// client actually opens) — a classic time-of-check/time-of-use bypass of
+    /// the anti-SSRF gate.
+    ///
+    /// The fix wires a connect-time `SsrfGuardResolver` into the HTTP client so
+    /// the addresses `reqwest` connects to are exactly the ones re-validated at
+    /// connect. This test models the rebind with a hermetic, stateful resolver
+    /// (no real network): the **first** resolution — the pre-flight — returns a
+    /// public IP so validation passes, and the **second** — `reqwest`'s
+    /// connect-time lookup — returns `10.0.0.5`. The request must be rejected,
+    /// and the resolver must have been consulted at least twice (proving the
+    /// connect-time layer ran and observed the rebind).
+    ///
+    /// Fails on `dev`: there the client uses its own default resolver, so a
+    /// rebind to a private IP at connect is not re-validated and the request
+    /// would proceed to open a socket to the private address rather than being
+    /// rejected here.
+    #[tokio::test]
+    async fn execute_rejects_dns_rebinding_to_private_ip_at_connect() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let calls_in_resolver = calls.clone();
+
+        // Stateful rebinding resolver: lookup #0 (pre-flight validation) →
+        // public; lookup #1+ (connect-time) → private.
+        let resolver: IpResolver = Arc::new(
+            move |_host: String| -> Pin<Box<dyn Future<Output = std::io::Result<Vec<IpAddr>>> + Send>> {
+                let calls = calls_in_resolver.clone();
+                Box::pin(async move {
+                    let n = calls.fetch_add(1, Ordering::SeqCst);
+                    let ip: IpAddr = if n == 0 {
+                        "93.184.216.34".parse().unwrap() // public — first (pre-flight) lookup
+                    } else {
+                        "10.0.0.5".parse().unwrap() // private — connect-time rebind
+                    };
+                    Ok(vec![ip])
+                })
+            },
+        );
+
+        let executor = ApiCallExecutor::with_ip_resolver(resolver);
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+        let config = serde_json::json!({ "url": "https://rebind.attacker.example/webhook" });
+
+        let result = executor.execute(&config, &context).await;
+
+        assert!(
+            result.is_err(),
+            "a host that rebinds to a private IP at connect must be rejected, got: {result:?}"
+        );
+        assert!(
+            calls.load(Ordering::SeqCst) >= 2,
+            "expected the connect-time resolver to re-resolve after the pre-flight \
+             lookup (rebinding observed), but it was consulted {} time(s)",
+            calls.load(Ordering::SeqCst)
+        );
     }
 }

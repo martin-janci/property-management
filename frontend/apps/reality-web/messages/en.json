@@ -963,5 +963,34 @@
         "cancelled": "Cancelled"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Title",
+    "labelDescription": "Description",
+    "labelPropertyType": "Property type",
+    "labelTransaction": "Transaction",
+    "labelPrice": "Price",
+    "labelCurrency": "Currency",
+    "labelCity": "City",
+    "labelPostalCode": "Postal code",
+    "labelStreet": "Street",
+    "labelArea": "Area (m²)",
+    "labelRooms": "Rooms",
+    "propertyTypeApartment": "Apartment",
+    "propertyTypeHouse": "House",
+    "propertyTypeLand": "Land",
+    "propertyTypeCommercial": "Commercial",
+    "propertyTypeOther": "Other",
+    "transactionSale": "For sale",
+    "transactionRent": "For rent",
+    "saving": "Saving…",
+    "errorTitleRequired": "Title is required",
+    "errorDescriptionRequired": "Description is required",
+    "errorCityRequired": "City is required",
+    "errorPricePositive": "Price must be a positive number",
+    "errorAreaInvalid": "Area must be a valid number",
+    "errorAreaNegative": "Area must not be negative",
+    "errorRoomsInvalid": "Rooms must be a valid number",
+    "errorRoomsNegative": "Rooms must not be negative"
   }
 }

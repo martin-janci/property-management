@@ -25,6 +25,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { resolveLocale } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 interface PersonMonthEntry {
@@ -43,7 +44,7 @@ const MOCK_ENTRIES: PersonMonthEntry[] = [
 
 function formatMonth(month: string): string {
   const [year, m] = month.split('-').map(Number);
-  return new Date(year, (m ?? 1) - 1, 1).toLocaleDateString('en-US', {
+  return new Date(year, (m ?? 1) - 1, 1).toLocaleDateString(resolveLocale(), {
     month: 'long',
     year: 'numeric',
   });

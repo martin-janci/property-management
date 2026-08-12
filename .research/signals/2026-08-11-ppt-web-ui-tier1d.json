@@ -1,0 +1,32 @@
+[
+  {
+    "id": "code-review-ppt-web-ui-content-mod-unvalidated-prompt-cast",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-143 — handleTakeAction reads a free-text moderation decision via window.prompt() and casts it directly to the typed union with `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (line 143) and submits it via takeAction.mutate. There is NO runtime validation of the prompt string against the allowed union: a typo (e.g. 'aprove') or arbitrary text is sent verbatim to the compliance moderation API as an action_type.",
+      "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:169-179 — handleDecideAppeal has the identical gap: `decision: decision as 'uphold' | 'overturn'` (line 179) casts the raw window.prompt string with no guard before mutate.",
+      "Contrast: the sibling AmlDashboardPage.handleReview (frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:143-154) was already hardened for exactly this — it trims/lowercases the prompt input and rejects it via `isAmlReviewDecision(decision)` before submitting, with an inline comment 'a typo ... must not reach the API as a decision'. ContentModerationPage was not given the same guard, so the two compliance pages are inconsistent on a security/compliance-relevant surface (content removal / appeal decisions).",
+      "Impact: relies entirely on backend enum validation to reject bad input; on the client the user gets only a generic 'Failed to take action' alert with no indication the value was invalid. Fix: add a type-guard (mirroring isAmlReviewDecision) for the action_type and appeal-decision unions and reject invalid prompt input client-side before mutate, or replace window.prompt with the planned modal form (TODO(Phase-2) at lines 128, 167)."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-content-mod-window-location-nav",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:159-163 — handleViewContent navigates with `window.location.href = `/compliance/moderation/cases/${caseId}`` inside a React SPA (ppt-web is a Vite/react-router-dom SPA). This forces a full page reload rather than a client-side route transition, discarding TanStack Query cache and in-memory app state and adding a full re-bootstrap on every 'view content' click. TODO(Phase-2) at line 160 already acknowledges it ('Use React Router's useNavigate for SPA navigation').",
+      "Fix: replace with react-router-dom `useNavigate()` (e.g. navigate(`/compliance/moderation/cases/${caseId}`)) to keep navigation in-SPA, consistent with the rest of ppt-web routing."
+    ],
+    "expert": "frontend"
+  }
+]

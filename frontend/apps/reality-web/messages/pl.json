@@ -956,5 +956,34 @@
         "cancelled": "Anulowane"
       }
     }
+  },
+  "listingForm": {
+    "labelTitle": "Tytuł",
+    "labelDescription": "Opis",
+    "labelPropertyType": "Typ nieruchomości",
+    "labelTransaction": "Transakcja",
+    "labelPrice": "Cena",
+    "labelCurrency": "Waluta",
+    "labelCity": "Miasto",
+    "labelPostalCode": "Kod pocztowy",
+    "labelStreet": "Ulica",
+    "labelArea": "Powierzchnia (m²)",
+    "labelRooms": "Pokoje",
+    "propertyTypeApartment": "Mieszkanie",
+    "propertyTypeHouse": "Dom",
+    "propertyTypeLand": "Działka",
+    "propertyTypeCommercial": "Lokal komercyjny",
+    "propertyTypeOther": "Inne",
+    "transactionSale": "Na sprzedaż",
+    "transactionRent": "Na wynajem",
+    "saving": "Zapisywanie…",
+    "errorTitleRequired": "Tytuł jest wymagany",
+    "errorDescriptionRequired": "Opis jest wymagany",
+    "errorCityRequired": "Miasto jest wymagane",
+    "errorPricePositive": "Cena musi być liczbą dodatnią",
+    "errorAreaInvalid": "Powierzchnia musi być prawidłową liczbą",
+    "errorAreaNegative": "Powierzchnia nie może być ujemna",
+    "errorRoomsInvalid": "Liczba pokoi musi być prawidłową liczbą",
+    "errorRoomsNegative": "Liczba pokoi nie może być ujemna"
   }
 }

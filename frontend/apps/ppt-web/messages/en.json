@@ -3494,6 +3494,10 @@
     "disconnectedDescription": "Real-time updates are not available",
     "clickToReconnect": "Click to reconnect"
   },
+  "offlineIndicator": {
+    "offline": "You are offline. Some features may be unavailable.",
+    "reconnected": "Connection restored"
+  },
   "submissionStatus": {
     "status": {
       "draft": "Draft",

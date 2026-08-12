@@ -11,6 +11,7 @@
 import { setReturnUrl } from '@ppt/shared';
 import type React from 'react';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './ProtectedRoute.css';
@@ -90,6 +91,7 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Store return URL when redirecting to login
   useEffect(() => {
@@ -102,8 +104,13 @@ export function ProtectedRoute({
   if (isLoading) {
     return (
       <div className="protected-route-loading">
-        <div className="protected-route-spinner" aria-label="Checking authentication" />
-        <span className="protected-route-loading-text">Loading...</span>
+        <div
+          className="protected-route-spinner"
+          aria-label={t('accessibility.checkingAuthentication', {
+            defaultValue: 'Checking authentication',
+          })}
+        />
+        <span className="protected-route-loading-text">{t('common.loading')}</span>
       </div>
     );
   }
@@ -122,8 +129,8 @@ export function ProtectedRoute({
       // User is authenticated but lacks required role (or role not yet populated).
       return (
         <div className="protected-route-unauthorized">
-          <h1>Access Denied</h1>
-          <p>You do not have permission to access this page.</p>
+          <h1>{t('errors.accessDenied', { defaultValue: 'Access Denied' })}</h1>
+          <p>{t('errors.unauthorized')}</p>
         </div>
       );
     }

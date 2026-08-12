@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-08",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved). Previous run covered api-handlers; dispatcher directed a different (reality-server / frontend / repository) segment. Picked reality-server: not recently covered by this run, review_cursor=2026-08-06, and not backlog-saturated (0 open code-review-finding items for this segment in backlog.json).",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !response.status().is_success() { ... state.token_cache.set(token, false, None, None).await; return Err(...) }`. A transient PM-API failure (503/502/500 during a deploy or overload) is thus conflated with a genuinely-inactive token.",
+        "Consequence: a legitimate, still-valid session token that hits the cache-miss path during a brief PM outage is negatively cached as inactive for up to 60s. Because introspect_pm_token feeds the SSO auth hot path, the user is denied/logged-out for up to a minute AFTER PM has already recovered — an availability regression driven by transient upstream errors, not by real token state.",
+        "The comment 'Cache inactive tokens too (to prevent repeated failed validations)' assumes non-2xx == inactive, but introspection RFC 7662 returns 200 with {active:false} for a genuinely inactive token; a 5xx is a server error, not an inactivity signal. Suggested fix: only negative-cache when the introspection call SUCCEEDS (200) and the body reports active=false; on 5xx/network errors, propagate the error WITHOUT writing a false entry (fail-open to a re-check on the next request, or short-TTL/no-cache)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` per invocation. `Client::new()` has NO request timeout, so a hung/slow PM OAuth server on the token-exchange / userinfo / introspection calls will block the awaiting request indefinitely (only bounded by whatever axum/OS imposes), risking worker/connection exhaustion under a stalled upstream.",
+        "Contrast: backend/servers/reality-server/src/state.rs:753-761 (PmApiClient::new) deliberately builds a pooled client WITH `.timeout(Duration::from_secs(timeout_seconds))`. The SSO helpers bypass that pattern, so they get neither the timeout nor connection-pool / TLS-session reuse across the hot introspection path.",
+        "Suggested fix: build one timeout-configured reqwest::Client at startup, store it on AppState (alongside PmApiClient), and share it across all three SSO helpers instead of `reqwest::Client::new()` per call — fixes both the missing timeout and the per-request pool/TLS churn in one change."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

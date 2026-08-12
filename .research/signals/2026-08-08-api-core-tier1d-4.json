@@ -1,0 +1,51 @@
+[
+  {
+    "id": "code-review-api-core-rls-context-deprecated-exported",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/crates/api-core/src/middleware/rls_context.rs:1-37 — the module's own header documents it as `# DEPRECATED` / 'fundamentally flawed and should NOT be used' (middleware runs before extractors; setting RLS on the pool does not affect the connection the handler later borrows). Despite that, it is still a live `pub mod rls_context;` (middleware/mod.rs:7) AND glob re-exported `pub use rls_context::*;` (middleware/mod.rs:16), so `rls_context_middleware` and `require_rls_context` are part of api-core's public surface.",
+      "Both functions derive tenant scope from the CLIENT-supplied `X-Tenant-ID` header: rls_context.rs:87-91 and :207-218 parse `X-Tenant-ID` into the org and pass it straight to `set_request_context(...)` with no verification that the authenticated principal belongs to that org — a caller could send any org UUID.",
+      "They also call `db::tenant_context::set_request_context(pool.as_ref(), ...)` on the POOL (rls_context.rs:110-116 and :232-238), whereas the current `set_request_context` signature (crates/db/src/tenant_context.rs:18) is connection-scoped and the live path acquires a dedicated connection via the `RlsConnection` extractor. Setting the GUC on a pooled executor mutates a random connection and the handler then queries a different one — RLS is effectively unset or set on the wrong session.",
+      "Confirmed dead: `grep -rn 'rls_context_middleware|require_rls_context' backend/servers backend/crates` returns no wiring outside this file; `host_tenant.rs:9-11` explicitly explains it superseded 'the deprecated middleware/rls_context.rs [which] set RLS context on the *pool*'. The risk is latent: the module is still exported under an obvious `require_rls_context` name, so a future route author reaching for `api_core::middleware::*` can wire a client-trusting, pool-scoped RLS layer that silently breaks tenant isolation.",
+      "Fix: delete rls_context.rs (the RlsConnection extractor + host_tenant middleware fully replace it), or at minimum drop it from `pub use` in mod.rs and mark the fns `#[deprecated]`/`#[cfg(test)]` so it cannot be wired by accident."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-authz-mw-guest-fail-open",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/crates/api-core/src/middleware/authorization.rs:176-180 — `require_permission` reads the caller's role from request extensions with `.get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)`: an ABSENT role (no authenticating extractor ran, or it failed to insert a TenantRole) is silently treated as `Guest` rather than rejected.",
+      "`TenantRole::Guest.level()` is 10 (backend/crates/common/src/tenant.rs:125) while `permissions::AUTHENTICATED = Permission::min_level(1, ...)` (authorization.rs:139) only requires level >= 1. So `require_authenticated` (authorization.rs:236-241) — and any hierarchical gate below level 10 — is FAIL-OPEN: a request carrying no authenticated principal at all passes the 'Any authenticated user' check because the Guest default (10) >= 1.",
+      "Currently latent, not active: `grep -rn 'require_permission|require_authenticated|is_satisfied_by|permissions::' backend/servers` shows the api-core authorization middleware is not wired anywhere — routes do their own auth via the `AuthUser` extractor and route-local `require_*` helpers. But the module is `pub mod authorization;` + `pub use authorization::*;` (middleware/mod.rs:3,12), so these authoritative-looking `require_authenticated`/`require_manager` layers are one `.layer(from_fn(...))` away from being adopted as the sole gate on a route.",
+      "Fix: default an absent principal to DENY — return 401/403 when no `TenantRole` (or no authenticated user id) is present in extensions, instead of `unwrap_or(TenantRole::Guest)`. If the middleware is genuinely dead, remove it from the public re-export so no one wires the fail-open version."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-tenant-filter-noop-isolation",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "security",
+    "evidence": [
+      "backend/crates/api-core/src/middleware/tenant_filter.rs:14-42 — `tenant_filter` is named and documented ('ensure tenant isolation') as an isolation guard, but its body only checks that `X-Tenant-ID` parses as a UUID and then calls `next.run(request)`; the actual checks are an inline TODO comment: '// In production, validate: 1. Tenant exists and is active 2. User has access to this tenant 3. Rate limiting' (tenant_filter.rs:31-34). It enforces nothing about whether the caller may act for that tenant.",
+      "It is `pub mod tenant_filter;` + glob-exported `pub use tenant_filter::*;` (middleware/mod.rs:9,18) and unused: `grep -rn 'tenant_filter' backend/servers` returns no `.layer(...)` wiring. Real isolation lives in host_tenant.rs + the RlsConnection extractor.",
+      "Risk: a dead, exported middleware whose name promises tenant isolation but is a pass-through is a trap — wiring it (reasonably believing it isolates tenants) would provide a false sense of security while enforcing only header-shape. Sibling issues: rls_context.rs and authorization.rs (same mod.rs) are dead/dangerous-if-wired too; a single cleanup PR can address all three.",
+      "Fix: remove tenant_filter.rs (and its mod/pub-use), or drop it from the public re-export, so no route can adopt a no-op 'tenant isolation' layer."
+    ],
+    "expert": "rust"
+  }
+]

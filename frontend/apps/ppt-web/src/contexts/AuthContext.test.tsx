@@ -197,6 +197,11 @@ describe('AuthContext.logout — Issue #712', () => {
       'predictive-maintenance',
       'sentiment',
       'notification-analytics',
+      // Per-user granular notification-trigger preferences — regression guard
+      // for the PR #2650 follow-up where this root was still missed and the
+      // previous user's notification-preference cache leaked into the next
+      // session on a shared workstation.
+      'notification-triggers',
       // Tenant-scoped financial + operational caches — the most sensitive
       // data in the app (invoices, contacts, bank statements, payment
       // matching, AR aging, report schedules) plus rentals/meters and the
@@ -227,6 +232,9 @@ describe('AuthContext.logout — Issue #712', () => {
     queryClient.setQueryData(['predictive-maintenance', 'needing-maintenance'], [{ id: 'e-1' }]);
     queryClient.setQueryData(['sentiment', 'dashboard'], { score: 0.42 });
     queryClient.setQueryData(['notification-analytics', {}], { delivered: 10 });
+    // Per-user notification-trigger preferences — real key from
+    // notificationTriggerKeys.events() (@ppt/api-client granular-notifications).
+    queryClient.setQueryData(['notification-triggers', 'events'], [{ id: 'nt-1' }]);
     // Tenant-scoped financial + operational caches — real keys from
     // queryKeys.accounting (invoices/contacts/statements/matching),
     // financial.tsx (['financial','ar-aging',orgId]), reportKeys
@@ -252,6 +260,7 @@ describe('AuthContext.logout — Issue #712', () => {
     ).toBeDefined();
     expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeDefined();
     expect(queryClient.getQueryData(['notification-analytics', {}])).toBeDefined();
+    expect(queryClient.getQueryData(['notification-triggers', 'events'])).toBeDefined();
     expect(queryClient.getQueryData(['accounting', 'invoices'])).toBeDefined();
     expect(queryClient.getQueryData(['financial', 'ar-aging', 'org-1'])).toBeDefined();
     expect(queryClient.getQueryData(['reports', 'schedules', 'list', 'org-1'])).toBeDefined();
@@ -284,6 +293,8 @@ describe('AuthContext.logout — Issue #712', () => {
     ).toBeUndefined();
     expect(queryClient.getQueryData(['sentiment', 'dashboard'])).toBeUndefined();
     expect(queryClient.getQueryData(['notification-analytics', {}])).toBeUndefined();
+    // Per-user notification-trigger preferences must not survive logout.
+    expect(queryClient.getQueryData(['notification-triggers', 'events'])).toBeUndefined();
     // Tenant-scoped financial + operational caches must not survive logout.
     expect(queryClient.getQueryData(['accounting', 'invoices'])).toBeUndefined();
     expect(queryClient.getQueryData(['financial', 'ar-aging', 'org-1'])).toBeUndefined();

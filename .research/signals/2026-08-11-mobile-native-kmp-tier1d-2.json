@@ -1,0 +1,57 @@
+{
+  "generated": "2026-08-11T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Demand-driven Tier-1d refill (claim buffer starved: claimable=2 < floor=36). No fresh Phase-1 CHURN_FILES this run (state.json hotspot_history is stale May-2026 api-server data, not current churn), so churn-alignment does not apply. review_cursor oldest-unreviewed is mobile-native-kmp (2026-08-04). A parallel generator already emitted 2026-08-11-mobile-native-kmp-tier1d.json today (findings: create-listing NotImplementedError stub, MyListings 100-cap no-paging, portfolio analytics unbounded fan-out); the next-oldest uncovered segments (mobile-rn, ppt-web-core, ppt-web-ui) also already have today-files, and reality-web (next after those) was reviewed and found well-hardened (JSON-LD routes through a proper serializeForScript </script>-breakout escaper; SSR listing fetch null-checks + normalizes via parseListingDetail; client comparison fetch degrades gracefully with i18n error surfacing) with no strong findings. Rather than manufacture weak reality-web nits, this emits a SECOND mobile-native-kmp slice (precedent: 2026-08-11-ppt-web-ui-tier1d-2.json) carrying three STRONG, DISTINCT findings that do NOT overlap the existing today-file or the open backlog item code-review-mobile-native-kmp-portfolio-analytics-caps-100. Saturation check: only 1 open code-review-finding in backlog.json for this segment, below the >=3 skip threshold. Static analysis only, no compilation/tests.",
+  "experts_used": ["kotlin", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-cancellation-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:63,85,107,137,163,188 — every suspend network method wraps the Ktor call in `catch (e: Exception) { Result.failure(e) }`. Because kotlinx.coroutines.CancellationException IS an Exception, this SWALLOWS cooperative cancellation: when the enclosing scope is cancelled (e.g. the Compose `rememberCoroutineScope()` the ViewModels launch into is disposed as the screen leaves composition), the CancellationException is caught, converted to a Result.failure, and the coroutine body keeps running past the suspension point instead of unwinding — breaking structured concurrency.",
+        "Same anti-pattern is repeated in 8 more commonMain files: FavoritesRepository.kt (13 catch sites: getFavorites/addFavorite/removeFavorite/isFavorite/saved-search + alert methods), ListingRepository.kt, InquiryRepository.kt, NotificationRepository.kt, PortalListingsRepository.kt, RealtorRepository.kt, AgencyRepository.kt, and auth/SsoService.kt. grep: `grep -rn 'catch (e: Exception)' shared/src/commonMain` returns 58 sites; none except LayoutRepository rethrow CancellationException.",
+        "Proof the team already knows the correct fix and applied it in exactly ONE repo: LayoutRepository.kt:65 does `catch (e: CancellationException) { throw e }` BEFORE the generic `catch (e: Exception)` (doc comment line 33: 'CancellationException is NOT swallowed — coroutine cancellation ...'), with a regression test at LayoutRepositoryTest.kt:266-270 asserting `assertFailsWith<CancellationException>`. The other 9 files never got the guard.",
+        "Concrete user-visible blast radius: SsoService.validateAndLogin (SsoService.kt:81-84) and loginWithPassword (SsoService.kt:180-183) catch the cancellation and set `_authState.value = AuthState.Error(e.message)` — a merely-cancelled auth flow (user backs out, config change) surfaces a spurious 'error' auth state. In ListingDetailViewModel.loadListing the swallowed cancellation flows into `.fold(onFailure = { errorMapper(e) })` and writes a phantom error message onto a screen that is being torn down. Fix: add `catch (e: CancellationException) { throw e }` ahead of the generic catch in all 9 files (mirror LayoutRepository), or extract a shared `runCatchingApi {}` helper that rethrows CancellationException.",
+        "grep -rn 'CancellationException' shared/src/commonMain -> only LayoutRepository.kt imports/handles it; ApiClient + FavoritesRepository + SsoService + 6 others do not."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — the single shared Ktor HttpClient installs ContentNegotiation, Logging(NONE), and a defaultRequest content-type, but NO `install(HttpTimeout)`. There is no requestTimeoutMillis, connectTimeoutMillis, or socketTimeoutMillis anywhere in the module (grep -rn 'HttpTimeout\\|requestTimeoutMillis\\|Timeout' shared/src returns nothing).",
+        "Impact on mobile: on a stalled/half-open connection (common on cellular handoff / captive portals) every repository suspend call — getListingDetail, favorites toggle, SSO validateAndLogin — hangs indefinitely with no upstream deadline. The UI state-holders flip isLoading=true and never receive a terminal onSuccess/onFailure, so the Compose CircularProgressIndicator (e.g. ListingDetailScreen.kt:116-119) spins forever with no error path and no retry affordance. This compounds the CancellationException-swallow finding: the only escape (scope cancellation) is itself swallowed by the repos.",
+        "Ktor default is NO timeout when the HttpTimeout plugin is not installed. Fix: `install(HttpTimeout) { requestTimeoutMillis = 30_000; connectTimeoutMillis = 15_000; socketTimeoutMillis = 30_000 }` in HttpClientProvider (applies uniformly to android ktor-client-android and iOS ktor-client-darwin engines since it is configured on the common client)."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is a 349-line security-critical auth service (validateAndLogin, createMobileToken, loginWithPassword, register, requestPasswordReset/confirm, getSession, refreshSession, restoreSession, updateProfile, logout) with NO dedicated unit test. find shared/src/commonTest -name '*.kt' shows SsoStateStoreTest and SsoInitiationTest (which cover only the CSRF-nonce store/initiation), but no SsoServiceTest — none of the token-validation, login, or session-restore success/failure/authState transitions are exercised.",
+        "Every other repository/service in commonMain has behavioural coverage (LayoutRepositoryTest, NotificationRepositoryTest, FavoritesRepositoryTest, PortalListingsRepositoryTest, ProfileStatsLoaderTest, ListingDetailViewModelTest, PriceTrackingViewModelTest, ...), making SsoService the sole untested state-mutating class — and it is the one that drives AuthState across the whole app.",
+        "Given the SSO CSRF contract called out in mobile-native/CLAUDE.md ('Both platforms MUST verify a per-flow state nonce'), the absence of tests asserting validateAndLogin's success->Authenticated / non-2xx->Error / exception->Error transitions (via a Ktor MockEngine, the pattern already used in LayoutRepositoryTest) is a real coverage gap on the highest-risk surface. Fix: add SsoServiceTest with MockEngine cases for validateAndLogin + loginWithPassword + restoreSession happy/error paths, and (paired with the cancellation finding) a CancellationException-propagation assertion."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

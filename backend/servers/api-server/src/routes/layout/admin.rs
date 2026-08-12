@@ -3,8 +3,9 @@ use crate::state::AppState;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
+use db::models::layout::LayoutConfigRow;
 use db::repositories::{LayoutChangeEventKind, LayoutRepository};
-use db::RlsPool;
+use db::{PublicConnection, RlsPool};
 use uuid::Uuid;
 
 use super::types::{
@@ -13,10 +14,24 @@ use super::types::{
 };
 use super::webhook;
 
+type ErrorResponse = (StatusCode, Json<ValidationErrorsResponse>);
+
+/// Build a single-message error body. Mirrors the sibling tenant-override
+/// handlers (`tenant.rs`) so error construction lives in one place.
+fn error_response(status: StatusCode, msg: impl Into<String>) -> ErrorResponse {
+    (
+        status,
+        Json(ValidationErrorsResponse {
+            errors: vec![msg.into()],
+        }),
+    )
+}
+
 /// 422 — strictly for validation results on the *request* (unparseable request
 /// payloads, publish-gate validation errors). Infra failures go through
-/// [`internal_error`] instead.
-fn bad_request(errors: Vec<String>) -> (StatusCode, Json<ValidationErrorsResponse>) {
+/// [`internal_error`] instead. Takes the full error list because publish-gate
+/// validation can surface many at once.
+fn bad_request(errors: Vec<String>) -> ErrorResponse {
     (
         StatusCode::UNPROCESSABLE_ENTITY,
         Json(ValidationErrorsResponse { errors }),
@@ -26,14 +41,53 @@ fn bad_request(errors: Vec<String>) -> (StatusCode, Json<ValidationErrorsRespons
 /// 500 — infra failures (pool acquire, query errors, corrupt stored data).
 /// Logs the real error server-side; the client gets a generic message so raw
 /// sqlx/serde error text never leaks.
-fn internal_error(err: impl std::fmt::Display) -> (StatusCode, Json<ValidationErrorsResponse>) {
+fn internal_error(err: impl std::fmt::Display) -> ErrorResponse {
     tracing::error!(error = %err, "layout admin: internal error");
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ValidationErrorsResponse {
-            errors: vec!["internal server error".into()],
-        }),
-    )
+    error_response(StatusCode::INTERNAL_SERVER_ERROR, "internal server error")
+}
+
+/// 403 — the shared platform-admin auth gate rejection.
+fn forbidden() -> ErrorResponse {
+    error_response(StatusCode::FORBIDDEN, "forbidden")
+}
+
+/// 404 — unknown screen (config row missing).
+fn unknown_screen() -> ErrorResponse {
+    error_response(StatusCode::NOT_FOUND, "unknown screen")
+}
+
+/// Platform-admin gate shared by every handler: validate the super-admin bearer
+/// token and map any rejection to a uniform 403. Returns the admin id (+ token
+/// string) for handlers that record it on change events.
+fn require_super_admin(
+    headers: &axum::http::HeaderMap,
+    state: &AppState,
+) -> Result<(Uuid, String), ErrorResponse> {
+    extract_super_admin_token(headers, state).map_err(|_| forbidden())
+}
+
+/// Acquire the sanctioned public/global (no-RLS) connection for the global
+/// layout tables, mapping a pool failure to 500. Every layout-admin read/write
+/// runs against this connection (clears stale RLS context on acquire).
+async fn acquire_public_conn(state: &AppState) -> Result<PublicConnection, ErrorResponse> {
+    RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(internal_error)
+}
+
+/// Load a screen's layout config, mapping a missing row to 404 and any sqlx
+/// failure to 500. Shared by `get_config` and `publish` so the fetch +
+/// not-found mapping stays in one place (mirrors `tenant.rs::load_screen_config`).
+async fn load_config(
+    repo: &LayoutRepository,
+    conn: &mut sqlx::PgConnection,
+    screen: &str,
+) -> Result<LayoutConfigRow, ErrorResponse> {
+    repo.get_config(conn, screen)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(unknown_screen)
 }
 
 /// Persist a `layout_change_published` analytics event to the append-only sink
@@ -73,20 +127,9 @@ async fn record_change_published(
 pub async fn list_screens(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let _admin = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let rows = LayoutRepository::new()
         .list_configs(&mut **conn)
         .await
@@ -101,31 +144,11 @@ pub async fn get_config(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(q): Query<ScreenQuery>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let _admin = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
-    let cfg = repo
-        .get_config(&mut **conn, &q.screen)
-        .await
-        .map_err(internal_error)?
-        .ok_or((
-            StatusCode::NOT_FOUND,
-            Json(ValidationErrorsResponse {
-                errors: vec!["unknown screen".into()],
-            }),
-        ))?;
+    let cfg = load_config(&repo, &mut conn, &q.screen).await?;
     let versions = repo
         .list_versions(&mut **conn, &q.screen)
         .await
@@ -146,24 +169,13 @@ pub async fn put_draft(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<PutDraftRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
     // shape gate: must parse as the layout-core contract type
     if let Err(e) = serde_json::from_value::<layout_core::ScreenConfig>(req.config.clone()) {
         return Err(bad_request(vec![format!("invalid ScreenConfig: {e}")]));
     }
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let row = LayoutRepository::new()
         .upsert_draft(&mut **conn, &req.screen, &req.config, Some(admin_id))
         .await
@@ -178,23 +190,12 @@ pub async fn put_rails(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<PutRailsRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
     if let Err(e) = serde_json::from_value::<layout_core::Rails>(req.rails.clone()) {
         return Err(bad_request(vec![format!("invalid Rails: {e}")]));
     }
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let row = LayoutRepository::new()
         .set_rails(&mut **conn, &req.screen, &req.rails, Some(admin_id))
         .await
@@ -208,20 +209,9 @@ pub async fn put_rails(
 pub async fn list_manifests(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let _admin = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let rows = LayoutRepository::new()
         .list_manifests(&mut **conn)
         .await
@@ -236,15 +226,8 @@ pub async fn put_manifest(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<PutManifestRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
     let parsed: layout_core::RegistryManifest = serde_json::from_value(req.manifest.clone())
         .map_err(|e| bad_request(vec![format!("invalid RegistryManifest: {e}")]))?;
     let platform_str = match parsed.platform {
@@ -257,11 +240,7 @@ pub async fn put_manifest(
             req.platform
         )]));
     }
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let row = LayoutRepository::new()
         .upsert_manifest(&mut **conn, &req.platform, &req.manifest, Some(admin_id))
         .await
@@ -279,32 +258,12 @@ pub async fn publish(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<PublishRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
 
-    let cfg_row = repo
-        .get_config(&mut **conn, &req.screen)
-        .await
-        .map_err(internal_error)?
-        .ok_or((
-            StatusCode::NOT_FOUND,
-            Json(ValidationErrorsResponse {
-                errors: vec!["unknown screen".into()],
-            }),
-        ))?;
+    let cfg_row = load_config(&repo, &mut conn, &req.screen).await?;
 
     let draft: layout_core::ScreenConfig =
         serde_json::from_value(cfg_row.draft.clone()).map_err(|e| {
@@ -320,11 +279,9 @@ pub async fn publish(
         .await
         .map_err(internal_error)?;
     if manifest_rows.is_empty() {
-        return Err((
+        return Err(error_response(
             StatusCode::CONFLICT,
-            Json(ValidationErrorsResponse {
-                errors: vec!["no registry manifests uploaded; cannot validate publish".into()],
-            }),
+            "no registry manifests uploaded; cannot validate publish",
         ));
     }
     let manifests: Vec<layout_core::RegistryManifest> = manifest_rows
@@ -345,18 +302,10 @@ pub async fn publish(
         .publish(&mut conn, &req.screen, &validated_draft, Some(admin_id))
         .await
         .map_err(|e| match e {
-            db::repositories::LayoutPublishError::ScreenNotFound => (
-                StatusCode::NOT_FOUND,
-                Json(ValidationErrorsResponse {
-                    errors: vec!["unknown screen".into()],
-                }),
-            ),
-            db::repositories::LayoutPublishError::DraftChanged => (
-                StatusCode::CONFLICT,
-                Json(ValidationErrorsResponse {
-                    errors: vec!["draft changed during publish, retry".into()],
-                }),
-            ),
+            db::repositories::LayoutPublishError::ScreenNotFound => unknown_screen(),
+            db::repositories::LayoutPublishError::DraftChanged => {
+                error_response(StatusCode::CONFLICT, "draft changed during publish, retry")
+            }
             db::repositories::LayoutPublishError::Sqlx(e) => internal_error(e),
         })?;
 
@@ -396,31 +345,17 @@ pub async fn rollback(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<RollbackRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<Json<serde_json::Value>, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
     let row = repo
         .rollback(&mut conn, &req.screen, req.version, Some(admin_id))
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => (
-                StatusCode::NOT_FOUND,
-                Json(ValidationErrorsResponse {
-                    errors: vec!["unknown screen or version".into()],
-                }),
-            ),
+            sqlx::Error::RowNotFound => {
+                error_response(StatusCode::NOT_FOUND, "unknown screen or version")
+            }
             other => internal_error(other),
         })?;
 
@@ -460,20 +395,9 @@ pub async fn kill(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<KillRequest>,
-) -> Result<StatusCode, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<StatusCode, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
     repo.kill(&mut **conn, &req.screen, &req.section_type, Some(admin_id))
         .await
@@ -512,15 +436,8 @@ pub async fn preview_resolve(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<PreviewResolveRequest>,
-) -> Result<Json<layout_core::ResolvedScreen>, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let _admin = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
+) -> Result<Json<layout_core::ResolvedScreen>, ErrorResponse> {
+    require_super_admin(&headers, &state)?;
 
     // Parse and validate the submitted config.
     let config: layout_core::ScreenConfig = serde_json::from_value(req.config.clone())
@@ -535,23 +452,16 @@ pub async fn preview_resolve(
         layout_core::Platform::Mobile => "mobile",
     };
 
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
 
     let manifest_row = repo
         .get_manifest(&mut **conn, platform_key)
         .await
         .map_err(internal_error)?
-        .ok_or((
-            StatusCode::NOT_FOUND,
-            Json(ValidationErrorsResponse {
-                errors: vec!["no registry manifest for platform".into()],
-            }),
-        ))?;
+        .ok_or_else(|| {
+            error_response(StatusCode::NOT_FOUND, "no registry manifest for platform")
+        })?;
     let manifest: layout_core::RegistryManifest = serde_json::from_value(manifest_row.manifest)
         .map_err(|e| bad_request(vec![format!("stored manifest invalid: {e}")]))?;
 
@@ -574,20 +484,9 @@ pub async fn unkill(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<KillRequest>,
-) -> Result<StatusCode, (StatusCode, Json<ValidationErrorsResponse>)> {
-    let (admin_id, _) = extract_super_admin_token(&headers, &state).map_err(|_| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ValidationErrorsResponse {
-                errors: vec!["forbidden".into()],
-            }),
-        )
-    })?;
-    // Global no-RLS layout tables — sanctioned public connection (clears stale context).
-    let mut conn = RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(internal_error)?;
+) -> Result<StatusCode, ErrorResponse> {
+    let (admin_id, _) = require_super_admin(&headers, &state)?;
+    let mut conn = acquire_public_conn(&state).await?;
     let repo = LayoutRepository::new();
     let removed = repo
         .unkill(&mut **conn, &req.screen, &req.section_type)
@@ -615,11 +514,6 @@ pub async fn unkill(
         webhook::notify_layout_change(state.db.clone(), &req.screen, "unkilled", None, delivery_id);
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err((
-            StatusCode::NOT_FOUND,
-            Json(ValidationErrorsResponse {
-                errors: vec!["no such kill flag".into()],
-            }),
-        ))
+        Err(error_response(StatusCode::NOT_FOUND, "no such kill flag"))
     }
 }

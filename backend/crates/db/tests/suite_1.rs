@@ -17,6 +17,8 @@ mod agency_domain_cache_tests;
 mod ai_chat_rls_repo_tests;
 #[path = "suites/announcement_comments_rls_tests.rs"]
 mod announcement_comments_rls_tests;
+#[path = "suites/announcement_fanout_metrics_tests.rs"]
+mod announcement_fanout_metrics_tests;
 #[path = "suites/announcement_targeting_visibility_tests.rs"]
 mod announcement_targeting_visibility_tests;
 #[path = "suites/announcement_tests.rs"]

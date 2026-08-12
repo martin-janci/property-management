@@ -1006,6 +1006,44 @@ pub struct SyncSessionResponse {
     pub status: String,
 }
 
+/// Decide the response when a PM token is found inactive during session sync,
+/// given the outcome of the portal-session invalidation attempt.
+///
+/// * `None` — no portal session was supplied, so there was nothing to
+///   invalidate: report the PM session as expired (`401`).
+/// * `Some(Ok(()))` — the portal session was invalidated: report the PM
+///   session as expired (`401`).
+/// * `Some(Err(_))` — invalidation FAILED. We must not claim the session was
+///   invalidated; surface a `500` so the caller treats the portal session as
+///   still live (and can retry) rather than trusting a false "invalidated"
+///   signal.
+fn inactive_pm_token_response(
+    invalidate_result: Option<Result<(), anyhow::Error>>,
+) -> (StatusCode, SsoError) {
+    match invalidate_result {
+        Some(Err(e)) => {
+            tracing::error!(
+                error = %e,
+                "Failed to invalidate portal session after PM token went inactive"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                SsoError::new(
+                    "session_invalidation_failed",
+                    "PM session is inactive but the portal session could not be invalidated",
+                ),
+            )
+        }
+        Some(Ok(())) | None => (
+            StatusCode::UNAUTHORIZED,
+            SsoError::new(
+                "pm_session_expired",
+                "PM session has expired, portal session invalidated",
+            ),
+        ),
+    }
+}
+
 /// Synchronize session state between PM and Reality Portal.
 ///
 /// This ensures that logout in PM invalidates the Reality Portal session,
@@ -1037,23 +1075,29 @@ pub async fn sync_session(
             )
         })?;
 
-    // If PM token is inactive, invalidate portal session
+    // If PM token is inactive, invalidate the portal session. The
+    // invalidation error MUST NOT be swallowed: if the portal session cannot
+    // be torn down we must surface that failure instead of falsely reporting
+    // it as invalidated — otherwise the portal session outlives the
+    // deactivated PM token and the caller is lulled into believing the SSO
+    // session is dead when it is still usable (security regression).
     if !token_info.active {
-        if let Some(portal_session) = &request.portal_session {
-            let _ = state
-                .session_service
-                .invalidate_session(portal_session)
-                .await;
+        let invalidate_result = match &request.portal_session {
+            Some(portal_session) => Some(
+                state
+                    .session_service
+                    .invalidate_session(portal_session)
+                    .await,
+            ),
+            None => None,
+        };
+
+        if matches!(invalidate_result, Some(Ok(()))) {
             tracing::info!("Invalidated portal session due to inactive PM token");
         }
 
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(SsoError::new(
-                "pm_session_expired",
-                "PM session has expired, portal session invalidated",
-            )),
-        ));
+        let (status, err) = inactive_pm_token_response(invalidate_result);
+        return Err((status, Json(err)));
     }
 
     // Get current user info
@@ -1435,6 +1479,44 @@ mod pm_role_derivation_tests {
         let derived = derive_pm_roles(Some(&token_scope), Some(&requested));
         assert!(derived.is_empty(), "empty filter must intersect to nothing");
         assert_eq!(portal_role_for(&derived), portal_roles::USER);
+    }
+}
+
+#[cfg(test)]
+mod sync_session_invalidation_tests {
+    use super::inactive_pm_token_response;
+    use axum::http::StatusCode;
+
+    /// Security regression: when the PM token is inactive and the portal
+    /// session invalidation FAILS, the handler must NOT report the session as
+    /// invalidated. It must surface a 500 so the caller does not trust a false
+    /// "portal session invalidated" signal while the session is still live.
+    #[test]
+    fn invalidation_failure_is_surfaced_not_swallowed() {
+        let result = Some(Err(anyhow::anyhow!("redis down")));
+        let (status, err) = inactive_pm_token_response(result);
+        assert_eq!(
+            status,
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "a failed invalidation must not masquerade as a successful 401"
+        );
+        assert_eq!(err.error, "session_invalidation_failed");
+    }
+
+    /// A successful invalidation reports the PM session as expired (401).
+    #[test]
+    fn successful_invalidation_reports_pm_session_expired() {
+        let (status, err) = inactive_pm_token_response(Some(Ok(())));
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(err.error, "pm_session_expired");
+    }
+
+    /// No portal session supplied: nothing to invalidate, still a 401.
+    #[test]
+    fn no_portal_session_reports_pm_session_expired() {
+        let (status, err) = inactive_pm_token_response(None);
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(err.error, "pm_session_expired");
     }
 }
 

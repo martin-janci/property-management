@@ -340,8 +340,8 @@ export const queryKeys = {
  * ppt-web (`messages`, `meters`, `reports`), and the ad-hoc roots used
  * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
  * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
- * `sentiment`, `notification-analytics`, `financial`, `rentals`, and the
- * `auth`-rooted active-sessions cache).
+ * `sentiment`, `notification-analytics`, `notification-triggers`,
+ * `financial`, `rentals`, and the `auth`-rooted active-sessions cache).
  *
  * When you add a new auth-scoped query root, add it here too — otherwise the
  * cached data will leak into the next user's session. This must cover ALL
@@ -384,6 +384,11 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'predictive-maintenance',
   'sentiment',
   'notification-analytics',
+  // Granular notification-trigger preferences (@ppt/api-client
+  // granular-notifications — `notificationTriggerKeys`, Story 84.4). These are
+  // per-user preference caches; without this root they leaked into the next
+  // session (PR #2650 fix was incomplete — this root was missed).
+  'notification-triggers',
 ] as const;
 
 // ============================================================================

@@ -1,0 +1,41 @@
+{
+  "generated": "2026-08-10T00:00:00Z",
+  "segment": "api-handlers",
+  "source": "tier1d-dispatcher-generator",
+  "selection_reason": "churn-aligned",
+  "selection_note": "Churn files (integrations/, organizations, documents/, ai/) all under api-server routes = api-handlers layer. The pre-existing 2026-08-10-api-handlers-tier1d.json only reviewed data_residency.rs; this pass covers the actual churn files (non-overlapping). mobile-native-kmp deliberately skipped per dispatcher constraint (issue #2652, AGP egress-blocked).",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-webhook-ssrf-loopback-failopen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:201-203 (create_webhook_subscription) and :337-339 (update path) derive the SSRF-guard mode as `let is_production = std::env::var(\"RUST_ENV\").map(|v| v == \"production\").unwrap_or(false);`. This value is passed to `integration_repo.create_webhook_subscription(..., is_production)` (:207), which forwards it to `validate_webhook_url(&data.url, is_production)` at backend/crates/db/src/repositories/integration.rs:1352.",
+        "The env detection FAILS OPEN and is INVERTED relative to every other RUST_ENV gate in the same binary. `.unwrap_or(false)` plus an exact `== \"production\"` match means: RUST_ENV unset, or set to anything other than the literal string `\"production\"` (e.g. `prod`, `PRODUCTION`, `staging`, or simply not configured) => `is_production = false` => the webhook-URL validator runs in relaxed/dev mode. Every other environment gate in the crate uses the SAFE convention `RUST_ENV == \"development\"` and defaults to strict when unset: main.rs:483/533/539, services/totp.rs:58, preflight.rs:125, and notably services/actions/api_call.rs:339 (its sibling outbound-request SSRF guard, 'plain-http gated to RUST_ENV=development'). webhook.rs is the lone site that keys strict behavior off `== \"production\"`, so it is the only guard that turns OFF when the var is unset.",
+        "Impact: in validate_webhook_url (backend/crates/db/src/models/integration.rs:887-903, 932-937) the localhost/loopback block is gated on is_production — `is_localhost` (localhost / 127.0.0.1 / ::1) is only rejected when is_production is true (:901), and the 127.0.0.0/8 branch is `if octets[0] == 127 && (is_production || !is_localhost)` (:933), and plain `http://` is permitted for localhost when `!is_production` (:891). Private ranges (10/8, 172.16/12, 192.168/16), link-local 169.254/16 (cloud metadata) and multicast are blocked unconditionally, so residual reach is loopback-scoped. Net: an authenticated org member can register a webhook subscription targeting `http://localhost:<port>` / `http://127.0.0.1:<port>` / `http://[::1]:<port>`; the server later delivers signed POSTs to it (webhook.rs:572-584 computes the HMAC and fires the request), yielding an SSRF primitive against loopback-bound services co-located with api-server (Redis 6379, metrics/admin ports, internal-only HTTP) whenever RUST_ENV is not exactly `production`.",
+        "RUST_ENV is NOT listed in backend/CLAUDE.md's env table nor in any .env.example, and no other code path requires it to be set to `production` in prod (they only ever check for `development`). So a standard prod deployment that leaves RUST_ENV unset silently ships with the loopback SSRF guard disabled. Fix: invert to the crate's safe convention — compute `is_production = std::env::var(\"RUST_ENV\").unwrap_or_default() != \"development\"` (fail closed / strict by default), or better, hoist a single shared `is_development()`/`is_production()` helper so this can't drift again, and consider always applying the loopback block regardless of env."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-link-failopen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:165-176 (exchange_voice_oauth_tokens, called from link_voice_device :80): when `VoiceOAuthManager::from_env()` reports the platform is not configured (`!oauth_manager.has_platform(voice_platform)`), the handler logs a warn and `return Ok((None, None, None))` — it then creates a persisted voice device row (:89-109) with NULL access/refresh tokens and responds `201 CREATED` with `oauth_linked: false` (:122-131). There is NO production guard on this degraded path.",
+        "This is inconsistent with the codebase's own established fail-closed convention for the exact same 'dependency not configured in prod' situation. The sibling RAG-indexing handler in ai/llm.rs:250-263 refuses the analogous stub/unconfigured path in production: `let is_production = std::env::var(\"RUST_ENV\").as_deref() == Ok(\"production\"); if is_production && !allow_stub { return Err(SERVICE_UNAVAILABLE ...) }`. voice.rs has no equivalent — so a production deployment missing the Alexa/Google voice OAuth credentials will silently create voice devices that appear 'linked' in the devices list but hold no OAuth tokens, deferring the failure to first use (authenticate_voice_user falls back to a linear scan per the #2662 note at :103-107) instead of surfacing a clear configuration error at link time.",
+        "Lower severity than a security bug: no data exposure, and the client can observe `oauth_linked:false`. But it is a genuine prod-vs-dev fail-open completeness gap. Fix: gate the token-less fallback on a development check (mirror ai/llm.rs:250-263) so an unconfigured voice OAuth manager returns 503 NOT_CONFIGURED in production rather than persisting a half-linked device."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

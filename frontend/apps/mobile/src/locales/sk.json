@@ -440,7 +440,13 @@
     "noUnitText": "Merače sa zobrazia po priradení vášho účtu k jednotke.",
     "detailLoadError": "Nepodarilo sa načítať merač",
     "noReadingsTitle": "Zatiaľ žiadne odpočty",
-    "noReadingsText": "Odošlite svoj prvý odpočet pre tento merač."
+    "noReadingsText": "Odošlite svoj prvý odpočet pre tento merač.",
+    "meterFallback": "Merač",
+    "backToMeters": "Merače",
+    "latestReading": "Posledný odpočet",
+    "usedSincePrevious": "Spotreba od predchádzajúceho odpočtu: {{amount}} {{unit}}",
+    "readingHistory": "História odpočtov",
+    "submitNewReading": "Odoslať nový odpočet"
   },
   "esignature": {
     "title": "Ziadost o podpis",

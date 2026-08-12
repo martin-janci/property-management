@@ -1,9 +1,153 @@
 {
-  "generated": "2026-08-06T18:19:51Z",
+  "generated": "2026-08-11T20:06:55Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-11T20:06:55Z",
+      "prs_scanned": 5,
+      "clean": [
+        2735,
+        2734,
+        2733,
+        2732,
+        2731
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit/push). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so the 5 PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-28), base=dev, max_prs=15. Prior run (2026-08-10T18:08Z) drained the roll-over queue through #2730; this run scanned exactly the NEW never-reviewed in-window set = 5 PRs merged 2026-08-11 (#2735,#2734,#2733,#2732,#2731) -- well under the cap. #2705 stays excluded (closed-not-merged, no merged_at). Note: list_pull_requests returns merged:false spuriously for confirmed-merged PRs, so merged_at (non-null) is the merge discriminator. ALL 5 CLEAN, 0 net-new issues -- another strong auto-impl batch, each PR a code-review correctness/security/refactor fix or test-coverage add shipped WITH a targeted regression test. Details: #2731 (reports CSV formula-injection: the votes CSV export wrote vote `title` verbatim, bypassing the audit exporter's sanitize_csv_cell -- a title leading with =/+/-/@ was a live Excel/Sheets formula-injection vector; fix promotes sanitize_csv_cell to pub(crate) and REUSES the single shared guard (no re-derived copy), extracts voting_csv_row for DB-free unit testing, + 3 unit tests incl. the classic =cmd|'/c calc'!A1 payload and comma-spill escaping). #2732 (gh-issue-2643: OAuth token-usage analytics INSERT moved OFF the hot token path -- record_token_event now returns Option<JoinHandle> and dispatches the write via detached tokio::spawn instead of awaiting inline, so issuance/refresh/revocation return their TokenResponse without the DB round-trip; prod drops the handle fire-and-forget, tests .await it; log-and-ignore best-effort contract preserved; new #[sqlx::test] asserts !is_finished() right after the sync call (off-hot-path) AND exactly-one persisted row after driving the handle; integration tests switched to a bounded ~2s poll helper await_token_event_count to remove the now-async race. Acceptable residual: a detached best-effort write can be lost on abrupt shutdown -- explicitly analytics-only, matches the documented contract, not filed). #2733 (screen-map reconcile only, docs/screens/ppt/error-handling-toasts.md: documents the two-tier error boundary from PR #2646 -- global main.tsx boundary + new pathname-keyed RouteErrorBoundary at the route outlet; buildStatus stays shipped; follows the screen-map self-management protocol incl. Agent Log entry; no code). #2734 (mobile useOfflineSupport: remapActionIds now applied to CARRIED-FORWARD actions before persisting the offline queue -- a cycle that halts on a head-of-line transient failure breaks the loop before reaching dependent UPDATE/DELETEs queued after the halt, and tempIdToServerId is in-memory-per-cycle only, so a CREATE that resolved its temp id this cycle would lose the mapping and orphan the dependent edit onto a dead temp id -- a silent loss of an offline edit; remap is a no-op for actions with no live temp id so re-applying to already-remapped items is safe; strong regression test (g) proves temp->srv id linkage survives a mid-cycle 503 halt and drains cleanly next cycle). #2735 (ppt-web rentals: TEST-ONLY coverage for the API<->UI mappers on a churn-hotspot file -- pins the lossy folds (vrbo->other for BookingSource, non-booking->airbnb for PlatformType, inactive->disconnected, submittedToAuthorities-> registration status, missing reservationId->empty bookingId); only production change is exporting the 6 mapper fns for import -- no behavior change). Process nits considered-but-not-filed: (a) #2732 spawns one detached task per token op -- cheap single INSERT, no unbounded-concurrency concern. (b) #2731 sanitize runs before the comma->';' replace, ordering correct. NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels and is issue-only), so post-merge-reviewed is NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
+      "focus_prs": [
+        2731,
+        2732,
+        2733,
+        2734,
+        2735
+      ]
+    },
+    {
+      "run_at": "2026-08-10T18:08:52Z",
+      "prs_scanned": 15,
+      "clean": [
+        2730,
+        2729,
+        2728,
+        2714,
+        2713,
+        2694,
+        2693,
+        2687,
+        2686,
+        2695,
+        2689,
+        2685,
+        2665,
+        2664,
+        2663
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-27), base=dev, max_prs=15. Prior run (2026-08-09T16:10Z) reviewed the newest-15 up to #2727. This run scanned the COMPLETE never-reviewed in-window set = 3 merged since the last run (#2730,#2729,#2728, all 2026-08-10) + the 12 previously-deferred stragglers (#2714,#2713,#2694,#2693,#2687,#2686,#2695,#2689,#2685,#2665,#2664,#2663) -- exactly the max_prs=15 cap; the roll-over queue is now fully drained. #2705 excluded (closed-not-merged, merged_at null). ALL 15 CLEAN, 0 net-new issues -- another strong auto-impl batch: every PR is a code-review security/correctness/refactor fix or a mock->real wiring, each shipped WITH a targeted regression test. Highlights: #2730 (quiet-hours push gate now FAILS CLOSED on a schedule-read DB error -- old get_user_schedule(...).ok().flatten() failed OPEN, could ring a phone during quiet hours on a transient error; pure resolve_push_quiet_gate + 4 unit tests). #2729 (quiet-hours drain no longer releases a held row when >=1 channel hit a transient Failed -- deliver_held returns PipelineResult, should_mark_released gates on failed==0, so a transient failure retries instead of permanently dropping the notification). #2728 (voice check-announcements/check-meter fail HONESTLY -- were fabricating success:true + empty data on a live webhook path with no repository queried; now success:false, no fabricated data, honest copy; 2 async tests). #2694 (AI lease-gen + voice-OAuth exchange stop leaking upstream provider error text to clients; fixed generic message consts, detail logged server-side; 2 no-leak tests). #2685 (workflow condition NOT operator CORRECTNESS BUG: negated only conditions.first() and dropped the rest -> multi-condition NOT gave wrong results; now De Morgan over the full conjunction incl. nested groups; 3 tests; also methods->free functions). #2689 (ppt-web WS: removed the redundant app-level ping/pong heartbeat that severed a HEALTHY socket every ~40s because the api-server never emits an app-level pong -- liveness is protocol-layer only; fake-timer test asserts the socket survives 60s). #2665 (news_articles AUTHZ HOLE: publish/archive/restore/pin extracted _user but never checked is_manager()/authorship -> any authenticated user could mutate any article's lifecycle; now author-or-manager gate with org-scoped 404-before-403; 4 sqlx 403 tests). #2663 (voice-device auth #2662: adds the MISSING voice_assistant_devices DDL migration 00226 -- same missing-DDL class as portal_webhook_events/00219 -- plus a keyed HMAC-SHA256 access_token_hash indexed-lookup column so authenticate_voice_user selects ONE candidate in SQL instead of AES-GCM-decrypt-and-scanning EVERY active device platform-wide on the unauthenticated webhook path (O(N)-decrypt DoS/amplification); decrypt+constant-time verify stays the authority; NULL-hash rows fall back to linear scan so no device is locked out; RLS intentionally omitted + added to check-rls-coverage.sh EXEMPT_TABLES with rationale; sqlx test proves owner-only selection + priv-esc guard + expired/unknown 401). #2714 (issue #2612: decouple scheduled announcement/vote PUBLISH from NOTIFY via nullable notified_at/started_notified_at/closed_notified_at watermarks + migration 00228 with mass-re-notify-suppressing backfill + partial indexes; manual vs auto transition semantics preserved; idempotent stamps only on success so a transient dispatch blip retries next tick instead of fire-once dropping). #2664 (portfolio dashboard: replace ALL mock data with real TanStack-Query hooks + new @ppt/api-client portfolio-performance module; serde-str Decimal-as-string decoded at the edge; loading/error/empty states + retry). #2695 (mobile-rn biometric OS-dialog copy moved from hardcoded English to i18n across 6 locales; guard tests assert every locale defines the keys + non-EN diverges). #2687 (disputes/kpis rejects inverted/empty window 422 before the repo instead of a degenerate zero-count 200; adds an EXECUTING tokio test outside BIT-440 quarantine + updates the quarantined sqlx case). #2713 (layout admin dedupe: extract require_super_admin/acquire_public_conn/load_config/error_response helpers, behavior-preserving, 403/404/500 semantics preserved). #2693 (remove orphaned schedule_viewing stub + ViewingResult enum, dead code, no live callers -- same class as prior #2697). Considered-but-not-filed process nits: (a) migrations 00226/#2663, 00228/#2714, and prior-run 00229/00230 are all sequential/distinct -- no collision. (b) #2664 num()/optNum() use Number(v) which yields NaN on a malformed decimal string, but the api-server serde-str contract guarantees well-formed decimals -- not a live bug. Existing open follow-ups #2643 and #2366 left as-is (not duplicated). NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
+      "focus_prs": [
+        2730,
+        2729,
+        2728,
+        2714,
+        2713,
+        2694,
+        2693,
+        2687,
+        2686,
+        2695,
+        2689,
+        2685,
+        2665,
+        2664,
+        2663
+      ]
+    },
+    {
+      "run_at": "2026-08-09T16:10:13Z",
+      "prs_scanned": 15,
+      "clean": [
+        2727,
+        2726,
+        2725,
+        2724,
+        2723,
+        2722,
+        2716,
+        2720,
+        2721,
+        2719,
+        2718,
+        2717,
+        2715,
+        2710,
+        2696
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-26), base=dev, max_prs=15. Reviewed-set max before this run was #2712; scanned the NEWEST-15 never-reviewed merged-to-dev PRs by merged_at desc: #2727,#2726,#2725,#2724,#2723,#2722,#2716,#2720,#2721,#2719,#2718,#2717,#2715,#2710,#2696 (exactly the max_prs cap). Rolled to next run (outside newest-15): #2714,#2713 and the older mid-tier stragglers #2685/#2686/#2687/#2689/#2693/#2694/#2695 (same roll-over precedent as prior runs). #2705 excluded (closed-not-merged, merged_at null). ALL 15 CLEAN, 0 net-new issues -- another strong auto-impl batch: every PR is a code-review security/correctness/refactor fix shipped WITH a targeted regression test. Security highlights: #2727 (reality-server list_members IDOR: was unauthenticated + ungated, leaked agency-internal member PII to the internet; now RequestPrincipal + shared check_agency_membership gate -> 401 anon / 403 non-member / 404 unknown; 401+403+200 regression tests). #2726 (SSO sync_session no longer swallows portal-session invalidation failure: extracted inactive_pm_token_response returns 500 on Err so a failed teardown can't masquerade as a successful 401 'invalidated'; 3 unit tests). #2725 (password-reset email transport UC-44.3: real SMTP mailer + log fallback behind PasswordResetMailer seam; delivery_decision guard returns 503 in release when no transport instead of falsely claiming a link was sent; locale-prefixed token-encoded reset URL; truth-table + url-encode tests). #2724 (reality-server DB-error leak: routes raw sqlx/serde errors through util::errors::db_error -> generic 500, scrubbing constraint/column/host/dbname/sslmode detail across agencies/imports/layout/listings/price_map/realtors; leak-scrub unit tests). #2722 (api-server community get_group/list_posts/get_item were unauthenticated cross-tenant reads: add RequestPrincipal + verify_group_access/verify_item_access -> 401 anon / 404 cross-tenant; full anon+x-tenant+same-tenant suite). #2710 (SSRF DNS-rebinding TOCTOU #2703: connect-time SsrfGuardResolver wired into the workflow reqwest client validates every connect+redirect hop via validate_resolved_addrs so the client connects only to validated IPs; hermetic stateful-rebind regression test asserts reject + >=2 resolver calls). Feature/refactor highlights: #2723 (announcement fan-out delivered/read/ack metrics scoped by target_type via real cross-tenant-safe targeting SQL; RLS test proves org-B ids in target_ids contribute nobody). #2716 (platform_settings singleton PATCH/GET + migration 00229, capability-gated, partial-update + persist tests). #2717 (mobile_config singleton PATCH/GET + migration 00230, FOR UPDATE merge, flags-merge PATCH semantics, route-exists/authz tests). #2719 (route anonymous inquiry POSTs through InquiriesHandler so the realtor notification fires; shared inquiry_result_to_id mapping with DB-error->generic-500 + 404/400/429 tests). #2696 (injectable InquiryNotifier seam + LogInquiryNotifier default; best-effort delivery swallows transport failure). #2718 (reality-web layout-revalidate HMAC-binds-body parity test, test-only). #2721 (behavior-preserving layout tenant acquire_public_conn extraction). #2720 (behavior-preserving reports helpers.rs extraction). #2715 (auth handler AuthError alias + err_response helper, byte-for-byte identical status/body, validation .with_details sites left inline). Migration-numbering watch (process nit, not filed): #2716 adds 00229, #2717 adds 00230 -- sequential, distinct, both merged same day pre-release; consistent with #2700's prior 00227 renumber. No collision observed between them. NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history remains the dedup record for the next run (same precedent as every prior run).",
+      "focus_prs": [
+        2727,
+        2726,
+        2725,
+        2724,
+        2723,
+        2722,
+        2716,
+        2720,
+        2721,
+        2719,
+        2718,
+        2717,
+        2715,
+        2710,
+        2696
+      ]
+    },
+    {
+      "run_at": "2026-08-08T02:22:56Z",
+      "prs_scanned": 15,
+      "clean": [
+        2688,
+        2690,
+        2691,
+        2692,
+        2697,
+        2698,
+        2700,
+        2701,
+        2702,
+        2706,
+        2707,
+        2708,
+        2709,
+        2711,
+        2712
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed in this runner -> GitHub MCP (mcp__github__*) for every network call. Window merged-to-dev 14d (>=2026-07-25), base=dev, max_prs=15. Prior run (2026-08-06T18:19Z) scanned #2666-#2683; this run scanned the 15 NEWEST never-reviewed merged-to-dev PRs after it (by merged_at desc): #2688,#2690,#2691,#2692,#2697,#2698,#2700,#2701,#2702,#2706,#2707,#2708,#2709,#2711,#2712 (exactly the max_prs cap). Two closed-unmerged dependabot PRs (#2587,#2582) excluded (merged_at null). The still-unreviewed older stragglers #2663/#2664/#2665 and the #2685/#2686/#2687/#2689/#2693/#2694/#2695 mid-tier (all merged 2026-08-06T23:22..2026-08-07T00:08) fall just outside the newest-15 and roll to the next run. ALL 15 CLEAN, 0 net-new issues -- another unusually strong batch: every PR is an auto-impl code-review security/correctness/i18n fix shipped WITH a targeted regression test. Highlights: #2698 (reality-server anonymous-inquiry throttle: new TenantRateLimiterSet::with_default_bounded w/ inline LRU+TTL eviction so a rotating-IP flood can't balloon the map; spoof-resistant client key reads X-Forwarded-For counting trusted_hops FROM THE RIGHT, fail-safe to a shared 'unknown' bucket on underlength/absent header -- never fail-open; wired FIRST on send_contact_message + request_viewing before any DB work; exhaustive route+key unit tests). #2707 (workflow api_call memory-DoS: read_capped_body caps response buffering at 8 MiB via Content-Length pre-check + bounded streaming read, closes the unbounded response.text() amplification; truncation-marked + warn-logged; hermetic synth-response tests). #2706 (RAG index_document fails closed 502 on embedding-count!=chunk-count instead of silently zip-truncating to a partial index). #2708 (workflow condition compare: coerce_finite_f64 rejects stringified NaN/inf/infinity that Rust's f64 parser otherwise accepts -> routed to uncomparable, not a non-antisymmetric ordering). #2688 (ai/llm enhanced_chat now fails closed 501 instead of returning a fabricated confidence:0.85/tokens_used:150/escalated payload built from no real RAG/LLM call; OpenAPI 200->501; test asserts 501 + absence of fabricated fields). #2692 (public listing view_count: SECURITY DEFINER portal_get_listing_view_count bypasses org-only FORCE-RLS on listing_analytics for portal listings org_id=NULL -> real total instead of hardcoded 0; NOBYPASSRLS-role FORCE-RLS regression test proves direct SUM reads 0 while definer reads the real total). #2712 (dispute add_evidence emits a resource_created/dispute_evidence access-audit row on audit_logs, mirroring membership.rs pattern; test asserts actor/org/dispute_id). #2711 (behavior-preserving layout tenant.rs dedupe: extracted require_org_admin + load_screen_config, nil-org 400 / non-admin 403 semantics preserved, connection still released on reject). #2690 (mobile-rn cold-start & biometric-unlock now refresh an expired stored access token via isJwtExpired(skew=30s) before trusting the restored session -- #2399 no-refetch intent preserved; malformed/missing-exp defers to server 401, never fail-open; broad integration + util tests). #2691 (ppt-web WS resume-after-give-up: connect() resets the reconnect budget via resetReconnectAttempts while the internal backoff loop calls openConnection() directly so the cap can still be reached; network-status effect re-arms on regained connectivity while authenticated; maxRetriesExceeded surfaced for a reconnect affordance; fake-WebSocket fake-timer tests cover both halves). #2709 (reality-web ListingForm i18n via next-intl across all 6 catalogs sk/cs/de/en/hu/pl, precursor #2702 added NaN/negative area/rooms guards + tests). #2701 (shared-comparison URL: Promise.all->allSettled so one bad listing id is dropped and the good ones still load; error state only when nothing loads). #2697 (removed orphaned reality-server ListingHandler stub module + its geo helpers -- dead code, no live callers). #2700 (pure migration-file renumber 00220->00227 resolving a version collision introduced by #2692's new migration; the function is referenced by NAME not number and CREATE OR REPLACE is idempotent, so the rename is safe). Dedup / considered-but-not-filed: (a) #2690's initialize() useEffect now depends on the memoized refreshToken callback -- if its deps ever churn the effect could re-run and re-read SecureStore; refreshToken is a stable useCallback so this is not a live bug, not filed. (b) #2698's InquiriesHandler::create_inquiry remains uncalled by live routes (throttle+repo path bypass it) but that pre-dates this PR and is explicitly documented; not a net-new gap. (c) #2700 renumber COULD checksum-conflict a DB that already applied the old 00220, but #2692/#2700 merged the same day well before any release and the function body is idempotent -- process nit, not code-shape actionable. Labeling: GitHub MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history is the dedup record for the next run (same precedent as every prior run). NET-NEW actionable issues: 0.",
+      "focus_prs": [
+        2688,
+        2690,
+        2691,
+        2692,
+        2697,
+        2698,
+        2700,
+        2701,
+        2702,
+        2706,
+        2707,
+        2708,
+        2709,
+        2711,
+        2712
+      ]
+    },
     {
       "run_at": "2026-08-06T18:19:51Z",
       "prs_scanned": 15,
@@ -511,92 +655,6 @@
           "note": "layout-core contract crate excellent (resolve+validate well-tested); one low-sev gap: prop VALUES never validated (only keys via rails.prop_whitelist); validate_publish ignores props entirely; types.rs docstring overclaims 'validated against component prop schemas at publish time' -- ppt-web #2429 PropInput sends arbitrary JSON.parse'd values. Mitigated by superadmin-authored whitelist + defensive rendering + React escaping"
         }
       ]
-    },
-    {
-      "run_at": "2026-07-22T08:25:28Z",
-      "prs_scanned": 13,
-      "clean": [
-        2431,
-        2430,
-        2423,
-        2394,
-        2393,
-        2392,
-        2391,
-        2390,
-        2389,
-        2388,
-        2386
-      ],
-      "with_issues": [
-        {
-          "pr": 2426,
-          "issue": 2435,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "put_tenant_override writes updated_by=None (AuthUser bound as _auth, unused) while every other layout write records the actor -> tenant overrides unattributable; RLS itself correct"
-        },
-        {
-          "pr": 2377,
-          "issue": 2434,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "view-webhook dedup gate correct+tested, but 3 comments (portal_webhooks.rs:741,1343; migration 00220:19) cite migration 00218 for the dedup unique index that actually lives in 00219 (00218 is unrelated report_schedules RLS) -- same class as #2417/#2418"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-18T16:08:31Z",
-      "prs_scanned": 3,
-      "clean": [
-        2421,
-        2420,
-        2419
-      ],
-      "with_issues": []
-    },
-    {
-      "run_at": "2026-07-17T22:12:33Z",
-      "prs_scanned": 5,
-      "clean": [
-        2339,
-        2336,
-        2334
-      ],
-      "with_issues": [
-        {
-          "pr": 2340,
-          "issue": 2417,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "scheduler-RLS doc + test comments cite migration 00216 for report_schedules_global_read; policy actually ships in this PR's 00218 (00216 is #2335's unrelated document_embeddings policy) \u2014 docs-only, scheduler.rs is correct"
-        },
-        {
-          "pr": 2335,
-          "issue": 2418,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "cross-org /rag/migrate RLS test runs as #[sqlx::test] superuser -> passes vacuously w.r.t. the 00216 super-admin policy; adopt #2340's NOBYPASSRLS role-switch to make it a real regression guard"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-17T16:12:50Z",
-      "prs_scanned": 11,
-      "clean": [
-        2416,
-        2415,
-        2414,
-        2412,
-        2411,
-        2410,
-        2409,
-        2408,
-        2407,
-        2372,
-        2371
-      ],
-      "with_issues": []
     }
   ]
 }

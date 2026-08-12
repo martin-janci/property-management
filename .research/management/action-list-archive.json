@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-06T22:20:20Z",
+  "archived_at": "2026-08-12T06:16:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -835,6 +835,21 @@
       }
     },
     {
+      "id": "bug-scheduler-notifications-fire-once-retry1",
+      "action": "Scheduler notifications fire-once: transient target-resolution or dispatch error permanently drops announcement / vote notifications [retry 1/2 of failed bug-scheduler-notifications-fire-once]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=bug-scheduler-notifications-fire-once reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T06:08:18Z",
+      "retry_of": "bug-scheduler-notifications-fire-once",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T06:16:59Z"
+    },
+    {
       "id": "bug-webhook-airbnb-dup-sync-jobs",
       "action": "[DROPPED: semantic-dup, already merged on dev] Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
       "owner_role": "pm-backend",
@@ -933,6 +948,20 @@
         "merged_at": null,
         "at": "2026-07-31T22:03:09Z"
       }
+    },
+    {
+      "id": "chore-triage-untriaged-issues-750s-2026-07-23-retry2",
+      "action": "Bulk-triage untriaged issues #749-#779 (backlog carry) — 30+ items in seen_signals list; owner assignment or bulk-close [retry 2/2 of failed chore-triage-untriaged-issues-750s-2026-07-23]",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=chore-triage-untriaged-issues-750s-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T20:13:32Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "chore-triage-untriaged-issues-750s-2026-07-23",
+      "retry_round": 2
     },
     {
       "id": "chore-uc-33-dispute-subuc-links-2026-07-23",
@@ -1080,6 +1109,30 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + upstream error masking #2694)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-07T16:21:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2706,
+        "merged_at": "2026-08-07T16:19:50Z",
+        "at": "2026-08-07T16:21:27Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
       "action": "Churn hotspot: 2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (window 2026-06-10 03:05Z→18:30Z)",
       "owner_role": "pm-backend",
@@ -1216,6 +1269,30 @@
         "merged_pr": 1813,
         "merged_at": "2026-06-24T02:26:53Z",
         "at": "2026-06-25T12:13:32Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs",
+      "action": "Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 workflow NOT-group fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-07T16:21:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2708,
+        "merged_at": "2026-08-07T16:19:50Z",
+        "at": "2026-08-07T16:21:27Z"
       }
     },
     {
@@ -1458,6 +1535,25 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts-retry1",
+      "action": "Churn hotspot: 2 commits touching frontend/apps/mobile/src/hooks/useOfflineSupport.ts (window 2026-08-03T17:00Z → 2026-08-04T03:00Z) [retry 1/2 of failed churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-ts",
+      "retry_round": 1,
+      "merged_evidence": {
+        "pr": 2734,
+        "merged_at": "2026-08-11T14:09:07Z",
+        "landed_on": "dev"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend-apps-mobile-src-screens-messages-ThreadDetailScreen-tsx",
       "action": "Churn hotspot: 2 commits touching frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
       "owner_role": "pm-tech-lead",
@@ -1482,6 +1578,30 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
+      "action": "Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-07T12:45:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-07T12:45:53Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
       "action": "Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z)",
       "owner_role": "pm-tech-lead",
@@ -1503,6 +1623,25 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-04T12:04:18Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx-retry1",
+      "action": "Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-08-03T17:00Z → 2026-08-04T03:00Z) [retry 1/2 of failed churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
+      "retry_round": 1,
+      "merged_evidence": {
+        "pr": 2735,
+        "merged_at": "2026-08-11T14:09:24Z",
+        "landed_on": "dev"
       }
     },
     {
@@ -1782,6 +1921,53 @@
       "depends_on": []
     },
     {
+      "id": "code-review-api-core-quiet-drain-drops-failed-delivery",
+      "action": "Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification permanently lost on transient failure",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-10T12:05:33Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-10T12:05:33Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "landed_pr": 2729,
+        "commit": "3096f0f",
+        "note": "already fixed on dev; non-id subject so auto-reconcile missed it",
+        "at": "2026-08-10T12:13:38Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-quiet-schedule-err-failopen",
+      "action": "Notification pipeline swallows quiet-hours schedule DB error and fails open — push delivered during user's configured quiet hours",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-10T08:05:35Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-10T14:14:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-10T08:05:35Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2730,
+        "merged_at": "2026-08-10T14:11:10Z",
+        "at": "2026-08-10T14:14:24Z"
+      }
+    },
+    {
       "id": "code-review-api-core-resolved-rs-leaks-db-error",
       "action": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
       "owner_role": "pm-backend",
@@ -1979,6 +2165,29 @@
       }
     },
     {
+      "id": "code-review-api-core-voice-actions-fabricated-empty",
+      "action": "Voice check-announcements & check-meter fabricate success with empty data — residents told 'no new announcements'/'no pending readings' without any query",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-10T12:05:33Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-10T12:05:33Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "landed_pr": 2728,
+        "commit": "2ac0dbb",
+        "note": "already fixed on dev; non-id subject so auto-reconcile missed it",
+        "at": "2026-08-10T12:13:16Z"
+      }
+    },
+    {
       "id": "code-review-api-core-voice-cmd-fabricated-success",
       "action": "backend/servers/api-server/src/services/voice_commands.rs:248 and :278 — action_check_balance() and action_report_fault() are shipped stubs that return VoiceActionResult{ success: true } with fabricated data on a LIVE webhook path, not TODO",
       "owner_role": "pm-backend",
@@ -2054,6 +2263,54 @@
       }
     },
     {
+      "id": "code-review-api-core-workflow-not-group-drops-conds",
+      "action": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirel",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core) | dev-reconcile 2026-08-07T00:11:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "412ed35c328fc45fe3403382452a64d333772dc8",
+        "subject": "code-review-api-core-workflow-not-group-drops-conds: NOT condition group evaluates full condition set (#2685)",
+        "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-ai-upstream-error-leak",
+      "action": "api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f...",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=security) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2694,
+        "merged_at": "2026-08-07T00:06:49Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-community-cross-tenant-idor",
       "action": "SECURITY: community.rs 5 write handlers (create_post/add_reaction/create_comment/rsvp_event/create_inquiry) accept cross-tenant IDs",
       "owner_role": "pm-security",
@@ -2118,6 +2375,48 @@
       }
     },
     {
+      "id": "code-review-api-handlers-community-unauthenticated-reads-retry2",
+      "action": "SECURITY: community.rs get_group/list_posts/get_item run unauthenticated — anonymous cross-tenant read [retry 2/2 of failed code-review-api-handlers-community-unauthenticated-reads]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T16:05:19Z (retry_of=code-review-api-handlers-community-unauthenticated-reads reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T14:08:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T16:05:19Z",
+      "retry_of": "code-review-api-handlers-community-unauthenticated-reads",
+      "retry_round": 2,
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-enhanced-chat-stub",
+      "action": "api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data....",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2688,
+        "merged_at": "2026-08-07T00:08:01Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-marketplace-award-quote-idor",
       "action": "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {",
       "owner_role": "pm-security",
@@ -2165,6 +2464,29 @@
         "merged_pr": 2665,
         "merged_at": "2026-08-06T08:12:22Z",
         "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-reports-csv-injection",
+      "action": "Reports CSV export writes user-authored vote titles unescaped — spreadsheet formula injection (bypasses the repo's own sanitize_csv_cell)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-11T00:06:12Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-11T06:05:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T00:06:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b403a1a875b728ea46572d7215cfc3628cda6077",
+        "subject": "code-review-api-handlers-reports-csv-injection: sanitize vote titles in reports CSV export (#2731)",
+        "at": "2026-08-11T06:05:56Z"
       }
     },
     {
@@ -2565,6 +2887,54 @@
       "retry_of": "code-review-mobile-native-kmp-search-stale-response-race",
       "retry_round": 2,
       "last_updated": "2026-07-22T08:13:07Z"
+    },
+    {
+      "id": "code-review-mobile-rn-auth-restore-stale-token",
+      "action": "mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-07T12:45:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2690,
+        "merged_at": "2026-08-07T12:34:29Z",
+        "at": "2026-08-07T12:45:53Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-biometric-prompt-i18n",
+      "action": "mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2695,
+        "merged_at": "2026-08-06T23:23:14Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-init-unhandled",
@@ -2986,6 +3356,52 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-ws-giveup-no-resume",
+      "action": "ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-07T00:11:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4356bec22febc0d623f6e3cfd57b02f53922f27f",
+        "subject": "code-review-ppt-web-core-ws-giveup-no-resume: resume WebSocket reconnection after the retry budget is exhausted (#2691)",
+        "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
+      "action": "ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa...",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=3 conf=high vector=bug) | dev-reconcile 2026-08-07T00:11:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4caa49171c49173c2c741c2000393bba33665653",
+        "subject": "code-review-ppt-web-core-ws-pong-timeout-drop: drop redundant client app-level WS heartbeat (#2689)",
+        "at": "2026-08-07T00:11:53Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-ws-token-rotation-stale",
       "action": "WebSocket not re-authed on token rotation — connect() early-return leaves live socket on old token",
       "owner_role": "pm-backend",
@@ -3114,6 +3530,29 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-offline-ind-i18n",
+      "action": "ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T02:05:43Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-08-12T06:06:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T02:05:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "26dce7d602d7a7b4646966f0644631899ef4c1b7",
+        "subject": "code-review-ppt-web-ui-offline-ind-i18n: i18n OfflineIndicator banner (#2736)",
+        "at": "2026-08-12T06:06:45Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-portfolio-mock-data",
       "action": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook",
       "owner_role": "pm-backend",
@@ -3160,6 +3599,29 @@
         "merged_pr": 2458,
         "merged_at": "2026-07-22T22:23:24Z",
         "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-i18n",
+      "action": "ppt-web-ui: ProtectedRoute hardcodes English 'Access Denied' / 'Loading...' strings instead of using i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T02:05:43Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-08-12T06:06:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T02:05:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "2ef5672fdc073e6f68ea07aedfeaf07c758e660d",
+        "subject": "code-review-ppt-web-ui-protectedroute-i18n: i18n ProtectedRoute strings (#2737)",
+        "at": "2026-08-12T06:06:45Z"
       }
     },
     {
@@ -3235,6 +3697,22 @@
       }
     },
     {
+      "id": "code-review-reality-server-agency-members-unauth-idor-retry1",
+      "action": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR) [retry 1/2 of failed code-review-reality-server-agency-members-unauth-idor]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T12:06:02Z (retry_of=code-review-reality-server-agency-members-unauth-idor reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T12:03:53Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T12:06:02Z",
+      "retry_of": "code-review-reality-server-agency-members-unauth-idor",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T12:08:27Z",
+      "dispatcher_reconciled": "assignment merged as PR #2727 on 2026-08-09; action-list in-progress→done (dispatcher hygiene 2026-08-09)"
+    },
+    {
       "id": "code-review-reality-server-db-error-leak-to-client",
       "action": "reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error",
       "owner_role": "pm-security",
@@ -3256,6 +3734,93 @@
         "archive_status": "failed",
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-db-error-leak-to-client-retry1",
+      "action": "reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error [retry 1/2 of failed code-review-reality-server-db-error-leak-to-client]",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=code-review-reality-server-db-error-leak-to-client reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T06:08:18Z",
+      "retry_of": "code-review-reality-server-db-error-leak-to-client",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T06:11:42Z",
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiries-no-ratelimit",
+      "action": "reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-07T16:05:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2698,
+        "merged_at": "2026-08-07T14:25:30Z",
+        "at": "2026-08-07T16:05:27Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-email-stub",
+      "action": "reality-server: a shipped-but-non-functional notification path.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-08-08T06:22:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "e7ca162b8d7fa6fc079c769807cb6c733d3052fc",
+        "subject": "code-review-reality-server-inquiry-email-stub: route inquiry notifications through an injectable notifier seam (#2696)",
+        "at": "2026-08-08T06:22:30Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-notify-route-wiring",
+      "action": "reality-server: the live public endpoint routes::inquiries::send_contact_message persists via state.reality_portal_repo.create_inquiry(...) directly and does NOT route through InquiriesHandler, so the new InquiryNotifier seam (added in PR #2696) is never reached on the live path — realtors still get no notification. Wire send_contact_message (and the viewing-request route if it shares the bypass) through InquiriesHandler::with_notifier so the best-effort notification fires. Touches routes/inquiries.rs + handler state wiring.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "implementer-secondary-finding PR#2696 (inquiry-email-stub) 2026-08-06T22:36:16Z | gc1-reconcile 2026-08-08T10:13:28Z",
+      "deadline": null,
+      "dependency": "code-review-reality-server-inquiry-email-stub (PR #2696 seam must land first)",
+      "depends_on": [
+        "code-review-reality-server-inquiry-email-stub"
+      ],
+      "first_open_at": "2026-08-06T22:36:16Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2719,
+        "merged_at": "2026-08-08T08:19:00Z",
+        "at": "2026-08-08T10:13:28Z"
       }
     },
     {
@@ -3309,6 +3874,78 @@
       }
     },
     {
+      "id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
+      "action": "reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2692,
+        "merged_at": "2026-08-07T00:08:27Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-orphan-listinghandler-stub-detail",
+      "action": "reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-07T12:23:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2697,
+        "merged_at": "2026-08-07T10:19:50Z",
+        "at": "2026-08-07T12:23:57Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-orphan-schedule-viewing-stub",
+      "action": "reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da...",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-06T20:08:18Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T20:08:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2693,
+        "merged_at": "2026-08-07T00:03:32Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-password-reset-no-transport",
       "action": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent",
       "owner_role": "pm-backend",
@@ -3330,6 +3967,25 @@
         "archive_status": "failed",
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-password-reset-no-transport-retry1",
+      "action": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent [retry 1/2 of failed code-review-reality-server-password-reset-no-transport]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=code-review-reality-server-password-reset-no-transport reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T06:08:18Z",
+      "retry_of": "code-review-reality-server-password-reset-no-transport",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T06:11:42Z",
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
       }
     },
     {
@@ -3382,6 +4038,25 @@
       }
     },
     {
+      "id": "code-review-reality-server-sso-session-invalidate-swallowed-retry1",
+      "action": "reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive [retry 1/2 of failed code-review-reality-server-sso-session-invalidate-swallowed]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=code-review-reality-server-sso-session-invalidate-swallowed reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T06:08:18Z",
+      "retry_of": "code-review-reality-server-sso-session-invalidate-swallowed",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T06:11:42Z",
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
       "id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
       "action": "RE-RAISE (unfixed at HEAD b1f6ad5, first emitted 2026-07-12, subsequently decayed out of backlog.json but the vulnerable code is unchanged): backend/servers/reality-server/src/util/url_validator.rs:145-164 — validate_fetch_url()'s Host::Ipv",
       "owner_role": "pm-backend",
@@ -3428,6 +4103,29 @@
         "merged_pr": 2636,
         "merged_at": "2026-08-03T10:15:45Z",
         "at": "2026-08-03T10:16:35Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-all-or-nothing",
+      "action": "reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared comparison URL",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-07T08:10:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "6a57a186728ad2bf828b112609fa708bf1afcc4c",
+        "subject": "code-review-reality-web-comparison-share-all-or-nothing: tolerate bad listing ids in shared comparison URLs (#2701)",
+        "at": "2026-08-07T08:10:06Z"
       }
     },
     {
@@ -3478,6 +4176,50 @@
       "first_open_at": "2026-07-07T16:06:35Z",
       "retry_of": "code-review-reality-web-listing-page-ssr-crash",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-listingform-nan-validation",
+      "action": "reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-08-07T08:10:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a2c0f53d4d66886ea14fcb6fd43478c4c4022fa9",
+        "subject": "code-review-reality-web-listingform-nan-validation: guard area/rooms against NaN &amp; negative input (#2702)",
+        "at": "2026-08-07T08:10:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listingform-no-i18n",
+      "action": "reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-07T04:07:19Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
     },
     {
       "id": "code-review-reality-web-protectedroute-i18n",
@@ -3631,6 +4373,24 @@
       }
     },
     {
+      "id": "data-announcement-fanout-metric-2026-07-23-retry2",
+      "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model) [retry 2/2 of failed data-announcement-fanout-metric-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T16:05:19Z (retry_of=data-announcement-fanout-metric-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T14:08:29Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T16:05:19Z",
+      "retry_of": "data-announcement-fanout-metric-2026-07-23",
+      "retry_round": 2,
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
       "id": "data-audit-add-evidence-idor-fix-2026-07-23",
       "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern)",
       "owner_role": "pm-data",
@@ -3676,6 +4436,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-31T16:04:41Z"
+      }
+    },
+    {
+      "id": "data-audit-add-evidence-idor-fix-2026-07-23-retry2",
+      "action": "After #2483/PR #2490 lands, backfill dispute add_evidence access-audit event (who added evidence to which dispute) to the platform-admin support-data event stream (parity with support-data audit-read pattern) [retry 2/2 of failed data-audit-add-evidence-idor-fix-2026-07-23]",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=data-audit-add-evidence-idor-fix-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:23:52Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "data-audit-add-evidence-idor-fix-2026-07-23",
+      "retry_round": 2,
+      "dev_reconciled": {
+        "landing_commit": "a598a8f",
+        "pr": 2712,
+        "subject": "feat(pm-data): emit dispute add_evidence access-audit event (#2712)",
+        "reconciled_at": "2026-08-08T02:26:53Z",
+        "note": "ghost retry: audit-event + IG3 test already landed out-of-band; implementer detected, no empty PR"
       }
     },
     {
@@ -4054,6 +4835,20 @@
       }
     },
     {
+      "id": "dx-closed-not-merged-pr-2385-retry2",
+      "action": "[DROPPED: task invalid — rust-toolchain 1.100.0 is a nonexistent version; PR #2705 auto-closed] PR #2385 (dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0) closed unmerged — likely superseded by unrelated toolchain pin or GH-action security rollup [retry 2/2 of failed dx-closed-not-merged-pr-2385]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-07T04:07:19Z (retry_of=dx-closed-not-merged-pr-2385 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T02:31:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:19Z",
+      "retry_of": "dx-closed-not-merged-pr-2385",
+      "retry_round": 2
+    },
+    {
       "id": "dx-closed-not-merged-pr-2387",
       "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423",
       "owner_role": "pm-devops",
@@ -4099,6 +4894,27 @@
       }
     },
     {
+      "id": "dx-closed-not-merged-pr-2387-retry2",
+      "action": "PR #2387 (dependabot: npm-minor-patch 15-update rollup) closed unmerged — superseded by the 19-update rollup #2423 [retry 2/2 of failed dx-closed-not-merged-pr-2387]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-07T08:11:10Z (retry_of=dx-closed-not-merged-pr-2387 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T04:22:38Z) | gc1-reconcile 2026-08-07T16:05:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T08:11:10Z",
+      "retry_of": "dx-closed-not-merged-pr-2387",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-07T16:05:27Z"
+      }
+    },
+    {
       "id": "dx-documentsbrowse-folder-preselect",
       "action": "[DROPPED: semantic-dup, already merged on dev] DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
       "owner_role": "pm-frontend",
@@ -4128,6 +4944,24 @@
       "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
     },
     {
+      "id": "dx-fixme-admin-web-mobile-config-patch-endpoint-retry1",
+      "action": "admin-web mobile-config Save flow blocked: PATCH /api/v1/admin/mobile-config endpoint missing [retry 1/2 of failed dx-fixme-admin-web-mobile-config-patch-endpoint]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=dx-fixme-admin-web-mobile-config-patch-endpoint reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "dx-fixme-admin-web-mobile-config-patch-endpoint",
+      "retry_round": 1,
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
       "id": "dx-fixme-admin-web-platform-settings-patch-endpoint",
       "action": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing",
       "owner_role": "pm-devops",
@@ -4144,6 +4978,24 @@
         "vector": "dx"
       },
       "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
+    },
+    {
+      "id": "dx-fixme-admin-web-platform-settings-patch-endpoint-retry1",
+      "action": "admin-web platform-settings Save blocked: PATCH /api/v1/platform-admin/settings endpoint missing [retry 1/2 of failed dx-fixme-admin-web-platform-settings-patch-endpoint]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=dx-fixme-admin-web-platform-settings-patch-endpoint reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "dx-fixme-admin-web-platform-settings-patch-endpoint",
+      "retry_round": 1,
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
     },
     {
       "id": "dx-fixme-admin-web-ui-kit-primitives-missing",
@@ -5941,6 +6793,20 @@
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
       }
+    },
+    {
+      "id": "gap-84-2-document-sign-page-2026-07-23-retry2",
+      "action": "Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned->shipped; verify signature-request email delivery (84-2 partial; prior attempt failed no-PR) [retry 1/2 of failed gap-84-2-document-sign-page-2026-07-23-retry3] [retry 2/2 of failed gap-84-2-document-sign-page-2026-07-23-retry1]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T06:23:37Z (retry_of=gap-84-2-document-sign-page-2026-07-23-retry1 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T06:14:40Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T06:23:37Z",
+      "retry_of": "gap-84-2-document-sign-page-2026-07-23-retry1",
+      "retry_round": 2
     },
     {
       "id": "gap-84-2-document-sign-page-2026-07-23-retry3",
@@ -11253,6 +12119,35 @@
       }
     },
     {
+      "id": "gh-issue-2575-retry1",
+      "action": "Follow-up: /disputes/kpis has no window-ordering validation and its only test is quarantined (PR #2572) (Closes #2575) [retry 1/2 of failed gh-issue-2575]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=gh-issue-2575 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:08:00Z) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T18:04:42Z",
+      "retry_of": "gh-issue-2575",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2575,
+        "url": "https://github.com/martin-janci/property-management/issues/2575",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2687,
+        "merged_at": "2026-08-07T00:07:53Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
       "id": "gh-issue-2598",
       "action": "Pre-existing frontend test failures on `dev` block the verify gate for admin-web / reality-web PRs (Closes #2598)",
       "owner_role": "pm-frontend",
@@ -11299,6 +12194,28 @@
         ]
       },
       "last_updated": "2026-08-01T00:20:00Z"
+    },
+    {
+      "id": "gh-issue-2612-retry1",
+      "action": "Follow-up: scheduled announcement / vote-started notifications are fire-once — a transient target-resolution error permanently drops them (PR #2608) (Closes #2612) [retry 1/2 of failed gh-issue-2612]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=gh-issue-2612 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T00:04:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "gh-issue-2612",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2612,
+        "url": "https://github.com/martin-janci/property-management/issues/2612",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     },
     {
       "id": "gh-issue-2621",
@@ -11399,6 +12316,35 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-04T08:03:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2643-retry1",
+      "action": "Follow-up: OAuth token-usage recording is awaited inline on the token hot path (PR #2629) (Closes #2643) [retry 1/2 of failed gh-issue-2643]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=gh-issue-2643 reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T06:05:19Z) | gc1-reconcile 2026-08-11T12:05:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T06:06:45Z",
+      "retry_of": "gh-issue-2643",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2643,
+        "url": "https://github.com/martin-janci/property-management/issues/2643",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2732,
+        "merged_at": "2026-08-11T10:09:19Z",
+        "at": "2026-08-11T12:05:29Z"
       }
     },
     {
@@ -11532,6 +12478,81 @@
         "merged_pr": 2663,
         "merged_at": "2026-08-05T20:10:07Z",
         "at": "2026-08-05T20:10:40Z"
+      }
+    },
+    {
+      "id": "gh-issue-2699",
+      "action": "dev CI broken: duplicate migration version 00220 (renumber portal_get_listing_view_count → 00227) (Closes #2699)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-07T04:07:08Z (#2699) | dev-reconcile 2026-08-07T08:10:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T04:07:08Z",
+      "issue_ref": {
+        "number": 2699,
+        "url": "https://github.com/martin-janci/property-management/issues/2699",
+        "labels": [
+          "bug",
+          "backend"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "9c8da676d5f0bf7d0757c88f97d241651ae97276",
+        "subject": "gh-issue-2699: renumber portal_get_listing_view_count migration 00220 → 00227 (#2700)",
+        "at": "2026-08-07T08:10:06Z"
+      }
+    },
+    {
+      "id": "gh-issue-2703",
+      "action": "Security: SSRF DNS-rebinding TOCTOU in workflow action api_call.rs — anti-rebinding gate is bypassable (Closes #2703)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-07T08:10:30Z (#2703)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T08:10:30Z",
+      "issue_ref": {
+        "number": 2703,
+        "url": "https://github.com/martin-janci/property-management/issues/2703",
+        "labels": [
+          "follow-up"
+        ]
+      },
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "gh-issue-2704",
+      "action": "Unbounded response-body read in workflow action api_call.rs — memory-amplification DoS (Closes #2704)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-07T08:10:30Z (#2704) | gc1-reconcile 2026-08-07T16:21:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T08:10:30Z",
+      "issue_ref": {
+        "number": 2704,
+        "url": "https://github.com/martin-janci/property-management/issues/2704",
+        "labels": [
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2707,
+        "merged_at": "2026-08-07T16:19:50Z",
+        "at": "2026-08-07T16:21:27Z"
       }
     },
     {
@@ -12120,6 +13141,27 @@
       "dev_reconciled": "no-op-already-on-dev 2026-07-30T16:29:56Z"
     },
     {
+      "id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1-retry1",
+      "action": "Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial finish-what-is-started) [retry 1/2 of failed pm-scrum-master-wire-ppt-web-direct-s3-84-1]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-06T18:04:42Z (retry_of=pm-scrum-master-wire-ppt-web-direct-s3-84-1 reason=failed-no-pr cooldown_ok newest_failure=2026-07-30T16:29:56Z) | gc1-reconcile 2026-08-07T02:05:57Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-06T18:04:42Z",
+      "retry_of": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2686,
+        "merged_at": "2026-08-07T00:07:46Z",
+        "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
       "id": "pm-security-reconcile-cookie-path-565",
       "action": "Reconcile the cookie Path breaking change (#617) introduced by PR #565 session-cookie scope hardening (P0-12): confirm the new Path does not silently log existing sessions out or break the SSO /auth/callback cookie read; document the migration.",
       "owner_role": "pm-security",
@@ -12225,6 +13267,24 @@
       "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
     },
     {
+      "id": "refactor-churn-hotspot-api-server-auth-2026-07-31-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/auth.rs — 2950 lines this window (runs_seen=5, no refactor PR yet) [retry 1/2 of failed refactor-churn-hotspot-api-server-auth-2026-07-31]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-auth-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "refactor-churn-hotspot-api-server-auth-2026-07-31",
+      "retry_round": 1,
+      "stale_reconciled": {
+        "at": "2026-08-09T14:11:09Z",
+        "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
       "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549)",
       "owner_role": "pm-tech-lead",
@@ -12249,6 +13309,27 @@
       }
     },
     {
+      "id": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/admin.rs — 240 lines this window (PRs #2478, #2549) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-admin-2026-07-30]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-07T18:08:20Z (retry_of=refactor-churn-hotspot-api-server-layout-admin-2026-07-30 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T18:04:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-07T18:08:20Z",
+      "retry_of": "refactor-churn-hotspot-api-server-layout-admin-2026-07-30",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "landing_commit": "10ba8fbc",
+        "pr": 2713,
+        "subject": "refactor(api-server): dedupe layout admin handler boilerplate (#2713)",
+        "reconciled_at": "2026-08-08T02:26:53Z",
+        "note": "merged this run"
+      }
+    },
+    {
       "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478)",
       "owner_role": "pm-tech-lead",
@@ -12270,6 +13351,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-31T16:04:41Z"
+      }
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/layout/tenant.rs — 262 lines this window (PR #2478) [retry 1/2 of failed refactor-churn-hotspot-api-server-layout-tenant-2026-07-30]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T00:08:13Z (retry_of=refactor-churn-hotspot-api-server-layout-tenant-2026-07-30 reason=failed-no-pr cooldown_ok newest_failure=2026-07-31T14:09:17Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T00:08:13Z",
+      "retry_of": "refactor-churn-hotspot-api-server-layout-tenant-2026-07-30",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "landing_commit": "5931d56",
+        "pr": 2711,
+        "subject": "refactor(api-server): dedupe layout tenant-override handlers (#2711)",
+        "reconciled_at": "2026-08-08T02:12:19Z",
+        "note": "ghost retry: tenant-override layout dedupe already landed out-of-band; retry-remint dev-truth guard missed it (non-<id>: subject)"
       }
     },
     {
@@ -12313,6 +13415,26 @@
         "vector": "refactor"
       },
       "inprogress_reconciled": "assignment=failed(open) @2026-08-01T04:09:02Z"
+    },
+    {
+      "id": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/reports.rs — 3329 lines this window (PR #2599 extracted helpers) [retry 1/2 of failed refactor-churn-hotspot-api-server-reports-2026-07-31]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T04:07:24Z (retry_of=refactor-churn-hotspot-api-server-reports-2026-07-31 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T04:04:50Z) | dev-reconcile 2026-08-08T10:13:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T04:07:24Z",
+      "retry_of": "refactor-churn-hotspot-api-server-reports-2026-07-31",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4db58a07a72e78904ad3698e5366bb6e9b556e61",
+        "subject": "refactor-churn-hotspot-api-server-reports-2026-07-31-retry1: extract reports helpers into helpers.rs (#2720)",
+        "at": "2026-08-08T10:13:28Z"
+      }
     },
     {
       "id": "refactor-churn-hotspot-api-server-routes-auth",
@@ -13048,6 +14170,25 @@
       }
     },
     {
+      "id": "screen-map-drift-pr-2646-ppt-retry1",
+      "action": "screen-map drift: PR #2646 touched ppt-web route wrapper (App.tsx) without updating docs/screens/ppt/ [retry 1/2 of failed screen-map-drift-pr-2646-ppt]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=screen-map-drift-pr-2646-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "screen-map-drift-pr-2646-ppt",
+      "retry_round": 1,
+      "merged_evidence": {
+        "pr": 2733,
+        "merged_at": "2026-08-11T14:09:30Z",
+        "landed_on": "dev"
+      }
+    },
+    {
       "id": "screen-map-drift-pr-2647-ppt",
       "action": "screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updating docs/screens/ppt/",
       "owner_role": "pm-qa",
@@ -13070,6 +14211,20 @@
         "merged_at": null,
         "at": "2026-08-04T12:04:18Z"
       }
+    },
+    {
+      "id": "screen-map-drift-pr-2647-ppt-retry1",
+      "action": "[MOOT: screen-maps already match PR #2647 routes; only pre-existing global catalog gap remains, out of scope] screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updating docs/screens/ppt/ [retry 1/2 of failed screen-map-drift-pr-2647-ppt]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-11T12:06:50Z (retry_of=screen-map-drift-pr-2647-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T10:17:15Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T12:06:50Z",
+      "retry_of": "screen-map-drift-pr-2647-ppt",
+      "retry_round": 1
     },
     {
       "id": "screen-map-drift-pr-2648-ppt",
@@ -13193,6 +14348,27 @@
         "archive_status": "failed",
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
+      }
+    },
+    {
+      "id": "sec-layout-webhook-hmac-verify-2026-07-23-retry2",
+      "action": "Verify layout publish webhook uses HMAC signature verification (parity with esignature webhook) — feeds #2485 fix design [retry 2/2 of failed sec-layout-webhook-hmac-verify-2026-07-23]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-08T06:23:37Z (retry_of=sec-layout-webhook-hmac-verify-2026-07-23 reason=failed-no-pr cooldown_ok newest_failure=2026-08-01T06:14:40Z) | gc1-reconcile 2026-08-08T10:13:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-08T06:23:37Z",
+      "retry_of": "sec-layout-webhook-hmac-verify-2026-07-23",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2718,
+        "merged_at": "2026-08-08T08:18:30Z",
+        "at": "2026-08-08T10:13:28Z"
       }
     },
     {
@@ -13398,6 +14574,21 @@
         "pr": null,
         "at": "2026-08-03T02:10:22Z"
       }
+    },
+    {
+      "id": "test-gap-disputes-kpis-window-validation-retry1",
+      "action": "/disputes/kpis: no window_start<=window_end validation and only test is BIT-440 quarantined [retry 1/2 of failed test-gap-disputes-kpis-window-validation]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-09T06:08:18Z (retry_of=test-gap-disputes-kpis-window-validation reason=failed-no-pr cooldown_ok newest_failure=2026-08-02T04:09:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-09T06:08:18Z",
+      "retry_of": "test-gap-disputes-kpis-window-validation",
+      "retry_round": 1,
+      "last_updated": "2026-08-09T06:24:50Z"
     },
     {
       "id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",

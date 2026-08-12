@@ -11,8 +11,11 @@
 //! Skipped (require live external provider calls):
 //!   • POST /api/v1/ai/llm/lease/generate     (LLM call)
 //!   • POST /api/v1/ai/llm/listing/description (LLM call)
-//!   • POST /api/v1/ai/llm/chat/enhanced       (LLM call)
 //!   • POST /api/v1/ai/llm/voice/devices       (OAuth exchange)
+//!
+//! Note: POST /api/v1/ai/llm/chat/enhanced is covered below as a fail-closed
+//! (501 NOT_IMPLEMENTED) regression test — the handler no longer fabricates a
+//! success payload, so it needs no live provider.
 
 use axum::http::StatusCode;
 use serde_json::json;
@@ -624,6 +627,63 @@ async fn update_escalation_config_returns_ok(pool: PgPool) {
         StatusCode::OK,
         "update escalation config must return 200; body={}",
         resp.text()
+    );
+}
+
+// =============================================================================
+// ai/llm.rs — enhanced (RAG) chat
+// =============================================================================
+
+// POST /api/v1/ai/llm/chat/enhanced → 501 NOT_IMPLEMENTED
+//
+// Regression guard (code-review-api-handlers-enhanced-chat-stub): this handler
+// used to return a 200 success payload with fabricated metrics (a canned echo
+// response, a hardcoded confidence of 0.85, tokens_used: 150, empty sources,
+// and an escalated flag derived from the fake confidence) despite doing no
+// embedding search and no LLM call. It now fails closed with 501 so clients
+// never act on invented data. Assert both the status AND the absence of the
+// fabricated fields.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn enhanced_chat_fails_closed_not_implemented(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) =
+        create_authenticated_user_with_org(&app, &user, "llm-enhanced-chat").await;
+    let session = app.session(token, org_id);
+
+    let resp = app
+        .execute(
+            session
+                .post("/api/v1/ai/llm/chat/enhanced")
+                .json(json!({
+                    "message": "How do I report a leak in my unit?",
+                    "language": "en"
+                }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_IMPLEMENTED,
+        "enhanced chat must fail closed with 501, not return fabricated success; body={}",
+        resp.text()
+    );
+
+    // The old stub leaked these invented metrics in a 200 body — none of them
+    // must ever appear in the fail-closed response.
+    let body = resp.text();
+    assert!(
+        !body.contains("\"confidence\""),
+        "response must not carry a fabricated confidence score; body={body}"
+    );
+    assert!(
+        !body.contains("\"tokens_used\""),
+        "response must not carry a fabricated token count; body={body}"
+    );
+    assert!(
+        !body.contains("\"escalated\""),
+        "response must not carry a fabricated escalation flag; body={body}"
     );
 }
 

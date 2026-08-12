@@ -5374,6 +5374,7 @@ dependencies = [
  "hex",
  "jsonwebtoken",
  "layout-core",
+ "lettre",
  "metrics 0.24.6",
  "metrics-exporter-prometheus",
  "opentelemetry",

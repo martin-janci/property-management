@@ -38,7 +38,7 @@ pub struct ForgotPasswordResponse {
 pub async fn forgot_password(
     State(state): State<AppState>,
     Json(req): Json<ForgotPasswordRequest>,
-) -> Result<Json<ForgotPasswordResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<ForgotPasswordResponse>, AuthError> {
     // Throttle per email before doing any work: this endpoint sends an email
     // and invalidates the recipient's outstanding reset token on every call, so
     // it is a mailbomb / token-clobber surface (see limiter docs above).
@@ -152,7 +152,7 @@ pub struct ResetPasswordResponse {
 pub async fn reset_password(
     State(state): State<AppState>,
     Json(req): Json<ResetPasswordRequest>,
-) -> Result<Json<ResetPasswordResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<ResetPasswordResponse>, AuthError> {
     // Validate new password requirements
     if let Err(errors) = AuthService::validate_password(&req.new_password) {
         let details: Vec<ValidationError> = errors
@@ -183,34 +183,28 @@ pub async fn reset_password(
     {
         Ok(Some(token)) => token,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "INVALID_TOKEN",
-                    "This password reset link is invalid or has already been used",
-                )),
+                "INVALID_TOKEN",
+                "This password reset link is invalid or has already been used",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding password reset token");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to validate reset token",
-                )),
+                "DATABASE_ERROR",
+                "Failed to validate reset token",
             ));
         }
     };
 
     // Check if token is expired
     if reset_token.is_expired() {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "TOKEN_EXPIRED",
-                "This password reset link has expired. Please request a new one.",
-            )),
+            "TOKEN_EXPIRED",
+            "This password reset link has expired. Please request a new one.",
         ));
     }
 
@@ -218,34 +212,28 @@ pub async fn reset_password(
     let user = match state.user_repo.find_by_id(reset_token.user_id).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return Err((
+            return Err(err_response(
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "USER_NOT_FOUND",
-                    "User account no longer exists",
-                )),
+                "USER_NOT_FOUND",
+                "User account no longer exists",
             ));
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding user");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to reset password",
-                )),
+                "DATABASE_ERROR",
+                "Failed to reset password",
             ));
         }
     };
 
     // Check if user is still active
     if user.status != "active" {
-        return Err((
+        return Err(err_response(
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "ACCOUNT_INACTIVE",
-                "Cannot reset password for inactive account",
-            )),
+            "ACCOUNT_INACTIVE",
+            "Cannot reset password for inactive account",
         ));
     }
 
@@ -282,12 +270,10 @@ pub async fn reset_password(
             }
             other => {
                 tracing::error!(error = %other, user_id = %user.id, "Password policy check failed");
-                return Err((
+                return Err(err_response(
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "AUTH_POLICY_ERROR",
-                        "Failed to validate password",
-                    )),
+                    "AUTH_POLICY_ERROR",
+                    "Failed to validate password",
                 ));
             }
         }
@@ -298,12 +284,10 @@ pub async fn reset_password(
         Ok(hash) => hash,
         Err(e) => {
             tracing::error!(error = %e, "Failed to hash new password");
-            return Err((
+            return Err(err_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to process password",
-                )),
+                "INTERNAL_ERROR",
+                "Failed to process password",
             ));
         }
     };
@@ -315,12 +299,10 @@ pub async fn reset_password(
         .await
     {
         tracing::error!(error = %e, user_id = %user.id, "Failed to update password");
-        return Err((
+        return Err(err_response(
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "DATABASE_ERROR",
-                "Failed to update password",
-            )),
+            "DATABASE_ERROR",
+            "Failed to update password",
         ));
     }
 

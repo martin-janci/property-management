@@ -488,8 +488,25 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
             return a;
           });
         // Prefer the original (post-retry-increment) objects for carried items
-        // so their bumped `retries` count is what gets persisted.
-        const merged = [...carriedForward.map((a) => byId.get(a.id) ?? a), ...newlyEnqueued];
+        // so their bumped `retries` count is what gets persisted. Also apply the
+        // temp→server id remap before persisting: a cycle that halts on a
+        // head-of-line failure breaks the loop before reaching dependent
+        // UPDATE/DELETEs queued *after* the halt point, so those never got
+        // remapped in-loop. `tempIdToServerId` is in-memory only and is gone
+        // next cycle, so if a CREATE already resolved its temp id this cycle we
+        // must rewrite its dependents now or the mapping is lost and the edit
+        // orphans onto a temp id that no longer exists server-side (same reason
+        // `newlyEnqueued` is remapped above). remapActionIds is a no-op for
+        // actions that carry no still-live temp id, so re-applying it to items
+        // that were already remapped in-loop is safe.
+        const merged = [
+          ...carriedForward.map((a) => {
+            const carried = byId.get(a.id) ?? a;
+            remapActionIds(carried, tempIdToServerId);
+            return carried;
+          }),
+          ...newlyEnqueued,
+        ];
 
         await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(merged));
         setQueuedActionsCount(merged.length);

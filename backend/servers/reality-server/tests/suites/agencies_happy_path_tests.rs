@@ -1,12 +1,13 @@
 //! Happy-path 2xx tests for the agencies surface
 //! (`reality-server/src/routes/agencies.rs`) — BIT-344 Wave 6.
 //!
-//! Public reads (`list_agencies`, `get_agency`, `get_agency_by_slug`,
-//! `list_members`) need only a seeded `reality_agencies` row. The authenticated
-//! writes (`create_agency`, `update_agency`) use `RequestPrincipal`, so the
-//! caller is seeded `principal_kind = 'platform'` to clear the tenant gate;
-//! `update_agency` additionally needs an active `reality_agency_members` row
-//! (FK → `users` after migration 00148).
+//! Public reads (`list_agencies`, `get_agency`, `get_agency_by_slug`) need only
+//! a seeded `reality_agencies` row. The authenticated calls (`create_agency`,
+//! `update_agency`, `list_members`) use `RequestPrincipal`, so the caller is
+//! seeded `principal_kind = 'platform'` to clear the tenant gate; `update_agency`
+//! and `list_members` additionally need an active `reality_agency_members` row
+//! (FK → `users` after migration 00148) — the member roster is agency-internal
+//! PII, gated by `check_agency_membership` (members-idor audit).
 
 use crate::common::{make_app_state, mint_token, send, send_json};
 use axum::{http::Method, Router};
@@ -109,13 +110,18 @@ async fn get_agency_by_slug_returns_2xx(pool: PgPool) {
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_members_returns_2xx(pool: PgPool) {
+    // members-idor audit: listing members now requires an authenticated,
+    // active member of the target agency.
+    let member = seed_user(&pool, "members-caller").await;
     let agency_id = seed_agency(&pool, "members").await;
+    seed_membership(&pool, agency_id, member).await;
+    let token = mint_token(member);
     let app = agencies_router(pool);
     let status = send(
         &app,
         Method::GET,
         &format!("/api/v1/agencies/{agency_id}/members"),
-        None,
+        Some(&token),
     )
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
