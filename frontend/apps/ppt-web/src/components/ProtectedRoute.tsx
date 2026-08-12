@@ -106,7 +106,9 @@ export function ProtectedRoute({
       <div className="protected-route-loading">
         <div
           className="protected-route-spinner"
-          aria-label={t('accessibility.checkingAuthentication')}
+          aria-label={t('accessibility.checkingAuthentication', {
+            defaultValue: 'Checking authentication',
+          })}
         />
         <span className="protected-route-loading-text">{t('common.loading')}</span>
       </div>
@@ -127,8 +129,8 @@ export function ProtectedRoute({
       // User is authenticated but lacks required role (or role not yet populated).
       return (
         <div className="protected-route-unauthorized">
-          <h1>{t('errors.accessDenied')}</h1>
-          <p>{t('errors.accessDeniedMessage')}</p>
+          <h1>{t('errors.accessDenied', { defaultValue: 'Access Denied' })}</h1>
+          <p>{t('errors.unauthorized')}</p>
         </div>
       );
     }
