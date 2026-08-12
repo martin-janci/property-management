@@ -14,6 +14,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmptyState } from '../../components/states';
+import { resolveLocale } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type NotificationCategory =
@@ -102,7 +103,7 @@ function formatRelative(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(iso).toLocaleDateString(resolveLocale(), { month: 'short', day: 'numeric' });
 }
 
 interface NotificationsScreenProps {
