@@ -7483,6 +7483,75 @@
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-offline-401-dropped",
+      "title": "mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit) as permanent and drops the queued action, silently losing offline-created content",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:262 — `if (response.status >= 400 && response.status < 500)` marks the error `permanent`, so processQueue (line 392-395) drops it: 401 (expired short-lived access token) and 429 (rate limit) are recoverable but discarded",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:232 — executeQueuedAction reads the bearer from SecureStore at dispatch but never refreshes it; token refresh only runs at boot/biometric (contexts/AuthContext.tsx:275,326), so a replay after an offline period reliably 401s",
+        "Contradicts the module's own documented invariant (lines 379-390, 399-404): transient failures must NEVER be dropped to avoid losing offline-created faults; a 401 on replay hits exactly that data-loss path",
+        "Fix: restrict `permanent` to non-auth client errors (400/403/404/409/422); treat 401/408/429 as transient — on 401 trigger AuthContext.refreshToken() and re-attempt rather than drop"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-date-locale-en-us",
+      "title": "mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dates never localize for sk/cs/de users",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:125 — module-level formatDate() hardcodes toLocaleDateString('en-US', ...) with no locale param",
+        "Same hardcoded 'en-US' remains in screens/notifications/NotificationsScreen.tsx:105, screens/messages/MessagesScreen.tsx:61, screens/messages/ThreadDetailScreen.tsx:124, screens/announcements/AnnouncementsScreen.tsx:153, screens/leases/LeaseDetailScreen.tsx:102, screens/person-months/PersonMonthsScreen.tsx:46",
+        "This class was recognized and fixed as #2282 only in DashboardScreen.tsx:119-122 and VotingScreen.tsx:84-90 (both now pass i18n.language) — the remaining screens are the unfinished half",
+        "Fix: pass useTranslation().i18n.language (as Dashboard/Voting do) instead of the 'en-US' literal"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-meterdetail-i18n",
+      "title": "mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling strings use i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:168 — literal 'Latest reading' rendered directly instead of t(...)",
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:175 — literal 'Used since previous reading:' hardcoded",
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:181 — literal 'Reading history' hardcoded, whereas adjacent strings use t('meters.noReadingsTitle') etc.",
+        "Fix: move the three literals into i18n keys (e.g. meters.latestReading / meters.usedSincePrevious / meters.readingHistory) and render via t()"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }
