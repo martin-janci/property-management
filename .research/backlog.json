@@ -7523,15 +7523,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2740",
         "Tier1d review 2026-08-12 (mobile-rn)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:125 — module-level formatDate() hardcodes toLocaleDateString('en-US', ...) with no locale param",
         "Same hardcoded 'en-US' remains in screens/notifications/NotificationsScreen.tsx:105, screens/messages/MessagesScreen.tsx:61, screens/messages/ThreadDetailScreen.tsx:124, screens/announcements/AnnouncementsScreen.tsx:153, screens/leases/LeaseDetailScreen.tsx:102, screens/person-months/PersonMonthsScreen.tsx:46",
         "This class was recognized and fixed as #2282 only in DashboardScreen.tsx:119-122 and VotingScreen.tsx:84-90 (both now pass i18n.language) — the remaining screens are the unfinished half",
-        "Fix: pass useTranslation().i18n.language (as Dashboard/Voting do) instead of the 'en-US' literal"
+        "Fix: pass useTranslation().i18n.language (as Dashboard/Voting do) instead of the 'en-US' literal",
+        "resolved: PR #2740 merged 2026-08-12 — localize mobile dates via active i18n locale; evidence-gone: FaultsListScreen.tsx now uses resolveLocale() at line 126, no hardcoded en-US"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx"
@@ -7546,15 +7548,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2739",
         "Tier1d review 2026-08-12 (mobile-rn)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:168 — literal 'Latest reading' rendered directly instead of t(...)",
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:175 — literal 'Used since previous reading:' hardcoded",
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:181 — literal 'Reading history' hardcoded, whereas adjacent strings use t('meters.noReadingsTitle') etc.",
-        "Fix: move the three literals into i18n keys (e.g. meters.latestReading / meters.usedSincePrevious / meters.readingHistory) and render via t()"
+        "Fix: move the three literals into i18n keys (e.g. meters.latestReading / meters.usedSincePrevious / meters.readingHistory) and render via t()",
+        "resolved: PR #2739 merged 2026-08-12 — i18n hardcoded strings in MeterDetailScreen; code patterns not independently verified (accompanying MeterDetailScreen.i18n.test.tsx added)"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx"
@@ -7569,15 +7573,17 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2741",
         "Tier1d review 2026-08-12 (ppt-web-core)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-387 — AUTHED_QUERY_KEY_ROOTS (the allow-list logout() iterates at contexts/AuthContext.tsx:565-567 to purge session-scoped TanStack caches) contains 'notification-analytics' but NOT 'notification-triggers'. The docstring at :349-352 states the list 'must cover ALL tenant-/user-scoped caches'; any root absent from it is never removed on logout.",
         "frontend/packages/api-client/src/granular-notifications/hooks.ts:15-17 — notificationTriggerKeys.all = ['notification-triggers'] (root missing from the allow-list). Consumed by ppt-web at frontend/apps/ppt-web/src/features/notification-triggers/index.ts:21 and mounted via a lazy route (frontend/apps/ppt-web/src/routes/lazyRoutes.tsx:330), so the cache is populated with the signed-in user's per-event push/email/in-app preferences.",
         "ppt-web is an SPA — logout() clears storage and removes only allow-listed roots without a page reload, so the ['notification-triggers'] subtree survives logout→next-login; on a shared workstation user B sees user A's notification-preference data until staleTime lapses. Same class as PR #2650 (which added predictive-maintenance/sentiment/notification-analytics) but that fix overlooked this root and the recommended guard (assert every feature *Keys.all root ∈ AUTHED_QUERY_KEY_ROOTS) was never added.",
-        "Fix: add 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS; better, add a unit assertion enumerating every exported *Keys.all root and requiring membership so future pages can't silently reintroduce the leak."
+        "Fix: add 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS; better, add a unit assertion enumerating every exported *Keys.all root and requiring membership so future pages can't silently reintroduce the leak.",
+        "resolved: PR #2741 merged 2026-08-12 — purge notification-triggers query root on logout; evidence-gone: 'notification-triggers' now in AUTHED_QUERY_KEY_ROOTS at queryKeys.ts:391"
       ],
       "files": [
         "frontend/apps/ppt-web/src/lib/queryKeys.ts",

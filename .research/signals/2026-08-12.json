@@ -1,0 +1,83 @@
+{
+  "date": "2026-08-12",
+  "run_mode": "compressed",
+  "trigger": "buffer-low: claimable=4/72 — refill planner",
+  "notes": "Compressed run under buffer-low trigger after 5d cloud-routine outage. Phase 1 pulled PR list only (no per-commit diff survey); Phases 1.5, 1.6, 3, 5 skipped. Focus: mark 3 resolved rows done, regenerate rendered views, advance cursors.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "evidence": "Routine had not run in 5d 9h at fire time (>36h threshold). Cloud routine scheduler appears paused since 2026-08-07.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-08-12",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-08-07T06:24:00Z (5d ≥ 3d threshold)",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 5d old; cloud routine may be paused. Dispatcher (planning branch) is still ticking based on de0dcec commit today at 14:17Z.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "resolution-pr-2739-code-review-mobile-rn-meterdetail-i18n",
+      "type": "resolution",
+      "source": "PR #2739 (merged 2026-08-12)",
+      "score_delta": 0,
+      "evidence": "PR body/title contains the item id verbatim; MeterDetailScreen.i18n.test.tsx added. Backlog row transitioned open→done with 'code patterns not independently verified' note per resolution table.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "resolution-pr-2740-code-review-mobile-rn-date-locale-en-us",
+      "type": "resolution",
+      "source": "PR #2740 (merged 2026-08-12)",
+      "score_delta": 0,
+      "evidence": "PR body/title contains item id verbatim; FaultsListScreen.tsx:126 now uses resolveLocale() — evidence-gone confirmed for the sole file in item.files.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "resolution-pr-2741-code-review-ppt-web-core-logout-purge-notif-triggers",
+      "type": "resolution",
+      "source": "PR #2741 (merged 2026-08-12)",
+      "score_delta": 0,
+      "evidence": "PR body/title contains item id verbatim; 'notification-triggers' now appears at queryKeys.ts:391 inside AUTHED_QUERY_KEY_ROOTS — evidence-gone confirmed.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "buffer-starvation-2026-08-12",
+      "type": "buffer_starvation",
+      "source": "backlog-refill.sh dry-run (honest_claimable=4 floor=36 avail=0)",
+      "score_delta": 0,
+      "evidence": "Dispatcher trigger fired at claimable=4/72; refill script found 0 candidates because every non-terminal backlog row is already tracked in action-list.json or assignments.json. Recovery requires fresh code-review-finding signals (Phase 1.5) or a deep sweep.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 5 allowlist requires confidence=high + score>=3; only logout-purge row met that bar and it was resolved this run",
+  "goal_checks": [
+    {"goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-12.md && head -1 | grep '^# 2026-08-12$'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true,  "command": "state.json advanced (last_pr_seen 2702→2741, last_commit_sha, last_run_iso)", "observed": "true", "expected": "true"},
+    {"goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true,  "command": "no non-cumulative signal id from today was in prior seen_signals with score_delta != 0", "observed": "true", "expected": "true"},
+    {"goal": "G5", "passed": true,  "command": "score cap ≤8; no open item is >14d old, so decay N/A this run", "observed": "true", "expected": "true"},
+    {"goal": "G6", "passed": true,  "command": "no new plans this run — vacuous", "observed": "true", "expected": "true"},
+    {"goal": "G7", "passed": true,  "command": "no new plans this run — vacuous", "observed": "true", "expected": "true"},
+    {"goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0"},
+    {"goal": "G9", "passed": true,  "command": "no secrets/private-host in staged diff (excluding baseline docs)", "observed": "0", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff backlog.md /tmp/backlog.regen.md", "observed": "identical", "expected": "identical"},
+    {"goal": "G11", "passed": true, "command": "no failed phase this run", "observed": "true", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "no plans deleted this run — no thrashing", "observed": "true", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count unchanged (_archive/ untouched)", "observed": "≥ HEAD", "expected": "≥ HEAD"},
+    {"goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical", "expected": "identical"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions=[] (kill switch not set, no candidate)", "observed": "true", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped — gate is a no-op this run", "observed": "no-op", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "no Telegram token in staged diff", "observed": "0", "expected": "0"}
+  ]
+}
