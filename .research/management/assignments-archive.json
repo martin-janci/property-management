@@ -3515,6 +3515,28 @@
       "merge_attempted_at": "2026-08-04T00:13:43Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-perfmetrics-listener-leak",
+      "branch": "auto-impl/code-review-ppt-web-core-perfmetrics-lis-00fbb67e",
+      "status": "merged",
+      "claimed_at": "2026-08-12T10:10:54Z",
+      "last_updated": "2026-08-12T16:41:50Z",
+      "status_changed_at": "2026-08-12T16:41:50Z",
+      "pr_number": 2742,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2742",
+      "merged_at": "2026-08-12T16:14:18Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2742 status=done specialist=react-web — removeEventListener visibilitychange+load on cleanup; onReport in ref dropped from deps; +5 tests; ppt-web verify green (2189). scope_drift labeling artifact (pm-backend owner, ppt-web hook code)",
+      "reviewer_summary": "verdict=approve head_oid=0631e686 — round-2 confined to the 2 hook files; stray assignments.json change correctly dropped; listener-cleanup fix correct; CI green. Posted as comment (bot cannot self-approve own PR).",
+      "last_reviewed_oid": "0631e686ddbaad6a92d0c67a3982d4517b9c0d58",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-12T16:41:50Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
       "branch": "auto-impl/code-review-ppt-web-core-rentals-auth-no-bf961d7e",
       "status": "merged",
@@ -13527,5 +13549,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-12T12:19:36Z"
+  "archived_at": "2026-08-12T16:42:45Z"
 }

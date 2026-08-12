@@ -1,0 +1,56 @@
+{
+  "generated": "2026-08-12T18:00:00Z",
+  "segment": "reality-web",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "No CHURN_FILES passed (demand-driven Tier 1d refill). mobile-native-kmp hard-excluded (AGP/KMP unlandable in cloud runner + saturated: 3 open backlog findings). By review_cursor ascending, reality-web (cursor 2026-08-07) is the oldest non-excluded segment. Saturation check clean: 0 open code-review-findings for reality-web in backlog.json. Distinct from yesterday's 2026-08-11 reality-web signals (listings-page-no-error-state / layoutsections-dup-key / maint-fallback-i18n) — this pass targets shipped-mock/fake-submit surfaces. Path root resolved to frontend/apps/reality-web/src (SKILL table lists frontend/reality-web/src, stale).",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-noid",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:15-20 — `AgentProfilePage()` is a `'use client'` component (line 1) that never reads the `[id]` route param: it takes no `params` prop and calls no `useParams()`. Line 20 hardcodes `const agent = MOCK_AGENT;`.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts:47-49 — MOCK_AGENT is a single fabricated agent (`id: 'realtor-1'`, `name: 'Ing. Petra Horáčková'`). Every URL under /[locale]/realtor/<any-id> renders this same fake agent, plus MOCK_AGENT_LISTINGS (page.tsx:227,237) and MOCK_AGENT_REVIEWS (page.tsx:330,333). Visiting /realtor/realtor-42 and /realtor/anything-else both show 'Ing. Petra Horáčková' with identical listings/reviews.",
+        "This is a PUBLIC, SEO-indexed portal route: crawlers index duplicate fabricated content across every agent URL, and real agents' public profiles are unreachable. frontend/apps/reality-web/src/lib/realtor-api.ts exposes only `getMyRealtorProfile()` (self, /api/v1/realtors/me) — there is no public `getRealtorById` fetcher, so the real backing endpoint is not wired.",
+        "Because the page is a client component with no `generateMetadata`, agent profiles also emit no per-agent SSR title/description/OG tags (unlike listings/[slug] which has generateMetadata). Fix: read `params.id`, fetch the public realtor profile (add a `/api/v1/realtors/{id}` fetcher in realtor-api.ts + regenerate the SDK), render `notFound()` on 404, and add `generateMetadata`."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-contact-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:22-28 — `handleSendMessage` calls `e.preventDefault()` then, if `message.trim()` is non-empty, only does `setMessageSent(true); setContactOpen(false);`. There is no `fetch`/API call anywhere in the file (grep for `fetch`/`await` in page.tsx returns nothing).",
+        "page.tsx:552-591 — this handler is wired to the contact-agent modal's `<form onSubmit={handleSendMessage}>` (line 591), which is the primary lead-capture CTA on the agent profile. A visitor fills in and submits an inquiry, sees a success confirmation (`messageSent` state), but the message is silently discarded — no inquiry is sent to the agent and nothing is persisted.",
+        "This fabricates success on a lead-generation flow: prospective buyers believe they have contacted the agent when they have not, so real leads are lost with zero error signal. Fix: POST the inquiry to a real reality-server endpoint (with loading/error states) before flipping `messageSent`, or disable the form and label it clearly if the backend is not yet available."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:65 — the authenticated user profile route renders `const profile = MOCK_PROFILE;` and maps MOCK_LISTINGS (line 268), MOCK_ACTIVITY (line 346), MOCK_REVIEWS (line 384) from ./_mock. No real data fetch (no useQuery/fetch in the file).",
+        "profile/page.tsx:5-11 — the file header comment acknowledges this is a deliberate placeholder: it was wrapped in `<ProtectedRoute>` (line 57) specifically because anonymous users were being shown 'a fabricated Tomáš Novotný + listings' which 'read like a security/UX bug', and notes 'Once /users/me + /listings/by-owner endpoints land, replace MOCK_* with live data via the SDK.'",
+        "Net effect: every authenticated user sees the same fabricated profile/listings/activity/reviews rather than their own account data. Lower severity than the public /realtor/[id] case (this route is auth-gated, not SEO-indexed, and the placeholder is documented), but it is still shipped mock data on a user-facing account route. Fix: wire MOCK_PROFILE/MOCK_LISTINGS/MOCK_ACTIVITY/MOCK_REVIEWS to the real /users/me + owner-listings endpoints once available."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-12T06:16:28Z",
+  "archived_at": "2026-08-12T16:43:00Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2937,6 +2937,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-date-locale-en-us",
+      "action": "mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dates never localize for sk/cs/de users",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-12T16:05:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T08:05:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2740,
+        "merged_at": "2026-08-12T12:19:26Z",
+        "at": "2026-08-12T16:05:30Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-deeplink-init-unhandled",
       "action": "[archive-terminal-reconcile: terminal in archive (merged)] useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection",
       "owner_role": "pm-frontend",
@@ -2984,6 +3008,30 @@
         "merged_pr": 2642,
         "merged_at": "2026-08-03T22:18:47Z",
         "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-meterdetail-i18n",
+      "action": "mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling strings use i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-12T16:05:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T08:05:18Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2739,
+        "merged_at": "2026-08-12T12:19:26Z",
+        "at": "2026-08-12T16:05:30Z"
       }
     },
     {
@@ -3261,6 +3309,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-logout-purge-notif-triggers",
+      "action": "ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incomplete) — user notification-preference cache leaks into the next session",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T10:07:43Z (score=3 conf=high vector=bug) | gc1-reconcile 2026-08-12T16:05:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T10:07:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2741,
+        "merged_at": "2026-08-12T12:19:26Z",
+        "at": "2026-08-12T16:05:30Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-mutation-no-onerror",
       "action": "ppt-web rentals + financial useMutation hooks lack onError — money-movement + platform-connect failures produce zero user feedback",
       "owner_role": "pm-backend",
@@ -3305,6 +3377,30 @@
         "merged_pr": 2647,
         "merged_at": "2026-08-04T00:13:43Z",
         "at": "2026-08-04T02:09:58Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-perfmetrics-listener-leak",
+      "action": "usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener leak, compounded by effect re-running on inline onReport",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T10:07:43Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-12T16:42:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T10:07:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2742,
+        "merged_at": "2026-08-12T16:14:18Z",
+        "at": "2026-08-12T16:42:45Z"
       }
     },
     {
