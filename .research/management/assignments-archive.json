@@ -3053,6 +3053,28 @@
       "merge_attempted_at": "2026-08-06T22:32:53Z"
     },
     {
+      "task_id": "code-review-mobile-rn-date-locale-en-us",
+      "branch": "auto-impl/code-review-mobile-rn-date-locale-en-us-49f0f94c",
+      "status": "merged",
+      "claimed_at": "2026-08-12T08:11:58Z",
+      "last_updated": "2026-08-12T12:19:26Z",
+      "status_changed_at": "2026-08-12T12:19:26Z",
+      "pr_number": 2740,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2740",
+      "merged_at": "2026-08-12T12:19:26Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve — date formatting routed through active i18n locale across screens; tested. Comment review (self-approve blocked).",
+      "last_reviewed_oid": "b233b0d6eeafa11b9f509f3041a49e5fb3731b8b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-deeplink-init-unhandled",
       "branch": "auto-impl/code-review-mobile-rn-deeplink-init-unha-5a0911a7",
       "status": "failed",
@@ -3117,6 +3139,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-08-03T22:17:21Z"
+    },
+    {
+      "task_id": "code-review-mobile-rn-meterdetail-i18n",
+      "branch": "auto-impl/code-review-mobile-rn-meterdetail-i18n-fb339e53",
+      "status": "merged",
+      "claimed_at": "2026-08-12T08:11:58Z",
+      "last_updated": "2026-08-12T12:19:26Z",
+      "status_changed_at": "2026-08-12T12:19:26Z",
+      "pr_number": 2739,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2739",
+      "merged_at": "2026-08-12T12:19:26Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve — all 6 strings wrapped in t() with keys in all 6 locales; regression test added; CI green. Comment review (self-approve blocked).",
+      "last_reviewed_oid": "7aaaf002091707eefd77b6b5af4d474af8b68d0a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-mobile-rn-offline-sync-false-complete",
@@ -3403,6 +3447,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-logout-purge-notif-triggers",
+      "branch": "auto-impl/code-review-ppt-web-core-logout-purge-no-27a65ecd",
+      "status": "merged",
+      "claimed_at": "2026-08-12T10:10:54Z",
+      "last_updated": "2026-08-12T12:19:26Z",
+      "status_changed_at": "2026-08-12T12:19:26Z",
+      "pr_number": 2741,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2741",
+      "merged_at": "2026-08-12T12:19:26Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2741 status=done specialist=react-web — added notification-triggers to AUTHED_QUERY_KEY_ROOTS + logout purge regression test; typecheck+biome+vitest green, IG3 confirmed",
+      "reviewer_summary": "verdict=approve — notification-triggers root added to AUTHED_QUERY_KEY_ROOTS logout purge; IG3 regression genuine; no scope drift; CI green. Comment review (self-approve blocked).",
+      "last_reviewed_oid": "8ec23acd380cf61b5c6be74f52fa28cd8569a4ff",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-core-mutation-no-onerror",
@@ -13461,5 +13527,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-12T06:16:28Z"
+  "archived_at": "2026-08-12T12:19:36Z"
 }
