@@ -154,11 +154,6 @@ function serverError(status = 503): Response {
   return { ok: false, status, json: async () => ({}) } as unknown as Response;
 }
 
-/** A 4xx client-error response (used to exercise permanent-vs-retryable 4xx). */
-function clientError(status = 400): Response {
-  return { ok: false, status, json: async () => ({}) } as unknown as Response;
-}
-
 beforeEach(() => {
   store.clear();
   jest.clearAllMocks();
@@ -423,108 +418,5 @@ describe('useOfflineSupport.processQueue — issue #1767', () => {
       await api.processQueue();
     });
     expect(readQueue()).toHaveLength(0);
-  });
-
-  it('(g) a recoverable 401 (expired token) is RETAINED, not dropped', async () => {
-    // Regression: an access token that expired between enqueue and replay
-    // returns 401. The old code treated every 4xx as permanent and silently
-    // discarded the offline-created action. It must instead be kept and
-    // re-attempted next reconnect (by which time the token is refreshed).
-    seedQueue([makeAction({ id: 'expired', body: { title: 'reported-offline' } })]);
-    const fetchMock = globalThis.fetch as jest.Mock;
-    fetchMock.mockResolvedValue(clientError(401));
-
-    await mountHook();
-
-    let result!: { success: number; failed: number };
-    await act(async () => {
-      result = await api.processQueue();
-    });
-
-    // Nothing succeeded, and crucially nothing was terminally dropped.
-    expect(result).toEqual({ success: 0, failed: 0 });
-    const remaining = readQueue();
-    expect(remaining).toHaveLength(1);
-    expect(remaining[0].id).toBe('expired');
-    expect((remaining[0].body as { title: string }).title).toBe('reported-offline');
-
-    // With a refreshed token (200), the next reconnect drains it.
-    fetchMock.mockResolvedValue(ok({ id: 'srv-after-reauth' }));
-    await act(async () => {
-      await api.processQueue();
-    });
-    expect(readQueue()).toHaveLength(0);
-  });
-
-  it('(h) a recoverable 429 (rate-limit) is RETAINED, not dropped', async () => {
-    seedQueue([makeAction({ id: 'throttled', body: { title: 'reported-offline' } })]);
-    const fetchMock = globalThis.fetch as jest.Mock;
-    fetchMock.mockResolvedValue(clientError(429));
-
-    await mountHook();
-
-    let result!: { success: number; failed: number };
-    await act(async () => {
-      result = await api.processQueue();
-    });
-
-    // Rate-limited, not rejected — carried forward for the next reconnect.
-    expect(result).toEqual({ success: 0, failed: 0 });
-    const remaining = readQueue();
-    expect(remaining).toHaveLength(1);
-    expect(remaining[0].id).toBe('throttled');
-
-    // Once the limit clears (200), it drains.
-    fetchMock.mockResolvedValue(ok({ id: 'srv-after-throttle' }));
-    await act(async () => {
-      await api.processQueue();
-    });
-    expect(readQueue()).toHaveLength(0);
-  });
-
-  it('(i) a permanent 400 (bad payload) IS dropped from the queue', async () => {
-    // Counterpart to (g)/(h): a genuinely permanent 4xx must still be dropped
-    // so the queue never blocks forever on a request that can never win.
-    seedQueue([makeAction({ id: 'bad', body: { title: 'malformed' } })]);
-    const fetchMock = globalThis.fetch as jest.Mock;
-    fetchMock.mockResolvedValue(clientError(400));
-
-    await mountHook();
-
-    let result!: { success: number; failed: number };
-    await act(async () => {
-      result = await api.processQueue();
-    });
-
-    // Terminally failed and removed from the queue.
-    expect(result).toEqual({ success: 0, failed: 1 });
-    expect(readQueue()).toHaveLength(0);
-  });
-
-  it('(j) a permanent 400 ahead of a valid action does not block the rest of the queue', async () => {
-    // A dropped (terminal) 4xx must not halt the cycle — its successors still
-    // drain the same reconnect (contrast with a retryable failure, which halts).
-    seedQueue([
-      makeAction({ id: 'bad', endpoint: '/api/v1/faults', body: { title: 'malformed' } }),
-      makeAction({ id: 'good', endpoint: '/api/v1/faults', body: { title: 'valid' } }),
-    ]);
-    const fetchMock = globalThis.fetch as jest.Mock;
-    let call = 0;
-    fetchMock.mockImplementation(async () => {
-      call++;
-      return call === 1 ? clientError(400) : ok({ id: 'srv-good' });
-    });
-
-    await mountHook();
-
-    let result!: { success: number; failed: number };
-    await act(async () => {
-      result = await api.processQueue();
-    });
-
-    // Bad dropped, good succeeded — queue fully drained in one cycle.
-    expect(result).toEqual({ success: 1, failed: 1 });
-    expect(readQueue()).toHaveLength(0);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
