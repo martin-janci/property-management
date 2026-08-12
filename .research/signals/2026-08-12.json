@@ -1,0 +1,190 @@
+{
+  "generated_at": "2026-08-12T03:15:00Z",
+  "since_iso": "2026-08-07T06:24:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-08-07T06:24Z; lag = 4d 116h — exceeds 36h threshold. dispatcher continued running on a separate loop (planning branch) during the gap"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-08-07T06:24Z --numstat",
+      "score_delta": 1,
+      "evidence": [
+        "3481 lines add+del in the routine window; top-3 raw churn"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-08-07T06:24Z --numstat",
+      "score_delta": 0,
+      "evidence": [
+        "2799 lines add+del in the routine window; re-emission — signal already in seen_signals (cumulative type). no score bump per G4."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-08-07T06:24Z --numstat",
+      "score_delta": 1,
+      "evidence": [
+        "2532 lines add+del in the routine window; top-3 raw churn — reshaped by PR #2714 (decouple scheduled notification dispatch)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-2735-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2735",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2735 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (mapper exports + a new mappers test file) without touching docs/screens/ppt/*.md. mapper-only change with no user-visible behaviour change — surface as review candidate, likely benign."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-12.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor-advance check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5cap",
+      "passed": true,
+      "command": "jq score>8",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5decay",
+      "passed": true,
+      "command": "open items updated_at<=today-14d",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "grep -c new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-research paths staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases; cursors advanced per phase",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no new plans; prior plans preserved",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive size",
+      "observed": "8>=8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "no actions",
+      "expected": "caps + idem OK"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram-token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

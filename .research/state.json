@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-07T06:24:00Z",
-  "last_run_ms": 2000,
-  "last_pr_seen": 2702,
-  "last_issue_seen": 2699,
-  "last_commit_sha": "a2c0f53d4d66886ea14fcb6fd43478c4c4022fa9",
+  "last_run_iso": "2026-08-12T03:15:00Z",
+  "last_run_ms": 3600000,
+  "last_pr_seen": 2735,
+  "last_issue_seen": 2704,
+  "last_commit_sha": "a22bbfc",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -153,9 +153,9 @@
       "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-30",
-      "recent_churn": 75
+      "runs_seen": 2,
+      "last_seen": "2026-08-12",
+      "recent_churn": 2799
     },
     "backend/servers/api-server/src/services/oauth.rs": {
       "runs_seen": 1,
@@ -441,6 +441,16 @@
       "runs_seen": 1,
       "last_seen": "2026-08-07",
       "recent_churn": 64
+    },
+    "backend/servers/api-server/tests/suites/oauth_integration_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-12",
+      "recent_churn": 3481
+    },
+    "backend/servers/api-server/src/services/scheduler/mod.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-12",
+      "recent_churn": 2532
     }
   },
   "seen_signals": [
@@ -819,7 +829,11 @@
     "code-review-reality-web-listingform-no-i18n",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
-    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs"
+    "churn-hotspot-backend/servers/api-server/src/routes/ai/llm.rs",
+    "lag-warning-2026-08-12",
+    "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+    "screen-map-drift-pr-2735-ppt"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -833,8 +847,8 @@
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 62,
-    "vectors_created": 284,
+    "runs": 63,
+    "vectors_created": 287,
     "plans_created": 22,
     "quiet_days": 2,
     "auto_fix_count": 0

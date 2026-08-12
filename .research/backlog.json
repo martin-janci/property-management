@@ -7483,6 +7483,67 @@
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
       "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-oauth-integration-tests-2026-08-12",
+      "title": "churn hotspot: oauth_integration_tests.rs (3481 lines this window)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Churn window 2026-08-07..2026-08-12"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs — 3481 lines add+del in the routine window (top-3 raw churn); heavily reshaped alongside routes/oauth.rs work. Signals test-file instability that may indicate flakiness or shared-fixture drift."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-scheduler-mod-2026-08-12",
+      "title": "churn hotspot: services/scheduler/mod.rs (2532 lines this window)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Churn window 2026-08-07..2026-08-12",
+        "PR #2714"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs — 2532 lines add+del in the routine window (top-3 raw churn); reshaped by PR #2714 decoupling notification dispatch from publish/activate. Consider splitting per-tick pass into modules if churn recurs."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-2735-ppt",
+      "title": "screen-map drift: PR #2735 modified rentals.tsx without doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2735"
+      ],
+      "evidence": [
+        "PR #2735 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (mapper exports + tests) without touching docs/screens/ppt/*.md. Heuristic drift: the change is mapper-only, not user-visible, so it is a review candidate rather than a real drift; if intentional, mark done in backlog."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }
