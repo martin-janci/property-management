@@ -16,6 +16,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { resolveLocale } from '../../i18n/format';
 import { warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import { type Lease, toUiLeaseStatus } from './LeasesScreen';
@@ -99,7 +100,7 @@ export function toUiLease(detail: ApiLeaseDetail): Lease {
 function periodLabel(dueDate: string): string {
   const d = new Date(dueDate);
   if (Number.isNaN(d.getTime())) return dueDate;
-  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(resolveLocale(), { month: 'long', year: 'numeric' });
 }
 
 /** Map api-server payments onto the UI payment rows, soonest `due_date` first.

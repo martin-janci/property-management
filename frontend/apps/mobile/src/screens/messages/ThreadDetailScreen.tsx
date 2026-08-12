@@ -29,6 +29,7 @@ import {
 import { QueryErrorBanner } from '../../components/QueryErrorBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
+import { resolveLocale } from '../../i18n/format';
 import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
@@ -121,7 +122,7 @@ function sentAtSortKey(sentAt: string): number {
 export function formatMessageTime(sentAt: string): string {
   const d = new Date(sentAt);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(resolveLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 /** Map api-server messages onto UI bubbles, oldest first. `currentUserId`
