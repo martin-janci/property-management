@@ -1,0 +1,178 @@
+{
+  "run_iso": "2026-08-12T14:18:59Z",
+  "trigger_payload": "buffer-low: claimable=4/72 coverage-missing — refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso=2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-08-07 06:24 UTC — 5 days 8 hours before this run. Cloud scheduler stalled or wake-signal missed.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-08-12",
+      "type": "stale_routine_alert",
+      "source": "state.json.last_run_iso=2026-08-07T06:24:00Z",
+      "score_delta": 0,
+      "evidence": "state.json.last_run_iso=2026-08-07T06:24:00Z is 5 days old (>=3d threshold). Cloud research routine likely paused. Dispatcher loop is separate and remained active (last dispatcher commit 1f06eb2 2026-08-12 12:19 UTC).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-08-07T06:24:00Z --numstat",
+      "score_delta": 0,
+      "evidence": "webhook.rs churned 2799 add+del in the 5-day window (top-2 real-code hotspot); prior hotspot_history run 2026-05-30 (75 lines). Cumulative re-emit; score_delta suppressed per Phase 1 dedup rule.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-08-07T06:24:00Z --numstat",
+      "score_delta": 1,
+      "evidence": "scheduler/mod.rs churned 2532 add+del in the 5-day window (top-3 real-code hotspot). New file path (previous history tracked scheduler.rs as a single file).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-08-07T06:24:00Z --numstat",
+      "score_delta": 1,
+      "evidence": "oauth_integration_tests.rs churned 3481 add+del in the 5-day window (top-1 real-code hotspot); test file grew substantially — likely OAuth token-hot-path work landing (PR #2732).",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (score>=3 + confidence=high + allowlist shape); top items already claimed or done",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today> && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors advanced vs HEAD",
+      "observed": "last_pr_seen 2702→2741, last_issue_seen 2699→2704, last_commit_sha bumped, seen_signals +4",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique(.id) == length(.id)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-scored",
+      "observed": "no offenders",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8; decay applied to items >14d old",
+      "observed": "true (no items >14d old this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass annotation",
+      "observed": "no new plans this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2 and each meets readiness gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no paths outside .research/",
+      "observed": "0 non-.research paths staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md == staged backlog.md",
+      "observed": "byte-identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — no phases marked failed",
+      "observed": "no failures reported",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or in _archive",
+      "observed": "all 18 prior plans still present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "7 (unchanged)",
+      "expected": ">=7"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md == staged",
+      "observed": "byte-identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap ≤1 PR + ≤1 issue + ≤1 comment; idempotent",
+      "observed": "0 actions this run",
+      "expected": "≤3 total, ≤1 per category"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor.next_index in 0..7; management artifacts valid",
+      "observed": "pm_cursor.next_index=3; Phase 1.6 skipped so GC7 clause is no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "notes": [
+    "Phase 1.5 (rotating expert review): skipped — 5-day lag recovery + dispatcher already fired 6 Tier-1d code-review signals today (mobile-rn, ppt-web-core, ppt-web-ui). Review_cursor NOT advanced.",
+    "Phase 1.6 (PM analysis): skipped — coverage healthy (47/49 stories done), no epic-scale change since last full PM run. pm_cursor + coverage_cursor NOT advanced."
+  ]
+}
