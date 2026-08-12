@@ -83,6 +83,40 @@
         "score": 1,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-offline-ind-i18n",
+      "action": "ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-12T02:05:43Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T02:05:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-i18n",
+      "action": "ppt-web-ui: ProtectedRoute hardcodes English 'Access Denied' / 'Loading...' strings instead of using i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-12T02:05:43Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T02:05:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
