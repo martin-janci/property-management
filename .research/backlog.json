@@ -7483,6 +7483,915 @@
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-idempotency-tx-across-handler",
+      "title": "api-core: backend/crates/api-core/src/middleware/idempotency.rs:95-179 — `handle_idempotent_request` opens a D...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-core tier1d 2026-08-09-api-core-tier1d-2.json"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:95-179 — `handle_idempotent_request` opens a DB transaction `pool.begin()` (line 95), takes a `pg_advisory_xact_lock` (line 108), and then HOLDS that transaction (and therefore one pooled connection) open across the entire downstream request: `next.run(request).await` at line 148, committing only afterward (line 177). The wrapped handler independently acquires its OWN pooled connection(s) (e.g. via the `RlsConnection` extractor) to do its work.",
+        "Concurrency hazard: with pool size N, N concurrent idempotent requests (distinct keys) each pin one connection in the still-open idempotency transaction and then each block waiting to check out a second connection for their handler — a classic pool-exhaustion self-deadlock; all N stall until acquire timeouts fire. Even below saturation this doubles the effective connection footprint of every idempotent (mutating POST/PUT) request and stretches the advisory-lock/transaction hold time to the full handler latency (including any slow outbound calls the handler makes).",
+        "The extensive comment at lines 80-94 justifies the xact-scoped lock purely for cancellation-safety (leak avoidance) and does NOT acknowledge the connection-held-across-handler cost, suggesting the pool-pressure interaction was not considered.",
+        "Fix: don't straddle the handler with an open transaction. Acquire the advisory lock + look up/insert a 'pending' ledger row in a SHORT transaction that commits before `next.run`, then persist the captured response in a SECOND short transaction after the handler returns (serialization is still provided by the ledger row / a shorter-lived lock). This releases the connection for the duration of handler execution and removes the deadlock/footprint-doubling."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/idempotency.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-listings-detail-swallows-db-err",
+      "title": "api-core: backend/servers/api-server/src/routes/listings.rs:338 — in `get_listing` (the tenant-scoped GET /api...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "api-core tier1d 2026-08-10-api-core-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338 — in `get_listing` (the tenant-scoped GET /api/v1/listings/{id} detail handler, listings.rs:316-345), the photos sub-fetch swallows all repository errors: `let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();`. `.unwrap_or_default()` collapses an `Err(sqlx/pool error)` into an empty `Vec`, which is indistinguishable from 'this listing genuinely has no photos'.",
+        "backend/servers/api-server/src/routes/listings.rs:340-342 — the very next call has the identical defect for syndications: `state.listing_repo.get_syndications(id).await.unwrap_or_default()`. Both feed directly into the `ListingWithDetails` response (listings.rs:344+).",
+        "Consequence: on a transient DB/pool error while fetching photos or syndications, the handler still returns HTTP 200 with an empty `photos`/`syndications` array instead of surfacing a 500. The caller (manager UI / API consumer) sees a listing that appears to have lost its photos and syndication targets — a silent, un-loggable partial-data response. Contrast with the primary `find_by_id_and_org` fetch two lines above (listings.rs:322-330), which correctly maps its error to `INTERNAL_SERVER_ERROR`; the two sub-fetches are the inconsistent outliers.",
+        "There is no `tracing::warn!`/`error!` on the swallowed branch, so the failure is invisible in logs and cannot be monitored — same fail-quiet class as the previously-tracked quiet-hours `.ok()` swallow, but on a user-facing read path. Fix: match on the `Result` and propagate the error to `INTERNAL_SERVER_ERROR` (or at minimum log the `Err` before defaulting), rather than discarding it with `.unwrap_or_default()`."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "title": "api-core: backend/crates/api-core/src/middleware/authorization.rs:170-201 — `require_permission` derives the c...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-core tier1d 2026-08-09-api-core-tier1d-2.json"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:170-201 — `require_permission` derives the caller role with `request.extensions().get::<TenantRole>().cloned().unwrap_or(TenantRole::Guest)` (lines 176-180). For an UNAUTHENTICATED request (no `TenantRole` in extensions) the role defaults to `Guest`, whose `level()` is 10 (backend/crates/common/src/tenant.rs:125).",
+        "`require_authenticated` (authorization.rs:236-241) delegates to `permissions::AUTHENTICATED = Permission::min_level(1, ...)` (line 139). `is_satisfied_by(Guest)` = `Guest.level() >= 1` = `10 >= 1` = TRUE. So the middleware literally named 'require authenticated user' GRANTS access to a request that carries NO authenticated identity — a fail-OPEN default. The higher-tier convenience guards (require_manager=80, require_owner=60, require_admin=90) happen to still deny Guest, so the hole is specific to the AUTHENTICATED gate, i.e. exactly the guard a route would pick to mean 'any logged-in user'.",
+        "Currently these from_fn-style guards are not mounted in servers/ (routes use their own `require_manager_in_org`/`require_platform_admin` helpers), so this is a latent footgun, not a live bypass — confidence medium. But it is public, documented, example-carrying middleware inviting adoption.",
+        "Fix: make the missing-role case fail closed — return 401 when no `TenantRole` (or authenticated principal) is present instead of substituting `Guest`, and/or give unauthenticated requests a role whose level is 0 that no `min_level(1)` permission satisfies. An authorization primitive must never treat 'no identity' as a valid low-privilege identity that clears an 'authenticated' check."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs",
+        "backend/crates/common/src/tenant.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "title": "api-core: backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is documented ...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "api-core tier1d 2026-08-09-api-core-tier1d-2.json"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but it enforces NOTHING: it calls `db::tenant_context::set_request_context(pool.as_ref(), Some(tenant_id), Some(user_id), is_super_admin)` (line 232) then runs the handler via `next.run(request)` (line 245). `set_request_context<E: Executor>` (backend/crates/db/src/tenant_context.rs:18) issues its `set_config`/SET on a connection sqlx transiently checks out of the POOL and immediately returns; the handler later acquires a DIFFERENT pooled connection where the RLS GUCs are unset. Result: tenant-isolation is silently NOT applied to the handler's queries — a cross-tenant data-exposure footgun for any route that adopts this middleware believing the doc.",
+        "The module's own header (rls_context.rs:1-37) already diagnoses this exact defect ('Setting RLS on the pool doesn't affect individual connections'; 'PostgreSQL session settings are connection-scoped, not pool-scoped') and marks the module DEPRECATED — yet the file is not `#[deprecated]`, and BOTH broken functions plus `rls_context_middleware` are glob re-exported to consumers via `pub use rls_context::*;` (backend/crates/api-core/src/middleware/mod.rs:16). The contradiction (top says 'do NOT use'; `require_rls_context` docstring says 'use this for routes that MUST have tenant isolation') is the trap.",
+        "Not currently mounted in either server (grep of servers/ finds no call site), so severity is a LATENT bypass rather than a live one — hence confidence medium, not high. But it is live-ready API surface: a future route author who follows the `require_rls_context` docstring gets a compiling, plausible-looking guard that leaks across tenants with no error.",
+        "Fix: delete the deprecated module (the correct path is the `RlsConnection` extractor, which sets RLS on the same dedicated connection it hands the handler — see extractors/rls_connection.rs), or at minimum stop re-exporting it and add `#[deprecated]` + `compile_error!`-style guards; do NOT leave a function named `require_rls_context` that provides no isolation."
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs",
+        "backend/crates/db/src/tenant_context.rs",
+        "backend/crates/api-core/src/middleware/mod.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": "plans/code-review-api-core-rls-context-pool-not-conn.md"
+    },
+    {
+      "id": "code-review-api-handlers-residency-chain-valid-failopen",
+      "title": "api-handlers: backend/servers/api-server/src/routes/data_residency.rs:736 — in `list_audit_logs_impl`, the audit-c...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "api-handlers tier1d 2026-08-10-api-handlers-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:736 — in `list_audit_logs_impl`, the audit-chain tamper-evidence flag is read as `let chain_valid = verification[\"chain_valid\"].as_bool().unwrap_or(true);`. The `.unwrap_or(true)` is a fail-OPEN default: if the `verify_audit_chain` result ever lacks a boolean `chain_valid` field (schema drift, an error-shaped JSON, a null), the audit chain is reported as VALID / untampered.",
+        "backend/crates/db/src/repositories/data_residency.rs:552-596 — the current repo implementation always emits `\"chain_valid\": <bool>`, so today the missing-field branch is not reachable and the practical impact is low. This is a latent wrong-direction defensive default rather than an active exploit — flagged so a future change to `verify_audit_chain`'s return shape (or a switch to a fallible/partial JSON) does not silently turn a broken tamper check into a green 'chain intact' signal.",
+        "For a tamper-evidence integrity check the safe default is fail-CLOSED. Fix: `.unwrap_or(false)` (an unparseable/absent verification result means the chain could NOT be confirmed valid), and/or `tracing::warn!` when the field is missing so schema drift surfaces instead of being swallowed."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/data_residency.rs",
+        "backend/crates/db/src/repositories/data_residency.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-residency-compliance-failopen",
+      "title": "api-handlers: backend/servers/api-server/src/routes/data_residency.rs:1040-1048 — in the data-residency dashboard ...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-handlers tier1d 2026-08-10-api-handlers-tier1d.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/data_residency.rs:1040-1048 — in the data-residency dashboard handler, the top-level `compliance_status` field is computed as `if last_verification.as_ref().map(|v| v.is_compliant).unwrap_or(true) { ComplianceStatus::Compliant } else { ComplianceStatus::NonCompliant }`. The `.unwrap_or(true)` is a fail-OPEN default: when `last_verification` is `None`, the org is reported as `Compliant`.",
+        "backend/servers/api-server/src/routes/data_residency.rs:936-941 — `last_verification` is `None` exactly when `data_residency_repo.get_latest_verification_result(org_id)` returns `None`, i.e. the organization has NEVER run a compliance verification (a fresh org, or one whose verification rows were purged). This branch is reachable in production for every org before its first verification run — not a hypothetical.",
+        "Consequence: the data-residency compliance dashboard displays `compliance_status: Compliant` for an organization whose compliance has never actually been checked. This is the summary signal most consumers surface; a never-verified tenant looks green. For a GDPR/data-residency compliance feature the correct default is fail-CLOSED — `Unknown` or `NonCompliant` — so unverified state is visibly distinct from verified-compliant. Note the sibling per-record mapping at data_residency.rs:953-957 keys strictly off `result.is_compliant`, so only the None case is mis-defaulted.",
+        "Fix: when `last_verification` is `None`, do not report `Compliant`. Either add an `Unknown`/`Unverified` variant to `ComplianceStatus`, or default to `NonCompliant` (`.unwrap_or(false)`), so a never-verified org does not read as compliant."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/data_residency.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-link-failopen",
+      "title": "api-handlers: backend/servers/api-server/src/routes/ai/voice.rs:165-176 (exchange_voice_oauth_tokens, called from ...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "api-handlers tier1d 2026-08-10-api-handlers-tier1d-2.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:165-176 (exchange_voice_oauth_tokens, called from link_voice_device :80): when `VoiceOAuthManager::from_env()` reports the platform is not configured (`!oauth_manager.has_platform(voice_platform)`), the handler logs a warn and `return Ok((None, None, None))` — it then creates a persisted voice device row (:89-109) with NULL access/refresh tokens and responds `201 CREATED` with `oauth_linked: false` (:122-131). There is NO production guard on this degraded path.",
+        "This is inconsistent with the codebase's own established fail-closed convention for the exact same 'dependency not configured in prod' situation. The sibling RAG-indexing handler in ai/llm.rs:250-263 refuses the analogous stub/unconfigured path in production: `let is_production = std::env::var(\"RUST_ENV\").as_deref() == Ok(\"production\"); if is_production && !allow_stub { return Err(SERVICE_UNAVAILABLE ...) }`. voice.rs has no equivalent — so a production deployment missing the Alexa/Google voice OAuth credentials will silently create voice devices that appear 'linked' in the devices list but hold no OAuth tokens, deferring the failure to first use (authenticate_voice_user falls back to a linear scan per the #2662 note at :103-107) instead of surfacing a clear configuration error at link time.",
+        "Lower severity than a security bug: no data exposure, and the client can observe `oauth_linked:false`. But it is a genuine prod-vs-dev fail-open completeness gap. Fix: gate the token-less fallback on a development check (mirror ai/llm.rs:250-263) so an unconfigured voice OAuth manager returns 503 NOT_CONFIGURED in production rather than persisting a half-linked device."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/voice.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-webhook-ssrf-loopback-failopen",
+      "title": "api-handlers: backend/servers/api-server/src/routes/integrations/webhook.rs:201-203 (create_webhook_subscription) ...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-handlers tier1d 2026-08-10-api-handlers-tier1d-2.json"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:201-203 (create_webhook_subscription) and :337-339 (update path) derive the SSRF-guard mode as `let is_production = std::env::var(\"RUST_ENV\").map(|v| v == \"production\").unwrap_or(false);`. This value is passed to `integration_repo.create_webhook_subscription(..., is_production)` (:207), which forwards it to `validate_webhook_url(&data.url, is_production)` at backend/crates/db/src/repositories/integration.rs:1352.",
+        "The env detection FAILS OPEN and is INVERTED relative to every other RUST_ENV gate in the same binary. `.unwrap_or(false)` plus an exact `== \"production\"` match means: RUST_ENV unset, or set to anything other than the literal string `\"production\"` (e.g. `prod`, `PRODUCTION`, `staging`, or simply not configured) => `is_production = false` => the webhook-URL validator runs in relaxed/dev mode. Every other environment gate in the crate uses the SAFE convention `RUST_ENV == \"development\"` and defaults to strict when unset: main.rs:483/533/539, services/totp.rs:58, preflight.rs:125, and notably services/actions/api_call.rs:339 (its sibling outbound-request SSRF guard, 'plain-http gated to RUST_ENV=development'). webhook.rs is the lone site that keys strict behavior off `== \"production\"`, so it is the only guard that turns OFF when the var is unset.",
+        "Impact: in validate_webhook_url (backend/crates/db/src/models/integration.rs:887-903, 932-937) the localhost/loopback block is gated on is_production — `is_localhost` (localhost / 127.0.0.1 / ::1) is only rejected when is_production is true (:901), and the 127.0.0.0/8 branch is `if octets[0] == 127 && (is_production || !is_localhost)` (:933), and plain `http://` is permitted for localhost when `!is_production` (:891). Private ranges (10/8, 172.16/12, 192.168/16), link-local 169.254/16 (cloud metadata) and multicast are blocked unconditionally, so residual reach is loopback-scoped. Net: an authenticated org member can register a webhook subscription targeting `http://localhost:<port>` / `http://127.0.0.1:<port>` / `http://[::1]:<port>`; the server later delivers signed POSTs to it (webhook.rs:572-584 computes the HMAC and fires the request), yielding an SSRF primitive against loopback-bound services co-located with api-server (Redis 6379, metrics/admin ports, internal-only HTTP) whenever RUST_ENV is not exactly `production`.",
+        "RUST_ENV is NOT listed in backend/CLAUDE.md's env table nor in any .env.example, and no other code path requires it to be set to `production` in prod (they only ever check for `development`). So a standard prod deployment that leaves RUST_ENV unset silently ships with the loopback SSRF guard disabled. Fix: invert to the crate's safe convention — compute `is_production = std::env::var(\"RUST_ENV\").unwrap_or_default() != \"development\"` (fail closed / strict by default), or better, hoist a single shared `is_development()`/`is_production()` helper so this can't drift again, and consider always applying the loopback block regardless of env."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "backend/crates/db/src/repositories/integration.rs",
+        "backend/crates/db/src/models/integration.rs",
+        "backend/CLAUDE.md"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug",
+      "title": "mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class Api...",
+      "vector": "cleanup",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-08-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt:27 — class ApiClient is never instantiated anywhere in production code. grep '\\bApiClient\\b' across mobile-native/**.kt returns only the class definition (ApiClient.kt:27) and a doc-comment reference in a test (ListingDetailRepositoryTest.kt:172). All live repositories (ListingRepository, FavoritesRepository, InquiryRepository, PortalListingsRepository, etc.) issue their own Ktor calls via HttpClientProvider.client and never route through ApiClient. It is ~100 lines of dead, duplicated API logic (listings search/detail, favorites, inquiry) that drifts from the real repositories and adds maintenance noise.",
+        "The dead class also carries a latent bug that would bite if it were ever wired: healthCheck() (ApiClient.kt:39) returns client.get(\"$baseUrl/health\") { configureRequest() }.toString() — .toString() on the Ktor HttpResponse object yields a debug string like 'HttpResponse[...]', not the health-endpoint body. It should await .body<String>() (or .bodyAsText()). Additionally healthCheck() is the only method in the class with no try/catch, so a network exception propagates uncaught instead of being folded into a Result like every sibling method (getListings/getListing wrap in try/catch → Result).",
+        "Recommend deleting ApiClient (and its exception type if unused elsewhere) to remove dead code and the duplication risk; if it is intended as the future canonical client, it should instead replace the ad-hoc per-repository HttpClientProvider calls and fix healthCheck first. Either way the current state — unreferenced + buggy — is pure liability."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancellationexception-swallowed-repos",
+      "title": "mobile-native-kmp: Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in ...",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "Systemic across the commonMain repository layer: every repository that wraps a suspend Ktor call in try/catch uses a bare `catch (e: Exception)` and folds the throwable into `Result.failure(e)` WITHOUT first rethrowing kotlinx.coroutines.CancellationException. In Kotlin coroutines, CancellationException is an Exception, so `catch (e: Exception)` swallows it — this breaks structured/cooperative cancellation. Affected files (57 catch sites total): favorites/FavoritesRepository.kt (11), auth/SsoService.kt (9), notifications/NotificationRepository.kt (9), inquiry/InquiryRepository.kt (8), listing/ListingRepository.kt (6), agency/AgencyRepository.kt (4), realtor/PortalListingsRepository.kt (2, lines 62 & 97), realtor/RealtorRepository.kt (2, lines 41 & 61).",
+        "The correct pattern already exists in this very codebase: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:65-70 does `catch (e: CancellationException) { throw e }` immediately before the generic `catch (e: Exception)`. LayoutRepository is the ONLY of the 10 repos that handles this correctly (grep for CancellationException across commonMain returns only LayoutRepository.kt), which demonstrates the intended convention and that the other 9 repos are inconsistent regressions rather than a deliberate design choice.",
+        "Impact: when a composable's rememberCoroutineScope / viewModelScope is cancelled (user navigates away, screen disposed, or a newer request supersedes an in-flight one), the cancelled Ktor call throws CancellationException which is caught and returned as `Result.failure(e)`. Callers then treat a normal cancellation as a real error — e.g. Navigation.kt list loaders do `.onFailure { xxx = emptyList() }`, and screens like AccountScreen surface Log.e / error UI. This produces spurious error states/empty-list flashes on navigation and can interfere with cancellation propagation. Fix: add `catch (e: CancellationException) { throw e }` as the first catch clause in each suspend fun's try/catch (mirroring LayoutRepository), or centralize the request+Result wrapping in a shared helper that rethrows CancellationException. Recommend a follow-up implementer task to sweep the 9 repositories."
+      ],
+      "files": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-state-bang-bang",
+      "title": "mobile-native-kmp: Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`...",
+      "vector": "cleanup",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediately after a `when`/`if` null-guard instead of smart-casting a locally captured val: androidApp/.../ui/listing/ListingDetailScreen.kt:121 (state.errorMessage!!), :125/:149/:160 (state.listing!!), :132 (state.listing!!.realtor?...); ui/account/AccountScreen.kt:174 (notificationPrefs!!); ui/inquiries/InquiriesScreen.kt:169 (errorMessage!!); ui/favorites/FavoritesScreen.kt:164 (errorMessage!!).",
+        "Because `state` is backed by a Compose State/StateFlow, the guard check and the `!!` deref are separate reads of a mutable property; a delegated-property `!!` after a `when (state.x != null)` is not protected by smart-cast and is a latent NPE-on-recomposition smell if the state can change between reads. The idiomatic fix is to capture into a local val inside the guarded branch (e.g. `val listing = state.listing ?: return@... ` or `state.listing?.let { ... }`) so the compiler smart-casts and the `!!` disappears. Repeated across 4 screens; low severity but a consistent maintainability/robustness cleanup for a follow-up task."
+      ],
+      "files": [],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl-stub",
+      "title": "mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the ...",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-11-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing destination wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The submit callback is HARDCODED to always fail; there is no listing-create API call behind it.",
+        "This is a fully non-functional user-facing feature, not dead code. The full form UI exists and is reachable: MyListingsScreen (Navigation.kt:481-488) renders `onCreateClick = { navController.navigate(Screen.CreateListing.route) }`, and CreateListingScreen (mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:41,95-121) is a complete form with input state, an `isSubmitting` spinner, and a `.fold(onSuccess = { onCreated() }, ...)` handler. A realtor fills the form, taps submit, watches the spinner, and ALWAYS gets a silent failure — the `onCreated()`/popBackStack success path at Navigation.kt:495 is unreachable.",
+        "Traced full call path (entry point -> stub): MyListingsScreen.onCreateClick -> navigate(Screen.CreateListing.route) -> CreateListing composable's onSubmit lambda == the NotImplementedError stub. Definitely reachable in production. Fix: back onSubmit with a real create call (reality-server portal-listings has no POST create surface yet per PortalListingsRepository, so this likely needs both a repository method and the backend endpoint) OR hide the create entry point until the API exists, so users are not led into a form that cannot succeed."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "title": "mobile-native-kmp: androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the production nav...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-10-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the production nav graph wires the CreateListing route's submit callback to a hardwired stub: `CreateListingScreen(onBackClick = ..., onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }, onCreated = ...)`. The onSubmit is not connected to any repository call; it unconditionally returns failure.",
+        "There is NO createListing method anywhere in the shared module: `grep -rn 'fun createListing' shared/src/commonMain` returns nothing, and PortalListingsRepository (which owns `/api/v1/my/listings`) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics — no POST/create. So the failure is permanent, not a transient wiring gap.",
+        "This route is reachable in the shipped app: MyListings (Navigation.kt:480-485) has an `onCreateClick` that navigates to `Screen.CreateListing.route`. A realtor who taps 'create listing', fills the validated form (title/city/price), and submits always lands in CreateListingScreen.kt:122 `onFailure` and sees the generic `publishFailedMsg` ('publish failed') error — the entire Create-Listing feature is an inert dead-end in production.",
+        "Fix: add a `createListing(input): Result<Unit>` (POST /api/v1/my/listings) to PortalListingsRepository and wire it into the Navigation onSubmit, or gate/remove the CreateListing entry point until the API is wired so users are not offered a flow that can never succeed."
+      ],
+      "files": [],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-submit-stub",
+      "title": "mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the ...",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-08-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen(onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }). The realtor 'Create Listing' screen is fully reachable in production navigation (composable(Screen.CreateListing.route) { ... }, reached from the MyListings flow), but every submit returns a hardcoded failure — a user fills in the create-listing form, taps submit, and always gets an error. This is a shipped, user-facing broken feature, not a hidden/disabled path.",
+        "The data layer to back it is entirely absent: PortalListingsRepository (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt) exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics — there is no create/submit method, and no other repository provides one (grep 'fun create' / 'fun submit' over mobile-native/shared/src/commonMain returns nothing). So the fix is not merely to swap the lambda; it requires building a create-listing repository call against the reality-server API and wiring it through.",
+        "Impact: the CreateListing route should either be gated behind a feature flag / hidden until the API exists, or the data-layer method built and wired. As-is it presents a functional-looking form that can never succeed. Recommend a follow-up implementer task to (a) add a createListing repository method, (b) wire onSubmit to it with proper Result handling in CreateListingScreen, or (c) hide the route until the endpoint lands."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl-stub",
+      "title": "mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the ...",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d-2.json"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing route wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every realtor 'Create listing' submission therefore fails unconditionally in production; the feature is reachable (MyListingsScreen `onCreateClick` navigates to Screen.CreateListing at Navigation.kt:483) yet non-functional.",
+        "The screen is a complete 399-line implementation: mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt collects a full `CreateListingInput` data class (line 392) and calls `onSubmit(CreateListingInput(...))` (suspend, returns Result<Unit>, line 41/109), rendering onSuccess -> onCreated. All the collected form data is discarded because the injected onSubmit is a hardcoded failure.",
+        "Root cause: the repository has no create method. mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics (grep for `fun create` returns nothing). Fix: add `suspend fun createListing(input): Result<Unit>` (POST /api/v1/my/listings) to PortalListingsRepository and wire it into Navigation.kt:493, or hide the Create Listing entry point until the API is wired. Traced entry->stub->missing-repo end to end, hence confidence high."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-nfe-crash",
+      "title": "mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d-3.json"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 — DecimalAsLongSerializer.deserialize() does `raw.substringBefore('.').toLong()` on the raw JSON primitive with no guard. A degenerate-but-syntactically-valid decimal string throws NumberFormatException *inside* deserialize: e.g. \".50\" (no leading zero) -> substringBefore('.') == \"\" -> \"\".toLong() throws; \"2e5\" / \"1,000\" / an empty string / a non-numeric \"N/A\" all throw the same way.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:62 — DecimalAsDoubleSerializer.deserialize() does `raw.toDouble()` with the same no-guard pattern; any non-Double string (empty, \"N/A\", thousands-separated) throws NumberFormatException.",
+        "Impact/scope: these serializers back the monetary fields of the favorites + price-tracking payload (PortalListingModels.kt, FavoritesModels.kt). A NumberFormatException on ONE field aborts the ENTIRE payload decode — the exact whole-payload-decode failure mode these serializers were introduced to eliminate (see the file's own doc comment referencing issue #2331 / PR #2350, which only hardened against *fractional* strings, not malformed ones). The exception is caught downstream (PriceTrackingViewModel injects an errorMapper + catch), so the user sees a generic error instead of the app crashing — hence severity medium, not high — but a single bad field still blanks the whole favorites/price-tracking screen. Fix: parse via toLongOrNull()/toDoubleOrNull() (or wrap in runCatching) and fall back to 0 / skip, matching the wire-tolerant intent already documented in the file header.",
+        "confidence medium: static analysis — the crash inputs are confirmed by reading the parse code, but whether reality-server can actually emit such a malformed rust_decimal serde-str string in production was not runtime-confirmed."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-wire-test-no-malformed",
+      "title": "mobile-native-kmp: mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt ...",
+      "vector": "test",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d-3.json"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt — the wire-contract guard for DecimalAsLong/DecimalAsDoubleSerializer covers only the happy paths: valid fractional string (\"200000.00\"/\"-7.50\"), valid numeric wire (200000/-7.5), and null. There is NO negative-input case, so the NumberFormatException crash path in DecimalStringSerializers.kt:46/62 (empty string, \".50\", \"2e5\", non-numeric) is completely untested.",
+        "This is the test-coverage half of the DecimalAsLong/Double robustness gap: a serializer whose whole documented purpose (file header, issue #2331) is wire-tolerance has no test pinning its behaviour on the degenerate inputs that still throw. Add cases asserting the chosen contract (either a defined fallback once the sibling finding is fixed, or an explicit expected-failure) for empty/non-numeric/leading-dot decimal strings, so a future regression in the parse path surfaces at CI rather than on-device on the favorites/price-tracking screen.",
+        "confidence medium: static analysis of the existing test file — the four @Test methods enumerate only string/number/null happy paths; no malformed-string assertion is present."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalWireContractTest.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "title": "mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-11-mobile-native-kmp-tier1d-2.json"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — the single shared Ktor HttpClient installs ContentNegotiation, Logging(NONE), and a defaultRequest content-type, but NO `install(HttpTimeout)`. There is no requestTimeoutMillis, connectTimeoutMillis, or socketTimeoutMillis anywhere in the module (grep -rn 'HttpTimeout\\|requestTimeoutMillis\\|Timeout' shared/src returns nothing).",
+        "Impact on mobile: on a stalled/half-open connection (common on cellular handoff / captive portals) every repository suspend call — getListingDetail, favorites toggle, SSO validateAndLogin — hangs indefinitely with no upstream deadline. The UI state-holders flip isLoading=true and never receive a terminal onSuccess/onFailure, so the Compose CircularProgressIndicator (e.g. ListingDetailScreen.kt:116-119) spins forever with no error path and no retry affordance. This compounds the CancellationException-swallow finding: the only escape (scope cancellation) is itself swallowed by the repos.",
+        "Ktor default is NO timeout when the HttpTimeout plugin is not installed. Fix: `install(HttpTimeout) { requestTimeoutMillis = 30_000; connectTimeoutMillis = 15_000; socketTimeoutMillis = 30_000 }` in HttpClientProvider (applies uniformly to android ktor-client-android and iOS ktor-client-darwin engines since it is configured on the common client)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layoutrepo-println-logging",
+      "title": "mobile-native-kmp: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...",
+      "vector": "cleanup",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt uses raw `println(...)` for diagnostic logging in commonMain (shared production KMP code) at three sites: line 48 ('falling back to default layout: HTTP ...'), line 57 ('...: unexpected screen echo ...'), and line 68 ('...: ${e.message}'). println in commonMain writes uncontrolled output to stdout on Android (logcat System.out) and to the device console on iOS with no tag, level, or ability to disable it in release builds.",
+        "It is the only repository in the commonMain layer that logs with println (the sibling repos either return Result.failure with a message or use platform loggers at the call site, e.g. AccountScreen uses Log.e). This is inconsistent and leaks internal fallback behavior to release logs. Fix: route through a shared expect/actual logger (or Kermit/Napier if already available), gate on a debug flag, or drop the println entirely since the fallback is already returned as DEFAULT_LISTING_DETAIL_LAYOUT. Low severity / cleanup, but easy and self-contained."
+      ],
+      "files": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-mylistings-truncates-100-no-paging",
+      "title": "mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:461-489 — ...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-11-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:461-489 — the MyListings route loads the realtor's own listings once via `portalListingsRepository.listMyListings(limit = 100)` (Navigation.kt:471) inside a `LaunchedEffect(Unit)` and passes the single page straight into MyListingsScreen. There is no `offset`, no load-more, and no total-count handling. The server clamps limit to 1..100 (PortalListingsRepository.kt:44 doc), so 100 is the hard ceiling.",
+        "The status-chip filter is applied CLIENT-SIDE over that truncated page, which compounds the bug into visible wrongness. MyListingsScreen.kt:76 derives the available chips from `listings.map { it.status }.distinct()` and filters locally (statusFilter at :52, chips at :84-87). For a realtor with >100 listings, any listing past row 100 is invisible AND its status may be absent from the chip strip; filtering to e.g. 'Sold' can render an empty screen even though sold listings exist beyond the first 100 rows.",
+        "Impact: silent data loss on a realtor's own inventory list with no UI affordance to reach the rest, plus a misleading filter. Fix: add offset-based pagination (LazyColumn onReachEnd -> fetch next page) or surface the server's total count with a load-more control; the status filter should drive the server query (listMyListings already accepts a `status` param, Navigation.kt fetches unfiltered by choice) rather than slicing a truncated client page. Distinct from the existing open finding code-review-mobile-native-kmp-portfolio-analytics-caps-100, which concerns the analytics roll-up rather than the MyListings display path."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "title": "mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — four inl...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d-2.json"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — four inline LaunchedEffect data loaders collapse ALL failures into an empty collection with no error state and no retry affordance: search history `.onFailure { searches = emptyList() }` (:380), inquiries `.onFailure { inquiries = emptyList() }` (:450), my-listings `.onFailure { listings = emptyList() }` (:476), portfolio analytics `.onFailure { metrics = emptyList() }` (:541).",
+        "A real network error (timeout, 5xx, auth loss — PortalListingException / IOException surfaced via Result.failure) is rendered identically to a legitimately empty result, so the realtor sees a misleading 'no listings / no inquiries / no analytics' empty state instead of an error + retry. This compounds the sibling finding (today's `cancellationexception-swallowed-repos`): repos return Result.failure on cancellation too, so a normal navigation-away also flashes an empty state.",
+        "Fix: give each loader a distinct error UI-state (e.g. an `errorMessage`/`isError` field alongside `isLoading`) and a retry action, mirroring how the KMP ViewModels (e.g. ListingDetailViewModel) already model error state, rather than folding every failure into emptyList(). Medium severity: user-facing but non-crashing, and errors are silently masked rather than surfaced."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-unbounded-fanout",
+      "title": "mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositor...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-09-mobile-native-kmp-tier1d-2.json"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111 getPortfolioAnalytics() fetches listMyListings(limit = 100) then fires one `async { getListingAnalytics(listing.id) }` per listing inside a single coroutineScope and awaitAll()s them — an unbounded concurrent fan-out of up to 100 simultaneous GET /api/v1/my/listings/{id}/analytics requests with no chunking or concurrency cap (Semaphore).",
+        "For a realtor with a large portfolio this thundering-herd fires the full batch at once every time the analytics dashboard opens; depending on the Ktor engine's connection pool it either serializes behind the pool (slow dashboard) or floods the server/rate-limiter. Per-listing failures are silently dropped via `.getOrNull()` (documented as intentional), which also means the portfolio totals under-report with no indication when some calls fail.",
+        "Fix: bound the fan-out — chunk the listing ids (e.g. groups of 5-10) or gate the async calls behind a kotlinx.coroutines Semaphore(permits = N). Low severity / perf-robustness; self-contained in one function."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "title": "mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is a 349-lin...",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-11-mobile-native-kmp-tier1d-2.json"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is a 349-line security-critical auth service (validateAndLogin, createMobileToken, loginWithPassword, register, requestPasswordReset/confirm, getSession, refreshSession, restoreSession, updateProfile, logout) with NO dedicated unit test. find shared/src/commonTest -name '*.kt' shows SsoStateStoreTest and SsoInitiationTest (which cover only the CSRF-nonce store/initiation), but no SsoServiceTest — none of the token-validation, login, or session-restore success/failure/authState transitions are exercised.",
+        "Every other repository/service in commonMain has behavioural coverage (LayoutRepositoryTest, NotificationRepositoryTest, FavoritesRepositoryTest, PortalListingsRepositoryTest, ProfileStatsLoaderTest, ListingDetailViewModelTest, PriceTrackingViewModelTest, ...), making SsoService the sole untested state-mutating class — and it is the one that drives AuthState across the whole app.",
+        "Given the SSO CSRF contract called out in mobile-native/CLAUDE.md ('Both platforms MUST verify a per-flow state nonce'), the absence of tests asserting validateAndLogin's success->Authenticated / non-2xx->Error / exception->Error transitions (via a Ktor MockEngine, the pattern already used in LayoutRepositoryTest) is a real coverage gap on the highest-risk surface. Fix: add SsoServiceTest with MockEngine cases for validateAndLogin + loginWithPassword + restoreSession happy/error paths, and (paired with the cancellation finding) a CancellationException-propagation assertion."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt",
+        "mobile-native/CLAUDE.md"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-unit-test",
+      "title": "mobile-native-kmp: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is the most security-criti...",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp tier1d 2026-08-10-mobile-native-kmp-tier1d.json"
+      ],
+      "evidence": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is the most security-critical class in the shared module — it owns the session-token lifecycle (validateAndLogin, restoreSession, login, register, requestPasswordReset, confirmPasswordReset, getSession, logout) and the mutable `sessionToken` used for every authenticated request via `Authorization header (Bearer scheme)`. It has NO dedicated unit test: there is no SsoServiceTest.kt anywhere under shared/src/commonTest, and the only references (`grep -rln SsoService commonTest`) are the navigation tests AuthGuardNavigationTest.kt and AndroidDeepLinkDispatchTest.kt, which exercise routing, not the service's own behavior.",
+        "Untested behavior worth locking down: restoreSession (SsoService.kt:318-345) sets `sessionToken = token` BEFORE calling getSession(), and on failure must clear it (`onFailure { sessionToken = null; _authState.value = Unauthenticated }`). There is no test asserting that a failed restore leaves no stale token behind — precisely the class of regression flagged for the RN app (code-review-mobile-rn-auth-restore-stale-token). The KMP counterpart has the correct clear-on-failure code but zero coverage guarding it.",
+        "The sibling repositories are all directly tested (PortalListingsRepositoryTest, FavoritesRepositoryTest, NotificationRepositoryTest, LayoutRepositoryTest, etc.), which makes SsoService's absence an inconsistent coverage hole rather than a project-wide policy. Fix: add SsoServiceTest covering validateAndLogin success/failure -> AuthState transitions and restoreSession's clear-on-failure token invariant (MockEngine-backed, same pattern as the existing repository tests)."
+      ],
+      "files": [
+        "shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallows-errors",
+      "title": "mobile-rn: frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:354-382 — the private `apiRequest<T>()` used ...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-rn tier1d 2026-08-11-mobile-rn-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:354-382 — the private `apiRequest<T>()` used by every widget fetch (fetchNotificationsData, fetchUpcomingMeetingsData, fetchFaultsData, etc.) catches ALL failures and `return {} as T` (:380). This includes the explicit `if (!response.ok) throw new Error(\\`API request failed: ${response.status}\\`)` at :369-371 — a 401 (the widget's own `authToken` set via setAuthToken at :35 is separate from the main app's token and is never refreshed), 403, or 500 is caught at :374 and converted to an empty object cast to the widget's data type. So an auth/server failure is indistinguishable from a legitimately empty response.",
+        "This silently defeats the intended cache-fallback in `updateAllWidgets()` (:138-173): because `apiRequest` swallows the throw, `fetchWidgetData` never rejects, so `result.success` is always `true` (:159), the `else` branch that restores cached data on failure (:162-167) is UNREACHABLE, and the empty `{}`-derived data is written back via `cacheWidgetData(result.config.id, result.data)` (:160) — OVERWRITING the last-known-good cache with zeros. e.g. fetchUpcomingMeetingsData maps `response.upcoming_count ?? 0` / `response.meetings?.map(...) ?? []` (:304-311), so on any transient network blip or expired widget token the home-screen widget silently drops to '0 meetings' / '0 notifications' AND clobbers the good cached copy, instead of showing stale data.",
+        "Compounding: error visibility is `if (__DEV__)` only (:376-378) — in production the failure is completely silent, and the inline comment `// in production, integrate with error reporting` (:375) is an unaddressed acknowledgement of the gap. Fix: let `apiRequest` propagate (rethrow) on `!response.ok` and on network error so `updateAllWidgets`'s existing allSettled + cached-fallback path (:153-168) actually engages and the cache is not overwritten with empty data; report errors outside `__DEV__`."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-storage-unguarded-jsonparse",
+      "title": "mobile-rn: frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:92-95 `getAllWidgetConfigs()` does `return st...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-rn tier1d 2026-08-11-mobile-rn-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:92-95 `getAllWidgetConfigs()` does `return stored ? JSON.parse(stored) : []` and :347-352 `getAllCachedData()` does `return stored ? JSON.parse(stored) : {}` — both parse AsyncStorage-persisted JSON with NO try/catch. If WIDGET_CONFIG_KEY or WIDGET_DATA_KEY is ever truncated/corrupted (partial write on process kill, storage corruption, schema drift after an app update), JSON.parse throws synchronously.",
+        "The throw is uncaught on the widget-refresh path: `updateAllWidgets()` (:138) calls `getAllWidgetConfigs()` at :139 outside any try/catch, and its cache-fallback calls `getCachedWidgetData()`→`getAllCachedData()` at :164 also outside try/catch — so a corrupted store rejects the whole background widget update (all widgets fail, not just one) as an unhandled promise rejection rather than degrading gracefully.",
+        "This exact hazard is already guarded elsewhere in the same app: nfc/NFCCredentialManager.ts:272,285 wraps its stored-credential JSON.parse in try/catch and discards on corruption ('Stored credentials corrupted; discarding'). The widget provider should follow that established repo pattern — wrap both parses, discard/reset the corrupted key, and return the empty default. Low trigger probability but zero-cost to harden and consistent with existing code."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-401-refresh-unwired",
+      "title": "ppt-web-core: frontend/apps/ppt-web/src/lib/api.ts:213-221 — the axios response interceptor has a reactive 401 hoo...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-core tier1d 2026-08-10-ppt-web-core-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 — the axios response interceptor has a reactive 401 hook: `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`. `onUnauthorizedCallback` is a module-level var (api.ts:180) set only from `configureApiClient({ onUnauthorized })` (api.ts:196). This is the ONLY reactive session-expiry recovery path in the axios layer (401 is not in the retryable set, so the request otherwise just rejects at api.ts:255).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — the sole production `configureApiClient(...)` call passes ONLY `{ getToken: getAccessToken }` and omits `onUnauthorized`. `grep -rn onUnauthorized` across ppt-web/src (excluding lib/api.ts) returns zero wiring — only two comment references in feature hooks. So `onUnauthorizedCallback` is permanently `undefined` in production and the 401 branch at api.ts:220 is dead code.",
+        "There is no proactive refresh fallback to cover the gap: AuthContext has NO setInterval/setTimeout refresh scheduler (`grep setInterval|setTimeout contexts/AuthContext.tsx` -> none) and the exposed `refreshToken` context method (AuthContext.tsx:449, with a correct isRefreshing/refreshPromise dedup guard at 451-461) has no reactive call site (`grep '.refreshToken('` non-test -> none). Refresh runs only at cold boot (AuthContext.tsx:427, init effect). No global QueryCache/MutationCache onError bridges 401s to it either.",
+        "Impact: once the access token expires mid-session, the next request 401s and NOTHING happens automatically — no token refresh (despite a valid refresh token in storage), no logout, and no redirect to login. The UI silently shows failed/empty data until a full page reload triggers the cold-boot refresh. Reachable in normal production use (token TTL elapses, or tab resumes from sleep past expiry).",
+        "Fix: pass `onUnauthorized` into the AuthContext.tsx:337 `configureApiClient` call, routing it to the existing dedup-guarded `refreshToken()` (retry the original request on success, hard-logout + redirect on failure); or add a proactive scheduled refresh keyed off the access-token TTL. The dedup machinery (refreshPromise/isRefreshing) and the interceptor hook already exist — they are simply not connected."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "title": "ppt-web-core: frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) a...",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-core tier1d 2026-08-08-ppt-web-core-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetworkError(error) as its FIRST branch, before the structured-error branches (isAxiosError at :162, isErrorResponse at :205). isNetworkError (errorHandler.ts:394-416) does case-insensitive substring sniffing on ANY object's `.message`: message.includes('network') || message.includes('failed to fetch') || message.includes('network request failed') || message.includes('networkerror').",
+        "This misclassifies genuine structured backend errors as generic connectivity errors whenever the backend's human message happens to contain a network keyword. The transformed ApiError from lib/api.ts:152-169 is an Error instance whose `.message` is set directly from the backend body (`data?.message`), so an ApiError is exactly the object shape that trips isNetworkError. Concrete failure: backend returns 422 { error:'VALIDATION_ERROR', message:'Network name must be unique', requestId:'abc', details:[{field:'network_name', message:'...'}] }; the axios interceptor (api.ts:transformError) builds ApiError(message='Network name must be unique'); a UI calling parseApiError(apiError) hits isNetworkError → returns the canned NETWORK_ERROR ('check your connection') and DROPS statusCode, code, requestId, and validationErrors. The user sees a bogus 'connection problem' instead of the field-level validation, and error telemetry loses the requestId.",
+        "Root cause is ordering + heuristic scope: message-substring detection is only safe for the axios TOP-LEVEL error.message (e.g. 'Network Error' from axios itself), not for a field that also carries server-authored text. Fix: gate the network heuristic to the true no-response case (axios error with code==='ERR_NETWORK' or !error.response, and TypeError 'fetch' path) and move the generic message-keyword check AFTER isAxiosError/isErrorResponse structured parsing, or restrict it so a structured ErrorResponse (has `error` + `message` string fields) is never swallowed by the network branch. Add a regression test: parseApiError of a 422 ApiError whose message contains 'network' must return code='VALIDATION_ERROR' with validationErrors intact."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "title": "ppt-web-core: frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-returns when `!ev...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-core tier1d 2026-08-08-ppt-web-core-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-returns when `!eventType || !handlerRef.current` and lists deps `[eventType, subscribe]`, intentionally excluding `handler` (handler is read via handlerRef to avoid re-subscribing on identity changes).",
+        "Edge case: if a consumer calls useWebSocket(eventType, handler) with a STABLE eventType but `handler` initially undefined (e.g. gated on a not-yet-ready callback: useWebSocket('message:new', ready ? onMsg : undefined)), the effect runs once at mount, sees handlerRef.current === undefined, returns without subscribing, and never re-runs when handler later becomes defined — because neither eventType nor subscribe changed. The subscription is silently never established, so realtime events for that eventType are dropped for the component's lifetime.",
+        "The optional `handler?` in the signature (useWebSocket.ts:74) advertises undefined as a supported input, making this a real API-contract gap rather than a misuse. Low severity because the common call site passes an always-defined inline handler; but the fix is cheap: include a boolean `hasHandler = handler != null` in the dep array (or subscribe unconditionally and no-op inside wrappedHandler when handlerRef.current is undefined) so a handler transitioning undefined→defined re-arms the subscription."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirm...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d 2026-08-09-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await <mutation>.mutateAsync(...)` with NO try/catch, and the page renders error UI only for the list query (`error` at :178) — deleteRule.error / updateRule.error / runRule.error are never surfaced anywhere in the component.",
+        "There is no global mutation error handler to catch the rejection: frontend/apps/ppt-web/src/main.tsx:28-35 configures QueryClient defaultOptions with `queries` only (staleTime, retry) — no `mutations` / MutationCache onError. So a rejected mutateAsync becomes an unhandled promise rejection with zero user feedback.",
+        "Concrete failure: confirmDelete (:56-61) — if deleteRule.mutateAsync rejects (network drop / 409 / 500), the throw skips `setDeleteConfirm(null)` (:59) so the delete-confirmation modal stays open indefinitely with the button re-enabled and no error message; the user cannot tell the delete failed. handleToggle (:63-68) — a failed enable/disable toggle reverts the switch visually on the next render with no indication the change was rejected, so the manager believes a rule is paused when it is still live (or vice-versa). handleRun (:70-72) and ExecutionMonitoringPage.handleRetry (ExecutionMonitoringPage.tsx:74-77) share the same no-catch/no-error-surface pattern.",
+        "Fix: wrap each handler in try/catch and render the mutation error (or add a MutationCache onError toast in main.tsx). Note CreateRulePage.tsx:62 and EditRulePage.tsx:113 DO render `createRule.error`/`updateRule.error`, so the list page is the inconsistent outlier."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.ts",
+        "frontend/apps/ppt-web/src/main.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 — the...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d 2026-08-09-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:211-218 — the number-typed value input does `onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}`. `Number('')` is `0`, so clearing the field silently persists the condition value as 0 rather than empty/unset.",
+        "addCondition (ConditionBuilder.tsx:81) seeds every new condition with `value: ''`. When the selected field is numeric (e.g. 'payment.amount', 'payment.daysOverdue', 'document.size' — getFieldType==='number', lines 21-24), a user who adds a condition and never types a value, or types then deletes it, ends up saving `value: 0` with no validation gate anywhere in the builder.",
+        "Effect: a rule like 'Payment Amount greater_than 0' or 'Days Overdue greater_than_or_equals 0' silently matches essentially every record instead of the intended threshold — an automation that fires far more broadly than the author expects (e.g. dunning/notification actions sent to all payers). There is no min/required check and no distinction between 'blank' and 'zero' in the persisted TriggerCondition.",
+        "Fix: keep the raw string in state (or use `e.target.value === '' ? '' : Number(e.target.value)`) and block save (RuleBuilder canProceed) when a non-empty operator has an empty/NaN numeric value; mirror the string-input branch (:220-227) which correctly preserves ''."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:55-66 — handleApprove aw...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d 2026-08-10-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:55-66 — handleApprove awaits the approve-booking mutation inside try/catch, and on failure the catch body is ONLY `console.error('Failed to approve booking:', error)`. No setState, no alert, no toast, no error banner. A manager clicks Approve on a pending facility booking; if the API rejects it (409 conflict, RLS denial, network), the UI gives zero feedback — the row silently stays pending and the manager assumes it worked.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:74-84 — handleRejectConfirm has the same shape: on the success path it closes the RejectBookingDialog (setRejectDialogBooking(null)); on the catch path it only console.errors, so a failed rejection leaves the dialog open with no message explaining why nothing happened.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx:67-77 — handleCancel (tenant-initiated booking cancellation) catches and only console.errors; a failed cancel is invisible to the tenant, who believes their booking was cancelled.",
+        "This is a codebase-inconsistency defect, not a style nit: the sibling feature page frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx:106-159 establishes the correct pattern — every mutation catch does `setError(err instanceof Error ? err.message : t('emergency.errors.failed...'))` AND console.error, rendering a visible error. The facilities booking pages omit the user-facing half. Fix: add an error state (or toast) surfaced in the same i18n style, matching EmergencyContactDirectoryPage."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.ts",
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.ts",
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-review-approve-only",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 — handlePetReview hardcod...",
+      "vector": "completeness",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d 2026-08-10-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 — handlePetReview hardcodes `data: { approve: true }` and is guarded only by `window.confirm('Approve this pet registration?')`. There is no reject path: a manager can approve a pending pet registration but cannot reject one from this screen. Same for handleVehicleReview at lines 168-183.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:113 — the code self-documents the gap: `// Simple approval - in a real app, this would open a modal to approve/reject with reason`. The review API is a two-outcome decision (approve boolean) but the UI wires only the approve=true branch, so the reject half of the moderation workflow is unreachable and no rejection reason can be captured.",
+        "Compare with the facilities feature, which ships a proper RejectBookingDialog capturing a reason (PendingBookingsPage.tsx / components/RejectBookingDialog). The registry review flow should offer an equivalent approve/reject choice with reason capture instead of a confirm-and-approve-only stub. Completeness gap, low severity: managers currently must delete a registration they intend to reject, losing the audit distinction between 'rejected' and 'deleted'."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-109 — handlePetDelete confirms...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d 2026-08-10-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-109 — handlePetDelete confirms via window.confirm then `await deletePetMutation.mutateAsync(id)`; the catch body is ONLY `console.error('Failed to delete pet registration:', error)`. A destructive delete that fails (RLS denial, 404, network) shows the user nothing. The grep-verified fact that the whole file contains no setError / setFormError / alert / toast / notify / onError means EVERY mutation failure on this page is swallowed.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 — handlePetReview (approve) and lines 155-183 handleVehicleDelete / handleVehicleReview repeat the identical silent-catch anti-pattern for the vehicle registry. Four user-facing mutations (2 destructive deletes, 2 approvals), all failing silently.",
+        "Contrast with the established convention in EmergencyContactDirectoryPage.tsx:106-159 (setError + i18n key + console.error) — RegistryPage implements only the console.error half, so a manager whose delete/approve silently fails has no signal to retry. Fix: introduce an error state surfaced in the UI (matching the emergency page), so failed destructive/approval actions are visible."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-i18n-gap",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call useTranslatio...",
+      "vector": "chore",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d 2026-08-09-ppt-web-ui-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call useTranslation (RuleCard, RuleBuilder, TemplatePreviewModal, TriggerSelector, ExecutionDetailsModal, ExecutionMonitoringPage partial); every page renders hardcoded English. This is a react-i18next-enabled app (root CLAUDE.md: react-i18next 16), so these strings never localize.",
+        "AutomationRulesPage.tsx: 'Automation Rules' (:82), 'Create and manage automated workflows...' (:84), 'Create Rule' (:101), 'Search rules...' (:133), 'All Status'/'Active'/'Paused' (:150-152), 'No automation rules yet' (:217), 'Failed to load automation rules. Please try again.' (:180), 'Delete Automation Rule'/'This action cannot be undone.' (:285-286), 'Deleting...'/'Delete' (:306) — all raw literals, no t().",
+        "ExecutionMonitoringPage.tsx: 'Execution Monitoring' (:93), 'No execution logs' (:230), 'No executions match your current filters.' (:234), 'Clear filters' (:246), 'Retrying execution...' (:296). CreateRulePage.tsx: 'Create Automation Rule' (:53), 'Back to Rules' (:57), 'Failed to create automation rule...' (:64). EditRulePage.tsx: 'Loading...'/'Edit: ...' (:79). TemplateLibraryPage.tsx: 'No templates found' (:197).",
+        "Consistent with prior finding code-review-ppt-web-ui-error-pages-i18n (2026-08-06) — same systemic gap, distinct feature. Fix: extract to the app's message catalog and wrap with t(); add the workflow-automation keys to frontend/apps/ppt-web/messages/en.json plus the sk/cs/de locales."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/en.js"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-layoutsections-dup-key",
+      "title": "reality-web: frontend/apps/reality-web/src/components/listings/LayoutSections.tsx:125 and :136 — both the placeho...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-web tier1d 2026-08-11-reality-web-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.tsx:125 and :136 — both the placeholder branch and the real-component branch render each row with `key={section.type}` while mapping over `layout.sections`.",
+        "frontend/apps/reality-web/src/lib/layout.ts:85-108 — `layout.sections` is a server-resolved list of `ResolvedSection` objects distinguished by `type` + `presentation` + `mode` + `props`; nothing enforces `type` uniqueness, and multiple sections of the same type (e.g. repeated 'custom'/'spacer'/'gallery' blocks differentiated by props) are a valid, expected payload. `getResolvedLayout` only filters non-object elements and clamps to MAX_SECTIONS — it does not dedupe or index types.",
+        "Impact: when a layout contains two sections of the same type, React sees duplicate sibling keys — it emits a dev warning and, on re-resolve/re-order of the sections list, reconciliation collides the duplicates: section-local state (e.g. a section's ErrorBoundary hasError, gallery index) can bleed between them or an update can be dropped. The `onClickCapture`/`data-layout-section={section.type}` preview bridge also targets ambiguously when two rows share the same type.",
+        "Fix: key on a stable unique id — prefer a server-provided section id if present, otherwise `key={`${section.type}-${index}`}` using the map index — at both LayoutSections.tsx:125 and :136."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/LayoutSections.ts",
+        "frontend/apps/reality-web/src/lib/layout.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "title": "reality-web: frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoading } = useL...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-web tier1d 2026-08-11-reality-web-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoading } = useListings(filters, currentPage);` destructures ONLY data + isLoading. The TanStack Query result's `isError`/`error` are dropped and there is no error branch anywhere in the file (`grep -c isError page.tsx` -> 0).",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:338,341 — on a failed query `data` is undefined and `isLoading` is false, so `<ListingGrid listings={data?.data ?? []} isLoading={isLoading} />` receives `[]` with isLoading=false.",
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:61,76 — with an empty array and isLoading=false ListingGrid renders the hardcoded empty state `<h3 className=\"empty-title\">No listings found</h3>`. Net effect: a reality-server outage / 5xx / network failure on the public search page is indistinguishable from a legitimate zero-results search — the user sees 'No listings found' with no error message and no retry affordance, and crawlers may index the soft-empty page.",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:185 — `toggleFavorite.mutate({ listingId, isFavorite });` (useToggleFavorite) is fire-and-forget with no onError/onSettled; a failed favorite toggle silently no-ops with no user feedback and no optimistic-state rollback.",
+        "Fix: destructure `isError`/`error` from useListings and render a distinct error state (message + retry button) when isError is true, before falling through to the empty state; and pass an `onError` to `toggleFavorite.mutate` (or the useToggleFavorite hook) to surface/roll back a failed toggle."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-maint-fallback-i18n",
+      "title": "reality-web: frontend/apps/reality-web/src/app/[locale]/layout.tsx:158-159 — the `building_disabled` defense-in-d...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web tier1d 2026-08-11-reality-web-tier1d.json"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx:158-159 — the `building_disabled` defense-in-depth branch renders hardcoded English: `<h1>Service temporarily unavailable</h1>` and `<p>{tenantConfig.name} is offline for maintenance. Please check back shortly.</p>` (plus the `<title>` at layout.tsx:146), even though `locale` is in scope and applied at `<html lang={locale}>` (layout.tsx:140). This is a 6-locale portal (en/sk/cs/de/pl/hu per layout.tsx generateMetadata title/description maps).",
+        "frontend/apps/reality-web/src/lib/kill-switch.ts:90-96 — localized maintenance copy ALREADY exists as `COPY[locale]` (used by the canonical middleware kill-switch path, src/middleware.ts:37-49, which emits a real 503). The SSR fallback branch in layout.tsx duplicates the maintenance UI but hardcodes English instead of reusing that COPY table, so a Slovak/Czech/German user hitting the rare edge-fetch-failed-but-SSR-succeeded fallback gets English.",
+        "Fix: reuse the `kill-switch.ts` `COPY` strings (or the shared normalizeKillSwitchLocale + COPY lookup) keyed by `locale` in the layout.tsx:154-160 fallback, so the defense-in-depth path matches the localized middleware path."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/kill-switch.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-client-no-timeout-pool",
+      "title": "reality-server: backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-server tier1d 2026-08-08-reality-server.json"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :706 (get_user_info), :743 (introspect_pm_token) — each SSO OAuth helper constructs a fresh `reqwest::Client::new()` per invocation. `Client::new()` has NO request timeout, so a hung/slow PM OAuth server on the token-exchange / userinfo / introspection calls will block the awaiting request indefinitely (only bounded by whatever axum/OS imposes), risking worker/connection exhaustion under a stalled upstream.",
+        "Contrast: backend/servers/reality-server/src/state.rs:753-761 (PmApiClient::new) deliberately builds a pooled client WITH `.timeout(Duration::from_secs(timeout_seconds))`. The SSO helpers bypass that pattern, so they get neither the timeout nor connection-pool / TLS-session reuse across the hot introspection path.",
+        "Suggested fix: build one timeout-configured reqwest::Client at startup, store it on AppState (alongside PmApiClient), and share it across all three SSO helpers instead of `reqwest::Client::new()` per call — fixes both the missing timeout and the per-request pool/TLS churn in one change."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-sso-rs-negcache-transient-fail",
+      "title": "reality-server: backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false...",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-server tier1d 2026-08-08-reality-server.json"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() caches active=false for the full 60s TTL on ANY non-success HTTP response from the PM introspection endpoint: `if !response.status().is_success() { ... state.token_cache.set(token, false, None, None).await; return Err(...) }`. A transient PM-API failure (503/502/500 during a deploy or overload) is thus conflated with a genuinely-inactive token.",
+        "Consequence: a legitimate, still-valid session token that hits the cache-miss path during a brief PM outage is negatively cached as inactive for up to 60s. Because introspect_pm_token feeds the SSO auth hot path, the user is denied/logged-out for up to a minute AFTER PM has already recovered — an availability regression driven by transient upstream errors, not by real token state.",
+        "The comment 'Cache inactive tokens too (to prevent repeated failed validations)' assumes non-2xx == inactive, but introspection RFC 7662 returns 200 with {active:false} for a genuinely inactive token; a 5xx is a server error, not an inactivity signal. Suggested fix: only negative-cache when the introspection call SUCCEEDS (200) and the body reports active=false; on 5xx/network errors, propagate the error WITHOUT writing a false entry (fail-open to a re-check on the next request, or short-TTL/no-cache)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }

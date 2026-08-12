@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-08-07 06:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-12 04:15 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -61,6 +61,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 0 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backen | #1331 | 2026-07-05 | dropped |
 | 0 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconf | issue #1380 | 2026-07-05 | dropped |
 | 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-06-13 | dropped |
+
 
 ## Status legend
 

@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-07 06:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-12 04:15 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 3 | bug | `code-review-api-core-rls-context-pool-not-conn` | api-core: backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is d | ready | 2026-08-12 | [plan](plans/code-review-api-core-rls-context-pool-not-conn.md) |
 | 3 | bug | `gh-issue-2699-migration-collision` | dev CI broken: duplicate SQLx migration 00220 — renumber portal_get_listing_view_count to 00227 | done | 2026-08-07 | [plan](plans/_archive/gh-issue-2699-migration-collision.md) |
 | 3 | bug | `code-review-ppt-web-core-ws-pong-timeout-drop` | ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa... | done | 2026-08-06 | [plan](plans/code-review-ppt-web-core-ws-pong-timeout-drop.md) |
 | 3 | security | `code-review-reality-server-sso-session-invalidate-swallowed` | reality-server sync_session swallows invalidate_session error — portal session survives after PM tok | dropped | 2026-08-02 | [plan](plans/code-review-reality-server-sso-session-invalidate-swallowed.md) |
@@ -31,12 +32,40 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-api-core-idempotency-tx-across-handler` | api-core: backend/crates/api-core/src/middleware/idempotency.rs:95-179 — `handle_idempotent_request` | open | 2026-08-12 |  |
+| 2 | bug | `code-review-api-core-require-auth-guest-default` | api-core: backend/crates/api-core/src/middleware/authorization.rs:170-201 — `require_permission` der | open | 2026-08-12 |  |
+| 2 | bug | `code-review-api-handlers-residency-compliance-failopen` | api-handlers: backend/servers/api-server/src/routes/data_residency.rs:1040-1048 — in the data-reside | open | 2026-08-12 |  |
+| 2 | bug | `code-review-api-handlers-webhook-ssrf-loopback-failopen` | api-handlers: backend/servers/api-server/src/routes/integrations/webhook.rs:201-203 (create_webhook_ | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-cancellationexception-swallowed-repos` | mobile-native-kmp: Systemic across the commonMain repository layer: every repository that wraps a su | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-notimpl-stub` | mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navig | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-stub` | mobile-native-kmp: androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-submit-stub` | mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navig | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-createlisting-notimpl-stub` | mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navig | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-decimal-serializer-nfe-crash` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalS | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClie | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-mylistings-truncates-100-no-paging` | mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navig | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-nav-onfailure-empty-swallow` | mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navig | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-rn-widget-apirequest-swallows-errors` | mobile-rn: frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:354-382 — the private `apiRequest< | open | 2026-08-12 |  |
+| 2 | bug | `code-review-ppt-web-core-auth-401-refresh-unwired` | ppt-web-core: frontend/apps/ppt-web/src/lib/api.ts:213-221 — the axios response interceptor has a re | open | 2026-08-12 |  |
+| 2 | bug | `code-review-ppt-web-core-errorhandler-network-misclassify` | ppt-web-core: frontend/apps/ppt-web/src/lib/errorHandler.ts:149-160 — parseApiError() runs isNetwork | open | 2026-08-12 |  |
+| 2 | bug | `code-review-ppt-web-ui-automationrules-mutation-no-catch` | ppt-web-ui: frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56- | open | 2026-08-12 |  |
+| 2 | bug | `code-review-ppt-web-ui-conditionbuilder-number-coerce-zero` | ppt-web-ui: frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx:2 | open | 2026-08-12 |  |
+| 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web-ui: frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:55-66 — hand | open | 2026-08-12 |  |
+| 2 | bug | `code-review-ppt-web-ui-registry-silent-mutation-errors` | ppt-web-ui: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-109 — handlePetDel | open | 2026-08-12 |  |
+| 2 | bug | `code-review-reality-web-layoutsections-dup-key` | reality-web: frontend/apps/reality-web/src/components/listings/LayoutSections.tsx:125 and :136 — bot | open | 2026-08-12 |  |
+| 2 | bug | `code-review-reality-web-listings-page-no-error-state` | reality-web: frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — `const { data, isLoa | open | 2026-08-12 |  |
+| 2 | bug | `code-review-sso-rs-client-no-timeout-pool` | reality-server: backend/servers/reality-server/src/routes/sso.rs:682 (exchange_code_for_tokens), :70 | open | 2026-08-12 |  |
+| 2 | bug | `code-review-sso-rs-negcache-transient-fail` | reality-server: backend/servers/reality-server/src/routes/sso.rs:753-763 — introspect_pm_token() cac | open | 2026-08-12 |  |
+| 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
+| 2 | bug | `code-review-api-core-voice-actions-fabricated-empty` | Voice check-announcements & check-meter fabricate success with empty data — residents told 'no new a | dropped | 2026-08-10 |  |
+| 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
+| 2 | bug | `code-review-api-handlers-reports-csv-injection` | Reports CSV export writes user-authored vote titles unescaped — spreadsheet formula injection (bypas | done | 2026-08-10 |  |
 | 2 | bug | `code-review-reality-web-comparison-share-all-or-nothing` | reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared compa | done | 2026-08-07 |  |
 | 2 | bug | `code-review-reality-web-listingform-nan-validation` | reality-web ListingForm posts NaN for area/rooms — non-numeric or negative input coerced silently | done | 2026-08-07 |  |
 | 2 | bug | `code-review-api-handlers-enhanced-chat-stub` | api-handlers: enhanced_chat is a stubbed production handler that returns fabricated data.... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-mobile-rn-auth-restore-stale-token` | mobile-rn: the cold-start initialize() effect reads the stored access token (SecureSto... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-ppt-web-core-ws-giveup-no-resume` | ppt-web-core: once reconnectAttempts reaches maxReconnectAttempts (default 10, :290) sche... | done | 2026-08-06 |  |
-| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | open | 2026-08-06 |  |
+| 2 | bug | `code-review-reality-server-inquiries-no-ratelimit` | reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-reality-server-listing-viewcount-hardcoded-zero` | reality-server: the LIVE public listing-detail handler get_listing() (route wired at routes... | done | 2026-08-06 |  |
 | 2 | bug | `code-review-mobile-rn-offline-terminal-drop-dataloss` | mobile: useOfflineSupport — transient (5xx/network) queued actions are permanently DROPPED after 3 r | done | 2026-08-04 |  |
 | 2 | bug | `code-review-ppt-web-core-logout-cache-purge-gap` | ppt-web logout leaves 3 tenant-scoped TanStack Query roots un-purged (predictive-maintenance, sentim | done | 2026-08-04 |  |
@@ -125,14 +154,33 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | open | 2026-08-07 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | open | 2026-08-07 |  |
+| 1 | refactor | `code-review-ppt-web-ui-protectedroute-i18n` | ppt-web-ui: ProtectedRoute hardcodes English 'Access Denied' / 'Loading...' strings instead of using | open | 2026-08-12 |  |
+| 1 | refactor | `code-review-ppt-web-ui-offline-ind-i18n` | ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n | open | 2026-08-12 |  |
+| 1 | bug | `code-review-api-core-listings-detail-swallows-db-err` | api-core: backend/servers/api-server/src/routes/listings.rs:338 — in `get_listing` (the tenant-scope | open | 2026-08-12 |  |
+| 1 | bug | `code-review-api-handlers-residency-chain-valid-failopen` | api-handlers: backend/servers/api-server/src/routes/data_residency.rs:736 — in `list_audit_logs_impl | open | 2026-08-12 |  |
+| 1 | bug | `code-review-api-handlers-voice-oauth-link-failopen` | api-handlers: backend/servers/api-server/src/routes/ai/voice.rs:165-176 (exchange_voice_oauth_tokens | open | 2026-08-12 |  |
+| 1 | cleanup | `code-review-mobile-native-kmp-apiclient-dead-code-healthcheck-bug` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClien | open | 2026-08-12 |  |
+| 1 | cleanup | `code-review-mobile-native-kmp-compose-state-bang-bang` | mobile-native-kmp: Compose screens repeatedly re-assert nullable UI-state fields with `!!` immediate | open | 2026-08-12 |  |
+| 1 | test | `code-review-mobile-native-kmp-decimal-wire-test-no-malformed` | mobile-native-kmp: mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/api/DecimalW | open | 2026-08-12 |  |
+| 1 | cleanup | `code-review-mobile-native-kmp-layoutrepo-println-logging` | mobile-native-kmp: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt | open | 2026-08-12 |  |
+| 1 | bug | `code-review-mobile-native-kmp-portfolio-unbounded-fanout` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/Port | open | 2026-08-12 |  |
+| 1 | test-gap | `code-review-mobile-native-kmp-ssoservice-no-test` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoServ | open | 2026-08-12 |  |
+| 1 | test-gap | `code-review-mobile-native-kmp-ssoservice-no-unit-test` | mobile-native-kmp: shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt is the  | open | 2026-08-12 |  |
+| 1 | bug | `code-review-mobile-rn-widget-storage-unguarded-jsonparse` | mobile-rn: frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:92-95 `getAllWidgetConfigs()` does | open | 2026-08-12 |  |
+| 1 | bug | `code-review-ppt-web-core-usewebsocket-handler-dep-gap` | ppt-web-core: frontend/apps/ppt-web/src/hooks/useWebSocket.ts:81-97 — the subscribe effect early-ret | open | 2026-08-12 |  |
+| 1 | completeness | `code-review-ppt-web-ui-registry-review-approve-only` | ppt-web-ui: frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:111-126 — handlePetRe | open | 2026-08-12 |  |
+| 1 | chore | `code-review-ppt-web-ui-workflow-automation-i18n-gap` | ppt-web-ui: frontend/apps/ppt-web/src/features/workflow-automation/ — only 3 of 15 .tsx files call u | open | 2026-08-12 |  |
+| 1 | bug | `code-review-reality-web-maint-fallback-i18n` | reality-web: frontend/apps/reality-web/src/app/[locale]/layout.tsx:158-159 — the `building_disabled` | open | 2026-08-12 |  |
+| 1 | test-gap | `code-review-mobile-native-kmp-ssoservice-untested` | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has | open | 2026-08-11 |  |
+| 1 | bug | `code-review-api-core-quiet-schedule-err-failopen` | Notification pipeline swallows quiet-hours schedule DB error and fails open — push delivered during  | done | 2026-08-10 |  |
+| 1 | bug | `code-review-reality-web-listingform-no-i18n` | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | done | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts` | Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) | dropped | 2026-08-07 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | done | 2026-08-07 |  |
 | 1 | security | `code-review-api-handlers-ai-upstream-error-leak` | api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-rn-biometric-prompt-i18n` | mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog... | done | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | open | 2026-08-06 |  |
-| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | open | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-inquiry-email-stub` | reality-server: a shipped-but-non-functional notification path. | done | 2026-08-06 |  |
+| 1 | bug | `code-review-reality-server-orphan-listinghandler-stub-detail` | reality-server: ListingHandler::get_listing() returns a PublicListingDetail with a whole bl... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-reality-server-orphan-schedule-viewing-stub` | reality-server: schedule_viewing() runs full input validation (future-date at :300, <=90-da... | done | 2026-08-06 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout` | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no c | dropped | 2026-08-04 |  |
 | 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx` | Churn hotspot: 2 commits touching frontend/apps/ppt-web/src/routes/groups/rentals.tsx (window 2026-0 | dropped | 2026-08-04 |  |
