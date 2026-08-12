@@ -400,7 +400,13 @@
     "noUnitText": "Liczniki pojawią się po powiązaniu Twojego konta z lokalem.",
     "detailLoadError": "Nie można załadować licznika",
     "noReadingsTitle": "Brak odczytów",
-    "noReadingsText": "Prześlij swój pierwszy odczyt dla tego licznika."
+    "noReadingsText": "Prześlij swój pierwszy odczyt dla tego licznika.",
+    "meterFallback": "Licznik",
+    "backToMeters": "Liczniki",
+    "latestReading": "Ostatni odczyt",
+    "usedSincePrevious": "Zużycie od poprzedniego odczytu: {{amount}} {{unit}}",
+    "readingHistory": "Historia odczytów",
+    "submitNewReading": "Prześlij nowy odczyt"
   },
   "esignature": {
     "title": "Prosba o podpis",
