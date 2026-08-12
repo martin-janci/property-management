@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-11T14:13:11Z",
+  "archived_at": "2026-08-12T06:16:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3530,6 +3530,29 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-offline-ind-i18n",
+      "action": "ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T02:05:43Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-08-12T06:06:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T02:05:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "26dce7d602d7a7b4646966f0644631899ef4c1b7",
+        "subject": "code-review-ppt-web-ui-offline-ind-i18n: i18n OfflineIndicator banner (#2736)",
+        "at": "2026-08-12T06:06:45Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-portfolio-mock-data",
       "action": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:17-208 — the entire dashboard renders hardcoded mockDashboardSummary / mockPropertyCards / mockAlerts / mockCashFlowTrend consts; no useQuery/API hook",
       "owner_role": "pm-backend",
@@ -3576,6 +3599,29 @@
         "merged_pr": 2458,
         "merged_at": "2026-07-22T22:23:24Z",
         "at": "2026-07-23T00:03:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-i18n",
+      "action": "ppt-web-ui: ProtectedRoute hardcodes English 'Access Denied' / 'Loading...' strings instead of using i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-12T02:05:43Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-08-12T06:06:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-12T02:05:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "2ef5672fdc073e6f68ea07aedfeaf07c758e660d",
+        "subject": "code-review-ppt-web-ui-protectedroute-i18n: i18n ProtectedRoute strings (#2737)",
+        "at": "2026-08-12T06:06:45Z"
       }
     },
     {

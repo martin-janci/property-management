@@ -3671,6 +3671,30 @@
       "merge_attempted_at": "2026-08-03T12:13:50Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-offline-ind-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-offline-ind-i18n-885493e4",
+      "status": "merged",
+      "claimed_at": "2026-08-12T02:08:15Z",
+      "last_updated": "2026-08-12T06:07:30Z",
+      "status_changed_at": "2026-08-12T06:07:30Z",
+      "pr_number": 2736,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2736",
+      "merged_at": "2026-08-12T06:05:19Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=clean-i18n-fix-scope-drift-benign-ci-pending",
+      "last_reviewed_oid": "eb0a15fff538554f76515456b2d0b83c3ca54697",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-12T06:07:30Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-portfolio-mock-data",
       "branch": "auto-impl/code-review-ppt-web-ui-portfolio-mock-da-d21eab33",
       "status": "merged",
@@ -3713,6 +3737,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-22T22:21:44Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-protectedroute-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-protectedroute-i1-68843a4c",
+      "status": "merged",
+      "claimed_at": "2026-08-12T02:08:15Z",
+      "last_updated": "2026-08-12T06:07:30Z",
+      "status_changed_at": "2026-08-12T06:07:30Z",
+      "pr_number": 2737,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2737",
+      "merged_at": "2026-08-12T06:05:22Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=i18n-cleanup-reused-keys-defaultValue-pattern-scopedrift-mapping-artifact-nonblocking",
+      "last_reviewed_oid": "bbc22f956b8180db8f5e9775c28e1dbfb31733d6",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-12T06:07:30Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-ppt-web-ui-savedirty-stale-closure",
@@ -13413,5 +13461,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-11T14:12:25Z"
+  "archived_at": "2026-08-12T06:16:28Z"
 }
