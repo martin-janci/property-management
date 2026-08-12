@@ -7610,6 +7610,79 @@
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "title": "reality-web: RealtorManagement leaks English strings on multi-locale portal (title, tabs, statuses, invite button)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review-2026-08-12"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:53 — hardcoded tab labels All/Active/Pending/Inactive shown to sk/cs/de users",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:90 — hardcoded page title Realtor Management and subtitle",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:108 — hardcoded Invite Realtor button",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:298 — hardcoded status labels in statusConfig (Active/Pending/Inactive/Suspended)",
+        "InviteRealtorModal in the same file uses useTranslations(agency) — the migration was partial; RealtorManagement + RealtorCard were left behind"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-favorites-i18n",
+      "title": "reality-web: favorites page hardcodes empty/error/pagination strings in English on multi-locale portal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review-2026-08-12"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:62 — Failed to load favorites. Please try again hardcoded",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:88 — No favorites yet empty-state title hardcoded",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:90 — Start exploring listings body hardcoded",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:93 — Browse listings CTA hardcoded",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:169-172 — Previous/Next pagination and Page X of Y hardcoded",
+        "FavoritesContent already imports useTranslations(pages.favorites) for other strings — the three most visible states were missed"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error",
+      "title": "reality-web: listings page renders empty grid on API failure instead of error state (isError dropped from useListings)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review-2026-08-12"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — const { data, isLoading } = useListings(...) drops isError",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:243 — data && <p>{t(resultsCount)}</p> — header hidden on failure",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:338 — listings={data?.data ?? []} yields empty grid on error, visually identical to legitimate zero-hit search",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:55 — useListings throws on !response.ok; TanStack default (throwOnError=false) leaves error in state; page never inspects it",
+        "Reference: app/[locale]/favorites/page.tsx:59 handles isError correctly with alert UI"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }

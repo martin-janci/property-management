@@ -1,0 +1,240 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "phase-1",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "routine last_run_iso=2026-08-07T06:24:00Z was 5d 3h ago (>36h threshold; >=3d stale_routine_alert also fires)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2705",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2705 (dx-closed-not-merged-pr-2385-retry2: dtolnay/rust-toolchain 1.94.1->1.100.0) closed unmerged 2026-08-08 \u2014 third failed attempt at this bump; previous #2385 dropped 2026-07-20. Log-only; do not re-create dropped item."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "PR #2559 feat(acc): PAY by square payment QR endpoint (UC-ACC-05.8) \u2014 open 14d, no updates 13d, no reviewDecision"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "PR #2558 feat(acc): invoice PDF render endpoint (UC-ACC-05.9) \u2014 open 14d, no updates 13d, no reviewDecision"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "PR #2555 feat(acc): wire sent/cancelled invoice lifecycle (UC-ACC-05.17) \u2014 open 14d, no updates 13d, no reviewDecision"
+      ]
+    },
+    {
+      "id": "dep-update-noise-batch-2026-08-12",
+      "type": "dep-update-noise",
+      "source": "dependabot",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "12 open dependabot PRs in-flight (#2591/2590/2589/2588/2586/2585/2584/2583/2581/2675/2674/2673) \u2014 expected background noise; not scored"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:53 \u2014 hardcoded tab labels 'All'/'Active'/'Pending'/'Inactive' shown to sk/cs/de users",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:90 \u2014 hardcoded page title 'Realtor Management' and subtitle",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:108 \u2014 hardcoded 'Invite Realtor' button",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:298 \u2014 hardcoded status labels in statusConfig"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-favorites-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:62 \u2014 'Failed to load favorites' hardcoded",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:88-93 \u2014 empty-state title/body/CTA hardcoded English",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:169-172 \u2014 pagination 'Previous'/'Next' hardcoded"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 \u2014 useListings destructure drops isError",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:338 \u2014 listings={data?.data ?? []} renders empty grid on API failure",
+        "Contrast: app/[locale]/favorites/page.tsx:59 handles isError correctly with alert UI"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# <today>'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advances vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no non-cumulative signal double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open item at HEAD is older than 14d",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run \u2014 vacuously true",
+      "observed": "0 new plans",
+      "expected": "0 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only in .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no placeholder rot in brief",
+      "observed": "no matches",
+      "expected": "no matches"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "8 >= 8",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions.length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 no-op",
+      "observed": "skipped",
+      "expected": "skipped or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
