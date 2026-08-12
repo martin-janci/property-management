@@ -7502,13 +7502,15 @@
       "score": 3,
       "status": "done",
       "sources": [
+        "PR #2738",
         "Tier1d review 2026-08-12 (mobile-rn)"
       ],
       "evidence": [
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:262 — `if (response.status >= 400 && response.status < 500)` marks the error `permanent`, so processQueue (line 392-395) drops it: 401 (expired short-lived access token) and 429 (rate limit) are recoverable but discarded",
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:232 — executeQueuedAction reads the bearer from SecureStore at dispatch but never refreshes it; token refresh only runs at boot/biometric (contexts/AuthContext.tsx:275,326), so a replay after an offline period reliably 401s",
         "Contradicts the module's own documented invariant (lines 379-390, 399-404): transient failures must NEVER be dropped to avoid losing offline-created faults; a 401 on replay hits exactly that data-loss path",
-        "Fix: restrict `permanent` to non-auth client errors (400/403/404/409/422); treat 401/408/429 as transient — on 401 trigger AuthContext.refreshToken() and re-attempt rather than drop"
+        "Fix: restrict `permanent` to non-auth client errors (400/403/404/409/422); treat 401/408/429 as transient — on 401 trigger AuthContext.refreshToken() and re-attempt rather than drop",
+        "resolved: PR #2738 merged 2026-08-12 — retain recoverable 4xx (401/408/429) in offline sync queue; verified evidence-gone: file now defines RETRYABLE_HTTP_STATUSES set for 401/408/429 (useOfflineSupport.ts:34); old `response.status >= 400 && response.status < 500` pattern absent"
       ],
       "files": [
         "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
@@ -7681,6 +7683,139 @@
         "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
       ],
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
+      "title": "ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2735"
+      ],
+      "evidence": [
+        "227 lines added in-window (2026-08-07..2026-08-12) — rentals.mappers.test.tsx introduced by PR #2735 pinning six pure mapper functions; treat as churn signal for the rentals route group, watch for follow-up churn cycles."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.mappers.test.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts",
+      "title": "mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't re-introduce data loss",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2738"
+      ],
+      "evidence": [
+        "183 lines added in-window (2026-08-07..2026-08-12) — useOfflineSupport.test.ts introduced by PR #2738 pinning RETRYABLE_HTTP_STATUSES={401,408,429} behavior; churn hotspot only via addition, not repeated churn."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.test.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-oauth-rs",
+      "title": "api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2732"
+      ],
+      "evidence": [
+        "178 lines changed in-window (2026-08-07..2026-08-12) — PR #2732 moved OAuth token-usage recording off the hot token path; oauth_integration_tests.rs also churned +65 lines. First hotspot appearance for this file — repeated-churn will fire if it churns again."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs",
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "title": "stalled review: PR #2555 feat(acc) UC-ACC-05.17 wire sent/cancelled invoice lifecycle (15d open, 13d idle)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2555"
+      ],
+      "evidence": [
+        "PR #2555 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A wiring; outside dispatcher-owned scope so no auto-review. Human decision: pick up review / mark WIP / close."
+      ],
+      "files": [],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "title": "stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2558"
+      ],
+      "evidence": [
+        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559."
+      ],
+      "files": [],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "title": "stalled review: PR #2559 feat(acc) UC-ACC-05.8 PAY by square QR endpoint (15d open, 13d idle)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2559"
+      ],
+      "evidence": [
+        "PR #2559 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2558."
+      ],
+      "files": [],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "title": "closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry closed unmerged, investigate root cause",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2705"
+      ],
+      "evidence": [
+        "PR #2705 closed 2026-08-08 without merge — retry2 of dx-closed-not-merged-pr-2385 (rust-toolchain bump). Two retry cycles suggests a persistent CI/dependency wedge; investigate the bump path or defer."
+      ],
+      "files": [],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }
