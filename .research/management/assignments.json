@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-12T12:19:26Z",
+  "generated": "2026-08-12T14:17:57Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -52,21 +52,21 @@
       "branch": "auto-impl/code-review-ppt-web-core-perfmetrics-lis-00fbb67e",
       "status": "review",
       "claimed_at": "2026-08-12T10:10:54Z",
-      "last_updated": "2026-08-12T12:19:26Z",
-      "status_changed_at": "2026-08-12T10:23:54Z",
+      "last_updated": "2026-08-12T14:17:57Z",
+      "status_changed_at": "2026-08-12T14:17:57Z",
       "pr_number": 2742,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2742",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=2742 status=done specialist=react-web — removeEventListener visibilitychange+load on cleanup; onReport in ref dropped from deps; +5 tests; ppt-web verify green (2189). scope_drift labeling artifact (pm-backend owner, ppt-web hook code)",
-      "reviewer_summary": "verdict=changes — hook fix + listener-leak regression test are correct, but the branch commit also modified .research/management/assignments.json (single-writer-rule violation: reverts generated ts + nulls reviewer_summary/last_reviewed_oid for #2738/2739/2740). Drop that file from the branch, keep the 2 hook files, then re-review.",
+      "reviewer_summary": null,
       "last_reviewed_oid": "edb2547730709efd4ebf3814119f96779c28f904",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]
