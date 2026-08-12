@@ -12,6 +12,27 @@ import { extractTenantId } from '../utils/jwt';
 // it stays local here.
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 
+/**
+ * 4xx statuses that are RECOVERABLE and must NOT drop the queued action.
+ *
+ * Not every 4xx is a permanent client error — some clear on their own or after
+ * the client refreshes state, so replaying later can succeed:
+ *   - 401 Unauthorized — the access token expired between enqueue and replay.
+ *     The action is kept; `executeQueuedAction` reads the token fresh from
+ *     SecureStore on every dispatch, so once AuthContext refreshes it the next
+ *     reconnect replays with a valid bearer token. Dropping here silently loses
+ *     offline-created content the moment a token ages out.
+ *   - 408 Request Timeout — the server timed out reading the request; a retry
+ *     may well complete.
+ *   - 429 Too Many Requests — rate-limited; the action is throttled, not
+ *     rejected. Retrying after backoff is exactly the intended behaviour.
+ *
+ * Everything else in the 4xx range (400/403/404/409/422/…) is treated as a
+ * genuinely permanent client error and dropped, so the queue never blocks
+ * forever on a request that can never win.
+ */
+const RETRYABLE_HTTP_STATUSES: ReadonlySet<number> = new Set([401, 408, 429]);
+
 export interface CacheOptions {
   expiresIn?: number; // milliseconds
   key: string;
@@ -253,14 +274,23 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
       });
 
       if (!response.ok) {
-        // Treat 4xx as terminal (the request will never succeed even on
-        // retry — bad payload, gone, unauthorized, …) so the queue drops
-        // the action without burning the retry budget on hopeless replays.
-        // 5xx and network failures bubble up as a normal error so the
-        // outer retry loop handles them.
+        // Classify the failure so processQueue can decide to DROP vs RETRY.
+        // Most 4xx are permanent (the request will never succeed on retry —
+        // bad payload, gone, forbidden, …) so the action is dropped without
+        // burning reconnects on a hopeless replay. But the recoverable
+        // statuses in RETRYABLE_HTTP_STATUSES (401 expired-token / 408 timeout
+        // / 429 rate-limit) are transient: dropping them silently loses
+        // offline-created content, so they are left UNMARKED and flow through
+        // the same carry-forward path as 5xx / network failures — kept in the
+        // queue and re-attempted (401 replays with a refreshed token) until
+        // they succeed or turn permanent.
         const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
-        if (response.status >= 400 && response.status < 500) {
-          // Mark the error so processQueue can decide to drop instead of retry.
+        const isPermanentClientError =
+          response.status >= 400 &&
+          response.status < 500 &&
+          !RETRYABLE_HTTP_STATUSES.has(response.status);
+        if (isPermanentClientError) {
+          // Mark the error so processQueue drops it instead of retrying.
           (error as Error & { permanent?: boolean }).permanent = true;
         }
         throw error;
