@@ -1,47 +1,34 @@
-# pm-qa — QA / Test lens (2026-06-15)
+# pm-qa role output — 2026-08-12
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues._
+## Summary
 
-## Role JSON
+Backend notification hand-off (QuietHoursDrainWorker.drain_due) is only unit-tested at the pure-decision-function level with no DB-integration coverage, and the just-shipped CSV-formula-injection fix (PR #2731) only covers vote titles — other CSV export surfaces (GDPR export, reports) likely share the same gap. Frontend has two known, still-open test gaps (perfmetrics listener leak, notification-triggers logout purge already fixed but check the pattern) that should be closed out this sprint.
 
-```json
-{
-  "role": "pm-qa",
-  "summary": "Dev CI unblocked by #1379 ends a 3-day red streak; 18 fresh follow-up issues from yesterday's merge surge are the new QA front, concentrated on missing test coverage (RLS, IDOR, OAuth, realtime sync, payment atomicity).",
-  "next_actions": [
-    {"action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Failing-on-main test landed; passes once #1361 fix lands."},
-    {"action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Decoder tests pin known variants and error-path for unknown."},
-    {"action": "Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "UI test confirms older paginated response doesn't clobber newer page-N state."},
-    {"action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Frontend test asserts autosave fires once per debounce window; i18n key lookups present."},
-    {"action": "Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Concurrent-tx test asserts no negative-balance and COALESCE-guarded aggregates."},
-    {"action": "Pin cron validator surface with fixture-based test (#1368) to guard against #616 regression", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Validator test fixture covers known-good + known-bad expressions; Epic 81 promotion gates on it."}
-  ],
-  "risks": [
-    {"risk": "18 follow-up issues (#1360–#1377) from the post-merge review of 2026-06-14 merges remain untriaged; backlog grows faster than burn-down without owner assignment.", "probability": "high", "impact": "medium", "mitigation": "pm-scrum-master triages the batch this run — assign owner or close as won't-fix."},
-    {"risk": "record_payment handler does a check-then-insert without serializable isolation or unique-constraint guard (#1361); concurrent retries can double-write a payment.", "probability": "medium", "impact": "high", "mitigation": "Wrap in serializable tx OR add (idempotency_key, payment_id) unique constraint; add concurrency regression test."},
-    {"risk": "Cron validator drift (#1368) could silently reintroduce regression #616 (Epic 81 promotion blocker) — current tests don't pin the validator surface.", "probability": "medium", "impact": "medium", "mitigation": "Pin a fixture-based test for the cron validator; gate Epic 81 promotion on it."},
-    {"risk": "Dispatcher meta-issue #1380: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured — wastes implementer cycles claiming gap stories already shipped.", "probability": "high", "impact": "medium", "mitigation": "pm-devops or dispatcher owner refreshes gap-scan buffer; verify Tier-2 endpoint config in dispatcher settings."},
-    {"risk": "Booking.com OAuth/credential connect flow lacks secure replacement on re-connect (#1362, #1374) — old credentials can linger and be used post-rotation.", "probability": "medium", "impact": "high", "mitigation": "Implement atomic credential swap + add OAuth handler/CSRF test coverage."}
-  ],
-  "open_questions": [
-    "Does #1377 (document download/preview test gap) require new presigned-URL minting test infra, or can it be folded into the existing forms RLS suite?",
-    "Should the pre-push fmt/clippy gate (#1375) be local-only or also enforced as a CI status check?",
-    "Is the realtime preference-sync publish leg (#1376) coverable as a deterministic integration test, or does it need a flake-tolerant smoke test?",
-    "Are stale draft PRs #1316 (verify-document-folder-organization-backend-promote) and #1197 (test-oauth-authorization-server-integration) salvageable, or should they be closed and re-opened?"
-  ],
-  "decisions_needed": [
-    "Pre-push fmt/clippy gate (#1375): local hook only, CI-status, or both? — owner: pm-tech-lead",
-    "Triage protocol for the 18 follow-up issues #1360-#1377: bulk-assign by theme to per-role queues, or per-issue triage? — owner: pm-scrum-master",
-    "Promotion-gate policy: should each high-severity coverage gap (atomicity, IDOR, RLS) block its source epic's done-promotion until a failing-on-main test exists? — owner: pm-tech-lead + pm-qa"
-  ]
-}
-```
+## Next actions
 
-## Notes
+1. **[high]** Add DB-integration test for QuietHoursDrainWorker.drain_due() exercising real held_notifications: partial-channel-failure retry, full-success release, batch_limit boundary across ticks. DoD: New `#[sqlx::test]` in api-server tests/suites asserting `release_at`/`released_at` transitions for held rows under mixed `PipelineResult` outcomes.
+2. **[high]** Audit GDPR export (routes/gdpr.rs), reports/mod.rs and market_pricing.rs CSV-generation paths for the same formula-injection vector fixed for vote titles in PR #2731. DoD: every CSV export writing user-authored free text calls `sanitize_csv_cell`; each fixed field has a leading-`=`/`+`/`-`/`@` regression test.
+3. **[medium]** Write mount/unmount test coverage for usePerformanceMetrics.ts asserting visibilitychange/load listeners are removed on cleanup and effect doesn't re-run on every inline onReport identity change. Depends on `code-review-ppt-web-core-perfmetrics-listener-leak`.
+4. **[medium]** Add a structural regression test that fails when a query-key root used by any @ppt/api-client hook factory is missing from ppt-web `AUTHED_QUERY_KEY_ROOTS` logout allowlist. This is the third missed root in a row (analytics, PR #2650 notifications, PR #2741 notification-triggers).
+5. **[medium]** Request test-coverage review on in-review PR #2714 (gh-issue-2612-retry1) before it merges to dev — it touches the same quiet-hours/notification-scheduling surface as the untested drain_due() path.
+6. **[low]** Once the offline-sync 4xx-handling fix (PR #2738) lands, add tests asserting 401 (expired token) and 429 (rate-limit) are retried/requeued while genuine permanent 4xx (400/422) are dropped.
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-07-06 (assuming 1-per-day cadence with 8 roles).
-- Five new pm-qa next_actions appended to `action-list.json` with `source = "pm-analysis 2026-06-15"`.
-- Five risks dedup-checked against existing pm-qa risk IDs and appended.
-- Coverage epic-85 (rotation idx 10) refreshed: gap-85-2 evidence added from PR #1383; "app icon variants" + "app.config.ts" gaps removed.
-- Phase 1.5 finding (vote partial_cmp NaN) already tracked in prior run via `pm-qa-vote-partial-cmp-nan-fuzz` — kept open.
-- Phase 1.5 finding (`OsRng.try_fill_bytes().expect()` low-sev in crypto.rs) noted; below threshold for new action this run.
+## Risks
+
+- **medium-high** — QuietHoursDrainWorker regression could silently drop or infinitely re-hold user notifications in production; no DB-integration fence.
+- **high-high** — CSV formula-injection fix is opt-in per call site; sibling exports likely still ship the vulnerability.
+- **high-medium** — AUTHED_QUERY_KEY_ROOTS allowlist missed a query root 3× in a row; a 4th regression is likely without a structural guard.
+- **medium-low** — perfmetrics fix could land without a regression test.
+- **medium-medium** — PR #2714 test coverage unknown (branch not visible in this session).
+
+## Open questions
+
+- What is the actual scope/diff of PR #2714 (gh-issue-2612-retry1)? Not present on any local/origin branch reachable from this checkout.
+- Does routes/gdpr.rs's CSV export format include free-text fields (names, messages, addresses) that would need `sanitize_csv_cell`, or purely structured/numeric data?
+- Is action-list.json stale relative to dev — three items already merged as PRs #2739/#2740/#2741 and should be closed in the tracker? (This run closes them.)
+- Is there an existing owner/cadence for a repo-wide "CSV export sanitization" sweep, or should this be a one-off audit task this sprint?
+
+## Decisions needed
+
+- Block PR #2714 merge pending an explicit test-coverage review of its notification hand-off changes — owner: pm-qa / rust-backend.
+- Scope of CSV-injection audit (GDPR export, reports, market pricing): single sprint task or split per-route — owner: pm-backend.

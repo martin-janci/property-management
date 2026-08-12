@@ -7523,15 +7523,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Tier1d review 2026-08-12 (mobile-rn)"
+        "Tier1d review 2026-08-12 (mobile-rn)",
+        "PR #2740"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:125 — module-level formatDate() hardcodes toLocaleDateString('en-US', ...) with no locale param",
         "Same hardcoded 'en-US' remains in screens/notifications/NotificationsScreen.tsx:105, screens/messages/MessagesScreen.tsx:61, screens/messages/ThreadDetailScreen.tsx:124, screens/announcements/AnnouncementsScreen.tsx:153, screens/leases/LeaseDetailScreen.tsx:102, screens/person-months/PersonMonthsScreen.tsx:46",
         "This class was recognized and fixed as #2282 only in DashboardScreen.tsx:119-122 and VotingScreen.tsx:84-90 (both now pass i18n.language) — the remaining screens are the unfinished half",
-        "Fix: pass useTranslation().i18n.language (as Dashboard/Voting do) instead of the 'en-US' literal"
+        "Fix: pass useTranslation().i18n.language (as Dashboard/Voting do) instead of the 'en-US' literal",
+        "resolved: PR #2740 merged 2026-08-12 — code-review-mobile-rn-date-locale-en-us: localize mobile dates via active i18n locale"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx"
@@ -7546,15 +7548,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Tier1d review 2026-08-12 (mobile-rn)"
+        "Tier1d review 2026-08-12 (mobile-rn)",
+        "PR #2739"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:168 — literal 'Latest reading' rendered directly instead of t(...)",
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:175 — literal 'Used since previous reading:' hardcoded",
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx:181 — literal 'Reading history' hardcoded, whereas adjacent strings use t('meters.noReadingsTitle') etc.",
-        "Fix: move the three literals into i18n keys (e.g. meters.latestReading / meters.usedSincePrevious / meters.readingHistory) and render via t()"
+        "Fix: move the three literals into i18n keys (e.g. meters.latestReading / meters.usedSincePrevious / meters.readingHistory) and render via t()",
+        "resolved: PR #2739 merged 2026-08-12 — code-review-mobile-rn-meterdetail-i18n: i18n hardcoded strings in MeterDetailScreen"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx"
@@ -7569,15 +7573,17 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Tier1d review 2026-08-12 (ppt-web-core)"
+        "Tier1d review 2026-08-12 (ppt-web-core)",
+        "PR #2741"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-387 — AUTHED_QUERY_KEY_ROOTS (the allow-list logout() iterates at contexts/AuthContext.tsx:565-567 to purge session-scoped TanStack caches) contains 'notification-analytics' but NOT 'notification-triggers'. The docstring at :349-352 states the list 'must cover ALL tenant-/user-scoped caches'; any root absent from it is never removed on logout.",
         "frontend/packages/api-client/src/granular-notifications/hooks.ts:15-17 — notificationTriggerKeys.all = ['notification-triggers'] (root missing from the allow-list). Consumed by ppt-web at frontend/apps/ppt-web/src/features/notification-triggers/index.ts:21 and mounted via a lazy route (frontend/apps/ppt-web/src/routes/lazyRoutes.tsx:330), so the cache is populated with the signed-in user's per-event push/email/in-app preferences.",
         "ppt-web is an SPA — logout() clears storage and removes only allow-listed roots without a page reload, so the ['notification-triggers'] subtree survives logout→next-login; on a shared workstation user B sees user A's notification-preference data until staleTime lapses. Same class as PR #2650 (which added predictive-maintenance/sentiment/notification-analytics) but that fix overlooked this root and the recommended guard (assert every feature *Keys.all root ∈ AUTHED_QUERY_KEY_ROOTS) was never added.",
-        "Fix: add 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS; better, add a unit assertion enumerating every exported *Keys.all root and requiring membership so future pages can't silently reintroduce the leak."
+        "Fix: add 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS; better, add a unit assertion enumerating every exported *Keys.all root and requiring membership so future pages can't silently reintroduce the leak.",
+        "resolved: PR #2741 merged 2026-08-12 — code-review-ppt-web-core-logout-purge-notif-triggers: purge notification-triggers query root on logout"
       ],
       "files": [
         "frontend/apps/ppt-web/src/lib/queryKeys.ts",
@@ -7606,6 +7612,263 @@
       ],
       "files": [
         "frontend/apps/ppt-web/src/hooks/usePerformanceMetrics.ts"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "title": "churn-hotspot: backend/servers/api-server/src/routes/integrations/webhook.rs — 2799 lines churned this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log a2c0f53..origin/dev --numstat"
+      ],
+      "evidence": [
+        "prior last_seen 2026-05-30; churn=2799 lines this run — re-hotspot"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "title": "churn-hotspot: backend/servers/api-server/src/services/scheduler/mod.rs — 2532 lines churned this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log a2c0f53..origin/dev --numstat"
+      ],
+      "evidence": [
+        "churn=2532 lines this run; scheduler.rs prior hotspot 2026-07-30 — likely renamed to mod.rs"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/financial.rs",
+      "title": "churn-hotspot: backend/servers/api-server/src/routes/financial.rs — 2411 lines churned this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log a2c0f53..origin/dev --numstat"
+      ],
+      "evidence": [
+        "churn=2411 lines this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiries-i18n",
+      "title": "reality-web /inquiries page has no next-intl wiring — badges, empty-state, pagination all English on /sk /cs /de",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review",
+        "segment:reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:541 — `<h1 className=\"page-title\">My Inquiries</h1>` — page has no `useTranslations`/`next-intl` import; badge labels (Pending/Responded/Scheduled/Completed/Cancelled), empty-state (`No inquiries yet`), error text, `Previous`/`Next`, and every button copy are hardcoded English, so /sk /cs /de all serve English on this authenticated user route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-saved-searches-i18n",
+      "title": "reality-web /saved-searches page hardcodes English throughout — labels, delete-prompt, empty-state, errors bypass locale",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review",
+        "segment:reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:409 — `<h1 className=\"page-title\">Saved Searches</h1>` — no `useTranslations`; hardcoded English throughout (For Sale/For Rent, Alerts on/off, Delete?/Yes/No, No saved searches, Failed to load saved searches...), so localized URLs serve English regardless of locale."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-i18n",
+      "title": "reality-web /agency/[slug] public SEO page hardcodes Slovak on all locales — /en /de /cs render Slovak",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review",
+        "segment:reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:8 — file-level comment admits hardcoded Slovak; `Načítavam…`, `Kancelária sa nenašla.`, `Overená`, `O kancelárii`, `Náš tím`, `Aktívne ponuky`, `Kontakt`/`Navštíviť web`/`Licencia:` all baked-in Slovak on a public, SEO-indexed route mounted under `[locale]`, so /en /de /cs render Slovak."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2735-ppt",
+      "title": "screen-map drift: PR #2735 modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx (regression tests) without a docs/screens/ppt/*.md update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2735",
+        "PR #2735"
+      ],
+      "evidence": [
+        "PR #2735 (test(ppt-web): rentals mappers regression tests) modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx AND rentals.mappers.test.tsx with no docs/screens/ppt/*.md update — best-effort heuristic; PR is a churn-hotspot auto-fix adding tests"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-drain-untested",
+      "title": "api-core: QuietHoursDrainWorker.drain_due() lacks DB-integration coverage — partial-channel-failure retry, full-success release, batch_limit boundary all untested against real held_notifications table",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review-pm-qa",
+        "segment:api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs — QuietHoursDrainWorker.drain_due() has pure-decision unit tests but NO DB-integration coverage against held_notifications: partial-channel-failure retry path, full-success release path, and batch_limit boundary across ticks are all untested against a real table (pm-qa 2026-08-12)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": "plans/code-review-api-core-quiet-hours-drain-untested.md"
+    },
+    {
+      "id": "code-review-security-csv-injection-audit-repowide",
+      "title": "api-handlers: PR #2731 fixed CSV formula-injection for vote titles only — GDPR export, reports, market_pricing likely share the same unsanitized-cell pattern (sanitize_csv_cell is opt-in per call site",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review-pm-qa",
+        "segment:api-handlers"
+      ],
+      "evidence": [
+        "PR #2731 sanitized only vote titles for CSV formula-injection; sibling exports (routes/gdpr.rs, routes/reports/mod.rs, routes/market_pricing.rs, and any handler emitting text/csv) likely reuse the unsanitized-cell pattern since sanitize_csv_cell is opt-in per call site (pm-qa 2026-08-12)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs",
+        "backend/servers/api-server/src/routes/reports/mod.rs",
+        "backend/servers/api-server/src/routes/market_pricing.rs"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": "plans/code-review-security-csv-injection-audit-repowide.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-keys-structural-guard",
+      "title": "ppt-web: AUTHED_QUERY_KEY_ROOTS logout allowlist has missed a query root 3× in a row — needs structural guard enumerating registered @ppt/api-client hook factories",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review-pm-qa",
+        "segment:ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx AUTHED_QUERY_KEY_ROOTS has missed a query root THREE times now (analytics, notifications, notification-triggers — PR #2650, #2741); no structural test enumerates registered @ppt/api-client hook factories to guard the allowlist, so a 4th regression is likely on the next new hook (pm-qa 2026-08-12)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/packages/api-client/src"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "gap-84-2-document-sign-page-ppt-web",
+      "title": "epic-84 story 84-2: signer-facing document-sign page missing in ppt-web — backend signing URL + invitation emails wired, screen-map planned, no page component",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "coverage-scan (epic-84)",
+        "segment:ppt-web-ui"
+      ],
+      "evidence": [
+        "coverage.json story 84-2-esignature-email: apiStatus=complete (signatures.rs, signing URL + invitation emails wired); docs/screens/ppt/document-sign.md exists with buildStatus=planned; NO signer-facing page component in ppt-web — end-to-end e-signature flow blocked on the missing frontend surface"
+      ],
+      "files": [
+        "docs/screens/ppt/document-sign.md",
+        "backend/servers/api-server/src/routes/signatures.rs",
+        "frontend/apps/ppt-web/src/features/documents"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "gap-84-1-s3-direct-upload-frontend-wire",
+      "title": "epic-84 story 84-1: ppt-web upload flow still server-proxied — POST /documents/upload-url (SigV4 presigner) landed backend (PR #2309), no frontend consumer",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "coverage-scan (epic-84)",
+        "segment:ppt-web-core"
+      ],
+      "evidence": [
+        "coverage.json story 84-1-s3-presigned-urls: PR #2309 wired backend POST /api/v1/documents/upload-url (SigV4 PUT presigner); StorageService::generate_upload_url confirmed; PR #2571 org-scoped DELETE by file_key added — but ppt-web upload flow is still server-proxied; @ppt/api-client binding missing + UploadDocument integration missing"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/core.rs",
+        "frontend/packages/api-client/src/documents/hooks.ts",
+        "frontend/apps/ppt-web/src/features/documents"
       ],
       "created_at": "2026-08-12",
       "updated_at": "2026-08-12",

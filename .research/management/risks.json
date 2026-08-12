@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-12T12:35:08Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -117,6 +117,96 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-scrum-master-landable-backlog-stays-thin-after-this-refill-if-t",
+      "risk": "Landable backlog stays thin after this refill if the mine doesn't surface enough non-KMP candidates, stalling throughput again within a day or two",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "widen refill scope to churn-hotspot files and coverage.json 'partial' items, not just code-review findings",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-mobile-native-kmp-queue-4-items-incl-retry-keeps-a",
+      "risk": "mobile-native/KMP queue (4 items incl. retry) keeps aging with no cloud-compilable lane, silently accumulating technical debt",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "route to a device-capable/local execution lane or explicitly defer with a documented owner decision",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-2684-leaves-a-known-fail-open-bug-in-workflow-cond",
+      "risk": "#2684 leaves a known fail-open bug in workflow condition evaluation (security-relevant) unresolved after 3 exhausted respawn rounds",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "scope down the fix or escalate to human review rather than re-quarantining",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-epic-10b-flagged-in-progress-in-sprint-status-yaml",
+      "risk": "epic-10b flagged in-progress in sprint-status.yaml despite all 7 stories showing done — stale tracking could misdirect planning",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "reconcile epic status field to done",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-held-notification-drain-worker-quiet-hours-drain-r",
+      "risk": "Held-notification drain worker (quiet_hours_drain.rs) has no integration test against a real DB — a regression in the retry/release invariant could silently drop or infinitely re-hold user notifications in production",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add sqlx::test integration coverage for drain_due()",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-csv-formula-injection-fix-landed-for-vote-titles-o",
+      "risk": "CSV formula-injection fix landed for vote titles only (PR #2731); sibling CSV exports (GDPR data export, reports, market pricing) likely reuse the same unsanitized-cell pattern",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Repo-wide CSV export audit + shared-helper enforcement",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-authed-query-key-roots-logout-allowlist-has-missed",
+      "risk": "AUTHED_QUERY_KEY_ROOTS logout allowlist has missed a query root three times in a row — an ad hoc per-incident fix pattern rather than a structural guard, so a fourth leak is likely on the next new hook",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Structural test enumerating registered query-key roots against the allowlist",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-useperformancemetrics-ts-ships-zero-tests-the-know",
+      "risk": "usePerformanceMetrics.ts ships zero tests; the known listener-leak bug fix (open action item) could land without a regression test, allowing the leak to reappear silently",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Require test scaffold as part of the fix PR",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-pr-2714-gh-issue-2612-retry1-is-in-review-with-no-",
+      "risk": "PR #2714 (gh-issue-2612-retry1) is in review with no local visibility — cannot confirm test coverage on the scheduled-notifications hand-off it modifies before merge",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Manual reviewer pass on PR #2714 diff before merge",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
     }
   ]
 }

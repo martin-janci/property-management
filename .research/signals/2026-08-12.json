@@ -1,0 +1,293 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-12",
+      "type": "lag_warning",
+      "source": "routine-observability",
+      "score_delta": 0,
+      "evidence": [
+        "last run 2026-08-07T06:24:00Z; now 2026-08-12T12:xxZ — 5d 125h lag > 36h threshold; likely 5 missed daily runs; buffer-low trigger fired"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log a2c0f53..origin/dev --numstat",
+      "score_delta": 1,
+      "evidence": [
+        "prior last_seen 2026-05-30; churn=2799 lines this run — re-hotspot"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "churn": 2799
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/scheduler/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log a2c0f53..origin/dev --numstat",
+      "score_delta": 1,
+      "evidence": [
+        "churn=2532 lines this run; scheduler.rs prior hotspot 2026-07-30 — likely renamed to mod.rs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/services/scheduler/mod.rs",
+      "churn": 2532
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/financial.rs",
+      "type": "churn-hotspot",
+      "source": "git log a2c0f53..origin/dev --numstat",
+      "score_delta": 1,
+      "evidence": [
+        "churn=2411 lines this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "file": "backend/servers/api-server/src/routes/financial.rs",
+      "churn": 2411
+    },
+    {
+      "id": "code-review-reality-web-inquiries-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:541 — `<h1 className=\"page-title\">My Inquiries</h1>` — page has no `useTranslations`/`next-intl` import; badge labels (Pending/Responded/Scheduled/Completed/Cancelled), empty-state (`No inquiries yet`), error text, `Previous`/`Next`, and every button copy are hardcoded English, so /sk /cs /de all serve English on this authenticated user route."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-saved-searches-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:409 — `<h1 className=\"page-title\">Saved Searches</h1>` — no `useTranslations`; hardcoded English throughout (For Sale/For Rent, Alerts on/off, Delete?/Yes/No, No saved searches, Failed to load saved searches...), so localized URLs serve English regardless of locale."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:8 — file-level comment admits hardcoded Slovak; `Načítavam…`, `Kancelária sa nenašla.`, `Overená`, `O kancelárii`, `Náš tím`, `Aktívne ponuky`, `Kontakt`/`Navštíviť web`/`Licencia:` all baked-in Slovak on a public, SEO-indexed route mounted under `[locale]`, so /en /de /cs render Slovak."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "screen-map-drift-pr-2735-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2735",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2735 (test(ppt-web): rentals mappers regression tests) modified frontend/apps/ppt-web/src/routes/groups/rentals.tsx AND rentals.mappers.test.tsx with no docs/screens/ppt/*.md update — best-effort heuristic; PR is a churn-hotspot auto-fix adding tests"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "product": "ppt"
+    },
+    {
+      "id": "code-review-api-core-quiet-hours-drain-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-pm-qa",
+      "segment": "api-core",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs — QuietHoursDrainWorker.drain_due() has pure-decision unit tests but NO DB-integration coverage against held_notifications: partial-channel-failure retry path, full-success release path, and batch_limit boundary across ticks are all untested against a real table (pm-qa 2026-08-12)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "pm-qa"
+    },
+    {
+      "id": "code-review-security-csv-injection-audit-repowide",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-pm-qa",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "evidence": [
+        "PR #2731 sanitized only vote titles for CSV formula-injection; sibling exports (routes/gdpr.rs, routes/reports/mod.rs, routes/market_pricing.rs, and any handler emitting text/csv) likely reuse the unsanitized-cell pattern since sanitize_csv_cell is opt-in per call site (pm-qa 2026-08-12)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "pm-qa"
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-keys-structural-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-pm-qa",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx AUTHED_QUERY_KEY_ROOTS has missed a query root THREE times now (analytics, notifications, notification-triggers — PR #2650, #2741); no structural test enumerates registered @ppt/api-client hook factories to guard the allowlist, so a 4th regression is likely on the next new hook (pm-qa 2026-08-12)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "pm-qa"
+    },
+    {
+      "id": "gap-84-2-document-sign-page-ppt-web",
+      "type": "code-review-finding",
+      "source": "coverage-scan (epic-84)",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "evidence": [
+        "coverage.json story 84-2-esignature-email: apiStatus=complete (signatures.rs, signing URL + invitation emails wired); docs/screens/ppt/document-sign.md exists with buildStatus=planned; NO signer-facing page component in ppt-web — end-to-end e-signature flow blocked on the missing frontend surface"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "coverage-gap"
+    },
+    {
+      "id": "gap-84-1-s3-direct-upload-frontend-wire",
+      "type": "code-review-finding",
+      "source": "coverage-scan (epic-84)",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "evidence": [
+        "coverage.json story 84-1-s3-presigned-urls: PR #2309 wired backend POST /api/v1/documents/upload-url (SigV4 PUT presigner); StorageService::generate_upload_url confirmed; PR #2571 org-scoped DELETE by file_key added — but ppt-web upload flow is still server-proxied; @ppt/api-client binding missing + UploadDocument integration missing"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "coverage-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no allowlist signal met confidence=high + score>=3 this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0",
+      "command": "test -f briefs/2026-08-12.md && head -1 matches"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true",
+      "command": "state.json changed vs HEAD (cursors + seen_signals + hotspot_history advanced)"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true",
+      "command": "jq unique ids on backlog"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true",
+      "command": "no non-cumulative re-emit with nonzero score_delta"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "true",
+      "expected": "true",
+      "command": "no score>8; no decayed items this run (no open items >14d)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0",
+      "command": "both new plans annotated with 'adversarial pass: passed' in brief"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "2 new plans; all 15 sections + mode + files exist",
+      "expected": "<=2 new plans, all gates",
+      "command": "count, metadata, headings, capability tick, mode, files-on-disk"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 offending paths",
+      "expected": "0",
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0",
+      "expected": "0",
+      "command": "grep for secrets/private-hostnames in staged diff (excl. baseline docs)"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0",
+      "command": "diff -q backlog.md /tmp/backlog.regen.md"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no failed phases",
+      "expected": "consistency",
+      "command": "Phases-failed=none in brief; cursors advanced as expected"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "no promoted plans deleted since HEAD (all 17 prior plans still present)",
+      "expected": "no silent deletion",
+      "command": "git ls-tree HEAD -- plans/ vs working tree"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "8 >= 8",
+      "expected": ">=",
+      "command": "archive count stable at 8"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0",
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "true (0 auto_fix_actions)",
+      "expected": "true",
+      "command": "auto_fix_actions length + per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "artifacts valid; pm_cursor 3→4; coverage_cursor 5→6",
+      "expected": "true",
+      "command": "jq -e .items + project-state.md non-empty + pm_cursor+coverage_cursor in range and advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0",
+      "expected": "0",
+      "command": "no Telegram token pattern in staged diff"
+    }
+  ]
+}

@@ -106,7 +106,7 @@
       "action": "mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dates never localize for sk/cs/de users",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -116,14 +116,16 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "resolved_at": "2026-08-12T12:34:06Z",
+      "resolved_pr": 2740
     },
     {
       "id": "code-review-mobile-rn-meterdetail-i18n",
       "action": "mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling strings use i18n",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-12T08:05:18Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -133,14 +135,16 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "resolved_at": "2026-08-12T12:34:06Z",
+      "resolved_pr": 2739
     },
     {
       "id": "code-review-ppt-web-core-logout-purge-notif-triggers",
       "action": "ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incomplete) — user notification-preference cache leaks into the next session",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-12T10:07:43Z (score=3 conf=high vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -150,7 +154,9 @@
         "plan": null,
         "score": 3,
         "vector": "bug"
-      }
+      },
+      "resolved_at": "2026-08-12T12:34:06Z",
+      "resolved_pr": 2741
     },
     {
       "id": "code-review-ppt-web-core-perfmetrics-listener-leak",
@@ -168,7 +174,149 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "qa-quiet-hours-drain-integration-test",
+      "action": "Add DB-integration test for QuietHoursDrainWorker.drain_due() exercising real held_notifications: partial-channel-failure retry, full-success release, batch_limit boundary across ticks",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "code-review-api-core-quiet-hours-drain-untested",
+      "depends_on": [
+        "UNRESOLVED:code-review-api-core-quiet-hours-drain-untested"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "qa-csv-injection-audit-repowide",
+      "action": "Audit GDPR export (routes/gdpr.rs), reports/mod.rs and market_pricing.rs CSV-generation paths for the same formula-injection vector fixed for vote titles in PR #2731; route unsanitized user-authored cells through sanitize_csv_cell + regression test per fixed field",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "code-review-security-csv-injection-audit-repowide",
+      "depends_on": [
+        "UNRESOLVED:code-review-security-csv-injection-audit-repowide"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "qa-perfmetrics-mount-unmount-test",
+      "action": "Add mount/unmount test coverage for usePerformanceMetrics.ts asserting visibilitychange/load listeners are removed on cleanup and effect doesn't re-run on every inline onReport identity change",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "code-review-ppt-web-core-perfmetrics-listener-leak",
+      "depends_on": [
+        "code-review-ppt-web-core-perfmetrics-listener-leak"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "qa-authed-query-keys-structural-guard",
+      "action": "Structural test enumerating registered @ppt/api-client hook factories and asserting each query-key root is present in ppt-web AUTHED_QUERY_KEY_ROOTS logout allowlist",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "qa-pr-2714-notif-hand-off-review",
+      "action": "Request test-coverage review on in-review PR #2714 (gh-issue-2612-retry1) before merge — touches same quiet-hours/notification-scheduling surface as untested drain_due() path",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "qa-offline-sync-4xx-tests-post-merge",
+      "action": "Once offline-sync 4xx-handling fix (PR #2738) lands, add tests asserting 401 (expired token) and 429 (rate-limit) retry/requeue while genuine permanent 4xx (400/422) drop",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "code-review-mobile-rn-offline-401-dropped",
+      "depends_on": [
+        "code-review-mobile-rn-offline-401-dropped"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "sm-decide-2684-scope-or-park",
+      "action": "Decide fate of quarantined PR #2684 (workflow cond-parse fail-open): scope down to minimal deny_unknown_fields fix or hand off to manual rust-backend review after 3 exhausted fix rounds",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "sm-reconcile-shipped-vs-2684",
+      "action": "Reconcile the shipped-themes summary against assignments.json — confirm whether a distinct PR shipped cond-parse fail-closed separate from quarantined #2684",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "sm-promote-2742-outof-draft",
+      "action": "Promote draft PR #2742 (ppt-web perfmetrics listener leak) out of draft — small self-contained fix",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "code-review-ppt-web-core-perfmetrics-listener-leak",
+      "depends_on": [
+        "code-review-ppt-web-core-perfmetrics-listener-leak"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "sm-reconcile-epic-10b-status",
+      "action": "Reconcile epic-10b sprint-status.yaml (marked in-progress but stories_completed=7/7) — flip to done",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "gap-84-2-document-sign-page-ppt-web",
+      "action": "epic-84 story 84-2: build signer-facing document-sign page in ppt-web (backend signing URL + invitation emails wired PR #2306; screen-map ppt/document-sign buildStatus planned; no page component)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
+    },
+    {
+      "id": "gap-84-1-s3-direct-upload-frontend-wire",
+      "action": "epic-84 story 84-1: wire ppt-web direct-to-S3 upload via POST /documents/upload-url (SigV4 presigner landed backend PR #2309; frontend still server-proxied; @ppt/api-client binding + UploadDocument integration missing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-12"
     }
   ],
-  "generated": "2026-07-30T03:23:02Z"
+  "generated": "2026-08-12T12:34:06Z"
 }
