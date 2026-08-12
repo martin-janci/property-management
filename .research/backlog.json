@@ -7440,6 +7440,49 @@
       "created_at": "2026-08-11",
       "updated_at": "2026-08-11",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-protectedroute-i18n",
+      "title": "ppt-web-ui: ProtectedRoute hardcodes English 'Access Denied' / 'Loading...' strings instead of using i18n",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:106 — literal 'Loading...' text with no useTranslation/t() call",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:125-126 — user-facing role-denied page hardcodes 'Access Denied' and 'You do not have permission to access this page.' in English",
+        "Sibling AuthRequiredGate.tsx:21-23 already translates the equivalent gate strings via t('errors.authenticationRequired') / t('errors.missingOrgContext'), confirming this is an oversight — non-English users see raw English on the access-denied and auth-loading paths"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-offline-ind-i18n",
+      "title": "ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-12 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:58-60 — 'You are offline. Some features may be unavailable.' rendered as a literal string",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:89 — 'Connection restored' rendered as a literal string; component imports no useTranslation, so both aria-live banners are English-only for all locales (sk/cs/de/en)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-12",
+      "plan": null
     }
   ]
 }
