@@ -61,6 +61,41 @@ impl reqwest::dns::Resolve for SsrfGuardResolver {
     }
 }
 
+/// Maximum number of redirect hops the workflow HTTP client will follow before
+/// aborting. `reqwest`'s default is also 10, but we set it explicitly because
+/// the client below installs a *custom* redirect policy (which otherwise has no
+/// hop limit of its own) and the bound is a security-relevant part of the SSRF
+/// posture, not an incidental default.
+const MAX_REDIRECTS: usize = 10;
+
+/// Decide whether a single redirect hop may be followed.
+///
+/// Extracted from the [`reqwest::redirect::Policy`] closure in
+/// [`ApiCallExecutor::with_ip_resolver`] so the SSRF re-validation of redirect
+/// targets is unit-testable *without* a live HTTP server: the SSRF DNS guard
+/// (`SsrfGuardResolver`) refuses to connect to a loopback address, so a
+/// redirect-following test cannot stand up a `127.0.0.1` server to emit a 3xx —
+/// the only hermetic way to exercise the redirect branch is this pure decision
+/// function.
+///
+/// `Ok(())` means the hop is safe to follow; `Err(reason)` aborts the whole
+/// request (fail closed). A hop is refused when:
+///   * the redirect chain has already reached [`MAX_REDIRECTS`], or
+///   * the redirect target fails [`common::url_validation::validate_external_url`]
+///     — i.e. it points at a blocked host, a private/reserved literal IP, an
+///     `http://` downgrade (outside development), or a `.local` / `.internal`
+///     TLD. This is what stops a redirect from bouncing an initially-valid
+///     request onto an internal/blocked host after the initial-URL check has
+///     already passed.
+fn redirect_hop_allowed(target: &str, previous_hops: usize) -> Result<(), String> {
+    if previous_hops >= MAX_REDIRECTS {
+        return Err("too many redirects".to_string());
+    }
+    common::url_validation::validate_external_url(target)
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 /// Real DNS resolver used in production: the OS resolver via Tokio's async
 /// wrapper around `getaddrinfo`.
 fn real_ip_resolver() -> IpResolver {
@@ -204,16 +239,13 @@ impl ApiCallExecutor {
         // downgrades to plain `http://`, or targets a blocked hostname /
         // `.local` / `.internal` TLD, which an IP-range check alone would not
         // catch. Fail closed: an invalid hop aborts the request.
-        let redirect_policy = reqwest::redirect::Policy::custom(|attempt| {
-            const MAX_REDIRECTS: usize = 10;
-            if attempt.previous().len() >= MAX_REDIRECTS {
-                return attempt.error("too many redirects");
-            }
-            match common::url_validation::validate_external_url(attempt.url().as_str()) {
-                Ok(_) => attempt.follow(),
-                Err(e) => attempt.error(e),
-            }
-        });
+        let redirect_policy =
+            reqwest::redirect::Policy::custom(|attempt| {
+                match redirect_hop_allowed(attempt.url().as_str(), attempt.previous().len()) {
+                    Ok(()) => attempt.follow(),
+                    Err(reason) => attempt.error(reason),
+                }
+            });
 
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(60))
@@ -808,6 +840,60 @@ mod tests {
             "expected the connect-time resolver to re-resolve after the pre-flight \
              lookup (rebinding observed), but it was consulted {} time(s)",
             calls.load(Ordering::SeqCst)
+        );
+    }
+
+    /// IG3 regression (SSRF via HTTP redirect): the workflow HTTP client is
+    /// built with a *custom* redirect policy. Before that policy existed the
+    /// client followed up to 10 redirects with `reqwest`'s default policy,
+    /// which re-validates nothing — so an attacker-controlled endpoint that
+    /// first passed `validate_external_url` could reply `302 Location:
+    /// http://169.254.169.254/…` (or any private/blocked host) and the client
+    /// would happily follow the hop straight into the internal network,
+    /// defeating the entire SSRF guard.
+    ///
+    /// The redirect decision lives in `redirect_hop_allowed`, which the policy
+    /// closure calls for every hop. This test exercises that decision directly
+    /// (the SSRF DNS guard blocks standing up a loopback test server, so the
+    /// redirect branch can only be reached hermetically via this pure
+    /// function): a hop whose target is a private or link-local/metadata
+    /// literal IP must be **refused** (`Err`), which makes the policy return
+    /// `attempt.error(..)` and aborts the request rather than following it.
+    ///
+    /// Both targets asserted here are rejected by `validate_external_url`
+    /// unconditionally (private + link-local ranges are forbidden regardless of
+    /// `RUST_ENV`), so the assertion is environment-independent.
+    ///
+    /// Fails on `dev` before the redirect policy was wired in: there the client
+    /// used `reqwest`'s default follow-everything policy with no per-hop
+    /// re-validation, so a redirect to a blocked/internal host WAS followed.
+    #[test]
+    fn redirect_to_blocked_or_internal_host_is_not_followed() {
+        // Redirect target = private RFC1918 host → must be refused.
+        assert!(
+            redirect_hop_allowed("https://10.0.0.1/internal", 0).is_err(),
+            "a redirect to a private (10.0.0.0/8) host must not be followed"
+        );
+        // Redirect target = link-local cloud-metadata endpoint → must be refused.
+        assert!(
+            redirect_hop_allowed("https://169.254.169.254/latest/meta-data/", 0).is_err(),
+            "a redirect to the 169.254.169.254 metadata host must not be followed"
+        );
+    }
+
+    /// Companion: a redirect to a legitimate public `https://` host is allowed
+    /// (guards against an over-broad policy that would break normal redirects),
+    /// while a redirect chain that has reached `MAX_REDIRECTS` is refused
+    /// (bounded-hops half of the policy).
+    #[test]
+    fn redirect_hop_allows_public_https_and_bounds_chain_length() {
+        assert!(
+            redirect_hop_allowed("https://api.example.com/next", 0).is_ok(),
+            "a redirect to a public https host should be followed"
+        );
+        assert!(
+            redirect_hop_allowed("https://api.example.com/next", MAX_REDIRECTS).is_err(),
+            "a redirect chain at the hop limit must be refused"
         );
     }
 }
