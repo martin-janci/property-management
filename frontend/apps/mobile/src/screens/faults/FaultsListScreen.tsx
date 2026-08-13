@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
-import { resolveLocale } from '../../i18n/format';
+import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
 export type FaultStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
@@ -121,15 +121,13 @@ const categoryIcon: Record<FaultCategory, string> = {
   other: '🔧',
 };
 
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString(resolveLocale(), {
+const formatDate = (dateString: string): string =>
+  formatLocaleDate(dateString, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
-};
 
 export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
   const { t } = useTranslation();
