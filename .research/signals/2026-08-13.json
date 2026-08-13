@@ -1,0 +1,231 @@
+{
+  "generated": "2026-08-13T11:00:00Z",
+  "since": "2026-08-12T22:45:00Z",
+  "run_kind": "incremental",
+  "trigger_payload": "buffer-low: claimable=5/72 — remaining open items are mobile-native/KMP (cloud-ungated); refill planner with landable backend/frontend vectors",
+  "phase_status": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "skipped: dispatcher tier-1d covered api-handlers + reality-server today; conserving tokens on normal-lag run; state.review_cursor NOT advanced",
+    "phase_1_6_pm": "skipped: 12h lag; management artifacts still fresh from 2026-08-06; today's 4 merged PRs are dispatcher security/DX fixes, none map to coverage stories; state.pm_cursor + state.coverage_cursor NOT advanced",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "ok — 1 plan promoted (buffer-low trigger)",
+    "phase_4_write": "ok",
+    "phase_5_autofix": "no candidate — see auto_fix_actions"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-actions-api-call-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2746",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/services/actions/api_call.rs — +106 lines (PR #2746: extract redirect_hop_allowed() pure fn + 2 hermetic tests). First-time hotspot (no `hotspot_history` entry)."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2748",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs — +72 lines (PR #2748: Alexa /verify fails closed + regression tests). First-time hotspot."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-marketplace-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2747",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/marketplace.rs — +30 lines (PR #2747: award_quote IDOR guard) plus +298-line new regression suite. First-time hotspot."
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot gradle-minor-patch regroup (5 updates); superseded PR #2581 (4 updates) at 10:13Z. Log-only."
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot cargo-minor-patch regroup (6 updates); superseded PR #2674 (2 updates) at 10:18Z. Log-only."
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot npm-minor-patch regroup (28 updates); superseded PR #2675 (22 updates) at 10:23Z. Log-only."
+    },
+    {
+      "id": "closed-not-merged-pr-2581-supersession",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot gradle-minor-patch (4 updates) auto-closed 2026-08-13T10:13:52Z as supersession by PR #2749 (5 updates) — no lost work. Supersession noise (not real closed-not-merged); score suppressed."
+    },
+    {
+      "id": "closed-not-merged-pr-2674-supersession",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot cargo-minor-patch (2 updates) auto-closed 2026-08-13T10:18:11Z as supersession by PR #2750 (6 updates) — no lost work. Supersession noise; score suppressed."
+    },
+    {
+      "id": "closed-not-merged-pr-2675-supersession",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot npm-minor-patch (22 updates) auto-closed 2026-08-13T10:21:55Z as supersession by PR #2751 (28 updates) — no lost work. Supersession noise; score suppressed."
+    },
+    {
+      "id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-08-13-api-handlers-tier1d.json (dispatcher tier-1d)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "Folded from dispatcher tier-1d 2026-08-13; confidence upgraded medium→high via direct code verification (ai/sessions.rs:101, ai_chat.rs:154, listing.rs:136 contrast); vector reclassified bug→security (self-scoped DoS). Promoted to plan."
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-08-13-api-handlers-tier1d.json (dispatcher tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Folded from dispatcher tier-1d 2026-08-13; auth/mod.rs:1001 `let _ = revoke_token(...)` on inactive-account branch (contrast with :1010-1013 normal-rotation logging). Low-severity observability gap."
+    },
+    {
+      "id": "code-review-reality-server-alert-drainer-stub-marks-notified",
+      "type": "code-review-finding",
+      "source": ".research/signals/2026-08-13-reality-server-tier1d.json (dispatcher tier-1d)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Folded from dispatcher tier-1d 2026-08-13; verified main.rs:453 uses default stub constructor + drainer service (:280-329) sets any_ok=true after LogEmailTransport.Ok, then irreversibly stamps notified_at. One-way notification-loss + real-transport cutover hazard. Confidence upgraded medium→high via direct verification. Not promoted (bug vector, score 2 below floor 3; not eligible for security fast-track)."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "annotation present",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "1 new plan; all metadata + headings + capability + Mode + Files present",
+      "expected": "≤2 plans; all sections"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "clean",
+      "expected": "no placeholder rot"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "no prior-run plans deleted",
+      "expected": "prior plans present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "now=8 head=8",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions=[]",
+      "expected": "kill-switch/idempotent/capped"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped — no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score ≥ 3 + allowlist). The 3 churn-hotspot signals are high-confidence but score 1 and outside auto-fix allowlist. The 2 tier-1d high-confidence findings are outside the allowlist (allowlist is: screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review). No new stalled-review signals this run."
+}
