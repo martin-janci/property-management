@@ -83,6 +83,23 @@
         "score": 1,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "closed-not-merged-pr-2705",
+      "action": "closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry closed unmerged, investigate root cause",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-13T00:24:37Z (score=1 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-13T00:24:37Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -1,0 +1,26 @@
+{
+  "generated": "2026-08-13T18:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Demand-driven Tier 1d refill, no CHURN_FILES. mobile-native-kmp / mobile-rn hard-excluded (KMP/RN unlandable in cloud runner). Among the three landable Rust segments {reality-server, api-handlers, api-core} all sit at review_cursor 2026-08-10; per constraints prefer reality-server unless saturated. Saturation check: 0 open code-review-finding items for reality-server in backlog.json — not saturated, so reality-server selected. Path root resolved to backend/servers/reality-server/src (SKILL table lists backend/reality-server/src, stale). Reviewed surfaces: extractors/auth, routes/sso (redirect allowlist, session-cookie flags, PM token introspection), routes/inquiries + handlers/inquiries (rate limit + validation + realtor-scoped reads), routes/favorites, routes/saved_searches, routes/portal_listings, routes/agencies + agency_imports (membership/invite authz), routes/agent_reviews, routes/reports, routes/listings, util/url_validator (SSRF), services/email, services/*alert*. This segment is heavily audit-hardened (H1-H7 / round-9 / D1.1-D1.2 / invite-authz) — every write is user/membership-scoped and input-validated. Only one genuine landable defect found; not padding with nits per the zero-vs-invent rule.",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-alert-drainer-stub-marks-notified",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:453 — production wiring constructs the saved-search alert delivery worker as `SearchAlertDrainerWorker::new(...)`, which (services/search_alert_drainer.rs:187-194) hard-codes the logging stub transports `Arc::new(LogEmailTransport)` / `Arc::new(LogPushTransport)`. The real SMTP/FCM/APNs adapters are only injectable via the alternate `with_transports(...)` constructor, which main.rs never calls.",
+        "services/search_alert_drainer.rs:136 (default config, line 133-138) sets `enabled: true`, so the drainer runs by default in production; `LogEmailTransport::send_email` unconditionally returns `Ok(())`. In `run_once` (services/search_alert_drainer.rs:280-329) a successful email send sets `any_ok = true`, and at line 316-322 `any_ok` triggers `self.repo.mark_search_alert_notified(alert.id)` which stamps the `notified_at` column (migration 00195).",
+        "Net effect: in production every `search_alert_queue` row is marked notified after being merely written to the log — no email/push is actually delivered, yet the row is permanently recorded as delivered. Because `list_undelivered_search_alerts` filters on `notified_at`, when a real transport is later injected via `with_transports` those already-stamped alerts will be skipped forever and never re-sent. Silent out-of-band notification loss plus a one-way cutover data-loss hazard (the in-app feed channel, keyed on `status`, is unaffected, which masks the problem).",
+        "Fix (concrete, cloud-landable): gate the mark-notified so a stub/log transport does not count as a real delivery (e.g. add an `is_real_delivery()` on the transport trait, or have `LogEmailTransport` return `Err`/a `Skipped` outcome so `any_ok` stays false), OR default `SearchAlertDrainerConfig::enabled` to `false` until a real transport is wired into main.rs. Either prevents rows from being irrevocably marked delivered while only the logging stubs are mounted."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
