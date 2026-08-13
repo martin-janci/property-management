@@ -110,7 +110,9 @@ export function ProtectedRoute({
             defaultValue: 'Checking authentication',
           })}
         />
-        <span className="protected-route-loading-text">{t('common.loading')}</span>
+        <span className="protected-route-loading-text">
+          {t('common.loading', { defaultValue: 'Loading...' })}
+        </span>
       </div>
     );
   }
@@ -130,7 +132,11 @@ export function ProtectedRoute({
       return (
         <div className="protected-route-unauthorized">
           <h1>{t('errors.accessDenied', { defaultValue: 'Access Denied' })}</h1>
-          <p>{t('errors.unauthorized')}</p>
+          <p>
+            {t('errors.unauthorized', {
+              defaultValue: 'You are not authorized to view this page.',
+            })}
+          </p>
         </div>
       );
     }
