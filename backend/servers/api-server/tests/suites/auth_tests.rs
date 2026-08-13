@@ -452,7 +452,7 @@ mod token_refresh {
             "#,
         )
         .bind("Org A — kept")
-        .bind(format!("org-a-{}", &user.email))
+        .bind(format!("org-a-{}", user.email))
         .bind(format!("org-a-{}", user.email))
         .fetch_one(&pool)
         .await
@@ -466,7 +466,7 @@ mod token_refresh {
             "#,
         )
         .bind("Org B — revoked")
-        .bind(format!("org-b-{}", &user.email))
+        .bind(format!("org-b-{}", user.email))
         .bind(format!("org-b-{}", user.email))
         .fetch_one(&pool)
         .await
