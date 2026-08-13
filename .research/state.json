@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-12T22:45:00Z",
+  "last_run_iso": "2026-08-13T12:36:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2742,
-  "last_issue_seen": 2704,
-  "last_commit_sha": "a92c652719576eefa949775d5e56f707a82f4e07",
+  "last_pr_seen": 2751,
+  "last_issue_seen": 2754,
+  "last_commit_sha": "53b53d289bc2f338bffb5a4e530afea7d9a04585",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -684,7 +684,10 @@
     "dep-update-noise-pr-2476",
     "dep-update-noise-pr-2477",
     "dep-update-noise-pr-2491",
+    "dep-update-noise-pr-2581",
     "dep-update-noise-pr-2625",
+    "dep-update-noise-pr-2674",
+    "dep-update-noise-pr-2675",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -698,6 +701,11 @@
     "fixme-in-merged-code-pr-538-webhook-rs",
     "fixme-in-merged-code-report-schedule-update",
     "gh-issue-2699-migration-collision",
+    "gh-issue-2743-dispatcher-archive-overflow",
+    "gh-issue-2743-retry-remint-ghost",
+    "gh-issue-2752-meterdetail-date-locale-miss",
+    "gh-issue-2753-format-ts-unused-helpers",
+    "gh-issue-2754-protectedroute-i18n-test-gap",
     "hotfix-no-test-pr-1287-rls-llm-sessions",
     "hotfix-no-test-pr-1288-webhook-rls",
     "hotfix-no-test-pr-1289-api-ecosystem",
@@ -851,8 +859,8 @@
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 63,
-    "vectors_created": 291,
+    "runs": 64,
+    "vectors_created": 296,
     "plans_created": 22,
     "quiet_days": 2,
     "auto_fix_count": 0

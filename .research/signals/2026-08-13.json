@@ -1,0 +1,233 @@
+{
+  "date": "2026-08-13",
+  "signals": [
+    {
+      "id": "gh-issue-2743-dispatcher-archive-overflow",
+      "type": "untriaged-issue",
+      "source": "issue #2743",
+      "score_delta": 3,
+      "evidence": [
+        "gh-issue-2743 (CRITICAL, bug+infra+dispatcher): action-list-archive.json 638 KiB and assignments-archive.json 660 KiB exceed MCP push ceiling (65536 B) \u2014 recurrence of #1162",
+        "Dispatcher can no longer persist terminal transitions; every merge/fail triggers reconciler append \u2192 oversize \u2192 Phase 6 push aborts",
+        "Directly ties to buffer-low trigger this run (claimable=7/72)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "gh-issue-2743-retry-remint-ghost",
+      "type": "untriaged-issue",
+      "source": "issue #2743",
+      "score_delta": 2,
+      "evidence": [
+        "gh-issue-2743 section 2: retry-remint.sh re-minted code-review-api-handlers-voice-webhook-default-secret as -retry1 despite Issue #2658 / PR #2660 already landing the fix on dev under a different id",
+        "Dev-truth guards key on task's own stem, missed cross-issue-id landings; proposed hardening: exclude when implementer_summary matches already-landed signals"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "gh-issue-2754-protectedroute-i18n-test-gap",
+      "type": "untriaged-issue",
+      "source": "issue #2754, PR #2737",
+      "score_delta": 2,
+      "evidence": [
+        "gh-issue-2754 (follow-up from-merged-review, low severity): PR #2737 shipped ProtectedRoute i18n without a leaf-key-lockstep regression test that sibling PRs #2736/#2739 shipped",
+        "Two unguarded keys (common.loading, errors.unauthorized) render raw key string on missing catalog entry \u2014 inconsistent guard policy in same component"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "gh-issue-2752-meterdetail-date-locale-miss",
+      "type": "untriaged-issue",
+      "source": "issue #2752, PR #2739",
+      "score_delta": 2,
+      "evidence": [
+        "gh-issue-2752 (follow-up from-merged-review, low severity): MeterDetailScreen.tsx 'Latest reading' date uses bare toLocaleDateString() \u2014 bypasses resolveLocale() introduced in PR #2740 sweep",
+        "SK/CZ/DE/PL/HU users see reading date in device locale, every other screen in app locale"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "gh-issue-2753-format-ts-unused-helpers",
+      "type": "untriaged-issue",
+      "source": "issue #2753, PR #2740",
+      "score_delta": 1,
+      "evidence": [
+        "gh-issue-2753 (follow-up from-merged-review, low severity): src/i18n/format.ts exports formatDate/formatTime/formatDateTime \u2014 zero call sites in production; every swept screen re-implements the wrapper inline",
+        "~10 screens duplicate `toLocaleDateString(resolveLocale(), opts)` boilerplate \u2014 the DRY intent inverted"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675 (dependabot)",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2675 closed-not-merged 2026-08-13: npm-minor-patch group bump superseded/rejected"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674 (dependabot)",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2674 closed-not-merged 2026-08-13: cargo-minor-patch group bump superseded/rejected"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581 (dependabot)",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2581 closed-not-merged 2026-08-13: gradle-minor-patch group bump superseded/rejected"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-13.md && head -1 matches # 2026-08-13",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev \u2026 | any of {last_pr_seen,last_issue_seen,last_commit_sha,seen_signals,hotspot_history,quiet_days} changed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id in state.seen_signals AND non-cumulative type AND score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap: no item.score > 8; decay: open items with updated_at <= 2026-07-30 lost >=1 or moved to dropped",
+      "observed": "cap=true; decay=true (no qualifying items)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan, brief annotates 'adversarial pass: passed|fixed-in-place|rolled-back'",
+      "observed": "vacuously true \u2014 0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; each has 15 required sections + concrete files",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for known secret / private-hostname patterns (see G9 spec in routine-prompt.md) with 4 baseline docs excluded",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "IDENTICAL",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "if any phase failed, brief lists it AND cursor not advanced",
+      "observed": "vacuously true \u2014 no phases failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug appears in plans/ or plans/_archive/",
+      "observed": "all plan slugs from HEAD present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "wc -l plans/_archive/ now (8) >= HEAD (8)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "IDENTICAL",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps: len<=3, pr<=1, issue<=1, comment<=1; no signal_id in prior auto_fix_history",
+      "observed": "auto_fix_actions=[] (no candidate); all caps satisfied trivially",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 gate is no-op; pm_cursor.next_index still in 0..7",
+      "observed": "no-op (skipped); pm_cursor valid",
+      "expected": "true (no-op)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for literal Telegram bot-token patterns in staged added lines (URL form / bare token form; see G17 spec)",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "resolved_ids": [
+    "closed-not-merged-pr-2705"
+  ],
+  "new_backlog_ids": [
+    "bug-dispatcher-archive-overflow-2743",
+    "bug-retry-remint-ghost-cross-issue-id-2743",
+    "test-gap-protectedroute-i18n-2754",
+    "bug-meterdetail-date-locale-bypass-2752",
+    "refactor-format-ts-unused-helpers-2753"
+  ],
+  "decayed_ids": []
+}

@@ -7820,16 +7820,142 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2705"
+        "PR #2705",
+        "PR #2745"
       ],
       "evidence": [
-        "PR #2705 closed 2026-08-08 without merge \u2014 retry2 of dx-closed-not-merged-pr-2385 (rust-toolchain bump). Two retry cycles suggests a persistent CI/dependency wedge; investigate the bump path or defer."
+        "PR #2705 closed 2026-08-08 without merge \u2014 retry2 of dx-closed-not-merged-pr-2385 (rust-toolchain bump). Two retry cycles suggests a persistent CI/dependency wedge; investigate the bump path or defer.",
+        "resolved: PR #2745 merged 2026-08-13 \u2014 closed-not-merged-pr-2705: bump rust-toolchain 1.94.1 -> 1.97.1 (real latest stable)"
       ],
       "files": [],
       "created_at": "2026-08-12",
-      "updated_at": "2026-08-12",
+      "updated_at": "2026-08-13",
+      "plan": null
+    },
+    {
+      "id": "bug-dispatcher-archive-overflow-2743",
+      "title": "Dispatcher archives (~640 KiB each) exceed MCP push ceiling \u2014 recurrence of #1162, blocks state persistence",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "issue #2743"
+      ],
+      "evidence": [
+        "action-list-archive.json 638 KiB, assignments-archive.json 660 KiB \u2014 both exceed 65536 B MCP inline-push ceiling",
+        "mcp-push-size-guard.sh correctly refuses to inline-push (would truncate/corrupt on dev per #1014/#1061); git push is proxy-403'd in cloud runner",
+        "Every terminal transition (assignment merged/failed OR action-list done/dropped) triggers archive append \u2192 oversize \u2192 Phase 6 push aborts",
+        "Recent runs only survived because zero terminal transitions (buffer starved of landable work \u2014 root cause of buffer-low trigger this run)",
+        "Remediation options: shard by year-month, gzip at rest with reader/self-test support, or restore scoped git-push path for .research/management/**"
+      ],
+      "files": [
+        ".research/management/action-list-archive.json",
+        ".research/management/assignments-archive.json",
+        ".research/archive-reconcile.sh",
+        ".research/action-list-reconcile.sh",
+        ".research/mcp-push-size-guard.sh"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
+      "plan": null
+    },
+    {
+      "id": "bug-retry-remint-ghost-cross-issue-id-2743",
+      "title": "retry-remint dev-truth guards miss cross-issue-id landings (recurrence of #2460/#2153)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "issue #2743"
+      ],
+      "evidence": [
+        "retry-remint.sh re-minted code-review-api-handlers-voice-webhook-default-secret as -retry1 on 2026-08-13 despite Issue #2658 / PR #2660 already landing the fix on dev under a different id",
+        "voice_webhooks.rs:1164 verify_hmac_signature() now fails closed via std::env::var(...)?; regression test at :1892 asserts is_err() when secret unset \u2014 evidence confirmed on dev",
+        "#2460 guards key on task's own stem: (a) coverage.json story done, (b) anchored `:` commit-subject prefix on origin/dev \u2014 fix landed under gh-issue-2658: so neither fired",
+        "Proposed hardening: also exclude a failed stem when failed row's implementer_summary matches an 'already-landed' signal (already.fixed, empty diff, no PR needed, already-satisfied)"
+      ],
+      "files": [
+        ".research/retry-remint.sh",
+        ".research/test-retry-remint.sh"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
+      "plan": null
+    },
+    {
+      "id": "test-gap-protectedroute-i18n-2754",
+      "title": "ppt-web ProtectedRoute i18n shipped without regression test + 2 unguarded keys",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "issue #2754",
+        "PR #2737"
+      ],
+      "evidence": [
+        "PR #2737 ppt-web ProtectedRoute i18n shipped no test; sibling PRs #2736 (OfflineIndicator) and #2739 (MeterDetailScreen) both shipped leaf-key-lockstep regression tests asserting rendered strings flow through t() and locale catalogs define new keys",
+        "New keys guarded with defaultValue; existing keys common.loading and errors.unauthorized used without defaultValue \u2014 inconsistent guard policy in same component",
+        "If common.loading or errors.unauthorized is renamed or missing from a catalog, raw key string renders to user on loading/access-denied path"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
+      "plan": null
+    },
+    {
+      "id": "bug-meterdetail-date-locale-bypass-2752",
+      "title": "mobile-rn MeterDetailScreen 'Latest reading' date bypasses active i18n locale",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "issue #2752",
+        "PR #2739"
+      ],
+      "evidence": [
+        "PR #2740 introduced src/i18n/format.ts::resolveLocale() and swept ~10 mobile screens so every date renders in active i18next locale",
+        "MeterDetailScreen.tsx NOT part of sweep \u2014 'Latest reading' timestamp uses bare `new Date(readings[0].takenAt).toLocaleDateString()` which uses device/runtime default locale, not app language",
+        "Slovak/Czech/German/Polish/Hungarian users see reading date in OS locale but every other screen in app locale \u2014 exactly the inconsistency PR #2740 set out to eliminate",
+        "Fix: import resolveLocale and pass to toLocaleDateString(resolveLocale()); extend MeterDetailScreen test with non-en-differs-from-en assertion"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterDetailScreen.tsx",
+        "frontend/apps/mobile/src/i18n/format.ts"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
+      "plan": null
+    },
+    {
+      "id": "refactor-format-ts-unused-helpers-2753",
+      "title": "mobile-rn format.ts helpers (formatDate/Time/DateTime) tested but unused \u2014 10 screens duplicate inline",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "issue #2753",
+        "PR #2740"
+      ],
+      "evidence": [
+        "PR #2740 added src/i18n/format.ts exporting formatDate/formatTime/formatDateTime + resolveLocale; only resolveLocale is imported by production code",
+        "~10 screens (announcements, documents, faults, leases, messages x2, notifications, outages, person-months) re-implement `X.toLocaleDateString(resolveLocale(), opts)` inline \u2014 DRY intent inverted",
+        "Fix directions (pick one): route call sites through helpers, OR delete unused exports (and tests) so module surface matches actual usage. Add lint/grep guard against bare toLocale*() calls without locale argument."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/i18n/format.ts",
+        "frontend/apps/mobile/src/i18n/format.test.ts"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
       "plan": null
     }
   ]
