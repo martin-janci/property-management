@@ -2631,6 +2631,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-voice-webhook-default-secret-retry1",
+      "branch": "auto-impl/code-review-api-handlers-voice-webhook-d-2a5597ef",
+      "status": "failed",
+      "claimed_at": "2026-08-13T04:28:20Z",
+      "last_updated": "2026-08-13T04:42:22Z",
+      "status_changed_at": "2026-08-13T04:42:22Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "ghost-retry: fail-closed VOICE_WEBHOOK_SECRET fix + regression test already merged on dev; pr=none, nothing to implement [retry-remint dev-truth guard miss — see #2743/PR#2744]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-voice-webhook-timing-cmp",
       "branch": "auto-impl/code-review-api-handlers-voice-webhook-t-c697ef3e",
       "status": "failed",
@@ -3423,6 +3445,28 @@
       "empty_branch": false,
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-core-apiclient-never-configured-retry1",
+      "branch": "auto-impl/code-review-ppt-web-core-apiclient-never-5743de98",
+      "status": "failed",
+      "claimed_at": "2026-08-13T04:28:20Z",
+      "last_updated": "2026-08-13T04:42:22Z",
+      "status_changed_at": "2026-08-13T04:42:22Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "ghost-retry: configureApiClient already wired in AuthProvider (App.tsx) on dev@0a1ca8a + regression test present; pr=none [retry-remint dev-truth guard miss — see #2743/PR#2744]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
@@ -13571,5 +13615,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-12T18:35:00Z"
+  "archived_at": "2026-08-13T04:42:31Z"
 }

@@ -122,34 +122,6 @@
           "dispatcher"
         ]
       }
-    },
-    {
-      "id": "code-review-api-handlers-voice-webhook-default-secret-retry1",
-      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:950 — verify_hmac_signature() reads VOICE_WEBHOOK_SECRET via `std::env::var(...).unwrap_or_else(|_| \"default_secret\".to_string())`, so when the env var is unset the HMAC key silently b [retry 1/2 of failed code-review-api-handlers-voice-webhook-default-secret]",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T04:24:29Z (retry_of=code-review-api-handlers-voice-webhook-default-secret reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T02:16:36Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T04:24:29Z",
-      "retry_of": "code-review-api-handlers-voice-webhook-default-secret",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-ppt-web-core-apiclient-never-configured-retry1",
-      "action": "frontend/apps/ppt-web/src/lib/api.ts:258 (configureApiClient) is NEVER called in production code. A repo-wide grep for `configureApiClient(` finds hits only in lib/api.test.tsx (7 test calls) and the docstring — no call in main.tsx / App.ts [retry 1/2 of failed code-review-ppt-web-core-apiclient-never-configured]",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T04:24:29Z (retry_of=code-review-ppt-web-core-apiclient-never-configured reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T04:15:32Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T04:24:29Z",
-      "retry_of": "code-review-ppt-web-core-apiclient-never-configured",
-      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
