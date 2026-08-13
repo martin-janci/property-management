@@ -1,26 +1,34 @@
-{
-  "generated": "2026-08-13T18:00:00Z",
-  "segment": "reality-server",
-  "source": "dispatcher-tier1d",
-  "selection_reason": "oldest-unreviewed",
-  "selection_note": "Demand-driven Tier 1d refill, no CHURN_FILES. mobile-native-kmp / mobile-rn hard-excluded (KMP/RN unlandable in cloud runner). Among the three landable Rust segments {reality-server, api-handlers, api-core} all sit at review_cursor 2026-08-10; per constraints prefer reality-server unless saturated. Saturation check: 0 open code-review-finding items for reality-server in backlog.json — not saturated, so reality-server selected. Path root resolved to backend/servers/reality-server/src (SKILL table lists backend/reality-server/src, stale). Reviewed surfaces: extractors/auth, routes/sso (redirect allowlist, session-cookie flags, PM token introspection), routes/inquiries + handlers/inquiries (rate limit + validation + realtor-scoped reads), routes/favorites, routes/saved_searches, routes/portal_listings, routes/agencies + agency_imports (membership/invite authz), routes/agent_reviews, routes/reports, routes/listings, util/url_validator (SSRF), services/email, services/*alert*. This segment is heavily audit-hardened (H1-H7 / round-9 / D1.1-D1.2 / invite-authz) — every write is user/membership-scoped and input-validated. Only one genuine landable defect found; not padding with nits per the zero-vs-invent rule.",
-  "experts_used": ["rust"],
-  "signals": [
-    {
-      "id": "code-review-reality-server-alert-drainer-stub-marks-notified",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-server",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "evidence": [
-        "backend/servers/reality-server/src/main.rs:453 — production wiring constructs the saved-search alert delivery worker as `SearchAlertDrainerWorker::new(...)`, which (services/search_alert_drainer.rs:187-194) hard-codes the logging stub transports `Arc::new(LogEmailTransport)` / `Arc::new(LogPushTransport)`. The real SMTP/FCM/APNs adapters are only injectable via the alternate `with_transports(...)` constructor, which main.rs never calls.",
-        "services/search_alert_drainer.rs:136 (default config, line 133-138) sets `enabled: true`, so the drainer runs by default in production; `LogEmailTransport::send_email` unconditionally returns `Ok(())`. In `run_once` (services/search_alert_drainer.rs:280-329) a successful email send sets `any_ok = true`, and at line 316-322 `any_ok` triggers `self.repo.mark_search_alert_notified(alert.id)` which stamps the `notified_at` column (migration 00195).",
-        "Net effect: in production every `search_alert_queue` row is marked notified after being merely written to the log — no email/push is actually delivered, yet the row is permanently recorded as delivered. Because `list_undelivered_search_alerts` filters on `notified_at`, when a real transport is later injected via `with_transports` those already-stamped alerts will be skipped forever and never re-sent. Silent out-of-band notification loss plus a one-way cutover data-loss hazard (the in-app feed channel, keyed on `status`, is unaffected, which masks the problem).",
-        "Fix (concrete, cloud-landable): gate the mark-notified so a stub/log transport does not count as a real delivery (e.g. add an `is_real_delivery()` on the transport trait, or have `LogEmailTransport` return `Err`/a `Skipped` outcome so `any_ok` stays false), OR default `SearchAlertDrainerConfig::enabled` to `false` until a real transport is wired into main.rs. Either prevents rows from being irrevocably marked delivered while only the logging stubs are mounted."
-      ],
-      "expert": "rust"
-    }
-  ]
-}
+[
+  {
+    "id": "code-review-reality-server-sso-introspect-negcache-poison",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 3,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/sso.rs:743-762 — introspect_pm_token() conflates 'the PM token is genuinely inactive' with 'the introspection HTTP call failed'. On the cache-miss path, when the PM introspect endpoint returns a non-success status (`!response.status().is_success()` at line 755 — i.e. a transient 5xx / 429 / network blip, NOT a valid `{active:false}` body), the code executes `state.token_cache.set(token, false, None, None)` (line 758, comment 'Cache inactive tokens too (to prevent repeated failed validations)') and THEN returns Err. This poisons the 60s-TTL cache: a still-valid PM token is now cached as active=false.",
+      "backend/servers/reality-server/src/routes/sso.rs:730-739 — the very next introspect_pm_token call for that same valid token within the TTL is served from cache and returns a SUCCESS value `TokenIntrospectionResponse { active: false, .. }` (no Err this time), so callers see 'token inactive' rather than 'introspection unavailable'.",
+      "backend/servers/reality-server/src/routes/sso.rs:1067-1101 — blast radius in sync_session(): a cache-hit with active=false takes the `if !token_info.active` branch (line 1082) and calls `session_service.invalidate_session(portal_session)` — it actively TEARS DOWN the user's live portal session. Net effect: a single transient PM-API introspection failure force-logs-out a validly-authenticated user from the Reality Portal for up to the full cache TTL, with no way to recover until the poisoned entry expires.",
+      "Fix: only write a negative cache entry when PM returns a well-formed response that explicitly says active=false. On transport/HTTP-status failures, return Err WITHOUT calling token_cache.set(...) so transient upstream failures fail-open on caching (they still fail-closed on the individual request via the returned Err) instead of persisting a false 'inactive' verdict that later reads as an authoritative logout signal."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-reality-server-sso-reqwest-no-timeout",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-server",
+    "score_delta": 2,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/reality-server/src/routes/sso.rs:682, 706, 743 — the three outbound SSO/OAuth helpers exchange_code_for_token(), get_user_info(), and introspect_pm_token() each build a fresh `reqwest::Client::new()` per invocation. `Client::new()` sets NO request timeout, so an unresponsive/hung PM OAuth endpoint blocks the SSO login / session-sync request indefinitely (Tokio task parked with no upper bound) on the auth hot path.",
+      "backend/servers/reality-server/src/state.rs:757-762 — a correctly-configured shared client already exists: PmApiClient::new() builds `reqwest::Client::builder().timeout(Duration::from_secs(timeout_seconds)).build()` and is held on AppState as `pm_api_client` (state.rs:863). The SSO helpers ignore it and instantiate untimed, unpooled clients instead.",
+      "Impact: (1) no request timeout -> hung PM upstream stalls auth requests and can exhaust the server's task/connection budget under load; (2) per-call Client::new() creates a new connection pool each time, defeating keep-alive/TLS reuse and adding a fresh TLS handshake to every token exchange, userinfo, and introspection call.",
+      "Fix: reuse a single shared timed reqwest::Client (extend PmApiClient or add a dedicated pooled client to AppState) across exchange_code_for_token / get_user_info / introspect_pm_token, and ensure it carries an explicit .timeout(...) matching the existing PmApiClient config."
+    ],
+    "expert": "rust"
+  }
+]

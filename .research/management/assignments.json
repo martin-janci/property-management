@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-13T20:46:38Z",
+  "generated": "2026-08-13T22:32:02Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -30,7 +30,7 @@
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-13T06:36:37Z",
+      "last_updated": "2026-08-13T22:32:02Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -46,30 +46,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-reality-server-sso-backslash-redirect-retry1",
-      "branch": "auto-impl/code-review-reality-server-sso-backslash-ede16b30",
-      "status": "review",
-      "claimed_at": "2026-08-13T20:30:11Z",
-      "last_updated": "2026-08-13T20:46:03Z",
-      "status_changed_at": "2026-08-13T20:43:47Z",
-      "pr_number": 2758,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2758",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2758 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fmt clean; clippy/test egress-blocked, CI is gate",
-      "reviewer_summary": "verdict=approve note=backslash-guard-correct-fails-closed-tests-cover-3-forms-selfapprove-blocked-CI-authoritative",
-      "last_reviewed_oid": "ade3d0f940ccb8facb9a5f51d2b71892f31435bf",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
     }
   ]
 }

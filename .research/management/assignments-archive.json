@@ -4447,6 +4447,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-sso-backslash-redirect-retry1",
+      "branch": "auto-impl/code-review-reality-server-sso-backslash-ede16b30",
+      "status": "merged",
+      "claimed_at": "2026-08-13T20:30:11Z",
+      "last_updated": "2026-08-13T22:32:02Z",
+      "status_changed_at": "2026-08-13T22:32:02Z",
+      "pr_number": 2758,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2758",
+      "merged_at": "2026-08-13T22:31:33Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2758 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fmt clean; clippy/test egress-blocked, CI is gate",
+      "reviewer_summary": "verdict=approve note=backslash-guard-correct-fails-closed-tests-cover-3-forms-selfapprove-blocked-CI-authoritative",
+      "last_reviewed_oid": "ade3d0f940ccb8facb9a5f51d2b71892f31435bf",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-reality-server-sso-session-invalidate-swallowed",
       "branch": "auto-impl/code-review-reality-server-sso-session-i-fc3c2385",
       "status": "failed",
@@ -13925,5 +13949,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-13T18:41:34Z"
+  "archived_at": "2026-08-13T22:34:21Z"
 }

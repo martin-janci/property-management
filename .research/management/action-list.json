@@ -105,20 +105,6 @@
           "dispatcher"
         ]
       }
-    },
-    {
-      "id": "code-review-reality-server-sso-backslash-redirect-retry1",
-      "action": "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash fo [retry 1/2 of failed code-review-reality-server-sso-backslash-redirect]",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T20:27:23Z (retry_of=code-review-reality-server-sso-backslash-redirect reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T20:06:36Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T20:27:23Z",
-      "retry_of": "code-review-reality-server-sso-backslash-redirect",
-      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
