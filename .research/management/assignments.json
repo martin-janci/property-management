@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-13T08:37:38Z",
+  "generated": "2026-08-13T08:42:11Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -72,18 +72,18 @@
     {
       "task_id": "code-review-api-core-apicall-ssrf-redirect-retry1",
       "branch": "auto-impl/code-review-api-core-apicall-ssrf-redire-b5ace3bb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-13T08:28:24Z",
-      "last_updated": "2026-08-13T08:28:24Z",
-      "status_changed_at": "2026-08-13T08:28:24Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-13T08:42:11Z",
+      "status_changed_at": "2026-08-13T08:42:11Z",
+      "pr_number": 2746,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2746",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2746 status=done specialist=rust-backend: redirect policy fix already on dev; added redirect_hop_allowed extract + 2 regression tests (redirects to 10.0.0.1/169.254.169.254 refused, MAX_REDIRECTS chain refused); fmt PASS, clippy/test blocked by utoipa-swagger-ui egress (CI backend.yml is gate)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
