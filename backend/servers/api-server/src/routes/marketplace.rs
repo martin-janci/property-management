@@ -927,9 +927,37 @@ async fn award_quote(
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
     load_rfq_for_org(&state, user.user_id, id).await?;
 
+    // IDOR guard: `quote_id` comes from the request body, while the org check
+    // above only proves the caller owns the RFQ path param `{id}`. Verify the
+    // awarded quote actually belongs to THIS rfq before awarding — otherwise a
+    // caller could award a quote from a foreign RFQ (and, transitively, another
+    // org) by guessing its id. Surface a mismatch as 404 (same shape as a
+    // missing quote) so quote existence is not leaked across tenants.
+    let quote = state
+        .marketplace_repo
+        .find_quote_by_id(data.quote_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load quote for award");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .filter(|q| q.rfq_id == id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Quote {} not found for RFQ {}", data.quote_id, id),
+                )),
+            )
+        })?;
+
     let rfq = state
         .marketplace_repo
-        .award_rfq(id, data.quote_id)
+        .award_rfq(id, quote.id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to award RFQ");
