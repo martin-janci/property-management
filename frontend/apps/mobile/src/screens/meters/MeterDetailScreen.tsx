@@ -18,6 +18,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { resolveLocale } from '../../i18n/format';
 import { warnIfListDegraded, warnIfParseFailed } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
@@ -169,7 +170,9 @@ export function MeterDetailScreen({
                 <Text style={styles.metricValue}>
                   {readings[0].value} {readings[0].unit}
                 </Text>
-                <Text style={s.cardMeta}>{new Date(readings[0].takenAt).toLocaleDateString()}</Text>
+                <Text style={s.cardMeta}>
+                  {new Date(readings[0].takenAt).toLocaleDateString(resolveLocale())}
+                </Text>
                 {monthDelta != null && (
                   <Text style={[s.cardBody, { marginTop: 8 }]}>
                     {t('meters.usedSincePrevious', {
@@ -195,7 +198,9 @@ export function MeterDetailScreen({
                     <Text style={s.cardTitle}>
                       {r.value} {r.unit}
                     </Text>
-                    <Text style={s.cardMeta}>{new Date(r.takenAt).toLocaleDateString()}</Text>
+                    <Text style={s.cardMeta}>
+                      {new Date(r.takenAt).toLocaleDateString(resolveLocale())}
+                    </Text>
                   </View>
                 </View>
               ))

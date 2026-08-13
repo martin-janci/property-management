@@ -30,6 +30,15 @@ jest.mock('../../hooks/useApi', () => ({
   useApiQuery: jest.fn(),
 }));
 
+// Force the app locale away from the runtime default so the regression test
+// below can prove the rendered dates are formatted with `resolveLocale()`
+// rather than a bare, device-locale `toLocaleDateString()` (issue #2752).
+jest.mock('../../i18n/format', () => ({
+  resolveLocale: jest.fn(() => 'de'),
+}));
+
+const mockResolveLocale = jest.requireMock('../../i18n/format').resolveLocale as jest.Mock;
+
 const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
 
 function mockQuery(overrides: Record<string, unknown>) {
@@ -113,5 +122,33 @@ describe('meter detail keys resolve to real, locale-distinct translations', () =
       expect(locale.meters.usedSincePrevious).toContain('{{amount}}');
       expect(locale.meters.usedSincePrevious).toContain('{{unit}}');
     }
+  });
+});
+
+describe('reading dates follow the in-app locale, not the device locale (#2752)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('formats the latest-reading and history dates via resolveLocale()', () => {
+    mockQuery({ data: responseWithReadings });
+    render(<MeterDetailScreen meterId="m-1" onBack={() => {}} onNavigate={() => {}} />);
+
+    // The screen must route every reading date through the app locale helper.
+    expect(mockResolveLocale).toHaveBeenCalled();
+
+    // With resolveLocale mocked to 'de', the newest reading (2026-03-31) and
+    // the older one (2026-02-28) render in German day.month.year order — the
+    // format a bare, device-locale `toLocaleDateString()` would NOT produce.
+    const de1 = new Date('2026-03-31').toLocaleDateString('de'); // "31.3.2026"
+    const de2 = new Date('2026-02-28').toLocaleDateString('de'); // "28.2.2026"
+    // Latest-reading card + history card both show the newest date.
+    expect(screen.getAllByText(de1).length).toBeGreaterThanOrEqual(1);
+    // History card shows the older date.
+    expect(screen.getByText(de2)).toBeTruthy();
+
+    // Guard the regression: the pre-fix bare-`en-US` rendering must be gone.
+    const enUs1 = new Date('2026-03-31').toLocaleDateString('en-US'); // "3/31/2026"
+    expect(screen.queryByText(enUs1)).toBeNull();
   });
 });
