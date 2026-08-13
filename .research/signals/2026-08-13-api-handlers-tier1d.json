@@ -1,0 +1,41 @@
+{
+  "generated": "2026-08-13T19:30:00Z",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Demand-driven Tier 1d refill (backlog starved: claimable=4 < floor=36), no CHURN_FILES passed. mobile-native-kmp / mobile-rn hard-excluded (KMP/RN unlandable in cloud runner). reality-server was already reviewed earlier today (2026-08-13-reality-server-tier1d.json), so among the remaining landable Rust segments {api-handlers, api-core} both sit at review_cursor 2026-08-10; api-handlers wins the priority-order tiebreak (also the security-critical fallback). Saturation check: 0 open code-review-finding items for api-handlers in backlog.json -- not saturated, so api-handlers selected. Path root resolved to backend/servers/api-server/src/routes/ (SKILL table lists backend/api-server/src/handlers/, stale on both the servers/ prefix and the routes-vs-handlers rename). Static-only: file reads + grep, no compile/test. Reviewed surfaces: unwrap/expect audit across all route files (all production hits are test-module-scoped or guarded is_none()/mutex-poison/infallible-const, e.g. lease_abstraction.rs:774/867 guarded, oauth_state.rs:205/219 mutex, signatures.rs:47 startup-validated); webhook signature verification (integrations/sync.rs:199-240, portal_webhooks.rs, voice_webhooks.rs:1152-1176) all fail-closed + constant-time (subtle::ConstantTimeEq / Mac::verify_slice); ai/* routes (llm/voice/sessions/equipment/workflows) authz + tenant scoping (migrate_embeddings gated on is_super_admin, generate_lease validates unit tenant ownership). Two findings emitted below.",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Multiple AI list endpoints forward a caller-controlled `?limit=` straight into a SQL `LIMIT $n` with NO upper-bound clamp, unlike the rest of the codebase which caps it. Concrete route-layer sites: backend/servers/api-server/src/routes/ai/sessions.rs:101 (`query.limit.unwrap_or(50)`), sessions.rs:205, sessions.rs:924, sessions.rs:997; ai/equipment.rs:203, ai/equipment.rs:297, ai/equipment.rs:379; ai/llm.rs:1448; ai/voice.rs:308. Each passes `query.limit.unwrap_or(N)` unchanged to a repo method.",
+        "Repo layer confirms no clamp downstream either: backend/crates/db/src/repositories/ai_chat.rs:133-163 `list_user_sessions(executor, user_id, limit, offset)` binds `limit` directly to `LIMIT $2 OFFSET $3` (line 154) with no `.min()`. backend/crates/db/src/repositories/equipment.rs list_maintenance (LIMIT $3 OFFSET $4, ~line 326) is the same shape -- no clamp anywhere in the grep for `.min(` in that file.",
+        "Contrast (proof this is an inconsistency, not a house style): backend/crates/db/src/repositories/listing.rs:136 clamps `let limit = query.limit.unwrap_or(20).min(100);`, and route-layer admin handlers clamp too -- routes/admin/users.rs:58 `.min(100)`, routes/admin/audit.rs:235 `.min(500)`, routes/admin/users_lifecycle.rs:273 `.clamp(1,100)`. reality-server even has a dedicated regression suite (listings_pagination_clamp_tests.rs). The AI routes missed the same guard.",
+        "Impact: an authenticated caller can request `?limit=100000000` and force an unbounded result-set materialization on tenant-scoped tables (chat sessions/messages, equipment maintenance, LLM request log) -> DB scan + Rust Vec allocation resource-exhaustion / latency-amplification (self-scoped DoS). A negative limit reaches Postgres as a bind error -> 500 rather than a clean 400. Fix (cloud-landable, no migration): add `.clamp(1, 100)` (or a shared `PageLimit` newtype) at each route site before the repo call, or clamp inside the repo methods to mirror listing.rs:136."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:1001 -- in the refresh-token path, when a user is found but `user.status != \"active\"`, the defense-in-depth revoke is fire-and-forgotten: `let _ = state.session_repo.revoke_token(stored_token.id).await;`. A failure to revoke the still-live refresh token of a just-deactivated/suspended account is silently discarded (no log, no metric).",
+        "This is inconsistent with the sibling revoke 9 lines below at auth/mod.rs:1010-1013 (the normal rotation path), which does `if let Err(e) = ... revoke_token(...) { tracing::error!(error = %e, \"Failed to revoke old refresh token\"); }`. The security-relevant branch (revoking a deactivated account's token) is the one that logs nothing.",
+        "Severity is low because the `user.status` gate re-runs on every refresh so a non-revoked token cannot mint a new access token while inactive; the concern is auditability/observability of a security operation on deactivated accounts, and inconsistency with the adjacent path. Fix: replace the `let _ =` with the same `if let Err(e) = ... { tracing::warn!(error = %e, user_id = %user_id, \"Failed to revoke token for deactivated account\"); }` shape used at line 1010."
+      ],
+      "expert": "security"
+    }
+  ]
+}
