@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-13T08:50:18Z",
+  "generated": "2026-08-13T08:52:28Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -116,18 +116,18 @@
     {
       "task_id": "code-review-api-handlers-voice-alexa-noverify-retry1",
       "branch": "auto-impl/code-review-api-handlers-voice-alexa-nov-08c6ace7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-13T08:28:24Z",
-      "last_updated": "2026-08-13T08:28:24Z",
-      "status_changed_at": "2026-08-13T08:28:24Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-13T08:52:28Z",
+      "status_changed_at": "2026-08-13T08:52:28Z",
+      "pr_number": 2748,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2748",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2748 status=done specialist=rust-backend: alexa branch of /verify JSON endpoint now fails closed (never returns valid:true; real cert-chain verify already guards the /alexa receiver via #2668) + forged-sig regression test (verify_endpoint_alexa_branch_fails_closed); security label; fmt PASS; clippy/test env-blocked by utoipa-swagger-ui egress, CI backend.yml is gate",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
