@@ -3893,6 +3893,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-ws-ungated-console-retry2",
+      "branch": "auto-impl/code-review-ppt-web-core-ws-ungated-cons-2108e991",
+      "status": "failed",
+      "claimed_at": "2026-08-13T18:35:43Z",
+      "last_updated": "2026-08-13T18:40:24Z",
+      "status_changed_at": "2026-08-13T18:40:24Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=websocket.ts already gates all console.warn/error behind import.meta.env.DEV via wsWarn/wsError helpers; only raw console calls are inside those DEV-gated helpers (lines 222/228) — already-fixed-on-dev-a22bbfc; round2/2 dead-end",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-accounting-invoic-c06a08f8",
       "status": "merged",
@@ -7007,6 +7029,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gap-uc-33-1-link-dispute-screen-map-retry2",
+      "branch": "auto-impl/gap-uc-33-1-link-dispute-screen-map-retr-124511be",
+      "status": "failed",
+      "claimed_at": "2026-08-13T18:35:43Z",
+      "last_updated": "2026-08-13T18:40:24Z",
+      "status_changed_at": "2026-08-13T18:40:24Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "pm-frontend",
+      "implementer_summary": "pr=none status=blocked specialist=pm-frontend scope_drift=false code_reuse_warn=none note=bad-premise: UC-33.1 is Tenant Screening (Request Tenant Background Check), not disputes; round2/2 dead-end — coverage rubric should stop generating this",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "gap-uc-33-2-link-dispute-screen-map",
       "branch": "auto-impl/gap-uc-33-2-link-dispute-screen-map-40199ee6",
       "status": "failed",
@@ -7040,6 +7084,28 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": "dispatcher claim-time prune: BAD-PREMISE (self-flagged) — UC-33.2 is Tenant Screening, not disputes; linking it to a dispute screen-map is incorrect. Not retrying.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-uc-33-2-link-dispute-screen-map-retry2",
+      "branch": "auto-impl/gap-uc-33-2-link-dispute-screen-map-retr-6dcd5498",
+      "status": "failed",
+      "claimed_at": "2026-08-13T18:35:43Z",
+      "last_updated": "2026-08-13T18:40:24Z",
+      "status_changed_at": "2026-08-13T18:40:24Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=none scope_drift=false code_reuse_warn=none note=bad-premise: UC-33.2 is Tenant Screening (Verify Tenant Income), not disputes; round2/2 dead-end — coverage rubric should stop generating this",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -11753,6 +11819,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-review-accounting-mvp-trio-retry2",
+      "branch": "auto-impl/pm-scrum-master-review-accounting-mvp-tr-c0b2cb4b",
+      "status": "failed",
+      "claimed_at": "2026-08-13T18:35:43Z",
+      "last_updated": "2026-08-13T18:40:24Z",
+      "status_changed_at": "2026-08-13T18:40:24Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "pm-tech-lead",
+      "implementer_summary": "pr=none status=blocked specialist=pm-tech-lead scope_drift=false code_reuse_warn=none note=trio #2555/#2558/#2559 all-open non-draft, zero external approvals (self-review COMMENTED, copilot quota exhausted); owner says CI green; #2559 unresolved cross-PR should-fix; idle since 2026-07-30 — needs HUMAN tech-lead approve+merge, outside auto-impl namespace",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-signer-doc-sign-page-84-2",
       "branch": "auto-impl/pm-scrum-master-signer-doc-sign-page-84-be4673ab",
       "status": "failed",
@@ -13837,5 +13925,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-13T16:44:16Z"
+  "archived_at": "2026-08-13T18:41:34Z"
 }

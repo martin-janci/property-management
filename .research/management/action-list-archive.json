@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-13T14:49:38Z",
+  "archived_at": "2026-08-13T18:36:08Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2346,6 +2346,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-06T18:03:49Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-voice-read-handlers-fabricate-data-retry1",
+      "action": "backend/servers/api-server/src/services/voice_commands.rs:235 action_check_balance returns a hardcoded response ('Your current balance is zero. You have no outstanding fees.') with data { balance: 0.0, currency: EUR } and success:true, rega [retry 1/2 of failed code-review-api-core-voice-read-handlers-fabricate-data]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-13T16:31:29Z (retry_of=code-review-api-core-voice-read-handlers-fabricate-data reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T16:17:58Z) | gc1-reconcile 2026-08-13T18:27:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-13T16:31:29Z",
+      "retry_of": "code-review-api-core-voice-read-handlers-fabricate-data",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-13T18:27:05Z"
       }
     },
     {
@@ -15496,6 +15517,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-06T18:03:49Z"
+      }
+    },
+    {
+      "id": "triage-closed-not-merged-pr-2489-retry2",
+      "action": "PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491 [retry 2/2 of failed triage-closed-not-merged-pr-2489]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-13T16:31:29Z (retry_of=triage-closed-not-merged-pr-2489 reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T16:17:58Z) | gc1-reconcile 2026-08-13T18:27:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-13T16:31:29Z",
+      "retry_of": "triage-closed-not-merged-pr-2489",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-13T18:27:05Z"
       }
     },
     {
