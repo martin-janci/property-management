@@ -783,9 +783,15 @@ impl MarketplaceRepository {
         id: Uuid,
         quote_id: Uuid,
     ) -> Result<Option<RequestForQuote>, SqlxError> {
-        // Get quote info
-        let quote = self.find_quote_by_id(quote_id).await?;
-        let provider_id = quote.map(|q| q.provider_id);
+        // Get quote info. Defense-in-depth against IDOR: the awarded quote must
+        // belong to THIS rfq. A quote from a different RFQ (possibly another
+        // org) must never be awardable, even if a caller reaches this method
+        // without the route-level ownership check. Return `Ok(None)` (surfaced
+        // as 404) rather than awarding a foreign quote.
+        let provider_id = match self.find_quote_by_id(quote_id).await? {
+            Some(q) if q.rfq_id == id => Some(q.provider_id),
+            _ => return Ok(None),
+        };
 
         // Update RFQ
         let rfq = sqlx::query_as::<_, RequestForQuote>(
