@@ -85,23 +85,6 @@
       }
     },
     {
-      "id": "closed-not-merged-pr-2705",
-      "action": "closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry closed unmerged, investigate root cause",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-13T00:24:37Z (score=1 conf=medium vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T00:24:37Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
       "id": "gh-issue-2743",
       "action": "dispatcher: two previously-fixed defects have recurred — archives again exceed MCP push ceiling (was #1162), retry-remint ghost retry (was #2460) (Closes #2743)",
       "owner_role": "pm-tech-lead",
@@ -124,60 +107,64 @@
       }
     },
     {
-      "id": "code-review-api-core-apicall-ssrf-redirect-retry1",
-      "action": "backend/servers/api-server/src/services/actions/api_call.rs:106 — reqwest::Client is built (Client::builder().timeout(60s).user_agent(...).build()) without a redirect policy, so it follows up to 10 redirects by default. validate_external_ur [retry 1/2 of failed code-review-api-core-apicall-ssrf-redirect]",
-      "owner_role": "pm-backend",
-      "priority": "high",
+      "id": "gh-issue-2752",
+      "action": "Follow-up: MeterDetailScreen \"Latest reading\" date bypasses the i18n locale (PR #2739) (Closes #2752)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
       "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T08:25:45Z (retry_of=code-review-api-core-apicall-ssrf-redirect reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T08:12:22Z)",
+      "source": "dispatcher-issue-ingest 2026-08-13T12:26:03Z (#2752)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-13T08:25:45Z",
-      "retry_of": "code-review-api-core-apicall-ssrf-redirect",
-      "retry_round": 1
+      "first_open_at": "2026-08-13T12:26:03Z",
+      "issue_ref": {
+        "number": 2752,
+        "url": "https://github.com/martin-janci/property-management/issues/2752",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     },
     {
-      "id": "code-review-api-handlers-marketplace-award-quote-idor-retry1",
-      "action": "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path { [retry 1/2 of failed code-review-api-handlers-marketplace-award-quote-idor]",
-      "owner_role": "pm-security",
-      "priority": "high",
+      "id": "gh-issue-2753",
+      "action": "Follow-up: adopt (or drop) the unused format.ts date helpers; ~10 screens duplicate the resolveLocale() call (PR #2740) (Closes #2753)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
       "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T08:25:45Z (retry_of=code-review-api-handlers-marketplace-award-quote-idor reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T08:12:22Z)",
+      "source": "dispatcher-issue-ingest 2026-08-13T12:26:03Z (#2753)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-13T08:25:45Z",
-      "retry_of": "code-review-api-handlers-marketplace-award-quote-idor",
-      "retry_round": 1
+      "first_open_at": "2026-08-13T12:26:03Z",
+      "issue_ref": {
+        "number": 2753,
+        "url": "https://github.com/martin-janci/property-management/issues/2753",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     },
     {
-      "id": "code-review-api-handlers-voice-alexa-noverify-retry1",
-      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:700-708 — the `alexa` branch of webhook verification sets `valid: !request.signature.is_empty()` with no cryptographic check whatsoever: any non-empty string is accepted as a valid Ale [retry 1/2 of failed code-review-api-handlers-voice-alexa-noverify]",
-      "owner_role": "pm-backend",
-      "priority": "high",
+      "id": "gh-issue-2754",
+      "action": "Follow-up: ProtectedRoute i18n shipped without a regression test + two unguarded keys (PR #2737) (Closes #2754)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
       "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T08:25:45Z (retry_of=code-review-api-handlers-voice-alexa-noverify reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T08:12:22Z)",
+      "source": "dispatcher-issue-ingest 2026-08-13T12:26:03Z (#2754)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-13T08:25:45Z",
-      "retry_of": "code-review-api-handlers-voice-alexa-noverify",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-api-handlers-voice-webhook-timing-cmp-retry1",
-      "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits [retry 1/2 of failed code-review-api-handlers-voice-webhook-timing-cmp]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T10:31:20Z (retry_of=code-review-api-handlers-voice-webhook-timing-cmp reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T10:11:34Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T10:31:20Z",
-      "retry_of": "code-review-api-handlers-voice-webhook-timing-cmp",
-      "retry_round": 1
+      "first_open_at": "2026-08-13T12:26:03Z",
+      "issue_ref": {
+        "number": 2754,
+        "url": "https://github.com/martin-janci/property-management/issues/2754",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
