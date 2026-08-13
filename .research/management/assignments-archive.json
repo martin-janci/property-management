@@ -2367,6 +2367,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-voice-read-handlers-fabricate-data-retry1",
+      "branch": "auto-impl/code-review-api-core-voice-read-handlers-510ecb26",
+      "status": "failed",
+      "claimed_at": "2026-08-13T16:34:58Z",
+      "last_updated": "2026-08-13T16:44:05Z",
+      "status_changed_at": "2026-08-13T16:44:05Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed on dev (commit 4699a32): action_check_balance returns success:false/data:None + regression test present; zero diff vs origin/dev, no PR needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-voice-report-fault-not-persisted",
       "branch": "auto-impl/code-review-api-core-voice-report-fault-34a8b68f",
       "status": "merged",
@@ -13705,6 +13727,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "triage-closed-not-merged-pr-2489-retry2",
+      "branch": "auto-impl/triage-closed-not-merged-pr-2489-retry2-b0d23aa8",
+      "status": "failed",
+      "claimed_at": "2026-08-13T16:34:58Z",
+      "last_updated": "2026-08-13T16:44:05Z",
+      "status_changed_at": "2026-08-13T16:44:05Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=none scope_drift=false code_reuse_warn=none note=no-action-needed:react pinned to 19.2.0 via pnpm overrides; #2489 superseded by #2491 (both closed unmerged), lockfile up-to-date",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "triage-dispatcher-mcp-push-large-file-issue-1014",
       "branch": "auto-impl/triage-dispatcher-mcp-push-large-file-is-b746df24",
       "status": "merged",
@@ -13793,5 +13837,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-13T14:49:23Z"
+  "archived_at": "2026-08-13T16:44:16Z"
 }
