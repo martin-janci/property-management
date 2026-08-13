@@ -595,7 +595,7 @@ impl MoneyS3Exporter {
                 self.separator,
                 self.format_number(total),
                 self.separator,
-                &invoice.currency,
+                invoice.currency,
                 self.separator,
                 escape_csv(invoice.note.as_deref().unwrap_or(""), self.separator),
             )?;
@@ -691,7 +691,7 @@ impl MoneyS3Exporter {
                 self.separator,
                 self.format_number(payment.amount),
                 self.separator,
-                &payment.currency,
+                payment.currency,
                 self.separator,
                 escape_csv(
                     payment.invoice_number.as_deref().unwrap_or(""),
