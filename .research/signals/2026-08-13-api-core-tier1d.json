@@ -1,0 +1,31 @@
+[
+  {
+    "id": "code-review-api-core-oauth-refresh-race-drops-revoke-guard",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/oauth.rs:557-597 — `refresh_tokens` reads the refresh row with `find_refresh_token_by_hash_including_revoked` (oauth.rs:561), checks `is_revoked()` in memory (oauth.rs:573), then later calls `self.repo.revoke_refresh_token(refresh_token.id)` (oauth.rs:597) and unconditionally proceeds to `issue_tokens`. This is a read-then-write TOCTOU: two concurrent refresh requests replaying the same valid refresh token both pass the in-memory `is_revoked()` gate and both mint a new access+refresh pair.",
+      "The atomic guard already exists but is thrown away. `OAuthRepository::revoke_refresh_token` (backend/crates/db/src/repositories/oauth.rs:449-461) runs `UPDATE oauth_refresh_tokens SET revoked_at = NOW() WHERE id = $1 AND revoked_at IS NULL` and returns `rows_affected() > 0` — i.e. it returns whether THIS caller actually won the revoke. The service discards that bool (`.await?` with no check), so the loser of the race is never rejected. Checking it (`if !revoked { return Err(TokenReuseDetected) }`) would close the window.",
+      "Contrast the sibling auth-code path at oauth.rs:472-477, which deliberately uses `find_and_consume_authorization_code` with the comment 'Atomically find and consume authorization code (prevents race condition)'. The refresh path has no equivalent atomic consume, weakening the refresh-token rotation / family-reuse-detection model (concurrent double-issuance in the same family goes undetected)."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-oauth-refresh-revoke-before-issue-lockout",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/oauth.rs:597-630 — `refresh_tokens` revokes the presented refresh token (`self.repo.revoke_refresh_token(...)` at oauth.rs:597) BEFORE issuing the replacement pair via `issue_tokens` (oauth.rs:~615), and the two operations are not wrapped in a single DB transaction. `issue_tokens` (oauth.rs:788-834) does two separate inserts (`create_access_token`, then `create_refresh_token`).",
+      "If any write after the revoke fails (DB error / connection drop between the revoke UPDATE and the token inserts), the old refresh token is already revoked and no new refresh token was persisted — the client's refresh chain is permanently broken and the user is silently forced to re-authenticate, with no compensating rollback. The correct ordering is issue-then-revoke, or wrapping revoke + both inserts in one transaction so a mid-flow failure rolls the revoke back."
+    ],
+    "expert": "rust"
+  }
+]

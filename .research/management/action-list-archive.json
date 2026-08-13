@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-13T12:29:36Z",
+  "archived_at": "2026-08-13T14:49:38Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12889,6 +12889,87 @@
         "merged_pr": 2707,
         "merged_at": "2026-08-07T16:19:50Z",
         "at": "2026-08-07T16:21:27Z"
+      }
+    },
+    {
+      "id": "gh-issue-2752",
+      "action": "Follow-up: MeterDetailScreen \"Latest reading\" date bypasses the i18n locale (PR #2739) (Closes #2752)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-13T12:26:03Z (#2752) | gc1-reconcile 2026-08-13T14:49:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-13T12:26:03Z",
+      "issue_ref": {
+        "number": 2752,
+        "url": "https://github.com/martin-janci/property-management/issues/2752",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2756,
+        "merged_at": "2026-08-13T14:49:15Z",
+        "at": "2026-08-13T14:49:38Z"
+      }
+    },
+    {
+      "id": "gh-issue-2753",
+      "action": "Follow-up: adopt (or drop) the unused format.ts date helpers; ~10 screens duplicate the resolveLocale() call (PR #2740) (Closes #2753)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-13T12:26:03Z (#2753) | gc1-reconcile 2026-08-13T14:49:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-13T12:26:03Z",
+      "issue_ref": {
+        "number": 2753,
+        "url": "https://github.com/martin-janci/property-management/issues/2753",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2755,
+        "merged_at": "2026-08-13T14:49:15Z",
+        "at": "2026-08-13T14:49:38Z"
+      }
+    },
+    {
+      "id": "gh-issue-2754",
+      "action": "Follow-up: ProtectedRoute i18n shipped without a regression test + two unguarded keys (PR #2737) (Closes #2754)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-13T12:26:03Z (#2754) | gc1-reconcile 2026-08-13T14:49:38Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-13T12:26:03Z",
+      "issue_ref": {
+        "number": 2754,
+        "url": "https://github.com/martin-janci/property-management/issues/2754",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2757,
+        "merged_at": "2026-08-13T14:49:15Z",
+        "at": "2026-08-13T14:49:38Z"
       }
     },
     {
