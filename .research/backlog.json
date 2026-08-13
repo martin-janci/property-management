@@ -7640,49 +7640,73 @@
     },
     {
       "id": "code-review-reality-web-comparison-view-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx \u2014 component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
         "Hardcoded UI text: L104 '<h2>No properties to compare</h2>', L105 'Add properties to your comparison from the listings page.', L107 'Browse Listings', L230 'Clear All', L272 'Remove'",
         "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' \u2014 surfaced to end users via showToast()",
-        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
+        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)",
+        "normalized 2026-08-13: rehydrated malformed row (status/vector/score were null; evidence preserved unchanged from original signal payload)"
       ],
-      "expert": "frontend"
+      "vector": "bug",
+      "title": "reality-web: ComparisonView hardcoded strings \u2014 no useTranslations coverage",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx"
+      ],
+      "score": 1,
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-13",
+      "status": "open",
+      "plan": null
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx \u2014 component DOES use useTranslations elsewhere, but the destructive confirm-remove modal and header subtitle are hardcoded English, so they never localize",
         "L91 subtitle 'Manage your team of real estate agents', L962 '<span>Are you sure?</span>', L964 'Yes, Remove' (and adjacent 'Cancel') on the realtor-removal confirmation",
-        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files"
+        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files",
+        "normalized 2026-08-13: rehydrated malformed row (status/vector/score were null; evidence preserved unchanged from original signal payload)"
       ],
-      "expert": "frontend"
+      "vector": "bug",
+      "title": "reality-web: realtor-management page hardcoded strings \u2014 i18n gap",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtors/"
+      ],
+      "score": 1,
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-13",
+      "status": "open",
+      "plan": null
     },
     {
       "id": "code-review-reality-web-agency-errorstate-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx \u2014 file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
         "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA \u2014 all untranslated on a 4-locale portal",
-        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
+        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI",
+        "normalized 2026-08-13: rehydrated malformed row (status/vector/score were null; evidence preserved unchanged from original signal payload)"
       ],
-      "expert": "frontend"
+      "vector": "bug",
+      "title": "reality-web: agency error-state UI hardcoded strings \u2014 i18n gap",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/"
+      ],
+      "score": 1,
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-13",
+      "status": "open",
+      "plan": null
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
@@ -7839,18 +7863,26 @@
     },
     {
       "id": "code-review-api-handlers-share-pw-no-throttle",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-handlers",
-      "score_delta": 2,
       "confidence": "medium",
-      "candidate_vector": "bug",
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:574 access_protected_share -- public, unauthenticated endpoint (mounted via shares::public_router at POST /api/v1/documents/shared/{token}/access, lib.rs:165 merge) verifies a caller-supplied share password (verify_share_password_for_share at ~L617) with NO brute-force protection: no failed-attempt counter, no per-token/per-IP lockout, no throttle. grep for rate.?limit|throttle|attempt|lockout across routes/documents/ returns 0 hits.",
         "The only rate limiter in api-server is a per-TENANT set (state.tenant_rate_limiters: TenantRateLimiterSet, applied through host_tenant_middleware keyed on org context). The share handler comment explicitly states 'This public endpoint has no caller org context', so the per-tenant limiter cannot key these unauthenticated requests -> the password endpoint is effectively unthrottled. An attacker holding a share token can brute-force the share password at request speed.",
-        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer."
+        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer.",
+        "normalized 2026-08-13: rehydrated malformed row (status/vector/score were null; evidence preserved unchanged from original signal payload)"
       ],
-      "expert": "security"
+      "vector": "security",
+      "title": "api-handlers: share password endpoint has no rate-limit throttle",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/shares.rs"
+      ],
+      "score": 2,
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
+      "status": "open",
+      "plan": null
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
@@ -7866,6 +7898,26 @@
         "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
       ],
       "expert": "rust"
+    },
+    {
+      "id": "test-gap-voice-webhooks-alexa-branch-pr2748",
+      "title": "add regression test for voice webhooks Alexa branch fail-closed (PR #2748)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2748"
+      ],
+      "evidence": [
+        "PR #2748 fix(api-server) merged 2026-08-13 -- files touched: backend/servers/api-server/src/routes/voice_webhooks.rs; no *test*/*spec* file in diff (hotfix-no-test-pr-2748)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-13",
+      "plan": null
     }
   ]
 }

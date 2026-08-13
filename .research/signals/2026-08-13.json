@@ -1,0 +1,223 @@
+{
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-2748",
+      "type": "hotfix-no-test",
+      "source": "PR #2748",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2748 fix(api-server) merged 2026-08-13 \u2014 files touched: backend/servers/api-server/src/routes/voice_webhooks.rs; no *test*/*spec* file in diff \u2014 verify webhook branch-guard change has no regression test"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open: npm-minor-patch across 1 directory with 28 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open: cargo-minor-patch across 1 directory with 6 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open: ktor group across 1 directory with 7 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot open: gradle-minor-patch across 1 directory with 5 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot closed-not-merged (superseded): npm-minor-patch"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot closed-not-merged (superseded): cargo-minor-patch"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot closed-not-merged (superseded): gradle-minor-patch"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-13.md + head -1 matches",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items updated_at <= today-14 without score/status change",
+      "observed": "no candidates",
+      "expected": "no candidates"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans (cap 2)",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths in staged diff",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": null,
+      "command": "backlog.md regenerated from json",
+      "observed": "regenerated deterministically this run; not diffed byte-for-byte because view generator + json mutations happen in the same script",
+      "expected": "diff -q exit 0",
+      "remediation": "next run's re-render should be a no-op if backlog.json wasn't touched"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans preserved",
+      "observed": "no archival ops this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "8 == 8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": null,
+      "command": "IDEAS_TRIAGE.md regenerated from json",
+      "observed": "regenerated; not diffed byte-for-byte in-run",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions)",
+      "observed": "no auto-fix candidate",
+      "expected": "<=3 and per-category caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (when Phase 1.6 ran)",
+      "observed": "Phase 1.6 skipped \u2014 gate no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run"
+}
