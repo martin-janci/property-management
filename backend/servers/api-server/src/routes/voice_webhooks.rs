@@ -727,16 +727,33 @@ async fn verify_webhook_signature(
 ) -> Json<WebhookVerificationResult> {
     let result = match request.platform.as_str() {
         "alexa" => {
-            // Alexa uses certificate-based signature verification
-            // Simplified check for demo
+            // SECURITY: Alexa request signing is certificate-chain based — the
+            // caller must present a `SignatureCertChainUrl` header, a base64
+            // `Signature` header, and the *raw* request body, which are then
+            // verified as a PKCS#1 v1.5 RSA-SHA1 signature under an Amazon-issued
+            // leaf certificate (see `verify_alexa_signature` /
+            // `verify_alexa_cert_and_signature`, wired into the mounted
+            // `POST /api/v1/webhooks/voice/alexa` receiver).
+            //
+            // This JSON introspection endpoint receives none of that material
+            // (no cert-chain URL, and `body` is a lossy string rather than the
+            // raw signed bytes), so it CANNOT cryptographically verify an Alexa
+            // signature and MUST NOT claim it did. The previous implementation
+            // returned `valid: !signature.is_empty()`, accepting any non-empty
+            // string as a valid Alexa signature — a forgery vector that let an
+            // attacker have an arbitrary payload reported as "valid". Fail
+            // CLOSED: never report `valid: true` from this endpoint for Alexa.
             WebhookVerificationResult {
-                valid: !request.signature.is_empty(),
+                valid: false,
                 platform: "alexa".to_string(),
-                error: if request.signature.is_empty() {
-                    Some("Missing signature".to_string())
+                error: Some(if request.signature.is_empty() {
+                    "Missing signature".to_string()
                 } else {
-                    None
-                },
+                    "Alexa signature verification is certificate-chain based and \
+                     is performed by POST /api/v1/webhooks/voice/alexa; this \
+                     endpoint cannot verify Alexa signatures"
+                        .to_string()
+                }),
             }
         }
         "google" => {
@@ -2093,19 +2110,48 @@ dQPD++LeIpOChiX4Ru2uMQ==\n\
     }
 
     #[tokio::test]
-    async fn verify_endpoint_alexa_branch() {
-        // Non-empty signature -> valid.
+    async fn verify_endpoint_alexa_branch_fails_closed() {
+        // SECURITY regression: the JSON /verify endpoint must NEVER report an
+        // Alexa signature as valid. It has no certificate-chain URL and no raw
+        // signed body, so it cannot perform Amazon's cert-based verification;
+        // the old code returned `valid: !signature.is_empty()`, accepting any
+        // non-empty string as a valid Alexa signature (a forgery vector).
+
+        // A forged, attacker-controlled non-empty "signature" is rejected — this
+        // is exactly the input the old code accepted as valid.
         let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
             platform: "alexa".to_string(),
-            signature: "present".to_string(),
+            signature: "any-forged-non-empty-string".to_string(),
+            body: r#"{"request":{"type":"IntentRequest","intent":{"name":"evil"}}}"#.to_string(),
+            timestamp: None,
+        }))
+        .await;
+        assert!(
+            !resp.0.valid,
+            "a non-empty (forged) Alexa signature must NOT be accepted"
+        );
+        assert_eq!(resp.0.platform, "alexa");
+        assert!(
+            resp.0
+                .error
+                .as_deref()
+                .is_some_and(|e| e.contains("cannot verify Alexa signatures")),
+            "unexpected error: {:?}",
+            resp.0.error
+        );
+
+        // Even a plausibly base64-shaped signature is rejected — there is no
+        // input to this endpoint that yields `valid: true` for Alexa.
+        let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
+            platform: "alexa".to_string(),
+            signature: BASE64.encode([0u8; 256]),
             body: "b".to_string(),
             timestamp: None,
         }))
         .await;
-        assert!(resp.0.valid);
-        assert_eq!(resp.0.platform, "alexa");
+        assert!(!resp.0.valid, "no Alexa input may be reported as valid");
 
-        // Empty signature -> invalid with "Missing signature".
+        // Empty signature -> still invalid, with the "Missing signature" hint.
         let resp = verify_webhook_signature(Json(VerifyWebhookRequest {
             platform: "alexa".to_string(),
             signature: String::new(),
