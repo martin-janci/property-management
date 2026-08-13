@@ -9,7 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
-import { resolveLocale } from '../../i18n/format';
+import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 /** Shape returned by `GET /api/v1/messages/threads`. The api-server serializes
@@ -59,7 +59,7 @@ function formatRelative(iso: string): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d`;
-  return new Date(iso).toLocaleDateString(resolveLocale(), { month: 'short', day: 'numeric' });
+  return formatDate(iso, { month: 'short', day: 'numeric' });
 }
 
 function participantName(p: ParticipantInfo): string {

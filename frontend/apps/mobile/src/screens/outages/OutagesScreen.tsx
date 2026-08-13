@@ -8,7 +8,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
-import { resolveLocale } from '../../i18n/format';
+import { formatDate, formatTime } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type OutageCommodity = 'water' | 'electricity' | 'gas' | 'heat' | 'internet';
@@ -101,19 +101,15 @@ function formatRange(startsAt: string, endsAt: string): string {
   const start = new Date(startsAt);
   const end = new Date(endsAt);
   const sameDay = start.toDateString() === end.toDateString();
-  const locale = resolveLocale();
   const dateOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   const timeOpts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
   if (sameDay) {
-    return `${start.toLocaleDateString(locale, dateOpts)} · ${start.toLocaleTimeString(
-      locale,
+    return `${formatDate(start, dateOpts)} · ${formatTime(start, timeOpts)} – ${formatTime(
+      end,
       timeOpts
-    )} – ${end.toLocaleTimeString(locale, timeOpts)}`;
+    )}`;
   }
-  return `${start.toLocaleDateString(locale, dateOpts)} – ${end.toLocaleDateString(
-    locale,
-    dateOpts
-  )}`;
+  return `${formatDate(start, dateOpts)} – ${formatDate(end, dateOpts)}`;
 }
 
 interface OutagesScreenProps {

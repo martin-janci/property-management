@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
-import { resolveLocale } from '../../i18n/format';
+import { formatDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
 export interface AnnouncementAttachment {
@@ -151,7 +151,7 @@ export function formatRelativeDate(dateString: string, now: Date = new Date()): 
   if (diffDays < 7) {
     return `${diffDays}d ago`;
   }
-  return date.toLocaleDateString(resolveLocale(), { month: 'short', day: 'numeric' });
+  return formatDate(date, { month: 'short', day: 'numeric' });
 }
 
 interface AnnouncementsScreenProps {
