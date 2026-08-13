@@ -1,0 +1,166 @@
+{
+  "generated": "2026-08-13T03:03:00Z",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-migration-export-mock-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/migration.rs:1270 — get_export_status auto-transitions Pending exports to Ready and persists a hardcoded mock path `https://storage.example.com/exports/{export_id}.zip` as file_path in the DB, poisoning the export row.",
+        "backend/servers/api-server/src/routes/migration.rs:1395 — download_export returns updated.file_path.unwrap_or_else(|| format!(\"https://storage.example.com/exports/{}.zip\", export_id)) as the download_url; either the persisted mock URL or the same literal fallback, so platform admins invoking GET /export/{id}/download always receive an unresolvable stub URL (Epic 66 export feature is non-functional end-to-end).",
+        "backend/servers/api-server/src/routes/migration.rs:66-68 — routes /export/{id} and /export/{id}/download are mounted and reachable by any authenticated platform admin."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "api-handlers",
+    "selection_reason": "oldest-unreviewed (tie broken by fallback preference for api-handlers)",
+    "experts_used": [
+      "rust",
+      "security"
+    ],
+    "findings_count": 1,
+    "skipped": false
+  },
+  "phase_1_6": {
+    "role_ran": "pm-qa",
+    "scrum_master_ran": true,
+    "coverage_upkeep": "epic-80 re-checked (all 3 stories still done; last_checked bumped)",
+    "coverage_cursor_advanced": "5 -> 6"
+  },
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && H1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state cursors",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no signal re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14d",
+      "observed": "0 items to decay",
+      "expected": "all handled or no candidates"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial annotation",
+      "observed": "no new plans",
+      "expected": "no new plans OR all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "gate11",
+      "passed": true,
+      "command": "grep placeholder rot in brief+plans",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "8 == 8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps 0/0/0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7",
+      "observed": "pass; CC advanced 5->6 while PM advanced 3->4",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist"
+}

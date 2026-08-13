@@ -100,7 +100,84 @@
         "score": 1,
         "vector": "dx"
       }
+    },
+    {
+      "id": "pm-scrum-master-fix-dispatcher-archive-oversize-2743",
+      "action": "Fix dispatcher archive-oversize regression (issue #2743): shard or prune .research/management/*-archive.json (~638KiB/~660KiB) back under the 64KiB MCP push ceiling",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
+    },
+    {
+      "id": "pm-scrum-master-fix-retry-remint-ghost-dedup",
+      "action": "Fix retry-remint.sh dedup so it doesn't re-mint tasks (e.g. code-review-api-handlers-voice-webhook-default-secret) already landed on dev under a different id (PR #2660)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
+    },
+    {
+      "id": "pm-scrum-master-story-84-1-s3-presigned-urls-frontend",
+      "action": "Wire ppt-web direct-to-S3 upload flow to POST /documents/upload-url (story 84-1-s3-presigned-urls, mvp, partial)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
+    },
+    {
+      "id": "pm-scrum-master-story-84-2-signer-page",
+      "action": "Build the signer-facing document-sign page in ppt-web (story 84-2-esignature-email, mvp, partial) — scope tightly, prior attempt (gap-84-2) failed with no PR",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
+    },
+    {
+      "id": "pm-scrum-master-kmp-alt-landing-path",
+      "action": "Find an alternate landing path for the 4 structurally-unlandable KMP items sitting in the claim buffer (cloud runner cannot build mobile-native)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
+    },
+    {
+      "id": "pm-scrum-master-reconcile-epic-status-sprint-yaml",
+      "action": "Reconcile epic-level status/story-count fields in sprint-status.yaml (epic-6, epic-7a, epic-10b, epic-80) against the already-done story-level detail",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
+    },
+    {
+      "id": "pm-qa-triage-pr-2684-quarantine",
+      "action": "Triage PR #2684 (auto-impl/code-review-api-core-workflow-cond-parse-failopen): identify the test-shard 1-4 failure as flake-vs-regression on head 926afe8; fix_rounds=3 auto-cap exhausted so needs explicit reviewer intervention",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-13"
     }
   ],
-  "generated": "2026-07-30T03:23:02Z"
+  "generated": "2026-08-13T03:03:00Z"
 }

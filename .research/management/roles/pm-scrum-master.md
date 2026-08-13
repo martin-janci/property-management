@@ -1,54 +1,54 @@
-# Role: pm-scrum-master — 2026-07-30
+# pm-scrum-master — Delivery lead (2026-08-13)
 
-> Delivery lead / coordinator. Always runs. Static read-only.
+_Always-on. Runs every research routine invocation._
 
-## Summary
-Very productive 2-day window: 17 PRs merged (post-merge-review batch of 2026-07-28 is now fully closed except #2528 booking-webhook parity), plus 3 fresh follow-up issues opened on this window's own PRs (#2573 DELETE-by-file-key regression, #2574 Android SSO CSRF half-wired, #2575 dispute KPI window validation). Coverage still at 47/49 done; the two long-standing 84-x frontend partials are unchanged.
+## Role JSON
 
-## Sprint progress
-- Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth**
-- epics_done: **3 / 5**
+```json
+{
+  "role": "pm-scrum-master",
+  "summary": "Quiet 4-hour window: zero PRs merged, one new issue (#2743) that reproduces two previously-fixed dispatcher defects and is choking the terminal-transition/claim-buffer loop. Story-level work for the active sprint is effectively complete (development_status shows nearly all epic-6/7a/8a/10a/10b/80 stories done) but epic-level status fields in sprint-status.yaml haven't been reconciled to match, and coverage.json shows only 2 remaining mvp gaps, both frontend (84-1, 84-2).",
+  "next_actions": [
+    {"action": "Fix dispatcher archive-oversize regression (issue #2743): shard or prune .research/management/*-archive.json (~638KiB/~660KiB) back under the 64KiB MCP push ceiling", "priority": "high", "dependency": "infra/pm-tech-lead", "definition_of_done": "both archive files push cleanly under ceiling; dispatcher terminal transitions unblock"},
+    {"action": "Fix retry-remint.sh dedup so it doesn't re-mint tasks (e.g. code-review-api-handlers-voice-webhook-default-secret) already landed on dev under a different id (PR #2660)", "priority": "high", "dependency": "infra/pm-tech-lead", "definition_of_done": "retry-remint checks merged-PR history before re-minting; regression covers the #2460 case"},
+    {"action": "Wire ppt-web direct-to-S3 upload flow to POST /documents/upload-url (story 84-1-s3-presigned-urls, mvp, partial)", "priority": "high", "dependency": "pm-frontend", "definition_of_done": "UploadDocument component uses the presigned-URL flow; ppt/upload-document screen-map apiStatus flips partial->complete"},
+    {"action": "Build the signer-facing document-sign page in ppt-web (story 84-2-esignature-email, mvp, partial) — scope tightly, prior attempt (gap-84-2) failed with no PR", "priority": "high", "dependency": "pm-frontend", "definition_of_done": "ppt/document-sign screen-map buildStatus planned->shipped; e2e signature-request email verified"},
+    {"action": "Find an alternate landing path for the 4 structurally-unlandable KMP items sitting in the claim buffer (cloud runner cannot build mobile-native)", "priority": "medium", "dependency": "pm-mobile-native", "definition_of_done": "KMP items routed to a runner that can build them, or explicitly deferred with a tracked follow-up"},
+    {"action": "Reconcile epic-level status/story-count fields in sprint-status.yaml (epic-6, epic-7a, epic-10b, epic-80) against the already-done story-level detail", "priority": "medium", "dependency": "none", "definition_of_done": "epics block matches development_status truth; sprint reported as accurately near-complete"}
+  ],
+  "risks": [
+    {"risk": "Dispatcher archive files recurring over the MCP push ceiling blocks all terminal transitions, stalling the entire research-to-implementation loop", "probability": "high", "impact": "high", "mitigation": "shard/prune archives now and add a size-guard check to prevent recurrence (this is the second time — was #1162)"},
+    {"risk": "retry-remint ghost-retries waste cycles re-doing work already merged under a different task id, masking true backlog depth", "probability": "medium", "impact": "medium", "mitigation": "cross-check merged-PR history before re-minting; add regression for the #2460 pattern"},
+    {"risk": "Claim buffer is structurally starved (4 KMP-unlandable + 1 stem-blocked by quarantined #2684 + 1 closed-not-merged) — throughput drops to near zero even once dispatcher infra is fixed", "probability": "high", "impact": "medium", "mitigation": "route KMP work to a capable runner; resolve or drop #2684 quarantine; re-triage the closed-not-merged retry"},
+    {"risk": "Stalled acc-track PRs #2555/#2558/#2559 (15d open, 13d idle) risk growing merge conflicts / scope drift the longer they sit unreviewed", "probability": "medium", "impact": "medium", "mitigation": "assign a reviewer decision this cycle: merge, request changes, or close"},
+    {"risk": "Epic-level sprint-status.yaml fields are stale relative to story-level done markers, risking inaccurate stakeholder-facing sprint reporting", "probability": "low", "impact": "medium", "mitigation": "batch-reconcile epic block against development_status"}
+  ],
+  "open_questions": [
+    "Is the archive-oversize fix intended to be a durable structural fix (permanent sharding/rotation) this time, given it already recurred once (#1162 -> #2743)?",
+    "Who owns retry-remint.sh going forward, and should it consult PR/merge history before re-minting?",
+    "Is there a plan/owner for a non-cloud runner to land the 4 structurally-unlandable KMP items?",
+    "What is the disposition of quarantined PR #2684 (workflow-cond-parse-failopen, in review >5d) — rework, reassign, or drop?",
+    "Should the sprint be formally closed/renamed given story-level work for epics 6/7a/8a/10a/10b/80 is already done, leaving only two mvp frontend gaps (84-1/84-2) which are epic-84, not part of the named sprint?"
+  ],
+  "decisions_needed": [
+    "Archive-oversize remediation strategy (shard vs raise ceiling vs prune) — owner: pm-tech-lead",
+    "Routing plan for cloud-unlandable KMP backlog items — owner: pm-mobile-native",
+    "Disposition of stalled PRs #2555/#2558/#2559 (merge/changes/close) — owner: pm-tech-lead",
+    "Disposition of quarantined PR #2684 — owner: pm-tech-lead"
+  ],
+  "shipped_since_last_run": [],
+  "sprint_progress": {"sprint": "Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth", "epics_done": 2, "epics_total": 6},
+  "blockers": [
+    {"item": "Dispatcher infra (issue #2743)", "reason": "Both .research/management/*-archive.json files again exceed the 64KiB MCP push ceiling (recurrence of #1162), blocking dispatcher terminal transitions for the whole research-to-implementation loop", "owner_role": "pm-tech-lead"},
+    {"item": "Claim buffer", "reason": "Starved of landable work: 4 KMP items structurally unlandable in the cloud runner, 1 stem-blocked by quarantined PR #2684, 1 investigative item closed-not-merged", "owner_role": "pm-mobile-native"},
+    {"item": "PR #2684 (workflow-cond-parse-failopen)", "reason": "Quarantined, in review >5 days, stem-blocking a backlog item", "owner_role": "pm-tech-lead"}
+  ]
+}
+```
 
-## Shipped since last run (17 PRs)
-- PR #2576 gh-issue-2563: schedule layout_change_events retention prune
-- PR #2572 gh-issue-2562: wire get_dispute_kpis into a reporting endpoint
-- PR #2571 gh-issue-2564: org-scoped DELETE-by-file_key for direct-upload orphan cleanup
-- PR #2570 gh-issue-2557: dedupe private seed_org/set_ctx in db test suites
-- PR #2569 dx: run SDK drift gate on client + workflow changes
-- PR #2568 code-review mobile-native-kmp: Android SSO CSRF state verification
-- PR #2567 code-review api-core: clear scheduler global-read RLS GUC before pool return (retry1)
-- PR #2566 gh-issue-2561: version-bump rebase+retry to fix GH006 on concurrent dev merges
-- PR #2565 gh-issue-2560: reality-web Docker build fix (api-client node_modules in builder stage)
-- PR #2554 chore(research): refill starved dispatcher stack (7 new vectors, 14 promoted)
-- PR #2553 code-review ppt-web-core: AuthContext cold-boot routes through refreshTokenInternal (stale-role fix)
-- PR #2549 gh-issue-2532: layout publish/webhook/revalidate event emission + sink
-- PR #2504 fix(api-server): signature-request list/create — mount as document sub-resource (BIT-313)
-- PR #2491 chore(deps): npm-minor-patch group (5 updates)
-- PR #2482 refactor: reconcile docs/repo-map.md with current tree
-- PR #2478 fix(layout): review-hardening sweep (authz, publish TOCTOU, webhook replay, defensive rendering)
-- PR #2433 feat(mobile-native): iOS listing detail renders through the shared resolved layout
+## Digest highlights
 
-## Next actions
-1. **[high]** Address #2573 — DELETE /documents/by-file-key can delete a still-referenced object within the same org (regression from PR #2571) — owner: pm-backend — DoD: reference-check added before delete; regression test covering shared-file-key same-org case.
-2. **[high]** Address #2574 — Android SSO CSRF guard half-wired (SsoStateStore.mint() has no call site so every reality://sso callback is rejected) — owner: pm-mobile / react-native — DoD: mint() wired at deep-link entry; integration test covers the happy path.
-3. **[medium]** Address #2575 — /disputes/kpis has no window-ordering validation, only test is quarantined (PR #2572) — owner: pm-backend — DoD: reject window_end < window_start with 400; un-quarantine the KPIs test.
-4. **[medium]** Merge or triage the accounting MVP-loop trio (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — all draft-ready since 2026-07-28 — owner: pm-backend / pm-tech-lead — DoD: reviewed + green + merged, or explicitly re-scoped.
-5. **[high]** Finish long-standing 84-1 direct-to-S3 wiring in ppt-web (POST /documents/upload-url consumer) — owner: pm-frontend — DoD: api-client binding + UploadDocument integration + regression test.
-6. **[high]** Finish long-standing 84-2 signer-facing document-sign page (screen-map planned→shipped, API complete) — owner: pm-frontend — DoD: page shipped, signature-request email delivery verified end-to-end.
-
-## Risks
-- **[med prob / high impact]** PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row — mitigation: land a reference-count guard + integration test before any client wires the endpoint.
-- **[high prob / high impact]** PR #2568 CSRF state fix is non-functional (#2574) — mint() has no call site so every SSO deep-link is rejected — mitigation: wire mint() at the SSO deep-link entry point (fresh subagent on the mobile-native slice).
-- **[med prob / med impact]** Accounting MVP-loop trio (3 open PRs) has been sitting 2 days with no reviewer engagement — dispatcher stack starving on reviewer capacity, not implementer capacity — mitigation: explicit reviewer slot for the trio next 24h; document reviewer-slot rotation for large-scope PRs.
-
-## Open questions
-- Should the accounting MVP-loop epic be added to coverage.json (currently outside the 13-epic set)?
-- Should the layout epic (scheduler.rs + tenant.rs + admin.rs are top churn this window) be promoted to its own coverage epic entry?
-
-## Decisions needed
-- Reviewer-slot policy for large-scope feature PRs (accounting trio blocking) — owner: pm-tech-lead.
-
-## Blockers
-- **#2574 Android SSO CSRF half-wired** — the freshly-merged CSRF fix (#2568) has no call site — every reality://sso callback is now rejected; blocks any Android SSO usage until re-wired — owner: pm-mobile.
-- **#2573 DELETE-by-file-key same-org reference gap** — new endpoint can delete a still-referenced S3 object within the same org (regression from PR #2571); blocks safe client wiring for 84-1 direct-to-S3 — owner: pm-backend.
-- **Accounting trio (#2555 / #2558 / #2559)** — no reviewer engagement in 2 days; dispatcher can't advance the MVP-loop — owner: pm-tech-lead.
+- **Sprint:** Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth — 2/6 epics done at the rolled-up level; story-level truth is much further ahead.
+- **Shipped since last run:** nothing (4-hour quiet window).
+- **Blockers:** dispatcher-archive oversize (#2743), starved claim buffer (KMP), quarantined PR #2684.
+- **Role focus today:** pm-scrum-master + pm-qa.

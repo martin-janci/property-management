@@ -103,3 +103,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 
 - **NEW (2026-07-30, pm-scrum-master):** Reviewer-slot policy for large-scope feature PRs — the accounting MVP-loop trio (#2555 / #2558 / #2559) has been draft-ready for 2 days with no reviewer engagement, showing the dispatcher stack is now bottlenecked on reviewer capacity, not implementer capacity. Owner: pm-tech-lead to define whether large-scope PRs get an explicit reviewer slot or if reviewer rotation is added to the daily routine.
 - **NEW (2026-07-30, pm-backend):** Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later). The PR #2547 (scheduler retention prune) and PR #2568 (Android SSO CSRF, half-wired) both slipped through this hole in the last two windows. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-13 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-08-13, pm-scrum-master):** Archive-oversize remediation strategy for `.research/management/*-archive.json` (currently ~638KiB + ~660KiB, both far past the 64KiB MCP push ceiling; #1162 recurrence tracked as #2743) — shard/rotate by month vs gzip-at-rest vs restore scoped `git push` for `.research/management/**`. Owner: pm-tech-lead.
+- **NEW (2026-08-13, pm-scrum-master):** Routing plan for the 4 KMP items structurally unlandable in the cloud runner (Gradle/AGP fetch 403 — issue #2652). Options: dedicate macOS runner, use ppt-bridge MCP route, or explicitly defer with a tracked follow-up. Owner: pm-mobile-native.
+- **NEW (2026-08-13, pm-scrum-master):** Disposition of the stalled accounting PRs #2555 / #2558 / #2559 (15d open, 13d idle). Reviewer decision required this cycle: merge, request changes, or close. Owner: pm-tech-lead.
+- **NEW (2026-08-13, pm-scrum-master):** Disposition of quarantined PR #2684 (workflow-cond-parse-failopen) — fix_rounds=3 exhausted, CI still red on test-shard 1-4 after >5 days. Human/reviewer needs to un-quarantine or drop; auto-loop cannot self-recover. Owner: pm-tech-lead.
+- **NEW (2026-08-13, pm-qa):** Whether #2684's fail-open workflow-condition fix should be hand-carried past the exhausted fix_rounds cap given its security severity, vs waiting for the next auto-dispatch cycle. Owner: pm-backend / pm-tech-lead.

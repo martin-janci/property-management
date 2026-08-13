@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-13T03:03:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -117,6 +117,76 @@
       "trigger": null,
       "status": "open",
       "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-scrum-master-dispatcher-archive-oversize-recurrence-2026-08-13",
+      "risk": "Dispatcher archive files recurring over the MCP push ceiling blocks all terminal transitions, stalling the entire research-to-implementation loop",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "shard/prune archives now and add a size-guard check to prevent recurrence (this is the second time — was #1162, now #2743)",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-retry-remint-ghost-retries-2026-08-13",
+      "risk": "retry-remint ghost-retries waste cycles re-doing work already merged under a different task id, masking true backlog depth",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "cross-check merged-PR history before re-minting; add regression for the #2460 pattern",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-claim-buffer-starved-2026-08-13",
+      "risk": "Claim buffer is structurally starved (4 KMP-unlandable + 1 stem-blocked by quarantined #2684 + 1 closed-not-merged) — throughput drops to near zero even once dispatcher infra is fixed",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "route KMP work to a capable runner; resolve or drop #2684 quarantine; re-triage the closed-not-merged retry",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-acc-track-prs-stalled-2026-08-13",
+      "risk": "Stalled acc-track PRs #2555/#2558/#2559 (15d open, 13d idle) risk growing merge conflicts / scope drift the longer they sit unreviewed",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "assign a reviewer decision this cycle: merge, request changes, or close",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-workflow-cond-failopen-quarantined-2026-08-13",
+      "risk": "A security fail-open bug (workflow condition parser) is confirmed but stuck in quarantine 5+ days with CI red and fix_rounds exhausted — it ships to no one, but the underlying vulnerability class also isn't confirmed fixed anywhere else on dev",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Escalate #2684 to human/reviewer triage outside the auto fix-round budget; do not let quarantine silently become permanent shelving",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-kmp-cancellation-swallowed-2026-08-13",
+      "risk": "mobile-native-kmp cancellation-swallowing bug (9 of 10 shared repos catch CancellationException via generic catch(e: Exception)) produces spurious error UI on normal screen-navigation cancellation and undermines structured concurrency, but is unlandable in the cloud runner",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Batch the 4 open KMP findings into one macOS/ppt-bridge-routed landing pass rather than leaving them to accumulate one-by-one",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-portfolio-analytics-caps-100-2026-08-13",
+      "risk": "getPortfolioAnalytics() truncates realtor dashboards at 100 listings — silently under-reports for any realtor portfolio over 100 listings, with no test asserting the >100 boundary",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add a >100-listing boundary regression test alongside the paging fix once KMP lands; until then, flag as a known reporting-accuracy limitation rather than a silent gap",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
     }
   ]
 }
