@@ -137,8 +137,9 @@ fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String
 ///
 /// - Same-origin **relative** paths (`/dashboard`) are allowed unconditionally;
 ///   the browser resolves them against the trusted reality-web origin. Note
-///   that protocol-relative URLs (`//evil.com`) are NOT relative paths and fall
-///   through to allowlist matching.
+///   that protocol-relative URLs (`//evil.com`) — including the backslash-
+///   obfuscated form (`/\evil.com`), which browsers normalise to `//evil.com`
+///   — are NOT relative paths and fall through to allowlist matching.
 /// - Absolute URLs must use `http`/`https` (blocks `javascript:`, `data:`,
 ///   `file:`, …) and their origin (`scheme://host[:port]`) must appear in
 ///   `allowed_origins`.
@@ -146,7 +147,11 @@ fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(
     // Allow same-origin relative paths (e.g. "/dashboard") unconditionally —
     // the browser will resolve them against the reality-web origin that
     // initiated the flow, which by definition the user already trusts.
-    if raw.starts_with('/') && !raw.starts_with("//") {
+    //
+    // A leading "/" is a same-origin relative path ONLY when the next char is
+    // neither "/" nor "\" — browsers normalise "\" to "/", so "/\evil.com" and
+    // "//evil.com" both resolve to a foreign authority (open-redirect bypass).
+    if raw.starts_with('/') && !raw.starts_with("//") && !raw.starts_with("/\\") {
         return Ok(());
     }
 
@@ -1770,6 +1775,28 @@ mod sso_consumer_security_tests {
             res.is_err(),
             "protocol-relative URL must not bypass the allowlist: {res:?}"
         );
+    }
+
+    /// Regression (open-redirect): a backslash-obfuscated authority
+    /// (`/\evil.com`, `/\\evil.com`, `/\/evil.com`) must NOT be treated as a
+    /// same-origin relative path. Browsers normalise `\` to `/`, so these
+    /// resolve to the foreign authority `//evil.com`. They must fall through to
+    /// allowlist matching (and be rejected here, with an empty allowlist),
+    /// while a legitimate relative path like `/dashboard` still passes.
+    #[test]
+    fn redirect_backslash_authority_is_not_treated_as_relative() {
+        let empty: Vec<String> = Vec::new();
+        for raw in ["/\\evil.com", "/\\\\evil.com", "/\\/evil.com"] {
+            let res = check_redirect_uri_allowed(raw, &empty);
+            assert!(
+                res.is_err(),
+                "backslash-obfuscated authority must not bypass the allowlist: {raw} -> {res:?}"
+            );
+        }
+        // Guard against over-tightening: a legitimate relative path still works.
+        assert!(check_redirect_uri_allowed("/dashboard", &empty).is_ok());
+        // Existing behaviour preserved: protocol-relative form also rejected.
+        assert!(check_redirect_uri_allowed("//evil.com", &empty).is_err());
     }
 
     /// Regression (issue #820): dangerous non-http(s) schemes (`javascript:`,
