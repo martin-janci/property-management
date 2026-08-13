@@ -1839,6 +1839,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "closed-not-merged-pr-2705",
+      "branch": "auto-impl/closed-not-merged-pr-2705-edf1feff",
+      "status": "merged",
+      "claimed_at": "2026-08-13T04:28:20Z",
+      "last_updated": "2026-08-13T10:40:27Z",
+      "status_changed_at": "2026-08-13T10:40:27Z",
+      "pr_number": 2745,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2745",
+      "merged_at": "2026-08-13T10:39:22Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2745 done: root-cause Rust 1.100.0 nonexistent(404) — repinned all toolchain refs to real 1.97.1 + rustfmt-1.97 reformat of organizations/mod.rs; local verify blocked only by utoipa-swagger-ui egress, CI is gate; scope_drift=rust-toolchain.toml+organizations/mod.rs(justified) [fix-round1: removed redundant & in writeln! args (clippy useless_borrows_in_formatting under 1.97.1) accounting.rs:598,694 → head ae0d275; awaiting CI re-run] [fix-round2 pushed afd2f10: removed 2 redundant borrows useless_borrows_in_formatting in auth_tests.rs:455,469; fmt PASS; CI re-running]",
+      "reviewer_summary": "verdict=approve note=1.97.1-bump-consistent-CI-green-both-prior-lint-blockers-fixed (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "afd2f10ac7012334adae4fc8fd0cf4a9a3b37062",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 2,
+      "merge_attempted_at": "2026-08-13T10:39:13Z"
+    },
+    {
       "task_id": "code-review-ai-ocr-correction-idor",
       "branch": "auto-impl/code-review-ai-ocr-correction-idor-754fa419",
       "status": "merged",
@@ -1925,6 +1947,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-core-apicall-ssrf-redirect-retry1",
+      "branch": "auto-impl/code-review-api-core-apicall-ssrf-redire-b5ace3bb",
+      "status": "merged",
+      "claimed_at": "2026-08-13T08:28:24Z",
+      "last_updated": "2026-08-13T10:40:27Z",
+      "status_changed_at": "2026-08-13T10:40:27Z",
+      "pr_number": 2746,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2746",
+      "merged_at": "2026-08-13T10:39:33Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2746 status=done specialist=rust-backend: redirect policy fix already on dev; added redirect_hop_allowed extract + 2 regression tests (redirects to 10.0.0.1/169.254.169.254 refused, MAX_REDIRECTS chain refused); fmt PASS, clippy/test blocked by utoipa-swagger-ui egress (CI backend.yml is gate)",
+      "reviewer_summary": "verdict=approve note=behaviour-preserving-refactor+env-independent-ssrf-regression-tests-CI-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "464eddecfac3c11da1871a5d75fb3b8385f89428",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-13T10:39:13Z"
     },
     {
       "task_id": "code-review-api-core-idempotency-client-tenant",
@@ -2521,6 +2565,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-marketplace-award-quote-idor-retry1",
+      "branch": "auto-impl/code-review-api-handlers-marketplace-awa-76b5563c",
+      "status": "merged",
+      "claimed_at": "2026-08-13T08:28:24Z",
+      "last_updated": "2026-08-13T10:40:27Z",
+      "status_changed_at": "2026-08-13T10:40:27Z",
+      "pr_number": 2747,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2747",
+      "merged_at": "2026-08-13T10:39:42Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2747 status=done specialist=rust-backend: award_quote IDOR fixed (handler loads body quote_id, rejects 404 when quote.rfq_id != {id}; repo award_rfq guard as defense-in-depth) + 3 HTTP regression tests (cross-org, cross-rfq, happy-path); fmt+clippy(db) PASS; api-server verify env-blocked by utoipa-swagger-ui, CI backend.yml is gate",
+      "reviewer_summary": "verdict=approve note=idor-fixed-two-layer+3-regression-tests-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "8bfb4745ca622244ba48bd1b7789dabd48baebe4",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-13T10:39:13Z"
+    },
+    {
       "task_id": "code-review-api-handlers-missing-authz-article",
       "branch": "auto-impl/code-review-api-handlers-missing-authz-a-daba9410",
       "status": "merged",
@@ -2609,6 +2675,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-voice-alexa-noverify-retry1",
+      "branch": "auto-impl/code-review-api-handlers-voice-alexa-nov-08c6ace7",
+      "status": "merged",
+      "claimed_at": "2026-08-13T08:28:24Z",
+      "last_updated": "2026-08-13T10:40:27Z",
+      "status_changed_at": "2026-08-13T10:40:27Z",
+      "pr_number": 2748,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2748",
+      "merged_at": "2026-08-13T10:39:52Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2748 status=done specialist=rust-backend: alexa branch of /verify JSON endpoint now fails closed (never returns valid:true; real cert-chain verify already guards the /alexa receiver via #2668) + forged-sig regression test (verify_endpoint_alexa_branch_fails_closed); security label; fmt PASS; clippy/test env-blocked by utoipa-swagger-ui egress, CI backend.yml is gate",
+      "reviewer_summary": "verdict=approve note=fail-closed-alexa-verify-correct+regression-test+CI-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "23b715bd826e9bfc2dc3bcfc8496c12a251ea36c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-13T10:39:13Z"
+    },
+    {
       "task_id": "code-review-api-handlers-voice-webhook-default-secret",
       "branch": "auto-impl/code-review-api-handlers-voice-webhook-d-5e3512f4",
       "status": "failed",
@@ -2673,6 +2761,30 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-voice-webhook-timing-cmp-retry1",
+      "branch": "auto-impl/code-review-api-handlers-voice-webhook-t-038c787c",
+      "status": "failed",
+      "claimed_at": "2026-08-13T10:34:01Z",
+      "last_updated": "2026-08-13T10:38:43Z",
+      "status_changed_at": "2026-08-13T10:38:43Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed-on-dev: verify_hmac_signature uses ct_eq_str (subtle ConstantTimeEq) + regression tests present; no-op empty diff, no PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-api-handlers-voice-webhook-token-authbypass",
@@ -13615,5 +13727,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-13T04:42:31Z"
+  "archived_at": "2026-08-13T10:41:26Z"
 }

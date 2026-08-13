@@ -170,7 +170,7 @@
       "action": "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits [retry 1/2 of failed code-review-api-handlers-voice-webhook-timing-cmp]",
       "owner_role": "pm-security",
       "priority": "high",
-      "status": "in-progress",
+      "status": "open",
       "source": "dispatcher-retry-remint 2026-08-13T10:31:20Z (retry_of=code-review-api-handlers-voice-webhook-timing-cmp reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T10:11:34Z)",
       "deadline": null,
       "dependency": null,

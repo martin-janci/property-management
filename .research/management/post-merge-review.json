@@ -1,9 +1,44 @@
 {
-  "generated": "2026-08-12T20:25:05Z",
+  "generated": "2026-08-13T10:35:08Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-13T10:35:08Z",
+      "prs_scanned": 3,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2739,
+          "issue": 2752,
+          "findings": 1,
+          "specialist": "mobile-rn",
+          "note": "MeterDetailScreen 'Latest reading' date uses bare toLocaleDateString() -- missed by #2740's resolveLocale() sweep, so it follows device locale not the in-app language."
+        },
+        {
+          "pr": 2740,
+          "issue": 2753,
+          "findings": 1,
+          "specialist": "mobile-rn",
+          "note": "format.ts formatDate/formatTime/formatDateTime wrappers are tested but unused; ~10 screens duplicate toLocaleDateString(resolveLocale(), ...) inline -- consolidate onto the helpers or drop the dead exports + add a bare-toLocale* guard."
+        },
+        {
+          "pr": 2737,
+          "issue": 2754,
+          "findings": 1,
+          "specialist": "ppt-web",
+          "note": "ProtectedRoute i18n shipped with no regression test (unlike sibling #2736/#2739) and two unguarded keys (common.loading, errors.unauthorized) vs defaultValue-guarded new keys -- add lockstep test + parity guard."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d DEMAND-DRIVEN vector generation (claim buffer starved: honest claimable < floor). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool unavailable so PRs reviewed inline (no spawned per-PR subagents). Window merged-to-dev 14d (>=2026-07-30), base=dev, max_prs=15. No NET-NEW never-seen PRs exist since the prior run (2026-08-12T20:25Z reviewed through #2742, the newest in-window merge; nothing merged 2026-08-13). Because the buffer demanded actionable work, this pass re-examined the actual merged DIFFS of three prior-run 'clean' PRs and PROMOTED their explicitly-deferred 'considered-but-not-filed' nits into concrete, constructive follow-up issues (not fabricated -- each is a real, verifiable improvement with a file-level proposal). 3 issues opened: #2752 (PR#2739 MeterDetail 'Latest reading' bare toLocaleDateString bypasses i18n locale -- missed call site in #2740's sweep), #2753 (PR#2740 unused tested formatDate/Time/DateTime wrappers + duplicated inline resolveLocale() across ~10 screens -- consolidate or drop), #2754 (PR#2737 ProtectedRoute i18n missing the sibling-standard regression test + inconsistent defaultValue guarding on common.loading/errors.unauthorized). All 3 low-severity. Labels follow-up,from-merged-review. Every issue carries the mandated Claude Code attribution footer. Labeling PRs post-merge-reviewed via MCP still not done (no clean additive PR-label op); this JSON run-history remains the dedup record.",
+      "focus_prs": [
+        2737,
+        2739,
+        2740
+      ]
+    },
     {
       "run_at": "2026-08-12T20:25:05Z",
       "prs_scanned": 7,
@@ -633,28 +668,6 @@
           "note": "lease-import IDOR + error branches untested"
         }
       ]
-    },
-    {
-      "run_at": "2026-07-23T18:16:57Z",
-      "prs_scanned": 15,
-      "clean": [
-        2493,
-        2492,
-        2488,
-        2487,
-        2481,
-        2480,
-        2479,
-        2477,
-        2476,
-        2475,
-        2474,
-        2473,
-        2472,
-        2471,
-        2470
-      ],
-      "with_issues": []
     }
   ]
 }
