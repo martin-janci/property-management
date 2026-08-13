@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-13T06:48:48Z",
+  "generated": "2026-08-13T08:37:38Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -50,23 +50,23 @@
     {
       "task_id": "closed-not-merged-pr-2705",
       "branch": "auto-impl/closed-not-merged-pr-2705-edf1feff",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-13T06:48:48Z",
-      "status_changed_at": "2026-08-13T04:42:22Z",
+      "last_updated": "2026-08-13T08:36:33Z",
+      "status_changed_at": "2026-08-13T08:36:33Z",
       "pr_number": 2745,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2745",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2745 done: root-cause Rust 1.100.0 nonexistent(404) — repinned all toolchain refs to real 1.97.1 + rustfmt-1.97 reformat of organizations/mod.rs; local verify blocked only by utoipa-swagger-ui egress, CI is gate; scope_drift=rust-toolchain.toml+organizations/mod.rs(justified) [fix-round1: removed redundant & in writeln! args (clippy useless_borrows_in_formatting under 1.97.1) accounting.rs:598,694 → head ae0d275; awaiting CI re-run]",
       "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "last_reviewed_oid": "ae0d275713a0e5aa4fcb4631b3004f31c9ff212b",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {
