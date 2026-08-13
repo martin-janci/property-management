@@ -1,0 +1,40 @@
+{
+  "generated": "2026-08-13T00:00:00Z",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "Churn-aligned pick api-handlers (all Aug-13 hotspots: marketplace/community/disputes) proved a dead end for fresh findings — that segment is at hardened steady-state (RLS tenant scoping via rls.tenant_id(), per-route require_capability layers on platform_admin, and recent IDOR fixes on marketplace #2747 / community / disputes; only production unwrap is an OS-rng expect). Pivoted to reality-server (tied-oldest cursor @ 2026-08-10, non-mobile-native). A prior same-day reality-server pass exists (2026-08-13-reality-server-tier1d.json, main.rs:453 alert-drainer stub) — these findings are new and non-duplicate.",
+  "experts_used": ["rust", "security"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-imports-feed-url-ssrf",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:339 create_feed / :399 update_feed / :436 sync_feed persist and later trigger a fetch of a caller-supplied feed_url (models::reality_portal::CreateFeedSubscription.feed_url / UpdateFeedSubscription.feed_url) with NO validate_fetch_url() SSRF guard and no scheme/length check — a portal agency user can register feed_url=http://169.254.169.254/... or http://localhost:.../ and have the import/sync worker fetch it (SSRF against cloud metadata / internal services).",
+        "SSRF-inconsistency: the sibling import surface backend/servers/reality-server/src/routes/agency_imports.rs:238 (test_connection) and :290 (run_import) explicitly call crate::util::url_validator::validate_fetch_url(url) on feed_url at submission time with a 'SECURITY (H3, round-9 audit): reject SSRF-prone feed URLs at submission time' comment. validate_fetch_url is used ONLY in agency_imports.rs — imports.rs never references it, so the /api/v1/imports/feeds{,/{id},/{id}/sync} routes are an unhardened parallel of the same feature.",
+        "Fix: in create_feed and update_feed, call validate_fetch_url(&feed_url) (the shared guard in util/url_validator.rs) before persisting, mirroring agency_imports.rs; reject on Err with 400. Belt-and-suspenders: also re-validate at fetch time in the sync worker to defend against DNS-rebind / TOCTOU."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validators",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/reports.rs:35 fn validate_image_or_link_url and backend/servers/reality-server/src/routes/agency_branding.rs:28 fn validate_image_or_link_url are byte-for-byte-duplicated local scheme-only URL validators (http/https, MAX_URL_LEN 2048), each carrying an explicit TODO ('once the auth-hardening branch lands a shared url_validator module this should be swapped for the import' / 'Inlined locally until the auth-hardening branch lands a shared validator').",
+        "The shared module util/url_validator.rs now exists (validate_fetch_url). Consolidating the render-URL scheme check into a shared helper there (e.g. validate_display_url) removes the drift risk that just materialized as the imports.rs SSRF gap — a fetch path that reused no validator at all. Note the two locals are render-only (XSS scheme guard) and must stay distinct from the SSRF fetch guard; expose both from the shared module so call sites pick the right one deliberately.",
+        "Fix: move validate_image_or_link_url into util/url_validator.rs as a shared render-URL validator and have reports.rs + agency_branding.rs import it, deleting the two local copies and their TODOs."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "note": "api-handlers (churn-aligned) is a hardened dead end this cycle — pivoted to reality-server. 2 findings: (1) HIGH SSRF — the /api/v1/imports/feeds create/update/sync path stores & worker-fetches an unvalidated feed_url while its sibling agency_imports.rs SSRF-validates the identical field; (2) LOW — two duplicated local scheme-only URL validators (reports.rs, agency_branding.rs) with standing TODOs to adopt the now-existing shared util/url_validator. reality-server production unwrap/expect audit was clean (inquiries/mod.rs:266 chars().next().unwrap() is guarded by a preceding is_empty() check; extractors/auth.rs:63 strip_prefix().unwrap() is guarded by a preceding starts_with(); users/mod.rs & sso.rs expects are OS-rng-failure panics). Both api-handlers and the ai/ + platform_admin/ subtrees are tenant/capability-scoped and yielded nothing fresh."
+}

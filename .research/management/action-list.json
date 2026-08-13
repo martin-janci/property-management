@@ -107,60 +107,18 @@
       }
     },
     {
-      "id": "gap-uc-33-2-link-dispute-screen-map-retry2",
-      "action": "[BAD-PREMISE: UC-33.2 is Tenant Screening not disputes] Link UC-33.2 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter [retry 2/2 of failed gap-uc-33-2-link-dispute-screen-map]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T18:29:31Z (retry_of=gap-uc-33-2-link-dispute-screen-map reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T18:13:18Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T18:29:31Z",
-      "retry_of": "gap-uc-33-2-link-dispute-screen-map",
-      "retry_round": 2
-    },
-    {
-      "id": "pm-scrum-master-review-accounting-mvp-trio-retry2",
-      "action": "Review + shepherd merge of the accounting MVP-loop trio (PRs #2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — draft-ready since 2026-07-28 with no reviewer engagement [retry 2/2 of failed pm-scrum-master-review-accounting-mvp-trio]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T18:29:31Z (retry_of=pm-scrum-master-review-accounting-mvp-trio reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T18:13:18Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T18:29:31Z",
-      "retry_of": "pm-scrum-master-review-accounting-mvp-trio",
-      "retry_round": 2
-    },
-    {
-      "id": "code-review-ppt-web-core-ws-ungated-console-retry2",
-      "action": "10 ungated console.warn/error in ppt-web websocket.ts leak diagnostics in prod [retry 2/2 of failed code-review-ppt-web-core-ws-ungated-console]",
-      "owner_role": "pm-tech-lead",
+      "id": "code-review-reality-server-sso-backslash-redirect-retry1",
+      "action": "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash fo [retry 1/2 of failed code-review-reality-server-sso-backslash-redirect]",
+      "owner_role": "pm-security",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T18:29:31Z (retry_of=code-review-ppt-web-core-ws-ungated-console reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T18:18:39Z)",
+      "source": "dispatcher-retry-remint 2026-08-13T20:27:23Z (retry_of=code-review-reality-server-sso-backslash-redirect reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T20:06:36Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-13T18:29:31Z",
-      "retry_of": "code-review-ppt-web-core-ws-ungated-console",
-      "retry_round": 2
-    },
-    {
-      "id": "gap-uc-33-1-link-dispute-screen-map-retry2",
-      "action": "Link UC-33.1 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter [retry 2/2 of failed gap-uc-33-1-link-dispute-screen-map]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-13T18:29:31Z (retry_of=gap-uc-33-1-link-dispute-screen-map reason=failed-no-pr cooldown_ok newest_failure=2026-08-06T18:18:39Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T18:29:31Z",
-      "retry_of": "gap-uc-33-1-link-dispute-screen-map",
-      "retry_round": 2
+      "first_open_at": "2026-08-13T20:27:23Z",
+      "retry_of": "code-review-reality-server-sso-backslash-redirect",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
