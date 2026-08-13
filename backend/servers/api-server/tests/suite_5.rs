@@ -41,6 +41,8 @@ mod listings_core_backfill_batch3_tests;
 mod listings_global_publish_authz_tests;
 #[path = "suites/market_pricing_happy_path_tests.rs"]
 mod market_pricing_happy_path_tests;
+#[path = "suites/marketplace_award_quote_idor_tests.rs"]
+mod marketplace_award_quote_idor_tests;
 #[path = "suites/marketplace_ecosystem_backfill_batch3_tests.rs"]
 mod marketplace_ecosystem_backfill_batch3_tests;
 #[path = "suites/marketplace_lifecycle_backfill_batch2_tests.rs"]
