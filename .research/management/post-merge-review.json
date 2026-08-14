@@ -1,9 +1,43 @@
 {
-  "generated": "2026-08-13T10:35:08Z",
+  "generated": "2026-08-14T12:32:06Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-14T12:32:06Z",
+      "prs_scanned": 8,
+      "clean": [
+        2758,
+        2757,
+        2756,
+        2748,
+        2747,
+        2746,
+        2745
+      ],
+      "with_issues": [
+        {
+          "pr": 2755,
+          "issue": 2759,
+          "findings": 2,
+          "specialist": "mobile-rn",
+          "note": "issue #2753 consolidation shipped INCOMPLETE: #2755 migrated only the ~9 screens already on resolveLocale(); a dozen+ call sites still use bare toLocaleDateString()/toLocaleString()/(undefined,...) (device locale, the #2752 bug class) across FaultCard, MetersScreen, NewsScreen, LeaseSignatureScreen, Leases/LeaseDetail (3 sites), FormsScreen, DocumentPreview/Detail/ShareSheet/Permissions, VoteDetail. The mandated bare-toLocale* guard was never added, so the class recurs. Also 4 screens bypass helpers via inline (i18n.language,...) and MeterDetail (#2756) bypasses via inline resolveLocale()."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1 NET-NEW review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI unavailable -> GitHub MCP for all GH I/O; Task tool unavailable so 8 PRs reviewed inline (no spawned per-PR subagents). Window merged-to-dev 14d (>=2026-07-31), base=dev, max_prs=15. 8 genuinely never-seen merges since prior run (through #2742): 2745,2746,2747,2748,2755,2756,2757,2758 -- dependabot 2675/2674/2581 skipped (still open, no merged_at). 7 clean, all high quality with strong IG3 regression tests: #2758 (SSO backslash /\\evil.com open-redirect fail-closed +test), #2748 (Alexa /verify fail-closed -- old code accepted any non-empty sig as valid, +regression test), #2747 (marketplace award-quote cross-RFQ/cross-tenant IDOR -- handler check + repo defense-in-depth + 3 HTTP-layer tests), #2746 (SSRF redirect policy extracted to testable redirect_hop_allowed + hermetic tests), #2745 (rust-toolchain 1.94.1->1.97.1 across all 9 CI refs + toolchain.toml + newer-clippy needless-borrow fixes + rustfmt import reorder), #2756 (MeterDetail reading dates via resolveLocale() + de-locale regression test -- issue #2752), #2757 (ProtectedRoute defaultValue-guard parity + lockstep bundle test -- issue #2754). 1 issue opened: #2759 against #2755 (incomplete i18n date consolidation + missing bare-toLocale* guard, medium). Labels follow-up,from-merged-review. PR-label post-merge-reviewed still not applied via MCP (no clean additive PR-label op); this JSON run-history is the dedup record.",
+      "focus_prs": [
+        2745,
+        2746,
+        2747,
+        2748,
+        2755,
+        2756,
+        2757,
+        2758
+      ]
+    },
     {
       "run_at": "2026-08-13T10:35:08Z",
       "prs_scanned": 3,
@@ -589,83 +623,6 @@
           "findings": 1,
           "specialist": "pm-backend",
           "note": "S3 direct-upload orphan mitigation only documented in a comment, not implemented/tracked"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-07-24T12:18:05Z",
-      "prs_scanned": 15,
-      "clean": [
-        2517,
-        2490,
-        2497,
-        2519,
-        2501,
-        2520
-      ],
-      "with_issues": [
-        {
-          "pr": 2499,
-          "issue": 2528,
-          "findings": 3,
-          "specialist": "pm-security",
-          "note": "booking webhook unhardened + airbnb replay parity"
-        },
-        {
-          "pr": 2498,
-          "issue": 2529,
-          "findings": 3,
-          "specialist": "pm-security",
-          "note": "join/leave_group cross-tenant IDOR gap"
-        },
-        {
-          "pr": 2515,
-          "issue": 2530,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "signup funnel only tour leg instrumented"
-        },
-        {
-          "pr": 2512,
-          "issue": 2531,
-          "findings": 3,
-          "specialist": "pm-backend",
-          "note": "retention prune defined but never scheduled"
-        },
-        {
-          "pr": 2494,
-          "issue": 2532,
-          "findings": 2,
-          "specialist": "pm-backend",
-          "note": "layout events spec-only, no producers"
-        },
-        {
-          "pr": 2495,
-          "issue": 2533,
-          "findings": 2,
-          "specialist": "pm-backend",
-          "note": "dispute KPIs no backing SQL; LIKE-parsed transitions"
-        },
-        {
-          "pr": 2500,
-          "issue": 2534,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "orphaned S3 object on failed direct upload"
-        },
-        {
-          "pr": 2496,
-          "issue": 2536,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "extractEpics reads nonexistent catalog"
-        },
-        {
-          "pr": 2440,
-          "issue": 2537,
-          "findings": 2,
-          "specialist": "pm-qa",
-          "note": "lease-import IDOR + error branches untested"
         }
       ]
     }
