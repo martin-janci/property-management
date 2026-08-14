@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-14T14:42:55Z",
+  "generated": "2026-08-14T14:47:31Z",
   "assignments": [
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -72,18 +72,18 @@
     {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts-retry1",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-2bb84078",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-14T14:31:54Z",
-      "last_updated": "2026-08-14T14:31:54Z",
-      "status_changed_at": "2026-08-14T14:31:54Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-14T14:47:31Z",
+      "status_changed_at": "2026-08-14T14:47:31Z",
+      "pr_number": 2760,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2760",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2760 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=disconnect() now detaches socket handlers (shared detachAndCloseSocket); 2 red-on-main regression tests added; VERIFY OK, 2207 tests pass",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
