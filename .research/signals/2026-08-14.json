@@ -1,0 +1,306 @@
+{
+  "run_type": "buffer-refill",
+  "trigger": "external-fire: buffer-starved (claimable=0/72, all scored backlog mobile-native/cloud-ungated); 6+ landable backend findings unscored in .research/signals/",
+  "note": "Targeted signal-scoring pass — no PR/issue/commit-cursor advance, no Phase 1/1.5/1.6 walk. Full daily routine still owed; next full run should treat this as a partial state.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-13-reality-server-tier1d.json",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=3, vector=bug, confidence=high)"
+    },
+    {
+      "id": "code-review-reality-server-imports-feed-url-ssrf",
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "source": "rotating-expert-review",
+      "source_file": ".research/signals/2026-08-13-reality-server-tier1d-2.json",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=3, vector=security, confidence=medium) — vector escalated from candidate_vector=bug to security because the defect IS SSRF (unvalidated feed_url reaching worker fetch)"
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-13-reality-server-tier1d.json",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug, confidence=high)"
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validators",
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "source": "rotating-expert-review",
+      "source_file": ".research/signals/2026-08-13-reality-server-tier1d-2.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "action": "backlog append (open, score=1, vector=refactor)"
+    },
+    {
+      "id": "code-review-api-handlers-financial-f64-money",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-14-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug)"
+    },
+    {
+      "id": "code-review-api-handlers-ai-pagination-no-cap",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-14-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug) — merged with older duplicate signal id code-review-api-handlers-ai-list-unclamped-limit (same defect, different file); older id added to sources array on the same row; older id also seen-signals-marked so it does not re-score."
+    },
+    {
+      "id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "rotating-expert-review",
+      "source_file": ".research/signals/2026-08-13-api-handlers-tier1d.json",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "MERGED into code-review-api-handlers-ai-pagination-no-cap (same defect: unclamped AI list ?limit → SQL LIMIT). score_delta suppressed on the merge to avoid double-counting per G4."
+    },
+    {
+      "id": "code-review-api-handlers-marketplace-limit-no-cap",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-14-api-handlers-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug)"
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "rotating-expert-review",
+      "source_file": ".research/signals/2026-08-13-api-handlers-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=1, vector=bug)"
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "rotating-expert-review",
+      "source_file": ".research/signals/2026-08-13-api-handlers-tier1d-2.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog NORMALIZE — item was already present in backlog.json as a bare signal shape (no title/vector/score/status/files); replaced with proper backlog schema (open, score=2, vector=security — escalated from bug because the endpoint is public-unauthenticated and the defect is a bruteforce gap on a password verify)"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "source": "rotating-expert-review",
+      "source_file": ".research/signals/2026-08-13-api-handlers-tier1d-2.json",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "DEFERRED — normalization skipped this run because the pre-existing bare-signal evidence text contains a private hostname reference (per-deployment nginx wildcard subdomain). The G9 grep as-written matches removal AND context lines, so rewriting that item without dropping the middle bullet lands the hostname string in the diff regardless. Left as bare-signal for a future run to normalize with sanitized evidence text; NOT added to state.seen_signals so a future run can process it fresh."
+    },
+    {
+      "id": "code-review-api-core-oauth-refresh-race-drops-revoke-guard",
+      "type": "code-review-finding",
+      "segment": "api-core",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-13-api-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug)"
+    },
+    {
+      "id": "code-review-api-core-oauth-refresh-revoke-before-issue-lockout",
+      "type": "code-review-finding",
+      "segment": "api-core",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-13-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=1, vector=bug)"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+      "type": "code-review-finding",
+      "segment": "ppt-web-core",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-14-ppt-web-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug)"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-actions",
+      "type": "code-review-finding",
+      "segment": "ppt-web-core",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-14-ppt-web-core-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=2, vector=bug)"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-toast-i18n",
+      "type": "code-review-finding",
+      "segment": "ppt-web-core",
+      "source": "tier1d-dispatcher-generator",
+      "source_file": ".research/signals/2026-08-14-ppt-web-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "action": "backlog append (open, score=1, vector=bug)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "not-a-full-run: buffer-refill only",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-14.md && head -1 == '# 2026-08-14'",
+      "observed": "brief exists with correct H1",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "seen_signals length changed vs HEAD",
+      "observed": "seen_signals +15 (384 -> 399)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)' .research/backlog.json",
+      "observed": "true (all ids unique)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "each new signal id not in prior seen_signals; merged id has score_delta==0",
+      "observed": "15 signal ids appended to seen_signals; ai-list-unclamped-limit merged with score_delta=0 (no double-count); share-log-proxy-ip DEFERRED — NOT added to seen_signals (see its action note)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap: no item.score > 8; decay: no open item is >14d old with no decay applied",
+      "observed": "max score = 6 (unchanged); 3 pre-existing open items all <14d old; no decay owed",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass required only for new plans; no new plans this run",
+      "observed": "no plans/*.md added",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; each has all metadata + headings; capability box ticked; files-on-disk",
+      "observed": "0 new plans (buffer-refill run; promotion left to next full routine run)",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "only .research/ paths staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff (baseline docs exempt)",
+      "observed": "no leaks (only signals/backlog/state/brief text added)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md into /tmp; diff -q against staged",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty: brief lists any failed phases; cursors not advanced",
+      "observed": "no phase failures this run; last_pr_seen / last_issue_seen / last_commit_sha unchanged (observation phase skipped)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still in plans/ or plans/_archive/",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive count this run >= count at HEAD",
+      "observed": "unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md; diff -q against staged",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline: <=1 pr, <=1 issue, <=1 comment, respect kill switch, idempotency",
+      "observed": "auto_fix_actions=[]; Phase 5 skipped (buffer-refill scope)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid when Phase 1.6 ran",
+      "observed": "Phase 1.6 skipped (buffer-refill scope) -- gate no-op",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "no token strings added",
+      "expected": "0"
+    }
+  ]
+}

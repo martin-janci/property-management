@@ -1,10 +1,12 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-12 22:45 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-14 08:49 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 3 | security | `code-review-reality-server-imports-feed-url-ssrf` | reality-server /api/v1/imports/feeds create/update/sync accept unvalidated feed_url — SSRF (cloud me | open | 2026-08-14 |  |
+| 3 | bug | `code-review-reality-server-sso-introspect-negcache-poison` | reality-server SSO: introspect_pm_token() poisons 60s neg-cache on transient PM 5xx/429/network — sp | open | 2026-08-14 |  |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
 | 3 | bug | `gh-issue-2699-migration-collision` | dev CI broken: duplicate SQLx migration 00220 — renumber portal_get_listing_view_count to 00227 | done | 2026-08-07 | [plan](plans/_archive/gh-issue-2699-migration-collision.md) |
@@ -33,6 +35,14 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-api-core-oauth-refresh-race-drops-revoke-guard` | api-server oauth.rs refresh_tokens TOCTOU: read-then-revoke ignores atomic revoke_refresh_token bool | open | 2026-08-14 |  |
+| 2 | bug | `code-review-api-handlers-ai-pagination-no-cap` | api-server AI list endpoints (sessions/equipment/voice/llm) bind caller-supplied ?limit unclamped in | open | 2026-08-14 |  |
+| 2 | bug | `code-review-api-handlers-financial-f64-money` | api-server financial.rs report renderers round-trip Decimal money through f64 and silently write 0.0 | open | 2026-08-14 |  |
+| 2 | bug | `code-review-api-handlers-marketplace-limit-no-cap` | api-server marketplace search/verification-queue/reviews format+bind ?limit unclamped into SQL — pub | open | 2026-08-14 |  |
+| 2 | security | `code-review-api-handlers-share-pw-no-throttle` | api-server public document-share access_protected_share verifies caller password with zero brute-for | open | 2026-08-14 |  |
+| 2 | bug | `code-review-ppt-web-core-rentals-mutation-swallow-err` | ppt-web routes/groups/rentals.tsx: all four mutations swallow non-auth errors — failed check-in/chec | open | 2026-08-14 |  |
+| 2 | bug | `code-review-ppt-web-core-rentals-noop-actions` | ppt-web routes/groups/rentals.tsx: BookingsPageRoute / PlatformConnections / BookingDetail list-leve | open | 2026-08-14 |  |
+| 2 | bug | `code-review-reality-server-sso-reqwest-no-timeout` | reality-server SSO: exchange_code_for_token / get_user_info / introspect_pm_token build unpooled unt | open | 2026-08-14 |  |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
 | 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
 | 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
@@ -132,10 +142,14 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | open | 2026-08-12 |  |
-| 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | open | 2026-08-12 |  |
-| 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | open | 2026-08-12 |  |
-| 1 | dx | `closed-not-merged-pr-2705` | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry clo | open | 2026-08-12 |  |
+| 1 | bug | `code-review-api-core-oauth-refresh-revoke-before-issue-lockout` | api-server oauth.rs refresh_tokens revokes BEFORE issuing replacement without a transaction — mid-fl | open | 2026-08-14 |  |
+| 1 | bug | `code-review-api-handlers-auth-inactive-revoke-swallowed` | api-server auth/mod.rs refresh path: revoke of a deactivated user's refresh token is `let _ = ...` — | open | 2026-08-14 |  |
+| 1 | bug | `code-review-ppt-web-core-person-months-toast-i18n` | ppt-web routes/groups/person-months.tsx save success/error toasts use raw English literals (not t()) | open | 2026-08-14 |  |
+| 1 | refactor | `code-review-reality-server-dup-url-validators` | reality-server: reports.rs and agency_branding.rs each carry a byte-duplicated local validate_image_ | open | 2026-08-14 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | done | 2026-08-12 |  |
+| 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | done | 2026-08-12 |  |
+| 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | done | 2026-08-12 |  |
+| 1 | dx | `closed-not-merged-pr-2705` | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry clo | done | 2026-08-12 |  |
 | 1 | bug | `code-review-mobile-rn-date-locale-en-us` | mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dat | done | 2026-08-12 |  |
 | 1 | bug | `code-review-mobile-rn-meterdetail-i18n` | mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling  | done | 2026-08-12 |  |
 | 1 | refactor | `code-review-ppt-web-ui-offline-ind-i18n` | ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n | done | 2026-08-12 |  |
@@ -316,6 +330,7 @@
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
+| 0 |  | `code-review-api-handlers-share-log-proxy-ip` |  |  |  |  |
 | 0 |  | `code-review-reality-web-agency-errorstate-i18n` |  |  |  |  |
 | 0 |  | `code-review-reality-web-comparison-view-i18n` |  |  |  |  |
 | 0 |  | `code-review-reality-web-realtor-mgmt-i18n` |  |  |  |  |
