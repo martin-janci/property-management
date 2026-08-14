@@ -1,0 +1,227 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2746",
+      "score_delta": 1,
+      "evidence": "api_call.rs: +96/-10 in PR #2746 (SSRF redirect policy extracted + unit-tested)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2748",
+      "score_delta": 1,
+      "evidence": "voice_webhooks.rs: +59/-13 in PR #2748 (Alexa /verify branch fails closed)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2758",
+      "score_delta": 1,
+      "evidence": "sso.rs: +30/-3 in PR #2758 (backslash-obfuscated open-redirect fail-closed)",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "stalled-review-pr-2673",
+      "type": "stalled-review",
+      "source": "PR #2673",
+      "score_delta": 1,
+      "evidence": "PR #2673 (chore(deps): bump the ktor group) open 8d, no reviewDecision, dependabot",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch bump (open, 28 updates)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "evidence": "dependabot cargo-minor-patch bump (open, 6 updates)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "evidence": "dependabot gradle-minor-patch bump (open, 5 updates)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "evidence": "dependabot npm bump closed unmerged (superseded by #2751)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "evidence": "dependabot cargo bump closed unmerged (superseded by #2750)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "evidence": "dependabot gradle bump closed unmerged (superseded by #2749)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2758",
+      "score_delta": 0,
+      "evidence": "sso.rs: +30/-3 in PR #2758 (backslash-obfuscated open-redirect fail-closed); re-emit \u2014 cumulative type, score_delta not re-applied",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "cumulative_reemit": true
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md and head -1 grep",
+      "observed": "will be written by phase 4",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced",
+      "observed": "cursors advanced + seen_signals grew",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "unique (verified during Phase 2)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scoring",
+      "observed": "cumulative sso re-emit had score_delta=0; no non-cum dup",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no scores > 8; no open items eligible for decay this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "0 new plans this run (vacuously true)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans, all sections",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "will verify at Phase 6",
+      "expected": "0 non-.research paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames grep",
+      "observed": "will verify at Phase 6",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "regen script produced current file",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans converge (no thrashing)",
+      "observed": "no plan deletions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "no archive changes this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "triage matches regen",
+      "observed": "regen script produced current file",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "Phase 5 candidate check \u2014 see auto_fix_actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor liveness",
+      "observed": "pm_cursor 3\u21924 advanced, coverage_cursor 5\u21926 advanced (GC7 pass)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "will verify at Phase 6",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "run_iso": "2026-08-14T03:17:45Z"
+}

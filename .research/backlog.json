@@ -7866,6 +7866,64 @@
         "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
       ],
       "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "title": "api_call.rs: +96/-10 in PR #2746 (SSRF redirect policy extracted + unit-tested)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2746"
+      ],
+      "evidence": [
+        "api_call.rs: +96/-10 in PR #2746 (SSRF redirect policy extracted + unit-tested)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-14",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "title": "voice_webhooks.rs: +59/-13 in PR #2748 (Alexa /verify branch fails closed)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2748"
+      ],
+      "evidence": [
+        "voice_webhooks.rs: +59/-13 in PR #2748 (Alexa /verify branch fails closed)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-14",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2673",
+      "title": "PR #2673 (chore(deps): bump the ktor group) open 8d, no reviewDecision, dependabot",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2673"
+      ],
+      "evidence": [
+        "PR #2673 (chore(deps): bump the ktor group) open 8d, no reviewDecision, dependabot"
+      ],
+      "files": [],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-14",
+      "plan": null
     }
   ]
 }
