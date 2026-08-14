@@ -1,0 +1,175 @@
+{
+  "generated": "2026-08-14T06:00:00Z",
+  "run_type": "targeted-backlog-refill",
+  "trigger_payload": "buffer-low: claimable=4/72 (all mobile-native-gated). Real work stuck: 5 unscored rows in backlog.json (status=null/score=null). Please score/plan these so backlog-refill can promote them.",
+  "notes": [
+    "Scoped run: fixed shape of 5 backlog rows that had been dumped as raw signal objects (type/source/segment/score_delta/candidate_vector/expert/evidence) instead of canonical backlog rows (title/vector/score/status/sources/files/created_at/updated_at/plan). No Phase 1.5/1.6 subagent invocations. Phase 1 minimal: fetched merged-PR window since #2742 via MCP + git rev-parse origin/dev.",
+    "share-pw-no-throttle confidence upgraded medium -> high after in-run verification: read shares.rs:570-640, confirmed no throttle machinery in routes/documents/ subtree (grep 0 hits), confirmed rate_limit_allowed helper exists in routes/rate_limit.rs and is used by 3 auth callers. Qualifies for security fast-track (vector=security AND confidence=high AND score>=2)."
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:574 — access_protected_share (public router, POST /api/v1/documents/shared/{token}/access) verifies caller-supplied share password (verify_share_password_for_share at :618) with NO brute-force protection",
+        "Grep rate|throttle|attempt|lockout across routes/documents/ returns 0 hits — subtree has no throttle machinery",
+        "Handler docstring at :582 explicitly states 'This public endpoint has no caller org context' — tenant-keyed limiter (host_tenant_middleware) cannot cover this surface",
+        "Helper rate_limit_allowed already exists at routes/rate_limit.rs:43 and is used by routes/auth (email-keyed) + routes/mfa (uuid-keyed) — drop-in third caller"
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 — both public share handlers derive audit ip_address from axum ConnectInfo<SocketAddr> and persist via log_share_access_for_share",
+        "ConnectInfo is the direct TCP peer; api-server sits behind nginx in this deployment, so addr.ip() records the proxy for every request",
+        "Result: share-access audit log is not attacker-attributable and cannot drive IP-based abuse detection"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
+        "Hardcoded UI text at L104-107, L230, L272; hardcoded toast messages at L145, L147, L153",
+        "Fix: wrap all strings in useTranslations('comparison') and add keys to messages/{en,sk,cs,de}.json"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — component uses useTranslations elsewhere, but the destructive confirm-remove modal and header subtitle are hardcoded English",
+        "L91 subtitle 'Manage your team of real estate agents'; L962 'Are you sure?'; L964 'Yes, Remove' + adjacent 'Cancel'",
+        "Partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
+        "L126 'No Agency Found'; L127 'You are not associated with any agency.'; L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
+        "Fix: move these three strings into the agency messages namespace"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no allowlisted signal types this run — code-review-finding is not on the Phase 5 auto-fix allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$(date).md ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurp state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq intersect seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "score>8 count==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new-plan count",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-research files",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep added-lines for secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff regen backlog.md",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count",
+      "observed": "staged=8 head=8",
+      "expected": "staged>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff regen ideas-triage",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram tokens",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

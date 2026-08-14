@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-12T22:45:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2742,
+  "last_run_iso": "2026-08-14T06:00:00Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 2758,
   "last_issue_seen": 2704,
-  "last_commit_sha": "a92c652719576eefa949775d5e56f707a82f4e07",
+  "last_commit_sha": "1d898bcd1409c49bfb26b1264b1e2065530eb8dd",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -837,7 +837,12 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-api-handlers-share-pw-no-throttle",
+    "code-review-api-handlers-share-log-proxy-ip",
+    "code-review-reality-web-comparison-view-i18n",
+    "code-review-reality-web-realtor-mgmt-i18n",
+    "code-review-reality-web-agency-errorstate-i18n"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -851,9 +856,9 @@
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 63,
-    "vectors_created": 291,
-    "plans_created": 22,
+    "runs": 64,
+    "vectors_created": 296,
+    "plans_created": 23,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
