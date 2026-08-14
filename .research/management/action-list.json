@@ -105,40 +105,6 @@
           "dispatcher"
         ]
       }
-    },
-    {
-      "id": "gh-issue-2759",
-      "action": "Follow-up: mobile date consolidation is incomplete — a dozen+ screens still render device-locale dates + no bare-toLocale* guard (PR #2755) (Closes #2759)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-14T14:28:45Z (#2759)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-14T14:28:45Z",
-      "issue_ref": {
-        "number": 2759,
-        "url": "https://github.com/martin-janci/property-management/issues/2759",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts-retry1",
-      "action": "Churn hotspot: frontend/apps/ppt-web/src/lib/websocket.ts (+11/-94 heartbeat removal PR #2689) [retry 1/2 of failed churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-14T14:30:00Z (retry_of=churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts reason=failed-no-pr cooldown_ok newest_failure=2026-08-07T12:30:18Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-14T14:30:00Z",
-      "retry_of": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts",
-      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

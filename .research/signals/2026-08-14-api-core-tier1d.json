@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-api-core-accounting-cross-currency-match",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/accounting.rs:129-174 (run_payment_matcher) scores a bank-statement line against each open invoice using ONLY the variable symbol (line 133-138, +0.8) and the numeric amount (line 141-146: `line.amount == remaining_amount` +0.15, or `line.amount <= remaining_amount` +0.05). It never compares currencies.",
+      "Both sides carry a currency: `BankStatementLine.currency` (set from the CSV at accounting.rs:77, model at backend/crates/db/src/models/accounting.rs) and `Invoice.currency: String` (backend/crates/db/src/models/accounting.rs:84). The matcher ignores both — `line.amount == remaining_amount` compares raw Decimals across potentially different currencies.",
+      "Reachability: a variable-symbol match alone contributes 0.8, which already clears the `confidence >= 0.5` suggest threshold (accounting.rs:150) regardless of currency. So a 1000 CZK bank line whose variable symbol collides with a 1000 EUR invoice is emitted as a Suggested PaymentMatch. On confirm_match (accounting.rs:248-254) the invoice's paid_amount is incremented by `line.amount` (the CZK figure) via update_invoice_payment_status_rls — applying a wrong-currency value to an EUR invoice balance. The manager confirming the suggestion has no currency signal that the match is invalid.",
+      "Impact: financial-data corruption / incorrect AR settlement whenever variable symbols (or equal numeric amounts) collide across currencies — the accounting subsystem is explicitly multi-currency (CZK default IBAN at accounting.rs:56, per-line currency from CSV). Landable backend-only fix: gate the whole scoring block (or at minimum the amount corroboration) on `line.currency == invoice.currency`, skipping the invoice when they differ, so no cross-currency match is ever suggested."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-accounting-confirm-no-tx",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/accounting.rs:182-257 (confirm_match) performs three separate money-mutating writes in sequence with no transaction: (1) upsert_payment_match_rls sets the match to Confirmed (line 232-235), (2) update_bank_statement_line_match_state_rls sets the line to \"matched\" (line 238-245), (3) update_invoice_payment_status_rls increments the invoice paid_amount by `line.amount` (line 248-254).",
+      "The executor is a bare pooled connection, not a transaction: routes/accounting/matches.rs:34-49 calls `confirm_match(&mut rls, ...)` where `rls: RlsConnection` — no `.begin()`/`.commit()` anywhere on this path. Each repo call therefore autocommits independently. If write (3) fails (transient DB error / RLS-excluded invoice row), writes (1) and (2) have already committed: the match reads Confirmed and the line reads \"matched\", but the invoice paid_amount was never credited — a permanently inconsistent AR state that no retry reconciles.",
+      "reject_match (accounting.rs:260-338) has the mirror-image hazard: it flips the match to Rejected (write 1, line 288-291) BEFORE unapplying the previously-credited amount via `-line.amount` (write 2, line 307-313). A failure between them leaves the match Rejected while the invoice paid_amount stays overstated (payment still counted as applied).",
+      "This is demonstrably an oversight, not a convention: the sibling multi-write handler in the SAME module family wraps its writes correctly — routes/accounting/invoices.rs:241 `let mut tx = rls.begin()...` / :269 `tx.commit()`. Landable backend-only fix: thread a single `Transaction` through confirm_match/reject_match (begin in the handler, pass `&mut *tx` to the three repo calls, commit once at the end) so the state-machine transition and the invoice balance update are atomic."
+    ],
+    "expert": "rust"
+  }
+]

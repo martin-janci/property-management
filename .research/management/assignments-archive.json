@@ -1727,6 +1727,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-ppt-web-src-lib-websocket-ts-retry1",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-2bb84078",
+      "status": "merged",
+      "claimed_at": "2026-08-14T14:31:54Z",
+      "last_updated": "2026-08-14T16:47:11Z",
+      "status_changed_at": "2026-08-14T16:47:11Z",
+      "pr_number": 2760,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2760",
+      "merged_at": "2026-08-14T16:46:27Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2760 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=disconnect() now detaches socket handlers (shared detachAndCloseSocket); 2 red-on-main regression tests added; VERIFY OK, 2207 tests pass",
+      "reviewer_summary": "verdict=approve note=clean-scoped-hardening-dedup+regression-tests; CI green at review time",
+      "last_reviewed_oid": "55969d75698d6b9d23d3e2c40488a03ed84a0bbe",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-14T16:45:28Z"
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-58eccf28",
       "status": "failed",
@@ -11755,6 +11777,28 @@
       "merge_attempted_at": "2026-08-13T14:49:15Z"
     },
     {
+      "task_id": "gh-issue-2759",
+      "branch": "auto-impl/gh-issue-2759-075499ce",
+      "status": "merged",
+      "claimed_at": "2026-08-14T14:31:54Z",
+      "last_updated": "2026-08-14T16:47:11Z",
+      "status_changed_at": "2026-08-14T16:47:11Z",
+      "pr_number": 2761,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2761",
+      "merged_at": "2026-08-14T16:46:20Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2761 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=consolidated 19 mobile screens onto i18n/format helpers + added no-bare-toLocale jest guard (test-first); verify green, typecheck+648 tests pass",
+      "reviewer_summary": "verdict=approve note=mobile-date-consolidation+guard clean, signatures-match, CI-green",
+      "last_reviewed_oid": "8dbfbd2896dc0cef7db3bb74f89b65f73f23dfa8",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-14T16:45:28Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -13949,5 +13993,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-13T22:34:21Z"
+  "archived_at": "2026-08-14T16:47:41Z"
 }
