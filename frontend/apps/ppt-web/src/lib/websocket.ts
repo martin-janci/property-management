@@ -377,16 +377,20 @@ export class WebSocketService {
 
   /**
    * Disconnect from the WebSocket server.
+   *
+   * The current socket's handlers are detached before it is closed (via
+   * {@link detachAndCloseSocket}) so that the browser's asynchronous `close`
+   * event on this socket cannot fire back into the service. Without that
+   * detach, a `connect()` that races the pending close (logout->login, token
+   * rotation) would let the stale socket's `onclose` run against the live
+   * service and drive a spurious `scheduleReconnect()` — the reconnect branch
+   * runs regardless of `wasClean`, so even the clean 1000 close below would
+   * re-arm reconnection against a service the caller asked to disconnect.
    */
   disconnect(): void {
     this.shouldReconnect = false;
     this.clearReconnectTimeout();
-
-    if (this.socket) {
-      this.socket.close(1000, 'Client disconnecting');
-      this.socket = null;
-    }
-
+    this.detachAndCloseSocket('Client disconnecting');
     this.currentToken = null;
     this.setConnectionState('disconnected');
   }
@@ -397,12 +401,25 @@ export class WebSocketService {
    * Unlike {@link disconnect}, this does NOT flip `shouldReconnect` or emit a
    * `disconnected` state — it is an internal replace step used by
    * {@link connect} when re-establishing the connection (e.g. after a token
-   * rotation) or when the previous socket is already closed. The stale socket's
-   * handlers are detached first so its imminent `close` event cannot drive a
-   * spurious reconnect or state transition on the service that is about to own
-   * a fresh socket.
+   * rotation) or when the previous socket is already closed. Handler detach and
+   * close are delegated to {@link detachAndCloseSocket}.
    */
   private teardownStaleSocket(): void {
+    this.detachAndCloseSocket('Reconnecting with a new token');
+  }
+
+  /**
+   * Detach the current socket's event handlers, close it, and drop the
+   * reference. Shared by {@link disconnect} and {@link teardownStaleSocket}.
+   *
+   * Detaching the handlers first is the load-bearing step: it guarantees the
+   * socket's imminent (and, in real browsers, asynchronous) `close`/`error`
+   * events cannot drive a state transition or reconnect on a service that has
+   * already moved on to a fresh socket or been shut down. Closing an
+   * already-closed/closing socket can throw in some engines, so the `close()`
+   * call is guarded — the socket is being discarded regardless.
+   */
+  private detachAndCloseSocket(reason: string): void {
     if (!this.socket) return;
 
     const stale = this.socket;
@@ -412,7 +429,7 @@ export class WebSocketService {
     stale.onmessage = null;
 
     try {
-      stale.close(1000, 'Reconnecting with a new token');
+      stale.close(1000, reason);
     } catch {
       // Closing an already-closed/closing socket can throw in some engines;
       // the socket is being discarded regardless, so the error is irrelevant.
