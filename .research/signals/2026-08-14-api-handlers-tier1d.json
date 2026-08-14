@@ -1,0 +1,18 @@
+[
+  {
+    "id": "code-review-api-handlers-financial-f64-money",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/financial.rs:1796,1828,1894 (XLSX renderers render_income_statement_xlsx / render_balance_sheet_xlsx) and :1975,2007 (PDF renderers) all convert monetary figures through f64 with the identical pattern `line.amount.to_string().parse::<f64>().unwrap_or(0.0)` (and `line.balance...` at :1894) before writing them into the exported financial report.",
+      "The source fields are exact-precision `Decimal` (confirmed on the accounting/report models in backend/crates/db/src/models — e.g. `pub amount: Decimal`, `pub balance: Decimal`). Round-tripping a Decimal through binary f64 for an income statement / balance sheet reintroduces floating-point representation error into money values that were deliberately kept exact — the class of penny/rounding drift these Decimal columns exist to prevent, now surfacing on the customer-facing PDF/XLSX exports.",
+      "The `.unwrap_or(0.0)` fallback is a second, worse defect: if `line.amount.to_string()` ever fails to re-parse as f64, the code silently writes 0.00 into a financial statement instead of erroring. A silent wrong zero in a balance sheet is a data-integrity/correctness failure, not a cosmetic one — the export renders as authoritative with no signal that a line was dropped.",
+      "Landable (self-contained backend Rust in financial.rs report renderers, no API/schema change). Fix: format the Decimal directly for the cell (write the value as a string, or serialize via rust_decimal to a fixed 2-dp representation) instead of parsing to f64; and replace `.unwrap_or(0.0)` with propagation of the existing `Result<Vec<u8>, String>` error so an unrenderable amount fails the export rather than becoming a silent 0.00."
+    ],
+    "expert": "rust"
+  }
+]
