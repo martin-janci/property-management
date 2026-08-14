@@ -5,6 +5,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { formatDate } from '../../../i18n/format';
 import { colors } from '../../../screens/shared/screenStyles';
 
 export type FaultStatus =
@@ -91,7 +92,7 @@ export function FaultCard({ fault, onPress }: FaultCardProps) {
       </View>
 
       <Text style={styles.date}>
-        {t('faults.reported')}: {new Date(fault.createdAt).toLocaleDateString()}
+        {t('faults.reported')}: {formatDate(fault.createdAt)}
       </Text>
     </TouchableOpacity>
   );

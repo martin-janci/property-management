@@ -31,13 +31,14 @@ jest.mock('../../hooks/useApi', () => ({
 }));
 
 // Force the app locale away from the runtime default so the regression test
-// below can prove the rendered dates are formatted with `resolveLocale()`
-// rather than a bare, device-locale `toLocaleDateString()` (issue #2752).
+// below can prove the rendered dates are formatted with the shared locale-aware
+// `formatDate()` helper rather than a bare, device-locale `toLocaleDateString()`
+// (issues #2752 / #2759). The mock pins the formatting locale to 'de'.
 jest.mock('../../i18n/format', () => ({
-  resolveLocale: jest.fn(() => 'de'),
+  formatDate: jest.fn((value: string | number | Date) => new Date(value).toLocaleDateString('de')),
 }));
 
-const mockResolveLocale = jest.requireMock('../../i18n/format').resolveLocale as jest.Mock;
+const mockFormatDate = jest.requireMock('../../i18n/format').formatDate as jest.Mock;
 
 const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
 
@@ -130,12 +131,12 @@ describe('reading dates follow the in-app locale, not the device locale (#2752)'
     jest.clearAllMocks();
   });
 
-  it('formats the latest-reading and history dates via resolveLocale()', () => {
+  it('formats the latest-reading and history dates via the shared formatDate helper', () => {
     mockQuery({ data: responseWithReadings });
     render(<MeterDetailScreen meterId="m-1" onBack={() => {}} onNavigate={() => {}} />);
 
     // The screen must route every reading date through the app locale helper.
-    expect(mockResolveLocale).toHaveBeenCalled();
+    expect(mockFormatDate).toHaveBeenCalled();
 
     // With resolveLocale mocked to 'de', the newest reading (2026-03-31) and
     // the older one (2026-02-28) render in German day.month.year order — the

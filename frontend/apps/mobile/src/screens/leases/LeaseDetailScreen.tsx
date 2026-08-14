@@ -157,8 +157,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
               {lease.buildingName ? ` · ${lease.buildingName}` : ''}
             </Text>
             <Text style={s.headerSubtitle}>
-              {new Date(lease.startsAt).toLocaleDateString()} –{' '}
-              {new Date(lease.endsAt).toLocaleDateString()}
+              {formatDate(lease.startsAt)} – {formatDate(lease.endsAt)}
             </Text>
           </>
         ) : (
@@ -207,9 +206,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
                       {payment.amount} {lease.currency}
                     </Text>
                   </View>
-                  <Text style={s.cardBody}>
-                    Due {new Date(payment.dueDate).toLocaleDateString()}
-                  </Text>
+                  <Text style={s.cardBody}>Due {formatDate(payment.dueDate)}</Text>
                 </View>
               ))
             )}

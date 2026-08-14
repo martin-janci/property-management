@@ -15,6 +15,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiRequest, useApiQuery } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import { isPreviewUnsupportedError } from './DocumentPreviewScreen';
 import { DocumentShareSheet } from './DocumentShareSheet';
@@ -174,9 +175,7 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
                 {typeof document.size_bytes === 'number' && document.size_bytes > 0 && (
                   <Text style={s.cardMeta}>{formatBytes(document.size_bytes)}</Text>
                 )}
-                <Text style={s.cardMeta}>
-                  Updated {new Date(document.updated_at).toLocaleDateString()}
-                </Text>
+                <Text style={s.cardMeta}>Updated {formatDate(document.updated_at)}</Text>
               </View>
             </View>
 
@@ -186,9 +185,7 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
               <Text style={[styles.sectionLabel, { marginTop: 12 }]}>File</Text>
               <Text style={styles.sectionValue}>{document.file_name}</Text>
               <Text style={[styles.sectionLabel, { marginTop: 12 }]}>Created</Text>
-              <Text style={styles.sectionValue}>
-                {new Date(document.created_at).toLocaleDateString()}
-              </Text>
+              <Text style={styles.sectionValue}>{formatDate(document.created_at)}</Text>
             </View>
 
             <Pressable

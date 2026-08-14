@@ -13,6 +13,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -121,7 +122,7 @@ function getStatusMeta(status: DocumentStatus | undefined): StatusMeta {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
+  return formatLocaleDate(iso, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

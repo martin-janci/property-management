@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
 export type VoteStatus = 'active' | 'closed' | 'pending';
@@ -87,11 +88,7 @@ export function parseVoteSummaries(data: unknown): ApiVoteSummary[] {
  *  the rest of the UI. Exported so the formatting can be unit-tested without
  *  rendering the screen. */
 export function formatVoteDate(dateString: string, locale: string): string {
-  return new Date(dateString).toLocaleDateString(locale, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatLocaleDate(dateString, { month: 'short', day: 'numeric', year: 'numeric' }, locale);
 }
 
 /** Map the api-server's status string onto the UI's narrowed enum.

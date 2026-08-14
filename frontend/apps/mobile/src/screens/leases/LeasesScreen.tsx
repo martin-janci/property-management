@@ -14,6 +14,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery, useTenantId } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type LeaseStatus = 'active' | 'pending' | 'expired' | 'terminated';
@@ -204,8 +205,7 @@ export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
                   {lease.rentAmount} {lease.currency} / month
                 </Text>
                 <Text style={[s.cardMeta, { marginTop: 8 }]}>
-                  {new Date(lease.startsAt).toLocaleDateString()} –{' '}
-                  {new Date(lease.endsAt).toLocaleDateString()}
+                  {formatDate(lease.startsAt)} – {formatDate(lease.endsAt)}
                 </Text>
               </Pressable>
             );
