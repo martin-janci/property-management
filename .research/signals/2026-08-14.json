@@ -1,0 +1,137 @@
+{
+  "date": "2026-08-14",
+  "auto_fix_actions": [],
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-14",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "Previous last_run_iso=2026-08-12T22:45:00Z; ~43h since last run (> 36h threshold). Cloud routine cadence gap ~1.8d — surfaced under Since last run."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "follow-up-issue-2759-mobile-tolocale",
+      "type": "fixme-in-merged-code",
+      "source": "issue #2759",
+      "score_delta": 2,
+      "evidence": [
+        "issue #2759 (labels: follow-up, from-merged-review) opened 2026-08-14T12:31Z as post-merge review of PR #2755. Enumerates 12+ bare toLocale* / (undefined,…) sites in frontend/apps/mobile/src/** that PR #2755 missed; the bare-toLocale* lint guard (second half of #2753) never landed — same bug class that #2752 slipped past #2740 sweep.",
+        "Files (bare/undefined-locale): features/faults/components/FaultCard.tsx:94, screens/meters/MetersScreen.tsx:194, screens/news/NewsScreen.tsx:153, screens/leases/LeaseSignatureScreen.tsx:222/227/237, screens/leases/LeasesScreen.tsx:207/208, screens/leases/LeaseDetailScreen.tsx:160/161/211, screens/forms/FormsScreen.tsx:165, screens/documents/DocumentPreviewScreen.tsx:247/284, screens/documents/DocumentDetailScreen.tsx:178/190, screens/documents/DocumentShareSheet.tsx:65, screens/documents/DocumentPermissionsScreen.tsx:124, screens/voting/VoteDetailScreen.tsx:273 — all render in device locale, not app i18n locale, for SK/CS/DE/PL/HU users.",
+        "Recommended: Biome noRestrictedSyntax rule (or Vitest source-scan test mirroring protectedRouteI18n.test.ts) that fails on any .toLocaleDateString(/.toLocaleTimeString(/.toLocaleString( call in frontend/apps/mobile/src/** (excluding i18n/format.ts and *.test.*)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$today.md && head -1 matches # $today",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state.json advance check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique id length equal",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signals not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items >14d without decay (none qualified this run)",
+      "observed": "no candidates",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached non-.research/ paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private-hostnames in staged diff (post-redaction)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "diff -q clean",
+      "expected": "diff -q clean"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "staged == HEAD",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "diff -q clean",
+      "expected": "diff -q clean"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; no PR/issue/comment opened",
+      "observed": "no candidate",
+      "expected": "cap respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op-when-skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
