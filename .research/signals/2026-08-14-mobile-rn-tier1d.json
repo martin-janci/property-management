@@ -1,0 +1,55 @@
+{
+  "generated": "2026-08-14T22:30:00Z",
+  "segment": "mobile-rn",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Demand-driven Tier-1d STATIC review (landable backlog starved: honest claimable=0; all remaining open items are mobile-native/KMP, structurally unlandable in this cloud runner). No CHURN_FILES passed. By review_cursor ascending the candidates are: api-handlers (08-10) — already reviewed today (2026-08-14-api-handlers-tier1d.json exists); mobile-native-kmp (08-11) — HARD-EXCLUDED (KMP/AGP egress-blocked + unlandable in cloud runner); api-core & reality-server (08-13) already reviewed today; ppt-web-core / ppt-web-ui / reality-web / mobile-rn all at cursor 08-12. Of those four co-oldest, ppt-web-core, ppt-web-ui and reality-web already have 2026-08-14-*-tier1d.json files this run; mobile-rn is the only cloud-verifiable (React Native TypeScript, part of the pnpm workspace, statically analyzable + landable) segment not yet reviewed today. Saturation check clean: 0 open code-review-findings for mobile-rn in backlog.json. Path root resolved to frontend/apps/mobile/src (SKILL table lists frontend/mobile/src, stale — actual app lives at frontend/apps/mobile). Experts: Frontend (primary) + Tester (secondary, per SKILL Step 2 mobile-rn row). Static analysis only: no compile, no tests run. Cap 3 findings, highest severity kept.",
+  "experts_used": ["frontend", "tester"],
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-useapi-401-no-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:83-92 — the central online client `apiRequest()` throws a bare `new Error(\\`HTTP ${response.status}\\`)` on any non-ok response and has NO 401 -> refresh -> retry interception. `useApiQuery` (107-117) and `useApiMutation` (142-155) both flow through it, so when the access token expires while the app is foregrounded, every query/mutation fails with `HTTP 401` even though a valid refresh_token sits in SecureStore unused.",
+        "There is no global recovery either: frontend/apps/mobile/src/App.tsx:47-55 configures the QueryClient with only `staleTime`/`gcTime`/`retry: 3` and no `QueryCache`/`MutationCache` `onError`, and grep for `refreshToken()` / `refreshAccessToken` inside hooks/useApi.ts returns nothing. `retry: 3` actually makes it worse — a 401 is re-sent 3 times with the same expired bearer before surfacing.",
+        "The app already knows how to do this on the OTHER path: frontend/apps/mobile/src/hooks/useOfflineSupport.ts:34 lists 401 in `RETRYABLE_HTTP_STATUSES` and comments (lines 20, 281-285) that a 401 replay 'replays with a refreshed token'. AuthContext.refreshToken() (contexts/AuthContext.tsx:174-211) exists but is only invoked at session restore (jwt staleness) and after biometric re-auth (275, 326) — never reactively from the online request path and with no AppState/interval proactive timer. Effect: a session left open past the (short, per docs/api) access-token TTL degrades into wall-to-wall error banners until the user backgrounds/relaunches or re-logs-in. Fix: wrap apiRequest so a 401 triggers a single-flight refresh + one retry (and exclude non-retryable 4xx from `retry: 3`)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/ — the NFC access-credential subsystem has ZERO test coverage: `find frontend/apps/mobile -name '*.test.*' | grep -i nfc` returns nothing, while ~48 other feature/screen modules ship co-located tests (AnnouncementsScreen, VotingScreen, useOfflineSupport, jwt, deepLinkRouting, etc.).",
+        "The untested code is security-sensitive and does non-trivial persistence/branching: NFCCredentialManager.ts handles physical building-access credentials — loadStoredCredentials() (262-290) parses SecureStore JSON, discards-on-corruption, and runs a one-time AsyncStorage->SecureStore legacy migration (278-289); storeCredentials() (292-294) serializes the whole credential list into a single SecureStore value; usageCount is bumped + persisted (255-256); apiRequest() (296-320) fetches credentials from the backend. NFCAccessController.ts adds wallet/encrypted-data handling (see the `credential has no encrypted data` guard at NFCAccessController.ts:376).",
+        "These are exactly the corruption-recovery, migration, and credential-fetch paths whose regressions are silent (a bad migration or a discarded blob just means 'no access credentials') and security-relevant. Fix: add unit tests for loadStoredCredentials corruption + legacy-migration branches and for the encrypted-data guard, mocking expo-secure-store / AsyncStorage."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-auth-unvalidated-token-body",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:97-107 (login) and :194-200 (refreshToken) read `data.access_token` / `data.refresh_token` straight off `await response.json()` after only an `!response.ok` check, then immediately `SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken)` with no assertion that the fields are present strings. A 200 response with a malformed/partial body (upstream proxy, shape drift) writes `undefined` into SecureStore.",
+        "Downstream that poisons every request: hooks/useApi.ts:67 builds `Authorization: \\`Bearer ${accessToken}\\`` from the stored token, so a stored `undefined`/`'undefined'` yields `Bearer undefined` on all calls and a confusing auth-failure loop rather than a clean login error. On some platforms `SecureStore.setItemAsync(key, undefined)` also throws, turning a bad-body login into an unhandled rejection inside the try (login's catch at 92-95 only covers `!response.ok`).",
+        "This is the same 'a 200 does not guarantee a well-formed body' hardening the reality-web listings path already applies (page.tsx routes bodies through parseListingDetail before use). Fix: after parsing, assert `typeof access_token === 'string' && typeof refresh_token === 'string'` (and for login, `user`) before persisting; throw a normal login/refresh error otherwise so the existing catch + logout path handles it."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
