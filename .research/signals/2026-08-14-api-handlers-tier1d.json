@@ -14,5 +14,38 @@
       "Landable (self-contained backend Rust in financial.rs report renderers, no API/schema change). Fix: format the Decimal directly for the cell (write the value as a string, or serialize via rust_decimal to a fixed 2-dp representation) instead of parsing to f64; and replace `.unwrap_or(0.0)` with propagation of the existing `Result<Vec<u8>, String>` error so an unrenderable amount fails the export rather than becoming a silent 0.00."
     ],
     "expert": "rust"
+  },
+  {
+    "id": "code-review-api-handlers-ai-pagination-no-cap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/routes/ai/sessions.rs:101 — list_sessions passes query.limit.unwrap_or(50) straight through to the repo. PaginationQuery (backend/servers/api-server/src/routes/ai/mod.rs:104-107) declares `limit: Option<i64>` with no bound/validation, so the raw client-supplied value flows to SQL.",
+      "backend/crates/db/src/repositories/ai_chat.rs:133-163 — list_user_sessions binds the caller-supplied `limit: i64` directly into `LIMIT $2` with NO upper clamp. Same unclamped bind in list_session_messages (ai_chat.rs:223-, `LIMIT $4`) and the third list method (ai_chat.rs:365-, `LIMIT $2`).",
+      "Same unclamped `query.limit.unwrap_or(N)` -> repo LIMIT pattern repeats across the whole AI surface with no `.min()` anywhere under routes/ai/: ai/sessions.rs:205,924,997; ai/equipment.rs:203,297,379; ai/voice.rs:308; ai/llm.rs:1448.",
+      "Contrast proving this is an oversight, not a convention: admin/users.rs:58 clamps `.min(100)`, admin/audit.rs:235,254 clamp `.min(500)`/`.min(50_000)`, and listing repo backend/crates/db/src/repositories/listing.rs:136 clamps `query.limit.unwrap_or(20).min(100)`. The AI routes are the outlier.",
+      "Impact (availability): an authenticated user requesting `?limit=100000000` (limit is i64, up to 9.2e18) forces an unbounded scan + full result-set materialization into memory on the shared pool — slow-query / memory-exhaustion DoS. Landable backend-only fix: clamp at the handler or repo, e.g. `query.limit.unwrap_or(50).min(100)`, mirroring listing.rs:136."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-handlers-marketplace-limit-no-cap",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-handlers",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/crates/db/src/repositories/marketplace.rs:224-289 — search_providers reads `query.limit.unwrap_or(20)` / `query.offset.unwrap_or(0)` (MarketplaceSearchQuery.limit/offset are `Option<i32>`, backend/crates/db/src/models/marketplace.rs:333-335) and string-formats them into `ORDER BY {} {} LIMIT {} OFFSET {}` (marketplace.rs:278) wrapped in `sqlx::AssertSqlSafe(sql)` — with NO upper clamp on limit.",
+      "Route callers pass the raw user-supplied limit unclamped: routes/marketplace.rs:1105, :1252; get_verification_queue at routes/marketplace.rs:1434 -> repo marketplace.rs:1209 (`LIMIT $1`); list_provider_reviews at routes/marketplace.rs:1727 -> repo marketplace.rs:1465 (`LIMIT $2`). None apply `.min()`.",
+      "Not an injection: sort_by/sort_order are whitelisted (marketplace.rs:274-286 map to fixed column names / ASC|DESC) and limit/offset are i32 (non-injectable). The defect is availability only — `?limit=2147483647` forces a full scan + large materialization on the marketplace provider-search path (public/authenticated-reachable), a slow-query/memory DoS.",
+      "Landable backend-only fix: clamp before the format!/bind, e.g. `let limit = query.limit.unwrap_or(20).clamp(1, 100);`, consistent with the admin/listing repos that already cap."
+    ],
+    "expert": "rust"
   }
 ]
