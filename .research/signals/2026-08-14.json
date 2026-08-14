@@ -1,0 +1,350 @@
+{
+  "date": "2026-08-14",
+  "run_iso": "2026-08-14T04:37:00Z",
+  "trigger_text": "buffer-low: refill planner with landable backend/frontend vectors",
+  "signals": [
+    {
+      "id": "code-review-reality-web-sell-page-fake-submit",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 3,
+      "evidence": "See backlog item code-review-reality-web-sell-page-fake-submit for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-report-page-fake-submit",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 3,
+      "evidence": "See backlog item code-review-reality-web-report-page-fake-submit for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-reality-web-realtor-account-i18n-gap for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-noid",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-reality-web-realtor-profile-mock-noid for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-contact-fake-submit",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-reality-web-realtor-contact-fake-submit for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-reality-web-profile-page-mock-data for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-13 (api-handlers)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-api-handlers-ai-list-unclamped-limit for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-13 (api-handlers)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-api-handlers-auth-inactive-revoke-swallowed for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-imports-feed-url-ssrf",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-13 (reality-server)",
+      "score_delta": 3,
+      "evidence": "See backlog item code-review-reality-server-imports-feed-url-ssrf for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validators",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-13 (reality-server)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-reality-server-dup-url-validators for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-handlers-financial-f64-money",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-14 (api-handlers)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-api-handlers-financial-f64-money for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-14 (ppt-web-core)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-ppt-web-core-rentals-mutation-swallow-err for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-actions",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-14 (ppt-web-core)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-ppt-web-core-rentals-noop-actions for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-toast-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-14 (ppt-web-core)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-ppt-web-core-person-months-toast-i18n for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-reality-web-comparison-view-i18n for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-reality-web-realtor-mgmt-i18n for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-12 (reality-web)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-reality-web-agency-errorstate-i18n for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-13 (api-handlers)",
+      "score_delta": 2,
+      "evidence": "See backlog item code-review-api-handlers-share-pw-no-throttle for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "tier1d 2026-08-13 (api-handlers)",
+      "score_delta": 1,
+      "evidence": "See backlog item code-review-api-handlers-share-log-proxy-ip for full evidence.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal type in Phase 5 allowlist (code-review-finding not in allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# 2026-08-14'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … 'cursor advanced or seen_signals grew'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id]|(length==(unique|length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit with score_delta!=0 count",
+      "observed": "0",
+      "expected": "0",
+      "note": "no re-emits this run"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[]|select(.score>8)]|length==0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items older than 14d — none this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plans/<slug>.md has 'adversarial pass:' annotation in brief",
+      "observed": "2/2 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c .md$",
+      "observed": "2",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields present in each plan",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 ## headings present in each plan",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "at least one [x] ticked capability",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "Mode: local-only|cloud-ok declared",
+      "observed": "cloud-ok in both",
+      "expected": "declared"
+    },
+    {
+      "goal": "G7-files",
+      "passed": true,
+      "command": "every ## Files bullet resolves on disk",
+      "observed": "9/9 exist",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-hostname scan on added lines",
+      "observed": "0",
+      "expected": "0",
+      "note": "one .rlt.sk delete-line remains in diff (redaction, not addition)"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q regen(backlog.json) backlog.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty check",
+      "observed": "no phase failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "no plan silently deleted",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "8>=8",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q regen(triage from backlog.json) IDEAS_TRIAGE.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no auto-fix this run)",
+      "observed": "0 actions",
+      "expected": "≤3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifact gate (Phase 1.6 skipped → no-op)",
+      "observed": "no-op",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token added-line scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "phase_notes": {
+    "phase_1_5_skipped": "review_cursor recently advanced (reality-server 2026-08-13, api-core 2026-08-13, api-handlers 2026-08-10); tier-1d generator already emitted findings today (api-handlers, ppt-web-core)",
+    "phase_1_6_skipped": "cheap upkeep only; pm_cursor and coverage_cursor NOT advanced this run (G16 no-op)",
+    "phase_5_skipped": "no eligible signal — code-review-finding is not in Phase 5 allowlist"
+  }
+}
