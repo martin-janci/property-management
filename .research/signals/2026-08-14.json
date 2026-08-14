@@ -1,0 +1,393 @@
+{
+  "generated": "2026-08-14T16:44:58Z",
+  "notes": "Incremental run — 8 merged PRs (#2745-#2758), 44 dev commits since cursor (all dispatcher noise + the 8 merges). Phase 1.5 result already emitted today by tier1d dispatcher runs across 5 segments (api-handlers, ppt-web-core, ppt-web-ui, reality-server, reality-web) — merged 13 code-review-finding signals into this file. Rebuilt 5 orphan-stub backlog rows (raw signal shape from prior run) into proper backlog items. Lag warning fired (41h > 36h).",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-14",
+      "type": "lag_warning",
+      "source": "state.json (last_run_iso=2026-08-12T22:45:00Z; now=2026-08-14T16:44Z)",
+      "score_delta": 0,
+      "evidence": "routine has not run in 1d 17h (41h) — over the 36h threshold; cloud cron may have slipped a run.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2746 (SSRF-redirect regression test) — merged 2026-08-13",
+      "score_delta": 1,
+      "evidence": "106 lines this run in PR #2746 — extracted redirect_hop_allowed() from the reqwest redirect closure so the SSRF re-validation of redirect targets is unit-testable; added two hermetic tests. First hotspot appearance for this file (runs_seen was 0).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2748 (Alexa /verify fail-closed) — merged 2026-08-13",
+      "score_delta": 1,
+      "evidence": "72 lines this run in PR #2748 — Alexa branch of introspection /verify endpoint now fails CLOSED (previously accepted any non-empty signature as valid). First hotspot appearance for this file.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/marketplace.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2747 (marketplace award_quote IDOR fix) — merged 2026-08-13",
+      "score_delta": 1,
+      "evidence": "30 lines this run in PR #2747 — award_quote handler now verifies the awarded quote belongs to the RFQ before awarding; new suite marketplace_award_quote_idor_tests.rs (298 lines). First hotspot appearance for this file.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749 (gradle-minor-patch group, 5 updates, dependabot)",
+      "score_delta": 0,
+      "evidence": "dependabot mobile-native gradle-minor-patch group update still open",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750 (cargo-minor-patch group, 6 updates, dependabot)",
+      "score_delta": 0,
+      "evidence": "dependabot cargo-minor-patch group still open",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751 (npm-minor-patch group, 28 updates, dependabot)",
+      "score_delta": 0,
+      "evidence": "dependabot frontend npm-minor-patch group still open",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-handlers-financial-f64-money",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/financial.rs:1796,1828,1894 (XLSX renderers render_income_statement_xlsx / render_balance_sheet_xlsx) and :1975,2007 (PDF renderers) all convert monetary figures through f64 with the identical pattern `line.amount.to_string().parse::<f64>().unwrap_or(0.0)` (and `line.balance...` at :1894) before writing them into the exported financial report.",
+        "The source fields are exact-precision `Decimal` (confirmed on the accounting/report models in backend/crates/db/src/models — e.g. `pub amount: Decimal`, `pub balance: Decimal`). Round-tripping a Decimal through binary f64 for an income statement / balance sheet reintroduces floating-point representation error into money values that were deliberately kept exact — the class of penny/rounding drift these Decimal columns exist to prevent, now surfacing on the customer-facing PDF/XLSX exports.",
+        "The `.unwrap_or(0.0)` fallback is a second, worse defect: if `line.amount.to_string()` ever fails to re-parse as f64, the code silently writes 0.00 into a financial statement instead of erroring. A silent wrong zero in a balance sheet is a data-integrity/correctness failure, not a cosmetic one — the export renders as authoritative with no signal that a line was dropped.",
+        "Landable (self-contained backend Rust in financial.rs report renderers, no API/schema change). Fix: format the Decimal directly for the cell (write the value as a string, or serialize via rust_decimal to a fixed 2-dp representation) instead of parsing to f64; and replace `.unwrap_or(0.0)` with propagation of the existing `Result<Vec<u8>, String>` error so an unrenderable amount fails the export rather than becoming a silent 0.00."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-ai-pagination-no-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs:101 — list_sessions passes query.limit.unwrap_or(50) straight through to the repo. PaginationQuery (backend/servers/api-server/src/routes/ai/mod.rs:104-107) declares `limit: Option<i64>` with no bound/validation, so the raw client-supplied value flows to SQL.",
+        "backend/crates/db/src/repositories/ai_chat.rs:133-163 — list_user_sessions binds the caller-supplied `limit: i64` directly into `LIMIT $2` with NO upper clamp. Same unclamped bind in list_session_messages (ai_chat.rs:223-, `LIMIT $4`) and the third list method (ai_chat.rs:365-, `LIMIT $2`).",
+        "Same unclamped `query.limit.unwrap_or(N)` -> repo LIMIT pattern repeats across the whole AI surface with no `.min()` anywhere under routes/ai/: ai/sessions.rs:205,924,997; ai/equipment.rs:203,297,379; ai/voice.rs:308; ai/llm.rs:1448.",
+        "Contrast proving this is an oversight, not a convention: admin/users.rs:58 clamps `.min(100)`, admin/audit.rs:235,254 clamp `.min(500)`/`.min(50_000)`, and listing repo backend/crates/db/src/repositories/listing.rs:136 clamps `query.limit.unwrap_or(20).min(100)`. The AI routes are the outlier.",
+        "Impact (availability): an authenticated user requesting `?limit=100000000` (limit is i64, up to 9.2e18) forces an unbounded scan + full result-set materialization into memory on the shared pool — slow-query / memory-exhaustion DoS. Landable backend-only fix: clamp at the handler or repo, e.g. `query.limit.unwrap_or(50).min(100)`, mirroring listing.rs:136."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-marketplace-limit-no-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/db/src/repositories/marketplace.rs:224-289 — search_providers reads `query.limit.unwrap_or(20)` / `query.offset.unwrap_or(0)` (MarketplaceSearchQuery.limit/offset are `Option<i32>`, backend/crates/db/src/models/marketplace.rs:333-335) and string-formats them into `ORDER BY {} {} LIMIT {} OFFSET {}` (marketplace.rs:278) wrapped in `sqlx::AssertSqlSafe(sql)` — with NO upper clamp on limit.",
+        "Route callers pass the raw user-supplied limit unclamped: routes/marketplace.rs:1105, :1252; get_verification_queue at routes/marketplace.rs:1434 -> repo marketplace.rs:1209 (`LIMIT $1`); list_provider_reviews at routes/marketplace.rs:1727 -> repo marketplace.rs:1465 (`LIMIT $2`). None apply `.min()`.",
+        "Not an injection: sort_by/sort_order are whitelisted (marketplace.rs:274-286 map to fixed column names / ASC|DESC) and limit/offset are i32 (non-injectable). The defect is availability only — `?limit=2147483647` forces a full scan + large materialization on the marketplace provider-search path (public/authenticated-reachable), a slow-query/memory DoS.",
+        "Landable backend-only fix: clamp before the format!/bind, e.g. `let limit = query.limit.unwrap_or(20).clamp(1, 100);`, consistent with the admin/listing repos that already cap."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311,323,417,427 — all four rentals mutations (createConnection, syncPlatforms, checkIn, checkOut) use the exact same handler: `onError: (error) => handleRentalsAuthError(error, logout)`. That is the ONLY error handling attached to any of them.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:220-226 — handleRentalsAuthError() only reacts to session-loss codes (SESSION_EXPIRED / TOKEN_EXPIRED / TOKEN_INVALID); for every other failure it returns `false` and does nothing. Its own doc comment says 'Non-auth errors are left for the caller to surface' — but the callers ignore the boolean return and surface nothing.",
+        "Net effect: a failed check-in / check-out / create-connection / sync-platforms (validation 4xx, backend 5xx, network error) produces ZERO user feedback — no toast, no error state, the button just silently no-ops. The user cannot tell the action failed and may retry blindly or assume success.",
+        "Inconsistency proof: the sibling route group frontend/apps/ppt-web/src/routes/groups/financial.tsx:179-185,204-210 does this correctly — its mutation onError handlers call showToast({ type: 'error', ... }) with a t()-wrapped title and the error message. Fix: give the rentals mutations a real onError that, when handleRentalsAuthError returns false, surfaces an error toast (useToast) as financial.tsx does."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-actions",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:381-383 — BookingsPageRoute wires onCancelBooking, onCheckIn and onCheckOut to `() => {}`. These are live action buttons on the bookings LIST that silently do nothing when clicked.",
+        "This is not a not-yet-built stub: the very same check-in / check-out actions ARE implemented as real mutations in BookingDetailPageRoute (rentals.tsx:409-428, rentalsApiCheckIn / rentalsApiCheckOut). So the list-level buttons are dead handlers for functionality that already exists one screen deeper — a genuine wiring gap, not a missing endpoint.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:333-339 (PlatformConnectionsPageRoute onConnect/onDisconnect/onSettings) and :449-456 (BookingDetailPageRoute onEdit/onCancel/onDeleteGuest) are likewise wired to `() => {}` — user-facing buttons that render as functional but perform no action and give no feedback.",
+        "Fix: wire the list-page check-in/check-out/cancel handlers to the existing mutations (or navigate to the detail route that owns them), and either implement or visibly disable the remaining no-op actions so the UI does not present dead controls as functional."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-toast-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:373 — success toast uses raw English literals: `showToast({ type: 'success', title: 'Saved', message: 'Person-month saved' })`, not wrapped in t().",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:376-379 — error toast likewise hardcodes `title: 'Save failed'` and `message: 'Could not save person-month'` (with only the raw Error.message as a fallback).",
+        "App convention is to route user-facing toast copy through react-i18next t(...) — see frontend/apps/ppt-web/src/routes/groups/financial.tsx:175,182,207 which wrap every toast title in t('financial.invoices.*', { defaultValue }). ppt-web ships localized (i18n/ directory present), so these strings render in English for every non-EN user.",
+        "Fix: wrap the four person-month toast strings in t('personMonths.*', { defaultValue: ... }) and add the keys to the ppt-web i18n message catalogs, matching the financial.tsx pattern."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-autorules-mutate-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete (line 58 `await deleteRule.mutateAsync(deleteConfirm.id)`), handleToggle (line 64 `await updateRule.mutateAsync(...)`) and handleRun (line 71 `await runRule.mutateAsync(rule.id)`) all call mutateAsync with NO try/catch. mutateAsync returns a rejecting promise on failure, so any backend/network error becomes an unhandled promise rejection.",
+        "The page never surfaces these mutation errors to the user: grep for updateRule.error / deleteRule.error / runRule.error (and .isError) in the file returns nothing — only the *query* error is rendered ({error} at line 178, from useAutomationRules). So a failed delete/enable-toggle/run silently does nothing on-screen: confirmDelete's `setDeleteConfirm(null)` at line 59 never runs (modal sticks) and the toggle switch visually reverts with no explanation. Contrast EditRulePage.tsx:113 which does render {updateRule.error}. Fix: wrap each handler in try/catch (or use .mutate with onError) and render the mutation error states."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-execmonitor-retry-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx:74-77 — handleRetry does `await retryExecution.mutateAsync(log.id); setSelectedLog(null);` with no try/catch. On a failed retry the mutateAsync promise rejects (unhandled rejection) and setSelectedLog(null) never fires, so the details modal stays open with no error shown.",
+        "The page surfaces the *query* error (logsError rendered at line 189) but never renders retryExecution.error / retryExecution.isError (grep confirms no such reference), so the retry action has no failure feedback path. Same unhandled-mutation-rejection class as AutomationRulesPage. Fix: try/catch the retry and render retryExecution.error near the retry control."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-pages-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "All five workflow-automation page files hardcode user-facing English and import no useTranslation (verified: useTranslation count = 0 in AutomationRulesPage.tsx, ExecutionMonitoringPage.tsx, EditRulePage.tsx, CreateRulePage.tsx, TemplateLibraryPage.tsx). Examples: AutomationRulesPage.tsx:82 'Automation Rules', :84 'Create and manage automated workflows for your properties.', :101 'Create Rule', :306 'Delete'/'Deleting...'; ExecutionMonitoringPage.tsx:93 'Execution Monitoring', :95 'Monitor and troubleshoot your automation executions.'; EditRulePage.tsx:37 'Invalid rule ID.', :47 'Failed to load automation rule. Please try again.'",
+        "The app is react-i18next-enabled and sibling components in the SAME feature already use t() (RuleCard.tsx, RuleBuilder.tsx, TriggerSelector.tsx, ExecutionDetailsModal.tsx, TemplatePreviewModal.tsx), so these page-level strings are an inconsistent i18n gap — the pages are untranslatable while their child components are. Fix: wire useTranslation into the five pages and move the literals into the workflow-automation namespace."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-reality-server-review-body-no-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 (create_review) validates only `data.rating` (1..=5 at :196) and then binds the free-text `data.body` straight into the `INSERT INTO realtor_reviews (... body ...)` at :255-266 with NO length validation anywhere. CreateReviewRequest.body is `Option<String>` (agent_reviews.rs:47) and there is no MAX_* constant or `.len()` check on it in the whole file (confirmed: grep for body length/cap on this file returns nothing).",
+        "This is an authenticated-but-public portal write endpoint (RequestPrincipal, principal_kind = 'public'), i.e. exactly the abuse surface the sibling reality-server endpoints explicitly cap. reports.rs caps its free text at MAX_REPORT_DESCRIPTION_LEN = 5000 (reports.rs:27, enforced at :161) and inquiries.rs caps its message at MAX_INQUIRY_MESSAGE_LEN = 5000 (inquiries.rs:27, enforced at :54 and :446). agent_reviews.rs is the outlier that skipped the same H6 input-hygiene control.",
+        "Impact (H6 abuse / resource): a portal user can POST an arbitrarily large review body (bounded only by the global request-body limit, not by an application cap), bloating `realtor_reviews` rows and every log line / response that echoes the review body — the exact unbounded-string abuse the neighboring endpoints were hardened against. The review body is also surfaced back verbatim in list_reviews (:115,:157), amplifying the bloat on every reader.",
+        "Landable backend-only fix (self-contained, no API/schema change): add a `const MAX_REVIEW_BODY_LEN: usize = 5000;` and reject over-length `data.body` with 400 before the insert, mirroring reports.rs:161 / inquiries.rs:54. Optionally also reject an all-whitespace/empty body to match the input-hygiene posture of the sibling handlers."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-url-validator-dup",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/reports.rs:35 and backend/servers/reality-server/src/routes/users.rs:28 each define a byte-for-byte identical private `fn validate_image_or_link_url(s: &str) -> Result<(), String>` (len <= MAX_URL_LEN 2048, then allow only http/https scheme to block stored-XSS `javascript:`/`data:`/`file:` URLs that later render in `<img src>` / `<a href>`).",
+        "Both copies carry an in-code TODO acknowledging the duplication: reports.rs:33-34 (\"once the auth-hardening branch lands a shared `url_validator` module this should be swapped for the import\") and users.rs:24-25 (\"swap for a shared `url_validator` module once it lands on main\"). The shared module already exists and is used elsewhere: backend/servers/reality-server/src/util/url_validator.rs (validate_fetch_url) is imported by agency_imports.rs:7.",
+        "Risk (security-relevant drift): the two copies are an XSS mitigation. If one file's copy is hardened (e.g. also stripping control chars, tightening the scheme list, or normalizing) and the other is not, the profile-image path (users.rs, `profile_image_url` -> `<img src>`) or the report-attachment path (reports.rs) silently regresses. Duplicated security predicates diverge under maintenance.",
+        "Landable refactor (reality-server only): extract a single scheme/length validator into util/url_validator.rs (alongside the existing validate_fetch_url) and replace both inline copies with the shared import, deleting the two TODOs. No behavior change intended; add one shared unit test covering the reject cases (javascript:/data:/file:, over-length)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-realtormgmt-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — inconsistent i18n on a multi-locale (sk/cs/de/en) public portal: the file imports `useTranslations` (line 19) and the nested InviteRealtorModal is fully translated (`const t = useTranslations('agency')` line 560; labels/buttons/placeholders/errors all via t(), e.g. lines 593/617/629/664/667), but the outer RealtorManagement panel and the realtor-detail modal ship 13 hardcoded English strings.",
+        "Hardcoded user-facing strings (not wrapped in t()): line 90 `<h1>Realtor Management</h1>`, line 91 `<p>Manage your team of real estate agents</p>`, line 347 `<span>Listings</span>`, line 351 `<span>Sales</span>`, line 854 `<h2>Realtor Details</h2>`, line 888 `<label>Job Title</label>`, line 899 `<label>Bio</label>`, line 914 `<span>Active Listings</span>`, line 918 `<span>Total Sales</span>`, line 922 `<span>Rating</span>`, line 962 `<span>Are you sure?</span>`, plus `aria-label=\"Close\"` on lines 594 and 855.",
+        "Effect: Slovak/Czech/German visitors see the invite dialog localized but the surrounding agent-management UI, the detail modal, and stat labels in English. Fix: move the 13 strings into the existing `agency` message namespace and render them via the already-imported `t()`; localize the two `aria-label=\"Close\"` values for screen-reader parity."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — `fetch(`${getApiBase()}/api/v1/listings/${id}`)` then `return response.json() as Promise<ListingSummary>`: an unvalidated type assertion crossing the API boundary. The parsed body is pushed straight into the comparison context via `addToComparison(result.value)` (lines 59-70) and rendered with no shape validation.",
+        "The sibling consumer of the exact same endpoint hardens against this: frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:79-89 explicitly comments 'A 200 does not guarantee a well-formed body' and routes every response through `parseListingDetail(body)` before use. ComparisonUrlHandler skips that normalizer, so a truthy-but-malformed 200 (upstream/proxy partial response, wrong-typed fields) is cast to ListingSummary and handed to the comparison UI unchecked.",
+        "Severity is bounded (network errors already degrade gracefully via Promise.allSettled at line 54, and the endpoint normally returns a superset ListingDetail), so this is a shape-validation gap rather than a guaranteed crash — but it is a user-facing shared-comparison path that is inconsistent with the codebase's own hardened pattern. Fix: validate/normalize the body (reuse or adapt parseListingDetail / a summary schema guard) before addToComparison, and drop the `as Promise<ListingSummary>` assertion."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches # YYYY-MM-DD",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq — cursor / seen_signals / hotspot_history / quiet_days advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq — backlog IDs unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq — no non-cumulative re-emit with score_delta!=0 vs prior seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq — no item score>8; no open item older than 14d needed decay",
+      "observed": "true (no decay eligible; cap held)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan, brief has 'adversarial pass:' annotation",
+      "observed": "no new plans this run",
+      "expected": "≤1 per plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans; metadata/headings/capability/mode/files-exist",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private-hostnames in added lines (with 4 baseline-doc exemptions)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief 'Phases that failed'",
+      "observed": "none",
+      "expected": "consistent with cursor advancement"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still exists in plans/ or plans/_archive/",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files _archive >= git ls-tree HEAD _archive",
+      "observed": "8>=8",
+      "expected": ">=0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency vs auto_fix_history",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse; pm_cursor in [0,7]; coverage_cursor in [0,epics); GC7 advance",
+      "observed": "epics=13, cc 5→6, pm 3→4",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token URL/bare-token forms in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist (screen-map-drift|screen-map-orphan|fixme-in-merged-code|dep-update-noise[lockfile-drift]|stalled-review)"
+}
