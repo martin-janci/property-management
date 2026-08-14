@@ -170,3 +170,58 @@ describe('WebSocketService — reconnect budget & resume after give-up', () => {
     expect(maxRetries).toHaveBeenCalledTimes(2);
   });
 });
+
+/**
+ * disconnect() lifecycle (regression).
+ *
+ * disconnect() must detach the current socket's handlers before closing it —
+ * the same guard teardownStaleSocket() uses. In a real browser close() delivers
+ * its `close` event asynchronously; if the still-attached onclose fires after
+ * the caller has moved on (a connect() racing the close on logout->login /
+ * token rotation), it would run against the live service and — because the
+ * reconnect branch fires regardless of `wasClean` — schedule a spurious
+ * reconnect the caller never asked for. Detaching the handlers makes any late
+ * close/error on the old socket inert.
+ */
+describe('WebSocketService — disconnect() lifecycle', () => {
+  function openService(): { service: WebSocketService; socket: FakeWebSocket } {
+    const service = makeService(5);
+    service.connect();
+    const socket = FakeWebSocket.lastInstance;
+    if (!socket) throw new Error('expected a socket to be constructed');
+    socket.readyState = FakeWebSocket.OPEN;
+    socket.onopen?.({});
+    expect(service.getConnectionState()).toBe('connected');
+    return { service, socket };
+  }
+
+  it('detaches the socket handlers on disconnect', () => {
+    const { service, socket } = openService();
+
+    service.disconnect();
+
+    expect(service.getConnectionState()).toBe('disconnected');
+    // Every handler the service attached must be gone so the imminent async
+    // close/error event on this socket cannot fire back into the service.
+    expect(socket.onopen).toBeNull();
+    expect(socket.onclose).toBeNull();
+    expect(socket.onerror).toBeNull();
+    expect(socket.onmessage).toBeNull();
+  });
+
+  it('makes a late unclean close on a disconnected socket inert (no reconnect)', () => {
+    const { service, socket } = openService();
+    const constructedBefore = FakeWebSocket.constructed;
+
+    service.disconnect();
+
+    // The browser delivers the socket's close event *after* disconnect() has
+    // returned. With handlers detached this is a no-op; without the detach it
+    // would drive scheduleReconnect() and spin up a new socket.
+    socket.simulateUncleanClose();
+    vi.advanceTimersByTime(10_000);
+
+    expect(FakeWebSocket.constructed).toBe(constructedBefore);
+    expect(service.getConnectionState()).toBe('disconnected');
+  });
+});
