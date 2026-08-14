@@ -30,6 +30,7 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
+import { formatDateTime } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 // ─── API Types ─────────────────────────────────────────────────────────────────
@@ -219,12 +220,12 @@ export function LeaseSignatureScreen({ esignatureId, onBack }: LeaseSignatureScr
               <MetaRow label={t('esignature.requestedBy')} value={request.requester_name} />
               <MetaRow
                 label={t('esignature.requestedAt')}
-                value={new Date(request.requested_at).toLocaleString()}
+                value={formatDateTime(request.requested_at)}
               />
               {request.expires_at ? (
                 <MetaRow
                   label={t('esignature.expiresAt')}
-                  value={new Date(request.expires_at).toLocaleString()}
+                  value={formatDateTime(request.expires_at)}
                 />
               ) : null}
               {request.signed_at ? (
@@ -234,7 +235,7 @@ export function LeaseSignatureScreen({ esignatureId, onBack }: LeaseSignatureScr
                       ? t('esignature.signedAt')
                       : t('esignature.declinedAt')
                   }
-                  value={new Date(request.signed_at).toLocaleString()}
+                  value={formatDateTime(request.signed_at)}
                 />
               ) : null}
               {request.webhook_delivered && (

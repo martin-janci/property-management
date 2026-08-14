@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export interface NewsArticle {
@@ -149,9 +150,7 @@ export function NewsScreen({ onNavigate }: NewsScreenProps) {
               <Text style={s.cardBody} numberOfLines={3}>
                 {article.excerpt}
               </Text>
-              <Text style={[s.cardMeta, { marginTop: 8 }]}>
-                {new Date(article.publishedAt).toLocaleDateString()}
-              </Text>
+              <Text style={[s.cardMeta, { marginTop: 8 }]}>{formatDate(article.publishedAt)}</Text>
             </Pressable>
           ))
         )}

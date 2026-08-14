@@ -35,6 +35,7 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
+import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 interface ApiQuestionOption {
@@ -270,7 +271,7 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
         {detail && (
           <Text style={s.headerSubtitle}>
             {detail.building_name} ·{' '}
-            {new Date(detail.end_at).toLocaleDateString(undefined, {
+            {formatDate(detail.end_at, {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
