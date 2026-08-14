@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-12 22:45 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-14 12:36 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -33,6 +33,7 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | security | `code-review-api-handlers-share-pw-no-throttle` | api-server public share password endpoint has no brute-force throttle (per-token/per-IP) or lockout | open | 2026-08-14 |  |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
 | 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
 | 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
@@ -132,10 +133,17 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | open | 2026-08-12 |  |
-| 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | open | 2026-08-12 |  |
-| 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | open | 2026-08-12 |  |
-| 1 | dx | `closed-not-merged-pr-2705` | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry clo | open | 2026-08-12 |  |
+| 1 | dx | `closed-not-merged-pr-2581` | closed-not-merged: PR #2581 dependabot gradle-minor-patch (4 updates) — superseded by open #2749 (5  | open | 2026-08-14 |  |
+| 1 | dx | `closed-not-merged-pr-2674` | closed-not-merged: PR #2674 dependabot cargo-minor-patch (2 updates) — superseded by open #2750 (6 u | open | 2026-08-14 |  |
+| 1 | dx | `closed-not-merged-pr-2675` | closed-not-merged: PR #2675 dependabot npm-minor-patch (22 updates) — superseded by open #2751 (28 u | open | 2026-08-14 |  |
+| 1 | bug | `code-review-api-handlers-share-log-proxy-ip` | api-server share access audit persists ConnectInfo IP not X-Forwarded-For — proxy IP logged instead  | open | 2026-08-14 |  |
+| 1 | bug | `code-review-reality-web-agency-errorstate-i18n` | reality-web AgencyErrorStates: no-agency empty/error state hardcoded English | open | 2026-08-14 |  |
+| 1 | bug | `code-review-reality-web-comparison-view-i18n` | reality-web ComparisonView is not translated — every string renders in English for non-EN visitors | open | 2026-08-14 |  |
+| 1 | bug | `code-review-reality-web-realtor-mgmt-i18n` | reality-web RealtorManagement: destructive remove-modal + header subtitle hardcoded English | open | 2026-08-14 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | done | 2026-08-12 |  |
+| 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | done | 2026-08-12 |  |
+| 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | done | 2026-08-12 |  |
+| 1 | dx | `closed-not-merged-pr-2705` | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry clo | done | 2026-08-12 |  |
 | 1 | bug | `code-review-mobile-rn-date-locale-en-us` | mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dat | done | 2026-08-12 |  |
 | 1 | bug | `code-review-mobile-rn-meterdetail-i18n` | mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling  | done | 2026-08-12 |  |
 | 1 | refactor | `code-review-ppt-web-ui-offline-ind-i18n` | ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n | done | 2026-08-12 |  |
@@ -277,6 +285,7 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
+| 0 | dx | `lag-warning-2026-08-14` | Routine lag: 37h since last run (2026-08-12 22:45 → 2026-08-14 12:28) | dropped | 2026-08-14 |  |
 | 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | dropped | 2026-07-09 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-document-rs` | Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06- | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-form-rs` | Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock) | dropped | 2026-07-05 |  |
@@ -316,6 +325,3 @@
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
-| 0 |  | `code-review-reality-web-agency-errorstate-i18n` |  |  |  |  |
-| 0 |  | `code-review-reality-web-comparison-view-i18n` |  |  |  |  |
-| 0 |  | `code-review-reality-web-realtor-mgmt-i18n` |  |  |  |  |

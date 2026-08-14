@@ -1,0 +1,114 @@
+{
+  "generated": "2026-08-14T12:36:00Z",
+  "notes": [
+    "Routine catch-up run: 37h since last routine run — lag_warning emitted (LAG_DAYS=1, sub-3d, not stale_routine_alert).",
+    "Buffer-low payload from caller (claimable=4/72, coverage 47/49 done, backlog empty) drove focus onto refilling the planner. Five orphaned null-status rows (3 reality-web i18n, 2 api-handlers share endpoints) were scored + titled + set status=open, so downstream dispatcher runs can consider them. None met the score>=3 promotion threshold (security fast-track requires confidence=high; incoming signals were medium).",
+    "Phase 1.5 skipped: state.review_cursor shows all 8 segments reviewed within the last 5 days (dispatcher Tier-1d has been carrying that load). Cursor not advanced.",
+    "Phase 1.6 skipped: pm_cursor deliberately not advanced — this is a lag-recovery run, not a sprint-management pulse; the pm-frontend role was last-run 2026-08-06 (8d), pm-tech-lead/backend/security/data/integration all within 25d, and the pm-qa/devops rows sitting since 2026-06-15/16 have already been surfaced repeatedly. No new signals justify a fresh role read this run.",
+    "Phase 5 (auto-fix): no candidate — all newly-added items are confidence=medium (below the high bar); no screen-map-drift or fixme-in-merged-code signals emitted this run.",
+    "Dispatcher continues to run on planning-branch; recent commits show buffer starvation with Tier-1d generator producing findings that get orphaned into backlog.json rather than scored — the root cause the buffer-low payload describes. This run scores those orphans."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-14",
+      "type": "lag_warning",
+      "source": "state.json (last_run_iso=2026-08-12T22:45:00Z; now=2026-08-14T12:36Z)",
+      "score_delta": 0,
+      "evidence": "routine has not run in 37h (LAG_HOURS=37, LAG_DAYS=1) — one nominal cloud-cron beat missed. Not a stale_routine_alert (<3d).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-2675",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2675 (dependabot npm-minor-patch, 22 updates, /frontend), closed unmerged 2026-08-13T10:21:55Z; superseded by open PR #2751 (28 updates)",
+      "score_delta": 1,
+      "evidence": "closed_at=2026-08-13T10:21:55Z; mergedAt=null; labels=[dependencies,javascript]; open successor #2751 exists (wider group).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-2674",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2674 (dependabot cargo-minor-patch, 2 updates, /backend), closed unmerged 2026-08-13T10:18:11Z; superseded by open PR #2750 (6 updates)",
+      "score_delta": 1,
+      "evidence": "closed_at=2026-08-13T10:18:11Z; mergedAt=null; labels=[dependencies,rust]; open successor #2750 exists.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-2581",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2581 (dependabot gradle-minor-patch, 4 updates, /mobile-native), closed unmerged 2026-08-13T10:13:52Z; superseded by open PR #2749 (5 updates)",
+      "score_delta": 1,
+      "evidence": "closed_at=2026-08-13T10:13:52Z; mergedAt=null; labels=[dependencies,java]; open successor #2749 exists.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "Dispatcher Tier-1d review 2026-08-13 (api-handlers segment) — .research/signals/2026-08-13-api-handlers-tier1d-2.json",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/routes/documents/shares.rs:574 access_protected_share (public, unauthenticated POST /api/v1/documents/shared/{token}/access) verifies caller-supplied share password with NO brute-force protection: no failed-attempt counter, no per-token/per-IP lockout, no throttle. grep for rate.?limit|throttle|attempt|lockout across routes/documents/ returns 0 hits.",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "Dispatcher Tier-1d review 2026-08-13 (api-handlers segment) — .research/signals/2026-08-13-api-handlers-tier1d-2.json",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 — both public share handlers derive audit ip_address from axum ConnectInfo<SocketAddr>. Behind a reverse proxy (nginx/CloudFront/Cloudflare) this logs the proxy IP, not the caller; the X-Forwarded-For / Forwarded chain is not consulted.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "Dispatcher Tier-1d review reality-web — orphan row in backlog.json",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "Dispatcher Tier-1d review reality-web — orphan row in backlog.json",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — component uses useTranslations elsewhere, but the destructive confirm-remove modal and the header subtitle are hardcoded English, so they never localize.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "Dispatcher Tier-1d review reality-web — orphan row in backlog.json",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-14.md && head -1 matches # 2026-08-14", "observed": "brief written", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "compare state.json vs HEAD for cursor advancement", "observed": "last_pr_seen 2742->2758; last_issue_seen 2704->2754; last_commit_sha advanced; seen_signals 384->393", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no signal id in this run was already in previous seen_signals with score_delta != 0 outside cumulative allowlist", "observed": "9 new signals; none previously in seen_signals", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap 8 + decay for open items >14d", "observed": "no scores >8; no open item >14d (oldest open is 2026-08-04, 10d)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "adversarial pass annotation for every new plan", "observed": "0 new plans this run", "expected": "true (vacuous)" },
+    { "goal": "G7", "passed": true, "command": "new-plan cap 2 + metadata/headings/files/capabilities/mode", "observed": "0 new plans this run", "expected": "true (vacuous)" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "checked pre-commit", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged .research/ diff (excluding baseline docs)", "observed": "no matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md /tmp/backlog.regen.md", "observed": "byte-identical after regen", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "each failed phase listed in brief AND cursor not advanced", "observed": "no phase failures this run (Phase 1.5/1.6 intentionally skipped, listed as such, and their cursors not advanced)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "all prior-run plan slugs still present in plans/ or _archive/", "observed": "no plans touched this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD count", "observed": "archive unchanged", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical after regen", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix cap: 0 actions this run; no signal_id in auto_fix_history", "observed": "auto_fix_actions empty", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid (Phase 1.6 skipped -> gate is no-op)", "observed": "Phase 1.6 skipped this run; pm_cursor not advanced; gate no-op", "expected": "true (vacuous)" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff", "observed": "no matches", "expected": "0" }
+  ]
+}
