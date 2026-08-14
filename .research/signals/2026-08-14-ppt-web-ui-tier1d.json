@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-14",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 4 < floor 36). Excluded per run constraints: api-handlers and ppt-web-core (already reviewed today 2026-08-14), mobile-native-kmp (findings structurally unlandable — AGP egress-blocked in cloud runner). From the remaining cloud-landable set the oldest-unreviewed segments tie at 2026-08-12: ppt-web-ui, reality-web, mobile-rn. reality-web already carries 3 code-review-finding rows in backlog.json (near-saturation), so from the two clean tied-oldest segments I picked ppt-web-ui — a frontend segment, first in the skill's segment-map order, not backlog-saturated (0 open code-review-finding items). Focused the pass on the freshest churn under this segment: the workflow-automation feature (pages/ + components/), the most recently touched page/component cluster in the last 25 commits.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-autorules-mutate-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete (line 58 `await deleteRule.mutateAsync(deleteConfirm.id)`), handleToggle (line 64 `await updateRule.mutateAsync(...)`) and handleRun (line 71 `await runRule.mutateAsync(rule.id)`) all call mutateAsync with NO try/catch. mutateAsync returns a rejecting promise on failure, so any backend/network error becomes an unhandled promise rejection.",
+        "The page never surfaces these mutation errors to the user: grep for updateRule.error / deleteRule.error / runRule.error (and .isError) in the file returns nothing — only the *query* error is rendered ({error} at line 178, from useAutomationRules). So a failed delete/enable-toggle/run silently does nothing on-screen: confirmDelete's `setDeleteConfirm(null)` at line 59 never runs (modal sticks) and the toggle switch visually reverts with no explanation. Contrast EditRulePage.tsx:113 which does render {updateRule.error}. Fix: wrap each handler in try/catch (or use .mutate with onError) and render the mutation error states."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-execmonitor-retry-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx:74-77 — handleRetry does `await retryExecution.mutateAsync(log.id); setSelectedLog(null);` with no try/catch. On a failed retry the mutateAsync promise rejects (unhandled rejection) and setSelectedLog(null) never fires, so the details modal stays open with no error shown.",
+        "The page surfaces the *query* error (logsError rendered at line 189) but never renders retryExecution.error / retryExecution.isError (grep confirms no such reference), so the retry action has no failure feedback path. Same unhandled-mutation-rejection class as AutomationRulesPage. Fix: try/catch the retry and render retryExecution.error near the retry control."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-pages-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "All five workflow-automation page files hardcode user-facing English and import no useTranslation (verified: useTranslation count = 0 in AutomationRulesPage.tsx, ExecutionMonitoringPage.tsx, EditRulePage.tsx, CreateRulePage.tsx, TemplateLibraryPage.tsx). Examples: AutomationRulesPage.tsx:82 'Automation Rules', :84 'Create and manage automated workflows for your properties.', :101 'Create Rule', :306 'Delete'/'Deleting...'; ExecutionMonitoringPage.tsx:93 'Execution Monitoring', :95 'Monitor and troubleshoot your automation executions.'; EditRulePage.tsx:37 'Invalid rule ID.', :47 'Failed to load automation rule. Please try again.'",
+        "The app is react-i18next-enabled and sibling components in the SAME feature already use t() (RuleCard.tsx, RuleBuilder.tsx, TriggerSelector.tsx, ExecutionDetailsModal.tsx, TemplatePreviewModal.tsx), so these page-level strings are an inconsistent i18n gap — the pages are untranslatable while their child components are. Fix: wire useTranslation into the five pages and move the literals into the workflow-automation namespace."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}
