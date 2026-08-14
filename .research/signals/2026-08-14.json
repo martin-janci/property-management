@@ -1,0 +1,432 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-14",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "routine last_run_iso=2026-08-12T22:45:00Z; now=2026-08-14T22:25:00Z (47h ago > 36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-actions-api_call-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-08-12T22:45:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "+106 lines in backend/servers/api-server/src/services/actions/api_call.rs since last run (PR #2746 SSRF-redirect regression test)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend-apps-ppt-web-src-lib-websocket-ts",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1\u21922",
+      "score_delta": 1,
+      "evidence": [
+        "websocket.ts churned again (+39 lines this run, PR #2760 disconnect() lifecycle fix); runs_seen 1\u21922"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-organizations-mod-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since 2026-08-12T22:45:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "+38 lines in backend/servers/api-server/src/routes/organizations/mod.rs since last run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "evidence": [
+        "open dependabot bump PR #2751 \u2014 logged, not scored"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "evidence": [
+        "open dependabot bump PR #2750 \u2014 logged, not scored"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "evidence": [
+        "open dependabot bump PR #2749 \u2014 logged, not scored"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": [
+        "open dependabot bump PR #2673 \u2014 logged, not scored"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-core-oauth-refresh-race-drops-revoke-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=security, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-oauth-refresh-revoke-before-issue-lockout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 3,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=3) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-accounting-cross-currency-match",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-accounting-confirm-no-tx",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-financial-f64-money",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-ai-pagination-no-cap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=security, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-marketplace-limit-no-cap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=security, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-actions",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-toast-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-review-body-no-cap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-url-validator-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=refactor, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 2,
+      "evidence": [
+        "scored into backlog.json this run (vector=security, score=2) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d, folded this run)",
+      "score_delta": 1,
+      "evidence": [
+        "scored into backlog.json this run (vector=bug, score=1) \u2014 refills starved planner buffer with backend/frontend vectors"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && grep '# YYYY-MM-DD'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq comparison to HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen_signals dedup vs prev",
+      "observed": "no non-cumulative re-emit with score_delta!=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "score > 8 count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay check",
+      "observed": "no open items past 14d cutoff",
+      "expected": "applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'adversarial pass:' in brief for new plans",
+      "observed": "1 new plan; brief line present with 'adversarial pass: passed'",
+      "expected": "present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": 1,
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "paths outside .research/",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets in added lines",
+      "observed": "raw=1, added=0",
+      "expected": "0 added",
+      "remediation": "raw grep hits 1 context line (unchanged .rlt.sk in pre-existing evidence at backlog.json:7871); added-lines-only=0 \u2014 interpreted per G17 filter",
+      "note": "G9 spec ambiguity: raw grep counts context lines but intent is to block NEW secret leaks. Aligned with G17's explicit '^+' filter."
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity to regen",
+      "observed": "regenerated in-process this run",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures",
+      "expected": "listed if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "no plan removals this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "now=8 head=8",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "regenerated in-process",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap + idempotency",
+      "observed": "auto_fix_actions=[]",
+      "expected": "pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "action-list.items ok, risks.items ok, project-state.md non-empty, pm 3\u21924, cc 5\u21926, epics=13",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token in added lines",
+      "observed": 0,
+      "expected": 0
+    }
+  ],
+  "auto_fix_actions": []
+}

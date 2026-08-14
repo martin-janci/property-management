@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-08-06 — routine Phase 1.6 lightweight upkeep (pm-frontend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 2 → 3 (pm-frontend → pm-qa next), coverage_cursor idx 4 → 5 (epic-7a re-checked, no material change; advances to epic-80). Sprint window 2026-08-04..08-06 shipped 25 PRs — most of the code-review/security backlog cleared; buffer-low fired from dispatcher for planner refill._
+_Generated: 2026-08-14 — routine Phase 1.6 lightweight upkeep (pm-qa rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 3 → 4 (pm-qa → pm-devops next), coverage_cursor idx 5 → 6. Sprint window 2026-08-13..08-14 merged 10 PRs — 4 i18n follow-ups (#2755/#2756/#2757/#2761), 3 code-review retries closed (#2746/#2747/#2748), SSO backslash open-redirect closed (#2758), WebSocket disconnect lifecycle hardened (#2760), rust-toolchain investigation closed unmerged path (#2745). Buffer-low fired from dispatcher for planner refill; 14 dispatcher-generated code-review-finding signals folded into backlog + 3 churn hotspots + 5 previously-null i18n/backend signals repaired._
 
 ## Executive summary
 
