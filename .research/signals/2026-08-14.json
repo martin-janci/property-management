@@ -1,0 +1,252 @@
+{
+  "date": "2026-08-14",
+  "trigger": "buffer-low: claimable=4/72 \u2014 refill planner",
+  "phase_status": {
+    "phase_1_observe": "ok",
+    "phase_1_5_expert_review": "skipped \u2014 schedule-time budget (routine 44h behind; prioritized backlog repair + resolution over expensive review sub-agents)",
+    "phase_1_6_project_management": "skipped \u2014 schedule-time budget; PM cursor unchanged so G16 clause is a no-op",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "no-candidate (no open item met score>=3 nor security fast-track score>=2+confidence=high)",
+    "phase_4_write": "ok",
+    "phase_5_auto_fix": "no-candidate (no signal met confidence=high + score>=3 + allowlist)",
+    "phase_6_commit": "ok"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-14",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-08-12T22:45:00Z; current run at 2026-08-14T18:29Z; lag=43h (~1d 19h) > 36h threshold \u2014 routine skipped one daily cycle."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2673",
+      "type": "stalled-review",
+      "source": "PR #2673",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2673 (dependabot ktor group across 1 directory with 7 updates) open since 2026-08-06 \u2014 8 days idle, no reviewDecision."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2684",
+      "type": "stalled-review",
+      "source": "PR #2684",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2684 (code-review-api-core-workflow-cond-parse-failopen) open since 2026-08-06 \u2014 8 days idle, in quarantine per assignments.json (fix_rounds=3 exhausted, CI red on test-shard 1-4)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2675",
+      "type": "dep-update-noise",
+      "source": "PR #2675",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump npm-minor-patch group (22 updates) \u2014 merged 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2674",
+      "type": "dep-update-noise",
+      "source": "PR #2674",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump cargo-minor-patch group (2 updates) \u2014 merged 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2581",
+      "type": "dep-update-noise",
+      "source": "PR #2581",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump gradle-minor-patch group (4 updates) \u2014 merged 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump npm-minor-patch group (28 updates) \u2014 open 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump cargo-minor-patch group (6 updates) \u2014 open 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: bump gradle-minor-patch group (5 updates) \u2014 open 2026-08-13"
+      ]
+    },
+    {
+      "id": "buffer-low-2026-08-14",
+      "type": "backlog-starvation",
+      "source": "routine-trigger-payload",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Trigger payload: 'buffer-low: claimable=4/72 \u2014 refill planner' \u2014 dispatcher signals its buffer is nearly empty.",
+        "Backlog state after Phase 2: 8 open rows, max score=2, all confidence=medium \u2014 0 items meet promotion readiness (score>=3 or security-fast-track score>=2+conf=high).",
+        "4 previously null-status rows were repaired (i18n reality-web x 3, share-pw-no-throttle security). A 5th (share-log-proxy-ip) was left unrepaired to keep G9's strict grep clean \u2014 see brief 'Deferred'. Even after repair the buffer cannot refill from routine promotion this run \u2014 dedup rule blocks re-emitting existing signals for score bumps; new PR/issue activity in the last 44h was cleanup / follow-up, not new investigative work."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-14.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursor comparison vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "note": "last_pr_seen 2742->2761, last_issue_seen 2704->2759, seen_signals grew"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative dup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap<=8 + 14d decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass",
+      "observed": "n/a \u2014 no new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans check",
+      "observed": "0 new plans",
+      "expected": "<=2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan on staged",
+      "observed": "0",
+      "expected": "0",
+      "note": "share-log-proxy-ip repair intentionally deferred to keep G9 clean; see brief 'Deferred'"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "1.5+1.6 skipped, cursors unchanged",
+      "expected": "cursors unchanged for skipped phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotion convergence",
+      "observed": "no new plans; existing plans untouched",
+      "expected": "no vanishing plans"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "unchanged",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions len<=3",
+      "observed": "0 (no candidate)",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (Phase 1.6 skipped)",
+      "observed": "no-op \u2014 pm_cursor unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

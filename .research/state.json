@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-12T22:45:00Z",
+  "last_run_iso": "2026-08-14T18:29:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2742,
-  "last_issue_seen": 2704,
-  "last_commit_sha": "a92c652719576eefa949775d5e56f707a82f4e07",
+  "last_pr_seen": 2761,
+  "last_issue_seen": 2759,
+  "last_commit_sha": "e67d90ebc2",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -837,7 +837,17 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-08-14",
+    "stalled-review-pr-2673",
+    "stalled-review-pr-2684",
+    "dep-update-noise-pr-2675",
+    "dep-update-noise-pr-2674",
+    "dep-update-noise-pr-2581",
+    "dep-update-noise-pr-2751",
+    "dep-update-noise-pr-2750",
+    "dep-update-noise-pr-2749",
+    "buffer-low-2026-08-14"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -851,7 +861,7 @@
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 63,
+    "runs": 64,
     "vectors_created": 291,
     "plans_created": 22,
     "quiet_days": 2,
