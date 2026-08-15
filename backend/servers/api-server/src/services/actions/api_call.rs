@@ -86,14 +86,51 @@ const MAX_REDIRECTS: usize = 10;
 ///     `http://` downgrade (outside development), or a `.local` / `.internal`
 ///     TLD. This is what stops a redirect from bouncing an initially-valid
 ///     request onto an internal/blocked host after the initial-URL check has
-///     already passed.
-fn redirect_hop_allowed(target: &str, previous_hops: usize) -> Result<(), String> {
+///     already passed, or
+///   * the redirect target is a **different origin** (scheme/host/port) from the
+///     originally-configured request URL. This is a credential-leak defence:
+///     `reqwest` strips only the well-known sensitive headers
+///     (`Authorization` / `Cookie` / `Proxy-Authorization` / `Www-Authenticate`)
+///     when a redirect crosses to a different host — it does **not** strip
+///     arbitrary custom headers. A credential carried in
+///     [`AuthConfig::Header`] (e.g. `X-Api-Key`) or any user-supplied secret in
+///     `ApiCallConfig::headers` would therefore be forwarded verbatim to the
+///     redirect target's host. An initially-valid endpoint that answers
+///     `302 Location: https://attacker.example/…` would thus exfiltrate the
+///     secret to an attacker-controlled origin — a hop the SSRF range checks
+///     above cannot catch (the attacker host is a perfectly ordinary public
+///     `https://` host). Pinning redirects to the same origin as the configured
+///     request closes that channel for **every** header, standard or custom.
+///
+/// `original` is the originally-configured request URL (the first entry in
+/// `reqwest`'s redirect chain); the same-origin comparison is always made
+/// against it rather than the immediately-preceding hop, so no chain of
+/// individually-"small" host changes can walk the request off its origin.
+fn redirect_hop_allowed(target: &str, original: &str, previous_hops: usize) -> Result<(), String> {
     if previous_hops >= MAX_REDIRECTS {
         return Err("too many redirects".to_string());
     }
-    common::url_validation::validate_external_url(target)
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+    common::url_validation::validate_external_url(target).map_err(|e| e.to_string())?;
+
+    // Same-origin enforcement (credential-leak defence — see doc comment). Parse
+    // both URLs with the same (`reqwest`-re-exported) `url` crate so their
+    // `Origin` values are directly comparable; `Origin` equality covers
+    // scheme + host + port, so an `https`→`http` downgrade or a port change also
+    // counts as cross-origin and is refused.
+    let target_origin = reqwest::Url::parse(target)
+        .map_err(|e| format!("invalid redirect target URL: {e}"))?
+        .origin();
+    let original_origin = reqwest::Url::parse(original)
+        .map_err(|e| format!("invalid original request URL: {e}"))?
+        .origin();
+    if target_origin != original_origin {
+        return Err(
+            "cross-origin redirect refused (credential-leak / SSRF hardening): the redirect \
+             target is a different origin than the configured request URL"
+                .to_string(),
+        );
+    }
+    Ok(())
 }
 
 /// Real DNS resolver used in production: the OS resolver via Tokio's async
@@ -238,14 +275,27 @@ impl ApiCallExecutor {
         // `validate_external_url` additionally rejects a redirect that
         // downgrades to plain `http://`, or targets a blocked hostname /
         // `.local` / `.internal` TLD, which an IP-range check alone would not
-        // catch. Fail closed: an invalid hop aborts the request.
-        let redirect_policy =
-            reqwest::redirect::Policy::custom(|attempt| {
-                match redirect_hop_allowed(attempt.url().as_str(), attempt.previous().len()) {
-                    Ok(()) => attempt.follow(),
-                    Err(reason) => attempt.error(reason),
-                }
-            });
+        // catch. The same-origin check additionally refuses a redirect to a
+        // *different* (but otherwise valid, public) origin, which would leak any
+        // custom credential header to the target host (`reqwest` only strips the
+        // well-known sensitive headers cross-host). Fail closed: an invalid hop
+        // aborts the request.
+        let redirect_policy = reqwest::redirect::Policy::custom(|attempt| {
+            // The originally-configured request URL is the first entry in the
+            // redirect chain (empty on the very first hop, where the URL being
+            // attempted IS the original).
+            let original = attempt
+                .previous()
+                .first()
+                .unwrap_or_else(|| attempt.url())
+                .as_str()
+                .to_string();
+            match redirect_hop_allowed(attempt.url().as_str(), &original, attempt.previous().len())
+            {
+                Ok(()) => attempt.follow(),
+                Err(reason) => attempt.error(reason),
+            }
+        });
 
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(60))
@@ -869,14 +919,15 @@ mod tests {
     /// re-validation, so a redirect to a blocked/internal host WAS followed.
     #[test]
     fn redirect_to_blocked_or_internal_host_is_not_followed() {
+        let original = "https://api.example.com/webhook";
         // Redirect target = private RFC1918 host → must be refused.
         assert!(
-            redirect_hop_allowed("https://10.0.0.1/internal", 0).is_err(),
+            redirect_hop_allowed("https://10.0.0.1/internal", original, 0).is_err(),
             "a redirect to a private (10.0.0.0/8) host must not be followed"
         );
         // Redirect target = link-local cloud-metadata endpoint → must be refused.
         assert!(
-            redirect_hop_allowed("https://169.254.169.254/latest/meta-data/", 0).is_err(),
+            redirect_hop_allowed("https://169.254.169.254/latest/meta-data/", original, 0).is_err(),
             "a redirect to the 169.254.169.254 metadata host must not be followed"
         );
     }
@@ -887,13 +938,71 @@ mod tests {
     /// (bounded-hops half of the policy).
     #[test]
     fn redirect_hop_allows_public_https_and_bounds_chain_length() {
+        // Same-origin redirect to a public https host → followed.
         assert!(
-            redirect_hop_allowed("https://api.example.com/next", 0).is_ok(),
-            "a redirect to a public https host should be followed"
+            redirect_hop_allowed(
+                "https://api.example.com/next",
+                "https://api.example.com/webhook",
+                0
+            )
+            .is_ok(),
+            "a same-origin redirect to a public https host should be followed"
         );
         assert!(
-            redirect_hop_allowed("https://api.example.com/next", MAX_REDIRECTS).is_err(),
+            redirect_hop_allowed(
+                "https://api.example.com/next",
+                "https://api.example.com/webhook",
+                MAX_REDIRECTS
+            )
+            .is_err(),
             "a redirect chain at the hop limit must be refused"
+        );
+    }
+
+    /// IG3 regression (credential leakage on cross-origin redirect): a request
+    /// may carry a secret in a custom header — `AuthConfig::Header` (e.g.
+    /// `X-Api-Key`) or an entry in `ApiCallConfig::headers`. `reqwest` strips
+    /// only the well-known sensitive headers (`Authorization` / `Cookie` /
+    /// `Proxy-Authorization` / `Www-Authenticate`) when a redirect crosses to a
+    /// different host; it forwards every *custom* header unchanged. So an
+    /// initially-valid endpoint answering `302 Location:
+    /// https://attacker.example/collect` would leak the custom credential to the
+    /// attacker's origin — and the SSRF range checks cannot catch it, because
+    /// `attacker.example` is an ordinary public `https://` host that passes
+    /// `validate_external_url`.
+    ///
+    /// The fix pins redirects to the **same origin** as the configured request
+    /// URL. This test exercises that decision directly (the SSRF DNS guard
+    /// blocks standing up a loopback test server, so the redirect branch is only
+    /// reachable hermetically via this pure function): a cross-origin hop to a
+    /// perfectly valid public host must be **refused**, while the corresponding
+    /// same-origin hop is allowed.
+    ///
+    /// Fails on `dev` before same-origin pinning: there the custom policy
+    /// re-validated the target for SSRF but followed any valid cross-origin hop,
+    /// forwarding the custom credential header to the new host.
+    #[test]
+    fn cross_origin_redirect_is_refused_even_to_a_valid_public_host() {
+        let original = "https://api.trusted.example/webhook";
+
+        // Different host (but a valid public https host) → refused.
+        let err = redirect_hop_allowed("https://attacker.example/collect", original, 0)
+            .expect_err("a cross-origin redirect to a different host must be refused");
+        assert!(
+            err.contains("cross-origin"),
+            "refusal must cite the cross-origin credential-leak guard, got: {err}"
+        );
+
+        // Different port on the same host → still cross-origin → refused.
+        assert!(
+            redirect_hop_allowed("https://api.trusted.example:8443/webhook", original, 0).is_err(),
+            "a redirect to a different port is cross-origin and must be refused"
+        );
+
+        // Same origin, different path → allowed (guards against over-broad pinning).
+        assert!(
+            redirect_hop_allowed("https://api.trusted.example/v2/webhook", original, 0).is_ok(),
+            "a same-origin redirect (identical scheme/host/port) must still be followed"
         );
     }
 }
