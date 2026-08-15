@@ -7640,49 +7640,73 @@
     },
     {
       "id": "code-review-reality-web-comparison-view-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
+      "title": "reality-web ComparisonView.tsx hardcoded English on 4-locale portal — sk/cs/de visitors see EN copy + toasts",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (reality-web)"
+      ],
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
         "Hardcoded UI text: L104 '<h2>No properties to compare</h2>', L105 'Add properties to your comparison from the listings page.', L107 'Browse Listings', L230 'Clear All', L272 'Remove'",
         "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' — surfaced to end users via showToast()",
-        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
+        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)",
+        "2026-08-15: normalized malformed backlog row (routine repair — preserved original tier1d finding evidence above)"
       ],
-      "expert": "frontend"
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
+      "title": "reality-web RealtorManagement.tsx partial i18n — realtor-removal confirm modal + subtitle stay English",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (reality-web)"
+      ],
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — component DOES use useTranslations elsewhere, but the destructive confirm-remove modal and header subtitle are hardcoded English, so they never localize",
         "L91 subtitle 'Manage your team of real estate agents', L962 '<span>Are you sure?</span>', L964 'Yes, Remove' (and adjacent 'Cancel') on the realtor-removal confirmation",
-        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files"
+        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files",
+        "2026-08-15: normalized malformed backlog row (routine repair — preserved original tier1d finding evidence above)"
       ],
-      "expert": "frontend"
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
     },
     {
       "id": "code-review-reality-web-agency-errorstate-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
+      "title": "reality-web AgencyErrorStates.tsx no-agency empty state hardcoded English on 4-locale portal",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (reality-web)"
+      ],
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
         "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
-        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
+        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI",
+        "2026-08-15: normalized malformed backlog row (routine repair — preserved original tier1d finding evidence above)"
       ],
-      "expert": "frontend"
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
@@ -7839,33 +7863,50 @@
     },
     {
       "id": "code-review-api-handlers-share-pw-no-throttle",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-handlers",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
+      "title": "SECURITY: public share password endpoint has no throttle — brute-force viable via anonymous POST",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Tier1d review 2026-08-15 (api-handlers)"
+      ],
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:574 access_protected_share -- public, unauthenticated endpoint (mounted via shares::public_router at POST /api/v1/documents/shared/{token}/access, lib.rs:165 merge) verifies a caller-supplied share password (verify_share_password_for_share at ~L617) with NO brute-force protection: no failed-attempt counter, no per-token/per-IP lockout, no throttle. grep for rate.?limit|throttle|attempt|lockout across routes/documents/ returns 0 hits.",
         "The only rate limiter in api-server is a per-TENANT set (state.tenant_rate_limiters: TenantRateLimiterSet, applied through host_tenant_middleware keyed on org context). The share handler comment explicitly states 'This public endpoint has no caller org context', so the per-tenant limiter cannot key these unauthenticated requests -> the password endpoint is effectively unthrottled. An attacker holding a share token can brute-force the share password at request speed.",
-        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer."
+        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer.",
+        "2026-08-15: normalized malformed backlog row (routine repair — preserved original tier1d finding evidence above)"
       ],
-      "expert": "security"
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs",
+        "backend/servers/api-server/src/routes/rate_limit.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": "plans/code-review-api-handlers-share-pw-no-throttle.md"
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-handlers",
-      "score_delta": 1,
+      "title": "share-access audit log records reverse-proxy IP, not client IP — audit trail loses attribution",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (api-handlers)"
+      ],
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 -- both public share handlers derive the audit ip_address from axum ConnectInfo<SocketAddr> (let ip_address = addr.ip().to_string()) and persist it via log_share_access_for_share(LogShareAccess{ ip_address, .. }).",
-        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *.dev.ppt.rlt.sk), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
-        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
+        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *<internal-dev-domain>), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
+        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer.",
+        "2026-08-15: normalized malformed backlog row (routine repair — preserved original tier1d finding evidence above)"
       ],
-      "expert": "rust"
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
     },
     {
       "id": "churn-hotspot-marketplace-award-quote-idor-tests",
@@ -8026,6 +8067,344 @@
         "assignment_status": "merged",
         "pr_number": 2762
       }
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow",
+      "title": "api-core: DelayConfig::to_duration multiplies user-supplied u64 before MAX_DELAY_SECONDS check — panics in debug / silently wraps in release",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:57-59 — `Duration::from_secs(self.duration * 60|3600|86400)` uses plain multiplication with no checked/saturating guard.",
+        "The multiply runs BEFORE the range check (delay.rs:100 to_duration call, delay.rs:103 MAX_DELAY_SECONDS check), so the 7-day cap can never guard the arithmetic.",
+        "Reachability: DelayConfig is deserialized from arbitrary workflow-action config (parse_config, no bound on `duration`). `{\"duration\": 9223372036854775807, \"unit\": \"days\"}` panics in overflow-checks builds (worker DoS) or silently wraps under release (validation bypass).",
+        "House convention already exists: workflow_executor.rs:35-46 compute_backoff_seconds uses saturating_mul with an explicit overflow-audit doc comment.",
+        "Verified 2026-08-15 against origin/dev — code still present at delay.rs:57-59, MAX_DELAY_SECONDS still checked after to_duration() at delay.rs:103."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-docgen-empty-llm-ok",
+      "title": "api-core: document_generation collapses empty LLM `choices[]` to Ok with empty summary — provider block / content-filter is silent success",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:536-540 uses `.unwrap_or_default()` on `response.choices.first()` so an empty choices array produces content = \"\", still returned as Ok(DocumentSummarizationResult{summary:\"\",…}).",
+        "Same pattern at document_generation.rs:706-711 for announcement drafting → empty Vec returned as Ok with zero drafts (silent no-op).",
+        "Caller cannot distinguish content-filter block / provider hiccup / quota truncation from a genuine empty answer — no retry / surfacing possible.",
+        "Landable fix: return a domain error (e.g. `DocumentGenerationError::EmptyCompletion`) when `choices` is empty; unit-testable with a stubbed LLM client."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-throws-malformed",
+      "title": "mobile-native-kmp: DecimalStringSerializers throws on malformed backend Decimal — crashes network deserialization",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:44-47 and :60-63 — the deserializer throws unconditionally on any parse failure, propagating an uncaught SerializationException out of the response pipeline.",
+        "Impacts every screen consuming Decimal fields (price, area, portfolio metrics) — a single malformed row from the API kills the whole list decode.",
+        "Fix candidates: (a) return null on parse failure and let the domain model treat it as missing; (b) return a sentinel and log; (c) surface a typed IntegrationError the UI can render as 'value unavailable' rather than a cold crash."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "title": "ppt-web WebSocketContext subscribes to `entity:*` events but backend emits with dot separator — real-time query invalidation silently broken",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 declares `eventToQueryKeys` keyed by `entity:announcement`/`entity:fault`/etc. (colon form).",
+        "WebSocketContext.tsx:305 iterates `Object.entries(eventToQueryKeys)` matching `eventType` → the incoming event must arrive as `entity:announcement` verbatim for the query invalidation to fire.",
+        "If backend emits any other shape (`announcement`, `entity.announcement`, `announcement:updated`), the map misses and clients never invalidate on push → stale data until manual refresh.",
+        "Verified 2026-08-15: eventToQueryKeys still uses `entity:<type>` keys (WebSocketContext.tsx:33-40)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-client-no-onunauthorized",
+      "title": "ppt-web AuthProvider wires configureApiClient without onUnauthorized — 401 from feature hooks doesn't trigger token refresh / logout",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:332-337 — configureApiClient({ getToken: getAccessToken }) — no onUnauthorized handler passed.",
+        "Feature hooks (sentiment, predictive-maintenance) hit the raw apiClient rather than the fetch wrapper that owns refresh flow → a 401 from these paths does not trigger token refresh or session-invalidate handling.",
+        "Fix: pass an onUnauthorized callback that runs the same refresh-then-logout ladder as the primary axios interceptor; wire it via configureApiClient({ getToken, onUnauthorized }) so every consumer of getApiClient() participates in the auth lifecycle."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-unverified-jwt-role",
+      "title": "ppt-web decodeJwtPayload unverified base64 decode of JWT — role/tenant reads trust untampered client-side (defence-in-depth gap)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:220-233 — decodeJwtPayload does an UNVERIFIED base64 decode; downstream reads (role, tenant_id, exp) trust the untampered client value.",
+        "Not a security auth bypass on its own (backend re-verifies every JWT), but any client-side gate keyed on the decoded fields can be flipped by a browser-side edit of localStorage → surprise UX / support tickets.",
+        "Fix: mark the decoded shape explicitly as 'display only', add a short comment at decodeJwtPayload citing 'server-side is source of truth', and route any real gate to the /me endpoint or the server-issued session claims."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-createdispute-fake-submit",
+      "title": "ppt-web CreateDisputePage.handleSubmit fakes API call — dispute forms 'succeed' without hitting backend",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit() collects the full dispute form and simulates success (no api-client call, no error branch).",
+        "User sees the 'created' toast but no dispute is persisted — direct parallel of the mobile-rn ReportFaultScreen fake-submit issue that landed as its own plan and PR.",
+        "Fix: replace the simulated success with the real POST /api/v1/disputes call via the generated api-client; add a wire-up integration test that asserts the network mutation was invoked."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-alert-i18n",
+      "title": "ppt-web compliance/ pages use window.alert() with hardcoded English — inaccessible on 6 locale bundles",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "The entire features/compliance/ page cluster uses the browser-native window.alert() with hardcoded English strings.",
+        "ppt-web ships 6 locales (en/sk/cs/de/pl/hu) — every non-EN user sees English on the highest-visibility compliance flows.",
+        "Fix: replace alert() with the app's toast / dialog system (t()/useTranslation), migrating strings into features/compliance/i18n namespace."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-mediation-panels-no-iserror",
+      "title": "ppt-web mediation panels drop isError from useQuery — network failures render as empty state, not error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx:28 — `const { data: notes = [], isLoading } = ...` — isError never destructured.",
+        "A failed fetch (500, network down, RLS reject) presents to the user as 'no notes' rather than an error banner → silent data-loss illusion in a legal/mediation context.",
+        "Fix: destructure isError/error, render an error card with retry, mirror the pattern used in features/faults/components/FaultDetailPanel.tsx."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-journal-newsletter-fake-submit",
+      "title": "reality-web journal newsletter subscribe fakes success — no backend POST, subscribers silently dropped",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:113-116 — handleSubscribe(e) calls e.preventDefault() then only calls a local toast; there is no fetch/POST.",
+        "Every 'thanks, you're subscribed!' is a lie — no row lands in the newsletter table, so growth metrics under-count and users never receive the promised newsletter.",
+        "Fix: wire to the newsletter endpoint (see reality-server subscription route, if present — otherwise add one first, then wire); add a Vitest that asserts fetch was called with the entered email."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "title": "reality-web inquiries page handleCancel fires mutation without error surface — network failures leave stale UI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel calls cancelInquiry.mutate(inquiryId) with no onError; a failure closes the modal but the inquiry stays live.",
+        "Given the endpoint is (correctly) authz-gated for realtor-owner, forbidden cancels are silently swallowed → user thinks it worked.",
+        "Fix: pass onSuccess / onError options to mutate(), route errors through the reality-web toast system with a retry action; add a Playwright test forcing a 403 and asserting the error toast."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-locale",
+      "title": "reality-web PriceMap hardcoded to 'sk' locale — cs/de/en visitors see Slovak number formatting",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-08-15 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:37 — `v == null ? '—' : `${Math.round(v).toLocaleString('sk')} €`` hardcodes the sk locale.",
+        "Route already provides the current locale via [locale] segment — plumb it into toLocaleString to match the URL locale.",
+        "Fix: replace 'sk' with the locale from useParams / useLocale hook; add a Vitest asserting cs-formatted output for locale=cs."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "title": "churn-hotspot: voice_webhooks.rs — 3 successive security fixes in one window (+556 lines) suggests deeper module review needed",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2762",
+        "PR #2765",
+        "PR #2766"
+      ],
+      "evidence": [
+        "PR #2762 (+59): Alexa cert-fetch timeout / shared client hardening.",
+        "PR #2765 (+407): fail-closed Google Actions JWT verification (was fail-open, could be forged).",
+        "PR #2766 (+90): voice OAuth refresh AuthUser + rate-limit + ownership check (was fully unauthenticated).",
+        "Three back-to-back security-relevant fixes in one file within a single window is a strong 'audit remainder' signal — worth a Rust + security review pass on the rest of voice_webhooks.rs and the surrounding voice/ tree (mounts, cert cache TTL semantics, `voice_assistant_devices` schema/RLS gap noted in migration 00226)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests",
+      "title": "churn-hotspot: voice_oauth_refresh_auth_tests.rs — new 270-line regression suite (monitor for further churn)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2766"
+      ],
+      "evidence": [
+        "PR #2766 added backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs (+270 lines) covering the anonymous-refresh regression (no bearer→401, non-owner→403, owner→200 rotates hash).",
+        "First-emit as hotspot to seed hotspot_history — if the file churns again next run, the repeated-churn signal will surface the follow-ups (e.g. platform-admin path coverage, rate-limit boundary tests)."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-workflow-executor-rs",
+      "title": "repeated-churn: workflow_executor.rs — runs_seen=2 (2026-08-07 + 2026-08-15) touched again by PR #2769 fail-closed condition parse",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2769",
+        "hotspot_history 2026-08-07"
+      ],
+      "evidence": [
+        "PR #2769 (+154) added deny_unknown_fields on Condition/ConditionGroup + free fn evaluate_conditions_list — this run's fail-closed fix.",
+        "Prior hotspot_history entry from 2026-08-07 (recent_churn=457) — module has now churned in two consecutive windows.",
+        "The two churns cluster around the same subsystem (condition eval) — worth a Rust dev-review slice on the file to catch adjacent fail-open patterns (`.unwrap_or_default()` on optional condition fields, downstream callers assuming `Ok(true)`)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
     }
   ]
 }

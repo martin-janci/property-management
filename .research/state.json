@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-15T03:11:00Z",
+  "last_run_iso": "2026-08-15T18:45:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2761,
-  "last_issue_seen": 2759,
-  "last_commit_sha": "75b30077aa0e3e37aa1f4ed4b6626245a41405e7",
+  "last_pr_seen": 2769,
+  "last_issue_seen": 2768,
+  "last_commit_sha": "5dc152bbc61bbdd8ddcd4b488f7c0f6c354e34ac",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -428,9 +428,9 @@
       "recent_churn": 2
     },
     "backend/servers/api-server/src/services/workflow_executor.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-07",
-      "recent_churn": 457
+      "runs_seen": 2,
+      "last_seen": "2026-08-15",
+      "recent_churn": 154
     },
     "frontend/apps/ppt-web/src/lib/websocket.ts": {
       "runs_seen": 1,
@@ -455,20 +455,31 @@
     "backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs": {
       "runs_seen": 1,
       "last_seen": "2026-08-15",
-      "recent_churn": 298
+      "recent_churn": 415
     },
     "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts": {
       "runs_seen": 1,
       "last_seen": "2026-08-15",
-      "recent_churn": 111
+      "recent_churn": 281
     },
     "backend/servers/api-server/src/services/actions/api_call.rs": {
       "runs_seen": 1,
       "last_seen": "2026-08-15",
-      "recent_churn": 106
+      "recent_churn": 251
+    },
+    "backend/servers/api-server/src/routes/voice_webhooks.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-15",
+      "recent_churn": 556
+    },
+    "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-15",
+      "recent_churn": 270
     }
   },
   "seen_signals": [
+    "churn-hotspot-api-call-rs",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -513,6 +524,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
@@ -525,6 +537,7 @@
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/org_property_authz_backfill_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
     "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
     "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
@@ -557,13 +570,19 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
     "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
+    "churn-hotspot-marketplace-award-quote-idor-tests",
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
     "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
+    "churn-hotspot-protected-route-i18n-test",
+    "churn-hotspot-voice-oauth-refresh-auth-tests",
+    "churn-hotspot-voice-webhooks-rs",
+    "churn-hotspot-workflow-executor-rs",
     "closed-not-merged-pr-1274",
     "closed-not-merged-pr-1378",
     "closed-not-merged-pr-1425",
@@ -580,7 +599,9 @@
     "closed-not-merged-pr-671",
     "closed-not-merged-pr-908",
     "code-review-api-core-admin-rs-swallowed-serialize",
+    "code-review-api-core-delay-duration-overflow",
     "code-review-api-core-dispute-fsm-no-tests",
+    "code-review-api-core-docgen-empty-llm-ok",
     "code-review-api-core-equipment-idor",
     "code-review-api-core-idempotency-client-tenant",
     "code-review-api-core-llm-doc-idor",
@@ -601,9 +622,13 @@
     "code-review-api-handlers-forgot-password-no-rate-limit",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
+    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
+    "code-review-api-handlers-voice-google-verify-fail-open",
+    "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
+    "code-review-mobile-native-kmp-decimal-serializer-throws-malformed",
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
     "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
@@ -626,6 +651,7 @@
     "code-review-mobile-rn-thread-send-silent-fail",
     "code-review-mobile-rn-vote-list-cast",
     "code-review-mobile-rn-vote-xform-untested",
+    "code-review-ppt-web-core-api-client-no-onunauthorized",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
     "code-review-ppt-web-core-logout-cache-purge-gap",
@@ -633,6 +659,8 @@
     "code-review-ppt-web-core-notfound-i18n-gap",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-unverified-jwt-role",
+    "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
     "code-review-ppt-web-core-ws-pong-timeout-drop",
     "code-review-ppt-web-core-ws-token-rotation-stale",
@@ -641,8 +669,11 @@
     "code-review-ppt-web-ui-actionqueue-mock-shipped",
     "code-review-ppt-web-ui-announcer-stale-msg",
     "code-review-ppt-web-ui-aria-label-i18n",
+    "code-review-ppt-web-ui-compliance-alert-i18n",
+    "code-review-ppt-web-ui-createdispute-fake-submit",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
+    "code-review-ppt-web-ui-mediation-panels-no-iserror",
     "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
     "code-review-ppt-web-ui-propinput-json-coerce",
     "code-review-ppt-web-ui-role-gate-fail-open",
@@ -661,10 +692,13 @@
     "code-review-reality-web-comparison-share-all-or-nothing",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-inline-tenant-json-xss",
+    "code-review-reality-web-inquiry-cancel-no-error",
+    "code-review-reality-web-journal-newsletter-fake-submit",
     "code-review-reality-web-listing-metadata-shape",
     "code-review-reality-web-listing-page-ssr-crash",
     "code-review-reality-web-listingform-nan-validation",
     "code-review-reality-web-listingform-no-i18n",
+    "code-review-reality-web-pricemap-hardcoded-locale",
     "code-review-reality-web-protectedroute-i18n",
     "code-review-reality-web-realtor-mgmt-silent-error",
     "code-review-reality-web-realtor-mgmt-untranslated",
@@ -700,6 +734,10 @@
     "dep-update-noise-pr-2477",
     "dep-update-noise-pr-2491",
     "dep-update-noise-pr-2625",
+    "dep-update-noise-pr-2673",
+    "dep-update-noise-pr-2749",
+    "dep-update-noise-pr-2750",
+    "dep-update-noise-pr-2751",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -745,6 +783,8 @@
     "lag-warning-2026-07-30",
     "lag-warning-2026-08-06",
     "lag-warning-2026-08-12",
+    "lag-warning-2026-08-15",
+    "malformed-backlog-row-repair-batch-2026-08-15",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
@@ -760,6 +800,7 @@
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+    "repeated-churn-workflow-executor-rs",
     "risky-churn-pr-963-main-rs",
     "risky-churn-pr-992-app-tsx",
     "screen-map-drift-pr-1033-ppt",
@@ -852,18 +893,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "lag-warning-2026-08-15",
-    "churn-hotspot-backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs",
-    "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
-    "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
-    "dep-update-noise-pr-2751",
-    "dep-update-noise-pr-2750",
-    "dep-update-noise-pr-2673",
-    "dep-update-noise-pr-2749",
-    "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
-    "code-review-api-handlers-voice-google-verify-fail-open",
-    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -877,9 +907,9 @@
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 64,
-    "vectors_created": 297,
-    "plans_created": 24,
+    "runs": 65,
+    "vectors_created": 312,
+    "plans_created": 25,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

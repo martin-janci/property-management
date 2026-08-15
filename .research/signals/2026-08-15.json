@@ -1,5 +1,125 @@
 {
-  "generated": "2026-08-15T03:11:00Z",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/2026-08-15.md",
+      "observed": "# 2026-08-15",
+      "expected": "# 2026-08-15"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.last_pr_seen delta",
+      "observed": "2761→2769",
+      "expected": "changed"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "339==339",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; no open row updated_at<=2026-08-01",
+      "observed": "cap held; oldest open updated_at=2026-08-04",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'adversarial pass:' in brief for new plan",
+      "observed": "passed (chain intact)",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "grep -c metadata/headings, Mode line, capability tick, Files-exist",
+      "observed": "4 metadata + 11 headings + Mode:cloud-ok + [x] boxes:3 + Files-resolve",
+      "expected": "all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md render",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty check",
+      "observed": "no phases failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still on disk or in _archive",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md render",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions bounds + idempotency",
+      "observed": "no candidate — 0 actions",
+      "expected": "≤3, kill switch honored"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped this run — no-op)",
+      "observed": "Phase 1.6 not run → no-op",
+      "expected": "no-op when not run"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
   "signals": [
     {
       "id": "lag-warning-2026-08-15",
@@ -77,8 +197,11 @@
       "id": "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
       "type": "code-review-finding",
       "source": "Phase 1.5 dev-review 2026-08-15 (segment=api-handlers, churn-aligned voice_webhooks.rs +72 lines after PR #2748)",
-      "score_delta": 2,
-      "evidence": "voice_webhooks.rs:535 — oauth_token_refresh handler signature has NO AuthUser extractor (contrast sibling oauth_token_exchange). Mounted at /api/v1/webhooks/voice/oauth/refresh via routes/mod.rs:126. VoiceTokenRefreshRequest = {device_id: Uuid} only. Downstream call oauth_manager.refresh_token(...) rotates access_token_encrypted + access_token_hash on the device row. Any caller with a device_id can DoS the integration and amplify traffic to Amazon/Google. Reachability confirmed: pub mod voice_webhooks + .route('/oauth/refresh', post(oauth_token_refresh)).",
+      "score_delta": 0,
+      "evidence": [
+        "voice_webhooks.rs:535 — oauth_token_refresh handler signature has NO AuthUser extractor (contrast sibling oauth_token_exchange). Mounted at /api/v1/webhooks/voice/oauth/refresh via routes/mod.rs:126. VoiceTokenRefreshRequest = {device_id: Uuid} only. Downstream call oauth_manager.refresh_token(...) rotates access_token_encrypted + access_token_hash on the device row. Any caller with a device_id can DoS the integration and amplify traffic to Amazon/Google. Reachability confirmed: pub mod voice_webhooks + .route('/oauth/refresh', post(oauth_token_refresh)).",
+        "note: score_delta zeroed on re-emit (id already in state.seen_signals; G4 non-cumulative type)"
+      ],
       "confidence": "high",
       "candidate_vector": "security"
     },
@@ -86,8 +209,11 @@
       "id": "code-review-api-handlers-voice-google-verify-fail-open",
       "type": "code-review-finding",
       "source": "Phase 1.5 dev-review 2026-08-15 (segment=api-handlers, churn-aligned voice_webhooks.rs)",
-      "score_delta": 2,
-      "evidence": "voice_webhooks.rs:1087 — verify_google_request returns Ok(()) for: no project-id configured, missing Auth header, JWT-payload-contains-substring match, AND base64-decode failure. Doc comment above function explicitly acknowledges the missing JWKS+signature+iss+aud+exp steps. STANDARD base64 alphabet used to decode URL-safe unpadded JWT payloads → real Google JWTs mis-decode → still fall through to Ok(()). Only real gate on POST /google is authenticate_voice_user's OAuth access-token check. Sibling verify_hmac_signature (PR #2748) already demonstrates the fail-closed pattern.",
+      "score_delta": 0,
+      "evidence": [
+        "voice_webhooks.rs:1087 — verify_google_request returns Ok(()) for: no project-id configured, missing Auth header, JWT-payload-contains-substring match, AND base64-decode failure. Doc comment above function explicitly acknowledges the missing JWKS+signature+iss+aud+exp steps. STANDARD base64 alphabet used to decode URL-safe unpadded JWT payloads → real Google JWTs mis-decode → still fall through to Ok(()). Only real gate on POST /google is authenticate_voice_user's OAuth access-token check. Sibling verify_hmac_signature (PR #2748) already demonstrates the fail-closed pattern.",
+        "note: score_delta zeroed on re-emit (id already in state.seen_signals; G4 non-cumulative type)"
+      ],
       "confidence": "high",
       "candidate_vector": "security"
     },
@@ -95,31 +221,306 @@
       "id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
       "type": "code-review-finding",
       "source": "Phase 1.5 dev-review 2026-08-15 (segment=api-handlers)",
-      "score_delta": 1,
-      "evidence": "voice_webhooks.rs:886 — reqwest::Client::new().get(url).send() with no builder timeout/connect_timeout, and client not memoised across calls. Under S3 slow-loris or cold-cache burst, holds Axum tasks + a DB RlsConnection (acquired above in alexa_webhook) for reqwest's default read window.",
+      "score_delta": 0,
+      "evidence": [
+        "voice_webhooks.rs:886 — reqwest::Client::new().get(url).send() with no builder timeout/connect_timeout, and client not memoised across calls. Under S3 slow-loris or cold-cache burst, holds Axum tasks + a DB RlsConnection (acquired above in alexa_webhook) for reqwest's default read window.",
+        "note: score_delta zeroed on re-emit (id already in state.seen_signals; G4 non-cumulative type)"
+      ],
       "confidence": "high",
       "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2762 + #2765 + #2766 in-window",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "voice_webhooks.rs churned by three back-to-back security-relevant PRs this run: #2762 (+59 Alexa cert timeout), #2765 (+407 Google JWT fail-closed), #2766 (+90 OAuth refresh auth).",
+        "Cumulative +556 lines in one window makes this the #1 raw hotspot; first appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests",
+      "type": "churn-hotspot",
+      "source": "PR #2766 (new file)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "New file backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs (+270 lines) added by PR #2766.",
+        "First-emit; seeds hotspot_history so a follow-up churn will fire repeated-churn."
+      ]
+    },
+    {
+      "id": "churn-hotspot-workflow-executor-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2769",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2769 (+154 lines) added deny_unknown_fields + free fn evaluate_conditions_list.",
+        "Also triggers repeated-churn: hotspot_history shows prior touch 2026-08-07 (runs_seen=1)."
+      ]
+    },
+    {
+      "id": "repeated-churn-workflow-executor-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history 2026-08-07 → 2026-08-15",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs runs_seen 1→2 across two consecutive windows (2026-08-07 + 2026-08-15).",
+        "Second-window churn cluster around the condition-evaluation subsystem — worth a Rust dev-review slice for adjacent fail-open patterns."
+      ]
+    },
+    {
+      "id": "churn-hotspot-marketplace-award-quote-idor-tests",
+      "type": "churn-hotspot",
+      "source": "PR #2763 (additional churn since morning run)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2763 (+117 lines) — additional churn on top of morning run's +298 (PR #2747). Cumulative in-window churn ~415 lines.",
+        "Re-emit under cumulative carve-out; no score_delta re-applied (G4 compliance)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-api-call-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2764 (additional churn since morning run)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2764 (+127/-18 = 145 lines) — cross-origin redirect refusal on top of morning run's +106 (PR #2746). Cumulative in-window ~251 lines.",
+        "Re-emit under cumulative carve-out; no score_delta re-applied."
+      ]
+    },
+    {
+      "id": "churn-hotspot-protected-route-i18n-test",
+      "type": "churn-hotspot",
+      "source": "PR #2767 (additional churn since morning run)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2767 (+170 lines) — expanded classification + runtime-resolution tests on top of morning run's +111 (PR #2757). Cumulative in-window ~281 lines.",
+        "Re-emit under cumulative carve-out; no score_delta re-applied."
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-60 (DelayConfig::to_duration) multiplies the user-supplied `duration: u64` field (declared at delay.rs:44) by the unit factor with a plain `*`: `Duration::from_secs(self.duration * 60)` (Minutes), `* 3600` (Hours), `* 86400` (Days). None of these multiplications is checked or saturating.",
+        "The multiply runs BEFORE the range validation. DelayExecutor::execute calls `let duration = delay_config.to_duration();` at delay.rs:100 and only THEN checks `if duration.as_secs() > MAX_DELAY_SECONDS` at delay.rs:103 (MAX_DELAY_SECONDS = 7 days, delay.rs:65). So the overflow happens inside to_duration() — the 7-day cap can never guard the arithmetic that precedes it.",
+        "Reachability: workflow action `config` is arbitrary serde_json deserialized straight into DelayConfig (parse_config at delay.rs:78-80, no bound on `duration`). A workflow-action definition with e.g. `{\"duration\": 9223372036854775807, \"unit\": \"days\"}` makes `self.duration * 86400` overflow u64. In debug / overflow-checks builds (the profile CI runs `cargo test` under) this PANICS, killing the workflow-executor task that drives the delay step (DoS of the action pipeline); in release it silently wraps to an arbitrary small value that then passes the MAX_DELAY_SECONDS check — a validation bypass rather than the intended ConfigurationError rejection.",
+        "This is an oversight, not a house convention: the sibling backoff helper in the SAME crate was explicitly hardened against exactly this class of bug — backend/servers/api-server/src/services/workflow_executor.rs:35-46 (compute_backoff_seconds) caps the exponent and uses `base.saturating_mul(multiplier)` with a doc comment citing the overflow audit. Landable backend-only fix: use `checked_mul`/`saturating_mul` in to_duration() (returning a ConfigurationError on overflow), or validate `self.duration` magnitude in parse_config before the unit multiply, so an out-of-range delay is rejected as a config error instead of panicking or wrapping past the 7-day cap."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-docgen-empty-llm-ok",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:536-540 collapses a missing LLM completion to an empty string: `let content = response.choices.first().map(|c| c.message.content.clone()).unwrap_or_default();`. When the provider returns 200 with an empty `choices` array (content-filter block, provider hiccup, quota/streaming truncation), `content` becomes \"\" and the branch is indistinguishable from a genuine empty answer.",
+        "The empty string is then fed to parse_summary_response(\"\") (document_generation.rs:558) which yields an empty summary and no key points, and the method still returns `Ok(DocumentSummarizationResult { summary: \"\", key_points: [], word_count: 0, tokens_used: response.usage.total_tokens, .. })` (document_generation.rs:547-554). The caller receives a SUCCESS carrying an empty document summary rather than an error it can retry or surface.",
+        "The same pattern repeats for announcement drafting at document_generation.rs:706-711 (`.unwrap_or_default()` on `choices.first()`), where parse_announcement_drafts(\"\") (document_generation.rs:799) returns an empty Vec and the call still succeeds with zero drafts — a silent no-op generation.",
+        "Landable backend-only fix: when `response.choices` is empty, return a domain error (e.g. a new `DocumentGenerationError::EmptyCompletion` / the crate's existing LLM error variant) instead of `unwrap_or_default()`, so an empty/blocked upstream response is reported as a failure rather than a successful-but-empty summary/announcement. Unit-testable with a stubbed LLM client returning `choices: []`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-throws-malformed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:44-47 and :60-63 — the wire-tolerant monetary deserializers finish by calling `raw.substringBefore('.').toLong()` (DecimalAsLongSerializer) and `raw.toDouble()` (DecimalAsDoubleSerializer) directly on the raw JSON primitive content. Both `String.toLong()` and `String.toDouble()` throw NumberFormatException on any content that is not a clean numeric literal: an empty string \"\", a thousands-separated value like \"1,000.00\", a leading-'+' value, whitespace, scientific notation, or any non-numeric string the backend might emit.",
+        "This defeats the exact purpose the serializers were introduced for. Their own doc comment (:12-32) says they exist because a fractional `serde-str` value like \"200000.00\" against a bare Long \"silently killed the whole price-tracking payload decode (see issue #2331)\". But an unexpected/malformed value now throws inside the serializer, which aborts the ENTIRE object decode — so a single bad monetary field still fails the whole favorites/price-tracking payload (`GET /api/v1/favorites`, `GET /api/v1/favorites/alerts`), reproducing the same all-or-nothing failure mode #2331 was meant to eliminate. The FavoritesRepository catch(e: Exception) (FavoritesRepository.kt:39,162) downgrades it to a failed Result rather than an app crash, so the user sees the whole Price-Tracking screen error out on one malformed field instead of a graceful per-field fallback.",
+        "Test gap confirming the exposure: DecimalWireContractTest.kt (the stated CI guard for these serializers, issue #2364) only pins happy-path shapes — fractional string, plain number, and JSON null (:44-152). There is NO test for empty-string, non-numeric, or otherwise malformed content, so this brittleness is unguarded. Fix: parse defensively — e.g. `raw.substringBefore('.').toLongOrNull() ?: 0L` and `raw.toDoubleOrNull() ?: 0.0` (or a documented sentinel), and add malformed-input cases to DecimalWireContractTest so the tolerance contract is actually enforced. Static-analysis finding: the throwing call is clear from source; runtime frequency depends on backend output."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 — eventToQueryKeys subscribes to COLON-form event names ('entity:announcement','entity:fault','entity:vote','entity:document','entity:message','entity:neighbor'), and :313 subscribes to generic 'entity:updated'/'entity:created'/'entity:deleted'. These are the ONLY keys wired for TanStack Query cache invalidation on server push.",
+        "The server publishes DOT-form event names. Confirmed in backend/servers/api-server/src/routes/ws_notifications.rs:92-95 (WsEvent.event mirrors PubSubMessage::event_type, e.g. 'notification.created','preference.updated') and backend/servers/api-server/src/services/notification_pipeline.rs:169 (`let event_type = format!(\"{}.notification\", entity_type)` → 'announcements.notification','fault.notification', etc.). Other confirmed literals: 'fault.created','vote.closed'.",
+        "frontend/apps/ppt-web/src/lib/websocket.ts:65-82 parseServerMessage maps the server envelope's `event` string straight onto `message.type` with NO dot→colon normalization, and WebSocketService.subscribe (websocket.ts:466) keys handlers off that raw `message.type`. Grep confirms there is no remapping layer anywhere in lib/hooks/contexts and no subscriber uses the dot-form names.",
+        "Net effect: the colon-form subscription keys can NEVER match the dot-form event names the server actually emits, so WebSocket-driven query invalidation is entirely dead — real-time announcements/faults/votes/documents pushes never invalidate any cache and the UI shows stale data until a manual refetch/navigation. Traced both ends (server publish site → client subscribe keys), no overlap → high confidence.",
+        "Fix: align the client subscription keys with the server's dot-form event_type namespace (e.g. map 'announcements.notification'/'fault.created'/'vote.closed'/'*.notification' → the right query keys), or normalize server event names to the colon scheme in parseServerMessage. Add a test asserting an emitted 'fault.created' frame invalidates the ['faults'] query."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-client-no-onunauthorized",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — AuthProvider wires the hand-rolled axios client via `configureApiClient({ getToken: getAccessToken })`, passing ONLY getToken and never an `onUnauthorized` callback.",
+        "frontend/apps/ppt-web/src/lib/api.ts:195-196,219-220 — createAxiosInstance stores `onUnauthorizedCallback = config.onUnauthorized` (module global) and the response interceptor only reacts to a 401 when `onUnauthorizedCallback` is truthy: `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();`. Because AuthContext never supplies it, the callback is permanently undefined and the entire 401 branch is dead for this client.",
+        "This client is NOT unused: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:19 and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:10 both document their reliance on it ('401 → onUnauthorized') — an expectation the wiring silently breaks.",
+        "Net effect: when a feature hook using getApiClient() hits a 401 (access token expired mid-session), there is no silent token refresh, no logout, and no redirect-to-login — the user just gets a failed request and a stuck/dead session until they manually reload. The AuthProvider already owns a refreshToken() routine that could be wired here.",
+        "Fix: pass `onUnauthorized` into configureApiClient (e.g. attempt refreshToken(); on failure call logout()), matching the documented contract in the sentiment/predictive-maintenance hooks."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-unverified-jwt-role",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:220-233 decodeJwtPayload does an UNVERIFIED base64 decode of the JWT payload (no signature check — the browser has no verifying key), and :254-258 deriveActiveRole trusts the embedded `claims.role` string: `if (claims.role is string && ROLE_PRIORITY.includes(claimRole)) return claimRole` — this becomes the user's effective role.",
+        "That derived role is persisted and set into React state (AuthContext.tsx:387-389 in refreshTokenInternal, and :477-479/:513-516 in login/loginWithSsoCode), so any UI role-gating that reads user.role trusts a value taken from an unverified, client-mutable token (localStorage key 'ppt_access_token').",
+        "Impact is bounded — the api-server still enforces real authorization server-side, so this cannot bypass backend checks; the risk is purely UI-level (a user who edits their stored token could reveal admin-only UI affordances / menu items). Low severity, but it is a genuine 'trust unverified JWT claim' smell in the auth core.",
+        "Fix: treat the client-derived role as advisory only and ensure every privileged UI surface is also guarded by a server-authoritative capability/permission check (or a role echoed by a signed server response) rather than the decoded token claim; add a comment documenting that decodeJwtPayload is unverified and UI-only."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-mediation-panels-no-iserror",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx:28 — `const { data: notes = [], isLoading } = useMediationNotes(disputeId);` drops isError; a failed notes fetch resolves isLoading=false with notes=[] and renders the 'disputes.mediation.noMessages' empty state (line 69-73), indistinguishable from a genuinely empty thread and with no retry affordance.",
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationTimelineView.tsx:51 — `const { data: events, isLoading } = useDisputeTimeline(disputeId);` drops isError; on fetch failure `events` is undefined so the `if (!events || events.length === 0)` branch (line 60) shows 'disputes.mediation.noTimelineEvents' instead of an error/retry.",
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationSubmissionsPanel.tsx:43 — `const { data: submissions = [], isLoading } = useDisputeSubmissions(disputeId);` drops isError; a failed fetch renders the empty submissions state (count 0) with no error indicator or retry.",
+        "Consistent pattern across all three mediation-workspace read panels. The parent MediationWorkspacePage.tsx only guards the top-level useDispute fetch (isError branch at line 204 with a retry button); the per-tab sub-queries above have no equivalent, so a sub-query failure on the Chat/Timeline/Submissions tab silently masquerades as empty data. Mutations in the same files are handled correctly (try/catch -> onToastError), and sibling MoveFolderDialog.tsx:296 already models the right shape (`{ data, isLoading, error }` with an explicit error branch at line 427). Fix: surface isError with an inline error + refetch, mirroring MoveFolderDialog / the parent page.",
+        "Static-analysis only (no compile/run). Severity medium: user-facing correctness/UX defect on the mediation hot path, graceful (no crash) but hides load failures with no recovery."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-createdispute-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit() collects the full dispute form (respondentId/category/subject/description) but never calls any create-dispute API: the try block is just `await new Promise((resolve) => setTimeout(resolve, 1000))` (line 35) then `navigate('/disputes')` (line 36). The form data is silently discarded; the user sees a 1s spinner and a redirect that looks like success. This is an abandoned first-cut stub of the real FileDisputePage.",
+        "It is an orphan: the /disputes/new route is wired to FileDisputePageRoute (frontend/apps/ppt-web/src/routes/groups/disputes.tsx:482), NOT CreateDisputePage. But CreateDisputePage is still exported from the public barrel (frontend/apps/ppt-web/src/features/disputes/pages/index.ts:6 and features/disputes/index.ts), so it remains importable/discoverable and would silently drop data if ever mounted.",
+        "Secondary: CreateDisputePage.tsx uses hardcoded English JSX strings with no i18n — 'Back to Disputes' (line 50), 'File New Dispute' (line 52), the intro paragraph (line 53-55), the error string 'Failed to create dispute. Please try again.' (line 38), 'Respondent ID' (line 67), 'Enter the ID of the other party' (line 77) — inconsistent with the fully-i18n'd sibling MediationWorkspacePage/FileDisputePage.",
+        "Same recognized pattern as the already-landed backlog item code-review-mobile-rn-report-fault-fake-submit (RN report-fault fake submit). Fix: delete CreateDisputePage (dead duplicate) and drop its barrel export, or wire it to the real useFileDispute mutation + i18n if it is meant to be the canonical page.",
+        "Static-analysis only (no compile/run). Severity medium: dead-code/completeness defect that discards user input if the orphan is ever mounted; currently not reachable via routing, hence confidence medium not high."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-alert-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The entire features/compliance/ page cluster uses the browser-native window.alert() with hardcoded English strings for ALL user feedback, bypassing the app's toast + react-i18next pattern used everywhere else (e.g. MediationWorkspacePage onToastSuccess/onToastError + t()).",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:108 alert('Report published successfully.'), :112 alert('Failed to publish report. Please try again.'), :124 alert('Failed to download report. Please try again.').",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:127 alert('Enhanced Due Diligence initiated successfully.'), :131, :150, :169 alert('Assessment reviewed successfully.'), :173 — 5 hardcoded alerts.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:119, :151, :186 — 3 hardcoded alert() error strings. ~11 hardcoded, non-i18n alert() calls across the compliance epic total.",
+        "Static-analysis only. Severity low: i18n gap (untranslatable, breaks sk/cs/de locales) plus inconsistent/blocking-modal UX on compliance pages. Fix: replace window.alert() with the app's toast helper and wrap all strings in t('compliance.*.')."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-journal-newsletter-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:113-116 — `handleSubscribe(e)` calls `e.preventDefault()` then `if (email.trim()) setSubscribed(true)` and returns. There is NO fetch / API mutation: the entered email is never sent anywhere, it is simply discarded when the component unmounts.",
+        "The UI nonetheless renders a localized success confirmation: line 217-218 `{subscribed ? <p>{t('newsletterSuccess')}</p> : <form onSubmit={handleSubscribe}>...}` — a public visitor who submits the Journal newsletter form is told (via `pages.journal.newsletterSuccess`) they subscribed, but no subscription was recorded server-side. Grep confirms the file contains no `fetch`/`api`/`subscribe` network call (only i18n keys named *newsletter*).",
+        "Distinct from the prior 2026-08-12 fake-submit findings (sell/page.tsx, report/page.tsx, realtor/[id] contact form) — this is the /[locale]/journal route. User-facing data-loss-of-intent on a public SEO page. Fix: POST the email to the reality-server newsletter/subscription endpoint (or a Next route) inside handleSubscribe, gate `setSubscribed(true)` on a 2xx, and surface a localized error state on failure."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — `handleCancel` calls `cancelInquiry.mutate(inquiry.id)` (fire-and-forget) and immediately `setShowCancelConfirm(false)`. `cancelInquiry = useCancelInquiry()` (line 41) is a TanStack useMutation, but line 48 is the ONLY reference to the mutation object in the whole file: no `onError`, no `cancelInquiry.isError`/`.error` branch, no `mutateAsync` + try/catch, no pending guard.",
+        "Effect: on a failed cancel (network error, 4xx/5xx, race with an already-responded inquiry) the confirmation dialog closes and the card still shows the inquiry as active with the Cancel button — the user believes the inquiry was cancelled when it was not, and gets zero feedback. The `.error-state` block at line 329-334 handles ONLY the page-load `useMyInquiries` query error, not the mutation.",
+        "Matches the SKILL Frontend pattern 'useMutation call with no error handling (no isError branch, no onError, no ErrorBoundary above)'. Distinct from prior reality-web passes (none touched inquiries/page.tsx). Fix: surface `cancelInquiry.isError` (localized toast/inline error), keep the confirm open or restore it on failure, and disable the confirm button while `cancelInquiry.isPending`. (Secondary: this whole route is hardcoded English — 0 useTranslations — but that folds into the known reality-web i18n backlog, not this finding.)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:37 — `v == null ? '—' : `${Math.round(v).toLocaleString('sk-SK')} €`` and line 96 `value: totalListings.toLocaleString('sk-SK')` pin the number-format locale to Slovak even though the page is fully next-intl localized (line 40 `const t = useTranslations('pages.priceMap')`).",
+        "Effect on the sk/cs/de/en portal: a German (/de/…) or English (/en/…) visitor sees Slovak-grouped numbers (narrow-no-break-space thousands separator, e.g. `1 234 €`) instead of their locale's convention (`1.234 €` / `1,234 €`). This is a distinct axis from the existing reality-web i18n findings, which are about untranslated STRINGS — here the strings are translated but the numeric/currency FORMAT ignores the active locale.",
+        "The same hardcoded-locale smell also appears in realtor/[id]/page.tsx:311 (`toLocaleString('sk-SK')`) and realtor/listings/page.tsx:17 (`Intl.NumberFormat('en', …)`), so a shared `formatPrice(value, currency, locale)` helper keyed off the route `[locale]` param / `useLocale()` would fix all three. Landable low-severity cleanup; no crash."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "malformed-backlog-row-repair-batch-2026-08-15",
+      "type": "routine-hygiene",
+      "source": "routine self-repair",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "5 backlog rows carried raw signal-shape (id,type,segment,evidence,expert) with null title/vector/score/status.",
+        "Rows repaired in-place with full backlog schema; preserved original tier1d finding evidence.",
+        "IDs: code-review-reality-web-comparison-view-i18n, code-review-reality-web-realtor-mgmt-i18n, code-review-reality-web-agency-errorstate-i18n, code-review-api-handlers-share-pw-no-throttle, code-review-api-handlers-share-log-proxy-ip.",
+        "share-pw-no-throttle was additionally upgraded (confidence low→high, vector bug→security) after grep verification against origin/dev; enables security fast-track promotion."
+      ]
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — the 2 new high-confidence security items are score=2 (below the auto-fix score>=3 bar). The 3 churn-hotspot signals score 1 and are outside the auto-fix allowlist. lag_warning is not on the allowlist. No stalled-review re-fires (all prior stalled-review IDs already in seen_signals; no new stalled non-dependabot PR triggered a signal this run).",
-  "goal_checks": [
-    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-15.md && head -1 matches '# 2026-08-15'", "observed": "true", "expected": "true" },
-    { "goal": "G2", "passed": true,  "command": "jq compare staged state.json vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "last_pr_seen 2742→2761, last_issue_seen 2704→2759, last_commit_sha changed, seen_signals +11, hotspot_history +3, stats.runs +1", "expected": "true" },
-    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id from today re-scored (all 11 IDs are new)", "observed": "true", "expected": "true" },
-    { "goal": "G5", "passed": true,  "command": "cap ≤ 8 + decay for open items with updated_at ≤ today-14", "observed": "no scores > 8; no open items older than 2026-08-01 to decay", "expected": "true" },
-    { "goal": "G6", "passed": true,  "command": "each new plan has 'adversarial pass: <passed|fixed-in-place|rolled-back>' annotation in brief", "observed": "both plans annotated 'passed' in brief Plans promoted section", "expected": "true" },
-    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 4 metadata + 11 headings + Mode declared + ticked capability + Files paths exist on disk", "observed": "2 new plans; both pass all sub-checks (verified with local awk pipeline)", "expected": "true" },
-    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
-    { "goal": "G9", "passed": true,  "command": "grep for secret patterns in staged diff (excl. baseline docs)", "observed": "0 hits", "expected": "0" },
-    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md /tmp/backlog.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
-    { "goal": "G11", "passed": true, "command": "no phase failed; cursor advance matches", "observed": "no failures — Phase 1.6 was skipped (allowed, not failed)", "expected": "true" },
-    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "true" },
-    { "goal": "G13", "passed": true, "command": "archive count this run ≥ count at HEAD", "observed": "archive unchanged (7 files)", "expected": "true" },
-    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill switch", "observed": "auto_fix_actions=[] — no candidate cleared the certainty bar", "expected": "true" },
-    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 was SKIPPED this run — G16 is a no-op per spec", "expected": "no-op" },
-    { "goal": "G17", "passed": true, "command": "grep for Telegram bot-token value in staged added lines (excl. baseline docs)", "observed": "0 hits", "expected": "0" }
-  ]
+  "auto_fix_skipped_reason": "no candidate — the 1 new high-confidence security item (score=2) is inside the security fast-track for plan promotion but does not match any Phase 5 allowlist shape (share-pw-no-throttle needs a rate-limiter wiring, not a doc-stub/orphan-remove/lockfile-bump). Everything else is medium confidence or score<3."
 }
