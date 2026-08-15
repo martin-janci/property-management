@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-15T18:32:20Z",
+  "generated": "2026-08-15T18:42:05Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "84-1-s3-presigned-urls",
       "branch": "auto-impl/84-1-s3-presigned-urls-66f8707f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-15T18:28:41Z",
-      "last_updated": "2026-08-15T18:28:41Z",
-      "status_changed_at": "2026-08-15T18:28:41Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-15T18:42:05Z",
+      "status_changed_at": "2026-08-15T18:42:05Z",
+      "pr_number": 2770,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2770",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2770 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=most of gap-84-1 already on dev; shipped only the #2366 building-association fix via access_scope=building+access_target_ids (no building_id field exists); verify green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
