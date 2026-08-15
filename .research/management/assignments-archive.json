@@ -599,6 +599,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "84-2-esignature-email",
+      "branch": "auto-impl/84-2-esignature-email-04b39f4e",
+      "status": "failed",
+      "claimed_at": "2026-08-15T18:28:41Z",
+      "last_updated": "2026-08-15T18:33:32Z",
+      "status_changed_at": "2026-08-15T18:33:32Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=already-landed on dev (commit 7849a9d / PR #2756 via gap-84-2-build-document-sign-page): DocumentSignPage + signer client + /sign route + 6-locale i18n + tests all present; screen-map already shipped. No PR needed.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "84-4-notification-triggers",
       "branch": "auto-impl/84-4-notification-triggers-0c5567ab",
       "status": "failed",
@@ -14171,5 +14193,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-15T16:36:18Z"
+  "archived_at": "2026-08-15T18:34:10Z"
 }

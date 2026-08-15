@@ -103,24 +103,16 @@
       "retry_round": 1
     },
     {
-      "id": "gh-issue-2768",
-      "action": "stale-review: code-review-api-core-workflow-cond-parse-failopen (was PR #2684) (Closes #2768)",
-      "owner_role": "pm-tech-lead",
+      "id": "84-1-s3-presigned-urls",
+      "action": "Wire direct-to-S3 upload in ppt-web via POST /api/v1/documents/upload-url (api-client binding + UploadDocument integration). Backend SigV4 presigner landed in #2309; scope strictly to the shipped API. Include the building_id association so building-scoped documents keep it (see #2366).",
+      "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-15T12:22:23Z (#2768)",
+      "source": "dispatcher-coverage-refill 2026-08-15T18:28:19Z (epic-84 84-1 partial)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-15T12:22:23Z",
-      "issue_ref": {
-        "number": 2768,
-        "url": "https://github.com/martin-janci/property-management/issues/2768",
-        "labels": [
-          "follow-up",
-          "from-stalled-pr"
-        ]
-      }
+      "first_open_at": "2026-08-15T18:28:19Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

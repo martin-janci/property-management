@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-15T16:36:09Z",
+  "generated": "2026-08-15T18:32:20Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,28 +26,6 @@
     {
       "task_id": "84-1-s3-presigned-urls",
       "branch": "auto-impl/84-1-s3-presigned-urls-66f8707f",
-      "status": "in-progress",
-      "claimed_at": "2026-08-15T18:28:41Z",
-      "last_updated": "2026-08-15T18:28:41Z",
-      "status_changed_at": "2026-08-15T18:28:41Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "84-2-esignature-email",
-      "branch": "auto-impl/84-2-esignature-email-04b39f4e",
       "status": "in-progress",
       "claimed_at": "2026-08-15T18:28:41Z",
       "last_updated": "2026-08-15T18:28:41Z",
