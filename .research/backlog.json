@@ -7948,7 +7948,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)"
       ],
@@ -7964,7 +7964,12 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md"
+      "plan": "plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md",
+      "reconciled": {
+        "at": "2026-08-15T10:24:40Z",
+        "assignment_status": "merged",
+        "pr_number": 2766
+      }
     },
     {
       "id": "code-review-api-handlers-voice-google-verify-fail-open",
