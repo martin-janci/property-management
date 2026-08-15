@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-15T03:11:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2761,
+  "last_run_iso": "2026-08-15T06:45:36Z",
+  "last_run_ms": 4000,
+  "last_pr_seen": 2767,
   "last_issue_seen": 2759,
-  "last_commit_sha": "75b30077aa0e3e37aa1f4ed4b6626245a41405e7",
+  "last_commit_sha": "ab7fcfd55832c880ad7ca64972199d1a35b1fbb6",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -453,19 +453,24 @@
       "recent_churn": 183
     },
     "backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs": {
-      "runs_seen": 1,
+      "runs_seen": 2,
       "last_seen": "2026-08-15",
       "recent_churn": 298
     },
     "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts": {
-      "runs_seen": 1,
+      "runs_seen": 2,
       "last_seen": "2026-08-15",
       "recent_churn": 111
     },
     "backend/servers/api-server/src/services/actions/api_call.rs": {
-      "runs_seen": 1,
+      "runs_seen": 2,
       "last_seen": "2026-08-15",
       "recent_churn": 106
+    },
+    "backend/servers/api-server/src/routes/voice_webhooks.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-15",
+      "recent_churn": 369
     }
   },
   "seen_signals": [
@@ -513,6 +518,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
@@ -525,6 +531,7 @@
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/org_property_authz_backfill_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
     "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
     "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
@@ -557,6 +564,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
@@ -564,6 +572,7 @@
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
     "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
+    "churn-hotspot-voice-webhooks-rs",
     "closed-not-merged-pr-1274",
     "closed-not-merged-pr-1378",
     "closed-not-merged-pr-1425",
@@ -601,6 +610,9 @@
     "code-review-api-handlers-forgot-password-no-rate-limit",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-revoke-all-sessions-cookie-blindness",
+    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
+    "code-review-api-handlers-voice-google-verify-fail-open",
+    "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
@@ -641,6 +653,7 @@
     "code-review-ppt-web-ui-actionqueue-mock-shipped",
     "code-review-ppt-web-ui-announcer-stale-msg",
     "code-review-ppt-web-ui-aria-label-i18n",
+    "code-review-ppt-web-ui-confirm-dialog-i18n-leak",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
     "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
@@ -700,6 +713,10 @@
     "dep-update-noise-pr-2477",
     "dep-update-noise-pr-2491",
     "dep-update-noise-pr-2625",
+    "dep-update-noise-pr-2673",
+    "dep-update-noise-pr-2749",
+    "dep-update-noise-pr-2750",
+    "dep-update-noise-pr-2751",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -745,6 +762,7 @@
     "lag-warning-2026-07-30",
     "lag-warning-2026-08-06",
     "lag-warning-2026-08-12",
+    "lag-warning-2026-08-15",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
@@ -852,33 +870,22 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "lag-warning-2026-08-15",
-    "churn-hotspot-backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs",
-    "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
-    "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
-    "dep-update-noise-pr-2751",
-    "dep-update-noise-pr-2750",
-    "dep-update-noise-pr-2673",
-    "dep-update-noise-pr-2749",
-    "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
-    "code-review-api-handlers-voice-google-verify-fail-open",
-    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-15",
     "api-core": "2026-08-13",
     "reality-server": "2026-08-13",
-    "ppt-web-ui": "2026-08-12",
+    "ppt-web-ui": "2026-08-15",
     "ppt-web-core": "2026-08-12",
     "reality-web": "2026-08-12",
     "mobile-rn": "2026-08-12",
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 64,
-    "vectors_created": 297,
+    "runs": 65,
+    "vectors_created": 299,
     "plans_created": 24,
     "quiet_days": 2,
     "auto_fix_count": 0

@@ -7873,12 +7873,14 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2747"
+        "PR #2747",
+        "PR #2763"
       ],
       "evidence": [
-        "Top-3 raw churn 2026-08-12..HEAD (+298 lines) — brand-new IDOR regression suite added by PR #2747; hotspot only via addition, no repeated churn (runs_seen=1)"
+        "Top-3 raw churn 2026-08-12..HEAD (+298 lines) — brand-new IDOR regression suite added by PR #2747; hotspot only via addition, no repeated churn (runs_seen=1)",
+        "resolved: PR #2763 merged 2026-08-15 — test(UC-68): add missing IDOR regressions for marketplace award endpoint (+2 tests: cross-org path-param, phantom quote-id)"
       ],
       "files": [
         "backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs"
@@ -7893,12 +7895,14 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2757"
+        "PR #2757",
+        "PR #2767"
       ],
       "evidence": [
-        "Top-3 raw churn 2026-08-12..HEAD (+111 lines) — new lockstep i18n regression test file added by PR #2757 for ProtectedRoute defaultValue-guard; hotspot only via addition (runs_seen=1)"
+        "Top-3 raw churn 2026-08-12..HEAD (+111 lines) — new lockstep i18n regression test file added by PR #2757 for ProtectedRoute defaultValue-guard; hotspot only via addition (runs_seen=1)",
+        "resolved: PR #2767 merged 2026-08-15 — test(ppt-web): cover ProtectedRoute i18n fallback + guard behavior (16→61 tests, runtime i18next resolution + defaultValue↔en parity)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts"
@@ -7913,12 +7917,14 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2746"
+        "PR #2746",
+        "PR #2764"
       ],
       "evidence": [
-        "Top-3 raw churn 2026-08-12..HEAD (+106 lines) — PR #2746 landed the SSRF redirect regression test in api_call.rs. Real code hotspot; runs_seen was 0 in hotspot_history so no repeated-churn firing."
+        "Top-3 raw churn 2026-08-12..HEAD (+106 lines) — PR #2746 landed the SSRF redirect regression test in api_call.rs. Real code hotspot; runs_seen was 0 in hotspot_history so no repeated-churn firing.",
+        "resolved: PR #2764 merged 2026-08-15 — fix(api-server): refuse cross-origin redirects in workflow API-call action (credential-leak SSRF hardening)"
       ],
       "files": [
         "backend/servers/api-server/src/services/actions/api_call.rs"
@@ -7957,23 +7963,25 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "ready",
+      "status": "done",
       "sources": [
-        "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)"
+        "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)",
+        "PR #2765"
       ],
       "evidence": [
         "voice_webhooks.rs:1087 — verify_google_request returns Ok(()) for: no project id, missing Authorization, JWT-payload-contains-substring match, AND base64-decode failure",
         "Doc comment above function acknowledges missing steps (\"In production you would ... verify the signature\")",
         "Base64 alphabet mismatch: STANDARD used to decode URL-safe unpadded JWT payloads — real Google JWTs frequently silently Err → still Ok(())",
         "Only real gate on POST /google is authenticate_voice_user's OAuth access-token check; the 'verify' step is theatre",
-        "Sibling verify_hmac_signature (PR #2748) fails closed via env::var().map_err(...) — the fail-closed pattern is already in-tree"
+        "Sibling verify_hmac_signature (PR #2748) fails closed via env::var().map_err(...) — the fail-closed pattern is already in-tree",
+        "resolved: PR #2765 merged 2026-08-15 — fix(api-server): fail-closed Google voice webhook JWT verification (RS256 sig + aud/iss/exp + JWKS cache)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-google-verify-fail-open.md"
+      "plan": "plans/_archive/code-review-api-handlers-voice-google-verify-fail-open.md"
     },
     {
       "id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
@@ -7981,14 +7989,62 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)"
+        "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)",
+        "PR #2762"
       ],
       "evidence": [
         "voice_webhooks.rs:886 — reqwest::Client::new().get(url).send() with no builder timeout/connect_timeout",
         "Client not memoised across calls (only the PEM is cached) → cold-cache burst spawns TLS clients unbounded",
-        "Under S3 slow-loris, holds Axum tasks + a RlsConnection (acquired above in alexa_webhook) for reqwest's default read window"
+        "Under S3 slow-loris, holds Axum tasks + a RlsConnection (acquired above in alexa_webhook) for reqwest's default read window",
+        "resolved: PR #2762 merged 2026-08-15 — fix(api-server): bound Alexa cert fetch with timeouts + shared client"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirm-dialog-i18n-leak",
+      "title": "ppt-web: ConfirmationDialog leaks hardcoded English `Processing...` + Confirm/Cancel fallbacks during mutation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-15"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 — `{isLoading ? 'Processing...' : confirmLabel}` renders hardcoded English `Processing...` while the caller-provided i18n-translated confirmLabel is temporarily suppressed during a mutation. Confirmed reachable via `frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx:344-354` which passes `isLoading={revokeMutation.isPending}`, so sk/cs/de users see English mid-confirm.",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:37-38 — default prop values `confirmLabel = 'Confirm'` and `cancelLabel = 'Cancel'` are hardcoded English fallbacks; any future call site omitting these props leaks untranslated copy silently.",
+        "Distinct from closed finding `code-review-ppt-web-ui-aria-label-i18n` (which scoped features/ aria-labels only) — this is the shared component's own literal strings."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "title": "voice_webhooks.rs is a 3-PR concurrent hotspot (Alexa timeout + Google JWT + oauth-refresh auth) — watch for cross-PR conflicts + regression coverage gaps",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2762",
+        "PR #2765",
+        "PR #2766"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs — churn +369 additions across 2 merged PRs (#2762 +58/-1, #2765 +311/-96) and 1 open PR (#2766 +86/-4) all landing/pending within a 2h window on 2026-08-15",
+        "runs_seen=1 (first hotspot appearance for this file); watch next run for repeated-churn signal if #2766 lands additional churn",
+        "concurrent-PR risk: #2766 rebased off pre-#2762/#2765 dev — merge conflicts likely; owner-authz + JWT-verify + shared-client added independently, so overlapping regions in Alexa/Google verify blocks"
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
