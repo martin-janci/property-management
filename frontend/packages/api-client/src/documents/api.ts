@@ -420,19 +420,20 @@ export async function uploadDocumentDirect(
     params.onProgress
   );
 
-  // NOTE (#2366): `params.buildingId` is deliberately NOT forwarded here.
-  // There is no `building_id` on the registration contract — the backend
-  // `documents` table has no such column, `CreateDocumentRequest` (Rust) has no
-  // such field, and it lacks `#[serde(deny_unknown_fields)]`, so a forwarded
-  // `building_id` would be *silently* dropped server-side (a false-green: the
-  // client would compile and pass CI while persisting nothing). The legacy
-  // multipart `uploadDocument` path drops it the same way (drained + ignored in
-  // the handler). Building association today is carried by `folder_id`
-  // (folders are building-scoped) or by `access_scope='building'` +
-  // `access_target_ids`. Adding a real `building_id` needs a backend
-  // migration + struct + repo change first — tracked in #2366. Do not add
-  // `building_id` here until that lands, or association loss just moves one
-  // layer deeper.
+  // Building association (#2366): the shipped registration contract
+  // (`POST /api/v1/documents`, Rust `CreateDocumentRequest`) has NO `building_id`
+  // column or field — building scope is expressed on the shipped API via
+  // `access_scope='building'` + `access_target_ids=[buildingId]` (the JSONB
+  // array the RLS gate and the building list/search filter both read). gap-84-1
+  // switched `DocumentUpload` from the multipart proxy to this direct path and
+  // dropped the association entirely; a raw `building_id` field never worked
+  // either (the legacy multipart handler drained + ignored it, and the JSON
+  // registration route has no such field). Forward it the shipped way so
+  // building-scoped uploads keep their association. Only set the scope when a
+  // building context was supplied — otherwise leave `access_scope` unset so the
+  // server applies its default (organization) scope. `access_target_ids` is
+  // required by the server whenever `access_scope='building'`, and we always
+  // provide it in the same branch.
   const registration: CreateDocumentRequest = {
     title: params.title,
     description: params.description,
@@ -442,6 +443,9 @@ export async function uploadDocumentDirect(
     file_name: params.file.name,
     mime_type: presigned.content_type,
     size_bytes: params.file.size,
+    ...(params.buildingId
+      ? { access_scope: 'building' as const, access_target_ids: [params.buildingId] }
+      : {}),
   };
 
   // ORPHANED-OBJECT CLEANUP (#2534, #2564): by this point step 2 has already PUT
