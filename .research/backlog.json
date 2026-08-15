@@ -7873,7 +7873,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2747"
       ],
@@ -7885,7 +7885,12 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-15T08:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2763
+      }
     },
     {
       "id": "churn-hotspot-protected-route-i18n-test",
@@ -7893,7 +7898,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2757"
       ],
@@ -7905,7 +7910,12 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-15T08:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2767
+      }
     },
     {
       "id": "churn-hotspot-api-call-rs",
@@ -7913,7 +7923,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2746"
       ],
@@ -7925,7 +7935,12 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-15T08:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2764
+      }
     },
     {
       "id": "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
@@ -7957,7 +7972,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)"
       ],
@@ -7973,7 +7988,12 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-google-verify-fail-open.md"
+      "plan": "plans/code-review-api-handlers-voice-google-verify-fail-open.md",
+      "reconciled": {
+        "at": "2026-08-15T08:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2765
+      }
     },
     {
       "id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
@@ -7981,7 +8001,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 dev-review 2026-08-15 (api-handlers segment)"
       ],
@@ -7995,7 +8015,12 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-15T08:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2762
+      }
     }
   ]
 }

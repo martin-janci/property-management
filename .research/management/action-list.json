@@ -207,6 +207,20 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "82-1-swiftui-project-setup-retry1",
+      "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-15T08:25:53Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-15T08:25:53Z",
+      "retry_of": "82-1-swiftui-project-setup",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
