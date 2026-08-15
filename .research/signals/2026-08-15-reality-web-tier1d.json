@@ -1,0 +1,55 @@
+{
+  "generated": "2026-08-15T13:20:00Z",
+  "segment": "reality-web",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed",
+  "selection_note": "Demand-driven Tier-1d STATIC review (claim buffer starved: claimable~6 < floor 36; coverage/backlog exhausted). No live CHURN_FILES passed (hotspot_history is stale, last_seen May/Jun). By review_cursor ascending: mobile-native-kmp (08-11) is oldest but HARD-EXCLUDED (KMP/AGP egress-blocked = structurally unlandable in cloud runner + saturated: 3 open backlog code-review-findings). Next co-oldest at cursor 08-12: ppt-web-ui (already reviewed twice today: 2026-08-15-ppt-web-ui-tier1d{,-2}.json), ppt-web-core, reality-web, mobile-rn. Picked reality-web (cloud-landable Next.js). backlog.json saturation check clean (0 open reality-web code-review-findings) BUT prior signal passes (08-11/08-12/08-14) already mined many reality-web files; cross-checked every candidate against them and DISCARDED duplicates: realtor/[id] mock-noid (== 2026-08-12 realtor-profile-mock-noid), realtor/account i18n cluster (== 2026-08-12 realtor-account-i18n-gap), ComparisonUrlHandler + RealtorManagement (== 08-14 pass), sell/report fake-submits (== 08-12). The 3 findings below are DISTINCT from all prior passes: journal newsletter fake-submit (new file), inquiries cancel-mutation unhandled-error (new file), price-map hardcoded number locale (new file; distinct axis from the untranslated-strings i18n findings since this page IS fully next-intl). Path root resolved to frontend/apps/reality-web/src (SKILL table lists frontend/reality-web/src, stale). Static analysis only: no compile, no tests, no stack.",
+  "experts_used": ["frontend"],
+  "signals": [
+    {
+      "id": "code-review-reality-web-journal-newsletter-fake-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:113-116 — `handleSubscribe(e)` calls `e.preventDefault()` then `if (email.trim()) setSubscribed(true)` and returns. There is NO fetch / API mutation: the entered email is never sent anywhere, it is simply discarded when the component unmounts.",
+        "The UI nonetheless renders a localized success confirmation: line 217-218 `{subscribed ? <p>{t('newsletterSuccess')}</p> : <form onSubmit={handleSubscribe}>...}` — a public visitor who submits the Journal newsletter form is told (via `pages.journal.newsletterSuccess`) they subscribed, but no subscription was recorded server-side. Grep confirms the file contains no `fetch`/`api`/`subscribe` network call (only i18n keys named *newsletter*).",
+        "Distinct from the prior 2026-08-12 fake-submit findings (sell/page.tsx, report/page.tsx, realtor/[id] contact form) — this is the /[locale]/journal route. User-facing data-loss-of-intent on a public SEO page. Fix: POST the email to the reality-server newsletter/subscription endpoint (or a Next route) inside handleSubscribe, gate `setSubscribed(true)` on a 2xx, and surface a localized error state on failure."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — `handleCancel` calls `cancelInquiry.mutate(inquiry.id)` (fire-and-forget) and immediately `setShowCancelConfirm(false)`. `cancelInquiry = useCancelInquiry()` (line 41) is a TanStack useMutation, but line 48 is the ONLY reference to the mutation object in the whole file: no `onError`, no `cancelInquiry.isError`/`.error` branch, no `mutateAsync` + try/catch, no pending guard.",
+        "Effect: on a failed cancel (network error, 4xx/5xx, race with an already-responded inquiry) the confirmation dialog closes and the card still shows the inquiry as active with the Cancel button — the user believes the inquiry was cancelled when it was not, and gets zero feedback. The `.error-state` block at line 329-334 handles ONLY the page-load `useMyInquiries` query error, not the mutation.",
+        "Matches the SKILL Frontend pattern 'useMutation call with no error handling (no isError branch, no onError, no ErrorBoundary above)'. Distinct from prior reality-web passes (none touched inquiries/page.tsx). Fix: surface `cancelInquiry.isError` (localized toast/inline error), keep the confirm open or restore it on failure, and disable the confirm button while `cancelInquiry.isPending`. (Secondary: this whole route is hardcoded English — 0 useTranslations — but that folds into the known reality-web i18n backlog, not this finding.)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-pricemap-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:37 — `v == null ? '—' : `${Math.round(v).toLocaleString('sk-SK')} €`` and line 96 `value: totalListings.toLocaleString('sk-SK')` pin the number-format locale to Slovak even though the page is fully next-intl localized (line 40 `const t = useTranslations('pages.priceMap')`).",
+        "Effect on the sk/cs/de/en portal: a German (/de/…) or English (/en/…) visitor sees Slovak-grouped numbers (narrow-no-break-space thousands separator, e.g. `1 234 €`) instead of their locale's convention (`1.234 €` / `1,234 €`). This is a distinct axis from the existing reality-web i18n findings, which are about untranslated STRINGS — here the strings are translated but the numeric/currency FORMAT ignores the active locale.",
+        "The same hardcoded-locale smell also appears in realtor/[id]/page.tsx:311 (`toLocaleString('sk-SK')`) and realtor/listings/page.tsx:17 (`Intl.NumberFormat('en', …)`), so a shared `formatPrice(value, currency, locale)` helper keyed off the route `[locale]` param / `useLocale()` would fix all three. Landable low-severity cleanup; no crash."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
