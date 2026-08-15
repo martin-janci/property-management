@@ -150,10 +150,16 @@ counterpart is the KMP `composeApp` shell; the shared KMP module under
   `scripts/build-{mobile,android,ios}.sh` CLI build scripts. One follow-up gap:
   per-flavor / per-scheme app-icon badge artwork is not yet generated
   (icon sets are scaffolded with `Contents.json` only).
+- Story 82.1 coverage gap ("no screen-map / orphan epic") re-verified closed on
+  `dev` (2026-08-15): this map is present, epic-tagged (Epic-82 / Epic-85), and
+  passes `screen-map validate --strict` (167 maps, 0 errors, 0 warnings) with no
+  orphan screens. The `update` `unknown-epic` note on this file is a tree-wide
+  epic-catalog naming mismatch, not an orphan-screen defect.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-08-15 — agent: re-verified the Story-82.1 (SwiftUI Project Setup & App Shell) coverage gap "no screen-map (orphan epic)". Gap is already satisfied on `dev`: this map exists, references Epic-82 (Story 82.1) + Epic-85, is registered "shipped" in the reality-mobile README, and `screen-map validate --strict` passes tree-wide (167 maps, 0 errors, 0 warnings) with zero orphan screens. No iOS/SwiftUI build was required (and none is runnable in the cloud runner); scope kept to this docs/screens entry. The `update` drift command flags `unknown-epic :: reality-mobile/project-setup :: Epic-82/85`, but that is a tree-wide epic-catalog naming mismatch (every reality-mobile screen + dozens of ppt/ screens report the same) — advisory only, not an orphan, and out of scope for Story 82.1.
 - 2026-06-28 — agent: extended this infra map to cover Epic 85 / Story 85.2 (Build Configuration by Environment) — added epic "85" to frontmatter and a "Build configuration by environment" functionality section documenting Android product flavors, iOS schemes + xcconfig matrix, the variant-agnostic KMP shared module, and the repo-root `scripts/build-{mobile,android,ios}.sh` CLI scripts (verified shipped on `dev`). Recorded one open gap: per-flavor / per-scheme app-icon badge artwork not yet generated. Chose to extend the existing project-setup infra map rather than create an orphan screen-map for non-visible build infrastructure. The earlier "AC-5 build scripts not found under mobile-native" coverage gap was a false negative — the scripts live at repo-root `scripts/`.
 - 2026-06-17 — agent: created the missing Story-82.1 (SwiftUI Project Setup & App Shell) infrastructure screen-map. Reality-mobile had maps for all 11 visible screens + the 82.2 navigation infra, but no map for the 82.1 project-setup layer. Content grounded in the 2026-05-25 static audit (`docs/superpowers/plans/gap-82-1-swiftui-audit.md`): bundle/xcconfig/Info.plist config, KMP bridge, Keychain, localization, `@main` entry. Carried over the three audit gaps (unlocalized tab titles, unauthenticated default repositories, duplicate `SsoService`).
