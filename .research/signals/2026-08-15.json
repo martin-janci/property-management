@@ -1,6 +1,9 @@
 {
-  "generated": "2026-08-15T03:11:00Z",
-  "signals": [
+  "generated": "2026-08-15T04:35:43Z",
+  "same_day_rerun": true,
+  "rerun_reason": "dispatcher fire payload: buffer-low; no fresh PR/issue/commit activity in the 1h24m window since 03:11 UTC",
+  "signals": [],
+  "archived_signals_from_03_11_run": [
     {
       "id": "lag-warning-2026-08-15",
       "type": "lag_warning",
@@ -102,24 +105,133 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — the 2 new high-confidence security items are score=2 (below the auto-fix score>=3 bar). The 3 churn-hotspot signals score 1 and are outside the auto-fix allowlist. lag_warning is not on the allowlist. No stalled-review re-fires (all prior stalled-review IDs already in seen_signals; no new stalled non-dependabot PR triggered a signal this run).",
+  "auto_fix_skipped_reason": "no candidate — no fresh signals derived this rerun",
   "goal_checks": [
-    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-15.md && head -1 matches '# 2026-08-15'", "observed": "true", "expected": "true" },
-    { "goal": "G2", "passed": true,  "command": "jq compare staged state.json vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "last_pr_seen 2742→2761, last_issue_seen 2704→2759, last_commit_sha changed, seen_signals +11, hotspot_history +3, stats.runs +1", "expected": "true" },
-    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id from today re-scored (all 11 IDs are new)", "observed": "true", "expected": "true" },
-    { "goal": "G5", "passed": true,  "command": "cap ≤ 8 + decay for open items with updated_at ≤ today-14", "observed": "no scores > 8; no open items older than 2026-08-01 to decay", "expected": "true" },
-    { "goal": "G6", "passed": true,  "command": "each new plan has 'adversarial pass: <passed|fixed-in-place|rolled-back>' annotation in brief", "observed": "both plans annotated 'passed' in brief Plans promoted section", "expected": "true" },
-    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 4 metadata + 11 headings + Mode declared + ticked capability + Files paths exist on disk", "observed": "2 new plans; both pass all sub-checks (verified with local awk pipeline)", "expected": "true" },
-    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
-    { "goal": "G9", "passed": true,  "command": "grep for secret patterns in staged diff (excl. baseline docs)", "observed": "0 hits", "expected": "0" },
-    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md /tmp/backlog.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
-    { "goal": "G11", "passed": true, "command": "no phase failed; cursor advance matches", "observed": "no failures — Phase 1.6 was skipped (allowed, not failed)", "expected": "true" },
-    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "true" },
-    { "goal": "G13", "passed": true, "command": "archive count this run ≥ count at HEAD", "observed": "archive unchanged (7 files)", "expected": "true" },
-    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill switch", "observed": "auto_fix_actions=[] — no candidate cleared the certainty bar", "expected": "true" },
-    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 was SKIPPED this run — G16 is a no-op per spec", "expected": "no-op" },
-    { "goal": "G17", "passed": true, "command": "grep for Telegram bot-token value in staged added lines (excl. baseline docs)", "observed": "0 hits", "expected": "0" }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-15.md && head -1 matches # 2026-08-15",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "stats.quiet_days advanced (2->3), last_run_iso refreshed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] length == unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signals[] is empty (no new derivations this rerun; all today's IDs already in seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open item with updated_at <= 2026-08-01 today",
+      "observed": "none eligible",
+      "expected": "none-or-decayed"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this rerun",
+      "observed": "0 new",
+      "expected": "any-count-with-annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this rerun",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md non-timestamp content matches HEAD (backlog.json unchanged this rerun)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this rerun (only observation + regen + state advance)",
+      "observed": "none",
+      "expected": "none-or-cursor-held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans deleted; archive unchanged",
+      "observed": "stable",
+      "expected": "present-or-archived"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count staged=8 head=8",
+      "observed": "8 >= 8",
+      "expected": ">=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md non-timestamp content matches HEAD",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty this rerun",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts JSON valid + pm_cursor.next_index=3 in 0..7",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
   ]
 }
