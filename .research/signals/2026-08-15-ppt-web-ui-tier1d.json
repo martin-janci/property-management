@@ -2,15 +2,12 @@
   "generator": "dev-review",
   "generated_at": "2026-08-15",
   "segment_reviewed": "ppt-web-ui",
-  "selection_reason": "dispatcher-tier1d demand-driven (claimable backlog starved of LANDABLE work; all remaining claimable items are mobile-native/KMP, structurally unlandable in the cloud runner). Excluded mobile-native-kmp per run constraint. api-handlers was already reviewed today (2026-08-15 per state.review_cursor) and carries 2 open code-review-finding rows; reality-web carries 3 open code-review-finding rows in backlog.json (saturation-skip per skill Step 1). From the landable frontend/Rust set I selected ppt-web-ui: it is churn-aligned (the ppt-web disputes-feature cluster dominates recent frontend churn in state.hotspot_history — MediationWorkspacePage 666, FileDisputePage 546, MediationResolutionForm 185, MediationChatThread 164, plus documents/MoveFolderDialog 802) AND in the oldest-unreviewed tier (cursor 2026-08-12), and has 0 open code-review-finding rows in the backlog (not saturated). Note: segment paths in the skill's segment-map are stale (frontend/ppt-web/src/pages/) vs the actual layout (frontend/apps/ppt-web/src/features/); reviewed the actual feature tree. Focused the pass on the disputes + documents churn cluster, which is disjoint from the 2026-08-14 ppt-web-ui tier1d run (that one covered the workflow-automation cluster), so no finding overlap.",
-  "experts_used": [
-    "frontend",
-    "completeness"
-  ],
-  "findings_count": 1,
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved, 0 landable candidates). Excluded per run constraints: api-core and mobile-native-kmp (already carry tier1d signals dated today 2026-08-15), and mobile-native-kmp is additionally deprioritized (findings structurally unlandable — AGP egress-blocked in the cloud runner). reality-web already carries 3 code-review-finding rows in backlog.json (near-saturation, diminishing value). From the remaining cloud-landable frontend segments, ppt-web-ui is both churn-aligned and tied-oldest: the top ppt-web churn hotspots in state.json hotspot_history are the disputes mediation cluster (features/disputes/pages/MediationWorkspacePage.tsx, components/MediationResolutionForm.tsx, components/MediationChatThread.tsx), and ppt-web-ui carries 0 open code-review-finding rows in backlog.json (not saturated). Focused the pass on the freshest churn under this segment — the disputes feature (pages/ + components/) — a different feature cluster than the 2026-08-14 ppt-web-ui pass, which covered workflow-automation. Experts: frontend (primary) + completeness (secondary). Static-only: file reads + grep, no compile/test.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
   "signals": [
     {
-      "id": "code-review-ppt-web-ui-mediation-panels-no-iserror",
+      "id": "code-review-ppt-web-ui-createdispute-stub-discard",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
@@ -18,13 +15,41 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx:28 — `const { data: notes = [], isLoading } = useMediationNotes(disputeId);` drops isError; a failed notes fetch resolves isLoading=false with notes=[] and renders the 'disputes.mediation.noMessages' empty state (line 69-73), indistinguishable from a genuinely empty thread and with no retry affordance.",
-        "frontend/apps/ppt-web/src/features/disputes/components/MediationTimelineView.tsx:51 — `const { data: events, isLoading } = useDisputeTimeline(disputeId);` drops isError; on fetch failure `events` is undefined so the `if (!events || events.length === 0)` branch (line 60) shows 'disputes.mediation.noTimelineEvents' instead of an error/retry.",
-        "frontend/apps/ppt-web/src/features/disputes/components/MediationSubmissionsPanel.tsx:43 — `const { data: submissions = [], isLoading } = useDisputeSubmissions(disputeId);` drops isError; a failed fetch renders the empty submissions state (count 0) with no error indicator or retry.",
-        "Consistent pattern across all three mediation-workspace read panels. The parent MediationWorkspacePage.tsx only guards the top-level useDispute fetch (isError branch at line 204 with a retry button); the per-tab sub-queries above have no equivalent, so a sub-query failure on the Chat/Timeline/Submissions tab silently masquerades as empty data. Mutations in the same files are handled correctly (try/catch -> onToastError), and sibling MoveFolderDialog.tsx:296 already models the right shape (`{ data, isLoading, error }` with an explicit error branch at line 427). Fix: surface isError with an inline error + refetch, mirroring MoveFolderDialog / the parent page.",
-        "Static-analysis only (no compile/run). Severity medium: user-facing correctness/UX defect on the mediation hot path, graceful (no crash) but hides load failures with no recovery."
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit is a fake-success stub: `await new Promise((resolve) => setTimeout(resolve, 1000)); navigate('/disputes');`. It NEVER sends the collected `formData` (CreateDisputeRequest: respondentId, title, description, category, desiredResolution) to any API. The user fills the full 'File New Dispute' form, clicks Submit, sees a 1s spinner then a redirect that looks like success — but nothing is ever persisted. Every field the user typed is silently discarded.",
+        "This is a duplicate/orphan of the REAL create flow. The routed page for /disputes/new is FileDisputePageRoute (routes/groups/disputes.tsx:482 `<Route path=\"/disputes/new\" element={<FileDisputePageRoute />} />`), which wraps FileDisputePage and wires the genuine `useCreateDispute` mutation (FileDisputePageRoute.tsx:32,42 `createDispute.mutateAsync(...)`). CreateDisputePage is exported from the barrel (features/disputes/pages/index.ts:6) but is NOT routed or referenced by any component/test — a latent trap: any dev who wires this exported 'CreateDisputePage' up gets a form that drops disputes on the floor.",
+        "Fix: delete the dead CreateDisputePage.tsx and remove its barrel export, OR wire handleSubmit to the existing useCreateDispute mutation (mutateAsync + try/catch surfacing the error) instead of the setTimeout stub. Verify no import references remain (grep found only the self-export)."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-disputedetail-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/DisputeDetailPage.tsx — a LIVE routed page (lazyRoutes.tsx:82, rendered from routes/groups/disputes.tsx:384 for /disputes/:id) that imports useTranslation (L7,149) but only calls t() for a handful of aria labels (e.g. t('aria.closeDialog') L483,525) — grep counts just 4 t() usages across 597 lines. All visible user-facing copy is hardcoded English.",
+        "Hardcoded strings include section headers 'Description' (L279), 'Desired Resolution' (L283), 'Resolutions' (L347), 'Action Items' (L384), detail labels 'Building'/'Filed by'/'Filed on'/'Assigned to' (L428,439,443,448), 'Parties' (L457), the modal titles 'Propose Resolution' (L487) and 'Create Action Item' (L529) plus their labels 'Title'/'Description'/'Assign to'/'Due Date' (L532,541,550,565), placeholders, and party-role labels complainant/respondent/witness/mediator (L116-119). None localize on the ppt-web UI.",
+        "Fix: move these literals into the i18n resource bundle (t('disputes.detail.*')) as already scaffolded for the aria labels; the useTranslation hook is already in scope so this is a low-risk sweep."
       ],
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-disputelist-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx — the shipped list surface rendered by DisputesPage (features/disputes/pages/DisputesPage.tsx:82, routed) imports NO useTranslation (grep count 0) yet renders the entire disputes index UI in hardcoded English.",
+        "Hardcoded strings: heading '<h1>Disputes</h1>' (L84), search placeholder 'Search disputes...' (L101), the filter dropdown options 'All Statuses'/'All Priorities'/'All Categories' (L120,134,148), and the empty-state 'No disputes found.' (L165). The empty state exists (good) but is untranslated like the rest.",
+        "Fix: add useTranslation and route these literals through t('disputes.list.*'). Consistent with the sibling detail-page i18n gap — the whole disputes feature (Epic 77) shipped without i18n wiring on its list + detail surfaces."
+      ],
+      "expert": "completeness"
     }
   ]
 }
