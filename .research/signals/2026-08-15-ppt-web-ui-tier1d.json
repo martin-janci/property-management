@@ -1,0 +1,30 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-15",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d demand-driven (claimable backlog starved of LANDABLE work; all remaining claimable items are mobile-native/KMP, structurally unlandable in the cloud runner). Excluded mobile-native-kmp per run constraint. api-handlers was already reviewed today (2026-08-15 per state.review_cursor) and carries 2 open code-review-finding rows; reality-web carries 3 open code-review-finding rows in backlog.json (saturation-skip per skill Step 1). From the landable frontend/Rust set I selected ppt-web-ui: it is churn-aligned (the ppt-web disputes-feature cluster dominates recent frontend churn in state.hotspot_history — MediationWorkspacePage 666, FileDisputePage 546, MediationResolutionForm 185, MediationChatThread 164, plus documents/MoveFolderDialog 802) AND in the oldest-unreviewed tier (cursor 2026-08-12), and has 0 open code-review-finding rows in the backlog (not saturated). Note: segment paths in the skill's segment-map are stale (frontend/ppt-web/src/pages/) vs the actual layout (frontend/apps/ppt-web/src/features/); reviewed the actual feature tree. Focused the pass on the disputes + documents churn cluster, which is disjoint from the 2026-08-14 ppt-web-ui tier1d run (that one covered the workflow-automation cluster), so no finding overlap.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-mediation-panels-no-iserror",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx:28 — `const { data: notes = [], isLoading } = useMediationNotes(disputeId);` drops isError; a failed notes fetch resolves isLoading=false with notes=[] and renders the 'disputes.mediation.noMessages' empty state (line 69-73), indistinguishable from a genuinely empty thread and with no retry affordance.",
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationTimelineView.tsx:51 — `const { data: events, isLoading } = useDisputeTimeline(disputeId);` drops isError; on fetch failure `events` is undefined so the `if (!events || events.length === 0)` branch (line 60) shows 'disputes.mediation.noTimelineEvents' instead of an error/retry.",
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationSubmissionsPanel.tsx:43 — `const { data: submissions = [], isLoading } = useDisputeSubmissions(disputeId);` drops isError; a failed fetch renders the empty submissions state (count 0) with no error indicator or retry.",
+        "Consistent pattern across all three mediation-workspace read panels. The parent MediationWorkspacePage.tsx only guards the top-level useDispute fetch (isError branch at line 204 with a retry button); the per-tab sub-queries above have no equivalent, so a sub-query failure on the Chat/Timeline/Submissions tab silently masquerades as empty data. Mutations in the same files are handled correctly (try/catch -> onToastError), and sibling MoveFolderDialog.tsx:296 already models the right shape (`{ data, isLoading, error }` with an explicit error branch at line 427). Fix: surface isError with an inline error + refetch, mirroring MoveFolderDialog / the parent page.",
+        "Static-analysis only (no compile/run). Severity medium: user-facing correctness/UX defect on the mediation hot path, graceful (no crash) but hides load failures with no recovery."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
