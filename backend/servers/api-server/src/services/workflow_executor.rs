@@ -87,7 +87,14 @@ pub enum ComparisonOperator {
 }
 
 /// A single condition to evaluate.
+///
+/// `deny_unknown_fields` is deliberate: a stored condition JSON that carries
+/// keys outside this shape is treated as *unparseable* rather than being
+/// silently coerced, so [`evaluate_conditions_list`] can fail closed on it
+/// (issue #2768). Without it, serde would ignore the stray keys and accept a
+/// malformed rule.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Condition {
     /// Field path to evaluate (e.g., "trigger.amount", "action_1.status")
     pub field: String,
@@ -108,7 +115,15 @@ pub enum LogicalOperator {
 }
 
 /// A group of conditions with a logical operator.
+///
+/// `deny_unknown_fields` is deliberate (issue #2768). Every field here is
+/// `#[serde(default)]`, so without this attribute serde would happily
+/// deserialize *any* JSON object into an empty `And` group — which then
+/// evaluates as vacuously satisfied, letting a corrupt or unknown stored rule
+/// wave the workflow's actions through unguarded. Denying unknown fields makes
+/// a malformed object fail to parse so it reaches the fail-closed branch.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ConditionGroup {
     /// Logical operator to combine conditions
     #[serde(default)]
@@ -461,33 +476,57 @@ impl WorkflowExecutor {
         conditions: &[serde_json::Value],
         context: &ActionContext,
     ) -> Result<bool, WorkflowError> {
-        if conditions.is_empty() {
-            return Ok(true);
-        }
-
-        for condition_json in conditions {
-            // Try to parse as a condition group
-            if let Ok(group) = serde_json::from_value::<ConditionGroup>(condition_json.clone()) {
-                if !evaluate_condition_group(&group, context)? {
-                    return Ok(false);
-                }
-            } else if let Ok(condition) =
-                serde_json::from_value::<Condition>(condition_json.clone())
-            {
-                // Try to parse as a single condition
-                if !evaluate_single_condition(&condition, context)? {
-                    return Ok(false);
-                }
-            } else {
-                tracing::warn!(
-                    condition = ?condition_json,
-                    "Could not parse condition, skipping"
-                );
-            }
-        }
-
-        Ok(true)
+        evaluate_conditions_list(conditions, context)
     }
+}
+
+/// Evaluate a workflow's stored condition list against an [`ActionContext`].
+///
+/// Semantics:
+/// - **Empty list ⇒ satisfied.** A workflow with no conditions always runs;
+///   `Ok(true)` is returned immediately.
+/// - **All conditions must hold.** The list is an implicit AND — the first
+///   condition that evaluates to `false` short-circuits to `Ok(false)`.
+/// - **Unparseable condition ⇒ FAIL CLOSED.** If a stored condition JSON
+///   deserializes as neither a [`ConditionGroup`] nor a [`Condition`], we
+///   return `Err(WorkflowError::ConditionError(..))` instead of silently
+///   skipping it. A corrupt or unknown rule must halt execution visibly:
+///   skipping it would let the workflow's actions run *unguarded*, which is
+///   exactly the guard the condition was meant to enforce (issue #2768).
+fn evaluate_conditions_list(
+    conditions: &[serde_json::Value],
+    context: &ActionContext,
+) -> Result<bool, WorkflowError> {
+    if conditions.is_empty() {
+        return Ok(true);
+    }
+
+    for condition_json in conditions {
+        // Try to parse as a condition group
+        if let Ok(group) = serde_json::from_value::<ConditionGroup>(condition_json.clone()) {
+            if !evaluate_condition_group(&group, context)? {
+                return Ok(false);
+            }
+        } else if let Ok(condition) = serde_json::from_value::<Condition>(condition_json.clone()) {
+            // Try to parse as a single condition
+            if !evaluate_single_condition(&condition, context)? {
+                return Ok(false);
+            }
+        } else {
+            // Fail closed: an unparseable stored condition must NOT be treated
+            // as satisfied. Halt execution so the corrupt rule is surfaced
+            // rather than letting the workflow's actions run unguarded.
+            tracing::error!(
+                condition = ?condition_json,
+                "Unparseable workflow condition; failing closed"
+            );
+            return Err(WorkflowError::ConditionError(format!(
+                "unparseable condition (matches neither ConditionGroup nor Condition): {condition_json}"
+            )));
+        }
+    }
+
+    Ok(true)
 }
 
 /// Evaluate a condition group.
@@ -1144,6 +1183,75 @@ mod tests {
         .unwrap();
 
         assert!(evaluate_condition_group(&group, &ctx).unwrap());
+    }
+
+    // ------------------------------------------------------------------
+    // evaluate_conditions_list: fail-closed on unparseable stored condition
+    // (issue #2768). An unknown/corrupt condition must halt execution with
+    // a ConditionError instead of being silently skipped (which would let
+    // the workflow's actions run unguarded). Empty / valid condition lists
+    // must keep their existing "satisfied" behavior.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_unparseable_condition_fails_closed() {
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        // Matches neither ConditionGroup (no `operator`) nor Condition
+        // (no `field`/`operator`) — a corrupt/unknown stored rule.
+        let garbage = serde_json::json!({ "totally": "unknown", "shape": [1, 2, 3] });
+
+        let result = evaluate_conditions_list(&[garbage], &ctx);
+        assert!(
+            matches!(result, Err(WorkflowError::ConditionError(_))),
+            "unparseable condition must fail closed, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_unparseable_condition_after_valid_one_still_fails_closed() {
+        // A valid, satisfied condition followed by a garbage one must still
+        // fail closed — the corrupt rule cannot be skipped just because an
+        // earlier condition passed.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+        let valid = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        let garbage = serde_json::json!(["not", "an", "object"]);
+
+        let result = evaluate_conditions_list(&[valid, garbage], &ctx);
+        assert!(
+            matches!(result, Err(WorkflowError::ConditionError(_))),
+            "unparseable condition must fail closed even after a valid one, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_empty_conditions_still_satisfied() {
+        // No conditions ⇒ the workflow always runs. Fail-closed applies only
+        // to *unparseable* conditions, never to an empty list.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50 }));
+        assert!(
+            evaluate_conditions_list(&[], &ctx).unwrap(),
+            "empty condition list must be satisfied"
+        );
+    }
+
+    #[test]
+    fn test_valid_conditions_still_evaluate() {
+        // Sanity: well-formed conditions keep evaluating normally after the
+        // fail-closed change — a satisfied single condition ⇒ true, an
+        // unsatisfied one ⇒ false.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+
+        let satisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        assert!(evaluate_conditions_list(&[satisfied], &ctx).unwrap());
+
+        let unsatisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "lt", "value": 10
+        });
+        assert!(!evaluate_conditions_list(&[unsatisfied], &ctx).unwrap());
     }
 
     #[test]
