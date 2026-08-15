@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-15T03:11:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2761,
-  "last_issue_seen": 2759,
-  "last_commit_sha": "75b30077aa0e3e37aa1f4ed4b6626245a41405e7",
+  "last_run_iso": "2026-08-15T12:34:41Z",
+  "last_run_ms": 4200,
+  "last_pr_seen": 2767,
+  "last_issue_seen": 2768,
+  "last_commit_sha": "7e2e04b9893114d89979794db4586e6f1ca2ea33",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -863,7 +863,15 @@
     "dep-update-noise-pr-2749",
     "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
     "code-review-api-handlers-voice-google-verify-fail-open",
-    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout"
+    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
+    "buffer-low-2026-08-15-1234",
+    "pr-observed-2762",
+    "pr-observed-2763",
+    "pr-observed-2764",
+    "pr-observed-2765",
+    "pr-observed-2766",
+    "pr-observed-2767",
+    "issue-observed-2768"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -877,7 +885,7 @@
     "mobile-native-kmp": "2026-08-11"
   },
   "stats": {
-    "runs": 64,
+    "runs": 65,
     "vectors_created": 297,
     "plans_created": 24,
     "quiet_days": 2,
