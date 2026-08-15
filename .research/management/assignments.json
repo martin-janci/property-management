@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-15T14:28:45Z",
+  "generated": "2026-08-15T14:56:17Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2768",
       "branch": "auto-impl/gh-issue-2768-2ed97b6a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-15T14:28:45Z",
-      "last_updated": "2026-08-15T14:28:45Z",
-      "status_changed_at": "2026-08-15T14:28:45Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-15T14:56:17Z",
+      "status_changed_at": "2026-08-15T14:56:17Z",
+      "pr_number": 2769,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2769",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2769 done: fail-closed on unparseable workflow conditions via #[serde(deny_unknown_fields)] on Condition/ConditionGroup + Err(WorkflowError::ConditionError); empty lists still Ok(true); 20/20 workflow_executor unit tests green (4 new regressions); 12 full-crate fails are env-only (11x DATABASE_URL sqlx::test, 1x DNS) green in CI; draft pending CI test-shard; scope_drift=true (added deny_unknown_fields on shared condition structs)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
