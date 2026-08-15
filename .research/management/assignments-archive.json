@@ -2499,6 +2499,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-workflow-cond-parse-failopen",
+      "branch": "auto-impl/code-review-api-core-workflow-cond-parse-dd416f1f",
+      "status": "failed",
+      "claimed_at": "2026-08-06T12:07:31Z",
+      "last_updated": "2026-08-15T12:22:23Z",
+      "status_changed_at": "2026-08-15T12:22:23Z",
+      "pr_number": 2684,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2684",
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "followup round 1 applied (commit 49dc28429): deny_unknown_fields on Condition+ConditionGroup, empty-group fail-closed guard, tests fixed/expanded. Re-armed for re-review of new SHA. [phase5.5 ci-retrigger: PR reopened to fire backend.yml] [phase5.7 respawn round 2 dispatched 2026-08-08T06:27Z: CI red at 7b79989e (fmt-clippy+check+test+test-shard all FAIL) — implementer respawned to fix the backend build; outcome reconciles next Phase 2] [dispatcher respawn round3: pushed clippy fix cloned_ref_to_slice_refs->std::slice::from_ref @workflow_executor.rs:1312 (commit 926afe8); CI re-running] [quarantine SLA: no operator action in 7d; PR #2684 closed (branch preserved), re-minted as issue #2768]",
+      "reviewer_summary": "verdict=changes note=CI red on 926afe8 — backend test-shard(1-4) FAILURE after round3 clippy fix; fmt-clippy+check green; fix_rounds=3 exhausted → quarantine",
+      "last_reviewed_oid": "926afe8a775acd5993a3f0354bfca5e14d89a2c1",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 3,
+      "reclaim_attempts": 1,
+      "fix_rounds": 3,
+      "merge_attempted_at": "2026-08-07T00:11:32Z",
+      "quarantined_at": "2026-08-08T12:08:50Z",
+      "quarantine_reason": "fix_rounds=3 exhausted; verdict still changes — CI red on head 926afe8 (test-shard 1-4 FAILURE) after 3 respawn rounds; fmt-clippy+check green but tests fail"
+    },
+    {
       "task_id": "code-review-api-core-workflow-not-group-drops-conds",
       "branch": "auto-impl/code-review-api-core-workflow-not-group-e28d30f6",
       "status": "merged",
@@ -14125,5 +14149,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-15T08:34:53Z"
+  "archived_at": "2026-08-15T12:34:01Z"
 }
