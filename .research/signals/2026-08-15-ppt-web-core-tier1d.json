@@ -1,0 +1,60 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-15",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d demand-driven (claimable landable backlog starved, ~5 << floor 36). Excluded mobile-native-kmp per run constraint (AGP egress-blocked / no macOS build = structurally unlandable). Segments already reviewed today per state.review_cursor: api-handlers (2026-08-15), and today's tier1d runs already covered ppt-web-ui (2x) and reality-web. From the remaining landable set, ppt-web-core is BOTH churn-aligned (frontend/apps/ppt-web is the #1 churn area by a wide margin — 880 file-touches in the last 7 days of git history) AND the oldest-unreviewed landable segment not yet covered today (cursor 2026-08-12, tied with mobile-rn but ppt-web-core is more central/landable). Backlog saturation check: 0 open code-review-finding rows for ppt-web-core (not saturated). Note: the skill's segment-map paths are stale (frontend/ppt-web/src/{hooks,api,stores,router}) vs the actual layout (frontend/apps/ppt-web/src/{hooks,lib,contexts,routes}); reviewed the actual core tree — auth/api/websocket entry points. This pass is disjoint from the 2026-08-14 ppt-web-core tier1d run (that one covered the rentals/person-months route groups); these findings are in the contexts/ + lib/ realtime+auth-client layer, no overlap.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 — eventToQueryKeys subscribes to COLON-form event names ('entity:announcement','entity:fault','entity:vote','entity:document','entity:message','entity:neighbor'), and :313 subscribes to generic 'entity:updated'/'entity:created'/'entity:deleted'. These are the ONLY keys wired for TanStack Query cache invalidation on server push.",
+        "The server publishes DOT-form event names. Confirmed in backend/servers/api-server/src/routes/ws_notifications.rs:92-95 (WsEvent.event mirrors PubSubMessage::event_type, e.g. 'notification.created','preference.updated') and backend/servers/api-server/src/services/notification_pipeline.rs:169 (`let event_type = format!(\"{}.notification\", entity_type)` → 'announcements.notification','fault.notification', etc.). Other confirmed literals: 'fault.created','vote.closed'.",
+        "frontend/apps/ppt-web/src/lib/websocket.ts:65-82 parseServerMessage maps the server envelope's `event` string straight onto `message.type` with NO dot→colon normalization, and WebSocketService.subscribe (websocket.ts:466) keys handlers off that raw `message.type`. Grep confirms there is no remapping layer anywhere in lib/hooks/contexts and no subscriber uses the dot-form names.",
+        "Net effect: the colon-form subscription keys can NEVER match the dot-form event names the server actually emits, so WebSocket-driven query invalidation is entirely dead — real-time announcements/faults/votes/documents pushes never invalidate any cache and the UI shows stale data until a manual refetch/navigation. Traced both ends (server publish site → client subscribe keys), no overlap → high confidence.",
+        "Fix: align the client subscription keys with the server's dot-form event_type namespace (e.g. map 'announcements.notification'/'fault.created'/'vote.closed'/'*.notification' → the right query keys), or normalize server event names to the colon scheme in parseServerMessage. Add a test asserting an emitted 'fault.created' frame invalidates the ['faults'] query."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-client-no-onunauthorized",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — AuthProvider wires the hand-rolled axios client via `configureApiClient({ getToken: getAccessToken })`, passing ONLY getToken and never an `onUnauthorized` callback.",
+        "frontend/apps/ppt-web/src/lib/api.ts:195-196,219-220 — createAxiosInstance stores `onUnauthorizedCallback = config.onUnauthorized` (module global) and the response interceptor only reacts to a 401 when `onUnauthorizedCallback` is truthy: `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();`. Because AuthContext never supplies it, the callback is permanently undefined and the entire 401 branch is dead for this client.",
+        "This client is NOT unused: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:19 and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:10 both document their reliance on it ('401 → onUnauthorized') — an expectation the wiring silently breaks.",
+        "Net effect: when a feature hook using getApiClient() hits a 401 (access token expired mid-session), there is no silent token refresh, no logout, and no redirect-to-login — the user just gets a failed request and a stuck/dead session until they manually reload. The AuthProvider already owns a refreshToken() routine that could be wired here.",
+        "Fix: pass `onUnauthorized` into configureApiClient (e.g. attempt refreshToken(); on failure call logout()), matching the documented contract in the sentiment/predictive-maintenance hooks."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-unverified-jwt-role",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:220-233 decodeJwtPayload does an UNVERIFIED base64 decode of the JWT payload (no signature check — the browser has no verifying key), and :254-258 deriveActiveRole trusts the embedded `claims.role` string: `if (claims.role is string && ROLE_PRIORITY.includes(claimRole)) return claimRole` — this becomes the user's effective role.",
+        "That derived role is persisted and set into React state (AuthContext.tsx:387-389 in refreshTokenInternal, and :477-479/:513-516 in login/loginWithSsoCode), so any UI role-gating that reads user.role trusts a value taken from an unverified, client-mutable token (localStorage key 'ppt_access_token').",
+        "Impact is bounded — the api-server still enforces real authorization server-side, so this cannot bypass backend checks; the risk is purely UI-level (a user who edits their stored token could reveal admin-only UI affordances / menu items). Low severity, but it is a genuine 'trust unverified JWT claim' smell in the auth core.",
+        "Fix: treat the client-derived role as advisory only and ensure every privileged UI surface is also guarded by a server-authoritative capability/permission check (or a role echoed by a signed server response) rather than the decoded token claim; add a comment documenting that decodeJwtPayload is unverified and UI-only."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

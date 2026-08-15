@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-15T10:33:38Z",
+  "archived_at": "2026-08-15T14:29:03Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2485,6 +2485,31 @@
         "merged_pr": 2666,
         "merged_at": "2026-08-06T08:12:22Z",
         "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-workflow-cond-parse-failopen",
+      "action": "backend/servers/api-server/src/services/workflow_executor.rs:459-489 — evaluate_conditions() FAILS OPEN on an unparseable condition. When a stored condition JSON deserializes as neither ConditionGroup nor Condition, the `else` branch (lines",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signal-bridge 2026-08-05T22:12:57Z (tier1d signal; score=2 conf=medium vector=bug seg=api-core) | gc1-reconcile 2026-08-15T14:24:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-05T22:12:57Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug",
+        "source": "tier1d-signal-bridge"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 2684,
+        "merged_at": null,
+        "at": "2026-08-15T14:24:01Z"
       }
     },
     {
