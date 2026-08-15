@@ -29,9 +29,12 @@ use db::models::{
 use db::RlsPool;
 use hmac::{Hmac, KeyInit, Mac};
 use integrations::{encrypt_optional_required, encrypt_required, CryptoError, IntegrationCrypto};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use serde::Deserialize;
 use sha2::Sha256;
 use sqlx::PgConnection;
+use std::sync::OnceLock;
+use tokio::sync::RwLock;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -210,14 +213,19 @@ async fn alexa_health_check() -> StatusCode {
 
 /// Google Actions webhook endpoint.
 ///
-/// Handles Google Assistant requests via Actions SDK.
+/// Handles Google Assistant requests via the Actions SDK. The request is
+/// authenticated by a Google-issued ID token supplied as
+/// `Authorization: Bearer <jwt>`: its RS256 signature is verified against
+/// Google's JWKS and its `aud` claim must equal `GOOGLE_ACTIONS_PROJECT_ID`
+/// (issuer + expiry are enforced too). Once verified, the linked account is
+/// resolved from the OAuth access token in `user.params.bearerToken`.
 #[utoipa::path(
     post,
     path = "/api/v1/webhooks/voice/google",
     request_body = GoogleActionsRequest,
     responses(
         (status = 200, description = "Google Actions response", body = GoogleActionsResponse),
-        (status = 401, description = "Unauthorized - invalid token"),
+        (status = 401, description = "Unauthorized - missing or invalid Google ID token"),
         (status = 500, description = "Internal server error"),
     ),
     tag = "Voice Webhooks"
@@ -228,8 +236,9 @@ async fn google_actions_webhook(
     mut rls: RlsConnection,
     Json(request): Json<GoogleActionsRequest>,
 ) -> Result<Json<GoogleActionsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify request (Google uses Bearer token in Authorization header)
-    if let Err(e) = verify_google_request(&headers) {
+    // Verify request: Google-issued ID token (Bearer) with RS256 signature +
+    // aud/iss/exp validation. Fails closed on any verification error.
+    if let Err(e) = verify_google_request(&headers).await {
         tracing::warn!("Google Actions verification failed: {}", e);
         rls.release().await;
         return Err((
@@ -1077,87 +1086,174 @@ fn validate_alexa_timestamp(body: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-/// Verify Google Actions request (Story 98.6).
-///
-/// Google Actions verification can use:
-/// 1. Google project ID from the Google-Actions-API-Version header
-/// 2. ID token in Authorization header (JWT format)
-///
-/// For security, we validate the project ID matches our configuration.
-fn verify_google_request(headers: &HeaderMap) -> Result<(), String> {
-    // Get the Google Actions API version header (contains project context)
-    let api_version = headers
-        .get("Google-Actions-API-Version")
-        .and_then(|v| v.to_str().ok());
+/// Google's OAuth2 JWKS endpoint — RS256 signing certificates for Google-issued
+/// ID tokens (used by Google Assistant / Actions account linking).
+const GOOGLE_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 
-    if let Some(version) = api_version {
-        tracing::debug!("Google Actions API version: {}", version);
-    }
+/// Accepted `iss` values for a Google-issued ID token.
+const GOOGLE_ISSUERS: [&str; 2] = ["https://accounts.google.com", "accounts.google.com"];
 
-    // Get the Google Assistant Signature header if present
-    let signature = headers
-        .get("Google-Assistant-Signature")
-        .and_then(|v| v.to_str().ok());
+/// How long a fetched JWKS is trusted before a refresh. Google rotates signing
+/// keys on the order of days; a 1h TTL keeps the hot path off the network while
+/// still picking up rotations promptly (a rotated-in `kid` also forces an
+/// immediate refresh regardless of TTL — see `google_decoding_key`).
+const GOOGLE_JWKS_TTL: std::time::Duration = std::time::Duration::from_secs(3600);
 
-    // Check for Authorization header (Bearer token)
-    let auth_header = headers.get("Authorization").and_then(|v| v.to_str().ok());
+/// One JWK entry from Google's `/oauth2/v3/certs` response (RSA public key).
+#[derive(Clone, Deserialize)]
+struct GoogleJwk {
+    kid: String,
+    n: String,
+    e: String,
+    #[allow(dead_code)]
+    alg: Option<String>,
+}
 
-    // Validate project ID if configured
-    if let Ok(expected_project) = std::env::var("GOOGLE_ACTIONS_PROJECT_ID") {
-        // If we have a signature, it should contain project info
-        if let Some(sig) = signature {
-            // The signature is base64-encoded JSON with project info
-            // For now, just log it - full validation would decode and verify
-            tracing::debug!(
-                signature_len = sig.len(),
-                expected_project = %expected_project,
-                "Google Actions signature present"
-            );
-        }
+#[derive(Clone, Deserialize)]
+struct GoogleJwks {
+    keys: Vec<GoogleJwk>,
+}
 
-        // If we have an auth header with Bearer token, validate format
-        if let Some(auth) = auth_header {
-            if !auth.starts_with("Bearer ") {
-                return Err("Invalid Authorization header format".to_string());
-            }
+struct JwksCache {
+    keys: Vec<GoogleJwk>,
+    fetched_at: std::time::Instant,
+}
 
-            let token = &auth[7..];
+/// Process-wide JWKS cache (1h TTL) and shared HTTP client (5s timeout).
+static GOOGLE_JWKS_CACHE: OnceLock<RwLock<Option<JwksCache>>> = OnceLock::new();
+static GOOGLE_JWKS_HTTP: OnceLock<reqwest::Client> = OnceLock::new();
 
-            // Validate JWT format (three base64 parts separated by dots)
-            let parts: Vec<&str> = token.split('.').collect();
-            if parts.len() != 3 {
-                return Err("Invalid JWT token format".to_string());
-            }
+fn google_jwks_cache() -> &'static RwLock<Option<JwksCache>> {
+    GOOGLE_JWKS_CACHE.get_or_init(|| RwLock::new(None))
+}
 
-            // In production, you would:
-            // 1. Decode the JWT header to get the key ID
-            // 2. Fetch Google's public keys from https://www.googleapis.com/oauth2/v3/certs
-            // 3. Verify the signature using the appropriate key
-            // 4. Check the 'aud' claim matches your project ID
-            // 5. Check the 'iss' claim is accounts.google.com or https://accounts.google.com
-            // 6. Check the token is not expired
+fn google_jwks_http() -> &'static reqwest::Client {
+    GOOGLE_JWKS_HTTP.get_or_init(|| {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .expect("build Google JWKS HTTP client")
+    })
+}
 
-            // Decode and check the payload for project ID (basic validation)
-            if let Ok(payload_bytes) = BASE64.decode(parts[1]) {
-                if let Ok(payload_str) = std::str::from_utf8(&payload_bytes) {
-                    if payload_str.contains(&expected_project) {
-                        tracing::info!(
-                            project_id = %expected_project,
-                            "Google Actions project ID verified"
-                        );
-                    }
+/// Fetch and parse Google's current JWKS. `error_for_status()` is deliberate:
+/// a 4xx/5xx JSON error body would otherwise parse into an empty `keys[]` and
+/// surface later as a confusing "unknown kid" instead of the real HTTP failure.
+async fn fetch_google_jwks() -> Result<Vec<GoogleJwk>, String> {
+    let resp = google_jwks_http()
+        .get(GOOGLE_CERTS_URL)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch Google signing certs: {e}"))?
+        .error_for_status()
+        .map_err(|e| format!("Google signing certs endpoint returned an error: {e}"))?;
+    let jwks: GoogleJwks = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse Google signing certs: {e}"))?;
+    Ok(jwks.keys)
+}
+
+/// Resolve the RSA public [`DecodingKey`] for a `kid`, using the cached JWKS
+/// when fresh and it contains the key, otherwise refreshing from Google.
+/// Mirrors the JWKS resolver in `deploy-server`'s OIDC validator.
+async fn google_decoding_key(kid: &str) -> Result<DecodingKey, String> {
+    // Fast path: cached, fresh, and contains the requested kid.
+    {
+        let guard = google_jwks_cache().read().await;
+        if let Some(cache) = guard.as_ref() {
+            if cache.fetched_at.elapsed() < GOOGLE_JWKS_TTL {
+                if let Some(k) = cache.keys.iter().find(|k| k.kid == kid) {
+                    return DecodingKey::from_rsa_components(&k.n, &k.e)
+                        .map_err(|e| format!("Invalid Google JWK for kid {kid}: {e}"));
                 }
             }
         }
     }
 
-    // Log validation for audit
-    tracing::info!(
-        has_signature = signature.is_some(),
-        has_auth = auth_header.is_some(),
-        "Google Actions request validation passed"
-    );
+    // Refresh: stale cache OR the kid was rotated in and isn't cached yet.
+    let fresh = fetch_google_jwks().await?;
+    let key = fresh
+        .iter()
+        .find(|k| k.kid == kid)
+        .ok_or_else(|| format!("Unknown Google signing key id: {kid}"))
+        .and_then(|k| {
+            DecodingKey::from_rsa_components(&k.n, &k.e)
+                .map_err(|e| format!("Invalid Google JWK for kid {kid}: {e}"))
+        })?;
+    *google_jwks_cache().write().await = Some(JwksCache {
+        keys: fresh,
+        fetched_at: std::time::Instant::now(),
+    });
+    Ok(key)
+}
 
+/// Verify a Google-issued ID token's RS256 signature and registered claims
+/// against `key`. Pure and synchronous so it is unit-testable without a live
+/// JWKS fetch. FAILS CLOSED: any bad signature, wrong audience (`aud` must
+/// equal `expected_project` exactly), untrusted issuer, or expired/not-yet-valid
+/// token yields `Err`.
+fn verify_google_id_token(
+    token: &str,
+    expected_project: &str,
+    key: &DecodingKey,
+) -> Result<(), String> {
+    let mut validation = Validation::new(Algorithm::RS256);
+    // Exact audience match against the configured Actions project id.
+    validation.set_audience(&[expected_project]);
+    validation.set_issuer(&GOOGLE_ISSUERS);
+    validation.validate_exp = true;
+    validation.validate_nbf = true;
+
+    // jsonwebtoken base64url-decodes the segments itself (no STANDARD-alphabet
+    // mis-decode) and enforces signature + aud + iss + exp/nbf.
+    decode::<serde_json::Value>(token, key, &validation)
+        .map(|_| ())
+        .map_err(|e| format!("Google ID token verification failed: {e}"))
+}
+
+/// Verify a Google Actions request (Epic 93 / Story 93.3).
+///
+/// The request MUST carry a Google-issued ID token in the `Authorization:
+/// Bearer <jwt>` header. The token's RS256 signature is verified against
+/// Google's published JWKS (`/oauth2/v3/certs`, cached 1h), and its `aud`
+/// claim must equal `GOOGLE_ACTIONS_PROJECT_ID`, its `iss` must be a Google
+/// issuer, and it must be unexpired.
+///
+/// FAILS CLOSED on every path: an unset `GOOGLE_ACTIONS_PROJECT_ID`, a missing
+/// or malformed `Authorization` header, or any signature/claim failure all
+/// return `Err` (mapped by the caller to `401`).
+async fn verify_google_request(headers: &HeaderMap) -> Result<(), String> {
+    // FAIL CLOSED: the audience we verify against must be configured.
+    let expected_project = std::env::var("GOOGLE_ACTIONS_PROJECT_ID")
+        .map_err(|_| "GOOGLE_ACTIONS_PROJECT_ID is not configured".to_string())?;
+
+    // FAIL CLOSED: a Google-signed Bearer ID token is required.
+    let auth_header = headers
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .ok_or_else(|| "Missing Authorization header".to_string())?;
+    let token = auth_header
+        .strip_prefix("Bearer ")
+        .ok_or_else(|| "Invalid Authorization header format".to_string())?;
+
+    // Fail fast — and off the network — on a structurally invalid token.
+    let header =
+        decode_header(token).map_err(|e| format!("Invalid Google ID token header: {e}"))?;
+    if header.alg != Algorithm::RS256 {
+        return Err(format!(
+            "Unexpected Google ID token algorithm: {:?}",
+            header.alg
+        ));
+    }
+    let kid = header
+        .kid
+        .ok_or_else(|| "Google ID token missing key id (kid)".to_string())?;
+
+    let key = google_decoding_key(&kid).await?;
+    verify_google_id_token(token, &expected_project, &key)?;
+
+    tracing::info!(project_id = %expected_project, "Google Actions ID token verified");
     Ok(())
 }
 
@@ -1827,43 +1923,162 @@ dQPD++LeIpOChiX4Ru2uMQ==\n\
         .is_err());
     }
 
-    // --- verify_google_request ------------------------------------------
+    // --- verify_google_request (fail-closed JWT verification) -----------
     //
-    // GOOGLE_ACTIONS_PROJECT_ID is process-global; `verify_google_request` is
-    // the only reader, so confining every mutation of it to this single test
-    // keeps the assertions race-free under the parallel test runner.
+    // Regression coverage for the fail-open bug: `verify_google_request` used
+    // to return Ok(()) for an unset project id, a missing auth header, and a
+    // forged bearer whose base64 payload merely *contained* the project id
+    // (with no signature check), and it decoded JWT payloads with the STANDARD
+    // (padded) base64 alphabet so real URL-safe Google tokens silently fell
+    // through to Ok(()). It now verifies the RS256 signature + aud/iss/exp and
+    // fails closed on every error path.
+
+    // Fixed RSA test keypair (2048-bit) used to mint + verify signed tokens in
+    // these unit tests. NOT a real Google key — the production path resolves the
+    // decoding key from Google's live JWKS via `google_decoding_key`.
+    const TEST_RSA_PRIV_PEM: &str = "-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7p2rNa9yZ9llX
+ZmRH2tWIayNP4yIdGP72CzZx8/YxOx03BbqKTNmcfpShjw9AuaWENi0sWXe9j1TX
+RR/JZ1Cff2qDHwsFfdwAwWraFtKFrFAziLG9yZXicxxY9fotLHOzEGwnPqZo4JqK
+APqVW/0bZzQLIpYALCM7Snj/DA2axsrlHH1Usi5UqEjaXQUpagwGRVpyR6eS6/Sg
+u/BkU50/xMZCyyv1/0ebeDKxOy3I5j+hxLW/reJZaNIOHEzZwXmARjah8b0L0/yP
+C6h5Y1Xg7Rn53qBw+DI03Z2HEwFf9cldO15X0B9XQiqJ+ZdGi2Jj6eq3oOBp812w
+1SIzp+V/AgMBAAECggEAAQP5l/2qxp/cAT+/Rdmb/jkA3+siwXWOgQEJMmSs7byc
+KTK8El4yxJ4Kv9++UriuefYGbeRYuYs6XPqKyX7oTh9VEZCWxq4qWqFcAAIk8YQ/
+4DIv2WRrOJEsPhmsA5fnUw4WXRVXC9+V9oPlge7ALT3JvPsFmh/4W4HJAIMC2oDm
+iB1fsl0jq+rk+k0JYIy11yRcI6Dz6CxMzrZtkl6h66a9LXUpwfqVSPUwuHilXCwp
+PpwNGja/Qi+91DFAM3AjAHy85uSzg+wV2thCKvS+OF45z2MuElXnWDbQKinW6ige
+tl8lbvQkIvDTpPAecSokYsV1ZI7LX5gqT4GlO1ImQQKBgQDmgDEsdBuIJP1lJarL
+NeL2/t9n9Nhs7FoxPy+qKy8+7F6W98wJzrXXCxcK6NhKSw6RmPunrFx3ha3i6aPp
+hu/855ihB0ZTkvNHQxCKmHPDW0wrrN6u77ANMYQa+Uwbs/DDbe/5Bj24ECcYqwHk
+7womofS/DewMsabouuk+ymxmWwKBgQDQacynrub8CjTUaCyvLqcKjIv/+Mv0i3j+
+zO1Fpb8bO9NM/FCKtnB3oddIRINAQRNJ3nd1V8HrHZhGxOTbIIeLi2RmtmJ0kjBE
+gVAKPDAqvhaybfgnRKsFpl0WDzeu0UmwaC2zrsBLEXpoLRfnT2JHnA4THBj3h4yG
+hVoIP1VOrQKBgQDJx7DEZIPxg8gbcoT4TZz5chbqb0nC2IkAEXtNcW5znAIWEKia
+cU14CepLD5jAOMJxLMYoe1ea/fhB6xwlg421DJztYmvrH3o+iPQDEABPJS4iEbwC
+0iqA8jbeUhyRJ819l1D6477F0cYX7yPCYIu3VBHn6m0Yk7A0jeM/p36LfwKBgFhf
+5KZeJhhOA6TmH7yRHcf9XQhH6cRiuAXjw+E6rVTRA4Kro0OOpRY1jGJamwVOEu3J
+5gHeGp6mSAIKT7kTjCaCDyr2v70KmGkUJGqSpyIYxOsYcpfEKHkW2HYYMdZxbLvf
+ETIWMfgjCzLNnEs7gEM5S0aTLYsY8V/BgDHrGTNpAoGBANeF2qEjS1NyJ99mJcGj
+Y5TPLyQot9d9hEkIpNT2aAFnUb0baqJ0j1eyN6NvOCUAdXcqskj4S5G5kIJEHQxP
+mR3t5mHnqglfXy8CSVtCuIuBxzPf32fQq8XZo0JtE6oKfbd0jnsAX61NYhnF7LDO
+mFM80HjvdsbTWHj9n2QgMU5B
+-----END PRIVATE KEY-----";
+    const TEST_RSA_PUB_PEM: &str = "-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6dqzWvcmfZZV2ZkR9rV
+iGsjT+MiHRj+9gs2cfP2MTsdNwW6ikzZnH6UoY8PQLmlhDYtLFl3vY9U10UfyWdQ
+n39qgx8LBX3cAMFq2hbShaxQM4ixvcmV4nMcWPX6LSxzsxBsJz6maOCaigD6lVv9
+G2c0CyKWACwjO0p4/wwNmsbK5Rx9VLIuVKhI2l0FKWoMBkVackenkuv0oLvwZFOd
+P8TGQssr9f9Hm3gysTstyOY/ocS1v63iWWjSDhxM2cF5gEY2ofG9C9P8jwuoeWNV
+4O0Z+d6gcPgyNN2dhxMBX/XJXTteV9AfV0IqifmXRotiY+nqt6DgafNdsNUiM6fl
+fwIDAQAB
+-----END PUBLIC KEY-----";
+
+    const GOOGLE_ISS: &str = "https://accounts.google.com";
+
+    fn test_decoding_key() -> DecodingKey {
+        DecodingKey::from_rsa_pem(TEST_RSA_PUB_PEM.as_bytes()).unwrap()
+    }
+
+    // Mint an RS256-signed JWT with the test private key. `exp_offset` is
+    // seconds relative to now (negative => already expired).
+    fn signed_google_token(iss: &str, aud: &str, exp_offset: i64) -> String {
+        use jsonwebtoken::{encode, EncodingKey, Header};
+        let now = Utc::now().timestamp();
+        let claims = serde_json::json!({
+            "iss": iss,
+            "aud": aud,
+            "sub": "1234567890",
+            "iat": now,
+            "exp": now + exp_offset,
+        });
+        let mut header = Header::new(Algorithm::RS256);
+        header.kid = Some("test-kid".to_string());
+        let key = EncodingKey::from_rsa_pem(TEST_RSA_PRIV_PEM.as_bytes()).unwrap();
+        encode(&header, &claims, &key).unwrap()
+    }
+
+    // A properly-signed, correctly-audienced, unexpired Google ID token is
+    // accepted. Also proves URL-safe base64url JWT segments decode for real
+    // (the old STANDARD-alphabet decode silently failed and fell through).
     #[test]
-    fn google_request_verification_branches() {
-        // No project configured -> always passes (both auth present and absent).
+    fn google_id_token_valid_signature_accepted() {
+        let token = signed_google_token(GOOGLE_ISS, "my-project-123", 3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_ok());
+    }
+
+    // A forged bearer whose payload merely *contains* the project id but whose
+    // signature does not verify is rejected (the core of the old fail-open bug).
+    #[test]
+    fn google_id_token_forged_bearer_rejected() {
+        let good = signed_google_token(GOOGLE_ISS, "my-project-123", 3600);
+        let parts: Vec<&str> = good.split('.').collect();
+        // Keep the real header + the payload (still carries aud=my-project-123),
+        // but replace the signature with garbage.
+        let forged = format!("{}.{}.AAAAAAAAAAAAAAAA", parts[0], parts[1]);
+        let err = verify_google_id_token(&forged, "my-project-123", &test_decoding_key())
+            .expect_err("forged signature must be rejected");
+        assert!(err.contains("verification failed"), "unexpected: {err}");
+    }
+
+    // Signature is valid but the audience is a different project => rejected
+    // (exact project-id match, not a substring contains()).
+    #[test]
+    fn google_id_token_wrong_project_rejected() {
+        let token = signed_google_token(GOOGLE_ISS, "someone-elses-project", 3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_err());
+    }
+
+    // Signature + audience valid but the token is expired => rejected.
+    #[test]
+    fn google_id_token_expired_rejected() {
+        let token = signed_google_token(GOOGLE_ISS, "my-project-123", -3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_err());
+    }
+
+    // Signature + audience valid but issued by an untrusted issuer => rejected.
+    #[test]
+    fn google_id_token_untrusted_issuer_rejected() {
+        let token = signed_google_token("https://evil.example.com", "my-project-123", 3600);
+        assert!(verify_google_id_token(&token, "my-project-123", &test_decoding_key()).is_err());
+    }
+
+    // GOOGLE_ACTIONS_PROJECT_ID is process-global and read only by
+    // `verify_google_request`; confining every mutation of it to this single
+    // test keeps the assertions race-free under the parallel test runner. All
+    // branches here fail closed *before* any JWKS network fetch.
+    #[tokio::test]
+    async fn google_request_fails_closed_on_bad_input() {
+        // Unset project id => fail closed (previously returned Ok).
         std::env::remove_var("GOOGLE_ACTIONS_PROJECT_ID");
-        assert!(verify_google_request(&HeaderMap::new()).is_ok());
+        let err = verify_google_request(&HeaderMap::new())
+            .await
+            .expect_err("must fail closed when project id unset");
+        assert!(err.contains("not configured"), "unexpected: {err}");
 
         std::env::set_var("GOOGLE_ACTIONS_PROJECT_ID", "my-project-123");
 
-        // No Authorization header still passes.
-        assert!(verify_google_request(&HeaderMap::new()).is_ok());
+        // Missing Authorization header => rejected (previously returned Ok).
+        let err = verify_google_request(&HeaderMap::new())
+            .await
+            .expect_err("missing auth header must be rejected");
+        assert!(err.contains("Missing Authorization"), "unexpected: {err}");
 
-        // Malformed Authorization (no "Bearer " prefix) is rejected.
+        // Malformed Authorization (no "Bearer " prefix) => rejected.
         let mut bad_scheme = HeaderMap::new();
         bad_scheme.insert("authorization", HeaderValue::from_static("Basic abc"));
-        let err = verify_google_request(&bad_scheme).unwrap_err();
+        let err = verify_google_request(&bad_scheme)
+            .await
+            .expect_err("non-bearer scheme must be rejected");
         assert!(
             err.contains("Authorization header format"),
             "unexpected: {err}"
         );
 
-        // Bearer token that isn't a 3-part JWT is rejected.
+        // Structurally invalid bearer token => rejected before any network I/O.
         let mut bad_jwt = HeaderMap::new();
         bad_jwt.insert("authorization", HeaderValue::from_static("Bearer only.two"));
-        let err = verify_google_request(&bad_jwt).unwrap_err();
-        assert!(err.contains("JWT token format"), "unexpected: {err}");
-
-        // Well-formed 3-part JWT carrying the project id in the payload passes.
-        let payload = BASE64.encode(br#"{"aud":"my-project-123"}"#);
-        let token = format!("Bearer header.{payload}.signature");
-        let mut good = HeaderMap::new();
-        good.insert("authorization", HeaderValue::from_str(&token).unwrap());
-        assert!(verify_google_request(&good).is_ok());
+        assert!(verify_google_request(&bad_jwt).await.is_err());
 
         std::env::remove_var("GOOGLE_ACTIONS_PROJECT_ID");
     }
