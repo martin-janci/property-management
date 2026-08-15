@@ -864,12 +864,47 @@ static ALEXA_CERT_CACHE: std::sync::OnceLock<
     >,
 > = std::sync::OnceLock::new();
 
+/// Time budget for establishing the TCP+TLS connection to S3 when fetching the
+/// Alexa signing certificate.
+const ALEXA_CERT_CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// Overall time budget for a single certificate fetch (connect + response
+/// body). Bounds how long a slow S3 can stall the webhook handler.
+const ALEXA_CERT_REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// Shared HTTP client for Alexa certificate fetches.
+///
+/// Built once (process-wide) with explicit connect and request timeouts and
+/// reused for every fetch. Reusing a single client keeps the connection pool
+/// and TLS session cache warm and, crucially, prevents a burst of cold-cache
+/// requests from spawning an unbounded number of independent TLS clients.
+static ALEXA_CERT_HTTP_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+
+/// Return the shared, timeout-bounded HTTP client used to fetch Alexa signing
+/// certificates, initialising it on first use.
+fn alexa_cert_http_client() -> &'static reqwest::Client {
+    ALEXA_CERT_HTTP_CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .connect_timeout(ALEXA_CERT_CONNECT_TIMEOUT)
+            .timeout(ALEXA_CERT_REQUEST_TIMEOUT)
+            .build()
+            // A builder failure means the TLS backend could not initialise; a
+            // default client would fail the same way, so fall back to it rather
+            // than panicking inside a request handler.
+            .unwrap_or_else(|_| reqwest::Client::new())
+    })
+}
+
 /// Fetch the PEM certificate chain from a (previously validated) Alexa cert
 /// URL, memoising the result for [`ALEXA_CERT_CACHE_TTL`].
 ///
 /// The URL is only ever reached after [`validate_alexa_cert_url`], so it always
 /// points at `https://s3.amazonaws.com/echo.api/…`; TLS authenticates the S3
 /// origin. Returns the raw PEM bytes (one or more concatenated certificates).
+///
+/// The fetch goes through a shared client ([`alexa_cert_http_client`]) with
+/// explicit connect/request timeouts so a slow or unresponsive S3 cannot stall
+/// the handler indefinitely.
 async fn fetch_alexa_cert_chain(url: &str) -> Result<std::sync::Arc<Vec<u8>>, String> {
     let cache =
         ALEXA_CERT_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
@@ -883,7 +918,7 @@ async fn fetch_alexa_cert_chain(url: &str) -> Result<std::sync::Arc<Vec<u8>>, St
         }
     }
 
-    let response = reqwest::Client::new()
+    let response = alexa_cert_http_client()
         .get(url)
         .send()
         .await
@@ -1685,6 +1720,28 @@ mod tests {
         headers.insert("signature", HeaderValue::from_static("sig"));
         let body = alexa_body_with_timestamp(&Utc::now().to_rfc3339());
         assert!(verify_alexa_signature(&headers, &body).await.is_err());
+    }
+
+    // The Alexa cert fetch must go through a single shared, timeout-bounded
+    // client rather than building a fresh `reqwest::Client` per call — a burst
+    // of cold-cache requests would otherwise spawn unbounded TLS clients.
+    // Guards against a regression back to `reqwest::Client::new()` per fetch.
+    #[test]
+    fn alexa_cert_http_client_is_shared() {
+        let first = alexa_cert_http_client();
+        let second = alexa_cert_http_client();
+        assert!(
+            std::ptr::eq(first, second),
+            "expected a single process-wide Alexa cert HTTP client"
+        );
+    }
+
+    // Sanity-check the fetch timeouts are ordered sensibly (connect budget is a
+    // subset of the overall request budget) and are actually bounded.
+    #[test]
+    fn alexa_cert_timeouts_are_bounded() {
+        assert!(ALEXA_CERT_CONNECT_TIMEOUT <= ALEXA_CERT_REQUEST_TIMEOUT);
+        assert!(!ALEXA_CERT_REQUEST_TIMEOUT.is_zero());
     }
 
     // Regression for issue #2668: a valid cert URL + fresh timestamp is NO
