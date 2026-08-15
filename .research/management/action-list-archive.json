@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-15T18:34:10Z",
+  "archived_at": "2026-08-15T22:31:59Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -374,18 +374,23 @@
     },
     {
       "id": "82-1-swiftui-project-setup-retry1",
-      "action": "[MACOS-GATE-DROP: retry re-mint of macOS-gated task, not buildable in cloud dispatcher env; un-claimed by dispatcher 2026-07-23T04:14:42Z] [MACOS-GATE-DEFER: SwiftUI/iOS project setup not buildable in this env or fleet (no macOS toolchain); dispatcher cannot verify — human/macOS path] Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
+      "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "dropped",
-      "source": "dispatcher-retry-remint 2026-07-22T08:10:43Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-15T08:25:53Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z) | dev-reconcile 2026-08-15T22:26:30Z",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-07-22T08:10:43Z",
+      "first_open_at": "2026-08-15T08:25:53Z",
       "retry_of": "82-1-swiftui-project-setup",
       "retry_round": 1,
-      "last_updated": "2026-07-23T04:14:42Z"
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "66d7aa5a0ef3754e6eeb6d9c45e91b74842e462f",
+        "subject": "82-1-swiftui-project-setup-retry1: re-verify SwiftUI project-setup screen-map coverage (#2771)",
+        "at": "2026-08-15T22:26:30Z"
+      }
     },
     {
       "id": "82-3-home-search-screens",
@@ -457,6 +462,24 @@
         "merged_pr": 2007,
         "merged_at": "2026-07-07T17:14:46Z",
         "at": "2026-07-07T17:15:04Z"
+      }
+    },
+    {
+      "id": "84-1-s3-presigned-urls",
+      "action": "Wire direct-to-S3 upload in ppt-web via POST /api/v1/documents/upload-url (api-client binding + UploadDocument integration). Backend SigV4 presigner landed in #2309; scope strictly to the shipped API. Include the building_id association so building-scoped documents keep it (see #2366).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-coverage-refill 2026-08-15T18:28:19Z (epic-84 84-1 partial) | dev-reconcile 2026-08-15T22:26:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-15T18:28:19Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b0b1505e21be36c9247e7647b990c146e2402c55",
+        "subject": "84-1-s3-presigned-urls: forward building association on direct-to-S3 document upload (#2366) (#2770)",
+        "at": "2026-08-15T22:26:30Z"
       }
     },
     {

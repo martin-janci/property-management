@@ -509,6 +509,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "82-1-swiftui-project-setup-retry1",
+      "branch": "auto-impl/82-1-swiftui-project-setup-retry1-b18a2126",
+      "status": "merged",
+      "claimed_at": "2026-08-15T20:28:22Z",
+      "last_updated": "2026-08-15T22:30:48Z",
+      "status_changed_at": "2026-08-15T22:30:48Z",
+      "pr_number": 2771,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2771",
+      "merged_at": "2026-08-15T22:30:48Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2771 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=gap already satisfied on dev; screen-map exists+validates (167 maps, 0 err); recorded 2026-08-15 re-verify; no iOS build needed/possible",
+      "reviewer_summary": "verdict=approve note=docs-only screen-map re-verify; CI green, validate-screen-maps pass, no hot-path/migration/test changes; approve not posted (GitHub blocks self-approval)",
+      "last_reviewed_oid": "6a71c5825ef75ebcfa697e51f75d9b096a624a77",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "82-3-home-search-screens",
       "branch": "auto-impl/82-3-home-search-screens-5241f9c8",
       "status": "merged",
@@ -597,6 +619,28 @@
       "merge_attempted_at": "2026-07-07T17:20:00Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "84-1-s3-presigned-urls",
+      "branch": "auto-impl/84-1-s3-presigned-urls-66f8707f",
+      "status": "merged",
+      "claimed_at": "2026-08-15T18:28:41Z",
+      "last_updated": "2026-08-15T22:30:48Z",
+      "status_changed_at": "2026-08-15T22:30:48Z",
+      "pr_number": 2770,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2770",
+      "merged_at": "2026-08-15T22:30:48Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2770 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=most of gap-84-1 already on dev; shipped only the #2366 building-association fix via access_scope=building+access_target_ids (no building_id field exists); verify green",
+      "reviewer_summary": "verdict=approve note=building-assoc-via-access-scope-matches-shipped-contract; tests+types+backend-validation verified; scope clean; approve-post blocked (self-PR)",
+      "last_reviewed_oid": "9f98bda411975bd29f2253cf278b801872646b78",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "84-2-esignature-email",
@@ -14193,5 +14237,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-15T18:34:10Z"
+  "archived_at": "2026-08-15T22:30:54Z"
 }

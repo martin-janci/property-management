@@ -87,32 +87,6 @@
           "dispatcher"
         ]
       }
-    },
-    {
-      "id": "82-1-swiftui-project-setup-retry1",
-      "action": "Coverage gap [phase4]: SwiftUI Project Setup — verify and finish to done. Gaps: no screen-map (orphan epic) [retry 1/2 of failed 82-1-swiftui-project-setup]",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-15T08:25:53Z (retry_of=82-1-swiftui-project-setup reason=failed-no-pr cooldown_ok newest_failure=2026-07-02T00:09:07Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-15T08:25:53Z",
-      "retry_of": "82-1-swiftui-project-setup",
-      "retry_round": 1
-    },
-    {
-      "id": "84-1-s3-presigned-urls",
-      "action": "Wire direct-to-S3 upload in ppt-web via POST /api/v1/documents/upload-url (api-client binding + UploadDocument integration). Backend SigV4 presigner landed in #2309; scope strictly to the shipped API. Include the building_id association so building-scoped documents keep it (see #2366).",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-coverage-refill 2026-08-15T18:28:19Z (epic-84 84-1 partial)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-15T18:28:19Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
