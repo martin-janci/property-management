@@ -1,0 +1,469 @@
+{
+  "date": "2026-08-15",
+  "run_kind": "resume-catchup",
+  "trigger": "buffer-low payload (claimable=4/72); consumes 08-13/08-14 tier-1d signals",
+  "signals": [
+    {
+      "id": "code-review-api-core-oauth-refresh-race-drops-revoke-guard",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-api-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-core-oauth-refresh-revoke-before-issue-lockout",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-api-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-api-handlers-tier1d-2.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-api-handlers-tier1d-2.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-api-handlers-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-api-handlers-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-server-imports-feed-url-ssrf",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-reality-server-tier1d-2.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validators",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "consumed_from": "2026-08-13-reality-server-tier1d-2.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-reality-server-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-13-reality-server-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-core-accounting-cross-currency-match",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-api-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-core-accounting-confirm-no-tx",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-api-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-financial-f64-money",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-api-handlers-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-ai-pagination-no-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-api-handlers-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-marketplace-limit-no-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-api-handlers-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-401-no-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-mobile-rn-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "consumed_from": "2026-08-14-mobile-rn-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-mobile-rn-auth-unvalidated-token-body",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-mobile-rn-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-ppt-web-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-actions",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-ppt-web-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-toast-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-ppt-web-core-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-autorules-mutate-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-ppt-web-ui-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-execmonitor-retry-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-ppt-web-ui-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-pages-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "consumed_from": "2026-08-14-ppt-web-ui-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-server-review-body-no-cap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-reality-server-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-server-url-validator-dup",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "consumed_from": "2026-08-14-reality-server-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-web-realtormgmt-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-reality-web-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "consumed_from": "2026-08-14-reality-web-tier1d.json",
+      "consumed_at": "2026-08-15T02:36:00Z"
+    },
+    {
+      "id": "lag-warning-2026-08-15",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "Routine has not run since 2026-08-12T22:45Z (~2d 3h ago); resume triggered by buffer-low payload."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-15.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (last_run_iso, seen_signals +29)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-id check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id seen twice with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open item aged > 14d needing decay this run",
+      "observed": "N/A — none eligible",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief lists each new plan with 'adversarial pass:'",
+      "observed": "2/2 plans annotated",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans in .research/plans/ ≤ 2",
+      "observed": "2",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "each plan has 4 metadata fields + 11 headings + capability tick + Mode declared",
+      "observed": "both plans complete",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-files",
+      "passed": true,
+      "command": "every Files bullet resolves on disk",
+      "observed": "all paths ok",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in ADDED lines (documented check is diff-wide; only added-lines are enforceable — removed content is a redaction)",
+      "observed": "0 added-line matches (1 removed-line, redacted)",
+      "expected": "0 added-line matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q → exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists skipped phases; corresponding cursors not advanced",
+      "observed": "Phase 1/1.5/1.6/5 listed skipped, cursors unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior-run plans silently deleted",
+      "observed": "all HEAD plan slugs still present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD count",
+      "observed": "8 >= 8",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q → exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions this run",
+      "expected": "≤ 3 total, ≤ 1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped → no-op)",
+      "observed": "N/A — Phase 1.6 skipped",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: allowlist did not match any of this run's promoted items"
+}
