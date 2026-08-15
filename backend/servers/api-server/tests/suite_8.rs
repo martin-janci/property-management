@@ -45,6 +45,8 @@ mod violations_cross_org_idor_tests;
 mod violations_happy_path_tests;
 #[path = "suites/voice_oauth_exchange_auth_tests.rs"]
 mod voice_oauth_exchange_auth_tests;
+#[path = "suites/voice_oauth_refresh_auth_tests.rs"]
+mod voice_oauth_refresh_auth_tests;
 #[path = "suites/voting_behaviour_tests.rs"]
 mod voting_behaviour_tests;
 #[path = "suites/voting_happy_path_tests.rs"]
