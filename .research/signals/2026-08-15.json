@@ -1,0 +1,125 @@
+{
+  "generated": "2026-08-15T03:11:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-15",
+      "type": "lag_warning",
+      "source": "state.json (last_run_iso=2026-08-12T22:45:00Z; now=2026-08-15T03:11Z)",
+      "score_delta": 0,
+      "evidence": "routine has not run in 2d 4h (52h) — lag_warning threshold 36h exceeded; below stale_routine_alert 3d threshold. Dispatcher on planning branch has been ticking (see dispatcher commit 75b3007 at 2026-08-15 00:32Z).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git churn a92c6527..HEAD (+298 lines) — added whole by PR #2747",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs +298 lines in-window; new IDOR regression suite added by PR #2747 (verify awarded quote belongs to RFQ). Hotspot only via addition, runs_seen=1.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
+      "type": "churn-hotspot",
+      "source": "git churn a92c6527..HEAD (+111 lines) — added whole by PR #2757",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts +111 lines in-window; new lockstep regression test file added by PR #2757 (ProtectedRoute i18n defaultValue-guard). Hotspot only via addition, runs_seen=1.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+      "type": "churn-hotspot",
+      "source": "git churn a92c6527..HEAD (+106 lines) — PR #2746",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/actions/api_call.rs +106 lines in-window (PR #2746 SSRF redirect regression test). Real code hotspot; runs_seen was 0 in hotspot_history so no repeated-churn firing.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751 (chore(deps): bump npm-minor-patch group across 1 dir with 28 updates) — open",
+      "score_delta": 0,
+      "evidence": "Dependabot group bump; not scored, logged in brief.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750 (chore(deps): bump cargo-minor-patch group across 1 dir with 6 updates) — open",
+      "score_delta": 0,
+      "evidence": "Dependabot group bump; not scored, logged in brief.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673 (chore(deps): bump ktor group across 1 dir with 7 updates) — open",
+      "score_delta": 0,
+      "evidence": "Dependabot Kotlin group bump; not scored, logged in brief.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749 (chore(deps): bump gradle-minor-patch group across 1 dir with 5 updates) — open",
+      "score_delta": 0,
+      "evidence": "Dependabot Gradle group bump; not scored, logged in brief.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 dev-review 2026-08-15 (segment=api-handlers, churn-aligned voice_webhooks.rs +72 lines after PR #2748)",
+      "score_delta": 2,
+      "evidence": "voice_webhooks.rs:535 — oauth_token_refresh handler signature has NO AuthUser extractor (contrast sibling oauth_token_exchange). Mounted at /api/v1/webhooks/voice/oauth/refresh via routes/mod.rs:126. VoiceTokenRefreshRequest = {device_id: Uuid} only. Downstream call oauth_manager.refresh_token(...) rotates access_token_encrypted + access_token_hash on the device row. Any caller with a device_id can DoS the integration and amplify traffic to Amazon/Google. Reachability confirmed: pub mod voice_webhooks + .route('/oauth/refresh', post(oauth_token_refresh)).",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-google-verify-fail-open",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 dev-review 2026-08-15 (segment=api-handlers, churn-aligned voice_webhooks.rs)",
+      "score_delta": 2,
+      "evidence": "voice_webhooks.rs:1087 — verify_google_request returns Ok(()) for: no project-id configured, missing Auth header, JWT-payload-contains-substring match, AND base64-decode failure. Doc comment above function explicitly acknowledges the missing JWKS+signature+iss+aud+exp steps. STANDARD base64 alphabet used to decode URL-safe unpadded JWT payloads → real Google JWTs mis-decode → still fall through to Ok(()). Only real gate on POST /google is authenticate_voice_user's OAuth access-token check. Sibling verify_hmac_signature (PR #2748) already demonstrates the fail-closed pattern.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 dev-review 2026-08-15 (segment=api-handlers)",
+      "score_delta": 1,
+      "evidence": "voice_webhooks.rs:886 — reqwest::Client::new().get(url).send() with no builder timeout/connect_timeout, and client not memoised across calls. Under S3 slow-loris or cold-cache burst, holds Axum tasks + a DB RlsConnection (acquired above in alexa_webhook) for reqwest's default read window.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the 2 new high-confidence security items are score=2 (below the auto-fix score>=3 bar). The 3 churn-hotspot signals score 1 and are outside the auto-fix allowlist. lag_warning is not on the allowlist. No stalled-review re-fires (all prior stalled-review IDs already in seen_signals; no new stalled non-dependabot PR triggered a signal this run).",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-15.md && head -1 matches '# 2026-08-15'", "observed": "true", "expected": "true" },
+    { "goal": "G2", "passed": true,  "command": "jq compare staged state.json vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "last_pr_seen 2742→2761, last_issue_seen 2704→2759, last_commit_sha changed, seen_signals +11, hotspot_history +3, stats.runs +1", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id from today re-scored (all 11 IDs are new)", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "cap ≤ 8 + decay for open items with updated_at ≤ today-14", "observed": "no scores > 8; no open items older than 2026-08-01 to decay", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "each new plan has 'adversarial pass: <passed|fixed-in-place|rolled-back>' annotation in brief", "observed": "both plans annotated 'passed' in brief Plans promoted section", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 4 metadata + 11 headings + Mode declared + ticked capability + Files paths exist on disk", "observed": "2 new plans; both pass all sub-checks (verified with local awk pipeline)", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "grep for secret patterns in staged diff (excl. baseline docs)", "observed": "0 hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md /tmp/backlog.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failed; cursor advance matches", "observed": "no failures — Phase 1.6 was skipped (allowed, not failed)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ count at HEAD", "observed": "archive unchanged (7 files)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill switch", "observed": "auto_fix_actions=[] — no candidate cleared the certainty bar", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 was SKIPPED this run — G16 is a no-op per spec", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep for Telegram bot-token value in staged added lines (excl. baseline docs)", "observed": "0 hits", "expected": "0" }
+  ]
+}

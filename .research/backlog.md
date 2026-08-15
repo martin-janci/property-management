@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-12 22:45 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-15 03:11 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -33,6 +33,8 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | ready | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
+| 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | ready | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
 | 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
 | 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
@@ -132,10 +134,14 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | open | 2026-08-12 |  |
-| 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | open | 2026-08-12 |  |
-| 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | open | 2026-08-12 |  |
-| 1 | dx | `closed-not-merged-pr-2705` | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry clo | open | 2026-08-12 |  |
+| 1 | refactor | `churn-hotspot-api-call-rs` | backend/servers/api-server/src/services/actions/api_call.rs churned +106 lines this run (PR #2746 SS | open | 2026-08-15 |  |
+| 1 | test-gap | `churn-hotspot-marketplace-award-quote-idor-tests` | backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs churned +298 lines thi | open | 2026-08-15 |  |
+| 1 | test-gap | `churn-hotspot-protected-route-i18n-test` | frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts churned +111 lines this run (new test suit | open | 2026-08-15 |  |
+| 1 | bug | `code-review-api-handlers-voice-alexa-cert-fetch-no-timeout` | voice fetch_alexa_cert_chain builds a fresh reqwest::Client per call with no connect/request timeout | open | 2026-08-15 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | done | 2026-08-12 |  |
+| 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | done | 2026-08-12 |  |
+| 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | done | 2026-08-12 |  |
+| 1 | dx | `closed-not-merged-pr-2705` | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry clo | done | 2026-08-12 |  |
 | 1 | bug | `code-review-mobile-rn-date-locale-en-us` | mobile-rn: date formatters hardcode 'en-US' locale in many screens (incomplete fix of #2282), so dat | done | 2026-08-12 |  |
 | 1 | bug | `code-review-mobile-rn-meterdetail-i18n` | mobile-rn: MeterDetailScreen renders hardcoded English UI strings not wrapped in t(), while sibling  | done | 2026-08-12 |  |
 | 1 | refactor | `code-review-ppt-web-ui-offline-ind-i18n` | ppt-web-ui: OfflineIndicator banner text is hardcoded English, not i18n | done | 2026-08-12 |  |
@@ -316,6 +322,8 @@
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
-| 0 |  | `code-review-reality-web-agency-errorstate-i18n` |  |  |  |  |
-| 0 |  | `code-review-reality-web-comparison-view-i18n` |  |  |  |  |
-| 0 |  | `code-review-reality-web-realtor-mgmt-i18n` |  |  |  |  |
+|  |  | `code-review-api-handlers-share-log-proxy-ip` |  |  |  |  |
+|  |  | `code-review-api-handlers-share-pw-no-throttle` |  |  |  |  |
+|  |  | `code-review-reality-web-agency-errorstate-i18n` |  |  |  |  |
+|  |  | `code-review-reality-web-comparison-view-i18n` |  |  |  |  |
+|  |  | `code-review-reality-web-realtor-mgmt-i18n` |  |  |  |  |
