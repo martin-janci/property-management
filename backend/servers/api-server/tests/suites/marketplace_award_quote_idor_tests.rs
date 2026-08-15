@@ -296,3 +296,120 @@ async fn award_succeeds_for_own_quote(pool: PgPool) {
         "the RFQ must be awarded to its own quote"
     );
 }
+
+// ---------------------------------------------------------------------------
+// T4 — the RFQ path param itself must be org-scoped: a caller cannot award a
+// FOREIGN org's RFQ, even when the body quote legitimately belongs to it.
+//
+// T1/T2 pin the body `quote_id` IDOR (the fix threaded into the handler), but
+// every one of them targets an RFQ the caller already owns — so the *first*
+// authz layer, `load_rfq_for_org` (path param `{id}` -> `verify_org_access`),
+// is never exercised as a negative. Here org A's admin points the award at org
+// B's RFQ using B's OWN valid, matching quote. The quote-ownership `filter`
+// would pass; the only thing standing between the caller and mutating a foreign
+// org's award is the path-param org check. It must reject with 404 (not leak
+// existence) BEFORE any quote lookup, and must not touch RFQ B's state.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn award_rejects_foreign_rfq_via_path_param(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Caller is an org_admin of org A.
+    let org_a = seed_org(&pool, "path-a").await;
+    let buyer_a = seed_user(&pool, "buyer-path-a@award-idor.test").await;
+    seed_membership(&pool, org_a, buyer_a, "org_admin").await;
+
+    // Org B owns RFQ B and a valid, matching quote submitted against it.
+    let org_b = seed_org(&pool, "path-b").await;
+    let buyer_b = seed_user(&pool, "buyer-path-b@award-idor.test").await;
+    seed_membership(&pool, org_b, buyer_b, "org_admin").await;
+    let rfq_b = seed_rfq(&pool, org_b, buyer_b).await;
+    let prov_b_user = seed_user(&pool, "prov-path-b@award-idor.test").await;
+    let prov_b = seed_provider(&pool, prov_b_user, "path-b").await;
+    let own_quote_b = seed_quote(&pool, rfq_b, prov_b).await;
+
+    // Caller from org A aims the award at org B's RFQ path param.
+    let token = mint_token(buyer_a, "buyer-path-a@award-idor.test", Some(org_a));
+
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/marketplace/rfqs/{rfq_b}/award"))
+                .bearer(&token)
+                .json(json!({ "quote_id": own_quote_b }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "awarding a foreign org's RFQ (path param) must be rejected (404), got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    // RFQ B must remain un-awarded and its quote lifecycle untouched.
+    assert_eq!(
+        rfq_awarded_quote_id(&pool, rfq_b).await,
+        None,
+        "the foreign RFQ must not have been awarded by a non-member"
+    );
+    let quote_status: String =
+        sqlx::query_scalar(r#"SELECT status FROM provider_quotes WHERE id = $1"#)
+            .bind(own_quote_b)
+            .fetch_one(&pool)
+            .await
+            .expect("read foreign quote status");
+    assert_eq!(
+        quote_status, "submitted",
+        "the foreign RFQ's own quote must not have been mutated by a non-member"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T5 — a non-existent `quote_id` on an RFQ the caller DOES own is a 404.
+//
+// T1/T2 both hit the `filter(|q| q.rfq_id == id)` mismatch branch (the quote
+// exists but points at another RFQ). The distinct branch where `find_quote_by_id`
+// returns `None` outright — a guessed/garbage id — is unexercised. It must
+// surface the same 404 shape and leave the RFQ un-awarded, so a caller cannot
+// probe quote-id existence through the award endpoint.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn award_rejects_nonexistent_quote(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org = seed_org(&pool, "ghost").await;
+    let buyer = seed_user(&pool, "buyer-ghost@award-idor.test").await;
+    seed_membership(&pool, org, buyer, "org_admin").await;
+    let rfq = seed_rfq(&pool, org, buyer).await;
+
+    let token = mint_token(buyer, "buyer-ghost@award-idor.test", Some(org));
+
+    // A quote id that does not exist anywhere.
+    let phantom_quote = Uuid::new_v4();
+
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/marketplace/rfqs/{rfq}/award"))
+                .bearer(&token)
+                .json(json!({ "quote_id": phantom_quote }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "awarding a non-existent quote must be rejected (404), got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert_eq!(
+        rfq_awarded_quote_id(&pool, rfq).await,
+        None,
+        "the RFQ must not have been awarded to a phantom quote"
+    );
+}
