@@ -6,6 +6,7 @@
 //! - Request signature verification
 //! - User authentication via OAuth token
 
+use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 use crate::services::VoiceCommandProcessor;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
@@ -52,6 +53,35 @@ fn voice_encryption_required(e: CryptoError) -> (StatusCode, Json<ErrorResponse>
             "ENCRYPTION_REQUIRED",
             "Integration token encryption is not configured",
         )),
+    )
+}
+
+// ============================================================================
+// Rate limiting (#2769)
+// ============================================================================
+//
+// `oauth_token_refresh` rotates the linked user's upstream OAuth token and
+// makes a live call to Amazon/Google. Even for an authenticated owner, an
+// unbounded loop is an amplification vector, so throttle per PM user with the
+// shared in-process sliding-window limiter (same primitive as `routes::mfa`).
+// `std::time::Duration` is fully qualified here to avoid clashing with the
+// `chrono::Duration` already imported in this module.
+const VOICE_REFRESH_MAX_ATTEMPTS: u32 = 10;
+const VOICE_REFRESH_WINDOW: std::time::Duration = std::time::Duration::from_secs(900);
+const VOICE_REFRESH_SWEEP_THRESHOLD: usize = 1024;
+
+static VOICE_REFRESH_RATE_LIMITER: std::sync::LazyLock<InProcessRateLimiter<Uuid>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+/// Record a refresh attempt for `user_id`; `false` once more than
+/// `VOICE_REFRESH_MAX_ATTEMPTS` occur in a rolling `VOICE_REFRESH_WINDOW`.
+fn voice_refresh_attempt_allowed(user_id: Uuid) -> bool {
+    rate_limit_allowed(
+        &VOICE_REFRESH_RATE_LIMITER,
+        user_id,
+        VOICE_REFRESH_MAX_ATTEMPTS,
+        VOICE_REFRESH_WINDOW,
+        VOICE_REFRESH_SWEEP_THRESHOLD,
     )
 }
 
@@ -530,28 +560,61 @@ async fn oauth_token_exchange(
 }
 
 /// Refresh OAuth tokens for a voice device.
+///
+/// SECURITY (#2769): this endpoint rotates the linked user's upstream
+/// Amazon/Google OAuth token, so it is invoked by the **authenticated
+/// Property Management user** (from the voice account-management flow), not
+/// anonymously by the voice platform. It requires a valid PM access token
+/// (`AuthUser`) and only refreshes a device the caller **owns**
+/// (`auth.user_id == device.user_id`) or that a platform admin manages.
+///
+/// Before this fix the handler took only `State` + `Json<{device_id}>` with no
+/// auth extractor, so any caller who learned a `device_id` could rotate that
+/// user's token and amplify unauthenticated traffic against the upstream OAuth
+/// endpoints. Authenticated callers are additionally throttled per-user.
 #[utoipa::path(
     post,
     path = "/api/v1/webhooks/voice/oauth/refresh",
     request_body = VoiceTokenRefreshRequest,
     responses(
         (status = 200, description = "Token refresh successful", body = VoiceTokenRefreshResult),
+        (status = 401, description = "Unauthorized - missing or invalid PM access token"),
+        (status = 403, description = "Forbidden - caller does not own the device"),
         (status = 404, description = "Device not found"),
+        (status = 429, description = "Too many refresh attempts"),
         (status = 500, description = "Token refresh failed"),
     ),
+    security(("bearer_auth" = [])),
     tag = "Voice OAuth"
 )]
 async fn oauth_token_refresh(
     State(state): State<AppState>,
+    auth: api_core::AuthUser,
     Json(request): Json<VoiceTokenRefreshRequest>,
 ) -> Result<Json<VoiceTokenRefreshResult>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{decrypt_if_available, VoiceOAuthManager, VoicePlatform};
 
+    // Throttle authenticated abuse: a valid principal must not be able to loop
+    // this endpoint and amplify against the upstream OAuth provider (#2769).
+    if !voice_refresh_attempt_allowed(auth.user_id) {
+        tracing::warn!(
+            user_id = %auth.user_id,
+            device_id = %request.device_id,
+            "Voice OAuth refresh rate limit exceeded"
+        );
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many token refresh attempts; try again later",
+            )),
+        ));
+    }
+
     // Find the device.
-    // PAP-170 (PAP-150 P5): this endpoint is called by the voice platform (no PM
-    // principal). Bootstrap the device on a context-cleared connection — it is
-    // addressed by an opaque, server-issued device_id and carries its owning
-    // org/user, which we bind below for the token write.
+    // `voice_assistant_devices` is not RLS-bound (see migration 00226), so the
+    // lookup runs on a context-cleared connection; the ownership check below is
+    // what authorizes the rotation.
     let rls_pool = RlsPool::new(state.db.clone());
     let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
         tracing::error!("Database error: {}", e);
@@ -581,6 +644,25 @@ async fn oauth_token_refresh(
             )
         })?;
     drop(lookup);
+
+    // Authorize: only the device's owner (or a platform admin) may rotate its
+    // upstream OAuth token (#2769). Reject anyone else before touching the
+    // provider or the stored token.
+    if auth.user_id != device.user_id && !auth.is_platform_admin() {
+        tracing::warn!(
+            caller_user_id = %auth.user_id,
+            device_id = %device.id,
+            device_owner = %device.user_id,
+            "Voice OAuth refresh rejected: caller does not own the device"
+        );
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have permission to refresh this device's tokens",
+            )),
+        ));
+    }
 
     // Check if device has refresh token
     let refresh_token_encrypted = match &device.refresh_token_encrypted {
