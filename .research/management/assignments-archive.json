@@ -11955,6 +11955,28 @@
       "merge_attempted_at": "2026-08-14T16:45:28Z"
     },
     {
+      "task_id": "gh-issue-2768",
+      "branch": "auto-impl/gh-issue-2768-2ed97b6a",
+      "status": "merged",
+      "claimed_at": "2026-08-15T14:28:45Z",
+      "last_updated": "2026-08-15T16:36:09Z",
+      "status_changed_at": "2026-08-15T16:36:09Z",
+      "pr_number": 2769,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2769",
+      "merged_at": "2026-08-15T16:34:18Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2769 done: fail-closed on unparseable workflow conditions via #[serde(deny_unknown_fields)] on Condition/ConditionGroup + Err(WorkflowError::ConditionError); empty lists still Ok(true); 20/20 workflow_executor unit tests green (4 new regressions); 12 full-crate fails are env-only (11x DATABASE_URL sqlx::test, 1x DNS) green in CI; draft pending CI test-shard; scope_drift=true (added deny_unknown_fields on shared condition structs)",
+      "reviewer_summary": "verdict=approve note=self-PR-approve-as-comment; fail-closed correct, CI+test-shard green, scope-drift benign",
+      "last_reviewed_oid": "cc70a776352ae13a3ff517f8e1695c1ac40d62c9",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-15T16:36:09Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -14149,5 +14171,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-15T12:34:01Z"
+  "archived_at": "2026-08-15T16:36:18Z"
 }

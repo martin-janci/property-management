@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-api-core-delay-duration-overflow",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/actions/delay.rs:53-60 (DelayConfig::to_duration) multiplies the user-supplied `duration: u64` field (declared at delay.rs:44) by the unit factor with a plain `*`: `Duration::from_secs(self.duration * 60)` (Minutes), `* 3600` (Hours), `* 86400` (Days). None of these multiplications is checked or saturating.",
+      "The multiply runs BEFORE the range validation. DelayExecutor::execute calls `let duration = delay_config.to_duration();` at delay.rs:100 and only THEN checks `if duration.as_secs() > MAX_DELAY_SECONDS` at delay.rs:103 (MAX_DELAY_SECONDS = 7 days, delay.rs:65). So the overflow happens inside to_duration() — the 7-day cap can never guard the arithmetic that precedes it.",
+      "Reachability: workflow action `config` is arbitrary serde_json deserialized straight into DelayConfig (parse_config at delay.rs:78-80, no bound on `duration`). A workflow-action definition with e.g. `{\"duration\": 9223372036854775807, \"unit\": \"days\"}` makes `self.duration * 86400` overflow u64. In debug / overflow-checks builds (the profile CI runs `cargo test` under) this PANICS, killing the workflow-executor task that drives the delay step (DoS of the action pipeline); in release it silently wraps to an arbitrary small value that then passes the MAX_DELAY_SECONDS check — a validation bypass rather than the intended ConfigurationError rejection.",
+      "This is an oversight, not a house convention: the sibling backoff helper in the SAME crate was explicitly hardened against exactly this class of bug — backend/servers/api-server/src/services/workflow_executor.rs:35-46 (compute_backoff_seconds) caps the exponent and uses `base.saturating_mul(multiplier)` with a doc comment citing the overflow audit. Landable backend-only fix: use `checked_mul`/`saturating_mul` in to_duration() (returning a ConfigurationError on overflow), or validate `self.duration` magnitude in parse_config before the unit multiply, so an out-of-range delay is rejected as a config error instead of panicking or wrapping past the 7-day cap."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-docgen-empty-llm-ok",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/document_generation.rs:536-540 collapses a missing LLM completion to an empty string: `let content = response.choices.first().map(|c| c.message.content.clone()).unwrap_or_default();`. When the provider returns 200 with an empty `choices` array (content-filter block, provider hiccup, quota/streaming truncation), `content` becomes \"\" and the branch is indistinguishable from a genuine empty answer.",
+      "The empty string is then fed to parse_summary_response(\"\") (document_generation.rs:558) which yields an empty summary and no key points, and the method still returns `Ok(DocumentSummarizationResult { summary: \"\", key_points: [], word_count: 0, tokens_used: response.usage.total_tokens, .. })` (document_generation.rs:547-554). The caller receives a SUCCESS carrying an empty document summary rather than an error it can retry or surface.",
+      "The same pattern repeats for announcement drafting at document_generation.rs:706-711 (`.unwrap_or_default()` on `choices.first()`), where parse_announcement_drafts(\"\") (document_generation.rs:799) returns an empty Vec and the call still succeeds with zero drafts — a silent no-op generation.",
+      "Landable backend-only fix: when `response.choices` is empty, return a domain error (e.g. a new `DocumentGenerationError::EmptyCompletion` / the crate's existing LLM error variant) instead of `unwrap_or_default()`, so an empty/blocked upstream response is reported as a failure rather than a successful-but-empty summary/announcement. Unit-testable with a stubbed LLM client returning `choices: []`."
+    ],
+    "expert": "rust"
+  }
+]
