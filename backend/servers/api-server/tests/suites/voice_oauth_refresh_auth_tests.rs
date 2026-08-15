@@ -10,10 +10,9 @@
 //! The fix adds the `AuthUser` extractor (PM access-token bearer auth), a
 //! per-user rate limit, and an ownership check that only lets the device's
 //! owner (or a platform admin) rotate its tokens. This suite pins the contract:
-//! - no / invalid bearer token                    -> 401 (before any DB work)
+//! - no / invalid bearer token -> 401 (before any DB work)
 //! - authenticated caller who does NOT own device -> 403
-//! - authenticated owner                          -> 200 + `access_token_hash`
-//!                                                   rotates on the row
+//! - authenticated owner -> 200 + `access_token_hash` rotates on the row
 //!
 //! TestApp wiring caveat (mirrors `voice_oauth_exchange_auth_tests`): `AuthUser`
 //! reads its claims straight from the JWT, so we mint tokens directly. The
