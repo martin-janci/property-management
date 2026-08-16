@@ -8174,6 +8174,207 @@
       "created_at": "2026-08-16",
       "updated_at": "2026-08-16",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-init-no-exp-check",
+      "title": "ppt-web-core AuthContext.initializeAuth restores expired-token session without exp check on cold boot",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 — initializeAuth restores authenticated UI whenever storedUser && accessToken exist, with no exp check; decodeJwtPayload helper (L220-232) with exp claim already exists in same file; refresh branch at L416 only runs when accessToken is absent, so expired token skips refresh and shows authenticated UI backed by a dead token."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "title": "ppt-web-core hand-rolled api.ts 401 branch is dead — onUnauthorizedCallback never wired at configureApiClient call site",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:219-221 — 401 branch reads module-level onUnauthorizedCallback (api.ts:180); only production call site is AuthContext.tsx:337 with configureApiClient({getToken}) NO onUnauthorized; feature hooks (useSentiment.ts:19, usePredictiveMaintenance.ts:10) document a 401->onUnauthorized behavior that is not wired; @ppt/api-client also registers only a REQUEST interceptor, so no client performs silent refresh-on-401 app-wide."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-unvalidated-cast",
+      "title": "ppt-web-ui ContentModerationPage.handleTakeAction casts unvalidated window.prompt input to ModerationAction — silent server 400s / bad enum submissions",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — handleTakeAction takes free-text window.prompt result and casts to ModerationAction with no allowlist validation; server rejects with 400 or (worse) accepts unexpected string; happens on the DSA moderation path (compliance-critical)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-prompt-i18n-gap",
+      "title": "ppt-web-ui compliance pages ship all user-facing prompt/alert copy as hardcoded English in an i18n app",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/*.tsx — all window.prompt / alert / confirm strings are hardcoded English; the compliance cluster is exactly the surface where i18n gaps are visible to regulators (DSA transparency)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-reload-nav",
+      "title": "ppt-web-ui ContentModerationPage.handleViewContent uses window.location.href (full SPA reload) instead of react-router navigate",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:159-163 — handleViewContent sets window.location.href, forcing a full-page reload and dropping the SPA state; use useNavigate() from react-router-dom instead."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirm-dialog-i18n",
+      "title": "ppt-web-ui ConfirmationDialog renders hardcoded 'Processing...' during pending state",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-ui r0821)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 — hardcoded 'Processing...' rendered without i18n; shared shell component, visible across the whole SPA when a confirm dialog is pending."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-langswitcher-aria-i18n",
+      "title": "ppt-web-ui LanguageSwitcher aria-label='Select language' is hardcoded English (screen-reader i18n gap)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-ui r0821)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 — aria-label is hardcoded 'Select language'; the very component whose purpose is switching languages ships its own label untranslated."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-langswitcher-promise",
+      "title": "ppt-web-ui LanguageSwitcher fires i18n.changeLanguage without awaiting the returned Promise (unhandled-rejection risk)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (ppt-web-ui r0821)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:11 — i18n.changeLanguage(newLocale) returns a Promise that is discarded; on failure the rejection is unhandled and the UI shows a stale locale."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-wallet-hardcoded-i18n",
+      "title": "mobile-rn NFCAccessController.addToWallet builds Apple Wallet pass with hardcoded English strings",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:380-388 (addToWallet) — pkpass primary/secondary fields are hardcoded English ('Building Access', 'Valid until', etc.); mobile app targets sk/cs/de/en."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-meters-hardcoded-label",
+      "title": "mobile-rn MetersScreen.toUiMeter renders raw meter_number/type as label without i18n or unit formatting",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d dispatcher 2026-08-16 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:100 (toUiMeter) — label = m.meter_number?.toString() with no i18n / unit / type formatting; users see raw meter_number instead of a translatable label like 'Elektromer #123'."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
     }
   ]
 }

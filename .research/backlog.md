@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-16 03:14 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-16 12:40 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -35,6 +35,9 @@
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
 | 2 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang i | open | 2026-08-16 |  |
+| 2 | bug | `code-review-ppt-web-core-api-onunauthorized-unwired` | ppt-web-core hand-rolled api.ts 401 branch is dead — onUnauthorizedCallback never wired at configure | open | 2026-08-16 |  |
+| 2 | bug | `code-review-ppt-web-core-authctx-init-no-exp-check` | ppt-web-core AuthContext.initializeAuth restores expired-token session without exp check on cold boo | open | 2026-08-16 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-unvalidated-cast` | ppt-web-ui ContentModerationPage.handleTakeAction casts unvalidated window.prompt input to Moderatio | open | 2026-08-16 |  |
 | 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
 | 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
@@ -136,8 +139,15 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | open | 2026-08-16 |  |
-| 1 | refactor | `churn-hotspot-voice-webhooks-rs` | voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google J | open | 2026-08-16 |  |
+| 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | done | 2026-08-16 |  |
+| 1 | refactor | `churn-hotspot-voice-webhooks-rs` | voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google J | dropped | 2026-08-16 |  |
+| 1 | bug | `code-review-mobile-rn-meters-hardcoded-label` | mobile-rn MetersScreen.toUiMeter renders raw meter_number/type as label without i18n or unit formatt | open | 2026-08-16 |  |
+| 1 | bug | `code-review-mobile-rn-nfc-wallet-hardcoded-i18n` | mobile-rn NFCAccessController.addToWallet builds Apple Wallet pass with hardcoded English strings | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-compliance-prompt-i18n-gap` | ppt-web-ui compliance pages ship all user-facing prompt/alert copy as hardcoded English in an i18n a | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-confirm-dialog-i18n` | ppt-web-ui ConfirmationDialog renders hardcoded 'Processing...' during pending state | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-langswitcher-aria-i18n` | ppt-web-ui LanguageSwitcher aria-label='Select language' is hardcoded English (screen-reader i18n ga | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-langswitcher-promise` | ppt-web-ui LanguageSwitcher fires i18n.changeLanguage without awaiting the returned Promise (unhandl | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-moderation-full-reload-nav` | ppt-web-ui ContentModerationPage.handleViewContent uses window.location.href (full SPA reload) inste | open | 2026-08-16 |  |
 | 1 | refactor | `churn-hotspot-api-call-rs` | backend/servers/api-server/src/services/actions/api_call.rs churned +106 lines this run (PR #2746 SS | done | 2026-08-15 |  |
 | 1 | test-gap | `churn-hotspot-marketplace-award-quote-idor-tests` | backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs churned +298 lines thi | done | 2026-08-15 |  |
 | 1 | test-gap | `churn-hotspot-protected-route-i18n-test` | frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts churned +111 lines this run (new test suit | done | 2026-08-15 |  |
