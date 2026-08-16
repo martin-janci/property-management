@@ -8026,6 +8026,52 @@
         "assignment_status": "merged",
         "pr_number": 2762
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-createfault-mock-ai",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/pages/CreateFaultPage.tsx:36-55 handlePhotosChange ships a HARDCODED mock AI suggestion instead of calling the real endpoint: on any photo upload it setTimeout(1500)s then setAiSuggestion({category:'plumbing', confidence:0.85, priority:'medium'}) — a fabricated constant regardless of the actual photo content.",
+        "The mock path is ON by default: CreateFaultPage defaults enablePhotoFirst = true (L28) and passes aiSuggestion/aiSuggestionLoading into FaultForm (L83-85), which renders the suggestion (FaultForm.tsx aiSuggestion prop L56, confidence L42). So every user in photo-first fault reporting (Epic 126) is shown a fake 'plumbing / 85% confidence / medium priority' suggestion.",
+        "The real backend + client already exist and are unused here: client hook packages/api-client/src/faults/hooks.ts:272 useRequestAiSuggestion + api.ts:233 getAiSuggestion -> POST /api/v1/faults/{id}/suggest (backend api-server faults route .route('/{id}/suggest', post(get_ai_suggestion))). The inline comment even says 'Mock AI suggestion - in production, call useRequestAiSuggestion' (L44). Fix: wire handlePhotosChange to the real suggestion endpoint and drop the constant.",
+        "Secondary: L71 hardcoded English fallback description ('Describe the issue you're experiencing...') is not wrapped in t() — i18n gap on the non-photo-first branch."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:73-79 fabricates moderator decision context: every ModerationCase is mapped with content_owner.previous_violations: 0 (L75, hardcoded) and report_source: 'user' (L79, hardcoded), independent of the real case. A compliance moderator taking enforcement actions (remove/restrict/warn) sees '0 previous violations' and source 'user' for EVERY owner, including repeat offenders and system/automated reports.",
+        "These fields drive an enforcement UI (DSA/AML content moderation queue) — presenting a constant 0 prior-violations count and a constant report source misleads the human decision-maker and can produce unjustified or under-scaled actions. Marked 'TODO(Phase-2): Extend API to include previous_violations count / report_source' but the defaults are shipped live, not gated.",
+        "Fix: extend the moderation cases API (casesData) to return previous_violations and report_source and map the real values; until then the fields should be rendered as unknown/'—', not a confident 0/'user'."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx (386 lines) imports NO useTranslation and hardcodes every moderator-facing interaction string in English on an otherwise fully react-i18next app.",
+        "Enforcement flows use native browser dialogs with hardcoded English: window.prompt('Enter action type (remove, restrict, warn, approve):', 'approve') L130, window.prompt('Enter rationale for this action:') L136, window.prompt('Enter decision (uphold, overturn):','uphold') L169, window.prompt('Enter rationale for this decision:') L172; error alert()s 'Failed to assign case. Please try again.' L119, 'Failed to take action...' L151, 'Failed to decide appeal...' L186.",
+        "Two problems: (1) i18n gap — none of these strings resolve for sk/cs/de users; (2) UX/robustness — building a DSA moderation enforcement workflow on window.prompt()/alert() (also flagged inline as TODO(Phase-2), L128/L167) has no validation and dispatches raw prompt text straight into action_type. Fix: replace with an i18n'd modal form using the existing action templates (useModerationTemplates is already fetched, L57)."
+      ],
+      "expert": "frontend"
     }
   ]
 }
