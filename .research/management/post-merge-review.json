@@ -1,9 +1,20 @@
 {
-  "generated": "2026-08-15T10:32:21Z",
+  "generated": "2026-08-16T12:26:18Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-16T12:26:18Z",
+      "prs_scanned": 4,
+      "clean": [
+        2772,
+        2771,
+        2770,
+        2769
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-08-15T10:32:21Z",
       "prs_scanned": 15,
@@ -574,49 +585,6 @@
         2569
       ],
       "note": "Fresh window sweep. Re-surfaced PRs 2567/2568/2569/2570/2571/2572 were already reviewed in the 2026-07-30 run (issues #2573/#2574/#2575 filed there) but never carried the post-merge-reviewed label, so they reappeared in the unlabeled search; re-verified and skipped. #2573 subsequently closed by merged PR #2597, #2574 by #2593. Only genuinely-new PR with an actionable gap this run is #2608 -> #2612."
-    },
-    {
-      "run_at": "2026-07-30T00:26:10Z",
-      "prs_scanned": 9,
-      "clean": [
-        2570,
-        2569,
-        2567,
-        2566,
-        2565,
-        2482
-      ],
-      "with_issues": [
-        {
-          "pr": 2571,
-          "issue": 2573,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "DELETE /documents/by-file-key deletes by org-scope only \u2014 no check the key is unreferenced; can drop a live document's S3 bytes intra-org"
-        },
-        {
-          "pr": 2568,
-          "issue": 2574,
-          "findings": 2,
-          "specialist": "mobile-native",
-          "note": "Android SSO CSRF guard half-wired: SsoStateStore.mint() has no prod call site, so every reality://sso callback is rejected; nonce also lost on process death"
-        },
-        {
-          "pr": 2572,
-          "issue": 2575,
-          "findings": 2,
-          "specialist": "rust-backend",
-          "note": "/disputes/kpis has no window_start<=window_end validation; only test is BIT-440 quarantined (zero executing coverage)"
-        }
-      ],
-      "skipped_already_reviewed": [
-        2549,
-        2478,
-        2433,
-        2554,
-        2491,
-        2553
-      ]
     }
   ]
 }
