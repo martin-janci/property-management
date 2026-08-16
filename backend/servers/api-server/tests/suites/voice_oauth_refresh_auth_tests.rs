@@ -13,6 +13,10 @@
 //! - no / invalid bearer token -> 401 (before any DB work)
 //! - authenticated caller who does NOT own device -> 403
 //! - authenticated owner -> 200 + `access_token_hash` rotates on the row
+//! - authenticated **platform admin** who does NOT own the device -> 200 +
+//!   rotation (the `is_platform_admin()` arm of `auth.user_id ==
+//!   device.user_id || auth.is_platform_admin()` — the only authorization path
+//!   that lets a non-owner through, so it is pinned here alongside the 403 arm)
 //!
 //! TestApp wiring caveat (mirrors `voice_oauth_exchange_auth_tests`): `AuthUser`
 //! reads its claims straight from the JWT, so we mint tokens directly. The
@@ -54,7 +58,17 @@ struct AuthClaims {
     name: String,
 }
 
-fn mint_access_token(secret: &str, user_id: Uuid, tenant_id: Option<Uuid>) -> String {
+/// Mint an access token carrying an explicit `role` claim. `AuthUser` reads the
+/// role straight from the JWT (no DB membership lookup), and
+/// `is_platform_admin()` is driven purely by that claim, so a `"platform_admin"`
+/// / `"super_admin"` token is sufficient to exercise the admin-bypass arm.
+/// The wire values are the `snake_case` serde renames of `TenantRole`.
+fn mint_access_token_with_role(
+    secret: &str,
+    user_id: Uuid,
+    tenant_id: Option<Uuid>,
+    role: &str,
+) -> String {
     let now = Utc::now();
     let claims = AuthClaims {
         sub: user_id,
@@ -62,7 +76,7 @@ fn mint_access_token(secret: &str, user_id: Uuid, tenant_id: Option<Uuid>) -> St
         exp: (now + Duration::hours(1)).timestamp(),
         token_type: "access".to_string(),
         tenant_id,
-        role: Some("manager".to_string()),
+        role: Some(role.to_string()),
         email: "voice-refresh@example.test".to_string(),
         name: "Voice Refresher".to_string(),
     };
@@ -72,6 +86,12 @@ fn mint_access_token(secret: &str, user_id: Uuid, tenant_id: Option<Uuid>) -> St
         &EncodingKey::from_secret(secret.as_bytes()),
     )
     .expect("mint access token")
+}
+
+/// A non-admin (`manager`) access token — the common case for owner /
+/// non-owner callers.
+fn mint_access_token(secret: &str, user_id: Uuid, tenant_id: Option<Uuid>) -> String {
+    mint_access_token_with_role(secret, user_id, tenant_id, "manager")
 }
 
 /// Insert a linked voice device owned by `owner` with a refresh token present
@@ -266,5 +286,65 @@ async fn oauth_refresh_owner_rotates_token(pool: PgPool) {
         new_hash.as_deref(),
         Some(&initial_hash[..]),
         "owner refresh must rotate access_token_hash away from the seeded value"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Test 5: a platform admin who does NOT own the device -> 200 and rotation.
+//
+// The authorization gate is `auth.user_id == device.user_id ||
+// auth.is_platform_admin()`. Test 3 pins the 403 arm (non-owner, non-admin);
+// this pins the *other* way a caller who is not the owner is allowed through —
+// the `is_platform_admin()` bypass. Without this test a regression that dropped
+// the admin arm (locking admins out) or, worse, widened it to the wrong roles
+// would slip past the suite. The caller here is a different user than the
+// owner and carries a `platform_admin` role claim; the seeded device is owned
+// by someone else. Same simulated-refresh branch as Test 4, so
+// `INTEGRATION_ENCRYPTION_KEY` is set and we assert the hash rotates.
+// ---------------------------------------------------------------------------
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn oauth_refresh_platform_admin_non_owner_rotates_token(pool: PgPool) {
+    std::env::set_var("INTEGRATION_ENCRYPTION_KEY", TEST_KEY);
+
+    let owner = Uuid::new_v4();
+    let initial_hash = b"initial-hash-admin";
+    let device_id = seed_device(&pool, owner, initial_hash).await;
+
+    let config = TestConfig::default();
+    let secret = config.jwt_secret.clone();
+    let app = TestApp::with_config(pool.clone(), config).await;
+
+    // A DIFFERENT user who is a platform admin (not the device owner).
+    let admin = Uuid::new_v4();
+    assert_ne!(admin, owner, "admin must not coincidentally be the owner");
+    let token = mint_access_token_with_role(&secret, admin, Some(Uuid::new_v4()), "platform_admin");
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(REFRESH_URI)
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(Body::from(refresh_body(device_id).to_string()))
+        .unwrap();
+
+    let resp = app.execute(req).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "platform-admin non-owner refresh must be 200, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let new_hash = read_token_hash(&pool, device_id).await;
+    assert!(
+        new_hash.is_some(),
+        "platform-admin refresh must persist a new access_token_hash"
+    );
+    assert_ne!(
+        new_hash.as_deref(),
+        Some(&initial_hash[..]),
+        "platform-admin refresh must rotate access_token_hash away from the seeded value"
     );
 }
