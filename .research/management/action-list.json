@@ -87,6 +87,74 @@
           "dispatcher"
         ]
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests",
+      "action": "voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contract (monitor)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "action": "voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google JWKS, /oauth/refresh authz)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
