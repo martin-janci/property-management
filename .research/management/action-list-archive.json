@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-15T22:31:59Z",
+  "archived_at": "2026-08-16T10:29:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1900,6 +1900,54 @@
         "merged_pr": 2767,
         "merged_at": "2026-08-15T06:33:11Z",
         "at": "2026-08-15T10:24:40Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests",
+      "action": "voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contract (monitor)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=1 conf=high vector=test-gap) | gc1-reconcile 2026-08-16T10:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2772,
+        "merged_at": "2026-08-16T06:32:42Z",
+        "at": "2026-08-16T10:23:37Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "action": "voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google JWKS, /oauth/refresh authz)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-16T10:23:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-16T10:23:37Z"
       }
     },
     {

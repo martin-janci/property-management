@@ -8079,7 +8079,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #2762",
         "PR #2765",
@@ -8094,7 +8094,12 @@
       ],
       "created_at": "2026-08-16",
       "updated_at": "2026-08-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-16T10:23:38Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "churn-hotspot-voice-oauth-refresh-auth-tests",
@@ -8102,7 +8107,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2766",
         "top-3-churn-2026-08-16"
@@ -8115,7 +8120,12 @@
       ],
       "created_at": "2026-08-16",
       "updated_at": "2026-08-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-16T10:23:38Z",
+        "assignment_status": "merged",
+        "pr_number": 2772
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
