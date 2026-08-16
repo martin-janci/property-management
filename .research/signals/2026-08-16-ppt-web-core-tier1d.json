@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-ppt-web-core-authctx-init-no-exp-check",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 (initializeAuth) — cold-boot restores the session as authenticated whenever BOTH a stored user and a stored access token exist: `if (storedUser && accessToken) { setUser(storedUser); }`. No expiry check is performed on the access token despite the inline comment at L413-414 explicitly flagging the gap ('Validate the token is not expired (basic check)' / 'In production, we might verify with the server').",
+      "The cold-boot refresh branch at AuthContext.tsx:416 (`else if (refreshTokenValue)`) only runs when the access token is ABSENT. A returning user with a still-present but EXPIRED access token (and a valid refresh token) therefore skips refresh entirely and is shown an authenticated UI backed by a dead token.",
+      "A `decodeJwtPayload` helper already exists in this same file (AuthContext.tsx:220-232) and returns the JWT `exp` claim, so a cheap client-side expiry check is readily available but unused on the init path. Fix: if the stored access token's `exp` is in the past, fall through to the `refreshTokenValue` branch instead of calling setUser(storedUser).",
+      "Impact is compounded by the absence of any silent refresh-on-401 interceptor (see companion finding code-review-ppt-web-core-api-onunauthorized-unwired): with no auto-recovery, the expired-token session does not self-heal and the user sees failing requests until a manual re-login."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-core",
+    "score_delta": 2,
+    "confidence": "high",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/lib/api.ts:219-221 — the hand-rolled axios response interceptor handles 401 via `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`, reading a module-level `onUnauthorizedCallback` (declared api.ts:180, assigned only inside configureApiClient at api.ts:196).",
+      "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 is the ONLY production call site of configureApiClient and it passes `configureApiClient({ getToken: getAccessToken })` with NO `onUnauthorized`. `onUnauthorizedCallback` therefore stays undefined at runtime and the 401 branch in api.ts is dead — a 401 from this client neither refreshes the session nor logs the user out; it just rejects with a transformed ApiError. (grep confirms no other non-test configureApiClient call.)",
+      "The behavior the missing callback should provide is explicitly documented as present by consumers: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:19 and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:10 both describe the shared client as doing '401 -> onUnauthorized'. That contract is not wired, so those feature endpoints silently fail on session expiry with no recovery.",
+      "There is also no response-side refresh interceptor on the generated @ppt/api-client: registerAuthInterceptors (packages/api-client/src/auth/interceptors.ts:36-51, invoked at apps/ppt-web/src/main.tsx:26) registers only a REQUEST interceptor that injects Authorization + X-Tenant-ID headers. So neither client performs silent refresh-on-401 app-wide. Fix: pass an onUnauthorized handler (trigger AuthContext.refreshToken with single-flight, fall back to logout) at the configureApiClient call site, or remove the dead branch + misleading hook comments."
+    ],
+    "expert": "frontend"
+  }
+]
