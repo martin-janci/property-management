@@ -1,104 +1,74 @@
 {
   "date": "2026-08-16",
-  "segment_reviewed": "mobile-native-kmp",
-  "segment_reason": "oldest-unreviewed (last reviewed 2026-08-11; no churn in mobile-native-kmp this run)",
+  "generated_at": "2026-08-16T16:35:00Z",
+  "note": "Same-day rerun (2nd of 2026-08-16; prior at 03:14Z). Window: 03:14Z→16:35Z. Only 1 new merged PR since prior cursor: #2772 (test-only). Signals from the 03:14Z run are permanent in state.seen_signals; not re-emitted here. Dispatcher Tier-1d dev-review signal files (.research/signals/2026-08-16-*-tier1d*.json) were produced by the dispatcher's demand-driven generator between routine runs and are its pipeline; the routine does not re-ingest them.",
   "signals": [
-    {
-      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
-      "type": "churn-hotspot",
-      "source": "top-3-churn-2026-08-16",
-      "score_delta": 1,
-      "evidence": "voice_webhooks.rs +556 lines across PRs #2762 (+59, Alexa cert timeouts), #2765 (+407, Google JWKS ID-token verify), #2766 (+90, /oauth/refresh device-owner authz)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
       "type": "churn-hotspot",
-      "source": "top-3-churn-2026-08-16",
-      "score_delta": 1,
-      "evidence": "voice_oauth_refresh_auth_tests.rs — new 270-line file (PR #2766) pinning /oauth/refresh device-owner auth contract",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
-      "type": "churn-hotspot",
-      "source": "top-3-churn-2026-08-16",
+      "source": "top-churn-since-2026-08-16T03:14Z (only PR #2772 in-window)",
       "score_delta": 0,
-      "evidence": "re-emit (cumulative): PR #2767 +170 lines. Already in state.seen_signals; matched backlog row already status=done. No score bump.",
       "confidence": "high",
       "candidate_vector": "test-gap",
-      "cumulative_reemit": true
-    },
-    {
-      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "type": "code-review-finding",
-      "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 3,
-      "evidence": "InquiryModels.kt:50-55 declares required page_size: Int (@SerialName). reality-server InquiryListResponse (inquiries.rs:253-263) returns `limit` — not `page_size` — so kotlinx.serialization throws MissingFieldException on every real /inquiries response. Realtor endpoint (realtors.rs:39-43) returns only {inquiries, total}; getRealtorInquiries() reuses the same DTO, so realtor inquiries are broken too. Outbound query at InquiryRepository.kt:61 also sends `page_size` while backend InquiryListQuery reads `limit`, so custom page sizes silently drop.",
-      "confidence": "high",
-      "candidate_vector": "bug"
-    },
-    {
-      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "type": "code-review-finding",
-      "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 2,
-      "evidence": "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging (level=NONE); no HttpTimeout plugin. Grep for HttpTimeout|requestTimeout|connectTimeout|socketTimeout across mobile-native returns zero hits. Every repository (SsoService/Listing/Inquiry/ApiClient) reuses HttpClientProvider.client, so an unresponsive reality-server hangs any suspend call forever on Android + iOS.",
-      "confidence": "high",
-      "candidate_vector": "bug"
+      "evidence": [
+        "PR #2772 added +82 lines to backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs (Test 5 pins the platform-admin bypass arm of /oauth/refresh authz).",
+        "cumulative re-emit: signal id already in state.seen_signals from the 03:14Z run (initial 270-line file); score_delta=0 per Phase-1 cumulative rule.",
+        "hotspot_history.runs_seen advanced 1→2, recent_churn (this-window) = 82.",
+        "matching backlog row `churn-hotspot-voice-oauth-refresh-auth-tests` was already flipped to `status=done` by the dispatcher (fast-path 2026-08-16 10:30 commit); PR #2772 IS the resolution for the monitor, so no re-open."
+      ]
     }
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "command": "test -f briefs/<today>.md && head -1 matches",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq state advanced vs HEAD",
+      "command": "jq state.json vs HEAD (cursors/seen_signals/hotspot/quiet_days)",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "last_pr_seen 2771->2772, last_commit_sha 7f767e24->c2bdfc7c, hotspot_history value updated"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids in backlog",
+      "command": "jq unique backlog ids",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq re-emit non-cumulative w/ score_delta=0",
+      "command": "signals not double-scoring non-cumulative seen ids",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "only 1 signal this rerun (churn-hotspot re-emit at score_delta=0; cumulative-type allowlist)"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no score > 8 + no open item ≤ today-14",
-      "observed": "cap true; no decay-eligible open items",
+      "command": "no score>8; decay skipped this rerun (03:14Z run handled it; no open items with updated_at<=2026-08-02)",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "grep brief for adversarial pass line per new plan",
-      "observed": "adversarial pass: passed line present",
-      "expected": "per-plan annotation present"
+      "command": "no new plans this rerun",
+      "observed": "0 new plans",
+      "expected": "n/a"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "count ≤2 new plans; 4 metadata + 11 headings + Mode + ≥1 cap tick + files exist",
-      "observed": "1 new plan, all checks pass",
-      "expected": "pass"
+      "command": "0 new plans <= 2 cap",
+      "observed": "0",
+      "expected": "<=2"
     },
     {
       "goal": "G8",
@@ -110,63 +80,64 @@
     {
       "goal": "G9",
       "passed": true,
-      "command": "git diff --cached scan for secrets/hostnames",
+      "command": "grep secrets/hostnames in staged diff (excluding 4 baseline docs)",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "grep brief phase-failure honesty; cursors preserved for failed phases",
-      "observed": "no phase failures; brief lists 'Phases that failed: none'",
+      "command": "brief lists failed phases and cursor pattern",
+      "observed": "no failed phases; all cursors advanced or intentionally held",
       "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plans still present in plans/ or _archive/",
-      "observed": "all present",
-      "expected": "all present"
+      "command": "prior-run plan slugs still resolve in plans/ or plans/_archive/",
+      "observed": "all resolve",
+      "expected": "all resolve"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count monotonic (now ≥ HEAD)",
-      "observed": "now=8 prev=8",
-      "expected": "now ≥ prev"
+      "command": "archive count >= HEAD archive count",
+      "observed": ">=",
+      "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps + idempotency",
-      "observed": "auto_fix_actions=[]",
-      "expected": "length ≤ 3, per-type ≤ 1"
+      "command": "auto_fix_actions length checks",
+      "observed": "0 actions this rerun",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped this run — gate is a no-op",
-      "observed": "pm_cursor unchanged, no management artifact writes",
-      "expected": "no-op when Phase 1.6 skipped"
+      "command": "mgmt artifacts + pm_cursor in [0,7]",
+      "observed": "action-list=ok risks=ok project-state=ok pm_cursor.next_index=3",
+      "expected": "ok",
+      "note": "Phase 1.6 skipped this rerun; GC7 coverage_cursor advancement requirement is a no-op when pm_cursor did not advance"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "git diff --cached for literal Telegram token value",
+      "command": "grep telegram token in staged +lines",
       "observed": "0",
       "expected": "0"
     }
