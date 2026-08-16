@@ -7,19 +7,23 @@
       "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
       "type": "churn-hotspot",
       "source": "top-3-churn-2026-08-16",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "voice_webhooks.rs +556 lines across PRs #2762 (+59, Alexa cert timeouts), #2765 (+407, Google JWKS ID-token verify), #2766 (+90, /oauth/refresh device-owner authz)",
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "first_run_delta": 1,
+      "rerun_note": "already-scored on first run 2026-08-16T03:14Z; delta zeroed on rerun per dedup rule"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
       "type": "churn-hotspot",
       "source": "top-3-churn-2026-08-16",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "voice_oauth_refresh_auth_tests.rs — new 270-line file (PR #2766) pinning /oauth/refresh device-owner auth contract",
       "confidence": "high",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "test-gap",
+      "first_run_delta": 1,
+      "rerun_note": "already-scored on first run 2026-08-16T03:14Z; delta zeroed on rerun per dedup rule"
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
@@ -35,19 +39,23 @@
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
       "type": "code-review-finding",
       "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 3,
+      "score_delta": 0,
       "evidence": "InquiryModels.kt:50-55 declares required page_size: Int (@SerialName). reality-server InquiryListResponse (inquiries.rs:253-263) returns `limit` — not `page_size` — so kotlinx.serialization throws MissingFieldException on every real /inquiries response. Realtor endpoint (realtors.rs:39-43) returns only {inquiries, total}; getRealtorInquiries() reuses the same DTO, so realtor inquiries are broken too. Outbound query at InquiryRepository.kt:61 also sends `page_size` while backend InquiryListQuery reads `limit`, so custom page sizes silently drop.",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "first_run_delta": 3,
+      "rerun_note": "already-scored on first run 2026-08-16T03:14Z; delta zeroed on rerun per dedup rule"
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
       "type": "code-review-finding",
       "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging (level=NONE); no HttpTimeout plugin. Grep for HttpTimeout|requestTimeout|connectTimeout|socketTimeout across mobile-native returns zero hits. Every repository (SsoService/Listing/Inquiry/ApiClient) reuses HttpClientProvider.client, so an unresponsive reality-server hangs any suspend call forever on Android + iOS.",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "first_run_delta": 2,
+      "rerun_note": "already-scored on first run 2026-08-16T03:14Z; delta zeroed on rerun per dedup rule"
     }
   ],
   "goal_checks": [
@@ -63,7 +71,8 @@
       "passed": true,
       "command": "jq state advanced vs HEAD",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "remediation": null
     },
     {
       "goal": "G3",
@@ -77,7 +86,8 @@
       "passed": true,
       "command": "jq re-emit non-cumulative w/ score_delta=0",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "remediation": "Rerun preserved 5 first-run signals; delta zeroed on 2 non-cumulative re-emits (see rerun_note in signals[])"
     },
     {
       "goal": "G5",
@@ -171,5 +181,15 @@
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "rerun_history": [
+    {
+      "run_at": "2026-08-16T06:29:52Z",
+      "trigger_payload": "buffer-low: claimable=6/72 — refill planner (all open candidates mobile-native-gated)",
+      "window": "2026-08-16T03:14:00Z → 2026-08-16T06:29:52Z",
+      "new_signals_this_rerun": 0,
+      "outcome": "quiet — 0 merged / 0 issues / 0 new commits on dev / 0 new signals; stats.quiet_days bumped 2→3"
+    }
+  ],
+  "goal_checks_last_verified_at": "2026-08-16T06:29:52Z"
 }
