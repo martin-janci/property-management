@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-16",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved, 0 truly-claimable candidates). Oldest-unreviewed per state.json review_cursor is mobile-native-kmp (2026-08-11), but it is SATURATED and skipped: backlog.json carries 3 open code-review-finding rows for that segment (code-review-mobile-native-kmp-portfolio-analytics-caps-100, -cancellation-swallowed, -ssoservice-untested), meeting the >=3-open skip rule; it is additionally structurally unlandable in the cloud runner (AGP egress-blocked). Next in priority is a 4-way tie at 2026-08-12 (ppt-web-ui, ppt-web-core, reality-web, mobile-rn). Broke the tie via churn-alignment: the top ppt-web churn hotspots in state.json hotspot_history are ppt-web feature clusters (disputes mediation + documents), so ppt-web-ui is churn-aligned AND tied-oldest, and carries 0 open code-review-finding rows in backlog.json (not saturated). Deliberately targeted the COMPLIANCE feature cluster (features/compliance/pages/) rather than disputes — the 2026-08-15 ppt-web-ui pass already reviewed the disputes cluster, so this covers fresh ground. Experts: frontend (primary) + completeness (secondary). Static-only: file reads + grep, no compile/test.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-moderation-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — handleTakeAction reads a free-text `window.prompt('Enter action type (remove, restrict, warn, approve):')` and passes it to the API with an unchecked type assertion: `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (L143). There is NO runtime validation; a typo (e.g. 'aprove', 'Remove ', 'delete') is cast straight through and sent to the DSA moderation mutation as an invalid action_type. Same pattern in handleDecideAppeal (L169-179): `decision as 'uphold' | 'overturn'` with no validation of the prompt result.",
+        "This is an `as` cast that crosses the API boundary on a regulated DSA content-moderation path — exactly the class the safe sibling avoids. AmlDashboardPage.handleReview (same feature dir, AmlDashboardPage.tsx:143-154) collects the identical free-text prompt but GUARDS it: `if (!isAmlReviewDecision(decision)) { alert('Invalid decision ...'); return; }` before mutating. ContentModerationPage has no equivalent guard, so the two regulated flows diverge in safety.",
+        "Fix: add `isModerationActionType` / `isAppealDecision` type-guard predicates (mirroring isAmlReviewDecision at AmlDashboardPage.tsx:39) and reject-with-message on invalid input before calling takeAction.mutate / decideAppeal.mutate, dropping the `as` casts. Confidence medium: reachability confirmed (handlers wired to case-action buttons) but the API's own server-side rejection of a bad action_type was not traced."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-prompt-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The compliance pages ship all user-facing prompt/alert copy as hardcoded English in an app that is i18n (react-i18next, locales sk/cs/de/en). ContentModerationPage.tsx: window.prompt labels (L130,136,169,172) and alert() error strings (L119,151,186). AmlDashboardPage.tsx: prompt labels (L116,143,156) and alert() success/error strings (L127,131,150,169,173). DsaReportsPage.tsx: alert() strings (L108,112,124). None are wrapped in t().",
+        "Unlike the disputes cluster where MediationWorkspacePage.tsx correctly uses t('disputes.mediation.sessions.cancelConfirm') for its window.confirm (MediationWorkspacePage.tsx:176), the compliance regulator-facing surfaces (AML EDD/review, DSA moderation actions, DSA report publish/download) are English-only, so a non-English compliance officer sees untranslated prompts on a legally-sensitive workflow.",
+        "Fix: move these literals into the i18n resource bundle (t('compliance.moderation.*'), t('compliance.aml.*'), t('compliance.dsa.*')). Low severity (i18n gap, no functional break). Related: RegistryPage.tsx (L100,114,157,171) has the same hardcoded-English window.confirm issue outside compliance — a candidate for the same sweep."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:159-163 — handleViewContent navigates with `window.location.href = `/compliance/moderation/cases/${caseId}`` inside a React Router SPA. This forces a full-page reload, discarding in-memory app state, TanStack Query cache, and auth context, and produces a visible white-flash reload instead of a client-side route transition. The code comments the intent as temporary ('Phase 1: Full page reload for simplicity', with a TODO(Phase-2) to use useNavigate).",
+        "The page is a live routed surface and the rest of ppt-web navigates via react-router-dom; this is the only compliance-moderation case-open path, so every 'view content' click pays the reload cost.",
+        "Fix: replace with react-router-dom useNavigate() — `const navigate = useNavigate(); navigate(`/compliance/moderation/cases/${caseId}`)` — matching the SPA navigation pattern used elsewhere in the app. Low severity (UX/perf regression, not a correctness break)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
