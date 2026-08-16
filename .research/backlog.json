@@ -8174,6 +8174,36 @@
       "created_at": "2026-08-16",
       "updated_at": "2026-08-16",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-payment-matcher-multi-suggest",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:124-176 (AccountingService::run_payment_matcher) — the once-only guard `if line.match_state != \"unmatched\" && line.match_state != \"suggested\" { continue; }` is at the TOP of the outer `for line in lines` loop (L125-127), evaluated once per line BEFORE the inner `for invoice in &open_invoices` loop (L129). Inside the inner loop the code, on every invoice whose confidence >= 0.5, upserts a PaymentMatch (L162 upsert_payment_match_rls) AND sets the line to \"suggested\" (L167 update_bank_statement_line_match_state_rls) but does NOT `break`. So a single bank-statement line is matched against EVERY qualifying open invoice, not just the first — the state update that marks the line as \"suggested\" never short-circuits the remaining invoices.",
+        "The line's in-memory `line.match_state` is a move-captured value from the pre-loop snapshot (repo.list_bank_statement_lines_rls at L104) and is never mutated after the DB write, and `remaining_amount = invoice.total_amount - invoice.paid_amount` (L141) is likewise read from the pre-loop `list_invoices_rls` snapshot and never decremented as suggestions accumulate. Consequence: one payment can be suggested as (partially/fully) paying N different invoices, and one invoice can absorb N different lines, because neither side's remaining balance is reduced within the run. When several open invoices share a variable symbol (0.8) the same line is auto-suggested against all of them.",
+        "The write of `match_state = \"suggested\"` after the first hit signals a 1:1 intent (one suggested match per line), which the un-broken inner loop contradicts — over-generating PaymentMatch rows in the accounting reconciliation flow that a human then has to reject. Fix options: `break` out of the inner loop after the first suggestion (keep best-scoring by tracking max-confidence invoice and suggesting only that), and/or decrement a mutable running `remaining` per invoice and skip invoices already fully covered by prior suggestions."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-payment-matcher-vs-only-threshold",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:132-150 — a Variable-Symbol match alone adds 0.8 (L136) which already clears the 0.5 auto-suggest threshold (L150), while the amount signal contributes at most 0.15 (exact match, L143) or 0.05 (L145) and is NEVER required. A bank line that merely shares a variable symbol with an invoice is therefore suggested regardless of amount — e.g. a small partial/erroneous payment suggested against a large invoice, or a payment suggested against an invoice with a totally different remaining balance.",
+        "The matcher is also explicitly incomplete: `// TODO: Date proximity, IBAN match` (L148). Two of the four intended corroboration signals are unimplemented, so the confidence score currently rests almost entirely on the VS field, which is user-supplied on the bank side and not guaranteed unique per invoice.",
+        "Suggested hardening: require a minimum amount corroboration before crossing the auto-suggest threshold (e.g. VS-only should stay below 0.5, or the amount branch weight should be raised so an amount mismatch can veto a VS-only match), and/or gate auto-suggestion on `line.amount <= remaining_amount` so a payment is never suggested against an invoice it cannot plausibly settle."
+      ],
+      "expert": "rust"
     }
   ]
 }
