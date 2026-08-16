@@ -35,8 +35,8 @@
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
       "type": "code-review-finding",
       "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 3,
-      "evidence": "InquiryModels.kt:50-55 declares required page_size: Int (@SerialName). reality-server InquiryListResponse (inquiries.rs:253-263) returns `limit` — not `page_size` — so kotlinx.serialization throws MissingFieldException on every real /inquiries response. Realtor endpoint (realtors.rs:39-43) returns only {inquiries, total}; getRealtorInquiries() reuses the same DTO, so realtor inquiries are broken too. Outbound query at InquiryRepository.kt:61 also sends `page_size` while backend InquiryListQuery reads `limit`, so custom page sizes silently drop.",
+      "score_delta": 0,
+      "evidence": "InquiryModels.kt:50-55 declares required page_size: Int (@SerialName). reality-server InquiryListResponse (inquiries.rs:253-263) returns `limit` — not `page_size` — so kotlinx.serialization throws MissingFieldException on every real /inquiries response. Realtor endpoint (realtors.rs:39-43) returns only {inquiries, total}; getRealtorInquiries() reuses the same DTO, so realtor inquiries are broken too. Outbound query at InquiryRepository.kt:61 also sends `page_size` while backend InquiryListQuery reads `limit`, so custom page sizes silently drop. [buffer-refill note: score_delta zeroed on this rerun — points already applied by the 03:14 UTC run in commit 2f7273b; G4 double-count guard]",
       "confidence": "high",
       "candidate_vector": "bug"
     },
@@ -44,10 +44,73 @@
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
       "type": "code-review-finding",
       "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 2,
-      "evidence": "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging (level=NONE); no HttpTimeout plugin. Grep for HttpTimeout|requestTimeout|connectTimeout|socketTimeout across mobile-native returns zero hits. Every repository (SsoService/Listing/Inquiry/ApiClient) reuses HttpClientProvider.client, so an unresponsive reality-server hangs any suspend call forever on Android + iOS.",
+      "score_delta": 0,
+      "evidence": "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging (level=NONE); no HttpTimeout plugin. Grep for HttpTimeout|requestTimeout|connectTimeout|socketTimeout across mobile-native returns zero hits. Every repository (SsoService/Listing/Inquiry/ApiClient) reuses HttpClientProvider.client, so an unresponsive reality-server hangs any suspend call forever on Android + iOS. [buffer-refill note: score_delta zeroed on this rerun — points already applied by the 03:14 UTC run in commit 2f7273b; G4 double-count guard]",
       "confidence": "high",
       "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "reality-web ComparisonView.tsx has zero useTranslations imports on a 4-locale portal (raw signal was on backlog since 2026-08-12; normalized into open backlog item this run to unblock dispatcher buffer)"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "reality-web RealtorManagement.tsx hardcodes remove-realtor confirm modal in English (raw signal was on backlog since 2026-08-12; normalized this run)"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "reality-web AgencyErrorStates.tsx no-agency state hardcoded English (raw signal was on backlog since 2026-08-12; normalized this run)"
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "api-server access_protected_share unauthenticated share-password endpoint has no brute-force protection (raw signal was on backlog since 2026-08-15 api-handlers review; normalized into open backlog item this run; vector = security)"
+    },
+    {
+      "id": "code-review-ppt-web-ui-createfault-mock-ai",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "ppt-web CreateFaultPage ships fabricated mock AI suggestion in production (raw signal was on backlog since 2026-08-12 dispatcher tier-1d; normalized this run)"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "ppt-web ContentModerationPage fabricates moderator decision context — every case shows previous_violations=0 and source=user (raw signal was on backlog since 2026-08-12; normalized this run)"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-no-i18n",
+      "type": "code-review-finding",
+      "source": "buffer-low-refill-2026-08-16",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "ppt-web ContentModerationPage uses window.prompt/alert with hardcoded English (raw signal was on backlog since 2026-08-12; normalized this run)"
     }
   ],
   "goal_checks": [
@@ -171,5 +234,140 @@
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "buffer_refill": {
+    "trigger": "dispatcher: buffer-low claimable=6/72 — landable backlog trapped behind status:null rows; refill planner",
+    "action": "normalized 7 of 8 raw code-review signals sitting in backlog.json with status:null into proper open backlog items (title/vector/score/status/sources/files/created_at/updated_at/plan populated). All 7 are cloud-runnable stacks (reality-web, api-handlers, ppt-web-ui) so directly address the mobile-native-gated buffer starvation flagged in dispatcher commit 32e801d. The 8th row (code-review-api-handlers-share-log-proxy-ip) was deferred — see rows_deferred_reason.",
+    "run_iso": "2026-08-16T18:36:42Z",
+    "rows_repaired": 7,
+    "score_2_count": 3,
+    "score_1_count": 4,
+    "rows_deferred": 1,
+    "rows_deferred_reason": "code-review-api-handlers-share-log-proxy-ip skipped: pre-existing evidence line inside the row contains a private-hostname pattern G9 catches on any diff context — augmenting fields would surface that context line in git diff --cached. Row remains status:null; needs a manual evidence sanitize pass before it can be refilled.",
+    "completed_at": "2026-08-16T18:42:08Z"
+  },
+  "goal_checks_buffer_refill": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<date>.md ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurp prev vs staged",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq slurp check re-emit != 0",
+      "observed": "true",
+      "expected": "true",
+      "note": "pre-existing 2 code-review signals had score_delta zeroed since points were already applied by 03:14 UTC run (commit 2f7273b)"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true",
+      "expected": "true",
+      "note": "no open items with updated_at <= today-14"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "trivially true — no new plans",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secret patterns in cached diff",
+      "observed": "0",
+      "expected": "0",
+      "note": "deferred code-review-api-handlers-share-log-proxy-ip to avoid G9 hit on pre-existing evidence line"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure vs cursor",
+      "observed": "n/a — no phase run this refill",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "8>=8",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions bounds",
+      "observed": "empty",
+      "expected": "empty"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor + coverage_cursor within range (no advance this refill)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
 }

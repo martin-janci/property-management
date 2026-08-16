@@ -7652,7 +7652,20 @@
         "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' — surfaced to end users via showToast()",
         "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "reality-web ComparisonView hardcodes English strings on 4-locale portal — no useTranslations imported",
+      "vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web segment review 2026-08-12 (dispatcher tier-1d)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-i18n",
@@ -7667,7 +7680,20 @@
         "L91 subtitle 'Manage your team of real estate agents', L962 '<span>Are you sure?</span>', L964 'Yes, Remove' (and adjacent 'Cancel') on the realtor-removal confirmation",
         "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files"
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "reality-web RealtorManagement destructive remove-realtor confirm modal is hardcoded English — partial i18n leaks on delete flow",
+      "vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web segment review 2026-08-12 (dispatcher tier-1d)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "code-review-reality-web-agency-errorstate-i18n",
@@ -7682,7 +7708,20 @@
         "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
         "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "reality-web AgencyErrorStates no-agency empty state hardcoded English despite localized surrounding UI",
+      "vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web segment review 2026-08-12 (dispatcher tier-1d)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
@@ -7850,7 +7889,20 @@
         "The only rate limiter in api-server is a per-TENANT set (state.tenant_rate_limiters: TenantRateLimiterSet, applied through host_tenant_middleware keyed on org context). The share handler comment explicitly states 'This public endpoint has no caller org context', so the per-tenant limiter cannot key these unauthenticated requests -> the password endpoint is effectively unthrottled. An attacker holding a share token can brute-force the share password at request speed.",
         "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer."
       ],
-      "expert": "security"
+      "expert": "security",
+      "title": "api-server public share-password endpoint has no brute-force protection — access_protected_share is unthrottled behind an unauthenticated public router",
+      "vector": "security",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-handlers segment review 2026-08-15"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
@@ -8041,7 +8093,20 @@
         "The real backend + client already exist and are unused here: client hook packages/api-client/src/faults/hooks.ts:272 useRequestAiSuggestion + api.ts:233 getAiSuggestion -> POST /api/v1/faults/{id}/suggest (backend api-server faults route .route('/{id}/suggest', post(get_ai_suggestion))). The inline comment even says 'Mock AI suggestion - in production, call useRequestAiSuggestion' (L44). Fix: wire handlePhotosChange to the real suggestion endpoint and drop the constant.",
         "Secondary: L71 hardcoded English fallback description ('Describe the issue you're experiencing...') is not wrapped in t() — i18n gap on the non-photo-first branch."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "ppt-web CreateFaultPage ships a fabricated mock AI suggestion in production — hardcoded plumbing/0.85/medium regardless of photo content",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-12 (dispatcher tier-1d)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/CreateFaultPage.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "code-review-ppt-web-ui-moderation-fabricated-context",
@@ -8056,7 +8121,20 @@
         "These fields drive an enforcement UI (DSA/AML content moderation queue) — presenting a constant 0 prior-violations count and a constant report source misleads the human decision-maker and can produce unjustified or under-scaled actions. Marked 'TODO(Phase-2): Extend API to include previous_violations count / report_source' but the defaults are shipped live, not gated.",
         "Fix: extend the moderation cases API (casesData) to return previous_violations and report_source and map the real values; until then the fields should be rendered as unknown/'—', not a confident 0/'user'."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "ppt-web ContentModerationPage fabricates moderator decision context — every case shows previous_violations=0 and report_source='user'",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-12 (dispatcher tier-1d)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "code-review-ppt-web-ui-moderation-no-i18n",
@@ -8071,7 +8149,20 @@
         "Enforcement flows use native browser dialogs with hardcoded English: window.prompt('Enter action type (remove, restrict, warn, approve):', 'approve') L130, window.prompt('Enter rationale for this action:') L136, window.prompt('Enter decision (uphold, overturn):','uphold') L169, window.prompt('Enter rationale for this decision:') L172; error alert()s 'Failed to assign case. Please try again.' L119, 'Failed to take action...' L151, 'Failed to decide appeal...' L186.",
         "Two problems: (1) i18n gap — none of these strings resolve for sk/cs/de users; (2) UX/robustness — building a DSA moderation enforcement workflow on window.prompt()/alert() (also flagged inline as TODO(Phase-2), L128/L167) has no validation and dispatches raw prompt text straight into action_type. Fix: replace with an i18n'd modal form using the existing action templates (useModerationTemplates is already fetched, L57)."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "ppt-web ContentModerationPage uses window.prompt/alert with hardcoded English for DSA enforcement — no i18n, no validation",
+      "vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-12 (dispatcher tier-1d)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-16",
+      "plan": null
     },
     {
       "id": "churn-hotspot-voice-webhooks-rs",
