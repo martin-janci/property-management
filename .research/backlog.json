@@ -8072,6 +8072,98 @@
         "Two problems: (1) i18n gap — none of these strings resolve for sk/cs/de users; (2) UX/robustness — building a DSA moderation enforcement workflow on window.prompt()/alert() (also flagged inline as TODO(Phase-2), L128/L167) has no validation and dispatches raw prompt text straight into action_type. Fix: replace with an i18n'd modal form using the existing action templates (useModerationTemplates is already fetched, L57)."
       ],
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "title": "voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google JWKS, /oauth/refresh authz)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2762",
+        "PR #2765",
+        "PR #2766",
+        "top-3-churn-2026-08-16"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs churned +556 lines this run across three merged PRs: #2762 (+59 — Alexa cert-fetch timeouts + shared client), #2765 (+407 — fail-closed Google ID-token JWT verify + JWKS cache), #2766 (+90 — /oauth/refresh device-owner AuthUser + per-user rate limit). Monitor for further churn — three back-to-back security landings on a single 1.2k-LOC route file suggest continued pressure."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests",
+      "title": "voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contract (monitor)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2766",
+        "top-3-churn-2026-08-16"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs — new 270-line file from PR #2766: unauthenticated → 401 (no rotation), invalid bearer → 401, non-owner → 403 (no rotation), owner → 200 with `access_token_hash` rotated. Test-gap monitor: further modifications to voice /oauth/refresh contract should update this suite."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
+      "title": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp segment review 2026-08-16"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt:50-55 — `InquiriesResponse` declares required `pageSize: Int (@SerialName(\"page_size\"))` with no default.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:253-263 — `GET /api/v1/inquiries` returns `InquiryListResponse { inquiries, total, page, limit }` (field is `limit`, NOT `page_size`), so with `ignoreUnknownKeys = true` the incoming `limit` is dropped and the required `page_size` triggers `kotlinx.serialization.MissingFieldException` on every real response.",
+        "backend/servers/reality-server/src/routes/realtors.rs:39-43 — `GET /api/v1/realtors/inquiries` returns `InquiriesResponse { inquiries, total }` only (missing BOTH `page` and `page_size` that the KMP shape requires). `getRealtorInquiries()` reuses the same KMP class, so realtor-portal inquiries are broken too.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:61 — outbound query sends `parameter(\"page_size\", pageSize)` while backend `InquiryListQuery` reads `limit`; custom page sizes are silently dropped (server default of 20 always applied)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt",
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp segment review 2026-08-16"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
+        "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
+        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
     }
   ]
 }

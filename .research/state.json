@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-15T03:11:00Z",
+  "last_run_iso": "2026-08-16T03:14:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2761,
-  "last_issue_seen": 2759,
-  "last_commit_sha": "75b30077aa0e3e37aa1f4ed4b6626245a41405e7",
+  "last_pr_seen": 2771,
+  "last_issue_seen": 2768,
+  "last_commit_sha": "7f767e24b4f51f797d17841d6e27dbccbbd11fab",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -458,14 +458,24 @@
       "recent_churn": 298
     },
     "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-15",
-      "recent_churn": 111
+      "runs_seen": 2,
+      "last_seen": "2026-08-16",
+      "recent_churn": 170
     },
     "backend/servers/api-server/src/services/actions/api_call.rs": {
       "runs_seen": 1,
       "last_seen": "2026-08-15",
       "recent_churn": 106
+    },
+    "backend/servers/api-server/src/routes/voice_webhooks.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-16",
+      "recent_churn": 556
+    },
+    "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-16",
+      "recent_churn": 270
     }
   },
   "seen_signals": [
@@ -863,7 +873,11 @@
     "dep-update-noise-pr-2749",
     "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
     "code-review-api-handlers-voice-google-verify-fail-open",
-    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout"
+    "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
+    "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+    "code-review-mobile-native-kmp-inquiries-response-contract",
+    "code-review-mobile-native-kmp-httpclient-no-timeout"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -874,12 +888,12 @@
     "ppt-web-core": "2026-08-12",
     "reality-web": "2026-08-12",
     "mobile-rn": "2026-08-12",
-    "mobile-native-kmp": "2026-08-11"
+    "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 64,
-    "vectors_created": 297,
-    "plans_created": 24,
+    "runs": 65,
+    "vectors_created": 301,
+    "plans_created": 25,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
