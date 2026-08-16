@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-16 03:14 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-16 14:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 4 | bug | `code-review-ppt-web-core-api-onunauthorized-unwired` | ppt-web hand-rolled axios: onUnauthorized callback unwired — 401 branch dead, expired sessions never | ready | 2026-08-16 | [plan](plans/code-review-ppt-web-core-api-onunauthorized-unwired.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | open | 2026-08-16 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
@@ -34,7 +35,16 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-api-core-delay-duration-overflow` | api-core: backend/servers/api-server/src/services/actions/delay.rs:53-60 (DelayConfig::to_duration)  | open | 2026-08-16 |  |
+| 2 | bug | `code-review-mobile-native-kmp-decimal-serializer-throws-malformed` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalS | open | 2026-08-16 |  |
 | 2 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang i | open | 2026-08-16 |  |
+| 2 | bug | `code-review-mobile-native-kmp-nav-loaders-swallow-errors` | mobile-native-kmp: mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navig | open | 2026-08-16 |  |
+| 2 | bug | `code-review-ppt-web-core-authctx-init-no-exp-check` | ppt-web-core: frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 (initializeAuth) — cold-boo | open | 2026-08-16 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-event-name-mismatch` | ppt-web-core: frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 — eventToQueryKeys subsc | open | 2026-08-16 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-unvalidated-cast` | ppt-web-ui: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 —  | open | 2026-08-16 |  |
+| 2 | bug | `code-review-reality-web-compare-label-currency-guard` | reality-web: frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:163-169 (getHigh | open | 2026-08-16 |  |
+| 2 | bug | `code-review-reality-web-inquiry-cancel-no-error` | reality-web: frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — `handleCancel` ca | open | 2026-08-16 |  |
+| 2 | bug | `code-review-reality-web-journal-newsletter-fake-submit` | reality-web: frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:113-116 — `handleSubscribe( | open | 2026-08-16 |  |
 | 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
 | 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
@@ -136,8 +146,24 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | open | 2026-08-16 |  |
-| 1 | refactor | `churn-hotspot-voice-webhooks-rs` | voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google J | open | 2026-08-16 |  |
+| 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | done | 2026-08-16 |  |
+| 1 | refactor | `churn-hotspot-voice-webhooks-rs` | voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google J | dropped | 2026-08-16 |  |
+| 1 | bug | `code-review-api-core-docgen-empty-llm-ok` | api-core: backend/servers/api-server/src/services/document_generation.rs:536-540 collapses a missing | open | 2026-08-16 |  |
+| 1 | bug | `code-review-mobile-native-kmp-profilestats-serial-fetch` | mobile-native-kmp: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/account/Prof | open | 2026-08-16 |  |
+| 1 | bug | `code-review-mobile-rn-meters-hardcoded-label` | mobile-rn: frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:100 (toUiMeter) — `label: m.mete | open | 2026-08-16 |  |
+| 1 | bug | `code-review-mobile-rn-nfc-wallet-hardcoded-i18n` | mobile-rn: frontend/apps/mobile/src/nfc/NFCAccessController.ts:380-388 (addToWallet) builds the Appl | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-core-unverified-jwt-role` | ppt-web-core: frontend/apps/ppt-web/src/contexts/AuthContext.tsx:220-233 decodeJwtPayload does an UN | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-compliance-alert-i18n` | ppt-web-ui: The entire features/compliance/ page cluster uses the browser-native window.alert() with | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-compliance-prompt-i18n-gap` | ppt-web-ui: The compliance pages ship all user-facing prompt/alert copy as hardcoded English in an a | open | 2026-08-16 |  |
+| 1 | dx | `code-review-ppt-web-ui-confirm-dialog-i18n` | ppt-web-ui: frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 — hardcoded 'Processing. | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-disputedetail-i18n-gap` | ppt-web-ui: frontend/apps/ppt-web/src/features/disputes/pages/DisputeDetailPage.tsx — a LIVE routed  | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-disputelist-i18n-gap` | ppt-web-ui: frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx — the shipped lis | open | 2026-08-16 |  |
+| 1 | dx | `code-review-ppt-web-ui-langswitcher-aria-i18n` | ppt-web-ui: frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:19 — aria-label="Select langua | open | 2026-08-16 |  |
+| 1 | dx | `code-review-ppt-web-ui-langswitcher-promise` | ppt-web-ui: frontend/apps/ppt-web/src/components/LanguageSwitcher.tsx:11 — i18n.changeLanguage(newLo | open | 2026-08-16 |  |
+| 1 | bug | `code-review-ppt-web-ui-moderation-full-reload-nav` | ppt-web-ui: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:159-163 —  | open | 2026-08-16 |  |
+| 1 | refactor | `code-review-reality-web-compare-exportpdf-stub` | reality-web: frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:212-227 renders  | open | 2026-08-16 |  |
+| 1 | refactor | `code-review-reality-web-comparison-i18n-gap` | reality-web: The entire Epic-51 comparison feature renders hardcoded English on a portal whose whole | open | 2026-08-16 |  |
+| 1 | bug | `code-review-reality-web-pricemap-hardcoded-locale` | reality-web: frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:37 — `v == null ? '—' : ` | open | 2026-08-16 |  |
 | 1 | refactor | `churn-hotspot-api-call-rs` | backend/servers/api-server/src/services/actions/api_call.rs churned +106 lines this run (PR #2746 SS | done | 2026-08-15 |  |
 | 1 | test-gap | `churn-hotspot-marketplace-award-quote-idor-tests` | backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs churned +298 lines thi | done | 2026-08-15 |  |
 | 1 | test-gap | `churn-hotspot-protected-route-i18n-test` | frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts churned +111 lines this run (new test suit | done | 2026-08-15 |  |
@@ -287,6 +313,7 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
+| 0 | bug | `code-review-ppt-web-ui-createdispute-fake-submit` | ppt-web CreateDisputePage.handleSubmit is a fake success stub — dispute never persisted | dropped | 2026-08-16 |  |
 | 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | dropped | 2026-07-09 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-document-rs` | Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06- | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-form-rs` | Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock) | dropped | 2026-07-05 |  |

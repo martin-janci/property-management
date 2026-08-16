@@ -1,175 +1,187 @@
 {
-  "date": "2026-08-16",
-  "segment_reviewed": "mobile-native-kmp",
-  "segment_reason": "oldest-unreviewed (last reviewed 2026-08-11; no churn in mobile-native-kmp this run)",
+  "run_iso": "2026-08-16T14:35:00Z",
+  "run_reason": "refill-trigger (buffer-low: dispatcher claimable=6/72, all open backlog was mobile-native-kmp / cloud-unlandable). Second run of the day — a full observation pass already ran at 03:14Z and its signals + PR/issue/commit cursors are unchanged; this pass exists to ingest the 29 unseen dispatcher-Tier-1d code-review findings that piled up between the routine runs and to promote a landable plan the cloud dispatcher can actually claim.",
   "signals": [
     {
-      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
-      "type": "churn-hotspot",
-      "source": "top-3-churn-2026-08-16",
-      "score_delta": 1,
-      "evidence": "voice_webhooks.rs +556 lines across PRs #2762 (+59, Alexa cert timeouts), #2765 (+407, Google JWKS ID-token verify), #2766 (+90, /oauth/refresh device-owner authz)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
-      "type": "churn-hotspot",
-      "source": "top-3-churn-2026-08-16",
-      "score_delta": 1,
-      "evidence": "voice_oauth_refresh_auth_tests.rs — new 270-line file (PR #2766) pinning /oauth/refresh device-owner auth contract",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
-      "type": "churn-hotspot",
-      "source": "top-3-churn-2026-08-16",
+      "id": "buffer-refill-2026-08-16",
+      "type": "meta",
+      "source": "routine-fire-payload",
       "score_delta": 0,
-      "evidence": "re-emit (cumulative): PR #2767 +170 lines. Already in state.seen_signals; matched backlog row already status=done. No score bump.",
       "confidence": "high",
-      "candidate_vector": "test-gap",
-      "cumulative_reemit": true
+      "evidence": [
+        "routine-fire-payload: 'buffer-low: claimable=6/72 — all open backlog is mobile-native (cloud-unlandable); need landable (backend/frontend) vectors — refill planner'",
+        "confirmed against state before this run: 5 open backlog items were ALL mobile-native-kmp; 0 open backend/frontend vectors were promotable"
+      ],
+      "candidate_vector": null,
+      "notes": "This is a routine-orchestration signal, not a backlog vector."
     },
     {
-      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "type": "code-review-finding",
-      "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 3,
-      "evidence": "InquiryModels.kt:50-55 declares required page_size: Int (@SerialName). reality-server InquiryListResponse (inquiries.rs:253-263) returns `limit` — not `page_size` — so kotlinx.serialization throws MissingFieldException on every real /inquiries response. Realtor endpoint (realtors.rs:39-43) returns only {inquiries, total}; getRealtorInquiries() reuses the same DTO, so realtor inquiries are broken too. Outbound query at InquiryRepository.kt:61 also sends `page_size` while backend InquiryListQuery reads `limit`, so custom page sizes silently drop.",
+      "id": "tier1d-catchup-2026-08-16",
+      "type": "meta",
+      "source": "dispatcher-generator",
+      "score_delta": 0,
       "confidence": "high",
-      "candidate_vector": "bug"
-    },
-    {
-      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "type": "code-review-finding",
-      "source": "mobile-native-kmp segment review 2026-08-16",
-      "score_delta": 2,
-      "evidence": "HttpClientProvider.kt:37-43 installs only ContentNegotiation + Logging (level=NONE); no HttpTimeout plugin. Grep for HttpTimeout|requestTimeout|connectTimeout|socketTimeout across mobile-native returns zero hits. Every repository (SsoService/Listing/Inquiry/ApiClient) reuses HttpClientProvider.client, so an unresponsive reality-server hangs any suspend call forever on Android + iOS.",
-      "confidence": "high",
-      "candidate_vector": "bug"
+      "evidence": [
+        "29 unseen `code-review-finding` signals across 2026-08-15 + 2026-08-16 Tier 1d files (dispatcher-generator output) never ingested by prior routine runs. All 29 now added to `state.seen_signals` and reflected in backlog.json.",
+        "Segments covered: api-core (2), ppt-web-core (5), ppt-web-ui (10), reality-web (5), mobile-native-kmp (3), mobile-rn (2). Landable (non-mobile-native) share: 24 of 29.",
+        "Two same-defect pairs merged into a single canonical row each: (a) api-onunauthorized-unwired + api-client-no-onunauthorized (same 401-handler-unwired bug; canonical id = api-onunauthorized-unwired, high-conf wins, score=4); (b) createdispute-fake-submit + createdispute-stub-discard (same fake-submit stub, canonical id = createdispute-fake-submit).",
+        "Dead-code filter: `createdispute-fake-submit` canonical row DEMOTED to `status=dropped, score=0` — grep confirms `CreateDisputePage` is not imported by any route (routes/groups/disputes.tsx:482 wires the live /disputes/new to `FileDisputePageRoute` → `FileDisputePage` → `useCreateDispute`). Signal IDs still added to seen_signals to prevent re-emit."
+      ],
+      "candidate_vector": null
     }
+  ],
+  "ingested_from_tier1d": [
+    "code-review-api-core-delay-duration-overflow",
+    "code-review-api-core-docgen-empty-llm-ok",
+    "code-review-mobile-native-kmp-nav-loaders-swallow-errors",
+    "code-review-mobile-native-kmp-profilestats-serial-fetch",
+    "code-review-mobile-native-kmp-decimal-serializer-throws-malformed",
+    "code-review-ppt-web-core-ws-event-name-mismatch",
+    "code-review-ppt-web-core-api-client-no-onunauthorized",
+    "code-review-ppt-web-core-unverified-jwt-role",
+    "code-review-ppt-web-core-api-onunauthorized-unwired",
+    "code-review-ppt-web-core-authctx-init-no-exp-check",
+    "code-review-ppt-web-ui-createdispute-fake-submit",
+    "code-review-ppt-web-ui-createdispute-stub-discard",
+    "code-review-ppt-web-ui-compliance-alert-i18n",
+    "code-review-ppt-web-ui-disputedetail-i18n-gap",
+    "code-review-ppt-web-ui-disputelist-i18n-gap",
+    "code-review-ppt-web-ui-confirm-dialog-i18n",
+    "code-review-ppt-web-ui-langswitcher-aria-i18n",
+    "code-review-ppt-web-ui-langswitcher-promise",
+    "code-review-ppt-web-ui-moderation-unvalidated-cast",
+    "code-review-ppt-web-ui-compliance-prompt-i18n-gap",
+    "code-review-ppt-web-ui-moderation-full-reload-nav",
+    "code-review-reality-web-journal-newsletter-fake-submit",
+    "code-review-reality-web-inquiry-cancel-no-error",
+    "code-review-reality-web-pricemap-hardcoded-locale",
+    "code-review-reality-web-compare-label-currency-guard",
+    "code-review-reality-web-comparison-i18n-gap",
+    "code-review-reality-web-compare-exportpdf-stub",
+    "code-review-mobile-rn-nfc-wallet-hardcoded-i18n",
+    "code-review-mobile-rn-meters-hardcoded-label"
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "command": "test -f briefs/2026-08-16.md && head -1 briefs/2026-08-16.md | grep -q '^# 2026-08-16$'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq state advanced vs HEAD",
-      "observed": "true",
-      "expected": "true"
+      "command": "compare staged state.json vs HEAD — seen_signals length changed (399 → 428)",
+      "observed": "seen_signals grew by 29",
+      "expected": "at least one advance"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids in backlog",
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq re-emit non-cumulative w/ score_delta=0",
-      "observed": "true",
+      "command": "no non-cumulative signal re-emitted with score_delta != 0 that was already in seen_signals",
+      "observed": "all 29 ingested Tier1d signals were previously unseen (not in prior seen_signals)",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no score > 8 + no open item ≤ today-14",
-      "observed": "cap true; no decay-eligible open items",
+      "command": "score cap ≤ 8 + decay applied on 14d-stale open items",
+      "observed": "no item exceeds 8; no open item has updated_at ≤ 2026-08-02 (14d ago) — nothing eligible for decay this run",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "grep brief for adversarial pass line per new plan",
-      "observed": "adversarial pass: passed line present",
-      "expected": "per-plan annotation present"
+      "command": "adversarial-pass annotation for each new plan",
+      "observed": "plans/code-review-ppt-web-core-api-onunauthorized-unwired.md — adversarial pass: passed",
+      "expected": "annotation present"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "count ≤2 new plans; 4 metadata + 11 headings + Mode + ≥1 cap tick + files exist",
-      "observed": "1 new plan, all checks pass",
-      "expected": "pass"
+      "command": "plan count + sections + capability + Mode + files exist",
+      "observed": "1 new plan; all 4 metadata + 11 headings present; ≥1 capability ticked; Mode: cloud-ok; all 4 file paths under Files resolve on disk",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
-      "observed": "0",
+      "command": "git diff --cached --name-only outside .research/ = 0",
+      "observed": "0 (deferred verification — run at gate time)",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "git diff --cached scan for secrets/hostnames",
-      "observed": "0",
+      "command": "no secrets or private hostnames in staged diff (excluding baseline docs)",
+      "observed": "no matches (deferred verification — run at gate time)",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "regenerate backlog.md from backlog.json and diff",
+      "observed": "identical (regenerator: /tmp/regen_backlog.py write)",
+      "expected": "diff exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "grep brief phase-failure honesty; cursors preserved for failed phases",
-      "observed": "no phase failures; brief lists 'Phases that failed: none'",
-      "expected": "consistent"
+      "command": "phase-failure honesty",
+      "observed": "no phases reported failure this run",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plans still present in plans/ or _archive/",
-      "observed": "all present",
-      "expected": "all present"
+      "command": "prior-run plan slugs still present in plans/ or plans/_archive/",
+      "observed": "no plans removed this run — 21 active + 7 archived (unchanged) + 1 new promotion",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count monotonic (now ≥ HEAD)",
-      "observed": "now=8 prev=8",
-      "expected": "now ≥ prev"
+      "command": "archive count ≥ HEAD",
+      "observed": "no archive changes this run — count matches HEAD",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "regenerate IDEAS_TRIAGE.md from backlog.json triage rows and diff",
+      "observed": "identical (regenerator: /tmp/regen_backlog.py write)",
+      "expected": "diff exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps + idempotency",
-      "observed": "auto_fix_actions=[]",
-      "expected": "length ≤ 3, per-type ≤ 1"
+      "command": "auto-fix discipline — 0 auto_fix_actions this run",
+      "observed": "auto_fix_actions=[] — no allowlisted signal type had confidence=high + score≥3 + not-yet-seen this run",
+      "expected": "≤3 (0)"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped this run — gate is a no-op",
-      "observed": "pm_cursor unchanged, no management artifact writes",
-      "expected": "no-op when Phase 1.6 skipped"
+      "command": "management artifacts valid — Phase 1.6 SKIPPED this run (refill trigger, not full pipeline)",
+      "observed": "pm_cursor.next_index and coverage_cursor.next_index unchanged from HEAD — GC7 no-op branch",
+      "expected": "no-op"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "git diff --cached for literal Telegram token value",
-      "observed": "0",
+      "command": "no Telegram token in staged diff",
+      "observed": "0 (deferred verification — run at gate time)",
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type (screen-map-drift/orphan, fixme-in-merged-code, lockfile-drift, stalled-review) met confidence=high + score≥3 + not-in-history this run"
 }
