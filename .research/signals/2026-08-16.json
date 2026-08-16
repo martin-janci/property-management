@@ -1,0 +1,164 @@
+{
+  "run_iso": "2026-08-16T00:42:48Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "PR-diff churn tally 2026-08-15..2026-08-16 window (dev branch, excludes dispatcher chore commits)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs +556 lines: PR #2762 (+59 Alexa cert timeout), PR #2765 (+407 Google JWT fail-closed), PR #2766 (+90 voice OAuth refresh authz). File now 2686 lines.",
+        "New hotspot: runs_seen 0→1. Not previously in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests-rs",
+      "type": "churn-hotspot",
+      "source": "PR-diff churn tally 2026-08-15..2026-08-16 window",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs +270 lines: new file added by PR #2766, covers AuthUser+owner+rate-limit gate on POST /webhooks/voice/oauth/refresh (401 unauth, 403 non-owner, 200 owner + token hash rotation).",
+        "New hotspot: runs_seen 0→1."
+      ]
+    },
+    {
+      "id": "churn-hotspot-protected-route-i18n-test",
+      "type": "churn-hotspot",
+      "source": "PR-diff churn tally 2026-08-15..2026-08-16 window",
+      "score_delta": 0,
+      "candidate_vector": "test-gap",
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts +170 lines: PR #2767 extended from static JSON/regex assertions to runtime i18next resolution + defaultValue parity + key-classification integrity (16→61 test cases).",
+        "Cumulative re-emit: signal ID already in state.seen_signals (from 2026-08-15 run). runs_seen 1→2 across runs 63,64. score_delta=0 per cumulative allowlist rule (G4). No repeated-churn emitted separately — the underlying vector was resolved by PR #2767 (intentional coverage expansion, not instability); repeated-churn on a done item would just noise the backlog."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-16.md && head -1 .research/briefs/2026-08-16.md | grep -q '^# 2026-08-16$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged-vs-HEAD compare on state.json cursors + seen_signals + hotspot_history",
+      "observed": "last_pr_seen 2761→2771, last_issue_seen 2759→2768, last_commit_sha changed, seen_signals grew by 2 (churn-hotspot-voice-webhooks-rs, churn-hotspot-voice-oauth-refresh-auth-tests-rs), hotspot_history grew by 2, review_cursor.api-handlers 2026-08-15→2026-08-16",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true (326 unique ids across 326 items)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "Every new signal ID either absent from prev seen_signals OR is in the cumulative allowlist AND score_delta==0 on re-emit",
+      "observed": "2 new IDs absent; 1 re-emit (churn-hotspot-protected-route-i18n-test) is in cumulative allowlist with score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json + decay check",
+      "observed": "no score > 8; no open item ≥14d without new signal (max open age = 12d, below decay threshold)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → gate vacuously satisfied",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c '.md$' ≤ 2",
+      "observed": "0 new plans",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0 (all staged paths under .research/)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached -- .research/ (excluding 4 baseline docs) | grep -E secret/hostname patterns | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md to /tmp/backlog.regen.md, diff -q against staged",
+      "observed": "byte-identical (regen produced the staged file directly)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief's 'Phases that failed' line; verify cursors match previous-run values for each failed phase",
+      "observed": "brief lists 'none' — no cursor rollback needed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "for prior-run plan slug, assert present in plans/ or plans/_archive/ this run",
+      "observed": "no plans deleted this run — all 16 active + 7 archive plans from HEAD still present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ $(git ls-files -- .research/plans/_archive/ | wc -l) -ge $(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l) ]",
+      "observed": "archive count unchanged this run (7 files both sides + .gitkeep)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md to /tmp/ideas-triage.regen.md, diff -q against staged",
+      "observed": "byte-identical (regen produced the staged file directly)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions capped (≤3 total, ≤1 per type) + idempotency vs auto_fix_history + kill-switch honored",
+      "observed": "auto_fix_actions: [] (no candidate); ROUTINE_AUTOFIX_DISABLED unset",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → gate is a no-op",
+      "observed": "pm_cursor NOT advanced (still at next_index=3); coverage_cursor NOT advanced (still at next_index=5); gate no-op",
+      "expected": "true (no-op when Phase 1.6 skipped)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached (excluding 4 baseline docs) added lines match Telegram token pattern",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

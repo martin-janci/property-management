@@ -8026,6 +8026,50 @@
         "assignment_status": "merged",
         "pr_number": 2762
       }
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs",
+      "title": "voice_webhooks.rs churn hotspot — 3 back-to-back security-hardening PRs (Alexa timeout, Google JWT verify, OAuth refresh authz)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2762",
+        "PR #2765",
+        "PR #2766"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs +556 lines this run — PR #2762 bounded Alexa cert fetch (+59), PR #2765 fail-closed Google JWT verify (+407), PR #2766 owner-authz+rate-limit on /oauth/refresh (+90). All landed in one dispatcher tier of security work.",
+        "File is now 2686 lines. Runs_seen=1 in hotspot_history after this run — monitor for repeated-churn. If it keeps churning, consider splitting the file by upstream (Alexa vs Google vs authz core)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-voice-oauth-refresh-auth-tests-rs",
+      "title": "voice_oauth_refresh_auth_tests.rs — new 270-line auth regression suite from PR #2766, monitor for churn indicating coverage gaps",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2766"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs — new file, +270 lines added by PR #2766 covering the AuthUser+owner+rate-limit gate on /webhooks/voice/oauth/refresh.",
+        "Freshly-landed test suite covering a security-sensitive path (voice OAuth token rotation). Any churn on this file over the next few runs likely indicates the initial suite missed a branch — worth monitoring but not itself a defect."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null
     }
   ]
 }

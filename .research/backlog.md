@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-15 03:11 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-16 00:41 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -33,8 +33,8 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | ready | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
-| 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | ready | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
+| 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
+| 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
 | 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
 | 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
@@ -134,10 +134,12 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | refactor | `churn-hotspot-api-call-rs` | backend/servers/api-server/src/services/actions/api_call.rs churned +106 lines this run (PR #2746 SS | open | 2026-08-15 |  |
-| 1 | test-gap | `churn-hotspot-marketplace-award-quote-idor-tests` | backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs churned +298 lines thi | open | 2026-08-15 |  |
-| 1 | test-gap | `churn-hotspot-protected-route-i18n-test` | frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts churned +111 lines this run (new test suit | open | 2026-08-15 |  |
-| 1 | bug | `code-review-api-handlers-voice-alexa-cert-fetch-no-timeout` | voice fetch_alexa_cert_chain builds a fresh reqwest::Client per call with no connect/request timeout | open | 2026-08-15 |  |
+| 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests-rs` | voice_oauth_refresh_auth_tests.rs — new 270-line auth regression suite from PR #2766, monitor for ch | open | 2026-08-16 |  |
+| 1 | refactor | `churn-hotspot-voice-webhooks-rs` | voice_webhooks.rs churn hotspot — 3 back-to-back security-hardening PRs (Alexa timeout, Google JWT v | open | 2026-08-16 |  |
+| 1 | refactor | `churn-hotspot-api-call-rs` | backend/servers/api-server/src/services/actions/api_call.rs churned +106 lines this run (PR #2746 SS | done | 2026-08-15 |  |
+| 1 | test-gap | `churn-hotspot-marketplace-award-quote-idor-tests` | backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs churned +298 lines thi | done | 2026-08-15 |  |
+| 1 | test-gap | `churn-hotspot-protected-route-i18n-test` | frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts churned +111 lines this run (new test suit | done | 2026-08-15 |  |
+| 1 | bug | `code-review-api-handlers-voice-alexa-cert-fetch-no-timeout` | voice fetch_alexa_cert_chain builds a fresh reqwest::Client per call with no connect/request timeout | done | 2026-08-15 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-oauth-rs` | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | done | 2026-08-12 |  |
 | 1 | test-gap | `churn-hotspot-frontend-apps-mobile-src-hooks-useOfflineSupport-test-ts` | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't | done | 2026-08-12 |  |
 | 1 | test-gap | `churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx` | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | done | 2026-08-12 |  |
