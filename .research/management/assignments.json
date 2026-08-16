@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-16T04:31:35Z",
+  "generated": "2026-08-16T05:06:06Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "churn-hotspot-voice-oauth-refresh-auth-tests",
       "branch": "auto-impl/churn-hotspot-voice-oauth-refresh-auth-t-65aad2e7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-16T04:27:50Z",
-      "last_updated": "2026-08-16T04:27:50Z",
-      "status_changed_at": "2026-08-16T04:27:50Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-16T05:06:06Z",
+      "status_changed_at": "2026-08-16T05:06:06Z",
+      "pr_number": 2772,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2772",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2772 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added platform-admin-bypass test (5/5 green, fmt+clippy pass); draft — full suite has 1 unrelated pre-existing DNS-rebinding lib-test failure in an unchanged module",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
