@@ -7644,15 +7644,29 @@
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
         "Hardcoded UI text: L104 '<h2>No properties to compare</h2>', L105 'Add properties to your comparison from the listings page.', L107 'Browse Listings', L230 'Clear All', L272 'Remove'",
         "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' — surfaced to end users via showToast()",
-        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
+        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)",
+        "scored by routine 2026-08-16: severity low → +1 (refactor); files verified from evidence paths."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "reality-web: ComparisonView.tsx hardcodes English UI + toast strings on a 4-locale portal — Epic 51 share-comparison flow not localized",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-i18n",
@@ -7660,14 +7674,28 @@
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — component DOES use useTranslations elsewhere, but the destructive confirm-remove modal and header subtitle are hardcoded English, so they never localize",
         "L91 subtitle 'Manage your team of real estate agents', L962 '<span>Are you sure?</span>', L964 'Yes, Remove' (and adjacent 'Cancel') on the realtor-removal confirmation",
-        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files"
+        "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files",
+        "scored by routine 2026-08-16: severity low → +1 (refactor); files verified from evidence paths."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "reality-web: RealtorManagement.tsx destructive confirm-remove modal + subtitle hardcoded English — non-EN users hit English on delete action",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "code-review-reality-web-agency-errorstate-i18n",
@@ -7675,14 +7703,28 @@
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
         "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
-        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
+        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI",
+        "scored by routine 2026-08-16: severity low → +1 (refactor); files verified from evidence paths."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "reality-web: AgencyErrorStates.tsx no-agency empty/error state hardcoded English — inconsistent with partial i18n of same component",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
@@ -7843,14 +7885,28 @@
       "source": "rotating-expert-review",
       "segment": "api-handlers",
       "score_delta": 2,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:574 access_protected_share -- public, unauthenticated endpoint (mounted via shares::public_router at POST /api/v1/documents/shared/{token}/access, lib.rs:165 merge) verifies a caller-supplied share password (verify_share_password_for_share at ~L617) with NO brute-force protection: no failed-attempt counter, no per-token/per-IP lockout, no throttle. grep for rate.?limit|throttle|attempt|lockout across routes/documents/ returns 0 hits.",
         "The only rate limiter in api-server is a per-TENANT set (state.tenant_rate_limiters: TenantRateLimiterSet, applied through host_tenant_middleware keyed on org context). The share handler comment explicitly states 'This public endpoint has no caller org context', so the per-tenant limiter cannot key these unauthenticated requests -> the password endpoint is effectively unthrottled. An attacker holding a share token can brute-force the share password at request speed.",
-        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer."
+        "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer.",
+        "scored by routine 2026-08-16: severity high → +3 (security); files verified from evidence paths."
       ],
-      "expert": "security"
+      "expert": "security",
+      "title": "SECURITY: public document-share password endpoint has no throttle — attacker with a share token can brute-force the password at request speed",
+      "vector": "security",
+      "score": 3,
+      "status": "open",
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
@@ -7858,14 +7914,28 @@
       "source": "rotating-expert-review",
       "segment": "api-handlers",
       "score_delta": 1,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 -- both public share handlers derive the audit ip_address from axum ConnectInfo<SocketAddr> (let ip_address = addr.ip().to_string()) and persist it via log_share_access_for_share(LogShareAccess{ ip_address, .. }).",
-        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *.dev.ppt.rlt.sk), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
-        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
+        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + the internal dev domain), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
+        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer.",
+        "scored by routine 2026-08-16: severity medium → +2 (bug); files verified from evidence paths."
       ],
-      "expert": "rust"
+      "expert": "rust",
+      "title": "shares.rs audit log records TCP peer (proxy IP) instead of real client — audit trail useless behind reverse proxy; blocks IP-based abuse detection",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "churn-hotspot-marketplace-award-quote-idor-tests",
@@ -8033,15 +8103,29 @@
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
       "score_delta": 2,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/ppt-web/src/features/faults/pages/CreateFaultPage.tsx:36-55 handlePhotosChange ships a HARDCODED mock AI suggestion instead of calling the real endpoint: on any photo upload it setTimeout(1500)s then setAiSuggestion({category:'plumbing', confidence:0.85, priority:'medium'}) — a fabricated constant regardless of the actual photo content.",
         "The mock path is ON by default: CreateFaultPage defaults enablePhotoFirst = true (L28) and passes aiSuggestion/aiSuggestionLoading into FaultForm (L83-85), which renders the suggestion (FaultForm.tsx aiSuggestion prop L56, confidence L42). So every user in photo-first fault reporting (Epic 126) is shown a fake 'plumbing / 85% confidence / medium priority' suggestion.",
         "The real backend + client already exist and are unused here: client hook packages/api-client/src/faults/hooks.ts:272 useRequestAiSuggestion + api.ts:233 getAiSuggestion -> POST /api/v1/faults/{id}/suggest (backend api-server faults route .route('/{id}/suggest', post(get_ai_suggestion))). The inline comment even says 'Mock AI suggestion - in production, call useRequestAiSuggestion' (L44). Fix: wire handlePhotosChange to the real suggestion endpoint and drop the constant.",
-        "Secondary: L71 hardcoded English fallback description ('Describe the issue you're experiencing...') is not wrapped in t() — i18n gap on the non-photo-first branch."
+        "Secondary: L71 hardcoded English fallback description ('Describe the issue you're experiencing...') is not wrapped in t() — i18n gap on the non-photo-first branch.",
+        "scored by routine 2026-08-16: severity medium → +2 (bug); files verified from evidence paths."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "ppt-web-ui: CreateFaultPage ships a HARDCODED mock AI suggestion instead of calling useRequestAiSuggestion — every user sees fake 'plumbing/85%/medium' regardless of photo",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/CreateFaultPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "code-review-ppt-web-ui-moderation-fabricated-context",
@@ -8049,14 +8133,28 @@
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
       "score_delta": 2,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:73-79 fabricates moderator decision context: every ModerationCase is mapped with content_owner.previous_violations: 0 (L75, hardcoded) and report_source: 'user' (L79, hardcoded), independent of the real case. A compliance moderator taking enforcement actions (remove/restrict/warn) sees '0 previous violations' and source 'user' for EVERY owner, including repeat offenders and system/automated reports.",
         "These fields drive an enforcement UI (DSA/AML content moderation queue) — presenting a constant 0 prior-violations count and a constant report source misleads the human decision-maker and can produce unjustified or under-scaled actions. Marked 'TODO(Phase-2): Extend API to include previous_violations count / report_source' but the defaults are shipped live, not gated.",
-        "Fix: extend the moderation cases API (casesData) to return previous_violations and report_source and map the real values; until then the fields should be rendered as unknown/'—', not a confident 0/'user'."
+        "Fix: extend the moderation cases API (casesData) to return previous_violations and report_source and map the real values; until then the fields should be rendered as unknown/'—', not a confident 0/'user'.",
+        "scored by routine 2026-08-16: severity medium → +2 (bug); files verified from evidence paths."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "ppt-web-ui: ContentModerationPage fabricates content_owner.previous_violations=0 + report_source='user' for every DSA case — misleads moderator enforcement decisions",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     },
     {
       "id": "code-review-ppt-web-ui-moderation-no-i18n",
@@ -8064,14 +8162,28 @@
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
       "score_delta": 1,
-      "confidence": "medium",
+      "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx (386 lines) imports NO useTranslation and hardcodes every moderator-facing interaction string in English on an otherwise fully react-i18next app.",
         "Enforcement flows use native browser dialogs with hardcoded English: window.prompt('Enter action type (remove, restrict, warn, approve):', 'approve') L130, window.prompt('Enter rationale for this action:') L136, window.prompt('Enter decision (uphold, overturn):','uphold') L169, window.prompt('Enter rationale for this decision:') L172; error alert()s 'Failed to assign case. Please try again.' L119, 'Failed to take action...' L151, 'Failed to decide appeal...' L186.",
-        "Two problems: (1) i18n gap — none of these strings resolve for sk/cs/de users; (2) UX/robustness — building a DSA moderation enforcement workflow on window.prompt()/alert() (also flagged inline as TODO(Phase-2), L128/L167) has no validation and dispatches raw prompt text straight into action_type. Fix: replace with an i18n'd modal form using the existing action templates (useModerationTemplates is already fetched, L57)."
+        "Two problems: (1) i18n gap — none of these strings resolve for sk/cs/de users; (2) UX/robustness — building a DSA moderation enforcement workflow on window.prompt()/alert() (also flagged inline as TODO(Phase-2), L128/L167) has no validation and dispatches raw prompt text straight into action_type. Fix: replace with an i18n'd modal form using the existing action templates (useModerationTemplates is already fetched, L57).",
+        "scored by routine 2026-08-16: severity medium → +2 (refactor); files verified from evidence paths."
       ],
-      "expert": "frontend"
+      "expert": "frontend",
+      "title": "ppt-web-ui: ContentModerationPage uses window.prompt/alert with hardcoded English for DSA enforcement flow — no i18n, no validation, raw prompt dispatched into action_type",
+      "vector": "refactor",
+      "score": 2,
+      "status": "open",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-16",
+      "plan": null,
+      "sources": [
+        "dispatcher-tier1d-review 2026-08-16 (unscored → scored by routine)"
+      ]
     }
   ]
 }

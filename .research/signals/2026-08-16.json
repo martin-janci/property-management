@@ -1,0 +1,143 @@
+{
+  "generated": "2026-08-16T02:36:08Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2762 (+59), #2765 (+407), #2766 (+90) — 3 merged PRs in-window",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs churned ~556 lines across 3 security fixes this window (Alexa cert timeouts + Google verify fail-closed + oauth/refresh auth). runs_seen 0→1 in hotspot_history. New churn hotspot; not repeated-churn yet.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
+      "type": "churn-hotspot",
+      "source": "PR #2767 (+170) — cumulative re-emit; already in state.seen_signals from 2026-08-15 run",
+      "score_delta": 0,
+      "evidence": "frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts +170 lines this window (PR #2767 extended lockstep coverage with runtime-fallback + key-classification tests). Cumulative-type re-emit → score_delta=0 per G4 carve-out.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2769 (+154) — cumulative re-emit; already in state.seen_signals",
+      "score_delta": 0,
+      "evidence": "backend/servers/api-server/src/services/workflow_executor.rs +131/-23 (PR #2769 fail-closed on unparseable condition + deny_unknown_fields + 4 regression tests, closes #2768). Cumulative-type re-emit → score_delta=0 per G4 carve-out.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1→2 after this run",
+      "score_delta": 1,
+      "evidence": "protectedRouteI18n.test.ts hit as churn-hotspot on 2026-08-15 (initial file addition, +111) and 2026-08-16 (PR #2767, +170). Two consecutive runs — repeated-churn threshold met. Both edits are additive test coverage (not instability); no action needed but signal is recorded per spec.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/workflow_executor.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1→2 after this run",
+      "score_delta": 1,
+      "evidence": "workflow_executor.rs previously churned 2026-08-07 (initial hotspot entry, +106 for SSRF pin). PR #2769 today (+154 for fail-closed condition parser). Two runs — repeated-churn fires. Both were security/correctness fixes; churn reflects coordinated remediation, not code instability. Log-only, no backlog item.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "scored-code-review-api-handlers-share-pw-no-throttle-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 3,
+      "evidence": "SECURITY: routes/documents/shares.rs:574 access_protected_share (public, unauthenticated) verifies caller-supplied share password with NO rate limit, no failed-attempt counter, no per-token/per-IP lockout. Handler comment: 'This public endpoint has no caller org context', so per-tenant limiter cannot key these requests. Attacker holding a share token can brute-force at request speed. Severity high, confidence high → +3 (security fast-track eligible: vector=security, confidence=high, score≥2).",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "scored-code-review-api-handlers-share-log-proxy-ip-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 2,
+      "evidence": "routes/documents/shares.rs:437 & :574 derive audit ip_address from ConnectInfo<SocketAddr> which is the DIRECT TCP peer (i.e. the reverse-proxy IP, since api-server sits behind an nginx front). log_share_access_for_share persists this — audit trail records the proxy IP identical across all clients, defeating IP-based abuse detection. Severity medium → +2 (vector=bug, confidence=high).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "scored-code-review-ppt-web-ui-createfault-mock-ai-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 2,
+      "evidence": "features/faults/pages/CreateFaultPage.tsx:36-55 handlePhotosChange ships a hardcoded mock AI suggestion (setTimeout(1500) → setAiSuggestion({category:'plumbing', confidence:0.85, priority:'medium'})) instead of calling the existing useRequestAiSuggestion hook (packages/api-client/src/faults/hooks.ts:272). enablePhotoFirst=true by default → every user of Epic 126 photo-first flow sees fake 'plumbing/85%/medium' suggestion regardless of the photo. Severity medium → +2 (vector=bug).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "scored-code-review-ppt-web-ui-moderation-fabricated-context-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 2,
+      "evidence": "features/compliance/pages/ContentModerationPage.tsx:73-79 maps every ModerationCase with hardcoded content_owner.previous_violations=0 (L75) and report_source='user' (L79). DSA/AML moderator enforcement UI shows constant '0 prior violations' for repeat offenders and constant 'user' source for automated reports — misleads decision-making. Marked TODO(Phase-2) but shipped live. Severity medium → +2 (vector=bug).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "scored-code-review-ppt-web-ui-moderation-no-i18n-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 2,
+      "evidence": "features/compliance/pages/ContentModerationPage.tsx (386 lines) imports no useTranslation. DSA enforcement flow uses window.prompt() at L130/136/169/172 with hardcoded English + alert() error paths at L119/151/186. Two problems: (1) i18n gap on sk/cs/de; (2) raw prompt text dispatched into action_type with no validation. Severity medium → +2 (vector=refactor).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "scored-code-review-reality-web-comparison-view-i18n-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 1,
+      "evidence": "components/comparison/ComparisonView.tsx imports NO useTranslations on a 4-locale portal. Hardcoded strings at L104-107 (empty state + CTA), L230 (Clear All), L272 (Remove), L145-153 (toast messages). Epic 51 share-comparison flow not localized for non-EN visitors. Severity low → +1 (vector=refactor).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "scored-code-review-reality-web-realtor-mgmt-i18n-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 1,
+      "evidence": "components/agency/RealtorManagement.tsx uses useTranslations elsewhere BUT the destructive confirm-remove modal (L962-964: 'Are you sure?', 'Yes, Remove') and header subtitle (L91: 'Manage your team of real estate agents') are hardcoded English. Partial i18n on the highest-stakes delete action. Severity low → +1 (vector=refactor).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "scored-code-review-reality-web-agency-errorstate-i18n-2026-08-16",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d review (unscored → scored by routine 2026-08-16)",
+      "score_delta": 1,
+      "evidence": "components/agency/AgencyErrorStates.tsx uses useTranslations for other states but the no-agency empty/error state at L126-129 ('No Agency Found', 'You are not associated with any agency.', 'Create Agency' CTA) is hardcoded English. Inconsistent with partial i18n of same component. Severity low → +1 (vector=refactor).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the 4 code-review scoring signals (+2/+3) are not in the Phase 5 allowlist (only screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review qualify). The 3 churn signals + 2 repeated-churn are outside the allowlist. No new stalled-review non-dependabot PR triggered a signal. No new merged unchecked-todo. Phase 5 kill switch not set.",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-08-16.md && head -1 matches '# 2026-08-16'", "observed": "true", "expected": "true" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state.json vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "last_pr_seen 2761→2771, last_issue_seen 2759→2768, last_commit_sha changed, seen_signals +11, hotspot_history 3 bumps, stats.runs 64→65", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true — 327 items, all unique ids", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id from today re-scored; cumulative-type re-emits have score_delta=0", "observed": "true — 2 cumulative-type re-emits (churn-hotspot protectedRouteI18n + workflow_executor) both have score_delta=0", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap ≤ 8 + decay for open items with updated_at ≤ today-14 (2026-08-02)", "observed": "no scores > 8; only open item older than 2026-08-02 is code-review-mobile-native-kmp-portfolio-analytics-caps-100 (2026-08-04, 12d < 14d, no decay yet)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plan has 'adversarial pass: <passed|fixed-in-place|rolled-back>' annotation in brief", "observed": "no new plans this run — vacuously true", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans this run (0 new plans)", "observed": "0 new plans in .research/plans/", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep for secret patterns in staged diff (excl. baseline docs)", "observed": "0 hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff .research/backlog.md /tmp/backlog.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failed; cursor advance matches", "observed": "no failures — Phase 1.5 and Phase 1.6 were SKIPPED this run (see brief); all Phase 1/2/4/6 succeeded", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ count at HEAD", "observed": "archive unchanged (7 files)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical (regenerated in-place with same generator)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill switch", "observed": "auto_fix_actions=[] — no candidate cleared the certainty bar and allowlist", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 was SKIPPED this run — G16 is a no-op per spec", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep for Telegram bot-token value in staged added lines (excl. baseline docs)", "observed": "0 hits", "expected": "0" }
+  ]
+}
