@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-17T14:46:41Z",
+  "generated": "2026-08-17T16:33:41Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-17T14:46:41Z",
+      "last_updated": "2026-08-17T16:33:41Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -28,7 +28,7 @@
       "branch": "auto-impl/code-review-mobile-rn-nfc-revoke-local-p-ac6f0d79",
       "status": "review",
       "claimed_at": "2026-08-17T08:23:00Z",
-      "last_updated": "2026-08-17T14:47:15Z",
+      "last_updated": "2026-08-17T16:33:41Z",
       "status_changed_at": "2026-08-17T08:42:00Z",
       "pr_number": 2780,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2780",

@@ -8425,7 +8425,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn-scan 2026-08-17",
         "top-3-churn-2026-08-16",
@@ -8442,7 +8442,12 @@
       ],
       "created_at": "2026-08-17",
       "updated_at": "2026-08-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-17T16:26:01Z",
+        "assignment_status": "merged",
+        "pr_number": 2787
+      }
     },
     {
       "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
