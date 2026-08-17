@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Nástěnka moderování obsahu",
+      "subtitle": "Kontrolujte a moderujte uživatelský obsah v souladu s DSA.",
+      "loading": "Načítání fronty moderování...",
+      "loadError": "Nepodařilo se načíst případy moderování: {{message}}",
+      "retry": "Zkusit znovu"
+    },
+    "queue": {
+      "heading": "Fronta moderování",
+      "emptyTitle": "Nebyly nalezeny žádné případy moderování odpovídající kritériím.",
+      "emptySubtitle": "Fronta moderování je momentálně prázdná."
+    },
+    "filters": {
+      "status": "Stav",
+      "contentType": "Typ obsahu",
+      "violationType": "Typ porušení",
+      "priority": "Priorita",
+      "unassignedOnly": "Pouze nepřiřazené",
+      "allStatuses": "Všechny stavy",
+      "allTypes": "Všechny typy",
+      "allViolations": "Všechna porušení",
+      "allPriorities": "Všechny priority"
+    },
+    "templates": {
+      "heading": "Šablony akcí"
+    },
+    "stats": {
+      "pendingCases": "Čekající případy",
+      "underReview": "Kontrolované",
+      "totalQueue": "Celá fronta",
+      "avgResolution": "Prům. vyřešení",
+      "byPriority": "Podle priority",
+      "byViolationType": "Podle typu porušení",
+      "overdue_one": "{{count}} případ po termínu (SLA 24 h+)",
+      "overdue_other": "{{count}} případů po termínu (SLA 24 h+)"
+    },
+    "status": {
+      "pending": "Čeká",
+      "under_review": "Kontrolované",
+      "approved": "Schváleno",
+      "removed": "Odstraněno",
+      "restricted": "Omezeno",
+      "warned": "Upozorněno",
+      "appealed": "Odvoláno",
+      "appeal_approved": "Odvolání schváleno",
+      "appeal_rejected": "Odvolání zamítnuto"
+    },
+    "priorityLabel": {
+      "1": "Kritická",
+      "2": "Vysoká",
+      "3": "Střední",
+      "4": "Nízká",
+      "5": "Nejnižší",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Inzerát",
+      "listing_photo": "Foto inzerátu",
+      "user_profile": "Profil uživatele",
+      "review": "Recenze",
+      "comment": "Komentář",
+      "message": "Zpráva",
+      "announcement": "Oznámení",
+      "document": "Dokument",
+      "community_post": "Komunitní příspěvek"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Obtěžování",
+      "hate_speech": "Nenávistný projev",
+      "violence": "Násilí",
+      "illegal_content": "Nelegální obsah",
+      "misinformation": "Dezinformace",
+      "fraud": "Podvod",
+      "privacy": "Soukromí",
+      "intellectual_property": "Duševní vlastnictví",
+      "inappropriate_content": "Nevhodný obsah",
+      "other": "Jiné",
+      "notSpecified": "Neuvedeno"
+    },
+    "actionType": {
+      "remove": "Odstranit",
+      "restrict": "Omezit",
+      "warn": "Upozornit",
+      "approve": "Schválit",
+      "ignore": "Ignorovat",
+      "escalate": "Eskalovat"
+    },
+    "card": {
+      "contentOwner": "Vlastník obsahu",
+      "assignedTo": "Přiřazeno",
+      "decision": "Rozhodnutí",
+      "appealFiled": "Podané odvolání",
+      "appealUpheld": "Odvolání potvrzeno",
+      "appealRejected": "Odvolání zamítnuto",
+      "ageAgo": "před {{age}}",
+      "created": "Vytvořeno: {{date}}",
+      "viewContent": "Zobrazit obsah",
+      "assignToMe": "Přiřadit mně",
+      "takeAction": "Provést akci",
+      "decideAppeal": "Rozhodnout o odvolání"
+    },
+    "prompts": {
+      "actionType": "Zadejte typ akce (remove, restrict, warn, approve):",
+      "actionRationale": "Zadejte odůvodnění této akce:",
+      "decision": "Zadejte rozhodnutí (uphold, overturn):",
+      "decisionRationale": "Zadejte odůvodnění tohoto rozhodnutí:",
+      "assignError": "Nepodařilo se přiřadit případ. Zkuste to znovu.",
+      "actionError": "Nepodařilo se provést akci. Zkuste to znovu.",
+      "appealError": "Nepodařilo se rozhodnout o odvolání. Zkuste to znovu."
+    }
+  },
   "common": {
     "search": "Hledat",
     "login": "Přihlásit se",
@@ -748,7 +861,82 @@
     "bookingNotFound": "Rezervace nebyla nalezena",
     "faultNotFound": "Závada nebyla nalezena",
     "meterNotFound": "Měřič nebyl nalezen",
-    "entityNotFound": "{{entity}} nebylo nalezeno"
+    "entityNotFound": "{{entity}} nebylo nalezeno",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Vyžaduje se přihlášení",
+        "message": "Pro pokračování se prosím přihlaste."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Neplatné přihlašovací údaje",
+        "message": "Zadaný e-mail nebo heslo je nesprávné."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Relace vypršela",
+        "message": "Vaše relace vypršela. Přihlaste se prosím znovu."
+      },
+      "UNAUTHORIZED": {
+        "title": "Přístup odepřen",
+        "message": "Nemáte oprávnění provést tuto akci."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Chyba ověření",
+        "message": "Zkontrolujte prosím chyby ve formuláři."
+      },
+      "INVALID_INPUT": {
+        "title": "Neplatný vstup",
+        "message": "Poskytnuté údaje jsou neplatné."
+      },
+      "NOT_FOUND": {
+        "title": "Nenalezeno",
+        "message": "Požadovaný zdroj se nepodařilo najít."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Zdroj nenalezen",
+        "message": "Položka, kterou hledáte, neexistuje nebo byla odstraněna."
+      },
+      "CONFLICT": {
+        "title": "Konflikt",
+        "message": "Tato operace je v konfliktu s existujícími údaji."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Duplicitní záznam",
+        "message": "Položka se stejnou hodnotou již existuje."
+      },
+      "RATE_LIMITED": {
+        "title": "Příliš mnoho požadavků",
+        "message": "Odeslali jste příliš mnoho požadavků. Před dalším pokusem prosím počkejte."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Překročen limit požadavků",
+        "message": "Zpomalte prosím a zkuste to znovu za okamžik."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Chyba serveru",
+        "message": "Došlo k neočekávané chybě. Zkuste to prosím později."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Služba nedostupná",
+        "message": "Služba je dočasně nedostupná. Zkuste to prosím později."
+      },
+      "TIMEOUT": {
+        "title": "Vypršel časový limit požadavku",
+        "message": "Požadavek trval příliš dlouho. Zkuste to prosím znovu."
+      },
+      "NETWORK_ERROR": {
+        "title": "Chyba sítě",
+        "message": "Nepodařilo se připojit k serveru. Zkontrolujte prosím své připojení k internetu."
+      },
+      "OFFLINE": {
+        "title": "Jste offline",
+        "message": "Zkontrolujte prosím své připojení k internetu a zkuste to znovu."
+      },
+      "default": {
+        "title": "Chyba",
+        "message": "Došlo k neočekávané chybě."
+      },
+      "rateLimitRetry": "Před dalším pokusem prosím počkejte {{seconds}} sekund."
+    }
   },
   "notifications": {
     "title": "Oznámení",

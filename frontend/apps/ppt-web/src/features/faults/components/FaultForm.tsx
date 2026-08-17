@@ -56,6 +56,8 @@ interface FaultFormProps {
   aiSuggestion?: AiSuggestion | null;
   /** Whether AI suggestion is loading */
   aiSuggestionLoading?: boolean;
+  /** Whether AI triage is unavailable (no production endpoint) — shows an honest notice instead of a fabricated suggestion */
+  aiSuggestionUnavailable?: boolean;
   /** Callback when photos change (for triggering AI analysis) */
   onPhotosChange?: (photos: UploadedPhoto[]) => void;
 }
@@ -70,6 +72,7 @@ export function FaultForm({
   enablePhotoFirst = false,
   aiSuggestion,
   aiSuggestionLoading = false,
+  aiSuggestionUnavailable = false,
   onPhotosChange,
 }: FaultFormProps) {
   const { t } = useTranslation();
@@ -223,6 +226,17 @@ export function FaultForm({
               isAccepted={aiSuggestionAccepted}
             />
           )}
+
+          {/* Honest "unavailable" notice — shown instead of a fabricated
+              suggestion when no AI triage endpoint is wired up. */}
+          {aiSuggestionUnavailable &&
+            !aiSuggestion &&
+            !aiSuggestionLoading &&
+            photos.length > 0 && (
+              <p className="mt-3 text-sm text-gray-500" role="status">
+                {t('faults.ai.unavailable')}
+              </p>
+            )}
         </div>
       )}
 

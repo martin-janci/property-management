@@ -18,6 +18,9 @@
     "inviteRealtor": "Zaproś agenta",
     "loadErrorMessage": "Podczas ładowania panelu agencji wystąpił błąd. Spróbuj ponownie.",
     "loadErrorTitle": "Nie udało się załadować Twojej agencji",
+    "createAgency": "Utwórz agencję",
+    "noAgencyMessage": "Nie jesteś powiązany z żadną agencją.",
+    "noAgencyTitle": "Nie znaleziono agencji",
     "manageRealtors": "Zarządzaj agentami",
     "performanceOverview": "Przegląd wydajności",
     "period1y": "1 rok",
@@ -39,7 +42,43 @@
     "chartViews": "Wyświetlenia",
     "chartInquiries": "Zapytania",
     "leaderboardEmpty": "Brak aktywnych agentów",
-    "leaderboardStats": "{sales} sprzedaży · {active} aktywnych"
+    "leaderboardStats": "{sales} sprzedaży · {active} aktywnych",
+    "backToDashboard": "Powrót do panelu",
+    "realtorManagementTitle": "Zarządzanie agentami",
+    "realtorManagementSubtitle": "Zarządzaj swoim zespołem agentów nieruchomości",
+    "tabAll": "Wszyscy",
+    "tabActive": "Aktywni",
+    "tabPending": "Oczekujący",
+    "tabInactive": "Nieaktywni",
+    "realtorsLoadError": "Nie udało się załadować agentów. Spróbuj ponownie.",
+    "statusActive": "Aktywny",
+    "statusPending": "Oczekujący",
+    "statusInactive": "Nieaktywny",
+    "statusSuspended": "Zawieszony",
+    "cardListings": "Oferty",
+    "cardSales": "Sprzedaże",
+    "cardReviews": "{count} opinii",
+    "buttonResend": "Wyślij ponownie",
+    "buttonView": "Zobacz",
+    "detailTitle": "Szczegóły agenta",
+    "formLabelBio": "Biografia",
+    "statTotalSales": "Łączna sprzedaż",
+    "statRating": "Ocena",
+    "statusLabel": "Status",
+    "confirmRemoveQuestion": "Na pewno?",
+    "confirmRemoveYes": "Tak, usuń",
+    "buttonRemove": "Usuń",
+    "buttonSaveChanges": "Zapisz zmiany",
+    "buttonEdit": "Edytuj",
+    "buttonClose": "Zamknij",
+    "emptyAllTitle": "Brak agentów",
+    "emptyAllDesc": "Zaproś swojego pierwszego agenta, aby rozpocząć.",
+    "emptyActiveTitle": "Brak aktywnych agentów",
+    "emptyActiveDesc": "Aktywni agenci pojawią się tutaj.",
+    "emptyInvitedTitle": "Brak oczekujących zaproszeń",
+    "emptyInvitedDesc": "Zaproś agentów do swojej agencji.",
+    "emptyInactiveTitle": "Brak nieaktywnych agentów",
+    "emptyInactiveDesc": "Nieaktywni agenci pojawią się tutaj."
   },
   "auth": {
     "login": {
@@ -82,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Nie udało się wczytać udostępnionego porównania. Niektóre nieruchomości mogą być już niedostępne.",
-    "loading": "Wczytywanie udostępnionego porównania..."
+    "loading": "Wczytywanie udostępnionego porównania...",
+    "empty": {
+      "title": "Brak nieruchomości do porównania",
+      "description": "Dodaj nieruchomości do porównania ze strony z ofertami.",
+      "browse": "Przeglądaj oferty"
+    },
+    "actions": {
+      "share": "Udostępnij",
+      "exportPdf": "Eksportuj PDF",
+      "clearAll": "Wyczyść wszystko"
+    },
+    "toast": {
+      "linkCopied": "Link do porównania skopiowany do schowka!",
+      "shareUrl": "Udostępnij ten adres URL: {url}",
+      "pdfComingSoon": "Eksport do PDF już wkrótce!"
+    },
+    "currencyWarning": "Uwaga: Nieruchomości używają różnych walut. Wyróżnianie porównania cen jest wyłączone.",
+    "propertyHeader": "Nieruchomość",
+    "remove": "Usuń",
+    "removeAria": "Usuń {title} z porównania",
+    "rows": {
+      "price": "Cena",
+      "type": "Typ",
+      "propertyType": "Typ nieruchomości",
+      "area": "Powierzchnia",
+      "rooms": "Pokoje",
+      "floor": "Piętro",
+      "city": "Miasto",
+      "district": "Dzielnica",
+      "pricePerSqm": "Cena za m²"
+    },
+    "transactionType": {
+      "sale": "Na sprzedaż",
+      "rent": "Do wynajęcia"
+    }
   },
   "contact": {
     "askQuestion": "Zadać pytanie",

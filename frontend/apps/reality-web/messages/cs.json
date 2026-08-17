@@ -18,6 +18,9 @@
     "inviteRealtor": "Pozvat makléře",
     "loadErrorMessage": "Při načítání panelu agentury došlo k chybě. Zkuste to prosím znovu.",
     "loadErrorTitle": "Nepodařilo se načíst vaši agenturu",
+    "createAgency": "Vytvořit agenturu",
+    "noAgencyMessage": "Nejste přiřazeni k žádné agentuře.",
+    "noAgencyTitle": "Nenalezena žádná agentura",
     "manageRealtors": "Spravovat makléře",
     "performanceOverview": "Přehled výkonnosti",
     "period1y": "1 rok",
@@ -39,7 +42,43 @@
     "chartViews": "Zobrazení",
     "chartInquiries": "Poptávky",
     "leaderboardEmpty": "Zatím žádní aktivní makléři",
-    "leaderboardStats": "{sales} prodejů · {active} aktivních"
+    "leaderboardStats": "{sales} prodejů · {active} aktivních",
+    "backToDashboard": "Zpět na panel",
+    "realtorManagementTitle": "Správa makléřů",
+    "realtorManagementSubtitle": "Spravujte svůj tým realitních makléřů",
+    "tabAll": "Všichni",
+    "tabActive": "Aktivní",
+    "tabPending": "Čekající",
+    "tabInactive": "Neaktivní",
+    "realtorsLoadError": "Nepodařilo se načíst makléře. Zkuste to znovu.",
+    "statusActive": "Aktivní",
+    "statusPending": "Čekající",
+    "statusInactive": "Neaktivní",
+    "statusSuspended": "Pozastavený",
+    "cardListings": "Nabídky",
+    "cardSales": "Prodeje",
+    "cardReviews": "{count} hodnocení",
+    "buttonResend": "Odeslat znovu",
+    "buttonView": "Zobrazit",
+    "detailTitle": "Detaily makléře",
+    "formLabelBio": "Životopis",
+    "statTotalSales": "Celkové prodeje",
+    "statRating": "Hodnocení",
+    "statusLabel": "Stav",
+    "confirmRemoveQuestion": "Opravdu?",
+    "confirmRemoveYes": "Ano, odstranit",
+    "buttonRemove": "Odstranit",
+    "buttonSaveChanges": "Uložit změny",
+    "buttonEdit": "Upravit",
+    "buttonClose": "Zavřít",
+    "emptyAllTitle": "Zatím žádní makléři",
+    "emptyAllDesc": "Pozvěte svého prvního makléře a začněte.",
+    "emptyActiveTitle": "Žádní aktivní makléři",
+    "emptyActiveDesc": "Aktivní makléři se zobrazí zde.",
+    "emptyInvitedTitle": "Žádné čekající pozvánky",
+    "emptyInvitedDesc": "Pozvěte makléře, aby se připojili k vaší agentuře.",
+    "emptyInactiveTitle": "Žádní neaktivní makléři",
+    "emptyInactiveDesc": "Neaktivní makléři se zobrazí zde."
   },
   "auth": {
     "login": {
@@ -82,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Nepodařilo se načíst sdílené porovnání. Některé nemovitosti už nemusí být dostupné.",
-    "loading": "Načítá se sdílené porovnání..."
+    "loading": "Načítá se sdílené porovnání...",
+    "empty": {
+      "title": "Žádné nemovitosti k porovnání",
+      "description": "Přidejte nemovitosti do porovnání ze stránky s nabídkami.",
+      "browse": "Procházet nabídky"
+    },
+    "actions": {
+      "share": "Sdílet",
+      "exportPdf": "Exportovat PDF",
+      "clearAll": "Vymazat vše"
+    },
+    "toast": {
+      "linkCopied": "Odkaz na porovnání zkopírován do schránky!",
+      "shareUrl": "Sdílejte tuto adresu URL: {url}",
+      "pdfComingSoon": "Export do PDF již brzy!"
+    },
+    "currencyWarning": "Poznámka: Nemovitosti používají různé měny. Zvýrazňování porovnání cen je vypnuto.",
+    "propertyHeader": "Nemovitost",
+    "remove": "Odebrat",
+    "removeAria": "Odebrat {title} z porovnání",
+    "rows": {
+      "price": "Cena",
+      "type": "Typ",
+      "propertyType": "Typ nemovitosti",
+      "area": "Plocha",
+      "rooms": "Pokoje",
+      "floor": "Patro",
+      "city": "Město",
+      "district": "Okres",
+      "pricePerSqm": "Cena za m²"
+    },
+    "transactionType": {
+      "sale": "K prodeji",
+      "rent": "K pronájmu"
+    }
   },
   "contact": {
     "askQuestion": "Položit otázku",

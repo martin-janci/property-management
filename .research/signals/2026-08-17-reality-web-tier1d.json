@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-17",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: claimable ~2, floor 36). No CHURN_FILES this run. Oldest-unreviewed rotation from state.json review_cursor: reality-web=2026-08-12 is the oldest cursor, and mobile-native-kmp is excluded as structurally unlandable in the cloud runner (AGP egress-403, issue #2652). reality-web carries 2 open code-review-finding rows in backlog.json (comparison-view-i18n, agency-errorstate-i18n) — below the >=3 saturation cap, so not skipped. Frontend primary expert (Next.js), static-only (file reads + grep, no compile/test). NOTE: reality-web core is very mature — the SSR listing fetch (getListing -> parseListingDetail shape-normalizes before render), serialize-script.ts XSS hardening (both dangerouslySetInnerHTML sites in layout.tsx route through serializeForScript; ORGANIZATION_LD too), auth-token.ts (JSON.parse guarded, expiry validated), and the SSO callback CSRF/open-redirect handling are all exemplary. The two findings below are the only fresh actionable items after de-duplicating against the 2026-08-16-reality-web-tier1d sweep, which already filed the components/comparison/ i18n gap (ComparisonTray/View/Button) — so the ComparisonTray hardcoded-English strings observed this run are NOT re-filed here.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-context-shape",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:37-46 restores comparison state from localStorage: `const stored = localStorage.getItem(STORAGE_KEY); ... const parsed = JSON.parse(stored); setListings(parsed);`. The try/catch (L39-45) only guards JSON *parse* errors — it does NOT validate the parsed *shape*. Any syntactically-valid-but-non-array value in the `reality-comparison` key (legacy schema, manual edit, cross-tab corruption, e.g. `{}`, `5`, or `null`) parses fine and is fed directly into `setListings`, whose declared type is `ListingSummary[]` (L29).",
+        "Crash path is reachable and global: `listings` is consumed by the always-mounted ComparisonTray (frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx:16 `listings.length`, :30 `listings.map`, :53 `4 - listings.length`) and ComparisonView (ComparisonView.tsx:100/158/253/283 `.length`/`.map`). A non-array `listings` throws `listings.map is not a function` on first render of the tray, and since the tray is rendered on every page via the layout, a single corrupted localStorage entry white-screens the whole portal for that visitor until they clear storage.",
+        "Fix (frontend-only, self-contained): after JSON.parse, guard with `Array.isArray(parsed)` (and ideally filter to entries with a string `id`) before setListings; on failure fall through to the existing `localStorage.removeItem(STORAGE_KEY)` recovery branch. Mirrors the defensive shape-normalization the SSR side already does via parseListingDetail. Confidence medium: requires a corrupted/legacy storage value (not attacker-triggerable over the network), but is a real client crash with no shape guard today."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx renders entirely hardcoded English on a next-intl locale-aware route (sk/cs/de/en): 'Loading...' (L66), 'Completing login...' (L144), the error heading 'Login Failed' (L130), the CTA 'Return Home' (L132-134), and the runtime error string 'Invalid state token. Please try logging in again.' (L106). The component imports no `useTranslations`/`getTranslations` (grep: 0 hits) despite living under the [locale] segment.",
+        "This is the SSO landing page every OAuth login funnels through, so a Slovak/Czech/German user completing login is shown English status + failure UI — an inconsistent, unlocalized experience on an auth-critical, high-visibility surface. It is distinct from the already-filed comparison-feature i18n gap (that sweep was scoped to components/comparison/; this is the auth flow).",
+        "Fix (frontend-only): route the five literals through `useTranslations('auth')` (or a dedicated 'auth.callback' namespace) and add the keys to the sk/cs/de/en message catalogs. Low severity (i18n gap, no functional break)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

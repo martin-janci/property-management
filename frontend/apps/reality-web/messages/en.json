@@ -18,6 +18,9 @@
     "inviteRealtor": "Invite Realtor",
     "loadErrorMessage": "Something went wrong while loading your agency dashboard. Please try again.",
     "loadErrorTitle": "Couldn't load your agency",
+    "createAgency": "Create Agency",
+    "noAgencyMessage": "You are not associated with any agency.",
+    "noAgencyTitle": "No Agency Found",
     "manageRealtors": "Manage Realtors",
     "performanceOverview": "Performance Overview",
     "period1y": "1 Year",
@@ -39,7 +42,43 @@
     "chartViews": "Views",
     "chartInquiries": "Inquiries",
     "leaderboardEmpty": "No active realtors yet",
-    "leaderboardStats": "{sales} sales · {active} active"
+    "leaderboardStats": "{sales} sales · {active} active",
+    "backToDashboard": "Back to Dashboard",
+    "realtorManagementTitle": "Realtor Management",
+    "realtorManagementSubtitle": "Manage your team of real estate agents",
+    "tabAll": "All",
+    "tabActive": "Active",
+    "tabPending": "Pending",
+    "tabInactive": "Inactive",
+    "realtorsLoadError": "Couldn't load realtors. Please try again.",
+    "statusActive": "Active",
+    "statusPending": "Pending",
+    "statusInactive": "Inactive",
+    "statusSuspended": "Suspended",
+    "cardListings": "Listings",
+    "cardSales": "Sales",
+    "cardReviews": "{count} reviews",
+    "buttonResend": "Resend",
+    "buttonView": "View",
+    "detailTitle": "Realtor Details",
+    "formLabelBio": "Bio",
+    "statTotalSales": "Total Sales",
+    "statRating": "Rating",
+    "statusLabel": "Status",
+    "confirmRemoveQuestion": "Are you sure?",
+    "confirmRemoveYes": "Yes, Remove",
+    "buttonRemove": "Remove",
+    "buttonSaveChanges": "Save Changes",
+    "buttonEdit": "Edit",
+    "buttonClose": "Close",
+    "emptyAllTitle": "No realtors yet",
+    "emptyAllDesc": "Invite your first realtor to get started.",
+    "emptyActiveTitle": "No active realtors",
+    "emptyActiveDesc": "Active realtors will appear here.",
+    "emptyInvitedTitle": "No pending invitations",
+    "emptyInvitedDesc": "Invite realtors to join your agency.",
+    "emptyInactiveTitle": "No inactive realtors",
+    "emptyInactiveDesc": "Inactive realtors will appear here."
   },
   "auth": {
     "login": {
@@ -82,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Failed to load shared comparison. Some properties may no longer be available.",
-    "loading": "Loading shared comparison..."
+    "loading": "Loading shared comparison...",
+    "empty": {
+      "title": "No properties to compare",
+      "description": "Add properties to your comparison from the listings page.",
+      "browse": "Browse Listings"
+    },
+    "actions": {
+      "share": "Share",
+      "exportPdf": "Export PDF",
+      "clearAll": "Clear All"
+    },
+    "toast": {
+      "linkCopied": "Comparison link copied to clipboard!",
+      "shareUrl": "Share this URL: {url}",
+      "pdfComingSoon": "PDF export coming soon!"
+    },
+    "currencyWarning": "Note: Properties use different currencies. Price comparison highlighting is disabled.",
+    "propertyHeader": "Property",
+    "remove": "Remove",
+    "removeAria": "Remove {title} from comparison",
+    "rows": {
+      "price": "Price",
+      "type": "Type",
+      "propertyType": "Property Type",
+      "area": "Area",
+      "rooms": "Rooms",
+      "floor": "Floor",
+      "city": "City",
+      "district": "District",
+      "pricePerSqm": "Price per m²"
+    },
+    "transactionType": {
+      "sale": "For Sale",
+      "rent": "For Rent"
+    }
   },
   "contact": {
     "askQuestion": "Ask a question",

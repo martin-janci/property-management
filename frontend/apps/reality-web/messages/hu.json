@@ -18,6 +18,9 @@
     "inviteRealtor": "Ügynök meghívása",
     "loadErrorMessage": "Hiba történt az ügynökségi irányítópult betöltésekor. Kérjük, próbálja újra.",
     "loadErrorTitle": "Nem sikerült betölteni az ügynökségét",
+    "createAgency": "Ügynökség létrehozása",
+    "noAgencyMessage": "Nincs egyetlen ügynökséghez sem rendelve.",
+    "noAgencyTitle": "Nem található ügynökség",
     "manageRealtors": "Ügynökök kezelése",
     "performanceOverview": "Teljesítmény áttekintés",
     "period1y": "1 év",
@@ -39,7 +42,43 @@
     "chartViews": "Megtekintések",
     "chartInquiries": "Érdeklődések",
     "leaderboardEmpty": "Még nincsenek aktív ügynökök",
-    "leaderboardStats": "{sales} eladás · {active} aktív"
+    "leaderboardStats": "{sales} eladás · {active} aktív",
+    "backToDashboard": "Vissza az irányítópultra",
+    "realtorManagementTitle": "Ügynökök kezelése",
+    "realtorManagementSubtitle": "Kezelje ingatlanügynökökből álló csapatát",
+    "tabAll": "Összes",
+    "tabActive": "Aktív",
+    "tabPending": "Függőben",
+    "tabInactive": "Inaktív",
+    "realtorsLoadError": "Az ügynököket nem sikerült betölteni. Kérjük, próbálja újra.",
+    "statusActive": "Aktív",
+    "statusPending": "Függőben",
+    "statusInactive": "Inaktív",
+    "statusSuspended": "Felfüggesztve",
+    "cardListings": "Hirdetések",
+    "cardSales": "Eladások",
+    "cardReviews": "{count} értékelés",
+    "buttonResend": "Újraküldés",
+    "buttonView": "Megtekintés",
+    "detailTitle": "Ügynök részletei",
+    "formLabelBio": "Bemutatkozás",
+    "statTotalSales": "Összes eladás",
+    "statRating": "Értékelés",
+    "statusLabel": "Állapot",
+    "confirmRemoveQuestion": "Biztos benne?",
+    "confirmRemoveYes": "Igen, eltávolítás",
+    "buttonRemove": "Eltávolítás",
+    "buttonSaveChanges": "Módosítások mentése",
+    "buttonEdit": "Szerkesztés",
+    "buttonClose": "Bezárás",
+    "emptyAllTitle": "Még nincsenek ügynökök",
+    "emptyAllDesc": "Hívja meg első ügynökét a kezdéshez.",
+    "emptyActiveTitle": "Nincsenek aktív ügynökök",
+    "emptyActiveDesc": "Az aktív ügynökök itt jelennek meg.",
+    "emptyInvitedTitle": "Nincsenek függőben lévő meghívók",
+    "emptyInvitedDesc": "Hívjon meg ügynököket az ügynökségéhez.",
+    "emptyInactiveTitle": "Nincsenek inaktív ügynökök",
+    "emptyInactiveDesc": "Az inaktív ügynökök itt jelennek meg."
   },
   "auth": {
     "login": {
@@ -82,7 +121,41 @@
   },
   "comparison": {
     "loadError": "A megosztott összehasonlítás betöltése sikertelen. Egyes ingatlanok már nem érhetők el.",
-    "loading": "Megosztott összehasonlítás betöltése..."
+    "loading": "Megosztott összehasonlítás betöltése...",
+    "empty": {
+      "title": "Nincs összehasonlítható ingatlan",
+      "description": "Adjon hozzá ingatlanokat az összehasonlításhoz a hirdetések oldaláról.",
+      "browse": "Hirdetések böngészése"
+    },
+    "actions": {
+      "share": "Megosztás",
+      "exportPdf": "PDF exportálása",
+      "clearAll": "Összes törlése"
+    },
+    "toast": {
+      "linkCopied": "Összehasonlítási link a vágólapra másolva!",
+      "shareUrl": "Ossza meg ezt az URL-t: {url}",
+      "pdfComingSoon": "A PDF exportálás hamarosan!"
+    },
+    "currencyWarning": "Megjegyzés: Az ingatlanok különböző pénznemeket használnak. Az árösszehasonlítás kiemelése le van tiltva.",
+    "propertyHeader": "Ingatlan",
+    "remove": "Eltávolítás",
+    "removeAria": "{title} eltávolítása az összehasonlításból",
+    "rows": {
+      "price": "Ár",
+      "type": "Típus",
+      "propertyType": "Ingatlan típusa",
+      "area": "Terület",
+      "rooms": "Szobák",
+      "floor": "Emelet",
+      "city": "Város",
+      "district": "Kerület",
+      "pricePerSqm": "Ár per m²"
+    },
+    "transactionType": {
+      "sale": "Eladó",
+      "rent": "Kiadó"
+    }
   },
   "contact": {
     "askQuestion": "Kérdést feltenni",

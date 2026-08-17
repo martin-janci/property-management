@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Nástenka moderovania obsahu",
+      "subtitle": "Kontrolujte a moderujte používateľský obsah v súlade s DSA.",
+      "loading": "Načítavanie frontu moderovania...",
+      "loadError": "Nepodarilo sa načítať prípady moderovania: {{message}}",
+      "retry": "Skúsiť znova"
+    },
+    "queue": {
+      "heading": "Front moderovania",
+      "emptyTitle": "Nenašli sa žiadne prípady moderovania zodpovedajúce kritériám.",
+      "emptySubtitle": "Front moderovania je momentálne prázdny."
+    },
+    "filters": {
+      "status": "Stav",
+      "contentType": "Typ obsahu",
+      "violationType": "Typ porušenia",
+      "priority": "Priorita",
+      "unassignedOnly": "Iba nepriradené",
+      "allStatuses": "Všetky stavy",
+      "allTypes": "Všetky typy",
+      "allViolations": "Všetky porušenia",
+      "allPriorities": "Všetky priority"
+    },
+    "templates": {
+      "heading": "Šablóny akcií"
+    },
+    "stats": {
+      "pendingCases": "Čakajúce prípady",
+      "underReview": "Kontrolované",
+      "totalQueue": "Celý front",
+      "avgResolution": "Priem. vyriešenie",
+      "byPriority": "Podľa priority",
+      "byViolationType": "Podľa typu porušenia",
+      "overdue_one": "{{count}} prípad po termíne (SLA 24 h+)",
+      "overdue_other": "{{count}} prípadov po termíne (SLA 24 h+)"
+    },
+    "status": {
+      "pending": "Čaká",
+      "under_review": "Kontrolované",
+      "approved": "Schválené",
+      "removed": "Odstránené",
+      "restricted": "Obmedzené",
+      "warned": "Upozornené",
+      "appealed": "Odvolané",
+      "appeal_approved": "Odvolanie schválené",
+      "appeal_rejected": "Odvolanie zamietnuté"
+    },
+    "priorityLabel": {
+      "1": "Kritická",
+      "2": "Vysoká",
+      "3": "Stredná",
+      "4": "Nízka",
+      "5": "Najnižšia",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Inzerát",
+      "listing_photo": "Foto inzerátu",
+      "user_profile": "Profil používateľa",
+      "review": "Recenzia",
+      "comment": "Komentár",
+      "message": "Správa",
+      "announcement": "Oznam",
+      "document": "Dokument",
+      "community_post": "Komunitný príspevok"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Obťažovanie",
+      "hate_speech": "Nenávistný prejav",
+      "violence": "Násilie",
+      "illegal_content": "Nelegálny obsah",
+      "misinformation": "Dezinformácie",
+      "fraud": "Podvod",
+      "privacy": "Súkromie",
+      "intellectual_property": "Duševné vlastníctvo",
+      "inappropriate_content": "Nevhodný obsah",
+      "other": "Iné",
+      "notSpecified": "Neuvedené"
+    },
+    "actionType": {
+      "remove": "Odstrániť",
+      "restrict": "Obmedziť",
+      "warn": "Upozorniť",
+      "approve": "Schváliť",
+      "ignore": "Ignorovať",
+      "escalate": "Eskalovať"
+    },
+    "card": {
+      "contentOwner": "Vlastník obsahu",
+      "assignedTo": "Priradené",
+      "decision": "Rozhodnutie",
+      "appealFiled": "Podané odvolanie",
+      "appealUpheld": "Odvolanie potvrdené",
+      "appealRejected": "Odvolanie zamietnuté",
+      "ageAgo": "pred {{age}}",
+      "created": "Vytvorené: {{date}}",
+      "viewContent": "Zobraziť obsah",
+      "assignToMe": "Priradiť mne",
+      "takeAction": "Vykonať akciu",
+      "decideAppeal": "Rozhodnúť o odvolaní"
+    },
+    "prompts": {
+      "actionType": "Zadajte typ akcie (remove, restrict, warn, approve):",
+      "actionRationale": "Zadajte odôvodnenie tejto akcie:",
+      "decision": "Zadajte rozhodnutie (uphold, overturn):",
+      "decisionRationale": "Zadajte odôvodnenie tohto rozhodnutia:",
+      "assignError": "Nepodarilo sa priradiť prípad. Skúste to znova.",
+      "actionError": "Nepodarilo sa vykonať akciu. Skúste to znova.",
+      "appealError": "Nepodarilo sa rozhodnúť o odvolaní. Skúste to znova."
+    }
+  },
   "common": {
     "search": "Hladať",
     "login": "Prihlásiť sa",
@@ -750,7 +863,82 @@
     "bookingNotFound": "Rezervácia nebola nájdená",
     "faultNotFound": "Porucha nebola nájdená",
     "meterNotFound": "Merač nebol nájdený",
-    "entityNotFound": "{{entity}} sa nenašlo"
+    "entityNotFound": "{{entity}} sa nenašlo",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Vyžaduje sa prihlásenie",
+        "message": "Pre pokračovanie sa prosím prihláste."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Neplatné prihlasovacie údaje",
+        "message": "Zadaný e-mail alebo heslo je nesprávne."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Relácia vypršala",
+        "message": "Vaša relácia vypršala. Prihláste sa prosím znova."
+      },
+      "UNAUTHORIZED": {
+        "title": "Prístup zamietnutý",
+        "message": "Nemáte oprávnenie vykonať túto akciu."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Chyba overenia",
+        "message": "Skontrolujte prosím chyby vo formulári."
+      },
+      "INVALID_INPUT": {
+        "title": "Neplatný vstup",
+        "message": "Poskytnuté údaje sú neplatné."
+      },
+      "NOT_FOUND": {
+        "title": "Nenájdené",
+        "message": "Požadovaný zdroj sa nepodarilo nájsť."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Zdroj nenájdený",
+        "message": "Položka, ktorú hľadáte, neexistuje alebo bola odstránená."
+      },
+      "CONFLICT": {
+        "title": "Konflikt",
+        "message": "Táto operácia je v konflikte s existujúcimi údajmi."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Duplicitný záznam",
+        "message": "Položka s rovnakou hodnotou už existuje."
+      },
+      "RATE_LIMITED": {
+        "title": "Príliš veľa požiadaviek",
+        "message": "Odoslali ste príliš veľa požiadaviek. Pred ďalším pokusom prosím počkajte."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Prekročený limit požiadaviek",
+        "message": "Spomaľte prosím a skúste to znova o chvíľu."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Chyba servera",
+        "message": "Vyskytla sa neočakávaná chyba. Skúste to prosím neskôr."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Služba nedostupná",
+        "message": "Služba je dočasne nedostupná. Skúste to prosím neskôr."
+      },
+      "TIMEOUT": {
+        "title": "Vypršal časový limit požiadavky",
+        "message": "Požiadavka trvala príliš dlho. Skúste to prosím znova."
+      },
+      "NETWORK_ERROR": {
+        "title": "Chyba siete",
+        "message": "Nepodarilo sa pripojiť k serveru. Skontrolujte prosím svoje internetové pripojenie."
+      },
+      "OFFLINE": {
+        "title": "Ste offline",
+        "message": "Skontrolujte prosím svoje internetové pripojenie a skúste to znova."
+      },
+      "default": {
+        "title": "Chyba",
+        "message": "Vyskytla sa neočakávaná chyba."
+      },
+      "rateLimitRetry": "Pred ďalším pokusom prosím počkajte {{seconds}} sekúnd."
+    }
   },
   "notifications": {
     "title": "Oznámenia",

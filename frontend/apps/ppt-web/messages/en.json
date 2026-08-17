@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Content Moderation Dashboard",
+      "subtitle": "Review and moderate user-generated content for DSA compliance.",
+      "loading": "Loading moderation queue...",
+      "loadError": "Failed to load moderation cases: {{message}}",
+      "retry": "Retry"
+    },
+    "queue": {
+      "heading": "Moderation Queue",
+      "emptyTitle": "No moderation cases found matching the criteria.",
+      "emptySubtitle": "The moderation queue is currently empty."
+    },
+    "filters": {
+      "status": "Status",
+      "contentType": "Content Type",
+      "violationType": "Violation Type",
+      "priority": "Priority",
+      "unassignedOnly": "Unassigned Only",
+      "allStatuses": "All Statuses",
+      "allTypes": "All Types",
+      "allViolations": "All Violations",
+      "allPriorities": "All Priorities"
+    },
+    "templates": {
+      "heading": "Action Templates"
+    },
+    "stats": {
+      "pendingCases": "Pending Cases",
+      "underReview": "Under Review",
+      "totalQueue": "Total Queue",
+      "avgResolution": "Avg Resolution",
+      "byPriority": "By Priority",
+      "byViolationType": "By Violation Type",
+      "overdue_one": "{{count}} case overdue (24h+ SLA)",
+      "overdue_other": "{{count}} cases overdue (24h+ SLA)"
+    },
+    "status": {
+      "pending": "Pending",
+      "under_review": "Under Review",
+      "approved": "Approved",
+      "removed": "Removed",
+      "restricted": "Restricted",
+      "warned": "Warned",
+      "appealed": "Appealed",
+      "appeal_approved": "Appeal Approved",
+      "appeal_rejected": "Appeal Rejected"
+    },
+    "priorityLabel": {
+      "1": "Critical",
+      "2": "High",
+      "3": "Medium",
+      "4": "Low",
+      "5": "Lowest",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Listing",
+      "listing_photo": "Listing Photo",
+      "user_profile": "User Profile",
+      "review": "Review",
+      "comment": "Comment",
+      "message": "Message",
+      "announcement": "Announcement",
+      "document": "Document",
+      "community_post": "Community Post"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Harassment",
+      "hate_speech": "Hate Speech",
+      "violence": "Violence",
+      "illegal_content": "Illegal Content",
+      "misinformation": "Misinformation",
+      "fraud": "Fraud",
+      "privacy": "Privacy",
+      "intellectual_property": "Intellectual Property",
+      "inappropriate_content": "Inappropriate Content",
+      "other": "Other",
+      "notSpecified": "Not specified"
+    },
+    "actionType": {
+      "remove": "Remove",
+      "restrict": "Restrict",
+      "warn": "Warn",
+      "approve": "Approve",
+      "ignore": "Ignore",
+      "escalate": "Escalate"
+    },
+    "card": {
+      "contentOwner": "Content Owner",
+      "assignedTo": "Assigned To",
+      "decision": "Decision",
+      "appealFiled": "Appeal Filed",
+      "appealUpheld": "Appeal Upheld",
+      "appealRejected": "Appeal Rejected",
+      "ageAgo": "{{age}} ago",
+      "created": "Created: {{date}}",
+      "viewContent": "View Content",
+      "assignToMe": "Assign to Me",
+      "takeAction": "Take Action",
+      "decideAppeal": "Decide Appeal"
+    },
+    "prompts": {
+      "actionType": "Enter action type (remove, restrict, warn, approve):",
+      "actionRationale": "Enter rationale for this action:",
+      "decision": "Enter decision (uphold, overturn):",
+      "decisionRationale": "Enter rationale for this decision:",
+      "assignError": "Failed to assign case. Please try again.",
+      "actionError": "Failed to take action. Please try again.",
+      "appealError": "Failed to decide appeal. Please try again."
+    }
+  },
   "common": {
     "search": "Search",
     "login": "Login",
@@ -378,7 +491,8 @@
       },
       "acceptSuggestion": "Accept Suggestion",
       "modifySuggestion": "Modify",
-      "lowConfidenceNote": "The AI is less certain about this suggestion. Please review and adjust if needed."
+      "lowConfidenceNote": "The AI is less certain about this suggestion. Please review and adjust if needed.",
+      "unavailable": "AI triage suggestions are currently unavailable. Please categorize the issue manually."
     },
     "category": {
       "plumbing": "Plumbing",
@@ -885,7 +999,82 @@
     "bookingNotFound": "Booking not found",
     "faultNotFound": "Fault not found",
     "meterNotFound": "Meter not found",
-    "entityNotFound": "{{entity}} not found"
+    "entityNotFound": "{{entity}} not found",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Authentication Required",
+        "message": "Please log in to continue."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Invalid Credentials",
+        "message": "The email or password you entered is incorrect."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Session Expired",
+        "message": "Your session has expired. Please log in again."
+      },
+      "UNAUTHORIZED": {
+        "title": "Access Denied",
+        "message": "You do not have permission to perform this action."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Validation Error",
+        "message": "Please check the form for errors."
+      },
+      "INVALID_INPUT": {
+        "title": "Invalid Input",
+        "message": "The provided data is invalid."
+      },
+      "NOT_FOUND": {
+        "title": "Not Found",
+        "message": "The requested resource could not be found."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Resource Not Found",
+        "message": "The item you are looking for does not exist or has been deleted."
+      },
+      "CONFLICT": {
+        "title": "Conflict",
+        "message": "This operation conflicts with existing data."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Duplicate Entry",
+        "message": "An item with the same value already exists."
+      },
+      "RATE_LIMITED": {
+        "title": "Too Many Requests",
+        "message": "You have made too many requests. Please wait before trying again."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Rate Limit Exceeded",
+        "message": "Please slow down and try again in a moment."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Server Error",
+        "message": "An unexpected error occurred. Please try again later."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Service Unavailable",
+        "message": "The service is temporarily unavailable. Please try again later."
+      },
+      "TIMEOUT": {
+        "title": "Request Timeout",
+        "message": "The request took too long. Please try again."
+      },
+      "NETWORK_ERROR": {
+        "title": "Network Error",
+        "message": "Unable to connect to the server. Please check your internet connection."
+      },
+      "OFFLINE": {
+        "title": "You are Offline",
+        "message": "Please check your internet connection and try again."
+      },
+      "default": {
+        "title": "Error",
+        "message": "An unexpected error occurred."
+      },
+      "rateLimitRetry": "Please wait {{seconds}} seconds before trying again."
+    }
   },
   "notifications": {
     "title": "Notifications",

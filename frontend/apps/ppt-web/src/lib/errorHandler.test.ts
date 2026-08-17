@@ -18,6 +18,8 @@
  * Additive-only: no production code is touched.
  */
 
+import i18n from 'i18next';
+import sk from '../../messages/sk.json';
 import {
   type ErrorResponse,
   formatValidationErrors,
@@ -302,5 +304,70 @@ describe('getFieldError', () => {
 
   it('returns undefined when the map itself is undefined', () => {
     expect(getFieldError(undefined, 'email')).toBeUndefined();
+  });
+});
+
+describe('parseApiError — i18n localisation', () => {
+  // Regression for the hardcoded-English error catalogue: user-facing titles
+  // and messages must follow the active react-i18next language rather than
+  // always emitting English. This fails on `dev` (where the catalogue was a
+  // literal English `Record`) and passes once parsing routes through
+  // `errors.catalogue.*`.
+  beforeAll(() => {
+    // Ensure the Slovak bundle is available on the shared i18next instance the
+    // error handler reads from, regardless of test import order.
+    i18n.addResourceBundle('sk', 'translation', sk, true, true);
+  });
+
+  afterEach(() => {
+    // Restore English so the other suites (and other test files sharing the
+    // singleton) are unaffected.
+    i18n.changeLanguage('en');
+  });
+
+  it('translates a known error title/message into the active locale', () => {
+    i18n.changeLanguage('sk');
+
+    const result = parseApiError({
+      requestId: 'req-sk',
+      error: 'SESSION_EXPIRED',
+      message: '',
+    });
+
+    expect(result.code).toBe('SESSION_EXPIRED');
+    expect(result.title).toBe('Relácia vypršala');
+    expect(result.message).toBe('Vaša relácia vypršala. Prihláste sa prosím znova.');
+  });
+
+  it('translates the default fallback copy for unknown codes', () => {
+    i18n.changeLanguage('sk');
+
+    const result = parseApiError({ response: { status: 418, data: undefined } });
+
+    expect(result.code).toBe('UNKNOWN_ERROR');
+    expect(result.title).toBe('Chyba');
+  });
+
+  it('localises the interpolated rate-limit retry message', () => {
+    i18n.changeLanguage('sk');
+
+    const result = parseApiError({
+      response: {
+        status: 429,
+        data: { requestId: 'r', error: 'RATE_LIMITED', message: '' },
+        headers: { 'retry-after': '30' },
+      },
+    });
+
+    expect(result.isRateLimitError).toBe(true);
+    expect(result.message).toBe('Pred ďalším pokusom prosím počkajte 30 sekúnd.');
+  });
+
+  it('still emits English copy when the active locale is English', () => {
+    i18n.changeLanguage('en');
+
+    const result = parseApiError({ requestId: 'r', error: 'SESSION_EXPIRED', message: '' });
+
+    expect(result.title).toBe('Session Expired');
   });
 });

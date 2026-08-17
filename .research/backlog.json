@@ -7673,7 +7673,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-web]"
       ],
@@ -7693,7 +7693,12 @@
       "segment": "reality-web",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2777
+      }
     },
     {
       "id": "code-review-reality-web-agency-errorstate-i18n",
@@ -7882,7 +7887,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -7903,7 +7908,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "security"
+      "expert": "security",
+      "reconciled": {
+        "at": "2026-08-17T08:25:52Z",
+        "assignment_status": "merged",
+        "pr_number": 2773
+      }
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
@@ -8099,7 +8109,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -8123,7 +8133,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2778
+      }
     },
     {
       "id": "code-review-ppt-web-ui-moderation-fabricated-context",
@@ -8131,7 +8146,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -8151,7 +8166,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2776
+      }
     },
     {
       "id": "code-review-ppt-web-ui-moderation-no-i18n",
@@ -8159,7 +8179,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -8179,7 +8199,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2783
+      }
     },
     {
       "id": "churn-hotspot-voice-webhooks-rs",
@@ -8291,7 +8316,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator [api-core]"
       ],
@@ -8311,7 +8336,12 @@
       "segment": "api-core",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-08-17T08:25:52Z",
+        "assignment_status": "merged",
+        "pr_number": 2774
+      }
     },
     {
       "id": "code-review-api-core-payment-matcher-vs-only-threshold",
@@ -8319,7 +8349,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator [api-core]"
       ],
@@ -8339,7 +8369,12 @@
       "segment": "api-core",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2782
+      }
     },
     {
       "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
@@ -8347,7 +8382,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-review 2026-08-17 (ppt-web-core)"
       ],
@@ -8362,7 +8397,12 @@
       ],
       "created_at": "2026-08-17",
       "updated_at": "2026-08-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2779
+      }
     },
     {
       "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -8395,7 +8435,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "churn-scan 2026-08-17",
         "PR #2766",
@@ -8410,7 +8450,12 @@
       ],
       "created_at": "2026-08-17",
       "updated_at": "2026-08-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-mobile-rn-nfc-revoke-local-persists-offline",
@@ -8475,7 +8520,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [mobile-rn]"
       ],
@@ -8495,7 +8540,12 @@
       "segment": "mobile-rn",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T12:26:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2775
+      }
     }
   ]
 }

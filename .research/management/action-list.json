@@ -123,93 +123,8 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-createfault-mock-ai",
-      "action": "ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake data",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
-      "action": "ppt-web moderation page fabricates context that the moderation API never returns — misleading data",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-payment-matcher-vs-only-threshold",
-      "action": "payment matcher uses a single VS-only threshold — ignores IBAN / amount tie-breakers documented in spec",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-handlers-share-log-proxy-ip",
       "action": "share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind — misattributes source",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
-      "action": "errorHandler.ts: entire client error catalogue is hardcoded English (no i18n)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-moderation-no-i18n",
-      "action": "ppt-web moderation page renders hardcoded English strings — no i18n on user-facing surface",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -246,23 +161,6 @@
       "action": "reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-realtor-mgmt-i18n",
-      "action": "reality-web RealtorManagement page has untranslated English UI on 4-locale portal",
-      "owner_role": "pm-backend",
-      "priority": "low",
       "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
       "deadline": null,
@@ -273,7 +171,8 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "last_updated": "2026-08-17T10:25:00Z"
     },
     {
       "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -281,23 +180,6 @@
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T04:24:25Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
-      "action": "repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -331,7 +213,7 @@
       "action": "NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched credentials",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -341,24 +223,36 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "last_updated": "2026-08-17T10:25:00Z"
     },
     {
-      "id": "code-review-mobile-rn-nfc-accesslog-parse-unguarded",
-      "action": "NFC getAccessLog JSON.parse is unguarded, so a corrupted log blob rejects handleTap after access was already granted",
+      "id": "code-review-api-core-voice-actions-fabricated-empty-retry1",
+      "action": "Voice check-announcements & check-meter fabricate success with empty data — residents told 'no new announcements'/'no pending readings' without any query [retry 1/2 of failed code-review-api-core-voice-actions-fabricated-empty]",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=1 conf=medium vector=bug)",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-17T12:26:50Z (retry_of=code-review-api-core-voice-actions-fabricated-empty reason=failed-no-pr cooldown_ok newest_failure=2026-08-10T12:13:16Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-17T06:30:07Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
+      "first_open_at": "2026-08-17T12:26:50Z",
+      "retry_of": "code-review-api-core-voice-actions-fabricated-empty",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-api-core-quiet-drain-drops-failed-delivery-retry1",
+      "action": "Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification permanently lost on transient failure [retry 1/2 of failed code-review-api-core-quiet-drain-drops-failed-delivery]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-17T12:26:50Z (retry_of=code-review-api-core-quiet-drain-drops-failed-delivery reason=failed-no-pr cooldown_ok newest_failure=2026-08-10T12:13:38Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T12:26:50Z",
+      "retry_of": "code-review-api-core-quiet-drain-drops-failed-delivery",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

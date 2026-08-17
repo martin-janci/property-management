@@ -8,89 +8,109 @@
 
 import type { ListingSummary } from '@ppt/reality-api-client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 
 import { useComparison } from '../../lib/comparison-context';
 
 interface ComparisonRow {
+  /** Stable, translation-independent identifier (used for keys + highlight logic). */
+  id: string;
   label: string;
   getValue: (listing: ListingSummary) => string | number | undefined;
   format?: (value: string | number | undefined, listing?: ListingSummary) => string;
   highlight?: 'lowest' | 'highest' | 'none';
 }
 
-// Format price with the listing's actual currency
-const formatPrice = (value: string | number | undefined, listing?: ListingSummary) => {
-  if (value === undefined) return '-';
-  const currency = listing?.currency ?? 'EUR';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-};
-
-const comparisonRows: ComparisonRow[] = [
-  {
-    label: 'Price',
-    getValue: (l) => l.price,
-    format: formatPrice,
-    highlight: 'lowest',
-  },
-  {
-    label: 'Type',
-    getValue: (l) => l.transactionType,
-    format: (v) => {
-      if (!v) return '-';
-      if (v === 'sale') return 'For Sale';
-      if (v === 'rent') return 'For Rent';
-      return String(v);
-    },
-  },
-  {
-    label: 'Property Type',
-    getValue: (l) => l.propertyType,
-    format: (v) => (v ? String(v).charAt(0).toUpperCase() + String(v).slice(1) : '-'),
-  },
-  {
-    label: 'Area',
-    getValue: (l) => l.area,
-    format: (v) => (v !== undefined ? `${v} m²` : '-'),
-    highlight: 'highest',
-  },
-  {
-    label: 'Rooms',
-    getValue: (l) => l.rooms,
-    format: (v) => (v !== undefined ? String(v) : '-'),
-    highlight: 'highest',
-  },
-  {
-    label: 'Floor',
-    getValue: (l) => l.floor,
-    format: (v) => (v !== undefined ? String(v) : '-'),
-  },
-  {
-    label: 'City',
-    getValue: (l) => l.address?.city,
-    format: (v) => (v ? String(v) : '-'),
-  },
-  {
-    label: 'District',
-    getValue: (l) => l.address?.district,
-    format: (v) => (v ? String(v) : '-'),
-  },
-  {
-    label: 'Price per m²',
-    getValue: (l) => (l.area > 0 ? Math.round(l.price / l.area) : undefined),
-    format: formatPrice,
-    highlight: 'lowest',
-  },
-];
-
 export function ComparisonView() {
   const { listings, removeFromComparison, clearComparison, generateShareUrl, shareUrl } =
     useComparison();
+  const t = useTranslations('comparison');
+  const locale = useLocale();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+
+  // Format price with the listing's actual currency, in the active locale.
+  const formatPrice = useMemo(
+    () => (value: string | number | undefined, listing?: ListingSummary) => {
+      if (value === undefined) return '-';
+      const currency = listing?.currency ?? 'EUR';
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 0,
+      }).format(Number(value));
+    },
+    [locale]
+  );
+
+  const comparisonRows: ComparisonRow[] = useMemo(
+    () => [
+      {
+        id: 'price',
+        label: t('rows.price'),
+        getValue: (l) => l.price,
+        format: formatPrice,
+        highlight: 'lowest',
+      },
+      {
+        id: 'type',
+        label: t('rows.type'),
+        getValue: (l) => l.transactionType,
+        format: (v) => {
+          if (!v) return '-';
+          if (v === 'sale') return t('transactionType.sale');
+          if (v === 'rent') return t('transactionType.rent');
+          return String(v);
+        },
+      },
+      {
+        id: 'propertyType',
+        label: t('rows.propertyType'),
+        getValue: (l) => l.propertyType,
+        format: (v) => (v ? String(v).charAt(0).toUpperCase() + String(v).slice(1) : '-'),
+      },
+      {
+        id: 'area',
+        label: t('rows.area'),
+        getValue: (l) => l.area,
+        format: (v) => (v !== undefined ? `${v} m²` : '-'),
+        highlight: 'highest',
+      },
+      {
+        id: 'rooms',
+        label: t('rows.rooms'),
+        getValue: (l) => l.rooms,
+        format: (v) => (v !== undefined ? String(v) : '-'),
+        highlight: 'highest',
+      },
+      {
+        id: 'floor',
+        label: t('rows.floor'),
+        getValue: (l) => l.floor,
+        format: (v) => (v !== undefined ? String(v) : '-'),
+      },
+      {
+        id: 'city',
+        label: t('rows.city'),
+        getValue: (l) => l.address?.city,
+        format: (v) => (v ? String(v) : '-'),
+      },
+      {
+        id: 'district',
+        label: t('rows.district'),
+        getValue: (l) => l.address?.district,
+        format: (v) => (v ? String(v) : '-'),
+      },
+      {
+        id: 'pricePerSqm',
+        label: t('rows.pricePerSqm'),
+        getValue: (l) => (l.area > 0 ? Math.round(l.price / l.area) : undefined),
+        format: formatPrice,
+        highlight: 'lowest',
+      },
+    ],
+    [t, formatPrice]
+  );
 
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
     setToast({ message, type });
@@ -101,10 +121,10 @@ export function ComparisonView() {
     return (
       <div className="empty-state">
         <div className="empty-icon">📊</div>
-        <h2>No properties to compare</h2>
-        <p>Add properties to your comparison from the listings page.</p>
+        <h2>{t('empty.title')}</h2>
+        <p>{t('empty.description')}</p>
         <Link href="/listings" className="browse-btn">
-          Browse Listings
+          {t('empty.browse')}
         </Link>
         <style jsx>{`
           .empty-state {
@@ -142,15 +162,15 @@ export function ComparisonView() {
     const url = generateShareUrl();
     try {
       await navigator.clipboard.writeText(url);
-      showToast('Comparison link copied to clipboard!', 'success');
+      showToast(t('toast.linkCopied'), 'success');
     } catch {
-      showToast(`Share this URL: ${url}`, 'info');
+      showToast(t('toast.shareUrl', { url }), 'info');
     }
   };
 
   const handleExportPDF = () => {
     // In a real implementation, this would generate a PDF
-    showToast('PDF export coming soon!', 'info');
+    showToast(t('toast.pdfComingSoon'), 'info');
   };
 
   // Check if all listings use the same currency
@@ -164,7 +184,7 @@ export function ComparisonView() {
     if (row.highlight === 'none' || !row.highlight) return '';
 
     // Disable price highlighting when currencies differ
-    if ((row.label === 'Price' || row.label === 'Price per m²') && !currenciesMatch()) {
+    if ((row.id === 'price' || row.id === 'pricePerSqm') && !currenciesMatch()) {
       return '';
     }
 
@@ -207,7 +227,7 @@ export function ComparisonView() {
             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
           </svg>
-          Share
+          {t('actions.share')}
         </button>
         <button type="button" className="action-btn" onClick={handleExportPDF}>
           <svg
@@ -224,10 +244,10 @@ export function ComparisonView() {
             <line x1="12" y1="18" x2="12" y2="12" />
             <line x1="9" y1="15" x2="15" y2="15" />
           </svg>
-          Export PDF
+          {t('actions.exportPdf')}
         </button>
         <button type="button" className="action-btn danger" onClick={clearComparison}>
-          Clear All
+          {t('actions.clearAll')}
         </button>
       </div>
 
@@ -239,9 +259,7 @@ export function ComparisonView() {
 
       {!currenciesMatch() && (
         <div className="currency-warning" role="alert">
-          <p>
-            Note: Properties use different currencies. Price comparison highlighting is disabled.
-          </p>
+          <p>{t('currencyWarning')}</p>
         </div>
       )}
 
@@ -249,7 +267,7 @@ export function ComparisonView() {
         <table>
           <thead>
             <tr>
-              <th className="label-column">Property</th>
+              <th className="label-column">{t('propertyHeader')}</th>
               {listings.map((listing: ListingSummary) => (
                 <th key={listing.id} className="property-column">
                   <div className="property-header">
@@ -267,9 +285,9 @@ export function ComparisonView() {
                       type="button"
                       className="remove-btn"
                       onClick={() => removeFromComparison(listing.id)}
-                      aria-label={`Remove ${listing.title} from comparison`}
+                      aria-label={t('removeAria', { title: listing.title })}
                     >
-                      Remove
+                      {t('remove')}
                     </button>
                   </div>
                 </th>
@@ -278,7 +296,7 @@ export function ComparisonView() {
           </thead>
           <tbody>
             {comparisonRows.map((row) => (
-              <tr key={row.label}>
+              <tr key={row.id}>
                 <td className="label-cell">{row.label}</td>
                 {listings.map((listing: ListingSummary) => {
                   const value = row.getValue(listing);

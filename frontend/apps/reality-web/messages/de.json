@@ -18,6 +18,9 @@
     "inviteRealtor": "Makler einladen",
     "loadErrorMessage": "Beim Laden des Agentur-Dashboards ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
     "loadErrorTitle": "Ihre Agentur konnte nicht geladen werden",
+    "createAgency": "Agentur erstellen",
+    "noAgencyMessage": "Sie sind mit keiner Agentur verknüpft.",
+    "noAgencyTitle": "Keine Agentur gefunden",
     "manageRealtors": "Makler verwalten",
     "performanceOverview": "Leistungsübersicht",
     "period1y": "1 Jahr",
@@ -39,7 +42,43 @@
     "chartViews": "Aufrufe",
     "chartInquiries": "Anfragen",
     "leaderboardEmpty": "Noch keine aktiven Makler",
-    "leaderboardStats": "{sales} Verkäufe · {active} aktiv"
+    "leaderboardStats": "{sales} Verkäufe · {active} aktiv",
+    "backToDashboard": "Zurück zum Dashboard",
+    "realtorManagementTitle": "Maklerverwaltung",
+    "realtorManagementSubtitle": "Verwalten Sie Ihr Team von Immobilienmaklern",
+    "tabAll": "Alle",
+    "tabActive": "Aktiv",
+    "tabPending": "Ausstehend",
+    "tabInactive": "Inaktiv",
+    "realtorsLoadError": "Makler konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "statusActive": "Aktiv",
+    "statusPending": "Ausstehend",
+    "statusInactive": "Inaktiv",
+    "statusSuspended": "Gesperrt",
+    "cardListings": "Inserate",
+    "cardSales": "Verkäufe",
+    "cardReviews": "{count} Bewertungen",
+    "buttonResend": "Erneut senden",
+    "buttonView": "Ansehen",
+    "detailTitle": "Maklerdetails",
+    "formLabelBio": "Biografie",
+    "statTotalSales": "Verkäufe gesamt",
+    "statRating": "Bewertung",
+    "statusLabel": "Status",
+    "confirmRemoveQuestion": "Sind Sie sicher?",
+    "confirmRemoveYes": "Ja, entfernen",
+    "buttonRemove": "Entfernen",
+    "buttonSaveChanges": "Änderungen speichern",
+    "buttonEdit": "Bearbeiten",
+    "buttonClose": "Schließen",
+    "emptyAllTitle": "Noch keine Makler",
+    "emptyAllDesc": "Laden Sie Ihren ersten Makler ein, um zu beginnen.",
+    "emptyActiveTitle": "Keine aktiven Makler",
+    "emptyActiveDesc": "Aktive Makler werden hier angezeigt.",
+    "emptyInvitedTitle": "Keine ausstehenden Einladungen",
+    "emptyInvitedDesc": "Laden Sie Makler ein, Ihrer Agentur beizutreten.",
+    "emptyInactiveTitle": "Keine inaktiven Makler",
+    "emptyInactiveDesc": "Inaktive Makler werden hier angezeigt."
   },
   "auth": {
     "login": {
@@ -82,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Der geteilte Vergleich konnte nicht geladen werden. Einige Immobilien sind möglicherweise nicht mehr verfügbar.",
-    "loading": "Geteilter Vergleich wird geladen..."
+    "loading": "Geteilter Vergleich wird geladen...",
+    "empty": {
+      "title": "Keine Immobilien zum Vergleichen",
+      "description": "Fügen Sie Immobilien von der Angebotsseite zu Ihrem Vergleich hinzu.",
+      "browse": "Angebote durchsuchen"
+    },
+    "actions": {
+      "share": "Teilen",
+      "exportPdf": "PDF exportieren",
+      "clearAll": "Alle löschen"
+    },
+    "toast": {
+      "linkCopied": "Vergleichslink in die Zwischenablage kopiert!",
+      "shareUrl": "Teilen Sie diese URL: {url}",
+      "pdfComingSoon": "PDF-Export kommt bald!"
+    },
+    "currencyWarning": "Hinweis: Die Immobilien verwenden unterschiedliche Währungen. Die Hervorhebung des Preisvergleichs ist deaktiviert.",
+    "propertyHeader": "Immobilie",
+    "remove": "Entfernen",
+    "removeAria": "{title} aus dem Vergleich entfernen",
+    "rows": {
+      "price": "Preis",
+      "type": "Art",
+      "propertyType": "Immobilientyp",
+      "area": "Fläche",
+      "rooms": "Zimmer",
+      "floor": "Etage",
+      "city": "Stadt",
+      "district": "Bezirk",
+      "pricePerSqm": "Preis pro m²"
+    },
+    "transactionType": {
+      "sale": "Zum Verkauf",
+      "rent": "Zur Miete"
+    }
   },
   "contact": {
     "askQuestion": "Eine Frage stellen",
