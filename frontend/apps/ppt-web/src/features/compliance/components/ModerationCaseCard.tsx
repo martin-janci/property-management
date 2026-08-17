@@ -52,7 +52,8 @@ export type ModerationActionType =
 export interface ContentOwnerInfo {
   user_id: string;
   name: string;
-  previous_violations: number;
+  // `previous_violations` is intentionally omitted: the moderation API does not
+  // return a prior-violation count, so it must not be surfaced (or defaulted) here.
 }
 
 export interface ModerationCase {
@@ -61,7 +62,6 @@ export interface ModerationCase {
   content_id: string;
   content_preview?: string;
   content_owner: ContentOwnerInfo;
-  report_source: string;
   violation_type?: ViolationType;
   report_reason?: string;
   status: ModerationStatus;
@@ -204,8 +204,10 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
       <div className="moderation-case-content">
         <div className="moderation-content-info">
           <span className="moderation-content-type">{getContentTypeLabel(case_.content_type)}</span>
-          {case_.content_preview && (
+          {case_.content_preview ? (
             <p className="moderation-content-preview">{case_.content_preview}</p>
+          ) : (
+            <p className="moderation-content-preview unavailable">No content preview available</p>
           )}
         </div>
 
@@ -221,22 +223,6 @@ export const ModerationCaseCard: React.FC<ModerationCaseCardProps> = ({
         <div className="moderation-owner-info">
           <h5>Content Owner</h5>
           <span className="moderation-owner-name">{case_.content_owner.name}</span>
-          {case_.content_owner.previous_violations > 0 && (
-            <span className="moderation-previous-violations">
-              {case_.content_owner.previous_violations} previous violations
-            </span>
-          )}
-        </div>
-
-        <div className="moderation-report-info">
-          <h5>Reported By</h5>
-          <span className="moderation-report-source">
-            {case_.report_source === 'user'
-              ? 'User Report'
-              : case_.report_source === 'automated'
-                ? 'Automated Detection'
-                : case_.report_source}
-          </span>
         </div>
 
         {case_.assigned_to_name && (
