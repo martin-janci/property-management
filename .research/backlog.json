@@ -8411,6 +8411,91 @@
       "created_at": "2026-08-17",
       "updated_at": "2026-08-17",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-revoke-local-persists-offline",
+      "title": "NFC emergencyRevokeAll leaves local credentials usable offline when the revoke API call fails",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn]"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:223-227 — emergencyRevokeAll() awaits apiRequest('/api/v1/access/credentials/revoke-all') FIRST, then clears this.credentials and secure-store. If the network call throws (device offline — the exact 'lost phone' scenario this method serves), the exception propagates before the local clear runs, so the encrypted credential blob stays in SecureStore.",
+        "NFC access (NFCAccessController.validateAccess / handleTap) works fully offline against the cached credential list, so a failed revoke means the lost/stolen device retains working building-access credentials until validUntil expiry.",
+        "Fix: clear local credentials regardless of the API outcome (clear-first or in a finally block), and surface the sync failure to the caller so the server-side revoke can be retried."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-securestore-2kb-blob",
+      "title": "NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched credentials",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn]"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:20-24,292-294 — storeCredentials() writes JSON.stringify(this.credentials) into a single SecureStore slot; the file's own comment acknowledges SecureStore's ~2KB per-value cap yet claims one slot is 'plenty for tens of entries'.",
+        "Each NFCCredential (types.ts:10-35) carries encryptedData (NFC HCE payload), a buildingName, and an accessPoints[] array (each with id/name/type/zone/floor/timeRestrictions) — a handful of credentials easily exceeds 2KB, and expo-secure-store rejects/warns on oversized values on Android.",
+        "fetchCredentials() (lines 60-75) awaits storeCredentials() inside its try block, so a size-related throw is swallowed and it returns the stale cached list — freshly fetched/refreshed credentials are silently lost; refreshCredential()/updateCredentialUsage() are unguarded and would reject.",
+        "Fix: chunk credentials across multiple SecureStore keys (or store a manifest + per-credential slots), or store the bulk list in encrypted AsyncStorage with only secrets in SecureStore; do not assume the whole array fits one 2KB slot."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-accesslog-parse-unguarded",
+      "title": "NFC getAccessLog JSON.parse is unguarded, so a corrupted log blob rejects handleTap after access was already granted",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn]"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:160-163 — getAccessLog() does `JSON.parse(stored)` with no try/catch, unlike the carefully corruption-guarded loadStoredCredentials() (lines 262-290) which discards a bad blob.",
+        "logAccessAttempt() (142-147) awaits getAccessLog(); NFCAccessController.handleTap() (nfc/NFCAccessController.ts:211-217) awaits logAccessAttempt() with no try/catch, so a corrupted @ppt/access_log blob throws and rejects handleTap — the already-computed granted AccessAttemptResult is never returned and the UI shows an error for a door that actually opened.",
+        "Fix: wrap the getAccessLog parse in try/catch (discard + reset on failure), mirroring the credential-load hardening."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "frontend"
     }
   ]
 }
