@@ -16,6 +16,7 @@ use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
 
+use crate::client_ip::resolve_client_ip;
 use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 
 use super::core::*;
@@ -65,52 +66,6 @@ fn share_access_attempts_reset(token: &str, ip: &str) {
     if let Ok(mut map) = SHARE_ACCESS_RATE_LIMITER.lock() {
         map.remove(&share_access_key(token, ip));
     }
-}
-
-/// Resolve the real client IP for the share-access audit log (and the per-client
-/// brute-force throttle key).
-///
-/// api-server runs behind a CDN / reverse-proxy chain (Cloudflare in
-/// production), so the direct socket peer exposed by `ConnectInfo` is the proxy,
-/// not the visitor. Recording it verbatim misattributes every shared-document
-/// access to a handful of proxy IPs — and, on the password endpoint, buckets
-/// every distinct visitor behind the proxy into one throttle key. We therefore
-/// unwind the proxy headers, in order:
-///
-/// 1. `CF-Connecting-IP` — Cloudflare sets this to the origin client on every
-///    proxied request; it is a single address the client cannot append to when
-///    traffic actually transits Cloudflare.
-/// 2. leftmost `X-Forwarded-For` hop — the client address the first proxy
-///    observed (matches the existing form-submission audit path in
-///    `routes::forms::submissions`).
-/// 3. the socket peer address — direct-connection / no-proxy fallback.
-///
-/// Each header candidate must parse as a valid [`std::net::IpAddr`]; a
-/// present-but-garbage value (spoofed, or from a misconfigured proxy) is skipped
-/// rather than written verbatim into the audit trail. The returned string is the
-/// canonical form of the parsed address.
-fn resolve_client_ip(headers: &axum::http::HeaderMap, addr: std::net::SocketAddr) -> String {
-    fn header_ip(
-        headers: &axum::http::HeaderMap,
-        name: &str,
-        leftmost_of_list: bool,
-    ) -> Option<String> {
-        let raw = headers.get(name)?.to_str().ok()?;
-        let candidate = if leftmost_of_list {
-            raw.split(',').next().unwrap_or(raw)
-        } else {
-            raw
-        }
-        .trim();
-        candidate
-            .parse::<std::net::IpAddr>()
-            .ok()
-            .map(|ip| ip.to_string())
-    }
-
-    header_ip(headers, "cf-connecting-ip", false)
-        .or_else(|| header_ip(headers, "x-forwarded-for", true))
-        .unwrap_or_else(|| addr.ip().to_string())
 }
 
 /// Create authenticated documents shares router.
@@ -538,7 +493,7 @@ async fn access_shared_document(
     headers: axum::http::HeaderMap,
     Path(token): Path<String>,
 ) -> Result<Json<SharedDocumentResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ip_address = resolve_client_ip(&headers, addr);
+    let ip_address = resolve_client_ip(&headers, addr, &state.trusted_proxies);
     // Find share by token. This public endpoint has no caller org context, so
     // the validated token is the authorization grant: the lookup runs with
     // super-admin RLS context on a dedicated connection (see
@@ -678,7 +633,7 @@ async fn access_protected_share(
     Path(token): Path<String>,
     Json(req): Json<AccessShareRequest>,
 ) -> Result<Json<SharedDocumentResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ip_address = resolve_client_ip(&headers, addr);
+    let ip_address = resolve_client_ip(&headers, addr, &state.trusted_proxies);
     // Find share by token. This public endpoint has no caller org context, so
     // the validated token is the authorization grant: the lookup runs with
     // super-admin RLS context on a dedicated connection (see
@@ -989,101 +944,5 @@ mod share_access_throttle_tests {
             share_access_attempt_allowed(token, ip),
             "after a reset the key must be allowed to attempt again"
         );
-    }
-}
-
-#[cfg(test)]
-mod resolve_client_ip_tests {
-    use super::resolve_client_ip;
-    use axum::http::HeaderMap;
-    use std::net::SocketAddr;
-
-    // The socket peer is always the reverse proxy in production; use a distinct
-    // documentation-range address so an accidental fallback is obvious.
-    fn proxy_peer() -> SocketAddr {
-        "10.0.0.5:443".parse().unwrap()
-    }
-
-    #[test]
-    fn falls_back_to_socket_peer_without_proxy_headers() {
-        let ip = resolve_client_ip(&HeaderMap::new(), proxy_peer());
-        assert_eq!(ip, "10.0.0.5", "no proxy headers ⇒ direct socket peer");
-    }
-
-    #[test]
-    fn prefers_cf_connecting_ip() {
-        let mut headers = HeaderMap::new();
-        headers.insert("cf-connecting-ip", "203.0.113.7".parse().unwrap());
-        // A conflicting XFF must not win over the Cloudflare-set client IP.
-        headers.insert("x-forwarded-for", "198.51.100.1".parse().unwrap());
-        let ip = resolve_client_ip(&headers, proxy_peer());
-        assert_eq!(ip, "203.0.113.7", "CF-Connecting-IP takes precedence");
-    }
-
-    #[test]
-    fn uses_leftmost_forwarded_for_hop() {
-        let mut headers = HeaderMap::new();
-        // client, then two trusted proxies appended to the right.
-        headers.insert(
-            "x-forwarded-for",
-            "203.0.113.9, 70.41.3.18, 10.0.0.5".parse().unwrap(),
-        );
-        let ip = resolve_client_ip(&headers, proxy_peer());
-        assert_eq!(ip, "203.0.113.9", "leftmost XFF hop is the origin client");
-    }
-
-    #[test]
-    fn skips_garbage_cf_header_and_uses_forwarded_for() {
-        let mut headers = HeaderMap::new();
-        headers.insert("cf-connecting-ip", "not-an-ip".parse().unwrap());
-        headers.insert("x-forwarded-for", "203.0.113.11".parse().unwrap());
-        let ip = resolve_client_ip(&headers, proxy_peer());
-        assert_eq!(
-            ip, "203.0.113.11",
-            "an unparsable CF header must fall through to XFF"
-        );
-    }
-
-    #[test]
-    fn skips_all_garbage_headers_and_uses_socket_peer() {
-        let mut headers = HeaderMap::new();
-        headers.insert("cf-connecting-ip", "garbage".parse().unwrap());
-        headers.insert(
-            "x-forwarded-for",
-            "also-garbage, still-bad".parse().unwrap(),
-        );
-        let ip = resolve_client_ip(&headers, proxy_peer());
-        assert_eq!(
-            ip, "10.0.0.5",
-            "present-but-invalid proxy headers must not poison the audit trail"
-        );
-    }
-
-    #[test]
-    fn canonicalises_parsed_address() {
-        let mut headers = HeaderMap::new();
-        // A non-canonical IPv6 spelling is normalised on the way into the log.
-        headers.insert(
-            "cf-connecting-ip",
-            "2001:0db8:0000:0000:0000:0000:0000:0001".parse().unwrap(),
-        );
-        let ip = resolve_client_ip(&headers, proxy_peer());
-        assert_eq!(
-            ip, "2001:db8::1",
-            "the stored value is the canonical IP form"
-        );
-    }
-
-    #[test]
-    fn trims_whitespace_around_forwarded_for_hop() {
-        let mut headers = HeaderMap::new();
-        // Proxies conventionally emit `", "` between hops; the leading space on
-        // the first entry must be trimmed before parsing.
-        headers.insert(
-            "x-forwarded-for",
-            " 203.0.113.20 , 10.0.0.5".parse().unwrap(),
-        );
-        let ip = resolve_client_ip(&headers, proxy_peer());
-        assert_eq!(ip, "203.0.113.20", "surrounding whitespace is trimmed");
     }
 }

@@ -481,6 +481,13 @@ pub struct AppState {
     /// `webhook_secret` is empty and verifies the `X-Webhook-Signature` HMAC
     /// over the raw body before acting.
     pub portal_config: PortalAppConfig,
+    /// Trusted reverse-proxy allowlist loaded once at startup from
+    /// `TRUSTED_PROXY_CIDRS` (issue #2789). Gates whether `X-Forwarded-For` /
+    /// `CF-Connecting-IP` are believed when resolving a request's client IP for
+    /// the share-access audit log and the `token:ip` brute-force throttle:
+    /// forwarding headers are only trusted when the socket peer is in this set,
+    /// so a directly-reachable client can no longer spoof its source IP.
+    pub trusted_proxies: crate::client_ip::TrustedProxies,
 }
 
 impl AppState {
@@ -794,6 +801,10 @@ impl AppState {
             // connection-scoped receiver can fail closed and verify signatures
             // without a per-request env read.
             portal_config: PortalAppConfig::from_env(),
+            // Issue #2789: trusted reverse-proxy allowlist cached at startup so
+            // client-IP resolution can gate forwarding-header trust on the
+            // socket peer without a per-request env read.
+            trusted_proxies: crate::client_ip::TrustedProxies::from_env(),
         }
     }
 
