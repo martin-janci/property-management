@@ -378,7 +378,8 @@
       },
       "acceptSuggestion": "Accept Suggestion",
       "modifySuggestion": "Modify",
-      "lowConfidenceNote": "The AI is less certain about this suggestion. Please review and adjust if needed."
+      "lowConfidenceNote": "The AI is less certain about this suggestion. Please review and adjust if needed.",
+      "unavailable": "AI triage suggestions are currently unavailable. Please categorize the issue manually."
     },
     "category": {
       "plumbing": "Plumbing",
