@@ -18,15 +18,68 @@ import type {
 // they're encrypted at rest. Access logs are not sensitive and remain in
 // AsyncStorage for simpler querying of the last N entries.
 //
-// SecureStore has a per-value size cap of ~2 KB, which is plenty for the
-// credential list we expect (tens of entries). We stringify the whole array
-// into one slot to keep the single-slot API simple.
+// SecureStore has a per-value size cap of ~2 KB on Android: writing a larger
+// value logs a warning and the write can silently fail, which would drop
+// credentials we just fetched from the server. A single NFCCredential carries
+// an `encryptedData` blob plus an `accessPoints` array, so even a handful of
+// buildings can push the serialized list past 2 KB. We therefore split the
+// serialized array across as many chunk slots as needed (each kept under the
+// cap) and record the chunk count in a small manifest stored at
+// CREDENTIALS_KEY. Reads reassemble the chunks; the legacy single-slot format
+// (a raw JSON array under CREDENTIALS_KEY) is still read transparently.
 const CREDENTIALS_KEY = 'ppt_nfc_credentials';
+// Prefix for the per-chunk slots, e.g. `ppt_nfc_credentials_c0`.
+const CREDENTIALS_CHUNK_PREFIX = 'ppt_nfc_credentials_c';
+// Byte budget per chunk. SecureStore's Android cap is ~2048 bytes; leave
+// headroom for encryption/framing overhead.
+const MAX_CHUNK_BYTES = 1800;
+// Upper bound on chunk slots we ever scan when cleaning up a corrupted/stale
+// write. 64 * 1800 B ≈ 115 KB, far beyond the "tens of entries" we expect.
+const MAX_CREDENTIAL_CHUNKS = 64;
 // Legacy key used by earlier versions that stored credentials in AsyncStorage;
 // read-through once at startup so upgraded users don't lose their credentials.
 const LEGACY_CREDENTIALS_KEY = '@ppt/nfc_credentials';
 const ACCESS_LOG_KEY = '@ppt/access_log';
 const MAX_LOG_ENTRIES = 100;
+
+/** Manifest written at CREDENTIALS_KEY describing the chunked credential blob. */
+interface CredentialManifest {
+  v: 1;
+  chunks: number;
+}
+
+/** UTF-8 byte length of a single Unicode code point. */
+function codePointUtf8Bytes(codePoint: number): number {
+  if (codePoint < 0x80) return 1;
+  if (codePoint < 0x800) return 2;
+  if (codePoint < 0x10000) return 3;
+  return 4;
+}
+
+/**
+ * Split a string into chunks whose UTF-8 encodings each stay within `maxBytes`.
+ * Iterates by code point (surrogate-safe), so `chunks.join('')` reproduces the
+ * original string exactly. Always returns at least one chunk (possibly empty).
+ */
+function chunkByUtf8Bytes(str: string, maxBytes: number): string[] {
+  const chunks: string[] = [];
+  let current = '';
+  let currentBytes = 0;
+  for (const ch of str) {
+    const chBytes = codePointUtf8Bytes(ch.codePointAt(0) ?? 0);
+    if (currentBytes + chBytes > maxBytes && current.length > 0) {
+      chunks.push(current);
+      current = '';
+      currentBytes = 0;
+    }
+    current += ch;
+    currentBytes += chBytes;
+  }
+  if (current.length > 0 || chunks.length === 0) {
+    chunks.push(current);
+  }
+  return chunks;
+}
 
 /**
  * Manages NFC credentials for building access.
@@ -274,17 +327,18 @@ export class NFCCredentialManager {
 
   private async loadStoredCredentials(): Promise<void> {
     // Stored credentials may be corrupted (partial writes, manual app-data
-    // restore, OS wipe of secure store). Never let a parse failure crash
-    // app startup: fall back to an empty list and drop the bad blob.
+    // restore, OS wipe of secure store) or split across chunk slots (large
+    // credential sets, see storeCredentials). Never let a read/parse failure
+    // crash app startup: fall back to an empty list and drop the bad blob.
     const stored = await SecureStore.getItemAsync(CREDENTIALS_KEY);
     if (stored) {
       try {
-        this.credentials = JSON.parse(stored);
+        this.credentials = await this.deserializeStoredCredentials(stored);
         return;
       } catch (err) {
         console.warn('[nfc] Stored credentials corrupted; discarding.', err);
         this.credentials = [];
-        await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+        await this.clearStoredCredentials();
         return;
       }
     }
@@ -302,8 +356,93 @@ export class NFCCredentialManager {
     }
   }
 
+  /**
+   * Reconstruct the credential array from what's stored at CREDENTIALS_KEY.
+   * Handles both the chunked manifest format and the legacy single-slot format
+   * (a raw JSON array). Throws if the data is malformed or a chunk is missing,
+   * which the caller treats as corruption.
+   */
+  private async deserializeStoredCredentials(stored: string): Promise<NFCCredential[]> {
+    const parsed: unknown = JSON.parse(stored);
+
+    // Chunked format: a manifest pointing at N chunk slots.
+    if (
+      parsed !== null &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed) &&
+      typeof (parsed as CredentialManifest).chunks === 'number'
+    ) {
+      const { chunks } = parsed as CredentialManifest;
+      const parts: string[] = [];
+      for (let i = 0; i < chunks; i++) {
+        const part = await SecureStore.getItemAsync(`${CREDENTIALS_CHUNK_PREFIX}${i}`);
+        if (part === null) {
+          throw new Error(`missing credential chunk ${i} of ${chunks}`);
+        }
+        parts.push(part);
+      }
+      return JSON.parse(parts.join('')) as NFCCredential[];
+    }
+
+    // Legacy single-slot format: the whole array stringified under the key.
+    if (Array.isArray(parsed)) {
+      return parsed as NFCCredential[];
+    }
+
+    throw new Error('unrecognized stored credential format');
+  }
+
+  /** Delete the manifest and every chunk slot it could have written. */
+  private async clearStoredCredentials(): Promise<void> {
+    await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+    // Deleting a non-existent SecureStore key is a no-op, so a bounded sweep is
+    // safe even when we don't know the exact prior chunk count.
+    for (let i = 0; i < MAX_CREDENTIAL_CHUNKS; i++) {
+      await SecureStore.deleteItemAsync(`${CREDENTIALS_CHUNK_PREFIX}${i}`);
+    }
+  }
+
   private async storeCredentials(): Promise<void> {
-    await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify(this.credentials));
+    const serialized = JSON.stringify(this.credentials);
+    const parts = chunkByUtf8Bytes(serialized, MAX_CHUNK_BYTES);
+
+    // How many chunk slots did the previous write leave behind? Needed so a
+    // shrinking credential set doesn't strand stale chunks that a later read
+    // might reassemble into a corrupt blob.
+    const previousChunks = await this.readManifestChunkCount();
+
+    // Write the chunks first, then the manifest that points at them: a crash
+    // between the two leaves the (still-consistent) previous manifest in place.
+    for (let i = 0; i < parts.length; i++) {
+      await SecureStore.setItemAsync(`${CREDENTIALS_CHUNK_PREFIX}${i}`, parts[i]);
+    }
+    const manifest: CredentialManifest = { v: 1, chunks: parts.length };
+    await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify(manifest));
+
+    // Remove chunk slots left over from a previously larger credential set.
+    for (let i = parts.length; i < previousChunks; i++) {
+      await SecureStore.deleteItemAsync(`${CREDENTIALS_CHUNK_PREFIX}${i}`);
+    }
+  }
+
+  /** Chunk count recorded by the last chunked write, or 0 if none/legacy. */
+  private async readManifestChunkCount(): Promise<number> {
+    const raw = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+    if (!raw) return 0;
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        !Array.isArray(parsed) &&
+        typeof (parsed as CredentialManifest).chunks === 'number'
+      ) {
+        return (parsed as CredentialManifest).chunks;
+      }
+    } catch {
+      // Not a manifest (legacy raw array or corrupt) — nothing to clean up.
+    }
+    return 0;
   }
 
   private async apiRequest<T>(
