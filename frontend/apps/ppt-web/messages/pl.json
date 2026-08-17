@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Panel moderacji treści",
+      "subtitle": "Przeglądaj i moderuj treści użytkowników zgodnie z DSA.",
+      "loading": "Ładowanie kolejki moderacji...",
+      "loadError": "Nie udało się załadować spraw moderacji: {{message}}",
+      "retry": "Spróbuj ponownie"
+    },
+    "queue": {
+      "heading": "Kolejka moderacji",
+      "emptyTitle": "Nie znaleziono spraw moderacji spełniających kryteria.",
+      "emptySubtitle": "Kolejka moderacji jest obecnie pusta."
+    },
+    "filters": {
+      "status": "Status",
+      "contentType": "Typ treści",
+      "violationType": "Typ naruszenia",
+      "priority": "Priorytet",
+      "unassignedOnly": "Tylko nieprzypisane",
+      "allStatuses": "Wszystkie statusy",
+      "allTypes": "Wszystkie typy",
+      "allViolations": "Wszystkie naruszenia",
+      "allPriorities": "Wszystkie priorytety"
+    },
+    "templates": {
+      "heading": "Szablony działań"
+    },
+    "stats": {
+      "pendingCases": "Oczekujące sprawy",
+      "underReview": "W trakcie przeglądu",
+      "totalQueue": "Cała kolejka",
+      "avgResolution": "Śr. czas rozwiązania",
+      "byPriority": "Według priorytetu",
+      "byViolationType": "Według typu naruszenia",
+      "overdue_one": "{{count}} sprawa po terminie (SLA 24 h+)",
+      "overdue_other": "{{count}} spraw po terminie (SLA 24 h+)"
+    },
+    "status": {
+      "pending": "Oczekująca",
+      "under_review": "W trakcie przeglądu",
+      "approved": "Zatwierdzona",
+      "removed": "Usunięta",
+      "restricted": "Ograniczona",
+      "warned": "Ostrzeżenie",
+      "appealed": "Odwołanie",
+      "appeal_approved": "Odwołanie zatwierdzone",
+      "appeal_rejected": "Odwołanie odrzucone"
+    },
+    "priorityLabel": {
+      "1": "Krytyczny",
+      "2": "Wysoki",
+      "3": "Średni",
+      "4": "Niski",
+      "5": "Najniższy",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Ogłoszenie",
+      "listing_photo": "Zdjęcie ogłoszenia",
+      "user_profile": "Profil użytkownika",
+      "review": "Recenzja",
+      "comment": "Komentarz",
+      "message": "Wiadomość",
+      "announcement": "Ogłoszenie",
+      "document": "Dokument",
+      "community_post": "Post społeczności"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Nękanie",
+      "hate_speech": "Mowa nienawiści",
+      "violence": "Przemoc",
+      "illegal_content": "Nielegalne treści",
+      "misinformation": "Dezinformacja",
+      "fraud": "Oszustwo",
+      "privacy": "Prywatność",
+      "intellectual_property": "Własność intelektualna",
+      "inappropriate_content": "Nieodpowiednie treści",
+      "other": "Inne",
+      "notSpecified": "Nie określono"
+    },
+    "actionType": {
+      "remove": "Usuń",
+      "restrict": "Ogranicz",
+      "warn": "Ostrzeż",
+      "approve": "Zatwierdź",
+      "ignore": "Ignoruj",
+      "escalate": "Eskaluj"
+    },
+    "card": {
+      "contentOwner": "Właściciel treści",
+      "assignedTo": "Przypisane do",
+      "decision": "Decyzja",
+      "appealFiled": "Złożono odwołanie",
+      "appealUpheld": "Odwołanie podtrzymane",
+      "appealRejected": "Odwołanie odrzucone",
+      "ageAgo": "{{age}} temu",
+      "created": "Utworzono: {{date}}",
+      "viewContent": "Zobacz treść",
+      "assignToMe": "Przypisz do mnie",
+      "takeAction": "Podejmij działanie",
+      "decideAppeal": "Rozstrzygnij odwołanie"
+    },
+    "prompts": {
+      "actionType": "Wprowadź typ działania (remove, restrict, warn, approve):",
+      "actionRationale": "Wprowadź uzasadnienie tego działania:",
+      "decision": "Wprowadź decyzję (uphold, overturn):",
+      "decisionRationale": "Wprowadź uzasadnienie tej decyzji:",
+      "assignError": "Nie udało się przypisać sprawy. Spróbuj ponownie.",
+      "actionError": "Nie udało się podjąć działania. Spróbuj ponownie.",
+      "appealError": "Nie udało się rozstrzygnąć odwołania. Spróbuj ponownie."
+    }
+  },
   "common": {
     "search": "Szukaj",
     "login": "Zaloguj się",

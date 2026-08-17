@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Dashboard zur Inhaltsmoderation",
+      "subtitle": "Nutzergenerierte Inhalte gemäß DSA prüfen und moderieren.",
+      "loading": "Moderationswarteschlange wird geladen...",
+      "loadError": "Moderationsfälle konnten nicht geladen werden: {{message}}",
+      "retry": "Erneut versuchen"
+    },
+    "queue": {
+      "heading": "Moderationswarteschlange",
+      "emptyTitle": "Keine Moderationsfälle gefunden, die den Kriterien entsprechen.",
+      "emptySubtitle": "Die Moderationswarteschlange ist derzeit leer."
+    },
+    "filters": {
+      "status": "Status",
+      "contentType": "Inhaltstyp",
+      "violationType": "Verstoßart",
+      "priority": "Priorität",
+      "unassignedOnly": "Nur nicht zugewiesene",
+      "allStatuses": "Alle Status",
+      "allTypes": "Alle Typen",
+      "allViolations": "Alle Verstöße",
+      "allPriorities": "Alle Prioritäten"
+    },
+    "templates": {
+      "heading": "Aktionsvorlagen"
+    },
+    "stats": {
+      "pendingCases": "Ausstehende Fälle",
+      "underReview": "In Prüfung",
+      "totalQueue": "Gesamte Warteschlange",
+      "avgResolution": "Durchschn. Bearbeitung",
+      "byPriority": "Nach Priorität",
+      "byViolationType": "Nach Verstoßart",
+      "overdue_one": "{{count}} Fall überfällig (24 h+ SLA)",
+      "overdue_other": "{{count}} Fälle überfällig (24 h+ SLA)"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "under_review": "In Prüfung",
+      "approved": "Genehmigt",
+      "removed": "Entfernt",
+      "restricted": "Eingeschränkt",
+      "warned": "Verwarnt",
+      "appealed": "Widerspruch eingelegt",
+      "appeal_approved": "Widerspruch stattgegeben",
+      "appeal_rejected": "Widerspruch abgelehnt"
+    },
+    "priorityLabel": {
+      "1": "Kritisch",
+      "2": "Hoch",
+      "3": "Mittel",
+      "4": "Niedrig",
+      "5": "Am niedrigsten",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Anzeige",
+      "listing_photo": "Anzeigenfoto",
+      "user_profile": "Benutzerprofil",
+      "review": "Bewertung",
+      "comment": "Kommentar",
+      "message": "Nachricht",
+      "announcement": "Ankündigung",
+      "document": "Dokument",
+      "community_post": "Community-Beitrag"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Belästigung",
+      "hate_speech": "Hassrede",
+      "violence": "Gewalt",
+      "illegal_content": "Illegale Inhalte",
+      "misinformation": "Fehlinformation",
+      "fraud": "Betrug",
+      "privacy": "Datenschutz",
+      "intellectual_property": "Geistiges Eigentum",
+      "inappropriate_content": "Unangemessene Inhalte",
+      "other": "Sonstiges",
+      "notSpecified": "Nicht angegeben"
+    },
+    "actionType": {
+      "remove": "Entfernen",
+      "restrict": "Einschränken",
+      "warn": "Verwarnen",
+      "approve": "Genehmigen",
+      "ignore": "Ignorieren",
+      "escalate": "Eskalieren"
+    },
+    "card": {
+      "contentOwner": "Inhaltseigentümer",
+      "assignedTo": "Zugewiesen an",
+      "decision": "Entscheidung",
+      "appealFiled": "Widerspruch eingereicht",
+      "appealUpheld": "Widerspruch bestätigt",
+      "appealRejected": "Widerspruch abgelehnt",
+      "ageAgo": "vor {{age}}",
+      "created": "Erstellt: {{date}}",
+      "viewContent": "Inhalt anzeigen",
+      "assignToMe": "Mir zuweisen",
+      "takeAction": "Maßnahme ergreifen",
+      "decideAppeal": "Über Widerspruch entscheiden"
+    },
+    "prompts": {
+      "actionType": "Aktionstyp eingeben (remove, restrict, warn, approve):",
+      "actionRationale": "Begründung für diese Maßnahme eingeben:",
+      "decision": "Entscheidung eingeben (uphold, overturn):",
+      "decisionRationale": "Begründung für diese Entscheidung eingeben:",
+      "assignError": "Fall konnte nicht zugewiesen werden. Bitte erneut versuchen.",
+      "actionError": "Maßnahme konnte nicht ausgeführt werden. Bitte erneut versuchen.",
+      "appealError": "Über den Widerspruch konnte nicht entschieden werden. Bitte erneut versuchen."
+    }
+  },
   "common": {
     "search": "Suchen",
     "login": "Anmelden",
