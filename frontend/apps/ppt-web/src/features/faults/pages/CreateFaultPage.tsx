@@ -19,6 +19,17 @@ interface CreateFaultPageProps {
   enablePhotoFirst?: boolean;
 }
 
+/**
+ * Photo-first AI triage has no production endpoint yet: the only backend
+ * suggestion route (`POST /api/v1/faults/{id}/suggest`) analyses an
+ * already-created fault's title/description text, not the pre-creation photos
+ * this page uploads. Rather than fabricate a hardcoded suggestion for real
+ * users, the mock is gated behind an explicit dev-only opt-in flag and the UI
+ * shows a clear "unavailable" state otherwise. Never ship fake AI output.
+ */
+const MOCK_AI_TRIAGE_ENABLED =
+  import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK_AI_TRIAGE === 'true';
+
 export function CreateFaultPage({
   buildings,
   units,
@@ -30,28 +41,40 @@ export function CreateFaultPage({
   const { t } = useTranslation();
   const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
   const [aiSuggestionLoading, setAiSuggestionLoading] = useState(false);
+  const [aiSuggestionUnavailable, setAiSuggestionUnavailable] = useState(false);
 
-  // Simulate AI suggestion when photos are uploaded
-  // In production, this would call the backend API
   const handlePhotosChange = useCallback((photos: UploadedPhoto[]) => {
-    if (
-      photos.length > 0 &&
-      photos.some((p) => p.status === 'pending' || p.status === 'uploaded')
-    ) {
-      setAiSuggestionLoading(true);
-      // Simulate API call delay
-      setTimeout(() => {
-        // Mock AI suggestion - in production, call useRequestAiSuggestion
-        setAiSuggestion({
-          category: 'plumbing',
-          confidence: 0.85,
-          priority: 'medium',
-        });
-        setAiSuggestionLoading(false);
-      }, 1500);
-    } else {
+    const hasPendingPhotos =
+      photos.length > 0 && photos.some((p) => p.status === 'pending' || p.status === 'uploaded');
+
+    if (!hasPendingPhotos) {
       setAiSuggestion(null);
+      setAiSuggestionLoading(false);
+      setAiSuggestionUnavailable(false);
+      return;
     }
+
+    // No production endpoint exists for pre-creation photo-based AI triage
+    // (see MOCK_AI_TRIAGE_ENABLED above). Surface an honest "unavailable"
+    // state instead of fabricating a suggestion.
+    if (!MOCK_AI_TRIAGE_ENABLED) {
+      setAiSuggestion(null);
+      setAiSuggestionLoading(false);
+      setAiSuggestionUnavailable(true);
+      return;
+    }
+
+    // Dev-only mock (explicitly opted in via VITE_ENABLE_MOCK_AI_TRIAGE).
+    setAiSuggestionUnavailable(false);
+    setAiSuggestionLoading(true);
+    setTimeout(() => {
+      setAiSuggestion({
+        category: 'plumbing',
+        confidence: 0.85,
+        priority: 'medium',
+      });
+      setAiSuggestionLoading(false);
+    }, 1500);
   }, []);
 
   return (
@@ -82,6 +105,7 @@ export function CreateFaultPage({
           enablePhotoFirst={enablePhotoFirst}
           aiSuggestion={aiSuggestion}
           aiSuggestionLoading={aiSuggestionLoading}
+          aiSuggestionUnavailable={aiSuggestionUnavailable}
           onPhotosChange={handlePhotosChange}
         />
       </div>
