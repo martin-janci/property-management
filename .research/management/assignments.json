@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-17T20:32:29Z",
+  "generated": "2026-08-17T21:14:11Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2789",
       "branch": "auto-impl/gh-issue-2789-06aded2c",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-17T16:30:39Z",
-      "last_updated": "2026-08-17T20:27:39Z",
-      "status_changed_at": "2026-08-17T20:27:39Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-17T21:13:28Z",
+      "status_changed_at": "2026-08-17T21:13:28Z",
+      "pr_number": 2790,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2790",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": "[reclaim] sandbox-timeout after 1st spawn (no branch after ~230m); respawned implementer round 1",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2790 done: trusted-proxy client-IP gate in new client_ip.rs (shares+forms); fmt+clippy green, 13 new tests incl IG3 pass; 14 test failures pre-existing DATABASE_URL env-only (CI is full gate)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
