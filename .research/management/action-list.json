@@ -225,6 +225,34 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-17T10:25:00Z"
+    },
+    {
+      "id": "code-review-api-core-voice-actions-fabricated-empty-retry1",
+      "action": "Voice check-announcements & check-meter fabricate success with empty data — residents told 'no new announcements'/'no pending readings' without any query [retry 1/2 of failed code-review-api-core-voice-actions-fabricated-empty]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-17T12:26:50Z (retry_of=code-review-api-core-voice-actions-fabricated-empty reason=failed-no-pr cooldown_ok newest_failure=2026-08-10T12:13:16Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T12:26:50Z",
+      "retry_of": "code-review-api-core-voice-actions-fabricated-empty",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-api-core-quiet-drain-drops-failed-delivery-retry1",
+      "action": "Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification permanently lost on transient failure [retry 1/2 of failed code-review-api-core-quiet-drain-drops-failed-delivery]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-17T12:26:50Z (retry_of=code-review-api-core-quiet-drain-drops-failed-delivery reason=failed-no-pr cooldown_ok newest_failure=2026-08-10T12:13:38Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T12:26:50Z",
+      "retry_of": "code-review-api-core-quiet-drain-drops-failed-delivery",
+      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
