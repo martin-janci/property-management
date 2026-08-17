@@ -70,22 +70,18 @@ export const ContentModerationPage: React.FC = () => {
     content_owner: {
       user_id: c.owner_id,
       name: c.owner_name,
-      // TODO(Phase-2): Extend API to include previous_violations count
-      // Phase 1: Default value
-      previous_violations: 0,
     },
-    // TODO(Phase-2): Extend API to include report_source
-    // Phase 1: Default value
-    report_source: 'user',
     violation_type: c.violation_type as ModerationCase['violation_type'],
     status: c.status as ModerationCase['status'],
     priority: c.priority,
     assigned_to_name: c.assigned_to_name,
     appeal_filed: c.is_appeal ?? false,
     created_at: c.reported_at,
-    age_hours: c.sla_deadline
-      ? Math.max(0, (new Date().getTime() - new Date(c.reported_at).getTime()) / (1000 * 60 * 60))
-      : 0,
+    // Derived from the real `reported_at` timestamp the API returns — not fabricated.
+    age_hours: Math.max(
+      0,
+      (new Date().getTime() - new Date(c.reported_at).getTime()) / (1000 * 60 * 60)
+    ),
   }));
 
   const stats: ModerationQueueStatsData | null = statsData?.stats
