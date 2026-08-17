@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17",
+  "generated_at": "2026-08-17T22:43:16Z",
   "signals": [
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -52,13 +52,99 @@
       "type": "code-review-finding",
       "source": "tier1d-dispatcher-generator",
       "segment": "ppt-web-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
       "evidence": [
         "Consumed pre-generated tier1d artifact: .research/signals/2026-08-17-ppt-web-core-tier1d.json",
         "frontend/apps/ppt-web/src/lib/errorHandler.ts:56-141 defines ERROR_MESSAGES + DEFAULT_ERROR as hardcoded English literals; parseApiError/parseErrorResponse/parseHttpStatusError and 429 branch never route through react-i18next; ~300 useTranslation components elsewhere in ppt-web."
+      ],
+      "reingested_from_prior_run": true
+    },
+    {
+      "id": "code-review-reality-web-realtor-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the public agent/realtor profile page (route /[locale]/realtor/[id]) imports NO useTranslations/getTranslations (grep count 0) across ~621 non-comment lines, yet reality-web is a 4-locale public portal (sk/cs/de/en per CLAUDE.md).",
+        "Every user-facing label is a hardcoded Slovak literal (161/162/163/165/291); line 311 hardcodes toLocaleString('sk-SK') for all four locales.",
+        "Landable frontend-only fix: introduce a realtor/agent-profile next-intl namespace, replace hardcoded literals with t('...'), derive Intl locale from route [locale]."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (~325 lines) has zero useTranslations/getTranslations on the 4-locale public portal. Hardcoded Slovak on loading (36), not-found (46), empty-listings (223), CTA (302). Not-found + empty render Slovak for cs/de/en visitors of an SEO-indexed page.",
+        "Landable frontend-only fix: add an agency-profile next-intl namespace and wire t('...') resolved from route [locale]."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (~930 lines) — zero i18n wiring, ~18 hardcoded Slovak strings; whole edit flow renders Slovak for cs/de/en account holders. Authenticated (not SEO-indexed) so lower severity but same systemic gap."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — InquiryCard.handleCancel calls cancelInquiry.mutate() fire-and-forget and closes the confirm dialog immediately. Mutation state never read. If cancel POST fails, user sees dialog close, no feedback, inquiry silently stays pending.",
+        "Landable frontend-only fix: consume mutation state and surface an inline error/toast on failure."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-locale-pages-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "9 authenticated /[locale]/** pages ship hardcoded English on 4-locale portal (account/profile, account/password, realtor/profile, realtor page, realtor/listings/new, realtor/listings/[id]/edit, realtor/listings page, inquiries). Grep -c useTranslations|getTranslations returns 0 for each.",
+        "Landable frontend-only fix: add per-page next-intl namespaces and wire useTranslations across each page; mirrors the shipped RealtorManagement / ComparisonView / AgencyErrorStates fixes."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:197-240 run_once advances each saved search's watermark unconditionally after a capped scan (match_limit default 100). SQL (crates/db/src/repositories/reality_portal/searches.rs:68-104) is ORDER BY published_at DESC LIMIT $13.",
+        "mark_saved_search_matched (:237-240) sets last_matched_at = now() UNCONDITIONALLY (searches.rs:134-159). Consequence: if >100 listings match a saved search within one cadence window (plausible after bulk portal imports), the newest 100 are returned and the rest are permanently dropped — watermark leaps to now(), next run resumes from published_at > now(). Dropped rows are precisely the OLDEST matches.",
+        "Silent data loss under exactly the high-volume conditions where alerts matter most. Fix options: advance watermark to MIN published_at minus epsilon (resume-from-oldest); or loop page-by-page until fewer than match_limit rows; or at minimum tracing::warn when ids.len() == match_limit."
       ]
     }
   ],
@@ -67,122 +153,129 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 …",
-      "observed": "exit 0",
+      "command": "brief-exists + H1==today",
+      "observed": "# 2026-08-17 present",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq --slurpfile prev …",
-      "observed": "true",
-      "expected": "true",
-      "note": "seen_signals grew, last_pr_seen/last_commit_sha advanced, hotspot_history changed"
+      "command": "state.json diff vs HEAD",
+      "observed": "last_pr_seen 2772→2790, last_issue_seen 2768→2789, seen_signals +6, stats.runs +1",
+      "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique|length))' backlog.json",
-      "observed": "true",
+      "command": "unique backlog ids",
+      "observed": "345 items, 345 unique",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signal ids checked against prior seen_signals for non-cumulative types with score_delta != 0",
-      "observed": "no offenders",
-      "expected": "no offenders"
+      "command": "no non-cumulative re-emit with score_delta!=0",
+      "observed": "code-review-ppt-web-core-errorhandler-i18n-gap zeroed on re-ingest",
+      "expected": "true"
     },
     {
-      "goal": "G5",
+      "goal": "G5-cap",
       "passed": true,
-      "command": "score cap + decay check",
-      "observed": "no scores > 8; no open item older than 14d requires decay",
-      "expected": "pass"
+      "command": "no item.score > 8",
+      "observed": "max=6",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated_at <= today-14 decayed or dropped",
+      "observed": "no open item older than 14d",
+      "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run",
-      "observed": "0 new plans → gate vacuously passes",
-      "expected": "no unannotated new plans"
+      "command": "new plans have adversarial pass annotation",
+      "observed": "0 new plans this run",
+      "expected": "true (vacuous)"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans this run",
-      "observed": "0 new plans",
-      "expected": "≤2"
+      "command": "new plans ≤2 with all sections",
+      "observed": "0 new plans this run",
+      "expected": "true (vacuous)"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
-      "observed": "verify at Phase 6 stage",
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secret / private-hostname scan",
-      "observed": "0 secrets in added lines (staged diff contains a removed .rlt.sk line from a prior malformed row's evidence — sanitized this run; interpretation mirrors G17's added-lines-only semantics)",
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "regen backlog.md diff",
-      "observed": "byte-identical (regenerator uses pinned NOW_UTC)",
-      "expected": "identical"
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "byte-identical",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
       "command": "phase-failure honesty",
-      "observed": "no phase failures this run",
-      "expected": "consistent"
+      "observed": "no phases failed",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plan slugs still present",
-      "observed": "no plans removed this run",
-      "expected": "converge"
+      "command": "prior plan slugs still present",
+      "observed": "all present",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive-only-grows count check",
-      "observed": "no archive removals",
-      "expected": "count unchanged or grown"
+      "command": "archive count ≥ HEAD",
+      "observed": "8 >= 8",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "regen IDEAS_TRIAGE.md diff",
-      "observed": "byte-identical (regenerator uses pinned NOW_UTC)",
-      "expected": "identical"
+      "command": "IDEAS_TRIAGE.md == regen(backlog.json)",
+      "observed": "byte-identical",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix discipline check",
-      "observed": "auto_fix_actions empty this run",
-      "expected": "≤ caps"
+      "command": "auto_fix_actions caps",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts + pm_cursor + coverage_cursor validity",
-      "observed": "Phase 1.6 skipped this run (pm_cursor unchanged) → gate is no-op; existing artifacts parse",
-      "expected": "valid"
+      "command": "management artifacts",
+      "observed": "Phase 1.6 skipped this rerun; pm_cursor unchanged → gate is no-op",
+      "expected": "noop"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "Telegram-secret scan on staged diff",
-      "observed": "verify at Phase 6 stage",
+      "command": "no Telegram bot-token value",
+      "observed": "0 matches",
       "expected": "0"
     }
-  ]
+  ],
+  "auto_fix_skipped_reason": "no candidate"
 }

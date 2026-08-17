@@ -8576,6 +8576,142 @@
         "assignment_status": "merged",
         "pr_number": 2775
       }
+    },
+    {
+      "id": "code-review-reality-web-realtor-page-no-i18n",
+      "title": "reality-web /[locale]/realtor/[id]/page.tsx has zero useTranslations — hardcoded Slovak on 4-locale public portal (cs/de/en visitors see SK)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator 2026-08-17"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the public agent/realtor profile page (route /[locale]/realtor/[id], screen-map docs/screens/reality/agent-profile.md) imports NO useTranslations/getTranslations (grep count 0) across ~621 non-comment lines, yet reality-web is a 4-locale public portal (sk/cs/de/en).",
+        "Every user-facing label is a hardcoded Slovak literal (lines 161/162/163/165/291). A cs/de/en visitor to an indexed agent profile sees the entire page in Slovak.",
+        "Line 311 hardcodes toLocaleString('sk-SK') so number/date formatting is Slovak-grouped for all four locales regardless of visitor.",
+        "Landable frontend-only fix: introduce a realtor/agent-profile next-intl namespace (sk/cs/de/en), replace hardcoded literals with t('...') via useTranslations, and derive Intl locale from the route [locale] param. Mirrors the previously-shipped ComparisonView i18n finding (code-review-reality-web-comparison-view-i18n)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "title": "reality-web /[locale]/agency/[slug]/page.tsx has zero useTranslations — public agency profile ships Slovak-only for cs/de/en visitors",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator 2026-08-17"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (~325 lines) has zero useTranslations/getTranslations on the same 4-locale public portal.",
+        "User-facing strings are hardcoded Slovak: line 36 loading '>Načítavam…<', line 46 not-found '>Kancelária sa nenašla.<', line 223 empty '>Žiadne aktívne ponuky.<', line 302 CTA '🌐 Navštíviť web'. Not-found + empty render Slovak for cs/de/en visitors of an SEO-indexed page.",
+        "Landable frontend-only fix: add an agency-profile next-intl namespace (sk/cs/de/en) and replace loading/not-found/empty-state/CTA literals with t('...') resolved from route [locale]."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "title": "reality-web /[locale]/account/listings/[id]/edit/page.tsx: ~18 hardcoded Slovak strings on authenticated 4-locale edit flow",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator 2026-08-17"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (~930 lines) has zero useTranslations/getTranslations with ~18 hardcoded Slovak strings, so the whole edit flow renders Slovak for cs/de/en account holders.",
+        "Spans error/status/form labels: 166 'Načítanie inzerátu zlyhalo.', 213 'Uloženie zlyhalo, skúste znova.', 223 'Načítavam inzerát…', 384/725 'Prenájom', 429 'Ulica a číslo', 466 'Počet izieb', 468 'Celkový počet poschodí', 469 'Rok výstavby', 665/746 'Aktívny', 666/748 'Neaktívny', 827 'Ukladám…'/'Uložiť zmeny'.",
+        "Lower severity than realtor/agency public pages (authenticated, not SEO-indexed) but same systemic gap. Landable frontend-only fix: add a listing-edit next-intl namespace and replace literals with t('...') resolved from route [locale]."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "title": "reality-web inquiries page fires cancel mutation fire-and-forget — user sees success when API errors (401/409/network)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator 2026-08-17"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — InquiryCard.handleCancel calls cancelInquiry.mutate(inquiry.id) fire-and-forget and immediately setShowCancelConfirm(false). The mutation result (useCancelInquiry() from @ppt/reality-api-client) is never read: no cancelInquiry.isError, .isPending, .error, no onError/onSuccess callback.",
+        "If the cancel POST fails (network / 409 already-cancelled / 403), the confirm dialog closes, the card shows no feedback, and the inquiry silently stays pending — user believes it was cancelled.",
+        "Landable frontend-only fix: consume the mutation state (loading + error) and surface a toast or inline error; keep the dialog open on error so the user can retry."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-locale-pages-hardcoded-i18n",
+      "title": "reality-web: ~9 authenticated /[locale]/** pages ship hardcoded English strings — no i18n wiring across profile/password/realtor workspace/inquiries",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator 2026-08-17"
+      ],
+      "evidence": [
+        "reality-web is a 4-locale public portal (next-intl 4; locales sk/cs/de/en) yet several app/[locale]/** pages ship hardcoded English copy with zero i18n wiring. Confirmed by grep -c 'useTranslations|getTranslations' returning 0 for: app/[locale]/account/profile/page.tsx, app/[locale]/account/password/page.tsx, app/[locale]/realtor/profile/page.tsx, app/[locale]/realtor/page.tsx, app/[locale]/realtor/listings/new/page.tsx, app/[locale]/realtor/listings/[id]/edit/page.tsx, app/[locale]/realtor/listings/page.tsx, app/[locale]/inquiries/page.tsx.",
+        "Consistent pattern: label / heading / CTA / status strings baked in English on all 4 locales. Landable frontend-only fix: add per-page next-intl namespaces and wire useTranslations across each of the 9 pages; mirrors the shipped fixes for RealtorManagement / ComparisonView / AgencyErrorStates."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "title": "reality-server saved-search alert engine: capped scan + unconditional now() watermark permanently drops matches beyond the 100-per-window cap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator 2026-08-17"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:197-240 (run_once matching loop) advances each saved search's watermark UNCONDITIONALLY after a capped scan, so any match beyond the cap in that cadence window is permanently dropped. The scan is find_new_match_listing_ids(&query, Some(since), self.config.match_limit) where match_limit defaults to 100 (SavedSearchAlertConfig::default, :80). Its SQL (crates/db/src/repositories/reality_portal/searches.rs:68-104) is  — it returns only the NEWEST match_limit listings.",
+        "After the capped scan the worker calls mark_saved_search_matched(&mut *conn, search.id, ids.len()) (:237-240), which sets last_matched_at = now() UNCONDITIONALLY (searches.rs:134-159). No timestamp argument; watermark always jumps to wall clock, never to the oldest listing processed. Consequence: if more than match_limit (100) listings match within one cadence window — plausible for a broad daily/weekly search after a bulk portal import — the query keeps the newest 100 (DESC), watermark leaps to now(), and every OLDER matching listing is skipped forever. Since ORDER BY is published_at DESC, the dropped rows are precisely the OLDEST matches; next run resumes from published_at > now() so they can never be re-selected. No continuation cursor, no carry-over.",
+        "Silently defeats the feature's stated purpose ('new listing matches your search -> you're notified') under exactly the high-volume conditions where alerts matter most, with no error and no log. Fix options (all local to worker + repo): (a) advance watermark to MIN published_at of returned ids minus epsilon (resume-from-oldest); or (b) loop find_new_match_listing_ids page-by-page until fewer than match_limit rows come back before advancing to now(); or (c) at minimum emit tracing::warn when ids.len() == match_limit so truncation is observable."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
     }
   ]
 }

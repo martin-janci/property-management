@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-17 03:16 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-17 22:38 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -34,10 +34,16 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-api-core-payment-matcher-multi-suggest` | payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good | open | 2026-08-17 |  |
-| 2 | bug | `code-review-api-handlers-share-pw-no-throttle` | SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockou | open | 2026-08-17 |  |
-| 2 | bug | `code-review-ppt-web-ui-createfault-mock-ai` | ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake dat | open | 2026-08-17 |  |
-| 2 | bug | `code-review-ppt-web-ui-moderation-fabricated-context` | ppt-web moderation page fabricates context that the moderation API never returns — misleading data | open | 2026-08-17 |  |
+| 2 | bug | `code-review-api-core-payment-matcher-multi-suggest` | payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good | done | 2026-08-17 |  |
+| 2 | bug | `code-review-api-handlers-share-pw-no-throttle` | SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockou | done | 2026-08-17 |  |
+| 2 | bug | `code-review-mobile-rn-nfc-revoke-local-persists-offline` | NFC emergencyRevokeAll leaves local credentials usable offline when the revoke API call fails | done | 2026-08-17 |  |
+| 2 | bug | `code-review-mobile-rn-nfc-securestore-2kb-blob` | NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched c | done | 2026-08-17 |  |
+| 2 | bug | `code-review-ppt-web-ui-createfault-mock-ai` | ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake dat | done | 2026-08-17 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-fabricated-context` | ppt-web moderation page fabricates context that the moderation API never returns — misleading data | done | 2026-08-17 |  |
+| 2 | bug | `code-review-reality-server-saved-search-alert-cap-dataloss` | reality-server saved-search alert engine: capped scan + unconditional now() watermark permanently dr | open | 2026-08-17 |  |
+| 2 | bug | `code-review-reality-web-agency-slug-no-i18n` | reality-web /[locale]/agency/[slug]/page.tsx has zero useTranslations — public agency profile ships  | open | 2026-08-17 |  |
+| 2 | bug | `code-review-reality-web-inquiry-cancel-no-error` | reality-web inquiries page fires cancel mutation fire-and-forget — user sees success when API errors | open | 2026-08-17 |  |
+| 2 | bug | `code-review-reality-web-realtor-page-no-i18n` | reality-web /[locale]/realtor/[id]/page.tsx has zero useTranslations — hardcoded Slovak on 4-locale  | open | 2026-08-17 |  |
 | 2 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang i | open | 2026-08-16 |  |
 | 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
 | 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
@@ -142,15 +148,18 @@
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
 | 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | done | 2026-08-17 |  |
 | 1 | refactor | `churn-hotspot-voice-webhooks-rs` | voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google J | dropped | 2026-08-17 |  |
-| 1 | bug | `code-review-api-core-payment-matcher-vs-only-threshold` | payment matcher uses a single VS-only threshold — ignores IBAN / amount tie-breakers documented in s | open | 2026-08-17 |  |
-| 1 | bug | `code-review-api-handlers-share-log-proxy-ip` | share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind — misattributes  | open | 2026-08-17 |  |
-| 1 | bug | `code-review-ppt-web-core-errorhandler-i18n-gap` | errorHandler.ts: entire client error catalogue is hardcoded English (no i18n) | open | 2026-08-17 |  |
-| 1 | bug | `code-review-ppt-web-ui-moderation-no-i18n` | ppt-web moderation page renders hardcoded English strings — no i18n on user-facing surface | open | 2026-08-17 |  |
-| 1 | bug | `code-review-reality-web-agency-errorstate-i18n` | reality-web AgencyErrorState has untranslated English messages on 4-locale portal | open | 2026-08-17 |  |
-| 1 | bug | `code-review-reality-web-comparison-view-i18n` | reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal | open | 2026-08-17 |  |
-| 1 | bug | `code-review-reality-web-realtor-mgmt-i18n` | reality-web RealtorManagement page has untranslated English UI on 4-locale portal | open | 2026-08-17 |  |
-| 1 | refactor | `repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs` | repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 2) | open | 2026-08-17 |  |
-| 1 | refactor | `repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs` | repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2) | open | 2026-08-17 |  |
+| 1 | bug | `code-review-api-core-payment-matcher-vs-only-threshold` | payment matcher uses a single VS-only threshold — ignores IBAN / amount tie-breakers documented in s | done | 2026-08-17 |  |
+| 1 | bug | `code-review-api-handlers-share-log-proxy-ip` | share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind — misattributes  | done | 2026-08-17 |  |
+| 1 | bug | `code-review-mobile-rn-nfc-accesslog-parse-unguarded` | NFC getAccessLog JSON.parse is unguarded, so a corrupted log blob rejects handleTap after access was | done | 2026-08-17 |  |
+| 1 | bug | `code-review-ppt-web-core-errorhandler-i18n-gap` | errorHandler.ts: entire client error catalogue is hardcoded English (no i18n) | done | 2026-08-17 |  |
+| 1 | bug | `code-review-ppt-web-ui-moderation-no-i18n` | ppt-web moderation page renders hardcoded English strings — no i18n on user-facing surface | done | 2026-08-17 |  |
+| 1 | bug | `code-review-reality-web-agency-errorstate-i18n` | reality-web AgencyErrorState has untranslated English messages on 4-locale portal | done | 2026-08-17 |  |
+| 1 | bug | `code-review-reality-web-comparison-view-i18n` | reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal | done | 2026-08-17 |  |
+| 1 | refactor | `code-review-reality-web-listing-edit-no-i18n` | reality-web /[locale]/account/listings/[id]/edit/page.tsx: ~18 hardcoded Slovak strings on authentic | open | 2026-08-17 |  |
+| 1 | refactor | `code-review-reality-web-locale-pages-hardcoded-i18n` | reality-web: ~9 authenticated /[locale]/** pages ship hardcoded English strings — no i18n wiring acr | open | 2026-08-17 |  |
+| 1 | bug | `code-review-reality-web-realtor-mgmt-i18n` | reality-web RealtorManagement page has untranslated English UI on 4-locale portal | done | 2026-08-17 |  |
+| 1 | refactor | `repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs` | repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 2) | done | 2026-08-17 |  |
+| 1 | refactor | `repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs` | repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2) | dropped | 2026-08-17 |  |
 | 1 | refactor | `churn-hotspot-api-call-rs` | backend/servers/api-server/src/services/actions/api_call.rs churned +106 lines this run (PR #2746 SS | done | 2026-08-15 |  |
 | 1 | test-gap | `churn-hotspot-marketplace-award-quote-idor-tests` | backend/servers/api-server/tests/suites/marketplace_award_quote_idor_tests.rs churned +298 lines thi | done | 2026-08-15 |  |
 | 1 | test-gap | `churn-hotspot-protected-route-i18n-test` | frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts churned +111 lines this run (new test suit | done | 2026-08-15 |  |
@@ -339,3 +348,4 @@
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
+
