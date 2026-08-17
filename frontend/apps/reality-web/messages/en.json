@@ -121,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Failed to load shared comparison. Some properties may no longer be available.",
-    "loading": "Loading shared comparison..."
+    "loading": "Loading shared comparison...",
+    "empty": {
+      "title": "No properties to compare",
+      "description": "Add properties to your comparison from the listings page.",
+      "browse": "Browse Listings"
+    },
+    "actions": {
+      "share": "Share",
+      "exportPdf": "Export PDF",
+      "clearAll": "Clear All"
+    },
+    "toast": {
+      "linkCopied": "Comparison link copied to clipboard!",
+      "shareUrl": "Share this URL: {url}",
+      "pdfComingSoon": "PDF export coming soon!"
+    },
+    "currencyWarning": "Note: Properties use different currencies. Price comparison highlighting is disabled.",
+    "propertyHeader": "Property",
+    "remove": "Remove",
+    "removeAria": "Remove {title} from comparison",
+    "rows": {
+      "price": "Price",
+      "type": "Type",
+      "propertyType": "Property Type",
+      "area": "Area",
+      "rooms": "Rooms",
+      "floor": "Floor",
+      "city": "City",
+      "district": "District",
+      "pricePerSqm": "Price per m²"
+    },
+    "transactionType": {
+      "sale": "For Sale",
+      "rent": "For Rent"
+    }
   },
   "contact": {
     "askQuestion": "Ask a question",

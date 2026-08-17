@@ -121,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Der geteilte Vergleich konnte nicht geladen werden. Einige Immobilien sind möglicherweise nicht mehr verfügbar.",
-    "loading": "Geteilter Vergleich wird geladen..."
+    "loading": "Geteilter Vergleich wird geladen...",
+    "empty": {
+      "title": "Keine Immobilien zum Vergleichen",
+      "description": "Fügen Sie Immobilien von der Angebotsseite zu Ihrem Vergleich hinzu.",
+      "browse": "Angebote durchsuchen"
+    },
+    "actions": {
+      "share": "Teilen",
+      "exportPdf": "PDF exportieren",
+      "clearAll": "Alle löschen"
+    },
+    "toast": {
+      "linkCopied": "Vergleichslink in die Zwischenablage kopiert!",
+      "shareUrl": "Teilen Sie diese URL: {url}",
+      "pdfComingSoon": "PDF-Export kommt bald!"
+    },
+    "currencyWarning": "Hinweis: Die Immobilien verwenden unterschiedliche Währungen. Die Hervorhebung des Preisvergleichs ist deaktiviert.",
+    "propertyHeader": "Immobilie",
+    "remove": "Entfernen",
+    "removeAria": "{title} aus dem Vergleich entfernen",
+    "rows": {
+      "price": "Preis",
+      "type": "Art",
+      "propertyType": "Immobilientyp",
+      "area": "Fläche",
+      "rooms": "Zimmer",
+      "floor": "Etage",
+      "city": "Stadt",
+      "district": "Bezirk",
+      "pricePerSqm": "Preis pro m²"
+    },
+    "transactionType": {
+      "sale": "Zum Verkauf",
+      "rent": "Zur Miete"
+    }
   },
   "contact": {
     "askQuestion": "Eine Frage stellen",

@@ -121,7 +121,41 @@
   },
   "comparison": {
     "loadError": "Nepodarilo sa načítať zdieľané porovnanie. Niektoré nehnuteľnosti už nemusia byť dostupné.",
-    "loading": "Načítava sa zdieľané porovnanie..."
+    "loading": "Načítava sa zdieľané porovnanie...",
+    "empty": {
+      "title": "Žiadne nehnuteľnosti na porovnanie",
+      "description": "Pridajte nehnuteľnosti do porovnania zo stránky s ponukami.",
+      "browse": "Prehľadávať ponuky"
+    },
+    "actions": {
+      "share": "Zdieľať",
+      "exportPdf": "Exportovať PDF",
+      "clearAll": "Vymazať všetko"
+    },
+    "toast": {
+      "linkCopied": "Odkaz na porovnanie skopírovaný do schránky!",
+      "shareUrl": "Zdieľajte túto adresu URL: {url}",
+      "pdfComingSoon": "Export do PDF čoskoro!"
+    },
+    "currencyWarning": "Poznámka: Nehnuteľnosti používajú rôzne meny. Zvýrazňovanie porovnania cien je vypnuté.",
+    "propertyHeader": "Nehnuteľnosť",
+    "remove": "Odstrániť",
+    "removeAria": "Odstrániť {title} z porovnania",
+    "rows": {
+      "price": "Cena",
+      "type": "Typ",
+      "propertyType": "Typ nehnuteľnosti",
+      "area": "Plocha",
+      "rooms": "Izby",
+      "floor": "Poschodie",
+      "city": "Mesto",
+      "district": "Okres",
+      "pricePerSqm": "Cena za m²"
+    },
+    "transactionType": {
+      "sale": "Na predaj",
+      "rent": "Na prenájom"
+    }
   },
   "contact": {
     "askQuestion": "Položiť otázku",

@@ -121,7 +121,41 @@
   },
   "comparison": {
     "loadError": "A megosztott összehasonlítás betöltése sikertelen. Egyes ingatlanok már nem érhetők el.",
-    "loading": "Megosztott összehasonlítás betöltése..."
+    "loading": "Megosztott összehasonlítás betöltése...",
+    "empty": {
+      "title": "Nincs összehasonlítható ingatlan",
+      "description": "Adjon hozzá ingatlanokat az összehasonlításhoz a hirdetések oldaláról.",
+      "browse": "Hirdetések böngészése"
+    },
+    "actions": {
+      "share": "Megosztás",
+      "exportPdf": "PDF exportálása",
+      "clearAll": "Összes törlése"
+    },
+    "toast": {
+      "linkCopied": "Összehasonlítási link a vágólapra másolva!",
+      "shareUrl": "Ossza meg ezt az URL-t: {url}",
+      "pdfComingSoon": "A PDF exportálás hamarosan!"
+    },
+    "currencyWarning": "Megjegyzés: Az ingatlanok különböző pénznemeket használnak. Az árösszehasonlítás kiemelése le van tiltva.",
+    "propertyHeader": "Ingatlan",
+    "remove": "Eltávolítás",
+    "removeAria": "{title} eltávolítása az összehasonlításból",
+    "rows": {
+      "price": "Ár",
+      "type": "Típus",
+      "propertyType": "Ingatlan típusa",
+      "area": "Terület",
+      "rooms": "Szobák",
+      "floor": "Emelet",
+      "city": "Város",
+      "district": "Kerület",
+      "pricePerSqm": "Ár per m²"
+    },
+    "transactionType": {
+      "sale": "Eladó",
+      "rent": "Kiadó"
+    }
   },
   "contact": {
     "askQuestion": "Kérdést feltenni",
