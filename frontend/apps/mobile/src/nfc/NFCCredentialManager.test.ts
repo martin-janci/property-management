@@ -1,17 +1,45 @@
 /**
- * Unit tests for NFCCredentialManager access-log parsing.
+ * Unit tests for `NFCCredentialManager`.
  *
- * Regression guard: getAccessLog() runs an unguarded JSON.parse on the stored
- * blob. Because logAccessAttempt() reads the log AFTER access has already been
- * granted at the door, a corrupted blob would throw a SyntaxError and reject
- * the tap flow post-grant. The parse must be guarded: a corrupted blob is
- * treated as an empty/unavailable log rather than throwing.
+ * Covers three independent guarantees:
+ *
+ *  - Emergency "lost phone" revoke must clear the local credential cache even
+ *    when the server-side revoke call fails, so a failed server revoke can
+ *    never leave credentials usable offline (code-review finding
+ *    `code-review-mobile-rn-nfc-revoke-local-persists-offline`).
+ *  - getAccessLog() must guard its JSON.parse: because logAccessAttempt() reads
+ *    the log AFTER access has already been granted at the door, a corrupted
+ *    blob must be treated as an empty/unavailable log rather than throwing and
+ *    rejecting the tap flow post-grant.
+ *  - Credentials must be chunked across SecureStore slots so a large fetched set
+ *    is never silently dropped by SecureStore's ~2 KB per-value Android cap.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
 import { NFCCredentialManager } from './NFCCredentialManager';
 import type { NFCCredential } from './types';
+
+// A single SecureStore mock shared by every suite below. It exposes an
+// in-memory `__store` Map (asserted directly by the emergencyRevokeAll suite)
+// and backs getItemAsync/setItemAsync/deleteItemAsync with it by default.
+// Suites that need a fresh, isolated backing map (the chunking round-trip
+// tests) call installStatefulSecureStore() to rebind the implementations.
+jest.mock('expo-secure-store', () => {
+  const store = new Map<string, string>();
+  return {
+    __store: store,
+    getItemAsync: jest.fn(async (k: string) => store.get(k) ?? null),
+    setItemAsync: jest.fn(async (k: string, v: string) => {
+      store.set(k, v);
+    }),
+    deleteItemAsync: jest.fn(async (k: string) => {
+      store.delete(k);
+    }),
+  };
+});
+
+const secureStore = (SecureStore as unknown as { __store: Map<string, string> }).__store;
 
 const getItem = AsyncStorage.getItem as jest.Mock;
 const setItem = AsyncStorage.setItem as jest.Mock;
@@ -32,7 +60,18 @@ function utf8ByteLength(str: string): number {
   return unescape(encodeURIComponent(str)).length;
 }
 
-/** Back the mocked SecureStore with a real in-memory map for round-trip tests. */
+/** Rebind the mocked SecureStore to the shared module-level `__store` map. */
+function useSharedSecureStore(): void {
+  secureGet.mockImplementation(async (key: string) => secureStore.get(key) ?? null);
+  secureSet.mockImplementation(async (key: string, value: string) => {
+    secureStore.set(key, value);
+  });
+  secureDelete.mockImplementation(async (key: string) => {
+    secureStore.delete(key);
+  });
+}
+
+/** Back the mocked SecureStore with a fresh in-memory map for round-trip tests. */
 function installStatefulSecureStore(): Map<string, string> {
   const store = new Map<string, string>();
   secureGet.mockImplementation(async (key: string) => store.get(key) ?? null);
@@ -45,8 +84,11 @@ function installStatefulSecureStore(): Map<string, string> {
   return store;
 }
 
-/** Build a credential whose serialized size is dominated by `encryptedData`. */
-function makeCredential(id: string, payloadBytes: number): NFCCredential {
+/**
+ * Build a credential whose serialized size is dominated by `encryptedData`.
+ * `payloadBytes` defaults to 0 for suites that don't care about serialized size.
+ */
+function makeCredential(id: string, payloadBytes = 0): NFCCredential {
   return {
     id,
     buildingId: `building-${id}`,
@@ -62,6 +104,83 @@ function makeCredential(id: string, payloadBytes: number): NFCCredential {
     encryptedData: 'x'.repeat(payloadBytes),
   };
 }
+
+describe('NFCCredentialManager.emergencyRevokeAll', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    secureStore.clear();
+    // Rebind SecureStore to the shared `__store` map so this suite is
+    // independent of any per-describe mock the chunking suites install.
+    useSharedSecureStore();
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('clears the local credential cache when the server revoke succeeds', async () => {
+    const okFetch = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    }));
+    globalThis.fetch = okFetch as unknown as typeof fetch;
+
+    const mgr = new NFCCredentialManager('http://localhost:8080');
+    secureStore.set(CREDENTIALS_KEY, JSON.stringify([makeCredential('a')]));
+    await mgr.initialize();
+    expect(mgr.getActiveCredentials()).toHaveLength(1);
+
+    await mgr.emergencyRevokeAll();
+
+    expect(mgr.getActiveCredentials()).toHaveLength(0);
+
+    // The persisted cache must reload as empty so nothing can be presented at an
+    // access point offline. We assert via a fresh manager rather than the raw
+    // stored string: the sibling SecureStore-chunking change persists a chunk
+    // manifest at CREDENTIALS_KEY instead of a raw '[]', but the
+    // reload-produces-no-credentials guarantee is unchanged — and this verifies
+    // it end-to-end through the real deserialize path.
+    const reloaded = new NFCCredentialManager('http://localhost:8080');
+    await reloaded.initialize();
+    expect(reloaded.getActiveCredentials()).toHaveLength(0);
+  });
+
+  it('clears the local credential cache even when the server revoke fails, and surfaces the error', async () => {
+    // Server revoke fails (e.g. device offline / server error). The panic
+    // action must still block offline use of the cached credentials.
+    const failingFetch = jest.fn(async () => ({
+      ok: false,
+      status: 503,
+      json: async () => ({}),
+    }));
+    globalThis.fetch = failingFetch as unknown as typeof fetch;
+
+    const mgr = new NFCCredentialManager('http://localhost:8080');
+    secureStore.set(CREDENTIALS_KEY, JSON.stringify([makeCredential('a'), makeCredential('b')]));
+    await mgr.initialize();
+    expect(mgr.getActiveCredentials()).toHaveLength(2);
+
+    // The failure must surface so the caller can prompt a retry.
+    await expect(mgr.emergencyRevokeAll()).rejects.toThrow();
+
+    // ...but the local cache — in memory AND persisted — must be cleared so the
+    // credentials cannot be presented at an access point offline.
+    expect(mgr.getActiveCredentials()).toHaveLength(0);
+    expect(mgr.getCredentialForBuilding('building-a')).toBeUndefined();
+
+    // The persisted cache must also reload empty (see note in the sibling test):
+    // a fresh manager reading the same SecureStore must find no credentials.
+    const reloaded = new NFCCredentialManager('http://localhost:8080');
+    await reloaded.initialize();
+    expect(reloaded.getActiveCredentials()).toHaveLength(0);
+    expect(reloaded.getCredentialForBuilding('building-a')).toBeUndefined();
+  });
+});
 
 describe('NFCCredentialManager.getAccessLog', () => {
   let manager: NFCCredentialManager;
