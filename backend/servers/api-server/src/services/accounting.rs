@@ -121,10 +121,24 @@ impl AccountingService {
             })
             .collect();
 
+        let threshold = Decimal::from_str("0.5").unwrap();
+
         for line in lines {
             if line.match_state != "unmatched" && line.match_state != "suggested" {
                 continue;
             }
+
+            // Score every open invoice for this line, then surface only the
+            // best-scoring tier. Previously EVERY invoice that cleared the
+            // auto-suggest threshold was upserted as a suggestion with no
+            // `break`, so a line sharing a variable symbol with N open invoices
+            // was auto-suggested against all N — burying the genuinely-best
+            // candidate under strictly-worse ones and over-generating
+            // PaymentMatch rows a human then has to reject. We now keep the
+            // maximum-confidence candidates only, with ties retained so
+            // genuinely equally-good invoices are all surfaced for manual
+            // disambiguation.
+            let mut scored: Vec<(&Invoice, Decimal)> = Vec::new();
 
             for invoice in &open_invoices {
                 let mut confidence = Decimal::ZERO;
@@ -147,31 +161,44 @@ impl AccountingService {
 
                 // TODO: Date proximity, IBAN match
 
-                if confidence >= Decimal::from_str("0.5").unwrap() {
-                    let p_match = PaymentMatch {
-                        id: Uuid::new_v4(),
-                        tenant_id,
-                        statement_line_id: line.id,
-                        invoice_id: invoice.id,
-                        confidence,
-                        decided_by: None,
-                        decided_at: None,
-                        state: PaymentMatchState::Suggested,
-                    };
-                    self.repo
-                        .upsert_payment_match_rls(&mut *executor, p_match)
-                        .await
-                        .map_err(|e| AppError::Database(e.to_string()))?;
-
-                    self.repo
-                        .update_bank_statement_line_match_state_rls(
-                            &mut *executor,
-                            line.id,
-                            "suggested".to_string(),
-                        )
-                        .await
-                        .map_err(|e| AppError::Database(e.to_string()))?;
+                if confidence >= threshold {
+                    scored.push((invoice, confidence));
                 }
+            }
+
+            // Retain only the candidates at the highest confidence (ties kept).
+            let Some(best_confidence) = scored.iter().map(|(_, c)| *c).max() else {
+                continue;
+            };
+
+            let mut suggested_any = false;
+            for (invoice, confidence) in scored.iter().filter(|(_, c)| *c == best_confidence) {
+                let p_match = PaymentMatch {
+                    id: Uuid::new_v4(),
+                    tenant_id,
+                    statement_line_id: line.id,
+                    invoice_id: invoice.id,
+                    confidence: *confidence,
+                    decided_by: None,
+                    decided_at: None,
+                    state: PaymentMatchState::Suggested,
+                };
+                self.repo
+                    .upsert_payment_match_rls(&mut *executor, p_match)
+                    .await
+                    .map_err(|e| AppError::Database(e.to_string()))?;
+                suggested_any = true;
+            }
+
+            if suggested_any {
+                self.repo
+                    .update_bank_statement_line_match_state_rls(
+                        &mut *executor,
+                        line.id,
+                        "suggested".to_string(),
+                    )
+                    .await
+                    .map_err(|e| AppError::Database(e.to_string()))?;
             }
         }
 
