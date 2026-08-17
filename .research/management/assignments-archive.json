@@ -12439,6 +12439,28 @@
       "merge_attempted_at": "2026-08-15T16:36:09Z"
     },
     {
+      "task_id": "gh-issue-2789",
+      "branch": "auto-impl/gh-issue-2789-06aded2c",
+      "status": "merged",
+      "claimed_at": "2026-08-17T16:30:39Z",
+      "last_updated": "2026-08-17T22:27:21Z",
+      "status_changed_at": "2026-08-17T22:27:21Z",
+      "pr_number": 2790,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2790",
+      "merged_at": "2026-08-17T22:27:21Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2790 done: trusted-proxy client-IP gate in new client_ip.rs (shares+forms); fmt+clippy green, 13 new tests incl IG3 pass; 14 test failures pre-existing DATABASE_URL env-only (CI is full gate)",
+      "reviewer_summary": "verdict=approve note=trusted-proxy-ip-gate-correct-scope-drift-inherent (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "5713648da108117cac7df69fbaf6229768d6b7a1",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-17T22:27:21Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -14677,5 +14699,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-17T18:32:20Z"
+  "archived_at": "2026-08-17T22:28:23Z"
 }
