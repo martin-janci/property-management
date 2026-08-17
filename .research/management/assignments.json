@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-17T05:04:35Z",
+  "generated": "2026-08-17T05:06:12Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "code-review-api-core-payment-matcher-multi-suggest",
       "branch": "auto-impl/code-review-api-core-payment-matcher-mul-5055186a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-17T04:31:07Z",
-      "last_updated": "2026-08-17T04:31:07Z",
-      "status_changed_at": "2026-08-17T04:31:07Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-17T05:06:12Z",
+      "status_changed_at": "2026-08-17T05:06:12Z",
+      "pr_number": 2774,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2774",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2774 status=done specialist=rust-backend: corrected inverted finding (bug is OVER-suggestion, not early-return); surfaces only max-confidence tier, keeps ties; TDD test:+fix: (regression fails on dev); fmt+clippy+test-link green, 588 unit tests pass, sqlx DB tests deferred to CI; rebased onto advanced dev (backend-only diff, 3 files)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
