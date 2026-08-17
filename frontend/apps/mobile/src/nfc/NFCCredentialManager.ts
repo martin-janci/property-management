@@ -219,11 +219,25 @@ export class NFCCredentialManager {
 
   /**
    * Report lost phone / emergency revoke all credentials.
+   *
+   * The local credential cache is cleared BEFORE the server call and always,
+   * even when the server revoke fails. A failed (or unreachable) server revoke
+   * must never leave credentials usable offline — that would defeat the entire
+   * point of the "lost phone" panic action, since the encrypted credentials in
+   * SecureStore can be presented at an access point without any network. We
+   * therefore clear locally first (blocking offline use immediately), then
+   * surface any API failure to the caller so it can prompt a retry once the
+   * device is back online.
    */
   async emergencyRevokeAll(): Promise<void> {
-    await this.apiRequest('/api/v1/access/credentials/revoke-all', 'POST');
+    // Clear local cache first so a subsequent API failure cannot leave
+    // credentials usable offline.
     this.credentials = [];
     await this.storeCredentials();
+
+    // Now attempt the server-side revoke. If it fails, the local cache is
+    // already cleared; re-throw so the failure surfaces to the caller.
+    await this.apiRequest('/api/v1/access/credentials/revoke-all', 'POST');
   }
 
   /**
