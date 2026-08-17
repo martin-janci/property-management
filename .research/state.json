@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-17T03:17:10Z",
+  "last_run_iso": "2026-08-17T14:56:02Z",
   "last_run_ms": 30000,
-  "last_pr_seen": 2772,
-  "last_issue_seen": 2768,
-  "last_commit_sha": "9c1ba063c6b38a4e6608c75568dba5847d202b6e",
+  "last_pr_seen": 2788,
+  "last_issue_seen": 2789,
+  "last_commit_sha": "8ef145bda04d8082c2efb8de87b97d7da8ef3486",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -890,7 +890,9 @@
     "code-review-api-core-payment-matcher-vs-only-threshold",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
-    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+    "code-review-post-merge-share-ip-spoof-2789",
+    "resolution-sweep-2026-08-17-refill"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -905,8 +907,8 @@
   },
   "stats": {
     "runs": 66,
-    "vectors_created": 314,
-    "plans_created": 25,
+    "vectors_created": 315,
+    "plans_created": 26,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

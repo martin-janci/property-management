@@ -7644,15 +7644,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-web]"
+        "rotating-expert-review [reality-web]",
+        "PR #2785"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
         "Hardcoded UI text: L104 '<h2>No properties to compare</h2>', L105 'Add properties to your comparison from the listings page.', L107 'Browse Listings', L230 'Clear All', L272 'Remove'",
         "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' — surfaced to end users via showToast()",
-        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
+        "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)",
+        "resolved: PR #2785 merged 2026-08-17T12:33:56Z — code-review-reality-web-comparison-view-i18n: i18n ComparisonView across all locales"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonView.ts"
@@ -7706,14 +7708,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-web]"
+        "rotating-expert-review [reality-web]",
+        "PR #2781"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
         "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
-        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
+        "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI",
+        "resolved: PR #2781 merged 2026-08-17T12:33:39Z — code-review-reality-web-agency-errorstate-i18n: route AgencyErrorStates NoAgencyMessage through next-intl"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.ts"
@@ -7921,14 +7925,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [api-handlers]"
+        "rotating-expert-review [api-handlers]",
+        "PR #2784"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 -- both public share handlers derive the audit ip_address from axum ConnectInfo<SocketAddr> (let ip_address = addr.ip().to_string()) and persist it via log_share_access_for_share(LogShareAccess{ ip_address, .. }).",
         "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *<internal-dev-host-redacted>), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
-        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
+        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer.",
+        "resolved: PR #2784 merged 2026-08-17T12:33:16Z — code-review-api-handlers-share-log-proxy-ip: unwind proxy headers for share access-log client IP",
+        "post-merge review issue #2789 filed: leftmost XFF hop trusted unconditionally — throttle bypassable / audit poisonable. Follow-up tracked separately as security-share-ip-spoof-follow-up-2789."
       ],
       "files": [
         "backend/servers/api-server/src/routes/documents/shares.rs"
@@ -8416,11 +8423,13 @@
         "top-3-churn-2026-08-16",
         "PR #2762",
         "PR #2765",
-        "PR #2766"
+        "PR #2766",
+        "PR #2787"
       ],
       "evidence": [
         "hotspot_history.runs_seen bumped to 2 (last=2026-08-16→2026-08-17); parent churn-hotspot-voice-webhooks-rs already dropped as 'no in-scope hardening' — this signal is instability tracking only.",
-        "14-day window: 3 commits, ~2897 line adds+dels (all voice-webhook OAuth / Alexa security hardening merged 2026-08-15)."
+        "14-day window: 3 commits, ~2897 line adds+dels (all voice-webhook OAuth / Alexa security hardening merged 2026-08-15).",
+        "PR #2787 merged 2026-08-17T14:40:00Z — Google JWKS panic fix (yet another change to this file this run; instability persists, tracker stays open)."
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
@@ -8491,15 +8500,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [mobile-rn]"
+        "rotating-expert-review [mobile-rn]",
+        "PR #2786"
       ],
       "evidence": [
         "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:20-24,292-294 — storeCredentials() writes JSON.stringify(this.credentials) into a single SecureStore slot; the file's own comment acknowledges SecureStore's ~2KB per-value cap yet claims one slot is 'plenty for tens of entries'.",
         "Each NFCCredential (types.ts:10-35) carries encryptedData (NFC HCE payload), a buildingName, and an accessPoints[] array (each with id/name/type/zone/floor/timeRestrictions) — a handful of credentials easily exceeds 2KB, and expo-secure-store rejects/warns on oversized values on Android.",
         "fetchCredentials() (lines 60-75) awaits storeCredentials() inside its try block, so a size-related throw is swallowed and it returns the stale cached list — freshly fetched/refreshed credentials are silently lost; refreshCredential()/updateCredentialUsage() are unguarded and would reject.",
-        "Fix: chunk credentials across multiple SecureStore keys (or store a manifest + per-credential slots), or store the bulk list in encrypted AsyncStorage with only secrets in SecureStore; do not assume the whole array fits one 2KB slot."
+        "Fix: chunk credentials across multiple SecureStore keys (or store a manifest + per-credential slots), or store the bulk list in encrypted AsyncStorage with only secrets in SecureStore; do not assume the whole array fits one 2KB slot.",
+        "resolved: PR #2786 merged 2026-08-17T12:33:47Z — code-review-mobile-rn-nfc-securestore-2kb-blob: chunk NFC credentials across SecureStore slots to avoid 2KB cap"
       ],
       "files": [
         "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
@@ -8546,6 +8557,32 @@
         "assignment_status": "merged",
         "pr_number": 2775
       }
+    },
+    {
+      "id": "security-share-ip-spoof-follow-up-2789",
+      "title": "Spoofable proxy-header client IP defeats share brute-force throttle (#2773) + poisons access-log audit (#2784)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2789",
+        "PR #2784",
+        "PR #2773"
+      ],
+      "evidence": [
+        "Issue #2789 (post-merge review of PR #2784, filed 2026-08-17T14:46:19Z): resolve_client_ip() in backend/servers/api-server/src/routes/documents/shares.rs:92 trusts leftmost X-Forwarded-For hop and any CF-Connecting-IP header without gating on a trusted-proxy allowlist. Consumers: share_access_key(token,ip) brute-force throttle (PR #2773) and log_share_access audit IP.",
+        "Attack: rotate spoofed X-Forwarded-For value per request → fresh token:ip bucket every time → brute-force throttle from #2773 silently defeated. Additionally: every share access can be attributed to an arbitrary source IP in the audit log.",
+        "Same naive leftmost-XFF pattern in backend/servers/api-server/src/routes/forms/submissions.rs:47 and backend/servers/api-server/src/routes/admin/{memberships,impersonation,capabilities,agencies}.rs — worth centralising via a shared client_ip extractor.",
+        "Fix sketch (from issue): gate header trust on ConnectInfo socket peer being inside a configured trusted-proxy CIDR set; prefer CF-Connecting-IP; for XFF walk right-to-left skipping known proxies; fall back to addr.ip()."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs",
+        "backend/servers/api-server/src/routes/forms/submissions.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": "plans/security-share-ip-spoof-follow-up-2789.md"
     }
   ]
 }
