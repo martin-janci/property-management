@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-16T03:14:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2771,
+  "last_run_iso": "2026-08-17T03:17:10Z",
+  "last_run_ms": 30000,
+  "last_pr_seen": 2772,
   "last_issue_seen": 2768,
-  "last_commit_sha": "7f767e24b4f51f797d17841d6e27dbccbbd11fab",
+  "last_commit_sha": "9c1ba063c6b38a4e6608c75568dba5847d202b6e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -468,14 +468,14 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-16",
-      "recent_churn": 556
+      "runs_seen": 2,
+      "last_seen": "2026-08-17",
+      "recent_churn": 2897
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-16",
-      "recent_churn": 270
+      "runs_seen": 2,
+      "last_seen": "2026-08-17",
+      "recent_churn": 352
     }
   },
   "seen_signals": [
@@ -877,7 +877,20 @@
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
     "code-review-mobile-native-kmp-inquiries-response-contract",
-    "code-review-mobile-native-kmp-httpclient-no-timeout"
+    "code-review-mobile-native-kmp-httpclient-no-timeout",
+    "code-review-reality-web-comparison-view-i18n",
+    "code-review-reality-web-realtor-mgmt-i18n",
+    "code-review-reality-web-agency-errorstate-i18n",
+    "code-review-api-handlers-share-pw-no-throttle",
+    "code-review-api-handlers-share-log-proxy-ip",
+    "code-review-ppt-web-ui-createfault-mock-ai",
+    "code-review-ppt-web-ui-moderation-fabricated-context",
+    "code-review-ppt-web-ui-moderation-no-i18n",
+    "code-review-api-core-payment-matcher-multi-suggest",
+    "code-review-api-core-payment-matcher-vs-only-threshold",
+    "code-review-ppt-web-core-errorhandler-i18n-gap",
+    "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -885,14 +898,14 @@
     "api-core": "2026-08-16",
     "reality-server": "2026-08-13",
     "ppt-web-ui": "2026-08-16",
-    "ppt-web-core": "2026-08-12",
+    "ppt-web-core": "2026-08-17",
     "reality-web": "2026-08-12",
     "mobile-rn": "2026-08-12",
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 65,
-    "vectors_created": 301,
+    "runs": 66,
+    "vectors_created": 314,
     "plans_created": 25,
     "quiet_days": 2,
     "auto_fix_count": 0

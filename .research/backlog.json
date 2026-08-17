@@ -7640,48 +7640,87 @@
     },
     {
       "id": "code-review-reality-web-comparison-view-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
+      "title": "reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web]"
+      ],
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx — component imports NO useTranslations (grep count 0) yet is a fully user-facing view on a 4-locale portal (sk/cs/de/en); every string renders in English for non-EN visitors",
         "Hardcoded UI text: L104 '<h2>No properties to compare</h2>', L105 'Add properties to your comparison from the listings page.', L107 'Browse Listings', L230 'Clear All', L272 'Remove'",
         "Hardcoded toast messages: L145 'Comparison link copied to clipboard!', L147 'Share this URL: ...', L153 'PDF export coming soon!' — surfaced to end users via showToast()",
         "Fix: wrap all strings in useTranslations('comparison') and add the keys to messages/{en,sk,cs,de}.json (Epic 51 Share Comparison)"
       ],
-      "expert": "frontend"
-    },
-    {
-      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
-      "confidence": "medium",
       "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "title": "reality-web RealtorManagement page has untranslated English UI on 4-locale portal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web]"
+      ],
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx — component DOES use useTranslations elsewhere, but the destructive confirm-remove modal and header subtitle are hardcoded English, so they never localize",
         "L91 subtitle 'Manage your team of real estate agents', L962 '<span>Are you sure?</span>', L964 'Yes, Remove' (and adjacent 'Cancel') on the realtor-removal confirmation",
         "A partially-translated component is worse than none: SK/CS/DE users hit English on the highest-stakes (delete) action. Route these through the existing t() namespace + messages files"
       ],
-      "expert": "frontend"
-    },
-    {
-      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
-      "confidence": "medium",
       "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "title": "reality-web AgencyErrorState has untranslated English messages on 4-locale portal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web]"
+      ],
       "evidence": [
         "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.tsx — file uses useTranslations for other states but the no-agency empty/error state is hardcoded English",
         "L126 '<h2>No Agency Found</h2>', L127 'You are not associated with any agency.', L129 'Create Agency' CTA — all untranslated on a 4-locale portal",
         "Fix: move these three strings into the agency messages namespace so the error state matches the localized surrounding UI"
       ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyErrorStates.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "candidate_vector": "bug",
       "expert": "frontend"
     },
     {
@@ -7839,32 +7878,59 @@
     },
     {
       "id": "code-review-api-handlers-share-pw-no-throttle",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "api-handlers",
-      "score_delta": 2,
+      "title": "SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockout — brute-force at request speed",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers]"
+      ],
       "evidence": [
         "backend/servers/api-server/src/routes/documents/shares.rs:574 access_protected_share -- public, unauthenticated endpoint (mounted via shares::public_router at POST /api/v1/documents/shared/{token}/access, lib.rs:165 merge) verifies a caller-supplied share password (verify_share_password_for_share at ~L617) with NO brute-force protection: no failed-attempt counter, no per-token/per-IP lockout, no throttle. grep for rate.?limit|throttle|attempt|lockout across routes/documents/ returns 0 hits.",
         "The only rate limiter in api-server is a per-TENANT set (state.tenant_rate_limiters: TenantRateLimiterSet, applied through host_tenant_middleware keyed on org context). The share handler comment explicitly states 'This public endpoint has no caller org context', so the per-tenant limiter cannot key these unauthenticated requests -> the password endpoint is effectively unthrottled. An attacker holding a share token can brute-force the share password at request speed.",
         "The parallel signer endpoint (routes/signatures::public_sign_router) and other public flows should be checked for the same gap. Fix: add per-token (and/or per-IP) attempt throttling + exponential backoff/lockout on access_protected_share before verify, or gate the public_router behind a dedicated unauthenticated-rate-limit layer."
       ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs",
+        "lib.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "candidate_vector": "bug",
       "expert": "security"
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
+      "title": "share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind — misattributes source",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 -- both public share handlers derive the audit ip_address from axum ConnectInfo<SocketAddr> (let ip_address = addr.ip().to_string()) and persist it via log_share_access_for_share(LogShareAccess{ ip_address, .. }).",
+        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *<internal-dev-host-redacted>), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
+        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "api-handlers",
       "score_delta": 1,
-      "confidence": "medium",
       "candidate_vector": "bug",
-      "evidence": [
-        "backend/servers/api-server/src/routes/documents/shares.rs:437 & :574 -- both public share handlers derive the audit ip_address from axum ConnectInfo<SocketAddr> (let ip_address = addr.ip().to_string()) and persist it via log_share_access_for_share(LogShareAccess{ ip_address, .. }).",
-        "ConnectInfo is the DIRECT TCP peer. In this deployment the api-server sits behind a reverse proxy / load balancer (per repo architecture: nginx + *.dev.ppt.rlt.sk), so addr.ip() is the proxy's address for every request -- the share-access audit log records the proxy IP, not the real client, for all public document-share accesses.",
-        "The code comments call this write 'important for audit trail', but the recorded IP is not attacker-attributable and is identical across all clients, undermining the audit value and defeating any future IP-based abuse detection. Fix: resolve the client IP from a validated forwarded-for chain (trusted-proxy-aware, e.g. axum-client-ip / a checked X-Forwarded-For) instead of the raw socket peer."
-      ],
       "expert": "rust"
     },
     {
@@ -8029,48 +8095,90 @@
     },
     {
       "id": "code-review-ppt-web-ui-createfault-mock-ai",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-ui",
-      "score_delta": 2,
+      "title": "ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake data",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/faults/pages/CreateFaultPage.tsx:36-55 handlePhotosChange ships a HARDCODED mock AI suggestion instead of calling the real endpoint: on any photo upload it setTimeout(1500)s then setAiSuggestion({category:'plumbing', confidence:0.85, priority:'medium'}) — a fabricated constant regardless of the actual photo content.",
         "The mock path is ON by default: CreateFaultPage defaults enablePhotoFirst = true (L28) and passes aiSuggestion/aiSuggestionLoading into FaultForm (L83-85), which renders the suggestion (FaultForm.tsx aiSuggestion prop L56, confidence L42). So every user in photo-first fault reporting (Epic 126) is shown a fake 'plumbing / 85% confidence / medium priority' suggestion.",
         "The real backend + client already exist and are unused here: client hook packages/api-client/src/faults/hooks.ts:272 useRequestAiSuggestion + api.ts:233 getAiSuggestion -> POST /api/v1/faults/{id}/suggest (backend api-server faults route .route('/{id}/suggest', post(get_ai_suggestion))). The inline comment even says 'Mock AI suggestion - in production, call useRequestAiSuggestion' (L44). Fix: wire handlePhotosChange to the real suggestion endpoint and drop the constant.",
         "Secondary: L71 hardcoded English fallback description ('Describe the issue you're experiencing...') is not wrapped in t() — i18n gap on the non-photo-first branch."
       ],
-      "expert": "frontend"
-    },
-    {
-      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/CreateFaultPage.ts",
+        "FaultForm.ts",
+        "packages/api-client/src/faults/hooks.ts",
+        "api.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
       "score_delta": 2,
-      "confidence": "medium",
       "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
+      "title": "ppt-web moderation page fabricates context that the moderation API never returns — misleading data",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:73-79 fabricates moderator decision context: every ModerationCase is mapped with content_owner.previous_violations: 0 (L75, hardcoded) and report_source: 'user' (L79, hardcoded), independent of the real case. A compliance moderator taking enforcement actions (remove/restrict/warn) sees '0 previous violations' and source 'user' for EVERY owner, including repeat offenders and system/automated reports.",
         "These fields drive an enforcement UI (DSA/AML content moderation queue) — presenting a constant 0 prior-violations count and a constant report source misleads the human decision-maker and can produce unjustified or under-scaled actions. Marked 'TODO(Phase-2): Extend API to include previous_violations count / report_source' but the defaults are shipped live, not gated.",
         "Fix: extend the moderation cases API (casesData) to return previous_violations and report_source and map the real values; until then the fields should be rendered as unknown/'—', not a confident 0/'user'."
       ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "candidate_vector": "bug",
       "expert": "frontend"
     },
     {
       "id": "code-review-ppt-web-ui-moderation-no-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "ppt-web-ui",
-      "score_delta": 1,
+      "title": "ppt-web moderation page renders hardcoded English strings — no i18n on user-facing surface",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx (386 lines) imports NO useTranslation and hardcodes every moderator-facing interaction string in English on an otherwise fully react-i18next app.",
         "Enforcement flows use native browser dialogs with hardcoded English: window.prompt('Enter action type (remove, restrict, warn, approve):', 'approve') L130, window.prompt('Enter rationale for this action:') L136, window.prompt('Enter decision (uphold, overturn):','uphold') L169, window.prompt('Enter rationale for this decision:') L172; error alert()s 'Failed to assign case. Please try again.' L119, 'Failed to take action...' L151, 'Failed to decide appeal...' L186.",
         "Two problems: (1) i18n gap — none of these strings resolve for sk/cs/de users; (2) UX/robustness — building a DSA moderation enforcement workflow on window.prompt()/alert() (also flagged inline as TODO(Phase-2), L128/L167) has no validation and dispatches raw prompt text straight into action_type. Fix: replace with an i18n'd modal form using the existing action templates (useModerationTemplates is already fetched, L57)."
       ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "bug",
       "expert": "frontend"
     },
     {
@@ -8087,13 +8195,14 @@
         "top-3-churn-2026-08-16"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/voice_webhooks.rs churned +556 lines this run across three merged PRs: #2762 (+59 — Alexa cert-fetch timeouts + shared client), #2765 (+407 — fail-closed Google ID-token JWT verify + JWKS cache), #2766 (+90 — /oauth/refresh device-owner AuthUser + per-user rate limit). Monitor for further churn — three back-to-back security landings on a single 1.2k-LOC route file suggest continued pressure."
+        "backend/servers/api-server/src/routes/voice_webhooks.rs churned +556 lines this run across three merged PRs: #2762 (+59 — Alexa cert-fetch timeouts + shared client), #2765 (+407 — fail-closed Google ID-token JWT verify + JWKS cache), #2766 (+90 — /oauth/refresh device-owner AuthUser + per-user rate limit). Monitor for further churn — three back-to-back security landings on a single 1.2k-LOC route file suggest continued pressure.",
+        "top-3 churn again this run (2026-08-17); runs_seen bumped to 2. Cumulative-signal re-emit — no score change."
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-17",
       "plan": null,
       "reconciled": {
         "at": "2026-08-16T10:23:38Z",
@@ -8113,13 +8222,14 @@
         "top-3-churn-2026-08-16"
       ],
       "evidence": [
-        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs — new 270-line file from PR #2766: unauthenticated → 401 (no rotation), invalid bearer → 401, non-owner → 403 (no rotation), owner → 200 with `access_token_hash` rotated. Test-gap monitor: further modifications to voice /oauth/refresh contract should update this suite."
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs — new 270-line file from PR #2766: unauthenticated → 401 (no rotation), invalid bearer → 401, non-owner → 403 (no rotation), owner → 200 with `access_token_hash` rotated. Test-gap monitor: further modifications to voice /oauth/refresh contract should update this suite.",
+        "top-3 churn again this run (2026-08-17) after PR #2772 landed. runs_seen bumped to 2. Cumulative-signal re-emit — no score change."
       ],
       "files": [
         "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-17",
       "plan": null,
       "reconciled": {
         "at": "2026-08-16T10:23:38Z",
@@ -8177,33 +8287,130 @@
     },
     {
       "id": "code-review-api-core-payment-matcher-multi-suggest",
-      "type": "code-review-finding",
-      "source": "tier1d-dispatcher-generator",
-      "segment": "api-core",
-      "score_delta": 2,
+      "title": "payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good candidates",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator [api-core]"
+      ],
       "evidence": [
         "backend/servers/api-server/src/services/accounting.rs:124-176 (AccountingService::run_payment_matcher) — the once-only guard `if line.match_state != \"unmatched\" && line.match_state != \"suggested\" { continue; }` is at the TOP of the outer `for line in lines` loop (L125-127), evaluated once per line BEFORE the inner `for invoice in &open_invoices` loop (L129). Inside the inner loop the code, on every invoice whose confidence >= 0.5, upserts a PaymentMatch (L162 upsert_payment_match_rls) AND sets the line to \"suggested\" (L167 update_bank_statement_line_match_state_rls) but does NOT `break`. So a single bank-statement line is matched against EVERY qualifying open invoice, not just the first — the state update that marks the line as \"suggested\" never short-circuits the remaining invoices.",
         "The line's in-memory `line.match_state` is a move-captured value from the pre-loop snapshot (repo.list_bank_statement_lines_rls at L104) and is never mutated after the DB write, and `remaining_amount = invoice.total_amount - invoice.paid_amount` (L141) is likewise read from the pre-loop `list_invoices_rls` snapshot and never decremented as suggestions accumulate. Consequence: one payment can be suggested as (partially/fully) paying N different invoices, and one invoice can absorb N different lines, because neither side's remaining balance is reduced within the run. When several open invoices share a variable symbol (0.8) the same line is auto-suggested against all of them.",
         "The write of `match_state = \"suggested\"` after the first hit signals a 1:1 intent (one suggested match per line), which the un-broken inner loop contradicts — over-generating PaymentMatch rows in the accounting reconciliation flow that a human then has to reject. Fix options: `break` out of the inner loop after the first suggestion (keep best-scoring by tracking max-confidence invoice and suggesting only that), and/or decrement a mutable running `remaining` per invoice and skip invoices already fully covered by prior suggestions."
       ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "candidate_vector": "bug",
       "expert": "rust"
     },
     {
       "id": "code-review-api-core-payment-matcher-vs-only-threshold",
-      "type": "code-review-finding",
-      "source": "tier1d-dispatcher-generator",
-      "segment": "api-core",
-      "score_delta": 1,
+      "title": "payment matcher uses a single VS-only threshold — ignores IBAN / amount tie-breakers documented in spec",
+      "vector": "bug",
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator [api-core]"
+      ],
       "evidence": [
         "backend/servers/api-server/src/services/accounting.rs:132-150 — a Variable-Symbol match alone adds 0.8 (L136) which already clears the 0.5 auto-suggest threshold (L150), while the amount signal contributes at most 0.15 (exact match, L143) or 0.05 (L145) and is NEVER required. A bank line that merely shares a variable symbol with an invoice is therefore suggested regardless of amount — e.g. a small partial/erroneous payment suggested against a large invoice, or a payment suggested against an invoice with a totally different remaining balance.",
         "The matcher is also explicitly incomplete: `// TODO: Date proximity, IBAN match` (L148). Two of the four intended corroboration signals are unimplemented, so the confidence score currently rests almost entirely on the VS field, which is user-supplied on the bank side and not guaranteed unique per invoice.",
         "Suggested hardening: require a minimum amount corroboration before crossing the auto-suggest threshold (e.g. VS-only should stay below 0.5, or the amount branch weight should be raised so an amount mismatch can veto a VS-only match), and/or gate auto-suggestion on `line.amount <= remaining_amount` so a payment is never suggested against an invoice it cannot plausibly settle."
       ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-17",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "title": "errorHandler.ts: entire client error catalogue is hardcoded English (no i18n)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-review 2026-08-17 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:56-141 defines ERROR_MESSAGES + DEFAULT_ERROR as hardcoded English title/message string literals; parseApiError (:149), parseErrorResponse (:232-245), parseHttpStatusError (:270-347), and the 429 branch (:172-174 hardcoded `Please wait ${retryAfter} seconds before trying again.`) never route through react-i18next.",
+        "Confirmed consumer frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:46-51 and :61-66 does showToast({message: parseApiError(error).message}) — English message rendered to end users with no t() wrapping.",
+        "App is fully i18n'd elsewhere: `grep -rl useTranslation frontend/apps/ppt-web/src --include='*.tsx'` returns ~300 components. errorHandler.ts imports/uses no i18n at all — every client-derived API/network/rate-limit error toast renders English-only regardless of user locale.",
+        "Fix: key catalogue by error code, resolve via t('errors.' + code) at render site; i18n the retry-after template as an interpolated ICU string. Low severity (no functional break; UX/locale-correctness), medium confidence."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "title": "repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 2)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan 2026-08-17",
+        "top-3-churn-2026-08-16",
+        "PR #2762",
+        "PR #2765",
+        "PR #2766"
+      ],
+      "evidence": [
+        "hotspot_history.runs_seen bumped to 2 (last=2026-08-16→2026-08-17); parent churn-hotspot-voice-webhooks-rs already dropped as 'no in-scope hardening' — this signal is instability tracking only.",
+        "14-day window: 3 commits, ~2897 line adds+dels (all voice-webhook OAuth / Alexa security hardening merged 2026-08-15)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "title": "repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan 2026-08-17",
+        "PR #2766",
+        "PR #2772"
+      ],
+      "evidence": [
+        "hotspot_history.runs_seen bumped to 2 (last=2026-08-16→2026-08-17); parent churn-hotspot done via PR #2772 (platform-admin bypass arm pinned). Instability tracking only — no new work implied.",
+        "14-day window: 2 commits — #2766 (created suite, +270 lines) and #2772 (Test 5, +82 lines)."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
     }
   ]
 }
