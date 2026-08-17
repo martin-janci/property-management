@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-17T08:47:13Z",
+  "archived_at": "2026-08-17T10:43:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2239,6 +2239,24 @@
       }
     },
     {
+      "id": "code-review-api-core-payment-matcher-vs-only-threshold",
+      "action": "payment matcher uses a single VS-only threshold — ignores IBAN / amount tie-breakers documented in spec",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-17T10:45:00Z"
+    },
+    {
       "id": "code-review-api-core-quiet-drain-drops-failed-delivery",
       "action": "Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification permanently lost on transient failure",
       "owner_role": "pm-backend",
@@ -4306,6 +4324,24 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-no-i18n",
+      "action": "ppt-web moderation page renders hardcoded English strings — no i18n on user-facing surface",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-17T10:45:00Z"
     },
     {
       "id": "code-review-ppt-web-ui-offline-ind-i18n",
@@ -15075,6 +15111,24 @@
         "subject": "repeated-churn-backend-servers-api-server-src-routes-forms-rs: split forms.rs into cohesive submodules (#1700)",
         "at": "2026-06-23T04:25:23Z"
       }
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "action": "repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-08-17T10:45:00Z"
     },
     {
       "id": "screen-map-drift-pr-1418-ppt",

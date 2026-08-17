@@ -2279,6 +2279,28 @@
       "merge_attempted_at": "2026-08-17T06:36:00Z"
     },
     {
+      "task_id": "code-review-api-core-payment-matcher-vs-only-threshold",
+      "branch": "auto-impl/code-review-api-core-payment-matcher-vs-a359cfb5",
+      "status": "merged",
+      "claimed_at": "2026-08-17T08:23:00Z",
+      "last_updated": "2026-08-17T10:45:00Z",
+      "status_changed_at": "2026-08-17T10:45:00Z",
+      "pr_number": 2782,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2782",
+      "merged_at": "2026-08-17T10:45:00Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=iban-tiebreaker-correct-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "539b53be12fa91294b36da890899288720136c73",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-quiet-drain-drops-failed-delivery",
       "branch": "auto-impl/code-review-api-core-quiet-drain-drops-f-5f88340e",
       "status": "failed",
@@ -4392,6 +4414,28 @@
       "implementer_summary": null,
       "reviewer_summary": "verdict=approve note=fabricated-fields-correctly-removed-api-types-confirm-no-report_source-or-previous_violations-ci-green",
       "last_reviewed_oid": "a0ae4bcf1164b23db55ea26dcdca57cb4f5971a7",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-moderation-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-moderation-no-i18-52eee807",
+      "status": "merged",
+      "claimed_at": "2026-08-17T08:23:00Z",
+      "last_updated": "2026-08-17T10:45:00Z",
+      "status_changed_at": "2026-08-17T10:45:00Z",
+      "pr_number": 2783,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2783",
+      "merged_at": "2026-08-17T10:45:00Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=i18n-extraction-6-locales-87keys-parity-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "2cc862f0ba422777c4d9a611c9f7805b18c91a96",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -13283,6 +13327,28 @@
       "merge_attempted_at": "2026-08-06T10:16:14Z"
     },
     {
+      "task_id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "branch": "auto-impl/repeated-churn-backend-servers-api-serve-6a3993ce",
+      "status": "failed",
+      "claimed_at": "2026-08-17T10:25:00Z",
+      "last_updated": "2026-08-17T10:45:00Z",
+      "status_changed_at": "2026-08-17T10:45:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "ppt-rust-backend",
+      "implementer_summary": "pr=none status=blocked: 2-commit churn healthy, file clean/comprehensive, no actionable stabilization [Phase 4 synchronous pr=none → failed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "screen-map-drift-pr-1418-ppt",
       "branch": "auto-impl/screen-map-drift-pr-1418-ppt-039c63c4",
       "status": "merged",
@@ -14435,5 +14501,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-17T08:47:01Z"
+  "archived_at": "2026-08-17T10:43:34Z"
 }
