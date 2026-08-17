@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-17T06:40:30Z",
+  "archived_at": "2026-08-17T08:47:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3579,6 +3579,24 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-nfc-accesslog-parse-unguarded",
+      "action": "NFC getAccessLog JSON.parse is unguarded, so a corrupted log blob rejects handleTap after access was already granted",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T06:30:07Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
       "id": "code-review-mobile-rn-offline-401-dropped",
       "action": "mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit) as permanent and drops the queued action, silently losing offline-created content",
       "owner_role": "pm-backend",
@@ -3873,6 +3891,24 @@
         "subject": "code-review-ppt-web-core-authctx-init-stale-role: route AuthContext cold-boot init through refreshTokenInternal (#2553)",
         "at": "2026-07-29T08:06:29Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "action": "errorHandler.ts: entire client error catalogue is hardcoded English (no i18n)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dispatcher_merged": "2026-08-17T08:41:00Z"
     },
     {
       "id": "code-review-ppt-web-core-logout-cache-purge-gap",
@@ -4234,6 +4270,42 @@
         "merged_at": "2026-08-03T12:13:22Z",
         "at": "2026-08-03T12:14:09Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-createfault-mock-ai",
+      "action": "ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake data",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
+      "action": "ppt-web moderation page fabricates context that the moderation API never returns — misleading data",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dispatcher_merged": "2026-08-17T08:41:00Z"
     },
     {
       "id": "code-review-ppt-web-ui-offline-ind-i18n",
@@ -4971,6 +5043,24 @@
         "merged_at": "2026-08-03T10:15:45Z",
         "at": "2026-08-03T10:16:35Z"
       }
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "action": "reality-web RealtorManagement page has untranslated English UI on 4-locale portal",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dispatcher_merged": "2026-08-17T08:41:00Z"
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-untranslated",

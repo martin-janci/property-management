@@ -7882,7 +7882,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -7903,7 +7903,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "security"
+      "expert": "security",
+      "reconciled": {
+        "at": "2026-08-17T08:25:52Z",
+        "assignment_status": "merged",
+        "pr_number": 2773
+      }
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
@@ -8291,7 +8296,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator [api-core]"
       ],
@@ -8311,7 +8316,12 @@
       "segment": "api-core",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-08-17T08:25:52Z",
+        "assignment_status": "merged",
+        "pr_number": 2774
+      }
     },
     {
       "id": "code-review-api-core-payment-matcher-vs-only-threshold",
