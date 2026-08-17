@@ -28,6 +28,7 @@ import {
 type TabType = 'all' | 'active' | 'invited' | 'inactive';
 
 export function RealtorManagement() {
+  const t = useTranslations('agency');
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedRealtor, setSelectedRealtor] = useState<Realtor | null>(null);
@@ -50,20 +51,20 @@ export function RealtorManagement() {
   });
 
   const tabs: { key: TabType; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: realtors?.length || 0 },
+    { key: 'all', label: t('tabAll'), count: realtors?.length || 0 },
     {
       key: 'active',
-      label: 'Active',
+      label: t('tabActive'),
       count: realtors?.filter((r) => r.status === 'active').length || 0,
     },
     {
       key: 'invited',
-      label: 'Pending',
+      label: t('tabPending'),
       count: realtors?.filter((r) => r.status === 'invited').length || 0,
     },
     {
       key: 'inactive',
-      label: 'Inactive',
+      label: t('tabInactive'),
       count:
         realtors?.filter((r) => r.status === 'inactive' || r.status === 'suspended').length || 0,
     },
@@ -85,10 +86,10 @@ export function RealtorManagement() {
       <div className="header">
         <div>
           <Link href="/agency" className="back-link">
-            ← Back to Dashboard
+            ← {t('backToDashboard')}
           </Link>
-          <h1 className="title">Realtor Management</h1>
-          <p className="subtitle">Manage your team of real estate agents</p>
+          <h1 className="title">{t('realtorManagementTitle')}</h1>
+          <p className="subtitle">{t('realtorManagementSubtitle')}</p>
         </div>
         <button type="button" className="invite-button" onClick={() => setShowInviteModal(true)}>
           <svg
@@ -105,7 +106,7 @@ export function RealtorManagement() {
             <line x1="20" y1="8" x2="20" y2="14" />
             <line x1="23" y1="11" x2="17" y2="11" />
           </svg>
-          Invite Realtor
+          {t('inviteRealtor')}
         </button>
       </div>
 
@@ -129,7 +130,7 @@ export function RealtorManagement() {
         {isLoading ? (
           <RealtorListSkeleton />
         ) : realtorsError ? (
-          <SectionError message="Couldn't load realtors. Please try again." />
+          <SectionError message={t('realtorsLoadError')} />
         ) : filteredRealtors?.length === 0 ? (
           <EmptyState tab={activeTab} onInvite={() => setShowInviteModal(true)} />
         ) : (
@@ -280,6 +281,7 @@ function RealtorCard({
   agencyId: string;
   onSelect: () => void;
 }) {
+  const t = useTranslations('agency');
   const resendInvitation = useResendInvitation();
   const [resending, setResending] = useState(false);
 
@@ -295,18 +297,22 @@ function RealtorCard({
 
   const statusConfig: Record<RealtorStatus, { label: string; color: string; bg: string }> = {
     active: {
-      label: 'Active',
+      label: t('statusActive'),
       color: 'var(--ppt-color-success)',
       bg: 'var(--ppt-color-success-light)',
     },
     invited: {
-      label: 'Pending',
+      label: t('statusPending'),
       color: 'var(--ppt-color-warning)',
       bg: 'var(--ppt-color-warning-light)',
     },
-    inactive: { label: 'Inactive', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    inactive: {
+      label: t('statusInactive'),
+      color: 'var(--ppt-fg-muted)',
+      bg: 'var(--ppt-border-default)',
+    },
     suspended: {
-      label: 'Suspended',
+      label: t('statusSuspended'),
       color: 'var(--ppt-color-danger)',
       bg: 'var(--ppt-color-danger-light)',
     },
@@ -344,11 +350,11 @@ function RealtorCard({
       <div className="stats">
         <div className="stat">
           <span className="stat-value">{realtor.activeListings}</span>
-          <span className="stat-label">Listings</span>
+          <span className="stat-label">{t('cardListings')}</span>
         </div>
         <div className="stat">
           <span className="stat-value">{realtor.totalSales}</span>
-          <span className="stat-label">Sales</span>
+          <span className="stat-label">{t('cardSales')}</span>
         </div>
         {realtor.rating && (
           <div className="stat">
@@ -364,7 +370,7 @@ function RealtorCard({
               </svg>
               {realtor.rating.toFixed(1)}
             </span>
-            <span className="stat-label">{realtor.reviewCount} reviews</span>
+            <span className="stat-label">{t('cardReviews', { count: realtor.reviewCount })}</span>
           </div>
         )}
       </div>
@@ -377,11 +383,11 @@ function RealtorCard({
             onClick={handleResend}
             disabled={resending}
           >
-            {resending ? 'Sending...' : 'Resend'}
+            {resending ? t('buttonSending') : t('buttonResend')}
           </button>
         )}
         <button type="button" className="action-button view" onClick={onSelect}>
-          View
+          {t('buttonView')}
         </button>
       </div>
 
@@ -591,7 +597,12 @@ export function InviteRealtorModal({
       >
         <div className="modal-header">
           <h2 id="invite-modal-title">{t('inviteRealtor')}</h2>
-          <button type="button" className="close-button" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="close-button"
+            onClick={onClose}
+            aria-label={t('buttonClose')}
+          >
             <svg
               width="24"
               height="24"
@@ -806,6 +817,7 @@ function RealtorDetailModal({
   agencyId: string;
   onClose: () => void;
 }) {
+  const t = useTranslations('agency');
   const updateRealtor = useUpdateRealtor();
   const removeRealtor = useRemoveRealtor();
   const [isEditing, setIsEditing] = useState(false);
@@ -851,8 +863,13 @@ function RealtorDetailModal({
         aria-labelledby="detail-modal-title"
       >
         <div className="modal-header">
-          <h2 id="detail-modal-title">Realtor Details</h2>
-          <button type="button" className="close-button" onClick={onClose} aria-label="Close">
+          <h2 id="detail-modal-title">{t('detailTitle')}</h2>
+          <button
+            type="button"
+            className="close-button"
+            onClick={onClose}
+            aria-label={t('buttonClose')}
+          >
             <svg
               width="24"
               height="24"
@@ -885,7 +902,7 @@ function RealtorDetailModal({
           {/* Editable Fields */}
           <div className="form-section">
             <div className="form-group">
-              <label htmlFor="detail-title">Job Title</label>
+              <label htmlFor="detail-title">{t('formLabelTitle')}</label>
               <input
                 id="detail-title"
                 type="text"
@@ -896,7 +913,7 @@ function RealtorDetailModal({
             </div>
 
             <div className="form-group">
-              <label htmlFor="detail-bio">Bio</label>
+              <label htmlFor="detail-bio">{t('formLabelBio')}</label>
               <textarea
                 id="detail-bio"
                 value={bio}
@@ -911,15 +928,15 @@ function RealtorDetailModal({
           <div className="stats-section">
             <div className="stat">
               <span className="stat-value">{realtor.activeListings}</span>
-              <span className="stat-label">Active Listings</span>
+              <span className="stat-label">{t('statActiveListings')}</span>
             </div>
             <div className="stat">
               <span className="stat-value">{realtor.totalSales}</span>
-              <span className="stat-label">Total Sales</span>
+              <span className="stat-label">{t('statTotalSales')}</span>
             </div>
             <div className="stat">
               <span className="stat-value">{realtor.rating?.toFixed(1) || '-'}</span>
-              <span className="stat-label">Rating</span>
+              <span className="stat-label">{t('statRating')}</span>
             </div>
           </div>
 
@@ -927,7 +944,7 @@ function RealtorDetailModal({
           {realtor.status !== 'invited' && (
             <div className="status-section" role="group" aria-labelledby="status-label-text">
               <span id="status-label-text" className="status-label-text">
-                Status
+                {t('statusLabel')}
               </span>
               <div className="status-buttons">
                 <button
@@ -935,21 +952,21 @@ function RealtorDetailModal({
                   className={`status-button ${realtor.status === 'active' ? 'active' : ''}`}
                   onClick={() => handleStatusChange('active')}
                 >
-                  Active
+                  {t('statusActive')}
                 </button>
                 <button
                   type="button"
                   className={`status-button ${realtor.status === 'inactive' ? 'active' : ''}`}
                   onClick={() => handleStatusChange('inactive')}
                 >
-                  Inactive
+                  {t('statusInactive')}
                 </button>
                 <button
                   type="button"
                   className={`status-button danger ${realtor.status === 'suspended' ? 'active' : ''}`}
                   onClick={() => handleStatusChange('suspended')}
                 >
-                  Suspended
+                  {t('statusSuspended')}
                 </button>
               </div>
             </div>
@@ -959,12 +976,12 @@ function RealtorDetailModal({
         <div className="modal-footer">
           {confirmRemove ? (
             <div className="confirm-remove">
-              <span>Are you sure?</span>
+              <span>{t('confirmRemoveQuestion')}</span>
               <button type="button" className="confirm-yes" onClick={handleRemove}>
-                Yes, Remove
+                {t('confirmRemoveYes')}
               </button>
               <button type="button" className="confirm-no" onClick={() => setConfirmRemove(false)}>
-                Cancel
+                {t('buttonCancel')}
               </button>
             </div>
           ) : (
@@ -974,7 +991,7 @@ function RealtorDetailModal({
                 className="remove-button"
                 onClick={() => setConfirmRemove(true)}
               >
-                Remove
+                {t('buttonRemove')}
               </button>
               {isEditing ? (
                 <>
@@ -983,15 +1000,15 @@ function RealtorDetailModal({
                     className="cancel-button"
                     onClick={() => setIsEditing(false)}
                   >
-                    Cancel
+                    {t('buttonCancel')}
                   </button>
                   <button type="button" className="save-button" onClick={handleSave}>
-                    Save Changes
+                    {t('buttonSaveChanges')}
                   </button>
                 </>
               ) : (
                 <button type="button" className="edit-button" onClick={() => setIsEditing(true)}>
-                  Edit
+                  {t('buttonEdit')}
                 </button>
               )}
             </>
@@ -1281,14 +1298,15 @@ function RealtorListSkeleton() {
 }
 
 function EmptyState({ tab, onInvite }: { tab: TabType; onInvite: () => void }) {
+  const t = useTranslations('agency');
   const messages: Record<TabType, { title: string; description: string }> = {
-    all: { title: 'No realtors yet', description: 'Invite your first realtor to get started.' },
-    active: { title: 'No active realtors', description: 'Active realtors will appear here.' },
+    all: { title: t('emptyAllTitle'), description: t('emptyAllDesc') },
+    active: { title: t('emptyActiveTitle'), description: t('emptyActiveDesc') },
     invited: {
-      title: 'No pending invitations',
-      description: 'Invite realtors to join your agency.',
+      title: t('emptyInvitedTitle'),
+      description: t('emptyInvitedDesc'),
     },
-    inactive: { title: 'No inactive realtors', description: 'Inactive realtors will appear here.' },
+    inactive: { title: t('emptyInactiveTitle'), description: t('emptyInactiveDesc') },
   };
 
   const { title, description } = messages[tab];
@@ -1313,7 +1331,7 @@ function EmptyState({ tab, onInvite }: { tab: TabType; onInvite: () => void }) {
       <p>{description}</p>
       {(tab === 'all' || tab === 'invited') && (
         <button type="button" onClick={onInvite}>
-          Invite Realtor
+          {t('inviteRealtor')}
         </button>
       )}
       <style jsx>{`
