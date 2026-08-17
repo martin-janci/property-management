@@ -239,20 +239,6 @@
       "first_open_at": "2026-08-17T12:26:50Z",
       "retry_of": "code-review-api-core-voice-actions-fabricated-empty",
       "retry_round": 1
-    },
-    {
-      "id": "code-review-api-core-quiet-drain-drops-failed-delivery-retry1",
-      "action": "Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification permanently lost on transient failure [retry 1/2 of failed code-review-api-core-quiet-drain-drops-failed-delivery]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-17T12:26:50Z (retry_of=code-review-api-core-quiet-drain-drops-failed-delivery reason=failed-no-pr cooldown_ok newest_failure=2026-08-10T12:13:38Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T12:26:50Z",
-      "retry_of": "code-review-api-core-quiet-drain-drops-failed-delivery",
-      "retry_round": 1
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -1,9 +1,39 @@
 {
-  "generated": "2026-08-16T12:26:18Z",
+  "generated": "2026-08-17T14:41:58Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-17T14:41:58Z",
+      "prs_scanned": 15,
+      "clean": [
+        2787,
+        2786,
+        2785,
+        2783,
+        2782,
+        2781,
+        2779,
+        2778,
+        2777,
+        2776,
+        2775,
+        2774,
+        2773,
+        2772
+      ],
+      "with_issues": [
+        {
+          "pr": 2784,
+          "issue": 2789,
+          "findings": 1,
+          "specialist": "rust-backend/pm-security",
+          "note": "security(medium): resolve_client_ip() trusts leftmost X-Forwarded-For / CF-Connecting-IP with no trusted-proxy verification. Same value keys the #2773 protected-share brute-force throttle AND the audit log, so a client rotating a spoofed XFF gets a fresh token:ip bucket per request -> defeats #2773's limiter; also poisons access-log source IP. Proposed: gate header trust on socket peer being in a trusted-proxy (Cloudflare CIDR) allowlist, prefer CF-Connecting-IP, take rightmost-untrusted XFF hop; centralise (routes::forms::submissions has the same leftmost-XFF exposure)."
+        }
+      ],
+      "note": "DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static review only (no checkout/compile beyond local key-existence grep). Window merged-to-dev 14d (>=2026-08-03), base=dev, max_prs=15. 132 in-window merges total; 125 unlabeled; reviewed the 15 most-recently-merged unlabeled PRs (2772-2787, minus 2780 which is not a dev-merge). THIS RUN APPLIES post-merge-reviewed PR-labels via MCP issue_write (prior runs did not), so future runs dedup by label as the skill intends -- note #2772 was already reviewed 2026-08-16 (clean) but resurfaced unlabeled; re-confirmed clean and now labeled. 14 CLEAN, 1 ISSUE. Clean highlights, uniformly high quality with IG3 regression tests + rationale doc-comments: #2787 (Google JWKS client build no-panic, mirrors alexa fallback), #2786 (NFC SecureStore 2KB-cap chunking w/ manifest+torn-write detection+legacy read-through; 5 round-trip tests), #2785 (ComparisonView next-intl i18n across 6 locales, stable row ids for keys+highlight, locale-aware Intl price format), #2783 (ppt-web moderation dashboard i18n, react-i18next plural keys), #2782 (payment-matcher counterparty-IBAN tie-breaker w/ canonical IBAN normalise + clamp; VS+amount-tie regression test), #2781 (AgencyErrorStates NoAgencyMessage next-intl), #2779 (ppt-web errorHandler catalogue routed through react-i18next w/ KNOWN_ERROR_CODES set + default fallback; sk/en + rate-limit-interpolation tests), #2778 (CreateFault mock AI gated behind DEV-only VITE_ENABLE_MOCK_AI_TRIAGE + honest 'unavailable' notice -- stops shipping fabricated triage), #2777 (RealtorManagement i18n; verified all newly-referenced keys buttonSending/formLabelTitle/statActiveListings/buttonCancel pre-exist across all 6 locales), #2776 (moderation stop fabricating previous_violations/report_source; age_hours from real reported_at), #2775 (NFC access-log JSON.parse guarded, post-grant safety), #2774 (payment-matcher surfaces only best-scoring tier, ties kept; buries-worse-candidates regression), #2773 (public protected-share password brute-force throttle token:ip reusing shared sliding-window limiter; 4 tests -- NOTE its correctness depends on trustworthy client IP, see the #2784 finding), #2772 (voice /oauth/refresh platform-admin-bypass authz test). 1 ISSUE opened: #2789 on #2784 (spoofable proxy-header client IP -> throttle bypass + audit poisoning). Existing open from-merged-review issues remain: #2366, #2759."
+    },
     {
       "run_at": "2026-08-16T12:26:18Z",
       "prs_scanned": 4,
@@ -553,38 +583,6 @@
       ],
       "skipped_already_reviewed": [],
       "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 \u2014 the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
-    },
-    {
-      "run_at": "2026-07-31T16:18:37Z",
-      "prs_scanned": 9,
-      "clean": [
-        2611,
-        2610,
-        2609,
-        2607,
-        2606,
-        2578,
-        2577,
-        2576
-      ],
-      "with_issues": [
-        {
-          "pr": 2608,
-          "issue": 2612,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "#2608 made scheduler notification-target lookup failures observable but left durability out of scope: publish_scheduled() commits the announcement as published, so a transient target-resolution error (now logged) permanently drops the notification \u2014 it is never re-selected. Same fire-once shape on vote-started + closed-vote dispatch. Propose notified_at column + separate dispatch pass that stamps only on success."
-        }
-      ],
-      "skipped_already_reviewed": [
-        2571,
-        2568,
-        2572,
-        2567,
-        2570,
-        2569
-      ],
-      "note": "Fresh window sweep. Re-surfaced PRs 2567/2568/2569/2570/2571/2572 were already reviewed in the 2026-07-30 run (issues #2573/#2574/#2575 filed there) but never carried the post-merge-reviewed label, so they reappeared in the unlabeled search; re-verified and skipped. #2573 subsequently closed by merged PR #2597, #2574 by #2593. Only genuinely-new PR with an actionable gap this run is #2608 -> #2612."
     }
   ]
 }
