@@ -748,7 +748,82 @@
     "bookingNotFound": "Rezervace nebyla nalezena",
     "faultNotFound": "Závada nebyla nalezena",
     "meterNotFound": "Měřič nebyl nalezen",
-    "entityNotFound": "{{entity}} nebylo nalezeno"
+    "entityNotFound": "{{entity}} nebylo nalezeno",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Vyžaduje se přihlášení",
+        "message": "Pro pokračování se prosím přihlaste."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Neplatné přihlašovací údaje",
+        "message": "Zadaný e-mail nebo heslo je nesprávné."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Relace vypršela",
+        "message": "Vaše relace vypršela. Přihlaste se prosím znovu."
+      },
+      "UNAUTHORIZED": {
+        "title": "Přístup odepřen",
+        "message": "Nemáte oprávnění provést tuto akci."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Chyba ověření",
+        "message": "Zkontrolujte prosím chyby ve formuláři."
+      },
+      "INVALID_INPUT": {
+        "title": "Neplatný vstup",
+        "message": "Poskytnuté údaje jsou neplatné."
+      },
+      "NOT_FOUND": {
+        "title": "Nenalezeno",
+        "message": "Požadovaný zdroj se nepodařilo najít."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Zdroj nenalezen",
+        "message": "Položka, kterou hledáte, neexistuje nebo byla odstraněna."
+      },
+      "CONFLICT": {
+        "title": "Konflikt",
+        "message": "Tato operace je v konfliktu s existujícími údaji."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Duplicitní záznam",
+        "message": "Položka se stejnou hodnotou již existuje."
+      },
+      "RATE_LIMITED": {
+        "title": "Příliš mnoho požadavků",
+        "message": "Odeslali jste příliš mnoho požadavků. Před dalším pokusem prosím počkejte."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Překročen limit požadavků",
+        "message": "Zpomalte prosím a zkuste to znovu za okamžik."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Chyba serveru",
+        "message": "Došlo k neočekávané chybě. Zkuste to prosím později."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Služba nedostupná",
+        "message": "Služba je dočasně nedostupná. Zkuste to prosím později."
+      },
+      "TIMEOUT": {
+        "title": "Vypršel časový limit požadavku",
+        "message": "Požadavek trval příliš dlouho. Zkuste to prosím znovu."
+      },
+      "NETWORK_ERROR": {
+        "title": "Chyba sítě",
+        "message": "Nepodařilo se připojit k serveru. Zkontrolujte prosím své připojení k internetu."
+      },
+      "OFFLINE": {
+        "title": "Jste offline",
+        "message": "Zkontrolujte prosím své připojení k internetu a zkuste to znovu."
+      },
+      "default": {
+        "title": "Chyba",
+        "message": "Došlo k neočekávané chybě."
+      },
+      "rateLimitRetry": "Před dalším pokusem prosím počkejte {{seconds}} sekund."
+    }
   },
   "notifications": {
     "title": "Oznámení",

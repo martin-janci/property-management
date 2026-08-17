@@ -701,7 +701,82 @@
     "bookingNotFound": "A foglalás nem található",
     "faultNotFound": "A hiba nem található",
     "meterNotFound": "A mérő nem található",
-    "entityNotFound": "{{entity}} nem található"
+    "entityNotFound": "{{entity}} nem található",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Bejelentkezés szükséges",
+        "message": "A folytatáshoz jelentkezzen be."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Érvénytelen hitelesítő adatok",
+        "message": "A megadott e-mail-cím vagy jelszó helytelen."
+      },
+      "SESSION_EXPIRED": {
+        "title": "A munkamenet lejárt",
+        "message": "A munkamenete lejárt. Jelentkezzen be újra."
+      },
+      "UNAUTHORIZED": {
+        "title": "Hozzáférés megtagadva",
+        "message": "Nincs jogosultsága a művelet végrehajtásához."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Érvényesítési hiba",
+        "message": "Ellenőrizze az űrlap hibáit."
+      },
+      "INVALID_INPUT": {
+        "title": "Érvénytelen bevitel",
+        "message": "A megadott adatok érvénytelenek."
+      },
+      "NOT_FOUND": {
+        "title": "Nem található",
+        "message": "A kért erőforrás nem található."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Az erőforrás nem található",
+        "message": "A keresett elem nem létezik, vagy törölték."
+      },
+      "CONFLICT": {
+        "title": "Ütközés",
+        "message": "Ez a művelet ütközik a meglévő adatokkal."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Ismétlődő bejegyzés",
+        "message": "Egy azonos értékű elem már létezik."
+      },
+      "RATE_LIMITED": {
+        "title": "Túl sok kérés",
+        "message": "Túl sok kérést küldött. Kérjük, várjon, mielőtt újra próbálkozik."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Kéréskorlát túllépve",
+        "message": "Kérjük, lassítson, és próbálja újra egy pillanat múlva."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Kiszolgálóhiba",
+        "message": "Váratlan hiba történt. Kérjük, próbálja újra később."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "A szolgáltatás nem érhető el",
+        "message": "A szolgáltatás átmenetileg nem érhető el. Kérjük, próbálja újra később."
+      },
+      "TIMEOUT": {
+        "title": "A kérés időtúllépése",
+        "message": "A kérés túl sokáig tartott. Kérjük, próbálja újra."
+      },
+      "NETWORK_ERROR": {
+        "title": "Hálózati hiba",
+        "message": "Nem sikerült csatlakozni a kiszolgálóhoz. Ellenőrizze az internetkapcsolatát."
+      },
+      "OFFLINE": {
+        "title": "Ön offline állapotban van",
+        "message": "Ellenőrizze az internetkapcsolatát, és próbálja újra."
+      },
+      "default": {
+        "title": "Hiba",
+        "message": "Váratlan hiba történt."
+      },
+      "rateLimitRetry": "Kérjük, várjon {{seconds}} másodpercet, mielőtt újra próbálkozik."
+    }
   },
   "notifications": {
     "title": "Értesítések",

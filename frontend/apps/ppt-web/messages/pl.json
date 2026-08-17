@@ -703,7 +703,82 @@
     "bookingNotFound": "Rezerwacja nie została znaleziona",
     "faultNotFound": "Usterka nie została znaleziona",
     "meterNotFound": "Licznik nie został znaleziony",
-    "entityNotFound": "Nie znaleziono: {{entity}}"
+    "entityNotFound": "Nie znaleziono: {{entity}}",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Wymagane logowanie",
+        "message": "Zaloguj się, aby kontynuować."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Nieprawidłowe dane logowania",
+        "message": "Wprowadzony adres e-mail lub hasło jest nieprawidłowe."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Sesja wygasła",
+        "message": "Twoja sesja wygasła. Zaloguj się ponownie."
+      },
+      "UNAUTHORIZED": {
+        "title": "Odmowa dostępu",
+        "message": "Nie masz uprawnień do wykonania tej akcji."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Błąd walidacji",
+        "message": "Sprawdź formularz pod kątem błędów."
+      },
+      "INVALID_INPUT": {
+        "title": "Nieprawidłowe dane",
+        "message": "Podane dane są nieprawidłowe."
+      },
+      "NOT_FOUND": {
+        "title": "Nie znaleziono",
+        "message": "Nie można znaleźć żądanego zasobu."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Nie znaleziono zasobu",
+        "message": "Element, którego szukasz, nie istnieje lub został usunięty."
+      },
+      "CONFLICT": {
+        "title": "Konflikt",
+        "message": "Ta operacja jest w konflikcie z istniejącymi danymi."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Zduplikowany wpis",
+        "message": "Element o tej samej wartości już istnieje."
+      },
+      "RATE_LIMITED": {
+        "title": "Zbyt wiele żądań",
+        "message": "Wysłano zbyt wiele żądań. Poczekaj przed ponowną próbą."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Przekroczono limit żądań",
+        "message": "Zwolnij i spróbuj ponownie za chwilę."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Błąd serwera",
+        "message": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie później."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Usługa niedostępna",
+        "message": "Usługa jest tymczasowo niedostępna. Spróbuj ponownie później."
+      },
+      "TIMEOUT": {
+        "title": "Przekroczono limit czasu żądania",
+        "message": "Żądanie trwało zbyt długo. Spróbuj ponownie."
+      },
+      "NETWORK_ERROR": {
+        "title": "Błąd sieci",
+        "message": "Nie można połączyć się z serwerem. Sprawdź swoje połączenie internetowe."
+      },
+      "OFFLINE": {
+        "title": "Jesteś offline",
+        "message": "Sprawdź swoje połączenie internetowe i spróbuj ponownie."
+      },
+      "default": {
+        "title": "Błąd",
+        "message": "Wystąpił nieoczekiwany błąd."
+      },
+      "rateLimitRetry": "Poczekaj {{seconds}} sekund przed ponowną próbą."
+    }
   },
   "notifications": {
     "title": "Powiadomienia",

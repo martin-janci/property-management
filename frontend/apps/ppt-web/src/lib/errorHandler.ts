@@ -3,7 +3,14 @@
  *
  * Parses backend ErrorResponse format and maps error codes to user-friendly messages.
  * Supports validation errors with field paths for inline form feedback.
+ *
+ * User-facing copy (error titles/messages) is resolved through the shared
+ * react-i18next instance under the `errors.catalogue.*` keys, so the strings
+ * follow the user's selected language. Developer-facing values — error `code`s,
+ * `requestId`s and raw backend `message`s — are passed through untranslated.
  */
+
+import i18n from '../i18n';
 
 /**
  * Backend error response format.
@@ -48,97 +55,68 @@ export interface ParsedApiError {
 }
 
 /**
- * Error code to user-friendly message mapping.
+ * Resolved, user-facing copy for an error code.
  */
-const ERROR_MESSAGES: Record<string, { title: string; message: string }> = {
-  // Authentication errors
-  AUTHENTICATION_ERROR: {
-    title: 'Authentication Required',
-    message: 'Please log in to continue.',
-  },
-  INVALID_CREDENTIALS: {
-    title: 'Invalid Credentials',
-    message: 'The email or password you entered is incorrect.',
-  },
-  SESSION_EXPIRED: {
-    title: 'Session Expired',
-    message: 'Your session has expired. Please log in again.',
-  },
-  UNAUTHORIZED: {
-    title: 'Access Denied',
-    message: 'You do not have permission to perform this action.',
-  },
-
-  // Validation errors
-  VALIDATION_ERROR: {
-    title: 'Validation Error',
-    message: 'Please check the form for errors.',
-  },
-  INVALID_INPUT: {
-    title: 'Invalid Input',
-    message: 'The provided data is invalid.',
-  },
-
-  // Resource errors
-  NOT_FOUND: {
-    title: 'Not Found',
-    message: 'The requested resource could not be found.',
-  },
-  RESOURCE_NOT_FOUND: {
-    title: 'Resource Not Found',
-    message: 'The item you are looking for does not exist or has been deleted.',
-  },
-  CONFLICT: {
-    title: 'Conflict',
-    message: 'This operation conflicts with existing data.',
-  },
-  DUPLICATE_ENTRY: {
-    title: 'Duplicate Entry',
-    message: 'An item with the same value already exists.',
-  },
-
-  // Rate limiting
-  RATE_LIMITED: {
-    title: 'Too Many Requests',
-    message: 'You have made too many requests. Please wait before trying again.',
-  },
-  RATE_LIMIT_EXCEEDED: {
-    title: 'Rate Limit Exceeded',
-    message: 'Please slow down and try again in a moment.',
-  },
-
-  // Server errors
-  INTERNAL_ERROR: {
-    title: 'Server Error',
-    message: 'An unexpected error occurred. Please try again later.',
-  },
-  SERVICE_UNAVAILABLE: {
-    title: 'Service Unavailable',
-    message: 'The service is temporarily unavailable. Please try again later.',
-  },
-  TIMEOUT: {
-    title: 'Request Timeout',
-    message: 'The request took too long. Please try again.',
-  },
-
-  // Network errors
-  NETWORK_ERROR: {
-    title: 'Network Error',
-    message: 'Unable to connect to the server. Please check your internet connection.',
-  },
-  OFFLINE: {
-    title: 'You are Offline',
-    message: 'Please check your internet connection and try again.',
-  },
-};
+interface ErrorCopy {
+  title: string;
+  message: string;
+}
 
 /**
- * Default error message for unknown error codes.
+ * Error codes that have a dedicated translation entry under
+ * `errors.catalogue.<CODE>`. Any code outside this set falls back to the
+ * default copy (`errors.catalogue.default`).
  */
-const DEFAULT_ERROR = {
-  title: 'Error',
-  message: 'An unexpected error occurred.',
-};
+const KNOWN_ERROR_CODES = new Set<string>([
+  // Authentication errors
+  'AUTHENTICATION_ERROR',
+  'INVALID_CREDENTIALS',
+  'SESSION_EXPIRED',
+  'UNAUTHORIZED',
+  // Validation errors
+  'VALIDATION_ERROR',
+  'INVALID_INPUT',
+  // Resource errors
+  'NOT_FOUND',
+  'RESOURCE_NOT_FOUND',
+  'CONFLICT',
+  'DUPLICATE_ENTRY',
+  // Rate limiting
+  'RATE_LIMITED',
+  'RATE_LIMIT_EXCEEDED',
+  // Server errors
+  'INTERNAL_ERROR',
+  'SERVICE_UNAVAILABLE',
+  'TIMEOUT',
+  // Network errors
+  'NETWORK_ERROR',
+  'OFFLINE',
+]);
+
+/**
+ * Default, user-facing copy for unknown error codes, resolved from the active
+ * i18n bundle.
+ */
+function defaultErrorCopy(): ErrorCopy {
+  return {
+    title: i18n.t('errors.catalogue.default.title'),
+    message: i18n.t('errors.catalogue.default.message'),
+  };
+}
+
+/**
+ * Resolve the user-facing title/message for an error code from the active i18n
+ * bundle. Unknown codes fall back to {@link defaultErrorCopy}.
+ */
+function errorCopy(code: string): ErrorCopy {
+  if (!KNOWN_ERROR_CODES.has(code)) {
+    return defaultErrorCopy();
+  }
+  return {
+    title: i18n.t(`errors.catalogue.${code}.title`),
+    message: i18n.t(`errors.catalogue.${code}.message`),
+  };
+}
 
 /**
  * Parse an API error response into a user-friendly format.
@@ -149,9 +127,10 @@ const DEFAULT_ERROR = {
 export function parseApiError(error: unknown): ParsedApiError {
   // Handle network errors
   if (isNetworkError(error)) {
+    const copy = errorCopy('NETWORK_ERROR');
     return {
-      title: ERROR_MESSAGES.NETWORK_ERROR.title,
-      message: ERROR_MESSAGES.NETWORK_ERROR.message,
+      title: copy.title,
+      message: copy.message,
       code: 'NETWORK_ERROR',
       isNetworkError: true,
       isRateLimitError: false,
@@ -167,11 +146,12 @@ export function parseApiError(error: unknown): ParsedApiError {
     // Check for rate limiting
     if (statusCode === 429) {
       const retryAfter = parseRetryAfter(response?.headers?.['retry-after']);
+      const copy = errorCopy('RATE_LIMITED');
       return {
-        title: ERROR_MESSAGES.RATE_LIMITED.title,
+        title: copy.title,
         message: retryAfter
-          ? `Please wait ${retryAfter} seconds before trying again.`
-          : ERROR_MESSAGES.RATE_LIMITED.message,
+          ? i18n.t('errors.catalogue.rateLimitRetry', { seconds: retryAfter })
+          : copy.message,
         code: 'RATE_LIMITED',
         requestId: data?.requestId,
         statusCode: 429,
@@ -191,9 +171,10 @@ export function parseApiError(error: unknown): ParsedApiError {
 
   // Handle fetch-style errors
   if (isFetchError(error)) {
+    const copy = errorCopy('NETWORK_ERROR');
     return {
-      title: ERROR_MESSAGES.NETWORK_ERROR.title,
-      message: ERROR_MESSAGES.NETWORK_ERROR.message,
+      title: copy.title,
+      message: copy.message,
       code: 'NETWORK_ERROR',
       isNetworkError: true,
       isRateLimitError: false,
@@ -207,9 +188,10 @@ export function parseApiError(error: unknown): ParsedApiError {
 
   // Handle Error instances
   if (error instanceof Error) {
+    const copy = defaultErrorCopy();
     return {
-      title: DEFAULT_ERROR.title,
-      message: error.message || DEFAULT_ERROR.message,
+      title: copy.title,
+      message: error.message || copy.message,
       code: 'UNKNOWN_ERROR',
       isNetworkError: false,
       isRateLimitError: false,
@@ -217,9 +199,10 @@ export function parseApiError(error: unknown): ParsedApiError {
   }
 
   // Fallback for unknown error types
+  const copy = defaultErrorCopy();
   return {
-    title: DEFAULT_ERROR.title,
-    message: DEFAULT_ERROR.message,
+    title: copy.title,
+    message: copy.message,
     code: 'UNKNOWN_ERROR',
     isNetworkError: false,
     isRateLimitError: false,
@@ -230,7 +213,7 @@ export function parseApiError(error: unknown): ParsedApiError {
  * Parse a structured ErrorResponse into ParsedApiError.
  */
 function parseErrorResponse(data: ErrorResponse, statusCode?: number): ParsedApiError {
-  const errorInfo = ERROR_MESSAGES[data.error] ?? DEFAULT_ERROR;
+  const errorInfo = errorCopy(data.error);
   const validationErrors = parseValidationDetails(data.details);
 
   return {
@@ -271,7 +254,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
   switch (statusCode) {
     case 400:
       return {
-        ...ERROR_MESSAGES.INVALID_INPUT,
+        ...errorCopy('INVALID_INPUT'),
         code: 'INVALID_INPUT',
         statusCode,
         isNetworkError: false,
@@ -279,7 +262,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     case 401:
       return {
-        ...ERROR_MESSAGES.AUTHENTICATION_ERROR,
+        ...errorCopy('AUTHENTICATION_ERROR'),
         code: 'AUTHENTICATION_ERROR',
         statusCode,
         isNetworkError: false,
@@ -287,7 +270,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     case 403:
       return {
-        ...ERROR_MESSAGES.UNAUTHORIZED,
+        ...errorCopy('UNAUTHORIZED'),
         code: 'UNAUTHORIZED',
         statusCode,
         isNetworkError: false,
@@ -295,7 +278,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     case 404:
       return {
-        ...ERROR_MESSAGES.NOT_FOUND,
+        ...errorCopy('NOT_FOUND'),
         code: 'NOT_FOUND',
         statusCode,
         isNetworkError: false,
@@ -303,7 +286,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     case 409:
       return {
-        ...ERROR_MESSAGES.CONFLICT,
+        ...errorCopy('CONFLICT'),
         code: 'CONFLICT',
         statusCode,
         isNetworkError: false,
@@ -311,7 +294,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     case 429:
       return {
-        ...ERROR_MESSAGES.RATE_LIMITED,
+        ...errorCopy('RATE_LIMITED'),
         code: 'RATE_LIMITED',
         statusCode,
         isNetworkError: false,
@@ -321,7 +304,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
     case 502:
     case 503:
       return {
-        ...ERROR_MESSAGES.INTERNAL_ERROR,
+        ...errorCopy('INTERNAL_ERROR'),
         code: 'INTERNAL_ERROR',
         statusCode,
         isNetworkError: false,
@@ -329,7 +312,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     case 504:
       return {
-        ...ERROR_MESSAGES.TIMEOUT,
+        ...errorCopy('TIMEOUT'),
         code: 'TIMEOUT',
         statusCode,
         isNetworkError: false,
@@ -337,7 +320,7 @@ function parseHttpStatusError(statusCode?: number): ParsedApiError {
       };
     default:
       return {
-        ...DEFAULT_ERROR,
+        ...defaultErrorCopy(),
         code: 'UNKNOWN_ERROR',
         statusCode,
         isNetworkError: false,
