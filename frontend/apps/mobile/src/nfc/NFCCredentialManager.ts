@@ -158,8 +158,21 @@ export class NFCCredentialManager {
    * Get access log.
    */
   async getAccessLog(): Promise<AccessLogEntry[]> {
+    // The stored blob may be corrupted (partial writes, manual app-data
+    // restore, OS-level storage wipe). Never let a parse failure throw:
+    // logAccessAttempt() calls this AFTER access has already been granted at
+    // the door, so a corrupted blob must not reject the tap flow. Fall back to
+    // an empty log rather than propagating the SyntaxError.
     const stored = await AsyncStorage.getItem(ACCESS_LOG_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) {
+      return [];
+    }
+    try {
+      return JSON.parse(stored);
+    } catch (err) {
+      console.warn('[nfc] Stored access log corrupted; treating as empty.', err);
+      return [];
+    }
   }
 
   /**
