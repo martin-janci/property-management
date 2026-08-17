@@ -1249,7 +1249,11 @@ fn google_jwks_http() -> &'static reqwest::Client {
         reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(5))
             .build()
-            .expect("build Google JWKS HTTP client")
+            // Mirror `alexa_cert_http_client`: a builder failure means the TLS
+            // backend could not initialise, and a default client would fail the
+            // same way — fall back to it rather than panicking inside the
+            // request-serving `verify_google_request` path.
+            .unwrap_or_else(|_| reqwest::Client::new())
     })
 }
 
