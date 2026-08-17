@@ -178,6 +178,8 @@ async fn alexa_webhook(
                 state.llm_document_repo.clone(),
                 state.fault_repo.clone(),
                 state.unit_repo.clone(),
+                state.announcement_repo.clone(),
+                state.meter_repo.clone(),
             );
             let (result, _) = processor
                 .process_command(rls.conn(), device.id, "help", &locale)
@@ -198,6 +200,8 @@ async fn alexa_webhook(
                 state.llm_document_repo.clone(),
                 state.fault_repo.clone(),
                 state.unit_repo.clone(),
+                state.announcement_repo.clone(),
+                state.meter_repo.clone(),
             );
             let (result, _) = processor
                 .process_command(rls.conn(), device.id, &command_text, &locale)
@@ -311,6 +315,8 @@ async fn google_actions_webhook(
         state.llm_document_repo.clone(),
         state.fault_repo.clone(),
         state.unit_repo.clone(),
+        state.announcement_repo.clone(),
+        state.meter_repo.clone(),
     );
     let (result, _) = processor
         .process_command(rls.conn(), device.id, command_text, locale)
