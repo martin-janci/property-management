@@ -40,6 +40,50 @@ async fn seed_contact(pool: &PgPool, org: Uuid) -> Uuid {
     .unwrap()
 }
 
+/// Seed a contact carrying an IBAN (used for the counterparty-IBAN tie-breaker).
+async fn seed_contact_iban(pool: &PgPool, org: Uuid, iban: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name, iban) VALUES ($1, 'C', $2) RETURNING id",
+    )
+    .bind(org)
+    .bind(iban)
+    .fetch_one(pool)
+    .await
+    .unwrap()
+}
+
+/// Seed a bank statement plus a single unmatched line carrying a counterparty
+/// IBAN. Returns (statement_id, line_id).
+async fn seed_statement_line_iban(
+    pool: &PgPool,
+    org: Uuid,
+    amount: i64,
+    vs: &str,
+    counterparty_iban: &str,
+) -> (Uuid, Uuid) {
+    let stmt = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO bank_statement (tenant_id, source_filename, account_iban) \
+         VALUES ($1, 'S', 'IBAN') RETURNING id",
+    )
+    .bind(org)
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    let line = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO bank_statement_line (statement_id, tenant_id, booking_date, amount, currency, variable_symbol, counterparty_iban, match_state) \
+         VALUES ($1, $2, NOW(), $3, 'CZK', $4, $5, 'unmatched') RETURNING id",
+    )
+    .bind(stmt)
+    .bind(org)
+    .bind(amount)
+    .bind(vs)
+    .bind(counterparty_iban)
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    (stmt, line)
+}
+
 /// Seed an open (issued) invoice with the given number, total, and variable
 /// symbol. `paid_amount` stays 0, so `remaining = total`.
 async fn seed_invoice(
@@ -158,5 +202,41 @@ async fn genuinely_tied_candidates_are_all_surfaced(pool: PgPool) {
     assert_eq!(
         suggested, expected,
         "both genuinely-tied top candidates must be surfaced for disambiguation"
+    );
+}
+
+/// Two invoices that would otherwise tie (same VS, both exact-amount -> 0.95)
+/// must be disambiguated by the counterparty IBAN: only the invoice whose
+/// contact owns the originating account is suggested. Regression for the
+/// matcher previously ignoring the documented IBAN tie-breaker (the old
+/// `// TODO: ... IBAN match`), so a VS+amount tie surfaced BOTH invoices.
+///
+/// The line's IBAN is supplied lower-cased and space-grouped to also exercise
+/// canonical-form normalisation against the stored contact IBAN.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn counterparty_iban_breaks_a_vs_amount_tie(pool: PgPool) {
+    let org = seed_org(&pool, "matcher-iban-tiebreak").await;
+    let contact_a = seed_contact_iban(&pool, org, "SK11 1000").await;
+    let contact_b = seed_contact_iban(&pool, org, "SK22 2000").await;
+
+    // Both share VS "VSIBAN" and owe exactly 100 (== line amount) -> both 0.95
+    // on VS+exact-amount alone. Only A's contact IBAN matches the line, so A
+    // gets the extra +0.05 (=> 1.0) and wins outright.
+    let a = seed_invoice(&pool, org, contact_a, "INV-A", 100, "VSIBAN").await;
+    let _b = seed_invoice(&pool, org, contact_b, "INV-B", 100, "VSIBAN").await;
+    let (stmt, line) = seed_statement_line_iban(&pool, org, 100, "VSIBAN", "sk111000").await;
+
+    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let mut conn = pool.acquire().await.unwrap();
+    set_ctx(&mut conn, org).await;
+    svc.run_payment_matcher(&mut conn, org, stmt)
+        .await
+        .expect("run matcher");
+
+    let suggested = suggested_invoices(&pool, line).await;
+    assert_eq!(
+        suggested,
+        vec![a],
+        "the counterparty-IBAN match must break the VS+amount tie in favour of the owning contact"
     );
 }
