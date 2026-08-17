@@ -195,7 +195,7 @@
       "action": "reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -205,7 +205,8 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "last_updated": "2026-08-17T10:25:00Z"
     },
     {
       "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -229,7 +230,7 @@
       "action": "repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -239,7 +240,8 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "last_updated": "2026-08-17T10:25:00Z"
     },
     {
       "id": "code-review-mobile-rn-nfc-revoke-local-persists-offline",
@@ -263,7 +265,7 @@
       "action": "NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched credentials",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -273,7 +275,8 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "last_updated": "2026-08-17T10:25:00Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
