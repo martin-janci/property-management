@@ -7644,7 +7644,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-web]"
       ],
@@ -7665,7 +7665,12 @@
       "segment": "reality-web",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T14:42:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2785
+      }
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-i18n",
@@ -7706,7 +7711,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-web]"
       ],
@@ -7726,7 +7731,12 @@
       "segment": "reality-web",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T14:42:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2781
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-rentals-mappers-test-tsx",
@@ -7921,7 +7931,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -7941,7 +7951,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-08-17T14:42:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2784
+      }
     },
     {
       "id": "churn-hotspot-marketplace-award-quote-idor-tests",
@@ -8491,7 +8506,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [mobile-rn]"
       ],
@@ -8512,7 +8527,12 @@
       "segment": "mobile-rn",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T14:42:09Z",
+        "assignment_status": "merged",
+        "pr_number": 2786
+      }
     },
     {
       "id": "code-review-mobile-rn-nfc-accesslog-parse-unguarded",

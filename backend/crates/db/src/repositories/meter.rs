@@ -14,7 +14,7 @@ use crate::models::meter::{
 use crate::DbPool;
 use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
-use sqlx::Error as SqlxError;
+use sqlx::{Error as SqlxError, Executor, Postgres};
 use uuid::Uuid;
 
 /// Repository for meter operations.
@@ -507,6 +507,38 @@ impl MeterRepository {
         .bind(org_id)
         .bind(building_id)
         .fetch_all(&self.pool)
+        .await
+    }
+
+    /// List pending meter readings for a single unit, honouring the caller's
+    /// RLS session context.
+    ///
+    /// Unlike [`get_pending_readings`] (org/building-wide, own-pool), this is
+    /// scoped to one resident's unit and runs on the caller-supplied,
+    /// context-set connection so tenant isolation is enforced. Used by the
+    /// voice assistant's "check meter readings" intent, which must answer with
+    /// the resident's own pending readings rather than fabricating an empty
+    /// result.
+    pub async fn get_pending_readings_for_unit_rls<'e, E>(
+        &self,
+        executor: E,
+        unit_id: Uuid,
+    ) -> Result<Vec<MeterReading>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, MeterReading>(
+            r#"
+            SELECT r.*
+            FROM meter_readings r
+            JOIN meters m ON r.meter_id = m.id
+            WHERE m.unit_id = $1
+              AND r.status = 'pending'
+            ORDER BY r.reading_date ASC
+            "#,
+        )
+        .bind(unit_id)
+        .fetch_all(executor)
         .await
     }
 
