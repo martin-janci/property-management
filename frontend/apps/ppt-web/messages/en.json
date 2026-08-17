@@ -886,7 +886,82 @@
     "bookingNotFound": "Booking not found",
     "faultNotFound": "Fault not found",
     "meterNotFound": "Meter not found",
-    "entityNotFound": "{{entity}} not found"
+    "entityNotFound": "{{entity}} not found",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Authentication Required",
+        "message": "Please log in to continue."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Invalid Credentials",
+        "message": "The email or password you entered is incorrect."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Session Expired",
+        "message": "Your session has expired. Please log in again."
+      },
+      "UNAUTHORIZED": {
+        "title": "Access Denied",
+        "message": "You do not have permission to perform this action."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Validation Error",
+        "message": "Please check the form for errors."
+      },
+      "INVALID_INPUT": {
+        "title": "Invalid Input",
+        "message": "The provided data is invalid."
+      },
+      "NOT_FOUND": {
+        "title": "Not Found",
+        "message": "The requested resource could not be found."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Resource Not Found",
+        "message": "The item you are looking for does not exist or has been deleted."
+      },
+      "CONFLICT": {
+        "title": "Conflict",
+        "message": "This operation conflicts with existing data."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Duplicate Entry",
+        "message": "An item with the same value already exists."
+      },
+      "RATE_LIMITED": {
+        "title": "Too Many Requests",
+        "message": "You have made too many requests. Please wait before trying again."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Rate Limit Exceeded",
+        "message": "Please slow down and try again in a moment."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Server Error",
+        "message": "An unexpected error occurred. Please try again later."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Service Unavailable",
+        "message": "The service is temporarily unavailable. Please try again later."
+      },
+      "TIMEOUT": {
+        "title": "Request Timeout",
+        "message": "The request took too long. Please try again."
+      },
+      "NETWORK_ERROR": {
+        "title": "Network Error",
+        "message": "Unable to connect to the server. Please check your internet connection."
+      },
+      "OFFLINE": {
+        "title": "You are Offline",
+        "message": "Please check your internet connection and try again."
+      },
+      "default": {
+        "title": "Error",
+        "message": "An unexpected error occurred."
+      },
+      "rateLimitRetry": "Please wait {{seconds}} seconds before trying again."
+    }
   },
   "notifications": {
     "title": "Notifications",

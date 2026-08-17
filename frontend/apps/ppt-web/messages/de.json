@@ -701,7 +701,82 @@
     "bookingNotFound": "Buchung nicht gefunden",
     "faultNotFound": "Störung nicht gefunden",
     "meterNotFound": "Zähler nicht gefunden",
-    "entityNotFound": "{{entity}} nicht gefunden"
+    "entityNotFound": "{{entity}} nicht gefunden",
+    "catalogue": {
+      "AUTHENTICATION_ERROR": {
+        "title": "Anmeldung erforderlich",
+        "message": "Bitte melden Sie sich an, um fortzufahren."
+      },
+      "INVALID_CREDENTIALS": {
+        "title": "Ungültige Anmeldedaten",
+        "message": "Die eingegebene E-Mail-Adresse oder das Passwort ist falsch."
+      },
+      "SESSION_EXPIRED": {
+        "title": "Sitzung abgelaufen",
+        "message": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+      },
+      "UNAUTHORIZED": {
+        "title": "Zugriff verweigert",
+        "message": "Sie haben keine Berechtigung, diese Aktion auszuführen."
+      },
+      "VALIDATION_ERROR": {
+        "title": "Validierungsfehler",
+        "message": "Bitte überprüfen Sie das Formular auf Fehler."
+      },
+      "INVALID_INPUT": {
+        "title": "Ungültige Eingabe",
+        "message": "Die bereitgestellten Daten sind ungültig."
+      },
+      "NOT_FOUND": {
+        "title": "Nicht gefunden",
+        "message": "Die angeforderte Ressource konnte nicht gefunden werden."
+      },
+      "RESOURCE_NOT_FOUND": {
+        "title": "Ressource nicht gefunden",
+        "message": "Das gesuchte Element existiert nicht oder wurde gelöscht."
+      },
+      "CONFLICT": {
+        "title": "Konflikt",
+        "message": "Dieser Vorgang steht im Konflikt mit vorhandenen Daten."
+      },
+      "DUPLICATE_ENTRY": {
+        "title": "Doppelter Eintrag",
+        "message": "Ein Element mit demselben Wert existiert bereits."
+      },
+      "RATE_LIMITED": {
+        "title": "Zu viele Anfragen",
+        "message": "Sie haben zu viele Anfragen gestellt. Bitte warten Sie, bevor Sie es erneut versuchen."
+      },
+      "RATE_LIMIT_EXCEEDED": {
+        "title": "Anfragelimit überschritten",
+        "message": "Bitte verlangsamen Sie und versuchen Sie es gleich noch einmal."
+      },
+      "INTERNAL_ERROR": {
+        "title": "Serverfehler",
+        "message": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut."
+      },
+      "SERVICE_UNAVAILABLE": {
+        "title": "Dienst nicht verfügbar",
+        "message": "Der Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut."
+      },
+      "TIMEOUT": {
+        "title": "Zeitüberschreitung der Anfrage",
+        "message": "Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut."
+      },
+      "NETWORK_ERROR": {
+        "title": "Netzwerkfehler",
+        "message": "Verbindung zum Server nicht möglich. Bitte überprüfen Sie Ihre Internetverbindung."
+      },
+      "OFFLINE": {
+        "title": "Sie sind offline",
+        "message": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+      },
+      "default": {
+        "title": "Fehler",
+        "message": "Ein unerwarteter Fehler ist aufgetreten."
+      },
+      "rateLimitRetry": "Bitte warten Sie {{seconds}} Sekunden, bevor Sie es erneut versuchen."
+    }
   },
   "notifications": {
     "title": "Benachrichtigungen",
