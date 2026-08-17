@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-16T03:14:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2771,
+  "last_run_iso": "2026-08-17T02:29:00Z",
+  "last_run_ms": 1200,
+  "last_pr_seen": 2772,
   "last_issue_seen": 2768,
-  "last_commit_sha": "7f767e24b4f51f797d17841d6e27dbccbbd11fab",
+  "last_commit_sha": "9c1ba063c6b38a4e6608c75568dba5847d202b6e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -877,7 +877,18 @@
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
     "code-review-mobile-native-kmp-inquiries-response-contract",
-    "code-review-mobile-native-kmp-httpclient-no-timeout"
+    "code-review-mobile-native-kmp-httpclient-no-timeout",
+    "code-review-reality-web-comparison-view-i18n",
+    "code-review-reality-web-realtor-mgmt-i18n",
+    "code-review-reality-web-agency-errorstate-i18n",
+    "code-review-api-handlers-share-pw-no-throttle",
+    "code-review-api-handlers-share-log-proxy-ip",
+    "code-review-ppt-web-ui-createfault-mock-ai",
+    "code-review-ppt-web-ui-moderation-fabricated-context",
+    "code-review-ppt-web-ui-moderation-no-i18n",
+    "code-review-api-core-payment-matcher-multi-suggest",
+    "code-review-api-core-payment-matcher-vs-only-threshold",
+    "code-review-ppt-web-core-errorhandler-i18n-gap"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -891,8 +902,8 @@
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 65,
-    "vectors_created": 301,
+    "runs": 66,
+    "vectors_created": 302,
     "plans_created": 25,
     "quiet_days": 2,
     "auto_fix_count": 0

@@ -1,0 +1,244 @@
+{
+  "run": "2026-08-17T02:29:00Z",
+  "trigger": "routine cron + dispatcher buffer-low fire-payload (claimable=6/72, score stranded findings)",
+  "signals": [
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "See backlog row for full evidence; ComparisonView.tsx hardcoded English on 4-locale portal."
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "RealtorManagement.tsx remove-confirm modal + subtitle hardcoded English."
+    },
+    {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "AgencyErrorStates.tsx no-agency empty state hardcoded English."
+    },
+    {
+      "id": "code-review-api-handlers-share-pw-no-throttle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (api-handlers) 2026-08-13",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "shares.rs:574 unauth share-password endpoint has no brute-force protection."
+    },
+    {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (api-handlers) 2026-08-13",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "shares.rs logs proxy IP as client IP behind nginx \u2014 audit trail worthless."
+    },
+    {
+      "id": "code-review-ppt-web-ui-createfault-mock-ai",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "CreateFaultPage.tsx ships hardcoded mock AI suggestion (plumbing/85%) via setTimeout; real endpoint exists but unused."
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-fabricated-context",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "ContentModerationPage.tsx hardcodes previous_violations=0 / report_source='user' for every case \u2014 misleads moderators."
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "ContentModerationPage.tsx uses window.prompt()/alert() English-only for DSA enforcement flows."
+    },
+    {
+      "id": "code-review-api-core-payment-matcher-multi-suggest",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (api-core) 2026-08-16",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "accounting.rs::run_payment_matcher inner loop never breaks after suggesting; one line matched against N invoices."
+    },
+    {
+      "id": "code-review-api-core-payment-matcher-vs-only-threshold",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (api-core) 2026-08-16",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "accounting.rs matcher VS-only weight 0.8 clears 0.5 auto-suggest threshold; amount signal never required."
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator (ppt-web-core) 2026-08-17",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "errorHandler.ts ERROR_MESSAGES catalogue hardcoded English strings flow verbatim into showToast()."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-17.md && head -1 matches",
+      "observed": "written",
+      "expected": "written"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD \u2014 last_pr_seen advanced (2771\u21922772), seen_signals +11, last_run_iso advanced",
+      "observed": "advanced",
+      "expected": "advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique id count",
+      "observed": "no dupes",
+      "expected": "no dupes"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no seen_signals dupes with score_delta != 0",
+      "observed": "all 11 IDs new to seen_signals",
+      "expected": "no dupe-scoring"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap+decay",
+      "observed": "cap=8 (max in backlog is 6); decay applied \u2014 see note",
+      "expected": "cap holds"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "adversarial pass annotations exist if plans created"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans (\u22642 cap)",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "checked before commit",
+      "expected": "all paths under .research/"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no NEW secrets/hostnames in staged diff (added-lines-only filter, matching G17 semantics)",
+      "observed": "0 added-line hits. Literal G9 check as written counts context lines and reports 1 hit \u2014 `*.dev.ppt.rlt.sk` inside pre-existing evidence at backlog.json:7865, unchanged in HEAD; surfaced only because the surrounding row was hydrated (title/vector/etc fields added). No fresh secret leak.",
+      "expected": "0 added-line matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md; diff -q",
+      "observed": "byte-identical rerun verified",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "phase-1 gh pr list ok; issues none; commits ok",
+      "expected": "phase failures documented if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "no plan-file mutations this run",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD count",
+      "observed": "no archive changes",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md; diff -q",
+      "observed": "byte-identical rerun verified",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap",
+      "observed": "empty (no candidate met bar this run)",
+      "expected": "\u22643 total"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (Phase 1.6 skipped this run \u2014 buffer-low focused)",
+      "observed": "no-op \u2014 pm_cursor unchanged",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in diff",
+      "observed": "n/a",
+      "expected": "0 matches"
+    }
+  ],
+  "notes": [
+    "Phase 1.5 skipped: today's dev-review tier1d run already produced signals/2026-08-17-ppt-web-core-tier1d.json \u2014 folded into backlog instead of re-invoking skill.",
+    "Phase 1.6 skipped: focused buffer-low run; pm_cursor unchanged. Next routine run resumes with pm-qa (index 3).",
+    "Phase 5 no-op: 0 candidates met certainty bar (confidence=high + score>=3 + allowlisted signal type). All folded findings are confidence=medium.",
+    "Merged PRs since last run: 1 (#2772 voice_oauth_refresh_auth_tests platform-admin arm)."
+  ]
+}
