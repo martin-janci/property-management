@@ -9,9 +9,21 @@ use db::repositories::AccountingRepository;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::PgConnection;
+use std::collections::HashMap;
 use std::io::Cursor;
 use std::str::FromStr;
 use uuid::Uuid;
+
+/// Normalise an IBAN for comparison: drop all whitespace and upper-case it, so
+/// `"sk11 1000"` and `"SK111000"` compare equal. Bank exports vary in casing
+/// and grouping; the counterparty IBAN on a statement line and the IBAN stored
+/// on a contact must be compared on their canonical form, not byte-for-byte.
+fn normalize_iban(raw: &str) -> String {
+    raw.chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>()
+        .to_uppercase()
+}
 
 #[derive(Debug, Deserialize)]
 struct CsvLine {
@@ -121,6 +133,25 @@ impl AccountingService {
             })
             .collect();
 
+        // Contact IBANs, keyed by contact id, for the counterparty-IBAN
+        // corroboration below. An invoice carries no IBAN of its own — the
+        // payer's account lives on its `Contact` — so we resolve it once here
+        // instead of per (line, invoice) pair. Only non-empty IBANs are kept,
+        // in canonical form.
+        let contact_iban: HashMap<Uuid, String> = self
+            .repo
+            .list_contacts_rls(&mut *executor)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?
+            .into_iter()
+            .filter_map(|c| {
+                c.iban
+                    .map(|i| normalize_iban(&i))
+                    .filter(|i| !i.is_empty())
+                    .map(|i| (c.id, i))
+            })
+            .collect();
+
         let threshold = Decimal::from_str("0.5").unwrap();
 
         for line in lines {
@@ -140,10 +171,22 @@ impl AccountingService {
             // disambiguation.
             let mut scored: Vec<(&Invoice, Decimal)> = Vec::new();
 
+            // The line's counterparty IBAN in canonical form, resolved once per
+            // line for the IBAN corroboration below.
+            let line_iban = line
+                .counterparty_iban
+                .as_deref()
+                .map(normalize_iban)
+                .filter(|i| !i.is_empty());
+
             for invoice in &open_invoices {
                 let mut confidence = Decimal::ZERO;
 
-                // 1. Variable Symbol match (highest weight)
+                // 1. Variable Symbol match (highest weight) — the primary
+                //    "auto-match by reference" signal (FR-16.8 / BR-16.8.1). It
+                //    is the only signal strong enough on its own to clear the
+                //    auto-suggest threshold; amount and IBAN below are
+                //    corroboration that breaks ties between VS-sharing invoices.
                 if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol)
                 {
                     if l_vs == i_vs && !l_vs.is_empty() {
@@ -151,7 +194,7 @@ impl AccountingService {
                     }
                 }
 
-                // 2. Amount match (corroboration)
+                // 2. Amount match (corroboration / tie-breaker)
                 let remaining_amount = invoice.total_amount - invoice.paid_amount;
                 if line.amount == remaining_amount {
                     confidence += Decimal::from_str("0.15").unwrap();
@@ -159,7 +202,23 @@ impl AccountingService {
                     confidence += Decimal::from_str("0.05").unwrap();
                 }
 
-                // TODO: Date proximity, IBAN match
+                // 3. Counterparty IBAN match (corroboration / tie-breaker).
+                //    When several invoices share a variable symbol (e.g. a
+                //    tenant's recurring monthly invoices), a matching payer
+                //    account promotes the invoice whose contact actually owns
+                //    the originating IBAN above its VS-only peers.
+                if let Some(l_iban) = &line_iban {
+                    if contact_iban.get(&invoice.contact_id) == Some(l_iban) {
+                        confidence += Decimal::from_str("0.05").unwrap();
+                    }
+                }
+
+                // TODO: Date proximity
+
+                // Confidence is a 0..1 score; the weights above sum to at most
+                // 1.0, but clamp defensively so future signals can't overflow
+                // the documented range.
+                let confidence = confidence.min(Decimal::ONE);
 
                 if confidence >= threshold {
                     scored.push((invoice, confidence));
