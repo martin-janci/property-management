@@ -2257,6 +2257,28 @@
       "merge_attempted_at": "2026-07-04T18:13:02Z"
     },
     {
+      "task_id": "code-review-api-core-payment-matcher-multi-suggest",
+      "branch": "auto-impl/code-review-api-core-payment-matcher-mul-5055186a",
+      "status": "merged",
+      "claimed_at": "2026-08-17T04:31:07Z",
+      "last_updated": "2026-08-17T06:37:00Z",
+      "status_changed_at": "2026-08-17T06:37:00Z",
+      "pr_number": 2774,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2774",
+      "merged_at": "2026-08-17T06:37:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2774 status=done specialist=rust-backend: corrected inverted finding (bug is OVER-suggestion, not early-return); surfaces only max-confidence tier, keeps ties; TDD test:+fix: (regression fails on dev); fmt+clippy+test-link green, 588 unit tests pass, sqlx DB tests deferred to CI; rebased onto advanced dev (backend-only diff, 3 files)",
+      "reviewer_summary": "verdict=approve note=max-tier-fix-correct-ties-retained-ci-green",
+      "last_reviewed_oid": "de04c6e12fa4196ca87423aeac2e8065893b6d06",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-17T06:36:00Z"
+    },
+    {
       "task_id": "code-review-api-core-quiet-drain-drops-failed-delivery",
       "branch": "auto-impl/code-review-api-core-quiet-drain-drops-f-5f88340e",
       "status": "failed",
@@ -2873,6 +2895,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-share-pw-no-throttle",
+      "branch": "auto-impl/code-review-api-handlers-share-pw-no-thr-4f91596a",
+      "status": "merged",
+      "claimed_at": "2026-08-17T04:31:07Z",
+      "last_updated": "2026-08-17T06:37:00Z",
+      "status_changed_at": "2026-08-17T06:37:00Z",
+      "pr_number": 2773,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2773",
+      "merged_at": "2026-08-17T06:37:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=partial specialist=rust-backend: reused rate_limit_allowed limiter (token:ip, 429 after 10 fails/15min, pre-hash check, reset on success) + 4 unit tests pass, fmt+clippy clean; VERIFY FAIL only on 12 pre-existing env tests (sqlx DATABASE_URL unset / DNS-rebind), none in share path; branch pushed. Dispatcher opened draft PR #2773 for real-CI validation.",
+      "reviewer_summary": "verdict=approve note=throttle-correct-ip-nonspoofable-reuse-genuine-ci-green",
+      "last_reviewed_oid": "34060ae3045a76ee7cf406f60feaca6c858c2f5a",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-17T06:36:00Z"
     },
     {
       "task_id": "code-review-api-handlers-shares-revoke-doc-mismatch",
@@ -14281,5 +14325,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-16T06:36:05Z"
+  "archived_at": "2026-08-17T06:40:30Z"
 }
