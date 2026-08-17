@@ -1,0 +1,26 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-17",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d demand-driven (claimable landable backlog starved; all remaining open items are mobile-native/KMP = structurally unlandable in the cloud runner). Excluded mobile-native-kmp per run constraint. Segment chosen by the skill's oldest-unreviewed rule: state.review_cursor has three landable segments tied at the oldest date 2026-08-12 (ppt-web-core, reality-web, mobile-rn); picked ppt-web-core by segment-map order (first of the tie) and landability/centrality. Backlog saturation check: 0 open code-review-finding rows for ppt-web-core (the 5 open code-review findings in backlog.json are ALL mobile-native-kmp), so ppt-web-core is not saturated. Note: skill segment-map paths are stale (frontend/ppt-web/src/{hooks,api,stores,router}); actual layout is frontend/apps/ppt-web/src/{hooks,lib,contexts,routes} - reviewed the actual core tree (lib/api.ts, lib/errorHandler.ts, lib/websocket.ts, lib/queryKeys.ts, contexts/AuthContext.tsx, contexts/WebSocketContext.tsx, hooks/useWebSocket.ts). Disjoint from prior tier1d runs: 2026-08-15 covered contexts/lib realtime+auth (WS event-name mismatch, api-client missing onUnauthorized, unverified-JWT role); 2026-08-14 covered the rentals/person-months route groups. Verified NON-issues this pass (no signal emitted): lib/websocket.ts:538 handleMessage wraps JSON.parse + per-handler dispatch in try/catch (safe); lib/api.ts auto-retry correctly excludes non-idempotent POST/PUT/PATCH; contexts/WebSocketContext.tsx handles token rotation + regained-connectivity reconnect; lib/queryKeys.ts AUTHED_QUERY_KEY_ROOTS covers all 13 queryKeys-factory roots AND every literal query-key root used in features/pages/hooks (no cross-session cache leak found); errorHandler parseRetryAfter handles both delta-seconds and HTTP-date forms correctly.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-gap",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:56-141 defines the ENTIRE client-side error catalogue (ERROR_MESSAGES + DEFAULT_ERROR) as hardcoded English title/message string literals (e.g. INVALID_CREDENTIALS 'The email or password you entered is incorrect.', RATE_LIMITED 'You have made too many requests. Please wait before trying again.', NETWORK_ERROR 'Unable to connect to the server. Please check your internet connection.'). parseApiError (:149), parseErrorResponse (:232-245), and parseHttpStatusError (:270-347) all return these raw English strings, and the 429 branch at :172-174 additionally builds a hardcoded English template `Please wait ${retryAfter} seconds before trying again.` - none of these pass through react-i18next.",
+        "These strings are rendered verbatim to end users. Confirmed consumer frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:46-51 and :61-66 does `const parsed = parseApiError(error); showToast({ type: 'error', message: parsed.message })` - the English catalogue message goes straight into the user-facing error toast with no t() wrapping.",
+        "The app is fully internationalised elsewhere: `grep -rl useTranslation frontend/apps/ppt-web/src --include='*.tsx'` returns ~300 components, and errorHandler.ts imports/uses no i18n at all. Net effect: every client-derived API/network/rate-limit error toast renders English-only regardless of the user's selected locale - a consistent i18n gap across the whole app's error surface.",
+        "Fix: key the catalogue by error code and resolve messages through i18n at the render site (e.g. return `code` from errorHandler and call `t('errors.' + code)` in showToast callers, with the current English strings seeded into the locale bundles), or inject a translator into parseApiError. Also i18n the retry-after template as an interpolated ICU string. Low severity (no functional break; UX/locale-correctness only), medium confidence (static - traced catalogue -> parseApiError -> one confirmed toast consumer; the exhaustive set of consumers was not enumerated)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
