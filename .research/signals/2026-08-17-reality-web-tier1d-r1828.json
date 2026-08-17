@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-reality-web-inquiry-cancel-no-error",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-web",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — InquiryCard.handleCancel calls `cancelInquiry.mutate(inquiry.id)` fire-and-forget and immediately `setShowCancelConfirm(false)`. The mutation result (`useCancelInquiry()` from @ppt/reality-api-client) is never read: grep of the file shows no `cancelInquiry.isError`, `.isPending`, `.error`, and no `onError`/`onSuccess` callback anywhere. If the cancel POST fails (network / 409 already-cancelled / 403), the confirm dialog closes, the card shows no feedback, and the inquiry silently stays pending — the user believes it was cancelled.",
+      "Secondary: because `cancelInquiry.isPending` is not read, the Cancel button is not disabled during the in-flight request, so a double-click fires two cancel mutations.",
+      "This is a deviation from the codebase's own established pattern, not a missing convention: the sibling public write path frontend/apps/reality-web/src/components/listings/ContactForm.tsx does it correctly — it renders `{createInquiry.error && <div className=\"error-message\">{t('failedToSend')}</div>}` (:213) and `disabled={createInquiry.isPending}` with a sending label (:215-216). The inquiries cancel flow should mirror that: surface `cancelInquiry.error` and gate the button on `cancelInquiry.isPending`.",
+      "Landable reality-web-only fix (no API/schema change): read the mutation state in InquiryCard — disable the confirm button while `cancelInquiry.isPending`, keep the confirm open and show an inline error string on `cancelInquiry.isError` instead of unconditionally closing it, and only `setShowCancelConfirm(false)` in an onSuccess. Reuse an i18n key rather than a hardcoded string (see the i18n-gap finding on the same file)."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-reality-web-locale-pages-hardcoded-i18n",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "reality-web",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "i18n",
+    "evidence": [
+      "reality-web is a public multi-locale portal (next-intl 4; locales sk, cs, de, en per CLAUDE.md) yet several `app/[locale]/**` pages ship hardcoded English user-facing copy with zero i18n wiring. Confirmed by `grep -c 'useTranslations|getTranslations'` returning 0 for: app/[locale]/account/profile/page.tsx (strings 'Edit profile' :48, 'Display name' :63), app/[locale]/account/password/page.tsx ('Change password' :68, 'Current password' :83, 'New password' :96, 'Confirm new password' :113), app/[locale]/realtor/profile/page.tsx ('Realtor profile' :93, 'License number' :160), app/[locale]/realtor/page.tsx ('Realtor workspace' :46), app/[locale]/realtor/listings/new/page.tsx ('Create listing' :37), app/[locale]/realtor/listings/[id]/edit/page.tsx ('Edit listing' :74), app/[locale]/realtor/listings/page.tsx ('My listings' :77), and app/[locale]/inquiries/page.tsx ('No inquiries yet' :387, 'My Inquiries' :541, 'Browse listings').",
+      "app/[locale]/inquiries/page.tsx additionally hardcodes the status labels in `statusConfig` (:15-38: 'Pending', 'Responded', 'Scheduled', 'Completed', 'Cancelled') that render as visible badges — these are enumerable UI strings that must be translated, not just headings.",
+      "Component-level empty states are affected too: frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:76 renders '<h3 className=\"empty-title\">No listings found</h3>' and ':78 'Try adjusting your filters or search criteria...' with no `t()`. This is on the primary search/browse surface.",
+      "This is a genuine gap versus the app's own baseline: 65 non-test files already use `useTranslations`/`getTranslations` and translated pages exist (e.g. favorites/page.tsx uses 3 translation calls; ContactForm.tsx is fully translated). Non-en visitors (sk/cs/de) see untranslated English on account, realtor-workspace, and inquiries flows. Landable reality-web-only fix: wrap the enumerated strings in `useTranslations(<ns>)`/`getTranslations` and add the keys to the sk/cs/de/en message catalogs — no backend or API change."
+    ],
+    "expert": "frontend"
+  }
+]

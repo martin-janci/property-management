@@ -192,23 +192,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-nfc-revoke-local-persists-offline",
-      "action": "NFC emergencyRevokeAll leaves local credentials usable offline when the revoke API call fails",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-17T06:30:07Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-nfc-securestore-2kb-blob",
       "action": "NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched credentials",
       "owner_role": "pm-backend",
