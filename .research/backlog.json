@@ -8566,6 +8566,55 @@
         "assignment_status": "merged",
         "pr_number": 2775
       }
+    },
+    {
+      "id": "security-share-ip-spoof-throttle-bypass",
+      "title": "SECURITY: share access log/throttle trust spoofable proxy headers — resolve_client_ip defeats PR #2773 throttle + poisons audit log",
+      "vector": "security",
+      "score": 2,
+      "status": "ready",
+      "confidence": "high",
+      "sources": [
+        "Issue #2789",
+        "PR #2784",
+        "PR #2773"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs:92-114 — resolve_client_ip trusts leftmost X-Forwarded-For hop and CF-Connecting-IP unconditionally, with no trusted-proxy gate on the socket peer.",
+        "Consumers: share_access_key(token, ip) throttle (shares.rs:45) plus log_share_access audit trail. Both are silently defeated whenever the peer is not gated to the Cloudflare edge.",
+        "Issue #2789 post-merge review (medium severity): rotating a spoofed XFF per request yields a fresh throttle bucket each attempt so PR #2773 10-attempts/15-min limiter never trips.",
+        "Same anti-pattern noted in backend/servers/api-server/src/routes/forms/submissions.rs — worth folding a shared extractor."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": "plans/security-share-ip-spoof-throttle-bypass.md"
+    },
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "title": "reality-server saved-search alert engine silently drops matches beyond match_limit=100 — unconditional last_matched_at=now watermark discards oldest matches",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "Tier1d review 2026-08-17 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:197-240 — run_once caps its scan at SavedSearchAlertConfig.match_limit (default 100) but advances the watermark unconditionally afterwards.",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs:68-104 — find_new_match_listing_ids uses ORDER BY published_at DESC LIMIT $13 so the newest N are kept and the oldest matches are dropped.",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs:134-159 — mark_saved_search_matched issues SET last_matched_at = now with no timestamp argument, so the watermark leaps past every unprocessed row.",
+        "Consequence: any high-volume saved search (broad daily/weekly cadence, bulk portal import) silently drops the oldest matches with no error and no log; the feature's stated purpose fails exactly under the load where alerts matter."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-17",
+      "plan": null
     }
   ]
 }

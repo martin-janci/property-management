@@ -1,5 +1,6 @@
 {
   "generated_at": "2026-08-17",
+  "run_note": "same-day rerun at 16:33Z (buffer-low: landable-claimable=1/72, 6 mobile-native-gated). Signals below merge the 03:17Z run's output with two new cloud-landable signals surfaced by this rerun (issue #2789 security follow-up + reality-server tier1d saved-search alert dataloss).",
   "signals": [
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -60,6 +61,46 @@
         "Consumed pre-generated tier1d artifact: .research/signals/2026-08-17-ppt-web-core-tier1d.json",
         "frontend/apps/ppt-web/src/lib/errorHandler.ts:56-141 defines ERROR_MESSAGES + DEFAULT_ERROR as hardcoded English literals; parseApiError/parseErrorResponse/parseHttpStatusError and 429 branch never route through react-i18next; ~300 useTranslation components elsewhere in ppt-web."
       ]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "Consumed pre-generated tier1d artifact: .research/signals/2026-08-17-reality-server-tier1d.json (dispatcher demand-driven, buffer starved of landable non-mobile-native work)",
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:197-240 caps scan at match_limit=100 then unconditionally sets last_matched_at=now(); backend/crates/db/src/repositories/reality_portal/searches.rs:68-104 uses ORDER BY published_at DESC LIMIT so the newest N win and the oldest matches are silently dropped forever."
+      ]
+    },
+    {
+      "id": "issue-2789-share-ip-spoof-throttle-bypass",
+      "type": "code-review-finding",
+      "source": "post-merge-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "Issue #2789 (labels: follow-up, from-merged-review) — post-merge review of PR #2784 (merged 2026-08-17T12:33:16Z) documents that resolve_client_ip() in backend/servers/api-server/src/routes/documents/shares.rs trusts leftmost X-Forwarded-For hop and CF-Connecting-IP unconditionally.",
+        "Independently verified against source: shares.rs:92-114 calls header_ip(headers, \"x-forwarded-for\", leftmost_of_list=true) with no trusted-proxy check; consumers include share_access_key(token, ip) throttle (shares.rs:45) added by PR #2773 and log_share_access audit trail.",
+        "Consequence: rotating a spoofed XFF per request yields a fresh throttle bucket each attempt → PR #2773 10-attempts/15-min brute-force limiter never trips; audit log records forged IPs.",
+        "Promoted to plan this run via security fast-track (vector=security + confidence=high + score≥2): plans/security-share-ip-spoof-throttle-bypass.md"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-17-rerun",
+      "type": "lag_warning",
+      "source": "same-day-rerun-trigger",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Rerun triggered 13h after 03:17Z run by external fire payload: 'buffer-low: honest landable-claimable=1/72 (6 open items mobile-native-gated/unlandable in cloud) — refill planner with cloud-landable backend/frontend work'. Not a lag on the routine's own cadence — this run addresses the payload's ask by ingesting 2 cloud-landable vectors and promoting the security fast-track plan."
+      ]
     }
   ],
   "auto_fix_actions": [],
@@ -67,72 +108,72 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 …",
+      "command": "test -f .research/briefs/2026-08-17.md && head -1 == '# 2026-08-17'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq --slurpfile prev …",
+      "command": "state.json advanced vs HEAD (last_pr_seen, last_issue_seen, last_commit_sha, seen_signals length)",
       "observed": "true",
       "expected": "true",
-      "note": "seen_signals grew, last_pr_seen/last_commit_sha advanced, hotspot_history changed"
+      "note": "last_pr_seen 2772→2784, last_issue_seen 2768→2789, seen_signals +3, stats.runs +1"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique|length))' backlog.json",
-      "observed": "true",
+      "command": "jq '[.items[].id] | length == (unique | length)' backlog.json",
+      "observed": "341 == 341",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signal ids checked against prior seen_signals for non-cumulative types with score_delta != 0",
-      "observed": "no offenders",
+      "command": "no non-cumulative signal id in prior seen_signals with score_delta != 0",
+      "observed": "issue-2789 + saved-search-alert are new IDs; lag_warning has score_delta=0; churn-hotspot re-emits have score_delta=0",
       "expected": "no offenders"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "score cap + decay check",
-      "observed": "no scores > 8; no open item older than 14d requires decay",
+      "command": "score cap (≤8) + decay for open items older than 14d",
+      "observed": "no scores > 8; no open item's updated_at is older than 14d (all open rows are ≥2026-08-04)",
       "expected": "pass"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run",
-      "observed": "0 new plans → gate vacuously passes",
-      "expected": "no unannotated new plans"
+      "command": "each new plan has 'adversarial pass:' annotation in brief",
+      "observed": "plans/security-share-ip-spoof-throttle-bypass.md annotated 'adversarial pass: passed' in Plans promoted section",
+      "expected": "annotated"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans this run",
-      "observed": "0 new plans",
-      "expected": "≤2"
+      "command": "≤2 new plans; each has 4 metadata fields + 11 headings; capability tick; Mode declared; Files exist",
+      "observed": "1 new plan (security-share-ip-spoof-throttle-bypass.md); all 4 metadata lines + 11 headings present; C1/C6/C7 ticked; Mode: cloud-ok declared; backend/servers/api-server/src/routes/documents/shares.rs exists on disk",
+      "expected": "pass"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
-      "observed": "verify at Phase 6 stage",
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0 (only .research/ paths staged)",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secret / private-hostname scan",
-      "observed": "0 secrets in added lines (staged diff contains a removed .rlt.sk line from a prior malformed row's evidence — sanitized this run; interpretation mirrors G17's added-lines-only semantics)",
+      "command": "secret / private-hostname scan on staged diff (baseline docs excluded)",
+      "observed": "0 secrets in added lines",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "regen backlog.md diff",
-      "observed": "byte-identical (regenerator uses pinned NOW_UTC)",
+      "command": "regen backlog.md diff vs staged",
+      "observed": "byte-identical (same tie-break as IDEAS_TRIAGE.md: [score desc, updated_at desc, id asc])",
       "expected": "identical"
     },
     {
@@ -145,43 +186,43 @@
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plan slugs still present",
-      "observed": "no plans removed this run",
+      "command": "prior-run plan slugs still present in plans/ or plans/_archive/",
+      "observed": "no plans removed this run; only new file added",
       "expected": "converge"
     },
     {
       "goal": "G13",
       "passed": true,
       "command": "archive-only-grows count check",
-      "observed": "no archive removals",
+      "observed": "no archive removals this run",
       "expected": "count unchanged or grown"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "regen IDEAS_TRIAGE.md diff",
-      "observed": "byte-identical (regenerator uses pinned NOW_UTC)",
+      "command": "regen IDEAS_TRIAGE.md diff vs staged",
+      "observed": "byte-identical (only timestamp widget changed from 03:16 to 16:33 UTC; row set unchanged)",
       "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix discipline check",
-      "observed": "auto_fix_actions empty this run",
+      "command": "auto-fix discipline (kill switch, cap, idempotency, verify-all gate)",
+      "observed": "auto_fix_actions empty this run — no eligible allowlist match",
       "expected": "≤ caps"
     },
     {
       "goal": "G16",
       "passed": true,
       "command": "management artifacts + pm_cursor + coverage_cursor validity",
-      "observed": "Phase 1.6 skipped this run (pm_cursor unchanged) → gate is no-op; existing artifacts parse",
+      "observed": "Phase 1.6 skipped this rerun (pm_cursor unchanged) → gate is a no-op; existing action-list.json + risks.json parse; project-state.md non-empty",
       "expected": "valid"
     },
     {
       "goal": "G17",
       "passed": true,
       "command": "Telegram-secret scan on staged diff",
-      "observed": "verify at Phase 6 stage",
+      "observed": "0 matches in added lines",
       "expected": "0"
     }
   ]
