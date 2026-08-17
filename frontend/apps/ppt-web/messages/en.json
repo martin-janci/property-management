@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Content Moderation Dashboard",
+      "subtitle": "Review and moderate user-generated content for DSA compliance.",
+      "loading": "Loading moderation queue...",
+      "loadError": "Failed to load moderation cases: {{message}}",
+      "retry": "Retry"
+    },
+    "queue": {
+      "heading": "Moderation Queue",
+      "emptyTitle": "No moderation cases found matching the criteria.",
+      "emptySubtitle": "The moderation queue is currently empty."
+    },
+    "filters": {
+      "status": "Status",
+      "contentType": "Content Type",
+      "violationType": "Violation Type",
+      "priority": "Priority",
+      "unassignedOnly": "Unassigned Only",
+      "allStatuses": "All Statuses",
+      "allTypes": "All Types",
+      "allViolations": "All Violations",
+      "allPriorities": "All Priorities"
+    },
+    "templates": {
+      "heading": "Action Templates"
+    },
+    "stats": {
+      "pendingCases": "Pending Cases",
+      "underReview": "Under Review",
+      "totalQueue": "Total Queue",
+      "avgResolution": "Avg Resolution",
+      "byPriority": "By Priority",
+      "byViolationType": "By Violation Type",
+      "overdue_one": "{{count}} case overdue (24h+ SLA)",
+      "overdue_other": "{{count}} cases overdue (24h+ SLA)"
+    },
+    "status": {
+      "pending": "Pending",
+      "under_review": "Under Review",
+      "approved": "Approved",
+      "removed": "Removed",
+      "restricted": "Restricted",
+      "warned": "Warned",
+      "appealed": "Appealed",
+      "appeal_approved": "Appeal Approved",
+      "appeal_rejected": "Appeal Rejected"
+    },
+    "priorityLabel": {
+      "1": "Critical",
+      "2": "High",
+      "3": "Medium",
+      "4": "Low",
+      "5": "Lowest",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Listing",
+      "listing_photo": "Listing Photo",
+      "user_profile": "User Profile",
+      "review": "Review",
+      "comment": "Comment",
+      "message": "Message",
+      "announcement": "Announcement",
+      "document": "Document",
+      "community_post": "Community Post"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Harassment",
+      "hate_speech": "Hate Speech",
+      "violence": "Violence",
+      "illegal_content": "Illegal Content",
+      "misinformation": "Misinformation",
+      "fraud": "Fraud",
+      "privacy": "Privacy",
+      "intellectual_property": "Intellectual Property",
+      "inappropriate_content": "Inappropriate Content",
+      "other": "Other",
+      "notSpecified": "Not specified"
+    },
+    "actionType": {
+      "remove": "Remove",
+      "restrict": "Restrict",
+      "warn": "Warn",
+      "approve": "Approve",
+      "ignore": "Ignore",
+      "escalate": "Escalate"
+    },
+    "card": {
+      "contentOwner": "Content Owner",
+      "assignedTo": "Assigned To",
+      "decision": "Decision",
+      "appealFiled": "Appeal Filed",
+      "appealUpheld": "Appeal Upheld",
+      "appealRejected": "Appeal Rejected",
+      "ageAgo": "{{age}} ago",
+      "created": "Created: {{date}}",
+      "viewContent": "View Content",
+      "assignToMe": "Assign to Me",
+      "takeAction": "Take Action",
+      "decideAppeal": "Decide Appeal"
+    },
+    "prompts": {
+      "actionType": "Enter action type (remove, restrict, warn, approve):",
+      "actionRationale": "Enter rationale for this action:",
+      "decision": "Enter decision (uphold, overturn):",
+      "decisionRationale": "Enter rationale for this decision:",
+      "assignError": "Failed to assign case. Please try again.",
+      "actionError": "Failed to take action. Please try again.",
+      "appealError": "Failed to decide appeal. Please try again."
+    }
+  },
   "common": {
     "search": "Search",
     "login": "Login",

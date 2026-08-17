@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Tartalommoderálási irányítópult",
+      "subtitle": "Felhasználói tartalom ellenőrzése és moderálása a DSA megfelelőség érdekében.",
+      "loading": "Moderálási várólista betöltése...",
+      "loadError": "Nem sikerült betölteni a moderálási eseteket: {{message}}",
+      "retry": "Újrapróbálás"
+    },
+    "queue": {
+      "heading": "Moderálási várólista",
+      "emptyTitle": "Nem található a feltételeknek megfelelő moderálási eset.",
+      "emptySubtitle": "A moderálási várólista jelenleg üres."
+    },
+    "filters": {
+      "status": "Állapot",
+      "contentType": "Tartalomtípus",
+      "violationType": "Szabálysértés típusa",
+      "priority": "Prioritás",
+      "unassignedOnly": "Csak a nem hozzárendeltek",
+      "allStatuses": "Minden állapot",
+      "allTypes": "Minden típus",
+      "allViolations": "Minden szabálysértés",
+      "allPriorities": "Minden prioritás"
+    },
+    "templates": {
+      "heading": "Műveleti sablonok"
+    },
+    "stats": {
+      "pendingCases": "Függőben lévő esetek",
+      "underReview": "Ellenőrzés alatt",
+      "totalQueue": "Teljes várólista",
+      "avgResolution": "Átl. megoldási idő",
+      "byPriority": "Prioritás szerint",
+      "byViolationType": "Szabálysértés típusa szerint",
+      "overdue_one": "{{count}} eset lejárt (24 óra+ SLA)",
+      "overdue_other": "{{count}} eset lejárt (24 óra+ SLA)"
+    },
+    "status": {
+      "pending": "Függőben",
+      "under_review": "Ellenőrzés alatt",
+      "approved": "Jóváhagyva",
+      "removed": "Eltávolítva",
+      "restricted": "Korlátozva",
+      "warned": "Figyelmeztetve",
+      "appealed": "Fellebbezve",
+      "appeal_approved": "Fellebbezés jóváhagyva",
+      "appeal_rejected": "Fellebbezés elutasítva"
+    },
+    "priorityLabel": {
+      "1": "Kritikus",
+      "2": "Magas",
+      "3": "Közepes",
+      "4": "Alacsony",
+      "5": "Legalacsonyabb",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Hirdetés",
+      "listing_photo": "Hirdetés fotó",
+      "user_profile": "Felhasználói profil",
+      "review": "Értékelés",
+      "comment": "Hozzászólás",
+      "message": "Üzenet",
+      "announcement": "Közlemény",
+      "document": "Dokumentum",
+      "community_post": "Közösségi bejegyzés"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Zaklatás",
+      "hate_speech": "Gyűlöletbeszéd",
+      "violence": "Erőszak",
+      "illegal_content": "Illegális tartalom",
+      "misinformation": "Félretájékoztatás",
+      "fraud": "Csalás",
+      "privacy": "Adatvédelem",
+      "intellectual_property": "Szellemi tulajdon",
+      "inappropriate_content": "Nem megfelelő tartalom",
+      "other": "Egyéb",
+      "notSpecified": "Nincs megadva"
+    },
+    "actionType": {
+      "remove": "Eltávolítás",
+      "restrict": "Korlátozás",
+      "warn": "Figyelmeztetés",
+      "approve": "Jóváhagyás",
+      "ignore": "Figyelmen kívül hagyás",
+      "escalate": "Eszkaláció"
+    },
+    "card": {
+      "contentOwner": "Tartalom tulajdonosa",
+      "assignedTo": "Hozzárendelve",
+      "decision": "Döntés",
+      "appealFiled": "Fellebbezés benyújtva",
+      "appealUpheld": "Fellebbezés helybenhagyva",
+      "appealRejected": "Fellebbezés elutasítva",
+      "ageAgo": "{{age}} ezelőtt",
+      "created": "Létrehozva: {{date}}",
+      "viewContent": "Tartalom megtekintése",
+      "assignToMe": "Hozzárendelés magamhoz",
+      "takeAction": "Művelet végrehajtása",
+      "decideAppeal": "Fellebbezésről döntés"
+    },
+    "prompts": {
+      "actionType": "Adja meg a művelet típusát (remove, restrict, warn, approve):",
+      "actionRationale": "Adja meg a művelet indoklását:",
+      "decision": "Adja meg a döntést (uphold, overturn):",
+      "decisionRationale": "Adja meg a döntés indoklását:",
+      "assignError": "Nem sikerült hozzárendelni az esetet. Kérjük, próbálja újra.",
+      "actionError": "Nem sikerült végrehajtani a műveletet. Kérjük, próbálja újra.",
+      "appealError": "Nem sikerült dönteni a fellebbezésről. Kérjük, próbálja újra."
+    }
+  },
   "common": {
     "search": "Keresés",
     "login": "Bejelentkezés",

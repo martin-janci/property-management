@@ -1,4 +1,117 @@
 {
+  "moderation": {
+    "dashboard": {
+      "title": "Nástěnka moderování obsahu",
+      "subtitle": "Kontrolujte a moderujte uživatelský obsah v souladu s DSA.",
+      "loading": "Načítání fronty moderování...",
+      "loadError": "Nepodařilo se načíst případy moderování: {{message}}",
+      "retry": "Zkusit znovu"
+    },
+    "queue": {
+      "heading": "Fronta moderování",
+      "emptyTitle": "Nebyly nalezeny žádné případy moderování odpovídající kritériím.",
+      "emptySubtitle": "Fronta moderování je momentálně prázdná."
+    },
+    "filters": {
+      "status": "Stav",
+      "contentType": "Typ obsahu",
+      "violationType": "Typ porušení",
+      "priority": "Priorita",
+      "unassignedOnly": "Pouze nepřiřazené",
+      "allStatuses": "Všechny stavy",
+      "allTypes": "Všechny typy",
+      "allViolations": "Všechna porušení",
+      "allPriorities": "Všechny priority"
+    },
+    "templates": {
+      "heading": "Šablony akcí"
+    },
+    "stats": {
+      "pendingCases": "Čekající případy",
+      "underReview": "Kontrolované",
+      "totalQueue": "Celá fronta",
+      "avgResolution": "Prům. vyřešení",
+      "byPriority": "Podle priority",
+      "byViolationType": "Podle typu porušení",
+      "overdue_one": "{{count}} případ po termínu (SLA 24 h+)",
+      "overdue_other": "{{count}} případů po termínu (SLA 24 h+)"
+    },
+    "status": {
+      "pending": "Čeká",
+      "under_review": "Kontrolované",
+      "approved": "Schváleno",
+      "removed": "Odstraněno",
+      "restricted": "Omezeno",
+      "warned": "Upozorněno",
+      "appealed": "Odvoláno",
+      "appeal_approved": "Odvolání schváleno",
+      "appeal_rejected": "Odvolání zamítnuto"
+    },
+    "priorityLabel": {
+      "1": "Kritická",
+      "2": "Vysoká",
+      "3": "Střední",
+      "4": "Nízká",
+      "5": "Nejnižší",
+      "fallback": "P{{priority}}"
+    },
+    "contentType": {
+      "listing": "Inzerát",
+      "listing_photo": "Foto inzerátu",
+      "user_profile": "Profil uživatele",
+      "review": "Recenze",
+      "comment": "Komentář",
+      "message": "Zpráva",
+      "announcement": "Oznámení",
+      "document": "Dokument",
+      "community_post": "Komunitní příspěvek"
+    },
+    "violationType": {
+      "spam": "Spam",
+      "harassment": "Obtěžování",
+      "hate_speech": "Nenávistný projev",
+      "violence": "Násilí",
+      "illegal_content": "Nelegální obsah",
+      "misinformation": "Dezinformace",
+      "fraud": "Podvod",
+      "privacy": "Soukromí",
+      "intellectual_property": "Duševní vlastnictví",
+      "inappropriate_content": "Nevhodný obsah",
+      "other": "Jiné",
+      "notSpecified": "Neuvedeno"
+    },
+    "actionType": {
+      "remove": "Odstranit",
+      "restrict": "Omezit",
+      "warn": "Upozornit",
+      "approve": "Schválit",
+      "ignore": "Ignorovat",
+      "escalate": "Eskalovat"
+    },
+    "card": {
+      "contentOwner": "Vlastník obsahu",
+      "assignedTo": "Přiřazeno",
+      "decision": "Rozhodnutí",
+      "appealFiled": "Podané odvolání",
+      "appealUpheld": "Odvolání potvrzeno",
+      "appealRejected": "Odvolání zamítnuto",
+      "ageAgo": "před {{age}}",
+      "created": "Vytvořeno: {{date}}",
+      "viewContent": "Zobrazit obsah",
+      "assignToMe": "Přiřadit mně",
+      "takeAction": "Provést akci",
+      "decideAppeal": "Rozhodnout o odvolání"
+    },
+    "prompts": {
+      "actionType": "Zadejte typ akce (remove, restrict, warn, approve):",
+      "actionRationale": "Zadejte odůvodnění této akce:",
+      "decision": "Zadejte rozhodnutí (uphold, overturn):",
+      "decisionRationale": "Zadejte odůvodnění tohoto rozhodnutí:",
+      "assignError": "Nepodařilo se přiřadit případ. Zkuste to znovu.",
+      "actionError": "Nepodařilo se provést akci. Zkuste to znovu.",
+      "appealError": "Nepodařilo se rozhodnout o odvolání. Zkuste to znovu."
+    }
+  },
   "common": {
     "search": "Hledat",
     "login": "Přihlásit se",
