@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-17T12:36:00Z",
+  "generated": "2026-08-17T13:02:00Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -70,18 +70,18 @@
     {
       "task_id": "code-review-api-core-voice-actions-fabricated-empty-retry1",
       "branch": "auto-impl/code-review-api-core-voice-actions-fabri-883539a6",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-17T12:30:00Z",
-      "last_updated": "2026-08-17T12:30:00Z",
-      "status_changed_at": "2026-08-17T12:30:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-17T13:02:00Z",
+      "status_changed_at": "2026-08-17T13:02:00Z",
+      "pr_number": 2788,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2788",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2788 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=announcements+meter now genuinely queried; db clippy clean; api-server compile+sqlx-tests delegated to backend.yml CI (local build blocked by github-403 on utoipa-swagger-ui)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
