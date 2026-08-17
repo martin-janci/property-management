@@ -15,6 +15,8 @@ mod accounting_happy_path_tests;
 mod accounting_invoices_tests;
 #[path = "suites/accounting_payment_match_state_machine_tests.rs"]
 mod accounting_payment_match_state_machine_tests;
+#[path = "suites/accounting_payment_matcher_suggest_tests.rs"]
+mod accounting_payment_matcher_suggest_tests;
 #[path = "suites/accounting_upload_statement_happy_path_tests.rs"]
 mod accounting_upload_statement_happy_path_tests;
 #[path = "suites/admin_mfa_disable_tests.rs"]
