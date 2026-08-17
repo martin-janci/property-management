@@ -118,7 +118,41 @@
   },
   "comparison": {
     "loadError": "Nie udało się wczytać udostępnionego porównania. Niektóre nieruchomości mogą być już niedostępne.",
-    "loading": "Wczytywanie udostępnionego porównania..."
+    "loading": "Wczytywanie udostępnionego porównania...",
+    "empty": {
+      "title": "Brak nieruchomości do porównania",
+      "description": "Dodaj nieruchomości do porównania ze strony z ofertami.",
+      "browse": "Przeglądaj oferty"
+    },
+    "actions": {
+      "share": "Udostępnij",
+      "exportPdf": "Eksportuj PDF",
+      "clearAll": "Wyczyść wszystko"
+    },
+    "toast": {
+      "linkCopied": "Link do porównania skopiowany do schowka!",
+      "shareUrl": "Udostępnij ten adres URL: {url}",
+      "pdfComingSoon": "Eksport do PDF już wkrótce!"
+    },
+    "currencyWarning": "Uwaga: Nieruchomości używają różnych walut. Wyróżnianie porównania cen jest wyłączone.",
+    "propertyHeader": "Nieruchomość",
+    "remove": "Usuń",
+    "removeAria": "Usuń {title} z porównania",
+    "rows": {
+      "price": "Cena",
+      "type": "Typ",
+      "propertyType": "Typ nieruchomości",
+      "area": "Powierzchnia",
+      "rooms": "Pokoje",
+      "floor": "Piętro",
+      "city": "Miasto",
+      "district": "Dzielnica",
+      "pricePerSqm": "Cena za m²"
+    },
+    "transactionType": {
+      "sale": "Na sprzedaż",
+      "rent": "Do wynajęcia"
+    }
   },
   "contact": {
     "askQuestion": "Zadać pytanie",
