@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings \u2014 dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -20,7 +20,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit \u2014 up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -68,7 +68,7 @@
     },
     {
       "id": "gh-issue-2743",
-      "action": "dispatcher: two previously-fixed defects have recurred — archives again exceed MCP push ceiling (was #1162), retry-remint ghost retry (was #2460) (Closes #2743)",
+      "action": "dispatcher: two previously-fixed defects have recurred \u2014 archives again exceed MCP push ceiling (was #1162), retry-remint ghost retry (was #2460) (Closes #2743)",
       "owner_role": "pm-tech-lead",
       "priority": "high",
       "status": "open",
@@ -90,7 +90,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -107,7 +107,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout \u2014 every suspend API call can hang indefinitely on Android + iOS",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -124,7 +124,7 @@
     },
     {
       "id": "code-review-api-core-payment-matcher-multi-suggest",
-      "action": "payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good candidates",
+      "action": "payment matcher never surfaces multiple suggestions \u2014 early-return on first match hides equally-good candidates",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -141,7 +141,7 @@
     },
     {
       "id": "code-review-api-handlers-share-pw-no-throttle",
-      "action": "SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockout — brute-force at request speed",
+      "action": "SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockout \u2014 brute-force at request speed",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -158,10 +158,10 @@
     },
     {
       "id": "code-review-ppt-web-ui-createfault-mock-ai",
-      "action": "ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake data",
+      "action": "ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API \u2014 ships fake data",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -175,10 +175,10 @@
     },
     {
       "id": "code-review-ppt-web-ui-moderation-fabricated-context",
-      "action": "ppt-web moderation page fabricates context that the moderation API never returns — misleading data",
+      "action": "ppt-web moderation page fabricates context that the moderation API never returns \u2014 misleading data",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -192,7 +192,7 @@
     },
     {
       "id": "code-review-api-core-payment-matcher-vs-only-threshold",
-      "action": "payment matcher uses a single VS-only threshold — ignores IBAN / amount tie-breakers documented in spec",
+      "action": "payment matcher uses a single VS-only threshold \u2014 ignores IBAN / amount tie-breakers documented in spec",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -209,7 +209,7 @@
     },
     {
       "id": "code-review-api-handlers-share-log-proxy-ip",
-      "action": "share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind — misattributes source",
+      "action": "share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind \u2014 misattributes source",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -229,7 +229,7 @@
       "action": "errorHandler.ts: entire client error catalogue is hardcoded English (no i18n)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -243,7 +243,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-moderation-no-i18n",
-      "action": "ppt-web moderation page renders hardcoded English strings — no i18n on user-facing surface",
+      "action": "ppt-web moderation page renders hardcoded English strings \u2014 no i18n on user-facing surface",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -277,7 +277,7 @@
     },
     {
       "id": "code-review-reality-web-comparison-view-i18n",
-      "action": "reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal",
+      "action": "reality-web ComparisonView.tsx has no i18n \u2014 every string renders English on 4-locale portal",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -297,7 +297,7 @@
       "action": "reality-web RealtorManagement page has untranslated English UI on 4-locale portal",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -341,6 +341,57 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-revoke-local-persists-offline",
+      "action": "NFC emergencyRevokeAll leaves local credentials usable offline when the revoke API call fails",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T06:30:07Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-securestore-2kb-blob",
+      "action": "NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched credentials",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T06:30:07Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-accesslog-parse-unguarded",
+      "action": "NFC getAccessLog JSON.parse is unguarded, so a corrupted log blob rejects handleTap after access was already granted",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T06:30:07Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
       }
     }
   ],
