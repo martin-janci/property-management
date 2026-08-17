@@ -8483,7 +8483,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [mobile-rn]"
       ],
@@ -8503,7 +8503,12 @@
       "segment": "mobile-rn",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-17T20:24:57Z",
+        "assignment_status": "merged",
+        "pr_number": 2780
+      }
     },
     {
       "id": "code-review-mobile-rn-nfc-securestore-2kb-blob",

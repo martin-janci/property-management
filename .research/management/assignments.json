@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-17T18:31:35Z",
+  "generated": "2026-08-17T20:32:29Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -28,20 +28,20 @@
       "branch": "auto-impl/gh-issue-2789-06aded2c",
       "status": "in-progress",
       "claimed_at": "2026-08-17T16:30:39Z",
-      "last_updated": "2026-08-17T18:31:35Z",
-      "status_changed_at": "2026-08-17T16:30:39Z",
+      "last_updated": "2026-08-17T20:27:39Z",
+      "status_changed_at": "2026-08-17T20:27:39Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "[reclaim] sandbox-timeout after 1st spawn (no branch after ~230m); respawned implementer round 1",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
     }
