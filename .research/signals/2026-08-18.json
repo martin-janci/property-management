@@ -1,0 +1,310 @@
+{
+  "generated_at": "2026-08-18",
+  "generator": "routine-prompt",
+  "since_iso": "2026-08-17T03:17:10Z",
+  "run_notes": [
+    "Phase 1.5 skipped as a fresh call \u2014 state.review_cursor already shows all six landable segments reviewed on 2026-08-17 or 2026-08-18 via dispatcher-tier1d; this run consumes the outstanding tier1d artifacts (2026-08-17 api-handlers/reality-server/reality-web/reality-web-r1828 + 2026-08-18 reality-server/reality-web) that prior routine runs did not integrate \u2014 fp-tier1d-signals-accumulate-no-promotion-to-backlog (recurrence 8) driving the catchup.",
+    "Phase 1.6 skipped: pm_cursor unadvanced this run (routine time budget); GC7 clause is a no-op when pm_cursor.next_index does not move.",
+    "Buffer-low trigger payload noted (claimable=6/72, dominated by mobile-native-kmp); this run backs up the reality-server / reality-web dispatcher tier1d findings into the shared backlog so cloud-landable rows exist next cycle."
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-install-swallowed-db-error",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-17-api-handlers-tier1d.json (dispatcher-generator, 2026-08-17)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "evidence": [
+        "install.rs L1115-1132 \u2014 Booking.com sync loop uses `.ok().flatten()` on `find_connection_by_unit_platform` + `find_booking_by_external_id`; transient DB errors are silently coerced to None, so real reservations vanish (silent data loss) and the dedup guard degrades to a duplicate-insert relying on the DB unique constraint",
+        "verified 2026-08-18: pattern still present at install.rs:1118-1121 and 1128-1132"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-platform-admin-audit-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-17-api-handlers-tier1d.json (dispatcher-generator, 2026-08-17)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/audit.rs"
+      ],
+      "evidence": [
+        "audit.rs L133/205/211/357/484 \u2014 repeated `.await.unwrap_or_default()` on platform-admin repo reads (memberships, sessions, audit log). A DB failure renders the admin as having no memberships / no sessions, misleading operators making revoke/audit decisions on security-sensitive surfaces",
+        "verified 2026-08-18: five `.unwrap_or_default()` sites still present in audit.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-17-reality-server-tier1d.json (dispatcher-generator, 2026-08-17)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ],
+      "evidence": [
+        "saved_search_alerts.rs L197-240 \u2014 run_once matching loop unconditionally advances each saved search's watermark after a capped `find_new_match_listing_ids(..., match_limit=100)` scan; any match beyond the cap in the window is permanently dropped (silent alert loss for busy queries)",
+        "verified 2026-08-18: config.match_limit default 100 still active at :80; call site at :199-203"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-error-leak",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-18-reality-server-tier1d.json (dispatcher-generator, 2026-08-18)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "evidence": [
+        "sso.rs \u2014 SSO handlers surface raw internal error strings to unauthenticated clients via `SsoError::new(<code>, &e.to_string())` on ~15 sites (265, 275, 287, 299, 439, 451, 515, 527, 687, 923, 958, 971, 1079, 1114, 1131, 1142, 1158, 1169); INTERNAL_SERVER_ERROR paths leak DB / crypto / JWT / reqwest internals in the API body"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-18-reality-server-tier1d.json (dispatcher-generator, 2026-08-18)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "evidence": [
+        "sso.rs :687, :711, :748 \u2014 three bare `reqwest::Client::new()` calls (PM OAuth token exchange, userinfo fetch, token-introspection cache-miss) with reqwest's default (no request timeout); a hung PM OAuth upstream can stall the reality-server auth path (DB conn + Tokio worker) indefinitely \u2014 availability/DoS-adjacent on the critical login flow"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-17-reality-web-tier1d-r1828.json (dispatcher-generator, 2026-08-17); reconfirmed by 2026-08-18 reality-web tier1d as `inquiry-cancel-silent-fail` (deduped into this id)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "evidence": [
+        "inquiries/page.tsx:47-50 \u2014 InquiryCard.handleCancel calls `cancelInquiry.mutate(inquiry.id)` fire-and-forget then immediately closes the confirm dialog; useCancelInquiry has no onError; nothing renders `.isError`/`.isPending`; a failed cancel (network/409/403) leaves the user believing the inquiry was cancelled while it silently stays pending",
+        "reconfirmed 2026-08-18 tier1d re-review as inquiry-cancel-silent-fail \u2014 same file, same call sites; deduped into this canonical id"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-locale-pages-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-artifact signals/2026-08-17-reality-web-tier1d-r1828.json (dispatcher-generator, 2026-08-17); adjacent 2026-08-17 findings (`realtor-page-no-i18n`, `agency-slug-no-i18n`, `listing-edit-no-i18n`) and 2026-08-18 findings (`inquiries-page-no-i18n`, `savedsearches-no-i18n`) subsumed here as one broader gap",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "reality-web is a next-intl 4 multi-locale portal (sk/cs/de/en) yet these 11 `app/[locale]/**` pages ship hardcoded English/Slovak strings with zero useTranslations/getTranslations wiring \u2014 public agent profile, agency slug page, realtor listing-edit form (~930 lines), account profile/password, inquiries + saved-searches, realtor workspace and listings; user-facing copy renders wrong-locale for non-Slovak users on every one",
+        "subsumes 5 individual tier1d ids into one epic-shaped refactor \u2014 the fix pattern is the same everywhere (wire useTranslations + move strings into messages/<locale>.json)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log --name-only origin/dev since=2026-08-17T03:17:10Z (5 commits touching this file this run, cumulative)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "evidence": [
+        "runs_seen: 2->3 this run; churn this window = 5 commits (PRs #2787, #2788, #2791, #2792, #2793)",
+        "cumulative type \u2014 score_delta suppressed per Phase 1 dedup rule; instability tracking only"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2 -> 3 (crossing the >=2 threshold again)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "evidence": [
+        "runs_seen=3 after this run; voice_webhooks.rs is the segment's persistent hotspot \u2014 five voice-auth hardening PRs merged in the last 24h",
+        "cumulative type \u2014 score_delta suppressed; already tracked on backlog"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+      "type": "churn-hotspot",
+      "source": "git log --name-only origin/dev since=2026-08-17T03:17:10Z (3 commits touching this file + 3 on its test)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts"
+      ],
+      "evidence": [
+        "new top-3 churn hotspot: NFCCredentialManager.ts (+ test) touched by PRs #2775, #2780, #2786 \u2014 offline-revoke, JSON.parse guard, SecureStore 2KB chunking \u2014 three consecutive hardening rounds indicate the module was under-covered",
+        "runs_seen: 0 -> 1"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/documents/shares.rs",
+      "type": "churn-hotspot",
+      "source": "git log --name-only origin/dev since=2026-08-17T03:17:10Z (3 commits touching this file)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "evidence": [
+        "new top-3 churn hotspot: documents/shares.rs touched by PRs #2773 (rate-limit share password), #2784 (proxy header IP unwind), #2790 (trusted-proxy allowlist gate) \u2014 three consecutive edge-hardening rounds on the public protected-share surface; runs_seen: 0 -> 1"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f && head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD diff",
+      "observed": "true",
+      "expected": "true",
+      "note": "last_pr_seen 2772->2793, seen_signals 412->428, hotspots 93->95"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no double-count non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq max score <=8",
+      "observed": "true",
+      "expected": "true",
+      "note": "decay applied to portfolio-analytics-caps-100 2->1"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'plans/<slug>.md' + 'adversarial pass:' in brief",
+      "observed": "both OK",
+      "expected": "both present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans + section/metadata/mode/caps/files-exist",
+      "observed": "2 plans, all sections and mode present, all Files paths resolve",
+      "expected": "<=2 + all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed this run",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present or archived",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive ge HEAD count",
+      "observed": "staged=8 head=8",
+      "expected": ">=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3, no idempotency reuse"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped (no-op)",
+      "observed": "pm_cursor unchanged",
+      "expected": "gate is no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram bot-token grep on staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run"
+}

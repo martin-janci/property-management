@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-17T03:17:10Z",
-  "last_run_ms": 30000,
-  "last_pr_seen": 2772,
-  "last_issue_seen": 2768,
-  "last_commit_sha": "9c1ba063c6b38a4e6608c75568dba5847d202b6e",
+  "last_run_iso": "2026-08-18T10:35:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2793,
+  "last_issue_seen": 2789,
+  "last_commit_sha": "63237d6abfa67c8248d8c96a574e91ffbb6c11f0",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -468,14 +468,24 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-17",
-      "recent_churn": 2897
+      "runs_seen": 3,
+      "last_seen": "2026-08-18",
+      "recent_churn": 5
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
       "last_seen": "2026-08-17",
       "recent_churn": 352
+    },
+    "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-18",
+      "recent_churn": 3
+    },
+    "backend/servers/api-server/src/routes/documents/shares.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-18",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -890,7 +900,23 @@
     "code-review-api-core-payment-matcher-vs-only-threshold",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
-    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+    "code-review-api-handlers-install-swallowed-db-error",
+    "code-review-api-handlers-platform-admin-audit-swallow",
+    "code-review-reality-server-saved-search-alert-cap-dataloss",
+    "code-review-reality-server-sso-error-leak",
+    "code-review-reality-server-sso-http-no-timeout",
+    "code-review-reality-web-inquiry-cancel-no-error",
+    "code-review-reality-web-locale-pages-hardcoded-i18n",
+    "code-review-reality-web-inquiry-cancel-silent-fail",
+    "churn-hotspot-frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+    "churn-hotspot-backend/servers/api-server/src/routes/documents/shares.rs",
+    "code-review-reality-web-realtor-page-no-i18n",
+    "code-review-reality-web-agency-slug-no-i18n",
+    "code-review-reality-web-listing-edit-no-i18n",
+    "code-review-reality-web-inquiries-page-no-i18n",
+    "code-review-reality-web-savedsearches-no-i18n",
+    "code-review-reality-web-locale-pages-hardcoded-i18n-r1828"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -904,9 +930,9 @@
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 66,
-    "vectors_created": 314,
-    "plans_created": 25,
+    "runs": 67,
+    "vectors_created": 323,
+    "plans_created": 27,
     "quiet_days": 2,
     "auto_fix_count": 0
   },
