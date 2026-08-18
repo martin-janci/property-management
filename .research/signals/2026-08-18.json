@@ -1,0 +1,216 @@
+{
+  "run_iso": "2026-08-18T03:12:09Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/documents/shares.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2773, #2784, #2790",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "shares.rs: 449 lines churned this run (154 PR#2773 + 148 PR#2784 + 147 PR#2790) — three back-to-back security PRs on the same file (rate-limit throttle, proxy-IP resolver, trusted-proxy gate)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts",
+      "type": "churn-hotspot",
+      "source": "PR #2775, #2780, #2786",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "NFCCredentialManager.test.ts: 379 lines churned this run (75 PR#2775 + 137 PR#2780 + 167 PR#2786) across three NFC hardening code-reviews; sibling .ts churned 186 lines in the same PRs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/voice_commands.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2788",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "voice_commands.rs: 347 lines churned this run in PR #2788 (retry1) — replaces fabricated empty responses in check-announcements/check-meter with real repository queries"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "PR #2787, #2788",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "voice_webhooks.rs re-emitted (cumulative type): 12 lines this run across PR #2787 (Google JWKS no-panic) + PR #2788 (voice_commands wiring); prior runs_seen already incremented — score_delta suppressed per cumulative rule"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: npm-minor-patch group (28 updates); still open since 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: cargo-minor-patch group (6 updates); still open since 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: ktor group (7 updates); still open since 2026-08-13"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: gradle-minor-patch group (5 updates); still open since 2026-08-13"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score>=3 + allowlisted signal type); all this-run churn signals are medium-confidence analytical",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored non-cumulative signal",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 (cap); decay N/A (no items older than 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuously satisfied",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial pass note"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged",
+      "observed": "0 non-.research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases failed cursors held",
+      "observed": "no phase failures this run",
+      "expected": "no phase failures OR cursor held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans preserved (no silent deletes)",
+      "observed": "no plans removed this run",
+      "expected": "each prior plan still in plans/ or plans/_archive/"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "current=8 prior=8",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency + kill switch",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "<=3 total actions; no re-fire"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor 0..7; coverage_cursor in [0, epics)",
+      "observed": "pm=4 coverage=6 epics=13",
+      "expected": "all in range"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

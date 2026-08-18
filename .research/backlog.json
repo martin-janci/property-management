@@ -8642,6 +8642,74 @@
       "created_at": "2026-08-18",
       "updated_at": "2026-08-18",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-documents-shares-rs-2026-08-18",
+      "title": "Churn hotspot: shares.rs — 449 lines this run across #2773 #2784 #2790 (public share endpoints + rate-limit + IP resolver refactor)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2773",
+        "PR #2784",
+        "PR #2790"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/shares.rs: 449 lines churned this run (154+148+147) across three security PRs (rate-limit, proxy-IP resolver, trusted-proxy gate).",
+        "PR #2790 extracted resolve_client_ip() into a shared client_ip.rs module, deleting 144 lines from shares.rs — the file is now settling but consider whether the extracted module is the natural home for share-specific throttle helpers too."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-nfc-nfccredentialmanager-test-ts-2026-08-18",
+      "title": "Churn hotspot: NFCCredentialManager.test.ts — 379 lines this run across #2775 #2780 #2786 (three NFC hardening PRs in one 24h window)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2775",
+        "PR #2780",
+        "PR #2786"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts: 379 lines churned this run (75+137+167) across three code-review PRs (access-log JSON guard, emergency-revoke local clear, SecureStore chunking).",
+        "Sibling NFCCredentialManager.ts churned 186 lines in the same three PRs. The manager plus its tests are the most-churned pair this run — worth a stabilisation pass (extract chunking primitive, consolidate mock helpers) before the next round of NFC work."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-voice-commands-rs-2026-08-18",
+      "title": "Churn hotspot: voice_commands.rs — 347 lines this run (PR #2788 fabricated-empty retry1: real announcement + meter queries)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2788"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs: 347 lines churned this run in PR #2788 (retry1) — replaces fabricated empty responses with real AnnouncementRepository/MeterRepository queries on the RLS-scoped connection.",
+        "Large single-PR churn on a service used by voice_webhooks.rs (itself a repeated-churn hotspot — see #2787/#2788 both landing this run). Watch for the next few voice commits: if churn continues, consider splitting per-command handlers into their own submodules."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
     }
   ]
 }

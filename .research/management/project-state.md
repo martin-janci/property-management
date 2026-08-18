@@ -73,3 +73,7 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **`coverage_cursor` advances 3 → 4** (epic-79 → epic-7a next run).
 - **`pm_cursor` advances 1 → 2** (pm-backend → pm-frontend next run). role_last_run["pm-backend"] = 2026-07-30.
 - **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. Same 3 missing UC links (UC-33.x — 2 queued into action-list this run, 1 remaining). Zero orphan screens, zero validation errors.
+
+---
+
+_2026-08-18 upkeep touch — routine Phase 1.6 lightweight mode (pm_cursor advanced 3→4 pm-qa→pm-devops; coverage_cursor advanced 5→6; generated timestamps refreshed on action-list/risks); no material re-scan this run. Dispatcher continues on its own schedule — see recent commits for its status._
