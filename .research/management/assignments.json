@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-18T02:55:31Z",
+  "generated": "2026-08-18T02:58:17Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -28,15 +28,15 @@
       "branch": "auto-impl/code-review-api-handlers-voice-refresh-s-1b8a358c",
       "status": "review",
       "claimed_at": "2026-08-18T02:30:23Z",
-      "last_updated": "2026-08-18T02:55:31Z",
+      "last_updated": "2026-08-18T02:58:17Z",
       "status_changed_at": "2026-08-18T02:55:31Z",
       "pr_number": 2791,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2791",
       "merged_at": null,
       "specialist": "pm-security-backend",
       "implementer_summary": "pr=2791 status=done specialist=pm-security-backend scope_drift=false code_reuse_warn=none note=gated simulated voice-refresh token behind debug_assertions; release fails closed 503 before token overwrite; +2 unit tests; fmt/clippy green, sqlx DB tests unrunnable (no postgres)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=fail-closed-fix-mirrors-#890-enrollment-idiom-return-before-token-write-tests-ok (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "c55c837f96cbf9fb1572d135cd7856bd33e06672",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
