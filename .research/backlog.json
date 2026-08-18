@@ -8283,7 +8283,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8291,7 +8291,8 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt:50-55 — `InquiriesResponse` declares required `pageSize: Int (@SerialName(\"page_size\"))` with no default.",
         "backend/servers/reality-server/src/routes/inquiries.rs:253-263 — `GET /api/v1/inquiries` returns `InquiryListResponse { inquiries, total, page, limit }` (field is `limit`, NOT `page_size`), so with `ignoreUnknownKeys = true` the incoming `limit` is dropped and the required `page_size` triggers `kotlinx.serialization.MissingFieldException` on every real response.",
         "backend/servers/reality-server/src/routes/realtors.rs:39-43 — `GET /api/v1/realtors/inquiries` returns `InquiriesResponse { inquiries, total }` only (missing BOTH `page` and `page_size` that the KMP shape requires). `getRealtorInquiries()` reuses the same KMP class, so realtor-portal inquiries are broken too.",
-        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:61 — outbound query sends `parameter(\"page_size\", pageSize)` while backend `InquiryListQuery` reads `limit`; custom page sizes are silently dropped (server default of 20 always applied)."
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:61 — outbound query sends `parameter(\"page_size\", pageSize)` while backend `InquiryListQuery` reads `limit`; custom page sizes are silently dropped (server default of 20 always applied).",
+        "promoted to plan (status flip); Phase 3 refill trigger 2026-08-18"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt",
@@ -8300,7 +8301,7 @@
         "backend/servers/reality-server/src/routes/realtors.rs"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-18",
       "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md"
     },
     {
@@ -8657,6 +8658,55 @@
         "assignment_status": "merged",
         "pr_number": 2793
       }
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "title": "reality-server: SSO reqwest calls have no timeout — anonymous DoS amplification on auth endpoints",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "reality-server segment review 2026-08-18"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687 — exchange_code_for_tokens uses reqwest::Client::new().send().await; no .timeout() on the client or request",
+        "backend/servers/reality-server/src/routes/sso.rs:711 — get_user_info: same pattern",
+        "backend/servers/reality-server/src/routes/sso.rs:748 — introspect_pm_token: same pattern",
+        "backend/servers/reality-server/src/state.rs:757 — PM health probe already builds a client with .timeout(), showing the pattern is understood but not applied to the SSO paths",
+        "attacker-triggerable amplification: create_mobile_sso_token is anonymous-callable and each bogus pm_access_token forces a PM upstream round-trip; concurrent floods saturate axum worker slots and the DB pool"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": "plans/code-review-reality-server-sso-reqwest-no-timeout.md"
+    },
+    {
+      "id": "code-review-reality-server-imports-pagination-total-and-unclamped-limit",
+      "title": "reality-server: imports list endpoints lie about total and accept unclamped limit (silent data loss + resource exhaustion)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-server segment review 2026-08-18"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:119 — list_import_jobs passes query.limit.unwrap_or(20) with no clamp",
+        "backend/servers/reality-server/src/routes/imports.rs:131 — returns `total = jobs.len() as i64` (page-length-as-total bug fixed in PR #919/#774 for realtors.rs/inquiries.rs)",
+        "backend/servers/reality-server/src/routes/imports.rs:322 — list_feeds has the same jobs.len()-as-total bug",
+        "compare inquiries.rs:589 (.clamp(1, 100) + parallel COUNT via tokio::try_join!) and favorites.rs:277-278 (.clamp(1, ALERTS_MAX_LIMIT))",
+        "silent data loss: agency with 30 jobs sees page 1 of 1 and older 10 disappear; resource exhaustion: authenticated realtor can request limit=1000000"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
     }
   ]
 }

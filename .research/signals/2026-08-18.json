@@ -1,0 +1,145 @@
+{
+  "generated_at": "2026-08-18T12:51:00Z",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "reality-server segment review 2026-08-18 (rotating expert, Rust)",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:687,711,748 — exchange_code_for_tokens, get_user_info, introspect_pm_token use reqwest::Client::new().send().await with no .timeout(); state.rs:757 shows the pattern already exists for the PM health probe. create_mobile_sso_token is anonymous-callable, so bogus pm_access_token floods amplify to full axum worker/DB-pool saturation.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-imports-pagination-total-and-unclamped-limit",
+      "type": "code-review-finding",
+      "source": "reality-server segment review 2026-08-18 (rotating expert, Rust)",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/imports.rs:115-134 (list_import_jobs) and :312-334 (list_feeds) pass query.limit.unwrap_or(20) with NO clamp and return total = jobs.len() as i64 — the exact page-length-as-total bug the team fixed for realtors.rs/inquiries.rs in PR #919/#774. Compare inquiries.rs:589 (.clamp(1, 100) + parallel COUNT) and favorites.rs:277-278. Silent data loss for agencies >20 jobs; unbounded LIMIT enables authenticated resource exhaustion.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head-line match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursors changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit + score_delta≠0 => empty",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; decay N/A (all open items updated <14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation on new plan",
+      "observed": "passed",
+      "expected": "passed | fixed-in-place | rolled-back"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, 4 meta + 11 headings, cap ticked, mode declared, files exist",
+      "observed": "1",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/ paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "no plan deleted this run",
+      "expected": "no silent deletion"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "8>=8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidate)",
+      "observed": "0/0/0",
+      "expected": "≤1 pr, ≤1 issue, ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → gate is no-op; GC7 coverage_cursor in [0,13)",
+      "observed": "cc=5",
+      "expected": "0..12"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
