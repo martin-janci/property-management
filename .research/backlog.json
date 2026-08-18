@@ -8610,7 +8610,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 dev-review 2026-08-18 (api-handlers segment, demand-driven Tier-1d; churn: voice_webhooks.rs)"
       ],
@@ -8624,7 +8624,12 @@
       ],
       "created_at": "2026-08-18",
       "updated_at": "2026-08-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-18T08:23:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2792
+      }
     },
     {
       "id": "code-review-api-handlers-voice-exchange-device-dedup",
@@ -8632,7 +8637,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 dev-review 2026-08-18 (api-handlers segment, demand-driven Tier-1d; churn: voice_webhooks.rs)"
       ],
@@ -8646,7 +8651,12 @@
       ],
       "created_at": "2026-08-18",
       "updated_at": "2026-08-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-18T08:23:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2793
+      }
     }
   ]
 }

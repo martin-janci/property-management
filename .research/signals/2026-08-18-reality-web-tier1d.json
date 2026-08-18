@@ -1,13 +1,15 @@
 {
+  "generator": "dev-review",
+  "generated_at": "2026-08-18",
   "segment_reviewed": "reality-web",
-  "selection_reason": "oldest-unreviewed",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=0 < floor=36); CHURN_FILES empty so oldest-unreviewed rule — review_cursor.reality-web=2026-08-12 is the oldest among cloud-verifiable segments (mobile-native-kmp excluded per issue #2652 unlandable-in-cloud steer); reality-web has 0 open code-review-finding rows in backlog.json so not saturated",
   "experts_used": [
     "frontend"
   ],
   "findings_count": 3,
   "signals": [
     {
-      "id": "code-review-reality-web-syncschedule-no-error-handling",
+      "id": "code-review-reality-web-inquiry-cancel-silent-fail",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "reality-web",
@@ -15,39 +17,33 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave() does `await updateMutation.mutateAsync({...})` with no try/catch; a rejected mutation (network error / 4xx-5xx) becomes an unhandled promise rejection and `setIsEditing(false)` on line 63 never runs, so the form is stuck in edit state with no user feedback",
-        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:161-163 — the component only reads `updateMutation.isPending`; it never renders `updateMutation.isError` / `.error`, so there is no error UI path at all for a failed schedule save",
-        "Contrast: InviteRealtorModal.handleSubmit (components/agency/RealtorManagement.tsx:568-581) wraps the same mutateAsync pattern in try/catch and sets an inviteError state — SyncSchedule should follow the same shape"
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel fires cancelInquiry.mutate(inquiry.id) as fire-and-forget then immediately closes the confirm dialog (setShowCancelConfirm(false)); the useCancelInquiry mutation has no onError, and nothing renders cancelInquiry.isError, so a failed cancellation (network/409/permission) leaves the user believing the inquiry was cancelled while it still stands — a silent user-facing failure on a state-changing action. The list query on the same page does handle isLoading/error, so the mutation path is the gap."
       ],
       "expert": "frontend"
     },
     {
-      "id": "code-review-reality-web-listinggrid-i18n-gap",
+      "id": "code-review-reality-web-inquiries-page-no-i18n",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "candidate_vector": "refactor",
       "evidence": [
-        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:76 — hardcoded English empty-state title 'No listings found' rendered directly, not wrapped in t('...')",
-        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:78 — hardcoded English empty-state body 'Try adjusting your filters or search criteria to find more properties.'; the component imports no useTranslations from next-intl",
-        "Impact: this is the primary search-results surface of a public multi-language portal (locales sk, cs, de, en per apps/CLAUDE.md); the empty state stays English for every non-English tenant/visitor"
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx — the entire Inquiries page has zero next-intl usage (no useTranslations import) despite living under app/[locale] on a sk/cs/de/en portal; user-facing strings are hardcoded English: statusConfig labels 'Pending'/'Responded'/'Scheduled'/'Completed'/'Cancelled' (lines 17-36), 'Viewing scheduled:' (95), 'Agent response:' (102), 'Cancel this inquiry?'/'Yes, cancel'/'No'/'Cancel inquiry' (114-135), 'No inquiries yet' empty state, and 'Failed to load inquiries. Please try again.' error state (331) — all render raw English in every non-English locale."
       ],
       "expert": "frontend"
     },
     {
-      "id": "code-review-reality-web-authcallback-i18n-gap",
+      "id": "code-review-reality-web-savedsearches-no-i18n",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "reality-web",
       "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "candidate_vector": "refactor",
       "evidence": [
-        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:130,133 — user-facing error UI strings 'Login Failed' and 'Return Home' are hardcoded English in a [locale]-scoped route with no next-intl import",
-        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:66,106,144 — 'Loading...', 'Invalid state token. Please try logging in again.' and 'Completing login...' are also hardcoded English",
-        "Impact: the SSO callback is the first screen a returning user sees after login; it renders untranslated for sk/cs/de locales unlike every other component in the app which uses useTranslations"
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx — no next-intl usage at all; hardcoded English filter/status strings render across all four locales: 'For Sale'/'For Rent' (line 38), 'All listings' (55), 'Alerts on'/'Alerts off' toggle (86). Mirrors the inquiries-page gap; both account-area pages were built without the useTranslations pattern the agency components already use."
       ],
       "expert": "frontend"
     }
