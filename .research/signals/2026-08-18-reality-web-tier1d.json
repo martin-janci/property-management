@@ -1,0 +1,55 @@
+{
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-syncschedule-no-error-handling",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave() does `await updateMutation.mutateAsync({...})` with no try/catch; a rejected mutation (network error / 4xx-5xx) becomes an unhandled promise rejection and `setIsEditing(false)` on line 63 never runs, so the form is stuck in edit state with no user feedback",
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:161-163 — the component only reads `updateMutation.isPending`; it never renders `updateMutation.isError` / `.error`, so there is no error UI path at all for a failed schedule save",
+        "Contrast: InviteRealtorModal.handleSubmit (components/agency/RealtorManagement.tsx:568-581) wraps the same mutateAsync pattern in try/catch and sets an inviteError state — SyncSchedule should follow the same shape"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listinggrid-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:76 — hardcoded English empty-state title 'No listings found' rendered directly, not wrapped in t('...')",
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:78 — hardcoded English empty-state body 'Try adjusting your filters or search criteria to find more properties.'; the component imports no useTranslations from next-intl",
+        "Impact: this is the primary search-results surface of a public multi-language portal (locales sk, cs, de, en per apps/CLAUDE.md); the empty state stays English for every non-English tenant/visitor"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-authcallback-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:130,133 — user-facing error UI strings 'Login Failed' and 'Return Home' are hardcoded English in a [locale]-scoped route with no next-intl import",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:66,106,144 — 'Loading...', 'Invalid state token. Please try logging in again.' and 'Completing login...' are also hardcoded English",
+        "Impact: the SSO callback is the first screen a returning user sees after login; it renders untranslated for sk/cs/de locales unlike every other component in the app which uses useTranslations"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
