@@ -8576,6 +8576,72 @@
         "assignment_status": "merged",
         "pr_number": 2775
       }
+    },
+    {
+      "id": "code-review-api-handlers-voice-refresh-simulated-token-release",
+      "title": "voice /oauth/refresh mints a simulated access token in RELEASE builds when the platform OAuth client is unconfigured (no cfg!(debug_assertions) gate) — fail-open contradicting #890; overwrites the device's real stored token with a dead one",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 dev-review 2026-08-18 (api-handlers segment, demand-driven Tier-1d; churn: voice_webhooks.rs)"
+      ],
+      "evidence": [
+        "voice_webhooks.rs:735-750 — oauth_token_refresh's `else` (has_platform==false) branch mints `voice_access_refreshed_<uuid>`, encrypts it and persists it via update_voice_device_tokens, with NO cfg!(debug_assertions) guard — it runs in release builds too",
+        "voice_webhooks.rs:465-498 — the analogous unconfigured branch in oauth_token_exchange IS gated behind `cfg!(debug_assertions)` and returns 503 SERVICE_UNAVAILABLE in release (documented security fix #890: 'release builds must never mint fake voice tokens'); the refresh handler violates the same invariant",
+        "Impact: in a release deploy where the platform OAuth client env is missing (has_platform=false), an authenticated owner's refresh silently replaces the device's real stored access token with a non-functional simulated token instead of failing closed"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-exchange-no-rate-limit",
+      "title": "voice /oauth/exchange makes a live upstream OAuth call (exchange_code) per request with no per-user rate limit, unlike its sibling /oauth/refresh (#2769) — same authenticated amplification vector left unthrottled",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 dev-review 2026-08-18 (api-handlers segment, demand-driven Tier-1d; churn: voice_webhooks.rs)"
+      ],
+      "evidence": [
+        "voice_webhooks.rs:436-448 — oauth_token_exchange calls oauth_manager.exchange_code() live against Amazon/Google on every request with no throttle",
+        "voice_webhooks.rs:605-618 — oauth_token_refresh gates the same class of upstream call behind voice_refresh_attempt_allowed(auth.user_id) (VOICE_REFRESH_* sliding-window limiter) added by #2769 precisely to stop an authenticated caller amplifying against the upstream OAuth provider; exchange has no equivalent limiter",
+        "An authenticated user can loop /oauth/exchange with bogus auth_codes to amplify traffic at Amazon/Google's token endpoint"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-exchange-device-dedup",
+      "title": "voice /oauth/exchange generates a fresh random device_id every call with no upsert on (org,user,platform) — re-linking accumulates active device rows whose old stored tokens stay independently usable",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 dev-review 2026-08-18 (api-handlers segment, demand-driven Tier-1d; churn: voice_webhooks.rs)"
+      ],
+      "evidence": [
+        "voice_webhooks.rs:502 — device_id = format!(\"{}_{}\", request.platform, Uuid::new_v4()); create_voice_device (voice_webhooks.rs:522-548) inserts a new row with no ON CONFLICT / dedup on (organization_id, user_id, platform)",
+        "Each re-link of the same account leaves the prior device row is_active=TRUE with its previously-issued stored access token still present",
+        "authenticate_voice_user (voice_webhooks.rs:1531-1585) selects a device by token hash/decrypt match, so every stale row remains independently authenticatable until its token expires — no revoke-on-relink"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
     }
   ]
 }
