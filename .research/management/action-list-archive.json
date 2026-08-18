@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-18T06:34:35Z",
+  "archived_at": "2026-08-18T18:35:51Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -15453,6 +15453,27 @@
       "first_open_at": "2026-08-11T12:06:50Z",
       "retry_of": "screen-map-drift-pr-2647-ppt",
       "retry_round": 1
+    },
+    {
+      "id": "screen-map-drift-pr-2647-ppt-retry2",
+      "action": "screen-map drift: PR #2647 touched 8 ppt-web route wrappers (i18n not-found fallbacks) without updating docs/screens/ppt/ [retry 2/2 of failed screen-map-drift-pr-2647-ppt]",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-18T12:26:36Z (retry_of=screen-map-drift-pr-2647-ppt reason=failed-no-pr cooldown_ok newest_failure=2026-08-11T12:20:23Z) | gc1-reconcile 2026-08-18T18:35:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-18T12:26:36Z",
+      "retry_of": "screen-map-drift-pr-2647-ppt",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2795,
+        "merged_at": "2026-08-18T18:32:10Z",
+        "at": "2026-08-18T18:35:51Z"
+      }
     },
     {
       "id": "screen-map-drift-pr-2648-ppt",
