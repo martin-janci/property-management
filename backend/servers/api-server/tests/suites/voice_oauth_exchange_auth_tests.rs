@@ -15,11 +15,12 @@
 //! claims (no `host_tenant_middleware` needed), so we mint tokens carrying a
 //! custom `tenant_id` claim to exercise the authenticated paths.
 //!
-//! Success-path note: there is no `voice_assistant_devices` migration in the
-//! PPT schema, so a fully-authenticated request gets *past* the auth gate and
-//! then fails at the DB insert. The security contract is what we assert: a
-//! valid token is NOT rejected at the auth layer (status is never 401/403),
-//! while an unauthenticated or org-less request IS rejected before any work.
+//! Success-path note: the `voice_assistant_devices` table exists as of
+//! migration 00226, so a fully-authenticated request runs end to end. Test 4
+//! asserts the security contract (a valid token is never rejected at the auth
+//! layer, while an unauthenticated or org-less request IS rejected before any
+//! work); Test 5 asserts the device-dedup contract (re-linking rotates one row
+//! rather than accumulating independent rows).
 
 #![allow(dead_code)]
 
@@ -167,9 +168,10 @@ async fn oauth_exchange_without_org_context_is_forbidden(pool: PgPool) {
 // Test 4: valid token with an org context passes the auth gate.
 //
 // Proves the extractor admits a real authenticated principal: the response
-// status is NOT 401/403. (It does not reach a 200 because the PPT schema has
-// no `voice_assistant_devices` table, so the downstream DB insert fails — but
-// that is well past the security boundary this fix establishes.)
+// status is NOT 401/403. (This test sets no `INTEGRATION_ENCRYPTION_KEY`, so it
+// stops at the mandatory-encryption gate rather than reaching a 200 — but that
+// is well past the security boundary this fix establishes. Test 5 exercises the
+// full 200 success path with the key set.)
 // ---------------------------------------------------------------------------
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn oauth_exchange_with_valid_auth_passes_auth_gate(pool: PgPool) {
@@ -200,5 +202,95 @@ async fn oauth_exchange_with_valid_auth_passes_auth_gate(pool: PgPool) {
         StatusCode::FORBIDDEN,
         "valid token with org context must clear the org gate, got 403: {}",
         resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Test 5: re-linking the same (org, user, platform) reuses ONE device row
+// instead of accumulating independent rows with independently-usable tokens.
+//
+// Regression for the device-dedup fix: `oauth_token_exchange` used to mint a
+// fresh random `device_id` and INSERT a new `voice_assistant_devices` row on
+// every call, so re-linking left the previous row active with its own still
+// usable stored token (stale-token accumulation). The handler now upserts on
+// `(organization_id, user_id, platform)`: the second link rotates the tokens
+// on the existing row in place, so exactly one active row exists and the
+// returned `device_id` is stable across re-links.
+//
+// No upstream OAuth is configured in tests, so the handler takes its
+// simulated-tokens branch (debug build) which still runs the mandatory
+// `encrypt_required` — hence `INTEGRATION_ENCRYPTION_KEY` is set below.
+// ---------------------------------------------------------------------------
+
+/// A valid 32-byte (64 hex char) AES-256 key so the simulated-tokens branch's
+/// mandatory `encrypt_required` succeeds.
+const TEST_KEY: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn oauth_exchange_relink_reuses_single_device_row(pool: PgPool) {
+    std::env::set_var("INTEGRATION_ENCRYPTION_KEY", TEST_KEY);
+
+    let config = TestConfig::default();
+    let secret = config.jwt_secret.clone();
+    let app = TestApp::with_config(pool.clone(), config).await;
+
+    let user_id = Uuid::new_v4();
+    let org_id = Uuid::new_v4();
+    let token = mint_access_token(&secret, user_id, Some(org_id));
+
+    let build_req = || {
+        Request::builder()
+            .method(Method::POST)
+            .uri(EXCHANGE_URI)
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .body(Body::from(exchange_body().to_string()))
+            .unwrap()
+    };
+
+    // First link.
+    let resp1 = app.execute(build_req()).await;
+    assert_eq!(
+        resp1.status,
+        StatusCode::OK,
+        "first link must succeed, got {}: {}",
+        resp1.status,
+        resp1.text()
+    );
+    let body1: serde_json::Value = serde_json::from_str(&resp1.text()).unwrap();
+    let device_id_1 = body1["device_id"].as_str().unwrap().to_string();
+
+    // Re-link (same user + org + platform).
+    let resp2 = app.execute(build_req()).await;
+    assert_eq!(
+        resp2.status,
+        StatusCode::OK,
+        "re-link must succeed, got {}: {}",
+        resp2.status,
+        resp2.text()
+    );
+    let body2: serde_json::Value = serde_json::from_str(&resp2.text()).unwrap();
+    let device_id_2 = body2["device_id"].as_str().unwrap().to_string();
+
+    assert_eq!(
+        device_id_1, device_id_2,
+        "re-link must reuse the same device row, not mint a new device_id"
+    );
+
+    // Exactly one active device row exists for the tuple.
+    let active_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM voice_assistant_devices \
+         WHERE organization_id = $1 AND user_id = $2 AND platform = $3 AND is_active = TRUE",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .bind("alexa")
+    .fetch_one(&pool)
+    .await
+    .expect("count active voice devices");
+
+    assert_eq!(
+        active_count, 1,
+        "re-link must not accumulate active device rows (found {active_count})"
     );
 }

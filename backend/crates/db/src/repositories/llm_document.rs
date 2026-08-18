@@ -1887,6 +1887,44 @@ impl LlmDocumentRepository {
         .await
     }
 
+    /// Find the active voice device for an `(organization, user, platform)`
+    /// tuple.
+    ///
+    /// This is the lookup key the OAuth-exchange (account-linking) path upserts
+    /// on: a re-link must rotate the tokens on the *existing* device row for the
+    /// tuple rather than insert an independent row. Without it, each re-link
+    /// minted a fresh `device_id` and a new row, leaving the previous row active
+    /// with its own still-usable stored token (stale-token accumulation).
+    /// Scoping to `organization_id` as well as `user_id` keeps devices a user
+    /// linked under different tenants distinct.
+    pub async fn find_active_voice_device_by_org_user_and_platform<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        user_id: Uuid,
+        platform: &str,
+    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, VoiceAssistantDevice>(
+            r#"
+            SELECT * FROM voice_assistant_devices
+            WHERE organization_id = $1
+              AND user_id = $2
+              AND platform = $3
+              AND is_active = TRUE
+            ORDER BY linked_at DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(organization_id)
+        .bind(user_id)
+        .bind(platform)
+        .fetch_optional(executor)
+        .await
+    }
+
     // =========================================================================
     // Statistics
     // =========================================================================
