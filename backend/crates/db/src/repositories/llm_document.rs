@@ -1887,41 +1887,75 @@ impl LlmDocumentRepository {
         .await
     }
 
-    /// Find the active voice device for an `(organization, user, platform)`
-    /// tuple.
+    /// Atomically upsert the single active voice device for an
+    /// `(organization_id, user_id, platform)` tuple.
     ///
-    /// This is the lookup key the OAuth-exchange (account-linking) path upserts
-    /// on: a re-link must rotate the tokens on the *existing* device row for the
-    /// tuple rather than insert an independent row. Without it, each re-link
-    /// minted a fresh `device_id` and a new row, leaving the previous row active
-    /// with its own still-usable stored token (stale-token accumulation).
-    /// Scoping to `organization_id` as well as `user_id` keeps devices a user
-    /// linked under different tenants distinct.
-    pub async fn find_active_voice_device_by_org_user_and_platform<'e, E>(
+    /// This is the account-linking (OAuth-exchange) write path. The
+    /// `uniq_voice_devices_active_org_user_platform` partial UNIQUE index
+    /// (`WHERE is_active = TRUE`, migration 00231) is the single writer of the
+    /// "at most one active device per tuple" invariant, and is the arbiter of
+    /// the `ON CONFLICT` below. On first link the row is inserted; a re-link
+    /// conflicts on that index and rotates the tokens on the existing row **in
+    /// place** — its `id`/`device_id` are preserved, and its previously stored
+    /// (now superseded) token is overwritten. Doing this in one statement makes
+    /// the DB the arbiter, so the concurrent-re-link race the previous
+    /// find -> branch -> insert/update path allowed can no longer produce two
+    /// active rows (#2794). Scoping to `organization_id` as well as `user_id`
+    /// keeps devices a user linked under different tenants distinct.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn upsert_active_voice_device<'e, E>(
         &self,
         executor: E,
         organization_id: Uuid,
         user_id: Uuid,
+        unit_id: Option<Uuid>,
         platform: &str,
-    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
+        device_id: &str,
+        device_name: Option<&str>,
+        access_token_encrypted: &str,
+        refresh_token_encrypted: Option<&str>,
+        token_expires_at: Option<DateTime<Utc>>,
+        capabilities: serde_json::Value,
+        // Keyed HMAC-SHA256 of the access token (#2662): kept in lock-step with
+        // `access_token_encrypted` so the indexed lookup stays correct.
+        access_token_hash: Option<&[u8]>,
+    ) -> Result<VoiceAssistantDevice, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             r#"
-            SELECT * FROM voice_assistant_devices
-            WHERE organization_id = $1
-              AND user_id = $2
-              AND platform = $3
-              AND is_active = TRUE
-            ORDER BY linked_at DESC
-            LIMIT 1
+            INSERT INTO voice_assistant_devices (
+                organization_id, user_id, unit_id, platform, device_id,
+                device_name, access_token_encrypted, refresh_token_encrypted,
+                token_expires_at, capabilities, access_token_hash, linked_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+            ON CONFLICT (organization_id, user_id, platform) WHERE is_active = TRUE
+            DO UPDATE SET
+                access_token_encrypted  = EXCLUDED.access_token_encrypted,
+                refresh_token_encrypted = COALESCE(
+                    EXCLUDED.refresh_token_encrypted,
+                    voice_assistant_devices.refresh_token_encrypted
+                ),
+                token_expires_at        = EXCLUDED.token_expires_at,
+                access_token_hash       = EXCLUDED.access_token_hash,
+                updated_at              = NOW()
+            RETURNING *
             "#,
         )
         .bind(organization_id)
         .bind(user_id)
+        .bind(unit_id)
         .bind(platform)
-        .fetch_optional(executor)
+        .bind(device_id)
+        .bind(device_name)
+        .bind(access_token_encrypted)
+        .bind(refresh_token_encrypted)
+        .bind(token_expires_at)
+        .bind(&capabilities)
+        .bind(access_token_hash)
+        .fetch_one(executor)
         .await
     }
 

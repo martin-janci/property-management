@@ -580,17 +580,37 @@ async fn oauth_token_exchange(
     // stored tokens stayed independently usable (stale-token accumulation). By
     // reusing the existing row we overwrite its `access_token_encrypted` /
     // `access_token_hash`, which invalidates the superseded token.
-    let existing = state
+    //
+    // #2794: the "at most one active device per (org, user, platform)" invariant
+    // is enforced by the DATABASE — the `uniq_voice_devices_active_org_user_platform`
+    // partial UNIQUE index (WHERE is_active = TRUE, migration 00231) is the single
+    // writer. A single atomic `INSERT ... ON CONFLICT ... DO UPDATE` (upsert) makes
+    // the DB the arbiter: first link inserts, re-link conflicts on the index and
+    // rotates the tokens on the existing row in place. This closes the
+    // concurrent-re-link race the previous sequential find -> branch ->
+    // insert/update path allowed (two racing requests could each observe "no
+    // existing row" and both INSERT). On conflict the `device_id` is preserved, so
+    // the returned id is stable across re-links.
+    let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
+    let device = state
         .llm_document_repo
-        .find_active_voice_device_by_org_user_and_platform(
+        .upsert_active_voice_device(
             &mut **guard.conn(),
             org_id,
             user_id,
+            None,
             &request.platform,
+            &device_id,
+            Some("Voice Assistant"),
+            &access_encrypted,
+            refresh_encrypted.as_deref(),
+            expires_at,
+            serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
+            access_hash.as_deref(),
         )
         .await
         .map_err(|e| {
-            tracing::error!("Failed to look up existing voice device: {}", e);
+            tracing::error!("Failed to upsert voice device: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -599,83 +619,6 @@ async fn oauth_token_exchange(
                 )),
             )
         })?;
-
-    let device = if let Some(existing) = existing {
-        // Re-link: rotate the tokens on the existing row in place.
-        tracing::info!(
-            device_id = %existing.id,
-            platform = %request.platform,
-            "Re-linking voice device: rotating tokens on existing (org,user,platform) row"
-        );
-        state
-            .llm_document_repo
-            .update_voice_device_tokens(
-                &mut **guard.conn(),
-                existing.id,
-                &access_encrypted,
-                refresh_encrypted.as_deref(),
-                expires_at,
-                access_hash.as_deref(),
-            )
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to rotate voice device tokens: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "DEVICE_CREATION_FAILED",
-                        "Failed to link voice device",
-                    )),
-                )
-            })?
-            // The row was active when we selected it on this same connection, so
-            // the conditional UPDATE (WHERE is_active = TRUE) matches it; a None
-            // here means it was concurrently deactivated — fail closed rather
-            // than silently fall through to a duplicate INSERT.
-            .ok_or_else(|| {
-                tracing::error!(
-                    device_id = %existing.id,
-                    "Voice device disappeared during re-link token rotation"
-                );
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "DEVICE_CREATION_FAILED",
-                        "Failed to link voice device",
-                    )),
-                )
-            })?
-    } else {
-        // First link for this (org, user, platform): create the device row.
-        let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
-        state
-            .llm_document_repo
-            .create_voice_device(
-                &mut **guard.conn(),
-                org_id,
-                user_id,
-                None,
-                &request.platform,
-                &device_id,
-                Some("Voice Assistant"),
-                Some(&access_encrypted),
-                refresh_encrypted.as_deref(),
-                expires_at,
-                serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
-                access_hash.as_deref(),
-            )
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to create voice device: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "DEVICE_CREATION_FAILED",
-                        "Failed to link voice device",
-                    )),
-                )
-            })?
-    };
 
     tracing::info!(
         "Voice device linked successfully: {} (platform: {})",
