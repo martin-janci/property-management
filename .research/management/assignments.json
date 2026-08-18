@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-18T18:35:50Z",
+  "generated": "2026-08-18T19:04:06Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2794",
       "branch": "auto-impl/gh-issue-2794-8c71b1fb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-18T18:26:46Z",
-      "last_updated": "2026-08-18T18:26:46Z",
-      "status_changed_at": "2026-08-18T18:26:46Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-18T19:04:06Z",
+      "status_changed_at": "2026-08-18T19:04:06Z",
+      "pr_number": 2796,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2796",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend+db-migration",
+      "implementer_summary": "pr=2796 status=done specialist=rust-backend+db-migration scope_drift=true code_reuse_warn=none note=DB-level partial-unique-index + atomic ON CONFLICT upsert + concurrent-relink test; fmt/clippy(workspace)/suite_8(6/6) green vs provisioned PG16; full workspace test is CI job",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
