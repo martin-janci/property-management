@@ -3095,6 +3095,28 @@
       "merge_attempted_at": "2026-08-13T10:39:13Z"
     },
     {
+      "task_id": "code-review-api-handlers-voice-exchange-device-dedup",
+      "branch": "auto-impl/code-review-api-handlers-voice-exchange-1987ba13",
+      "status": "merged",
+      "claimed_at": "2026-08-18T04:27:16Z",
+      "last_updated": "2026-08-18T06:31:20Z",
+      "status_changed_at": "2026-08-18T06:31:20Z",
+      "pr_number": 2793,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2793",
+      "merged_at": "2026-08-18T06:30:32Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2793 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=upsert exchange device on (org,user,platform); fmt+clippy(db,api-server) green via swagger stub; sqlx test + full gate run in CI (utoipa-swagger-ui github egress 403 blocks full local verify)",
+      "reviewer_summary": "verdict=approve note=upsert-on-org-user-platform-correct-failclosed-rls-ok-ci-green-selfapprove-blocked-posted-as-comment",
+      "last_reviewed_oid": "fd78da12493634a154cb4f507a2b49d87d186a2b",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-18T06:31:20Z"
+    },
+    {
       "task_id": "code-review-api-handlers-voice-google-verify-fail-open",
       "branch": "auto-impl/code-review-api-handlers-voice-google-ve-fcafa995",
       "status": "merged",
@@ -3115,6 +3137,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-voice-oauth-exchange-no-rate-limit",
+      "branch": "auto-impl/code-review-api-handlers-voice-oauth-exc-8d3e4f66",
+      "status": "merged",
+      "claimed_at": "2026-08-18T04:27:16Z",
+      "last_updated": "2026-08-18T06:31:20Z",
+      "status_changed_at": "2026-08-18T06:31:20Z",
+      "pr_number": 2792,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2792",
+      "merged_at": "2026-08-18T06:29:59Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2792 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=mirrored #2769 refresh rate-limit onto /oauth/exchange (+2 tests); rebased onto origin/dev, resolved additive test conflict; fmt clean, clippy/test blocked by swagger-ui github egress (env, CI-gated); drift=target file outside pm-security glob (task-scoped)",
+      "reviewer_summary": "verdict=approve note=faithful #2769 mirror; auth-keyed guard before exchange_code; CI green; scope-drift acceptable (exact task file); approve posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "5c08c486cd71388ee548ba10f9eec01980b62955",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-18T06:31:20Z"
     },
     {
       "task_id": "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
@@ -14721,5 +14765,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-18T04:33:19Z"
+  "archived_at": "2026-08-18T06:33:04Z"
 }

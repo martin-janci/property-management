@@ -208,57 +208,6 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-17T10:25:00Z"
-    },
-    {
-      "id": "code-review-api-handlers-voice-refresh-simulated-token-release",
-      "action": "voice /oauth/refresh mints a simulated access token in RELEASE builds when the platform OAuth client is unconfigured (no cfg!(debug_assertions) gate) — fail-open contradicting #890; overwrites the device's real stored token with a dead one",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-18T02:26:49Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-18T02:26:49Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-voice-exchange-device-dedup",
-      "action": "voice /oauth/exchange generates a fresh random device_id every call with no upsert on (org,user,platform) — re-linking accumulates active device rows whose old stored tokens stay independently usable",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-18T02:26:49Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-18T02:26:49Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-voice-oauth-exchange-no-rate-limit",
-      "action": "voice /oauth/exchange makes a live upstream OAuth call (exchange_code) per request with no per-user rate limit, unlike its sibling /oauth/refresh (#2769) — same authenticated amplification vector left unthrottled",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-18T02:26:49Z (score=1 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-18T02:26:49Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "security"
-      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

@@ -1,0 +1,40 @@
+{
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs — SSO handlers surface raw internal error strings to unauthenticated clients via `SsoError::new(<code>, &e.to_string())`. On INTERNAL_SERVER_ERROR paths this leaks DB / crypto / JWT / reqwest internals in the API response body. Sites: lines 265 (token_exchange_failed), 275/439/923/1114 (user_info_failed), 287/515/958/1131/1158 (user_create_failed), 299/527/971/1142/1169 (session_create_failed), 451 (token_create_failed), 1079 (pm_session_invalid). ~15 call sites.",
+        "Contrast — the correct pattern already exists in the same crate: backend/servers/reality-server/src/routes/users.rs:154-190 maps `RegistrationResult::CryptoError(e)` / `DatabaseError(e)` to a generic client message \"Registration failed\" (StatusCode 500) while keeping `e` internal; login does the same with \"Login failed\". sso.rs should follow suit — return a generic code/message to the client and move `e` into a `tracing::error!(error = %e, ...)` log.",
+        "Landable backend-only fix (Rust, no schema change): replace `&e.to_string()` in the client-facing `SsoError::new(...)` args with a fixed generic string per error code and add a `tracing::error!`/`warn!` carrying `%e` beside each `map_err`, mirroring routes/users.rs. Reachable in prod: every one of these handlers is mounted on the public SSO router."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — three bare `reqwest::Client::new()` instances used for the PM OAuth token exchange (exchange_code_for_tokens), the OAuth userinfo fetch (get_user_info), and the token introspection cache-miss call. reqwest's default client has NO request timeout, so a hung / slow PM OAuth upstream blocks the reality-server request (and its DB conn + Tokio worker) indefinitely — an availability/DoS-adjacent hazard on the critical auth path (every SSO login + every token-validation cache miss).",
+        "Contrast — the crate already knows to set one: backend/servers/reality-server/src/state.rs:756-759 (`PmApiClient::new`) builds its reqwest client with `.timeout(Duration::from_secs(timeout_seconds))`. The inline sso.rs clients skip that hardening.",
+        "Secondary smell: constructing a fresh `reqwest::Client` per request also discards connection pooling / keep-alive for the busiest outbound path. Landable backend-only fix: build one timeout-configured `reqwest::Client` once (e.g. store it on AppState alongside PmApiClient, or a shared helper) and reuse it in all three sso.rs call sites."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
