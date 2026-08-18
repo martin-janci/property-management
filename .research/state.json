@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-17T03:17:10Z",
-  "last_run_ms": 30000,
-  "last_pr_seen": 2772,
-  "last_issue_seen": 2768,
-  "last_commit_sha": "9c1ba063c6b38a4e6608c75568dba5847d202b6e",
+  "last_run_iso": "2026-08-18T04:33:00Z",
+  "last_run_ms": 5100,
+  "last_pr_seen": 2790,
+  "last_issue_seen": 2789,
+  "last_commit_sha": "a46acc207d9d2fa97eae3c637f3ba49e203bd75d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -468,9 +468,9 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-17",
-      "recent_churn": 2897
+      "runs_seen": 3,
+      "last_seen": "2026-08-18",
+      "recent_churn": 260
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
@@ -890,7 +890,10 @@
     "code-review-api-core-payment-matcher-vs-only-threshold",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
-    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+    "code-review-api-handlers-voice-refresh-simulated-token-release",
+    "code-review-api-handlers-voice-oauth-exchange-no-rate-limit",
+    "code-review-api-handlers-voice-exchange-device-dedup"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -904,7 +907,7 @@
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 66,
+    "runs": 67,
     "vectors_created": 314,
     "plans_created": 25,
     "quiet_days": 2,

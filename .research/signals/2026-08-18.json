@@ -1,0 +1,170 @@
+{
+  "run_iso": "2026-08-18T04:33:00Z",
+  "trigger_payload": "buffer-low: claimable=8/72 — refill planner",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-voice-refresh-simulated-token-release",
+      "type": "code-review-finding",
+      "source": "dispatcher tier1d 2026-08-18 (api-handlers, churn-aligned on voice_webhooks.rs)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "voice_webhooks.rs:735-750 — oauth_token_refresh's has_platform==false branch mints voice_access_refreshed_<uuid>, encrypts + persists via update_voice_device_tokens, NO cfg!(debug_assertions) gate — runs in release builds",
+        "voice_webhooks.rs:465-498 — analogous unconfigured branch in oauth_token_exchange IS gated behind cfg!(debug_assertions) and returns 503 in release (security fix #890); refresh violates the same invariant",
+        "pre-applied to backlog.json by dispatcher pre-Phase-2 (score already at 2, plan=null); Phase-5 fix currently in review via PR #2791",
+        "score_delta=0 this run to prevent double-count vs dispatcher pre-application"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-exchange-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "dispatcher tier1d 2026-08-18 (api-handlers, churn-aligned on voice_webhooks.rs)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "voice_webhooks.rs:436-448 — oauth_token_exchange calls oauth_manager.exchange_code() live per request against Amazon/Google with no throttle",
+        "voice_webhooks.rs:605-618 — sibling oauth_token_refresh gates same class of upstream call behind voice_refresh_attempt_allowed() added by #2769; exchange has no equivalent limiter",
+        "pre-applied to backlog.json by dispatcher pre-Phase-2 (score already at 1)",
+        "score_delta=0 this run to prevent double-count vs dispatcher pre-application"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-exchange-device-dedup",
+      "type": "code-review-finding",
+      "source": "dispatcher tier1d 2026-08-18 (api-handlers, churn-aligned on voice_webhooks.rs)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "voice_webhooks.rs:502 — device_id = format!(\"{}_{}\", platform, Uuid::new_v4()); create_voice_device (voice_webhooks.rs:522-548) inserts row with no ON CONFLICT / dedup on (organization_id, user_id, platform)",
+        "Each re-link accumulates a fresh active row while prior stored access token stays present; authenticate_voice_user selects device by token hash — every stale row remains independently authenticatable until expiry",
+        "pre-applied to backlog.json by dispatcher pre-Phase-2 (score already at 1)",
+        "score_delta=0 this run to prevent double-count vs dispatcher pre-application"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "portfolio-caps-100 decayed 2→1",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans adversarial pass",
+      "observed": "0 new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "cached diff .research/-only",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "match",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "placeholder rot grep",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no missing",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "8>=8",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "match",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions this run",
+      "expected": "caps + idempotency"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "no-op (Phase 1.6 skipped this run)",
+      "expected": "no-op ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token added-lines grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
