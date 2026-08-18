@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-18T02:30:23Z",
+  "generated": "2026-08-18T02:55:31Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "code-review-api-handlers-voice-refresh-simulated-token-release",
       "branch": "auto-impl/code-review-api-handlers-voice-refresh-s-1b8a358c",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-18T02:30:23Z",
-      "last_updated": "2026-08-18T02:30:23Z",
-      "status_changed_at": "2026-08-18T02:30:23Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-18T02:55:31Z",
+      "status_changed_at": "2026-08-18T02:55:31Z",
+      "pr_number": 2791,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2791",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "pm-security-backend",
+      "implementer_summary": "pr=2791 status=done specialist=pm-security-backend scope_drift=false code_reuse_warn=none note=gated simulated voice-refresh token behind debug_assertions; release fails closed 503 before token overwrite; +2 unit tests; fmt/clippy green, sqlx DB tests unrunnable (no postgres)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
