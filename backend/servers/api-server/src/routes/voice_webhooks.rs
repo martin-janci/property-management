@@ -98,6 +98,30 @@ fn voice_refresh_attempt_allowed(user_id: Uuid) -> bool {
     )
 }
 
+// `oauth_token_exchange` completes account linking by making a live call to
+// Amazon/Google (`exchange_code`). Like `oauth_token_refresh`, an authenticated
+// caller must not be able to loop it and amplify against the upstream OAuth
+// provider, so throttle per PM user with the same in-process sliding-window
+// limiter idiom (#2769).
+const VOICE_EXCHANGE_MAX_ATTEMPTS: u32 = 10;
+const VOICE_EXCHANGE_WINDOW: std::time::Duration = std::time::Duration::from_secs(900);
+const VOICE_EXCHANGE_SWEEP_THRESHOLD: usize = 1024;
+
+static VOICE_EXCHANGE_RATE_LIMITER: std::sync::LazyLock<InProcessRateLimiter<Uuid>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+/// Record an exchange attempt for `user_id`; `false` once more than
+/// `VOICE_EXCHANGE_MAX_ATTEMPTS` occur in a rolling `VOICE_EXCHANGE_WINDOW`.
+fn voice_exchange_attempt_allowed(user_id: Uuid) -> bool {
+    rate_limit_allowed(
+        &VOICE_EXCHANGE_RATE_LIMITER,
+        user_id,
+        VOICE_EXCHANGE_MAX_ATTEMPTS,
+        VOICE_EXCHANGE_WINDOW,
+        VOICE_EXCHANGE_SWEEP_THRESHOLD,
+    )
+}
+
 // ============================================================================
 // Router
 // ============================================================================
@@ -367,6 +391,7 @@ async fn google_actions_webhook(
         (status = 400, description = "Invalid authorization code"),
         (status = 401, description = "Unauthorized - missing or invalid PM access token"),
         (status = 403, description = "Forbidden - no active organization context"),
+        (status = 429, description = "Too many exchange attempts"),
         (status = 500, description = "Token exchange failed"),
     ),
     security(("bearer_auth" = [])),
@@ -378,6 +403,23 @@ async fn oauth_token_exchange(
     Json(request): Json<VoiceOAuthExchangeRequest>,
 ) -> Result<Json<VoiceOAuthExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{VoiceOAuthManager, VoicePlatform};
+
+    // Throttle authenticated abuse: a valid principal must not be able to loop
+    // this endpoint and amplify against the upstream OAuth provider (#2769).
+    if !voice_exchange_attempt_allowed(auth.user_id) {
+        tracing::warn!(
+            user_id = %auth.user_id,
+            platform = %request.platform,
+            "Voice OAuth exchange rate limit exceeded"
+        );
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many token exchange attempts; try again later",
+            )),
+        ));
+    }
 
     // Bind the linking to the authenticated PM user + their active org.
     // Without an org context we cannot create a tenant-scoped voice device.
@@ -1842,6 +1884,38 @@ mod tests {
             voice_simulated_oauth_allowed(true),
             "debug builds may use the simulated fallback"
         );
+    }
+
+    // --- oauth exchange rate limiting (#2769) ---------------------------
+
+    #[test]
+    fn exchange_rate_limiter_throttles_after_max_attempts() {
+        // Fresh principal => isolated bucket in the process-global limiter.
+        let user_id = Uuid::new_v4();
+        for i in 0..VOICE_EXCHANGE_MAX_ATTEMPTS {
+            assert!(
+                voice_exchange_attempt_allowed(user_id),
+                "attempt {i} within the window should be allowed"
+            );
+        }
+        // One past the limit within the same window is throttled, mirroring the
+        // /oauth/refresh guard.
+        assert!(
+            !voice_exchange_attempt_allowed(user_id),
+            "attempt beyond VOICE_EXCHANGE_MAX_ATTEMPTS should be throttled"
+        );
+    }
+
+    #[test]
+    fn exchange_rate_limiter_isolates_per_user() {
+        let user_a = Uuid::new_v4();
+        let user_b = Uuid::new_v4();
+        for _ in 0..VOICE_EXCHANGE_MAX_ATTEMPTS {
+            assert!(voice_exchange_attempt_allowed(user_a));
+        }
+        // user_a is now throttled, but a distinct principal is unaffected.
+        assert!(!voice_exchange_attempt_allowed(user_a));
+        assert!(voice_exchange_attempt_allowed(user_b));
     }
 
     // --- validate_alexa_cert_url ----------------------------------------
