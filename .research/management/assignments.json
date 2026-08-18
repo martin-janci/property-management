@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-18T04:40:21Z",
+  "generated": "2026-08-18T04:55:59Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "code-review-api-handlers-voice-exchange-device-dedup",
       "branch": "auto-impl/code-review-api-handlers-voice-exchange-1987ba13",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-18T04:27:16Z",
-      "last_updated": "2026-08-18T04:27:16Z",
-      "status_changed_at": "2026-08-18T04:27:16Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-18T04:55:59Z",
+      "status_changed_at": "2026-08-18T04:55:59Z",
+      "pr_number": 2793,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2793",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2793 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=upsert exchange device on (org,user,platform); fmt+clippy(db,api-server) green via swagger stub; sqlx test + full gate run in CI (utoipa-swagger-ui github egress 403 blocks full local verify)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
