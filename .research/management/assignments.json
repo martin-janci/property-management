@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-18T00:30:08Z",
+  "generated": "2026-08-18T02:30:23Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -16,6 +16,28 @@
       "reviewer_summary": "verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
       "last_reviewed_oid": "e3a6f01a38dba4a6f31f3235923067aff29004ca",
       "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-voice-refresh-simulated-token-release",
+      "branch": "auto-impl/code-review-api-handlers-voice-refresh-s-1b8a358c",
+      "status": "in-progress",
+      "claimed_at": "2026-08-18T02:30:23Z",
+      "last_updated": "2026-08-18T02:30:23Z",
+      "status_changed_at": "2026-08-18T02:30:23Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
