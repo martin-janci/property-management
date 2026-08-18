@@ -1,0 +1,59 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-18",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (research buffer starved, claimable<floor); CHURN_FILES empty so oldest-unreviewed rule — review_cursor.reality-web=2026-08-12 is the oldest LANDABLE segment (mobile-native-kmp excluded: gated/unlandable in cloud runner). A prior tier1d run today already emitted 2026-08-18-reality-web-tier1d.json (inquiries + saved-searches i18n); this second slice (-r2, same-day repeat per the -r suffix convention) mines DISTINCT non-i18n bug-classes — shipped mock data + unvalidated API-boundary casts — to add fresh landable throughput without duplicating the i18n findings. reality-web has 0 open code-review-finding rows in backlog.json (3 prior are status=done) so not saturated.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-profile-mock-data-shipped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65 — the authenticated /[locale]/profile page renders entirely fabricated data: `const profile = MOCK_PROFILE` and it maps MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS. It is wrapped in ProtectedRoute (SSO), so every LOGGED-IN user — regardless of identity — is shown the same hardcoded persona 'Tomáš Novotný' with fake PII (email t.novotny@email.sk, phone +421 911 123 456 in _mock.ts:46-57), fake stats (12 active listings, 47 deals, 4.7★), and 3 fabricated listings/activity/reviews.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts — the mock is the sole data source; there is no live-data path. The page comment itself concedes it is a stub: 'Once /users/me + /listings/by-owner endpoints land, replace MOCK_* with live data via the SDK' — i.e. a known placeholder shipped on a real authenticated route, not a dev-only fixture.",
+        "Impact: a real user reaching their own profile sees someone else's fabricated identity/PII presented as their account — a completeness gap that reads as a privacy/trust bug on a public portal. Contrast PopularNeighbourhoods.tsx, whose hardcoded set is documented as an intentional curated marketing surface; this profile mock is not intentional, it is unfinished.",
+        "Landable frontend-only fix: gate the page on real /users/me + listings-by-owner SDK calls (with loading/empty/error states), or hide the tabbed profile behind a 'coming soon' state, until the endpoints land — do not render fabricated PII to authenticated users."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-fetch-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — the shared-comparison loader fetches each id from `${getApiBase()}/api/v1/listings/${id}` and does `return response.json() as Promise<ListingSummary>` with NO runtime shape validation, then pushes result.value straight into addToComparison → rendered by ComparisonView (used on /[locale]/compare/page.tsx).",
+        "This diverges from the repo's own established hardening for the SAME endpoint family: src/app/[locale]/listings/[slug]/page.tsx:88-89 routes every 200 body through parseListingDetail() precisely because (its comment) 'A 200 does not guarantee a well-formed body … Rendering such a body crashes SSR'. The comparison path has no equivalent normalizer.",
+        "ComparisonView.tsx derefs listing fields per-row (row.getValue(l) across listings.map at lines 271/301); a malformed-but-truthy 200 (proxy partial response, wrong-typed collection field) for a shared id can therefore surface a broken/crashing comparison client-side instead of being dropped.",
+        "Landable frontend-only fix: validate/normalize each fetched body (reuse a ListingSummary parser mirroring parseListingDetail) before addToComparison; drop ids whose body fails the shape check, consistent with the existing per-id Promise.allSettled graceful-degrade."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-localstorage-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:37-46 — on mount the provider does `const parsed = JSON.parse(stored); setListings(parsed)` with no Array.isArray/shape guard. The try/catch only defends against JSON syntax errors, not a syntactically-valid-but-wrong-typed value (e.g. `\"null\"`, `\"{}\"`, `\"42\"`).",
+        "A non-array `parsed` then flows into listings and every consumer assumes an array: the save effect (line 55) reads `listings.length`, isInComparison (line 66) calls `.some`, removeFromComparison `.filter`, ComparisonView `.map` — all throw on a non-array, and ComparisonProvider wraps a large part of the app, so a single corrupted `ppt-comparison` localStorage entry (user/extension-editable) hard-crashes the surrounding tree with no recovery (the catch that would clear it is only around JSON.parse).",
+        "Landable frontend-only fix: after JSON.parse, guard `if (!Array.isArray(parsed)) { localStorage.removeItem(STORAGE_KEY); return; }` (and ideally filter to items with a string id) before setListings — mirrors the defensive-parse pattern already used in lib/auth-token.ts getSession()."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
