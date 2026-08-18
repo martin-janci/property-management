@@ -1,0 +1,54 @@
+{
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "rust",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-messages",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:706-709 — GET /api/v1/inquiries/{id} (get_inquiry, realtor-facing detail endpoint) always returns `InquiryDetailResponse { inquiry, messages: vec![] }` with the comment `// Would fetch conversation messages`. The conversation thread is hardcoded empty, so a realtor opening any inquiry never sees the message history — a shipped endpoint whose documented `messages` field (utoipa body = InquiryDetailResponse) is a permanent stub.",
+        "Ownership/scoping above the stub is correct (get_inquiry_for_realtor(id, principal.user_id) at :690, 404 on miss), so this is purely a completeness gap, not a security one. Landable backend-only fix: add a repo method to fetch the inquiry's conversation messages scoped to the same inquiry id and populate `messages` instead of `vec![]`.",
+        "Compare mark_as_read (:724) in the same file which is fully implemented — the detail read path was left as a placeholder while the mutation path shipped."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-reality-server-test-connection-always-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:243-253 — POST /api/v1/agencies/{id}/imports/test-connection (test_connection) is a stub: after membership + SSRF URL validation it unconditionally returns `TestConnectionResponse { success: true, message: \"Connection to provider '{}' successful (stub response)\", sample_record_count: Some(42) }` regardless of the real provider/credentials/feed reachability. An agency member testing a mistyped or dead feed URL gets a green 'Connection successful' with a fake 42-record count, which will mislead them into saving a broken import config.",
+        "The endpoint is mounted on the authenticated agency-import router and is documented as returning a real test result (utoipa body = TestConnectionResponse), so the placeholder is user-visible in production, not dev-only. Landable backend-only fix: perform an actual (timeout-bounded) fetch/parse of `data.feed_url` for the given provider and report real success/failure + record count, or explicitly gate the stub behind a 'not yet implemented' 501 rather than reporting a fabricated success."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-link-account-noop-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:376-385 — PortalUserService::link_account returns `LinkResult::Success` after only a `tracing::info!(\"Account linking requested\")`; the pm_user_id is never persisted (comment: `// Note: This would need a new repo method to update pm_user_id specifically / For now, we indicate success as the linking logic is in place`). Callers are told linking succeeded when nothing was written.",
+        "Mitigating context (why this is low, not medium): the same fn documents at :364-366 that the link concept is retired (pm_user_id column dropped from the PortalUser projection, guard kept for API compat), so the no-op may be intentional dead code. Landable follow-up: either remove the endpoint/return a explicit gone/unsupported status, or (if linking is still expected) implement the persistence — but do not keep reporting Success for a write that does not happen."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}
