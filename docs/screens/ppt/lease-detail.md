@@ -40,3 +40,4 @@ already built but unrouted; this screen is now reachable on web.
 
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
+- 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: the shared `LeaseLoadingNotice` fallback in `frontend/apps/ppt-web/src/routes/groups/leases.tsx` (rendered by the lease detail / application-detail / violation-detail route wrappers when the entity is absent) now renders via `t('errors.entityNotFound', { entity, defaultValue: '{{entity}} not found' })` — a dynamic interpolated key with the capitalized entity label (was a hardcoded English template literal); `useTranslation()` hook added inside the notice component; `errors.entityNotFound` key added to all locale bundles. No route or component change.

@@ -73,3 +73,6 @@ Endpoints (not yet registered in `@ppt/sitemap`, so listed here in prose):
   values, so the page can rely on `building.location` regardless of transport.
 - The map uses the OpenStreetMap keyless embed (`/export/embed.html`) — no API
   key and no extra dependency, so it works in CI and offline dev.
+
+## Agent Log
+- 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: `BuildingDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/buildings.tsx` now renders its missing-param fallback via `t('errors.buildingNotFound', 'Building not found')` (was a hardcoded English literal); locale bundles gained the `errors.buildingNotFound` key across en/sk/cs/de/hu/pl. No route or component change.
