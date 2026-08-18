@@ -6574,19 +6574,20 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
-        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop."
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
+        "decayed: no new signals in 14 days (2026-08-18)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-04",
+      "updated_at": "2026-08-18",
       "plan": null
     },
     {
@@ -8657,6 +8658,206 @@
         "assignment_status": "merged",
         "pr_number": 2793
       }
+    },
+    {
+      "id": "code-review-reality-server-sso-error-leak",
+      "title": "reality-server SSO handlers leak raw internal errors (DB/crypto/JWT/reqwest) via SsoError::new(&e.to_string()) — ~15 unauth call sites",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs — SSO handlers surface raw internal error strings via SsoError::new(<code>, &e.to_string()) at ~15 unauth-reachable sites (lines 265, 275/439/923/1114, 287/515/958/1131/1158, 299/527/971/1142/1169, 451, 1079). Contrast: routes/users.rs:154-190 already uses a generic client message + tracing::error!(%e) pattern for the same class of errors."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "title": "reality-server sso.rs builds bare reqwest::Client::new() with NO timeout — hung PM OAuth upstream blocks worker + DB conn on every SSO login",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — three bare reqwest::Client::new() (exchange_code_for_tokens, get_user_info, introspection cache-miss) use reqwest's default (no timeout). Hung PM OAuth upstream blocks the request + DB conn + Tokio worker indefinitely on every SSO login + token-validation cache miss. Same crate's state.rs:756-759 (PmApiClient::new) shows the right pattern: .timeout(Duration::from_secs(timeout_seconds))."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-silent-fail",
+      "title": "reality-web inquiries page: cancelInquiry mutation has no onError + no isError render — cancellation failure is a silent user-facing lie",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel fires cancelInquiry.mutate() fire-and-forget, immediately closes the confirm dialog; useCancelInquiry has no onError and cancelInquiry.isError is never rendered, so a failed cancel (network/409/perm) leaves the user believing the inquiry was cancelled while it still stands. The list query on the same page DOES handle isLoading/error — mutation is the only gap."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiries-page-no-i18n",
+      "title": "reality-web inquiries page renders raw English in every non-English locale (no useTranslations import)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx — no next-intl usage; hardcoded English strings: statusConfig labels Pending/Responded/Scheduled/Completed/Cancelled (17-36), 'Viewing scheduled:' (95), 'Agent response:' (102), 'Cancel this inquiry?'/'Yes, cancel'/'No'/'Cancel inquiry' (114-135), empty + error states — all rendered raw English on sk/cs/de portals."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-savedsearches-no-i18n",
+      "title": "reality-web saved-searches page: hardcoded English filter/toggle strings across sk/cs/de/en (no next-intl)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx — no next-intl usage; 'For Sale'/'For Rent' (38), 'All listings' (55), 'Alerts on'/'Alerts off' (86) render raw English across all four locales. Mirrors the inquiries-page gap — both account pages were built without the useTranslations pattern the agency components already use."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data-shipped",
+      "title": "reality-web /[locale]/profile ships MOCK_PROFILE + MOCK_LISTINGS to production users — authenticated profile page renders fabricated data",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65 — the authenticated /[locale]/profile page renders entirely fabricated data: `const profile = MOCK_PROFILE` and it maps MOCK_LISTINGS."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-fetch-unvalidated-cast",
+      "title": "reality-web ComparisonUrlHandler fetches shared-comparison payload with unvalidated JSON cast (as Foo) — trusted structure of untrusted server data",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — the shared-comparison fetch does `const data = (await res.json()) as ComparisonResponse` with no runtime validation before consuming fields, so any drift in the server response shape becomes a UI crash instead of a graceful error."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-localstorage-unvalidated",
+      "title": "reality-web comparison-context reads localStorage `pinnedListings` and JSON.parses it into state without shape validation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "sources": [
+        "Tier1d dev-review 2026-08-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:37-46 — on mount the provider does `const parsed = JSON.parse(...)` from localStorage without asserting the shape, so a hand-edited or version-migrated blob crashes the provider (which owns the comparison overlay across every listing page)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-mobile-nfc-credential-manager",
+      "title": "mobile/nfc/NFCCredentialManager.ts churn hotspot — 4 touches this run (offline-persist bugfix + SecureStore 2KB chunking + parse guard)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "sources": [
+        "churn 2026-08-18 (frontend/apps/mobile/src/nfc/NFCCredentialManager.ts)"
+      ],
+      "evidence": [
+        "4 touches since last routine run via PRs #2775 (parse guard), #2780 (clear cache on offline revoke), #2786 (SecureStore 2KB chunking). Repeated churn on the credential-store hot path warrants a consolidation / test-coverage pass."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-api-server-documents-shares",
+      "title": "api-server routes/documents/shares.rs churn hotspot — 3 touches this run (password throttle #2773 + proxy-IP unwind #2784 + trusted-proxy gate #2790)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "sources": [
+        "churn 2026-08-18 (backend/servers/api-server/src/routes/documents/shares.rs)"
+      ],
+      "evidence": [
+        "3 touches since last routine run via PRs #2773 (per-token:ip password throttle), #2784 (unwind proxy headers for share access-log IP), #2790 (trusted-proxy allowlist gate). Public share endpoint has attracted three security-relevant fixes in the same window — worth a follow-up audit for coverage completeness."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "status": "open",
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-18",
+      "plan": null
     }
   ]
 }

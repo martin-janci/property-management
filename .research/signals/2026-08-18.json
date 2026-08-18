@@ -1,0 +1,272 @@
+{
+  "date": "2026-08-18",
+  "run_iso": "2026-08-18T16:36:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Last routine run was 2026-08-17T03:17:10Z; now 2026-08-18T16:36:00Z (~37h ago) — > 36h threshold. Cloud cron routine slipped one daily slot; not stale (< 3 days)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+      "type": "churn-hotspot",
+      "source": "git log 2026-08-17..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "4 touches this window via PRs #2775 (parse guard), #2780 (offline-revoke cache clear), #2786 (SecureStore 2KB chunking). New hotspot (runs_seen 1)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/documents/shares.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-08-17..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 touches this window via PRs #2773 (per-token:ip password throttle), #2784 (proxy-header client-IP unwind), #2790 (trusted-proxy allowlist gate). Public share endpoint — three security-relevant fixes in the same 36-hour window."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-08-17..HEAD",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "6 touches this window via PRs #2787 (JWKS panic-guard), #2788 (real data), #2791/#2792/#2793 (voice OAuth hardening). Re-emit — cumulative signal type, score_delta suppressed to 0 per Phase 1 rule (already in seen_signals)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen advancing to 3+ this run. Cumulative signal type, score_delta suppressed to 0 on re-emit."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-error-leak",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-server-tier1d.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-server-tier1d.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-silent-fail",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-web-tier1d.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiries-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-web-tier1d.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-savedsearches-no-i18n",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-web-tier1d.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data-shipped",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-web-tier1d-r2.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-fetch-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-web-tier1d-r2.json into backlog."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-localstorage-unvalidated",
+      "type": "code-review-finding",
+      "source": "Tier1d dev-review (dispatcher, 2026-08-18)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from .research/signals/2026-08-18-reality-web-tier1d-r2.json into backlog."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-18.md && head -1 == '# 2026-08-18'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; portfolio-analytics decayed 2->1 (updated_at 2026-08-04 <= today-14)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuous",
+      "observed": "0 promoted",
+      "expected": ">= 0 with adversarial pass note"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep phases-failed cursors preserved",
+      "observed": "none failed",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "8 >= 8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions bounds",
+      "observed": "0 actions",
+      "expected": "<=3 with per-type <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor in range (Phase 1.6 skipped -> no-op advancement check)",
+      "observed": "action-list ok, risks ok, project-state ok, pm_cursor=3 in 0..7, coverage_cursor=5 in [0,13)",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
