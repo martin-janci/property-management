@@ -554,9 +554,7 @@ async fn oauth_token_exchange(
 
     // Device is bound to the authenticated PM user and their organization
     // (derived above from the verified access token — never random UUIDs).
-    let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
-
-    // Create the voice device with tokens.
+    //
     // PAP-170 (PAP-150 P2): bind the verified PM user's org/user RLS context for
     // the device write instead of touching the raw `state.db` pool.
     // `voice_assistant_devices` is not RLS-bound today, but binding context is
@@ -574,25 +572,25 @@ async fn oauth_token_exchange(
                 )),
             )
         })?;
-    let device = state
+
+    // Upsert on (org, user, platform). A re-link must ROTATE the tokens on the
+    // existing device row for this tuple, not insert an independent new row:
+    // the old code minted a fresh random `device_id` and created a row every
+    // call, so re-linking accumulated multiple active devices whose previously
+    // stored tokens stayed independently usable (stale-token accumulation). By
+    // reusing the existing row we overwrite its `access_token_encrypted` /
+    // `access_token_hash`, which invalidates the superseded token.
+    let existing = state
         .llm_document_repo
-        .create_voice_device(
+        .find_active_voice_device_by_org_user_and_platform(
             &mut **guard.conn(),
             org_id,
             user_id,
-            None,
             &request.platform,
-            &device_id,
-            Some("Voice Assistant"),
-            Some(&access_encrypted),
-            refresh_encrypted.as_deref(),
-            expires_at,
-            serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
-            access_hash.as_deref(),
         )
         .await
         .map_err(|e| {
-            tracing::error!("Failed to create voice device: {}", e);
+            tracing::error!("Failed to look up existing voice device: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -601,6 +599,83 @@ async fn oauth_token_exchange(
                 )),
             )
         })?;
+
+    let device = if let Some(existing) = existing {
+        // Re-link: rotate the tokens on the existing row in place.
+        tracing::info!(
+            device_id = %existing.id,
+            platform = %request.platform,
+            "Re-linking voice device: rotating tokens on existing (org,user,platform) row"
+        );
+        state
+            .llm_document_repo
+            .update_voice_device_tokens(
+                &mut **guard.conn(),
+                existing.id,
+                &access_encrypted,
+                refresh_encrypted.as_deref(),
+                expires_at,
+                access_hash.as_deref(),
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to rotate voice device tokens: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DEVICE_CREATION_FAILED",
+                        "Failed to link voice device",
+                    )),
+                )
+            })?
+            // The row was active when we selected it on this same connection, so
+            // the conditional UPDATE (WHERE is_active = TRUE) matches it; a None
+            // here means it was concurrently deactivated — fail closed rather
+            // than silently fall through to a duplicate INSERT.
+            .ok_or_else(|| {
+                tracing::error!(
+                    device_id = %existing.id,
+                    "Voice device disappeared during re-link token rotation"
+                );
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DEVICE_CREATION_FAILED",
+                        "Failed to link voice device",
+                    )),
+                )
+            })?
+    } else {
+        // First link for this (org, user, platform): create the device row.
+        let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
+        state
+            .llm_document_repo
+            .create_voice_device(
+                &mut **guard.conn(),
+                org_id,
+                user_id,
+                None,
+                &request.platform,
+                &device_id,
+                Some("Voice Assistant"),
+                Some(&access_encrypted),
+                refresh_encrypted.as_deref(),
+                expires_at,
+                serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
+                access_hash.as_deref(),
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to create voice device: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DEVICE_CREATION_FAILED",
+                        "Failed to link voice device",
+                    )),
+                )
+            })?
+    };
 
     tracing::info!(
         "Voice device linked successfully: {} (platform: {})",
