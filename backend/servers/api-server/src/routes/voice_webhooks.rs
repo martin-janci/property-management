@@ -56,6 +56,19 @@ fn voice_encryption_required(e: CryptoError) -> (StatusCode, Json<ErrorResponse>
     )
 }
 
+/// Whether an unconfigured voice OAuth platform may fall back to minting a
+/// locally-simulated token instead of failing the request.
+///
+/// Simulated tokens are a development-only aid. Fail-open fix (security #890):
+/// in RELEASE builds an unconfigured platform must fail closed — never mint or
+/// store a fake token, which would otherwise clobber the device's real stored
+/// token with a dead simulated one. The build flag is threaded through as an
+/// explicit argument so the release (fail-closed) path stays unit-testable —
+/// test binaries always compile with `debug_assertions` on.
+fn voice_simulated_oauth_allowed(debug_build: bool) -> bool {
+    debug_build
+}
+
 // ============================================================================
 // Rate limiting (#2769)
 // ============================================================================
@@ -732,10 +745,12 @@ async fn oauth_token_refresh(
                 tokens.expires_at,
                 access_hash,
             )
-        } else {
-            // Platform not configured - use simulated tokens for development
+        } else if voice_simulated_oauth_allowed(cfg!(debug_assertions)) {
+            // Platform not configured - use simulated tokens for development only.
+            // Gated (security fix #890): release builds must never mint fake voice
+            // tokens or overwrite the device's real stored token with one.
             tracing::warn!(
-                "Voice OAuth not configured for platform {}, using simulated refresh",
+                "Voice OAuth not configured for platform {}, using simulated refresh (debug build)",
                 device.platform
             );
             let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
@@ -747,6 +762,21 @@ async fn oauth_token_refresh(
                 Some(Utc::now() + Duration::hours(1)),
                 access_hash,
             )
+        } else {
+            // Fail closed (#890): an unconfigured platform in a release build must
+            // not mint a simulated token — returning here also leaves the device's
+            // real stored token untouched (no `update_voice_device_tokens` below).
+            tracing::error!(
+                "Voice OAuth not configured for platform {} in a release build; refusing to mint a simulated refresh token",
+                device.platform
+            );
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "OAUTH_NOT_CONFIGURED",
+                    "Voice OAuth is not configured for this platform",
+                )),
+            ));
         };
 
     // Update the device tokens under the device's own org/user RLS context.
@@ -1788,6 +1818,30 @@ mod tests {
         let mut mac = <Hmac<Sha256>>::new_from_slice(secret.as_bytes()).unwrap();
         mac.update(body.as_bytes());
         BASE64.encode(mac.finalize().into_bytes())
+    }
+
+    // --- voice OAuth simulated-token fallback gate (#890) ---------------
+
+    #[test]
+    fn simulated_voice_oauth_fallback_forbidden_in_release_builds() {
+        // Fail-open fix (#890): when the platform OAuth client is unconfigured,
+        // a RELEASE build must fail closed — never mint or store a simulated
+        // refresh token (which would also clobber the device's real stored
+        // token). The refresh handler gates its simulated branch on this.
+        assert!(
+            !voice_simulated_oauth_allowed(false),
+            "release builds must fail closed, never mint a simulated voice token"
+        );
+    }
+
+    #[test]
+    fn simulated_voice_oauth_fallback_allowed_in_debug_builds() {
+        // Development convenience is preserved: debug/test builds may still use
+        // the simulated fallback when the platform is unconfigured.
+        assert!(
+            voice_simulated_oauth_allowed(true),
+            "debug builds may use the simulated fallback"
+        );
     }
 
     // --- validate_alexa_cert_url ----------------------------------------
