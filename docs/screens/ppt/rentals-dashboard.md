@@ -91,6 +91,17 @@ Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-08-18 — agent: screen-map-drift-pr-2647-ppt-retry2 — noted i18n update in
+  PR #2647: `BookingDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/rentals.tsx`
+  now renders its missing-param fallback via
+  `t('errors.bookingNotFound', 'Booking not found')` (was hardcoded English);
+  `errors.bookingNotFound` key added to all locale bundles;
+  `useTranslation()` hook added inside the route wrapper. The dedicated
+  `/rentals/bookings/:bookingId` (BookingDetailPage) route still has no
+  standalone screen-map — logged here on the rentals-dashboard anchor as an
+  interim home per the parent screen-map convention (existing follow-up drift
+  for the whole `/rentals/*` sub-tree already noted below). No route or
+  component change.
 - 2026-08-04 — agent: screen-map-drift-pr-2648-ppt — reconciled this screen-map
   with PR #2648 (guard rentals mutation auth). Documented the mutation
   auth-guard / session-expiry redirect behavior (`requireRentalsAuthHeaders` +

@@ -45,5 +45,6 @@ already built but unrouted; this screen is now reachable on web.
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: the shared `LeaseLoadingNotice` rendered by `ApplicationDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/leases.tsx` now renders its missing-entity fallback via `t('errors.entityNotFound', { entity: 'Application', defaultValue: '{{entity}} not found' })` (was a hardcoded English template literal); `errors.entityNotFound` key added to all locale bundles. No route or component change.
 - 2026-07-09 — agent: linked UC-33 (Tenant Screening) to useCases frontmatter — screening actions live on the application-detail screen.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
