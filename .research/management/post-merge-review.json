@@ -1,9 +1,32 @@
 {
-  "generated": "2026-08-17T14:41:58Z",
+  "generated": "2026-08-18T18:33:38Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-18T18:33:38Z",
+      "prs_scanned": 15,
+      "clean": [
+        2760,
+        2761,
+        2758,
+        2757,
+        2756,
+        2755,
+        2748,
+        2747,
+        2746,
+        2745,
+        2742,
+        2741,
+        2740,
+        2739,
+        2738
+      ],
+      "with_issues": [],
+      "note": "DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static diff review only. Window merged-to-dev 14d, base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Label-based enumeration surfaced 15 unlabeled in-window merged PRs (2738-2761 range), but the run-history in THIS file shows all 15 were ALREADY reviewed & found clean by prior runs (2026-08-12/-14/-15) that did not yet apply PR labels -- the same missing-label dedup gap the 2026-08-17 run began closing. Re-confirmed all 15 clean via fresh diff review and APPLIED the missing post-merge-reviewed labels so they will not resurface (2748 keeps its existing 'security' label). 0 new issues opened. Re-review highlights, uniformly high quality with IG3 regression tests + rationale doc-comments: #2761 (mobile date-format consolidation onto i18n/format.ts + tree-wide bare-toLocale* guard test), #2760 (ppt-web WebSocket disconnect() detaches handlers before close via shared detachAndCloseSocket -> no spurious reconnect on logout/token-rotation race; regression tests), #2758 (reality-server SSO backslash-obfuscated open-redirect '/\\evil.com' fails closed + regression), #2757 (ProtectedRoute i18n defaultValue-guard parity + locale-lockstep test), #2756/#2740/#2739 (MeterDetail + broad mobile date/i18n locale fixes), #2748 (Alexa JSON /verify endpoint fails closed -- no longer accepts any non-empty string as a valid Alexa signature; forgery-vector regression), #2747 (marketplace award-quote cross-RFQ/cross-tenant IDOR: handler + repo defense-in-depth reject foreign quote as 404; 3 HTTP-layer tests), #2746 (workflow api_call SSRF redirect re-validation extracted to redirect_hop_allowed + hermetic hop tests), #2745 (rust-toolchain 1.94.1->1.97.1 across CI/deploy + clippy needless-borrow fixes), #2742 (usePerformanceMetrics listener leak: onReport moved to ref, listeners removed on cleanup, deps trimmed), #2741 (logout purge adds notification-triggers query root -> per-user pref cache no longer leaks across sessions on shared workstation), #2738 (offline sync queue retains recoverable 4xx 401/408/429 instead of dropping; permanent-4xx still dropped; 4 tests). Existing open from-merged-review issues remain (e.g. #2743, #2794, #2789, #2759, #2366); none re-opened."
+    },
     {
       "run_at": "2026-08-17T14:41:58Z",
       "prs_scanned": 15,
@@ -540,49 +563,6 @@
           "note": "reality-web layout-revalidate records untrusted Host as target_tenant on pre-auth (503/401) paths"
         }
       ]
-    },
-    {
-      "run_at": "2026-08-01T00:30:49Z",
-      "prs_scanned": 15,
-      "clean": [
-        2616,
-        2615,
-        2614,
-        2613,
-        2611,
-        2610,
-        2609,
-        2607,
-        2606,
-        2578,
-        2577,
-        2576
-      ],
-      "with_issues": [
-        {
-          "pr": 2608,
-          "issue": 2612,
-          "findings": 0,
-          "specialist": "rust-backend",
-          "note": "Pre-existing open follow-up #2612 (durability of scheduler dispatch) still covers this; re-verified error-handling fix, no NEW gap. Labeled post-merge-reviewed."
-        },
-        {
-          "pr": 2572,
-          "issue": 2575,
-          "findings": 0,
-          "specialist": "rust-backend",
-          "note": "Re-derived the window-validation + BIT-440-quarantined-test gap and opened #2617, then closed #2617 as duplicate of the still-open #2575. Labeled post-merge-reviewed."
-        },
-        {
-          "pr": 2568,
-          "issue": 2574,
-          "findings": 0,
-          "specialist": "mobile-native",
-          "note": "Pre-existing open follow-up #2574 (SSO nonce lost on process death) still covers this; mint site wired by merged #2593. No NEW gap. Labeled post-merge-reviewed."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Demand-driven refill sweep (dispatcher buffer starved: claimable=3 < floor=36). Reviewed the 15 newest unlabeled merged PRs in the 14d window. Root cause of re-surfacing: prior standalone runs filed issues but never applied the post-merge-reviewed PR label, so 11 already-reviewed PRs (2611/2610/2609/2608/2607/2606/2578/2577/2576/2572/2568) reappeared in the unlabeled search. Re-verified all, then labeled all 15 to stop the loop. Genuinely-new PRs this run: 2616/2615/2614/2613 (all clean DX/refactor/test). NET-NEW actionable issues: 0 \u2014 the only re-derived gap (#2572) was already tracked by open #2575 (opened #2617 -> closed as duplicate). Open refill vectors remaining from prior runs: #2612, #2574, #2575."
     }
   ]
 }
