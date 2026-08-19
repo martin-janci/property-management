@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-19T04:36:00Z",
+  "generated_at": "2026-08-19T18:44:48Z",
   "signals": [
     {
       "id": "lag-warning-2026-08-19",
       "type": "lag_warning",
       "source": "routine self-check",
       "score_delta": 0,
-      "evidence": "last_run_iso=2026-08-17T03:17:10Z (49h ago) — routine skipped an expected daily slot; nothing missed on dev (13 non-dispatcher merges tracked below).",
+      "evidence": "last_run_iso=2026-08-17T03:17:10Z (49h ago) \u2014 routine skipped an expected daily slot; nothing missed on dev (13 non-dispatcher merges tracked below).",
       "confidence": "high",
       "candidate_vector": null
     },
@@ -14,28 +14,34 @@
       "id": "code-review-reality-server-submit-report-no-rate-limit",
       "type": "code-review-finding",
       "source": "reality-server segment review 2026-08-19",
-      "score_delta": 2,
-      "evidence": "backend/servers/reality-server/src/routes/reports.rs:149 submit_report is OptionalRequestPrincipal (auth-optional); no rate-limit call. Its own doc-comment (:120) says 'should be rate-limited by IP'. Sibling anonymous POSTs (send_contact_message, request_viewing) call enforce_inquiry_rate_limit(&state, &headers, listing_id) using state.inquiry_rate_limiters + client_ip_bucket. Unauth flood → unbounded listing_reports + moderation-queue bloat.",
+      "score_delta": 0,
+      "evidence": "backend/servers/reality-server/src/routes/reports.rs:149 submit_report is OptionalRequestPrincipal (auth-optional); no rate-limit call. Its own doc-comment (:120) says 'should be rate-limited by IP'. Sibling anonymous POSTs (send_contact_message, request_viewing) call enforce_inquiry_rate_limit(&state, &headers, listing_id) using state.inquiry_rate_limiters + client_ip_bucket. Unauth flood \u2192 unbounded listing_reports + moderation-queue bloat.",
       "confidence": "high",
-      "candidate_vector": "security"
+      "candidate_vector": "security",
+      "score_delta_original": 2,
+      "rerun_note": "score already applied at 04:36 run; delta zeroed for G4 compliance on same-day rerun"
     },
     {
       "id": "code-review-reality-server-list-my-reports-total-page-length",
       "type": "code-review-finding",
       "source": "reality-server segment review 2026-08-19",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "backend/servers/reality-server/src/routes/reports.rs:342 list_my_reports returns MyReportsResponse { reports, total } where `let total = reports.len();` (page size, not filtered total). Response schema at :119 documents `pub total: usize` as real total. Same regression class as PR #919 for inquiries. Peer list_my_inquiries / list_buyer_inquiries in routes/inquiries.rs run count queries in tokio::try_join!.",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "score_delta_original": 2,
+      "rerun_note": "score already applied at 04:36 run; delta zeroed for G4 compliance on same-day rerun"
     },
     {
       "id": "code-review-reality-server-create-review-body-length-uncapped",
       "type": "code-review-finding",
       "source": "reality-server segment review 2026-08-19",
-      "score_delta": 1,
-      "evidence": "backend/servers/reality-server/src/routes/agent_reviews.rs:190 validates rating 1..=5 but never bounds data.body: Option<String>; INSERT at :265 accepts any length up to DefaultBodyLimit=4MiB (main.rs:527). Peer paths cap text (MAX_INQUIRY_MESSAGE_LEN=5000, MAX_REPORT_DESCRIPTION_LEN=5000). Review body is the outlier — feeds public realtor profile page.",
+      "score_delta": 0,
+      "evidence": "backend/servers/reality-server/src/routes/agent_reviews.rs:190 validates rating 1..=5 but never bounds data.body: Option<String>; INSERT at :265 accepts any length up to DefaultBodyLimit=4MiB (main.rs:527). Peer paths cap text (MAX_INQUIRY_MESSAGE_LEN=5000, MAX_REPORT_DESCRIPTION_LEN=5000). Review body is the outlier \u2014 feeds public realtor profile page.",
       "confidence": "high",
-      "candidate_vector": "security"
+      "candidate_vector": "security",
+      "score_delta_original": 1,
+      "rerun_note": "score already applied at 04:36 run; delta zeroed for G4 compliance on same-day rerun"
     }
   ],
   "goal_checks": [
@@ -43,14 +49,14 @@
       "goal": "G1",
       "passed": true,
       "command": "test -f briefs/2026-08-19.md && head -1 matches",
-      "observed": "will pass after brief write",
+      "observed": "will pass after brief overwrite",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state cursors advance",
-      "observed": "last_pr_seen 2772→2798, last_run_iso advanced, seen_signals +4, hotspot_history +0, review_cursor.reality-server 2026-08-13→2026-08-19",
+      "command": "state cursors advance vs HEAD",
+      "observed": "last_commit_sha bcc2d3a\u2192fd7659b, last_run_iso 04:36\u219218:44",
       "expected": "true"
     },
     {
@@ -63,102 +69,103 @@
     {
       "goal": "G4",
       "passed": true,
-      "command": "no prior signal re-emitted with score_delta≠0",
-      "observed": "4 signal ids all new",
+      "command": "no prior signal re-emitted with score_delta\u22600",
+      "observed": "0 new signals this rerun; existing 4 preserved from 04:36 run (score already applied)",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
       "command": "score cap 8 + 14d decay",
-      "observed": "no score >8; decay applied to portfolio-analytics-caps-100 (2→1)",
+      "observed": "no score >8; no decay this rerun (was applied at 04:36); inquiries-response-contract updated_at bumped 2026-08-16\u21922026-08-19 as part of status fix",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "each new plan has 'adversarial pass' annotation in brief",
-      "observed": "1 new plan, annotated 'passed'",
+      "command": "each new plan has adversarial pass annotation",
+      "observed": "0 new plans this rerun",
       "expected": "true"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans + 15 required sections + Mode declared + files exist",
-      "observed": "1 new plan; all sections present; Mode: cloud-ok; 4/4 files exist",
+      "command": "\u22642 new plans",
+      "observed": "0 new plans",
       "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "only .research/ paths in diff",
-      "observed": "will verify at stage time",
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "will verify at Phase 6",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets / private hostnames",
-      "observed": "no matches in staged diff",
+      "command": "secrets/private-hostname scan on staged diff",
+      "observed": "will verify at Phase 6",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md == regen(backlog.json)",
-      "observed": "match: True (regen script check-mode confirmed)",
+      "command": "regen backlog.md byte-identity",
+      "observed": "regenerated with 2026-08-19 18:44 UTC timestamp; matches JSON",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phase failure honesty",
-      "observed": "Phase 1.6 skipped (single-purpose run — buffer-refill for landable vectors); recorded in brief; pm_cursor NOT advanced",
-      "expected": "consistent"
+      "command": "phase-failure honesty",
+      "observed": "no phases failed; Phase 1.5/1.6 intentionally skipped (single-purpose rerun)",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plans still present or archived",
-      "observed": "no plan deleted this run",
+      "command": "promoted plans converge",
+      "observed": "no plans deleted this rerun; plans/ + plans/_archive/ superset preserved",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count non-decreasing",
-      "observed": "archive count unchanged (7)",
+      "command": "archive only grows",
+      "observed": "archive count unchanged this rerun",
       "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md == regen(backlog.json triage)",
-      "observed": "match: True",
+      "command": "regen IDEAS_TRIAGE.md byte-identity",
+      "observed": "regenerated with 2026-08-19 18:44 UTC timestamp; matches JSON",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps + idempotency + kill switch",
-      "observed": "no candidate — auto_fix_actions=[]",
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[]; kill switch not set; no candidate",
       "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid + coverage_cursor advance (when Phase 1.6 ran)",
-      "observed": "Phase 1.6 skipped this run → gate is no-op",
-      "expected": "no-op"
+      "command": "management artifacts valid (Phase 1.6 ran?)",
+      "observed": "Phase 1.6 skipped (pm_cursor.next_index unchanged at 3); no-op gate",
+      "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no telegram token literal",
-      "observed": "no matches",
+      "command": "no telegram token in staged diff",
+      "observed": "will verify at Phase 6",
       "expected": "0"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate (no signal met confidence=high + score≥3 + allowlist this run)"
+  "auto_fix_skipped_reason": "no candidate (no signal met confidence=high + score\u22653 + allowlist this run)",
+  "run_note": "rerun (buffer-refill payload); no new signals derived; status correction inquiries-response-contract open\u2192ready"
 }

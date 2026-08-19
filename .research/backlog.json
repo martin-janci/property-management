@@ -8284,7 +8284,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8292,7 +8292,8 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt:50-55 — `InquiriesResponse` declares required `pageSize: Int (@SerialName(\"page_size\"))` with no default.",
         "backend/servers/reality-server/src/routes/inquiries.rs:253-263 — `GET /api/v1/inquiries` returns `InquiryListResponse { inquiries, total, page, limit }` (field is `limit`, NOT `page_size`), so with `ignoreUnknownKeys = true` the incoming `limit` is dropped and the required `page_size` triggers `kotlinx.serialization.MissingFieldException` on every real response.",
         "backend/servers/reality-server/src/routes/realtors.rs:39-43 — `GET /api/v1/realtors/inquiries` returns `InquiriesResponse { inquiries, total }` only (missing BOTH `page` and `page_size` that the KMP shape requires). `getRealtorInquiries()` reuses the same KMP class, so realtor-portal inquiries are broken too.",
-        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:61 — outbound query sends `parameter(\"page_size\", pageSize)` while backend `InquiryListQuery` reads `limit`; custom page sizes are silently dropped (server default of 20 always applied)."
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt:61 — outbound query sends `parameter(\"page_size\", pageSize)` while backend `InquiryListQuery` reads `limit`; custom page sizes are silently dropped (server default of 20 always applied).",
+        "2026-08-19: status corrected open→ready — plan file already promoted on 2026-08-16 but backlog status was not flipped; buffer-refill rerun repairs bookkeeping"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt",
@@ -8301,7 +8302,7 @@
         "backend/servers/reality-server/src/routes/realtors.rs"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-19",
       "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md"
     },
     {
