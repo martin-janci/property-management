@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-19T04:27:04Z",
+  "generated": "2026-08-19T06:36:05Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -28,15 +28,15 @@
       "branch": "auto-impl/gh-issue-2794-8c71b1fb",
       "status": "review",
       "claimed_at": "2026-08-18T18:26:46Z",
-      "last_updated": "2026-08-19T04:27:04Z",
+      "last_updated": "2026-08-19T06:32:15Z",
       "status_changed_at": "2026-08-18T19:04:06Z",
       "pr_number": 2796,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2796",
       "merged_at": null,
       "specialist": "rust-backend+db-migration",
       "implementer_summary": "pr=2796 status=done specialist=rust-backend+db-migration scope_drift=true code_reuse_warn=none note=DB-level partial-unique-index + atomic ON CONFLICT upsert + concurrent-relink test; fmt/clippy(workspace)/suite_8(6/6) green vs provisioned PG16; full workspace test is CI job",
-      "reviewer_summary": "verdict=approve note=db-level-dedup-correct;partial-index-arbiter-valid;concurrency-test-sound;drift-is-role-mapping-artifact;cargo-deny-failure-unrelated-no-dep-changes",
-      "last_reviewed_oid": "442c9e5313812a1edc3e7319961f0e01801e352f",
+      "reviewer_summary": "verdict=approve note=dev-merge-only-no-code-delta; prior-approve-stands; sole-CI-red is cancelled test-shard-3 (infra), re-run before merge",
+      "last_reviewed_oid": "7cae8f7f6cbdd07ea8ccb077d7ce91006a68aba1",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
