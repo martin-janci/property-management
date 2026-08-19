@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-19T16:46:46Z",
+  "generated": "2026-08-19T16:55:48Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -28,14 +28,14 @@
       "branch": "auto-impl/gh-issue-2794-8c71b1fb",
       "status": "review",
       "claimed_at": "2026-08-18T18:26:46Z",
-      "last_updated": "2026-08-19T16:46:46Z",
+      "last_updated": "2026-08-19T16:55:48Z",
       "status_changed_at": "2026-08-19T08:54:11Z",
       "pr_number": 2796,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2796",
       "merged_at": null,
       "specialist": "rust-backend+db-migration",
-      "implementer_summary": "pr=2796 status=done specialist=rust-backend+db-migration scope_drift=true code_reuse_warn=none note=DB-level partial-unique-index + atomic ON CONFLICT upsert + concurrent-relink test; fmt/clippy(workspace)/suite_8(6/6) green vs provisioned PG16; full workspace test is CI job",
-      "reviewer_summary": "verdict=changes note=clippy explicit_auto_deref at voice_webhooks.rs:598 (`&mut **guard.conn()` -> `guard.conn()`) fails fmt-clippy job; introduced by fix_rounds=1 respawn head 7186176. Separately: backend test-shard CI is hanging repo-wide (~90m job timeout, base dev + all backend PRs) so merge is also infra-blocked. [round-2 respawn 2026-08-19T16:36Z timed out on slow sandbox clippy compile — no commit pushed; head unchanged]",
+      "implementer_summary": "pr=2796 round-2 clippy fix landed: explicit_auto_deref at voice_webhooks.rs:598 fixed (head 7186176..4a425f3); fmt+clippy green in worktree. Awaiting fresh review of 4a425f3; merge still gated on backend test-shard CI infra fix (PR #2803).",
+      "reviewer_summary": null,
       "last_reviewed_oid": "7186176171ab7dfc25a038f688baaf81f5ddd5a2",
       "scope_drift": true,
       "code_reuse_warn": null,
