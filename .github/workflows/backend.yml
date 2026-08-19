@@ -214,9 +214,17 @@ jobs:
       # entire life of the repo (every `rg … || true` swallowed exit 127 and
       # the script printed green; 68 handler-side raw-pool violations merged
       # behind it — PAP-68).
+      # Same unbounded-apt hazard as the test-shard fonts step (issue #2802):
+      # this runs in the REQUIRED `check` context, so a stalled mirror here
+      # would wedge the merge gate identically. Bound the network waits + add a
+      # step timeout backstop.
       - name: Install ripgrep (required by RLS enforcement check)
         if: needs.changes.outputs.backend == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+        timeout-minutes: 5
+        run: |
+          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          sudo apt-get $APT_OPTS update -qq
+          sudo apt-get $APT_OPTS install -y -qq ripgrep
 
       - name: RLS Enforcement Check
         if: needs.changes.outputs.backend == 'true'
@@ -429,10 +437,22 @@ jobs:
       # GitHub's `ubuntu-latest` image does NOT ship `fonts-liberation`, so the
       # `voting_report_tests` PDF E2E tests 500 on the render step. Install the
       # package the production code depends on (issue #1645).
+      # Bound apt's network waits (issue #2802). Default apt has NO overall
+      # timeout: a single stalled/half-open mirror connection blocks
+      # `apt-get update` forever. On 2026-08-19 this hung this exact step for
+      # ~90 min on random shards (e.g. run 32215620438 shard 1: step ran
+      # 04:35:38 → cancelled 06:05:13, so the test steps never started), which
+      # cancelled the shard and failed the required `test` roll-up on `dev` and
+      # every backend PR. `Acquire::*::Timeout` caps each request, `Retries`
+      # rides out transient stalls, and the step-level `timeout-minutes` is a
+      # hard backstop so a pathological hang fails fast (minutes) instead of
+      # eating the whole 90-minute job budget.
       - name: Install PDF report fonts
+        timeout-minutes: 5
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends fonts-liberation
+          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          sudo apt-get $APT_OPTS update
+          sudo apt-get $APT_OPTS install -y --no-install-recommends fonts-liberation
 
       # The archive extracts the FULL target/debug/deps test-binary set into
       # /tmp — tens of GB. Dependabot PR #2471's shard 3 died with ENOSPC
