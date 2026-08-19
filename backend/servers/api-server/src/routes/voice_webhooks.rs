@@ -595,7 +595,7 @@ async fn oauth_token_exchange(
     let device = state
         .llm_document_repo
         .upsert_active_voice_device(
-            &mut **guard.conn(),
+            guard.conn(),
             org_id,
             user_id,
             None,
