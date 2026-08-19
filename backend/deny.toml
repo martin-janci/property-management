@@ -67,6 +67,25 @@ ignore = [
     # Follow-up: BIT-279 — drop when genpdf ships a release on lopdf >= 0.42.0,
     # or migrate off genpdf to a maintained PDF generator.
     "RUSTSEC-2026-0187",
+
+    # RUSTSEC-2026-0258 (added 2026-08-19) — h2 empty-DATA-frame DoS. The
+    # directly-fixable path (h2 0.4.x via hyper 1.x / reqwest / axum / AWS SDK)
+    # is already resolved to h2 0.4.16 in Cargo.lock (>= 0.4.16 is patched).
+    # This ignore covers ONLY the residual h2 0.3.27 (0.3.x major line), which
+    # has no patched upstream release: it is pulled in transitively via
+    # `aws-smithy-http-client` -> `aws-config` / `aws-sdk-{s3,sso,ssooidc,sts}`
+    # and `hyper 0.14`. An in-range `aws-smithy-http-client` bump (1.1.13 ->
+    # 1.2.0) does NOT drop the hyper 0.14 / h2 0.3 path; only a major AWS SDK /
+    # smithy upgrade onto hyper 1.x would, which is out of scope here — matching
+    # how the other AWS-SDK-pinned advisories were handled (GH #2445/#2141/#2009).
+    #
+    # Reachability: the h2 0.3.27 codepath is only the AWS SDK's outbound HTTP/2
+    # client talking to well-behaved AWS endpoints (S3, STS, SSO); we never run
+    # an h2 0.3 server that would accept the malicious empty-DATA frames the
+    # advisory describes. Transitive-only, low-severity, no reachable exposure.
+    # Follow-up: remove once the AWS SDK drops its hyper 0.14 / h2 0.3
+    # dependency (smithy on hyper 1.x).
+    "RUSTSEC-2026-0258",
 ]
 
 [bans]
