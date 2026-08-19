@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-17T03:17:10Z",
-  "last_run_ms": 30000,
-  "last_pr_seen": 2772,
-  "last_issue_seen": 2768,
-  "last_commit_sha": "9c1ba063c6b38a4e6608c75568dba5847d202b6e",
+  "last_run_iso": "2026-08-19T04:00:00Z",
+  "last_run_ms": 25000,
+  "last_pr_seen": 2795,
+  "last_issue_seen": 2797,
+  "last_commit_sha": "94f80bb0d5d5690588e623f386691f4c382bb12a",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -468,14 +468,19 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-17",
-      "recent_churn": 2897
+      "runs_seen": 3,
+      "last_seen": "2026-08-19",
+      "recent_churn": 5
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
       "last_seen": "2026-08-17",
       "recent_churn": 352
+    },
+    "backend/servers/api-server/src/routes/documents/shares.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-19",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -890,7 +895,18 @@
     "code-review-api-core-payment-matcher-vs-only-threshold",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
-    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs"
+    "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+    "lag-warning-2026-08-19",
+    "stalled-review-pr-2583",
+    "stalled-review-pr-2584",
+    "stalled-review-pr-2585",
+    "stalled-review-pr-2586",
+    "stalled-review-pr-2588",
+    "stalled-review-pr-2589",
+    "stalled-review-pr-2590",
+    "stalled-review-pr-2591",
+    "stalled-review-pr-2673",
+    "churn-hotspot-backend/servers/api-server/src/routes/documents/shares.rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -904,8 +920,8 @@
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 66,
-    "vectors_created": 314,
+    "runs": 67,
+    "vectors_created": 324,
     "plans_created": 25,
     "quiet_days": 2,
     "auto_fix_count": 0
