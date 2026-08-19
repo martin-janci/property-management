@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-18T20:30:29Z",
+  "generated": "2026-08-19T00:30:36Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-18T18:24:02Z",
+      "last_updated": "2026-08-19T00:30:36Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -28,7 +28,7 @@
       "branch": "auto-impl/gh-issue-2794-8c71b1fb",
       "status": "review",
       "claimed_at": "2026-08-18T18:26:46Z",
-      "last_updated": "2026-08-18T20:28:30Z",
+      "last_updated": "2026-08-19T00:30:36Z",
       "status_changed_at": "2026-08-18T19:04:06Z",
       "pr_number": 2796,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2796",
@@ -50,7 +50,7 @@
       "branch": "auto-impl/gh-issue-2797-e3716075",
       "status": "in-progress",
       "claimed_at": "2026-08-18T22:29:06Z",
-      "last_updated": "2026-08-18T22:29:06Z",
+      "last_updated": "2026-08-19T00:30:36Z",
       "status_changed_at": "2026-08-18T22:29:06Z",
       "pr_number": null,
       "pr_url": null,
