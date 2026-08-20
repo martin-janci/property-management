@@ -1942,7 +1942,12 @@ impl LlmDocumentRepository {
         platform: &str,
         device_id: &str,
         device_name: Option<&str>,
-        access_token_encrypted: &str,
+        // `None` stores a NULL token — the client-linking path (`ai/voice.rs`)
+        // hits this when the platform's OAuth is not configured (dev/testing),
+        // mirroring what `create_voice_device` has always allowed. On a re-link
+        // conflict a `Some` token overwrites the stored one (rotation); a `None`
+        // leaves the existing token in place (see the `DO UPDATE` COALESCE).
+        access_token_encrypted: Option<&str>,
         refresh_token_encrypted: Option<&str>,
         token_expires_at: Option<DateTime<Utc>>,
         capabilities: serde_json::Value,
@@ -1993,13 +1998,33 @@ impl LlmDocumentRepository {
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
                     ON CONFLICT (organization_id, user_id, platform) WHERE is_active = TRUE
                     DO UPDATE SET
-                        access_token_encrypted  = EXCLUDED.access_token_encrypted,
+                        -- A NULL incoming token means "no new token to store"
+                        -- (client-link path with unconfigured OAuth): keep the
+                        -- existing token rather than blanking it. The webhook
+                        -- path always supplies a token, so this is a rotation.
+                        access_token_encrypted  = COALESCE(
+                            EXCLUDED.access_token_encrypted,
+                            voice_assistant_devices.access_token_encrypted
+                        ),
                         refresh_token_encrypted = COALESCE(
                             EXCLUDED.refresh_token_encrypted,
                             voice_assistant_devices.refresh_token_encrypted
                         ),
-                        token_expires_at        = EXCLUDED.token_expires_at,
-                        access_token_hash       = EXCLUDED.access_token_hash,
+                        token_expires_at        = CASE
+                            WHEN EXCLUDED.access_token_encrypted IS NULL
+                                THEN voice_assistant_devices.token_expires_at
+                            ELSE EXCLUDED.token_expires_at
+                        END,
+                        -- Keep the HMAC hash in lock-step with the access token:
+                        -- when a new token is supplied, adopt the incoming hash
+                        -- (which may itself be NULL, e.g. the client-link path);
+                        -- when no new token is supplied, preserve the old hash so
+                        -- it never points at a superseded token.
+                        access_token_hash       = CASE
+                            WHEN EXCLUDED.access_token_encrypted IS NULL
+                                THEN voice_assistant_devices.access_token_hash
+                            ELSE EXCLUDED.access_token_hash
+                        END,
                         updated_at              = NOW()
                     RETURNING *
                     "#,

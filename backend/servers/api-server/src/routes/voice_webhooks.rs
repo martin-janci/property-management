@@ -602,7 +602,7 @@ async fn oauth_token_exchange(
             &request.platform,
             &device_id,
             Some("Voice Assistant"),
-            &access_encrypted,
+            Some(&access_encrypted),
             refresh_encrypted.as_deref(),
             expires_at,
             serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
