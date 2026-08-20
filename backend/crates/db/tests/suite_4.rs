@@ -22,6 +22,8 @@ mod reserve_funds_rls_repo_tests;
 mod rls_context_bleed_tests;
 #[path = "suites/rls_listings_global_context_tests.rs"]
 mod rls_listings_global_context_tests;
+#[path = "suites/saved_search_watermark_advance_tests.rs"]
+mod saved_search_watermark_advance_tests;
 #[path = "suites/search_alert_delivery_tests.rs"]
 mod search_alert_delivery_tests;
 #[path = "suites/sensor_rls_repo_tests.rs"]

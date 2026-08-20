@@ -173,10 +173,13 @@ impl SavedSearchAlertWorker {
         for search in searches {
             // First sighting: establish the watermark, don't alert on history.
             let Some(since) = search.last_matched_at else {
-                let _ = self
+                if let Err(e) = self
                     .repo
-                    .mark_saved_search_matched(&mut *conn, search.id, 0)
-                    .await;
+                    .enqueue_and_advance_saved_search(search.id, search.user_id, &[])
+                    .await
+                {
+                    tracing::warn!(id = %search.id, error = %e, "[#983] failed to establish first-sighting watermark; will retry next run");
+                }
                 continue;
             };
 
@@ -211,33 +214,34 @@ impl SavedSearchAlertWorker {
                 }
             };
 
-            // Enqueue any new matches; on enqueue failure leave the watermark in
-            // place so the next due run retries the same window.
-            if !ids.is_empty() {
-                if let Err(e) = self
-                    .repo
-                    .enqueue_search_alert(
-                        &mut *conn,
-                        search.id,
-                        search.user_id,
-                        &ids,
-                        "new_listing",
-                    )
-                    .await
-                {
-                    tracing::warn!(id = %search.id, error = %e, "[#983] failed to enqueue alert; skipping watermark advance");
+            // Enqueue any new matches AND advance the watermark atomically. The
+            // watermark advances after every completed scan (matched or not) so
+            // the cadence window restarts — otherwise a no-match search would be
+            // due again on the very next poll, defeating daily/weekly spacing.
+            //
+            // #983: this used to enqueue and advance as two separate statements,
+            // discarding the advance error with `let _ = …`. When the enqueue
+            // succeeded but the advance failed, the alert stayed queued while the
+            // watermark never moved, so the next due run re-enqueued a duplicate.
+            // `enqueue_and_advance_saved_search` commits both writes in one
+            // transaction, so a failed advance rolls the enqueue back (nothing is
+            // sent, the window is retried cleanly) and the error is surfaced here
+            // rather than silently dropped.
+            match self
+                .repo
+                .enqueue_and_advance_saved_search(search.id, search.user_id, &ids)
+                .await
+            {
+                Ok(()) => {
+                    if !ids.is_empty() {
+                        queued += 1;
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(id = %search.id, error = %e, "[#983] failed to enqueue alert / advance watermark; leaving watermark in place to retry next run");
                     continue;
                 }
-                queued += 1;
             }
-
-            // Advance the watermark after every completed scan (matched or not)
-            // so the cadence window restarts; otherwise a no-match search would
-            // be due again on the very next poll, defeating daily/weekly spacing.
-            let _ = self
-                .repo
-                .mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64)
-                .await;
         }
 
         if queued > 0 {

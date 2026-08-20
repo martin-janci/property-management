@@ -158,6 +158,47 @@ impl RealityPortalRepository {
         Ok(())
     }
 
+    /// Atomically enqueue a saved-search alert (when `listing_ids` is non-empty)
+    /// **and** advance the search's match watermark, committing both writes in a
+    /// single transaction.
+    ///
+    /// #983 finding: the alert worker used to enqueue and then advance the
+    /// watermark as two separate autocommitted statements, discarding the
+    /// advance's error with `let _ = …`. When the enqueue succeeded but the
+    /// advance failed, the alert stayed `pending` in the queue while the
+    /// watermark never moved — so the next due run re-found the same listings
+    /// and enqueued a *duplicate* alert. Binding both writes to one transaction
+    /// makes the outcome all-or-nothing: a failed advance rolls the enqueue back,
+    /// leaving no orphaned queue row, so the next run retries the same window
+    /// without re-sending. The caller propagates the error (logs it) instead of
+    /// swallowing it, and only treats the run as delivered on `Ok`.
+    ///
+    /// `portal_saved_searches` and `search_alert_queue` are not RLS-gated, so
+    /// this runs on a plain pool connection without a tenant/global-read context.
+    pub async fn enqueue_and_advance_saved_search(
+        &self,
+        saved_search_id: Uuid,
+        user_id: Uuid,
+        listing_ids: &[Uuid],
+    ) -> Result<(), SqlxError> {
+        let mut tx = self.pool.begin().await?;
+        // Enqueue first, then advance — same ordering as the (now-atomic) worker.
+        if !listing_ids.is_empty() {
+            self.enqueue_search_alert(
+                &mut *tx,
+                saved_search_id,
+                user_id,
+                listing_ids,
+                "new_listing",
+            )
+            .await?;
+        }
+        self.mark_saved_search_matched(&mut *tx, saved_search_id, listing_ids.len() as i64)
+            .await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
     // ------------------------------------------------------------------------
     // Saved-search alert delivery (in-app feed for the matching engine above).
     //
