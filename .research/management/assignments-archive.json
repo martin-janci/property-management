@@ -12841,6 +12841,30 @@
       "merge_attempted_at": "2026-08-20T12:33:56Z"
     },
     {
+      "task_id": "gh-issue-2814",
+      "branch": "auto-impl/gh-issue-2814-8ebafc8f",
+      "status": "merged",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-08-20T20:26:31Z",
+      "last_updated": "2026-08-20T22:24:55Z",
+      "status_changed_at": "2026-08-20T22:24:55Z",
+      "pr_number": 2815,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2815",
+      "merged_at": "2026-08-20T22:24:55Z",
+      "last_reviewed_oid": "5101c75083224a86fd0ab24e39db9a78f9816967",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-20T22:24:00Z",
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "pr=2815 done: widened portal_saved_searches.match_count int4->bigint (mig 00232 + i32->i64 model/repo); target regression tests 4/4 pass on live PG16, fmt/clippy clean, 940+ workspace tests green; scope_drift=owner_role pm-tech-lead vs backend/crates/db work (pm-rust-backend correct per issue)",
+      "reviewer_summary": "verdict=approve note=clean-bigint-widen; migration-safe, cast-removal-correct, IG3-test-added; self-approve-blocked so posted as COMMENT; backend.yml CI still pending (authoritative gate) & PR draft"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -15103,5 +15127,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-20T18:33:01Z"
+  "archived_at": "2026-08-20T22:27:26Z"
 }
