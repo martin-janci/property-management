@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-20T18:33:17Z",
+  "generated": "2026-08-20T20:26:31Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -22,6 +22,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2814",
+      "branch": "auto-impl/gh-issue-2814-8ebafc8f",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-08-20T20:26:31Z",
+      "last_updated": "2026-08-20T20:26:31Z",
+      "status_changed_at": "2026-08-20T20:26:31Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
