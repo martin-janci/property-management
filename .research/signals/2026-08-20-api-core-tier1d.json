@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-api-core-voice-facility-contact-fabricated-success",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/voice_commands.rs:447-467 — `action_book_facility` returns `VoiceActionResult { success: true, .. }` while speaking 'Facility booking is not yet available via voice assistant. Please use the mobile app or web portal.' The success flag contradicts the message: the caller (Alexa/Google integration in routes/voice_webhooks.rs) treats `success: true` as a completed action for logging, telemetry, and follow-up prompts. Callers that decide on `success` (e.g. the analytics stream, the 'anything else?' re-prompt gate) misclassify this as a completed booking.",
+      "backend/servers/api-server/src/services/voice_commands.rs:531-557 — `action_contact_manager` returns `success: true` AND embeds a hardcoded placeholder email `manager@example.com` in the response text (in en/sk/cs), the voice card `content` (:549), and the `data` payload (`{\"manager_email\": \"manager@example.com\"}` :554). This is a live production webhook path — Alexa Smart Home / Google Actions users are literally spoken 'contact the manager at manager@example.com', a fabricated address unowned by the organization. There is no lookup of the real building manager's email from OrganizationMember/User/Building repositories.",
+      "This is the exact anti-pattern the same file's own comments flag and that the sibling `action_check_balance` was FIXED to avoid: see :262-274 ('this used to fabricate a 'your balance is zero' success response ... code review: fabricated success') where the fix set `success: false`. Sibling `action_check_announcements` (:399-410) and `action_check_meter` (:475-494) were likewise re-worked to actually query `announcement_repo.count_unread_rls` and `meter_repo.get_pending_readings_for_unit_rls`. Two of the four fabricated-success intents were fixed; `book_facility` and `contact_manager` were left with the same anti-pattern. Regression test coverage exists for check_balance/check_announcements/check_meter (see tests at :819-, :870-, :941-) but nothing pins book_facility/contact_manager to the same honesty contract.",
+      "Related backlog history: `code-review-api-core-voice-actions-fabricated-empty` (2026-08-09 signals, backlog status=dropped) covered check_announcements+check_meter, which have since been fixed — but the sister-actions that were part of the same anti-pattern were not swept in. Landable backend-only fix: (a) `action_contact_manager` should look up the organization's/building's real manager email(s) via OrganizationMember/UnitResident lookup (BUILDING_MANAGER role) and fail honestly (`success: false`, `should_end_session: false` retained) when none is configured, instead of speaking a fabricated address; (b) `action_book_facility` should either implement the FacilityRepository booking flow or return `success: false` like `check_balance` does, so downstream telemetry/re-prompt logic stops classifying a not-implemented feature as a completed action."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-syndication-stub-never-called",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/syndication.rs:289-405 — `SyndicationService::process_syndication_job` (public API) has zero callers in the tree. `rg 'process_syndication_job|build_listing_payload' backend/` returns only the definitions themselves. Meanwhile `SyndicationService::enqueue_publish`/`enqueue_status_change`/`enqueue_remove` (:117-260) ARE called from routes/listings.rs (:540, :655) and enqueue rows into the `SYNDICATION_QUEUE` background_jobs queue. Grep confirms `SYNDICATION_QUEUE` is only referenced INSIDE syndication.rs itself (enqueue writers + get_queue_stats reader) — no background worker binary, no scheduler tick, no CLI consumer dequeues from this queue. Result: portal publish/update/remove requests silently backlog forever; users see 'queued for syndication' in the UI while nothing ever runs.",
+      "The body of `process_syndication_job` (:308-405) does not perform any HTTP call to Sreality/Nehnutelnosti/Bezrealitky/etc. — the doc comment at :285-288 admits it: 'This is a placeholder for the actual portal API integration. In production, this would call the respective portal APIs.' On PUBLISH it fabricates an external id via `format!(\"{}_{}\", payload.portal, Uuid::new_v4())` (:318) and calls `update_syndication_status(..., syndication_status::SYNCED, Some(&external_id), None)` (:321-330). STATUS_CHANGE (:334-360) and UPDATE (:361-382) likewise stamp `SYNCED` without any real portal I/O. If a worker is ever wired to consume the queue without first replacing the body, every listing would be marked SYNCED with a fake external id — a data-integrity + user-trust break (the operator's dashboard says 'live on Sreality', nothing is actually live).",
+      "The support scaffolding is dead too: `build_listing_payload` (:417) constructs a portal-ready JSON body from every listing field and is never called (rg confirms). It is the only code path that would build the request body a real integration needs, so its non-invocation is proof the caller never landed.",
+      "Prior signal `code-review-api-core-syndication-fake-synced` (.research/signals/2026-08-09-api-core-tier1d-2.json) raised the same finding on 2026-08-09; it did not survive into backlog.json (no matching id/evidence there). The code has not moved since — `git log --since=\"30 days ago\" -- backend/servers/api-server/src/services/syndication.rs` shows only the 2026-08-19 dispatcher commit that re-checked in the whole services/ tree. Refreshing so it lands as a live signal. Landable backend-only investigation: either implement the four operations against the per-portal HTTP clients that already live in the integrations crate (portal secrets are wired in AppState per CLAUDE.md), or make the routes reject enqueue attempts with a clear NOT_IMPLEMENTED so users are not silently misled by a working-looking UI backed by a queue nothing drains."
+    ],
+    "expert": "rust"
+  }
+]
