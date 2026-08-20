@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-19 04:35 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-20 14:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 4 | bug | `code-review-ppt-web-ui-moderation-prompt-cast` | ppt-web ContentModerationPage casts window.prompt string to action union with no validation before P | ready | 2026-08-20 | [plan](plans/code-review-ppt-web-ui-moderation-prompt-cast.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | open | 2026-08-16 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
@@ -34,8 +35,11 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | open | 2026-08-19 |  |
-| 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | ready | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
+| 2 | bug | `code-review-api-core-announcement-roles-legacy-membership` | api-server scheduler role-targeted announcements query legacy organization_members, miss recipients | open | 2026-08-20 |  |
+| 2 | bug | `code-review-api-core-osrng-expect-panic-auth-paths` | api-server AuthService::generate_token() .expect() on OS RNG panics inside auth request handlers | open | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inqui | open | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | done | 2026-08-19 |  |
+| 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | done | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
 | 2 | security | `code-review-api-handlers-voice-refresh-simulated-token-release` | voice /oauth/refresh mints a simulated access token in RELEASE builds when the platform OAuth client | done | 2026-08-18 |  |
 | 2 | bug | `code-review-api-core-payment-matcher-multi-suggest` | payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good | done | 2026-08-17 |  |
 | 2 | bug | `code-review-api-handlers-share-pw-no-throttle` | SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockou | done | 2026-08-17 |  |
@@ -144,8 +148,17 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | bug | `code-review-api-core-delay-to-duration-mul-overflow` | api-server DelayConfig::to_duration() multiply can overflow (unverified) | open | 2026-08-20 |  |
+| 1 | bug | `code-review-mobile-native-kmp-formatprice-minor-unit-contract` | mobile-native-kmp FormatUtils.formatPrice KDoc says 'minor units/cents' but contract is whole units | open | 2026-08-20 |  |
+| 1 | bug | `code-review-mobile-native-kmp-ssoinitiation-callback-unencoded` | mobile-native-kmp SsoInitiation.buildUrl splices callback/state into query with no percent-encoding | open | 2026-08-20 |  |
+| 1 | bug | `code-review-ppt-web-core-api-default-export-stale-singleton` | ppt-web api.ts eager `export default getApiClient()` binds a stale unconfigured axios singleton | open | 2026-08-20 |  |
+| 1 | bug | `code-review-ppt-web-core-refresh-queue-never-invoked` | ppt-web AuthContext refreshToken/refresh-queue path may never be invoked (unverified) | open | 2026-08-20 |  |
+| 1 | refactor | `code-review-ppt-web-ui-compliance-hardcoded-i18n` | ppt-web AmlDashboardPage hardcodes user-facing strings, bypassing i18n (unverified) | open | 2026-08-20 |  |
+| 1 | refactor | `code-review-ppt-web-ui-dsa-reports-i18n` | ppt-web DsaReportsPage has no useTranslation — all strings + date locale hardcoded English | open | 2026-08-20 |  |
+| 1 | refactor | `code-review-ppt-web-ui-registry-confirm-i18n` | ppt-web RegistryPage native window.confirm() prompts are hardcoded English (unverified) | open | 2026-08-20 |  |
+| 1 | bug | `code-review-reality-server-saved-search-watermark-discard` | reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing  | open | 2026-08-20 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard u | open | 2026-08-19 |  |
-| 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | open | 2026-08-19 |  |
+| 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | done | 2026-08-19 |  |
 | 1 | bug | `code-review-api-handlers-voice-exchange-device-dedup` | voice /oauth/exchange generates a fresh random device_id every call with no upsert on (org,user,plat | done | 2026-08-18 |  |
 | 1 | security | `code-review-api-handlers-voice-oauth-exchange-no-rate-limit` | voice /oauth/exchange makes a live upstream OAuth call (exchange_code) per request with no per-user  | done | 2026-08-18 |  |
 | 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | done | 2026-08-17 |  |

@@ -8797,6 +8797,235 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-announcement-roles-legacy-membership",
+      "title": "api-server scheduler role-targeted announcements query legacy organization_members, miss recipients",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (api-core segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:663-681 — the `roles` arm runs `SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id=$1 AND om.role_id=ANY($2) AND om.status='active'`, keyed on the legacy organization_members.role_id (nullable UUID).",
+        "The same function's `all` arm (mod.rs:584-597) and the live non-scheduled path routes/announcements/shared.rs:325-340 both resolve ROLES against the newer user_memberships table (migration 00128 'new authorization spine'); shared.rs matches user_memberships.role (VARCHAR name from target_ids), so scheduler and live path disagree on both table and role key.",
+        "Scheduler roles arm also lacks the target_ids.is_empty() early-return guard present in the building/units arms (mod.rs:613,642). Verified against current tree 2026-08-20."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs",
+        "backend/servers/api-server/src/routes/announcements/shared.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-osrng-expect-panic-auth-paths",
+      "title": "api-server AuthService::generate_token() .expect() on OS RNG panics inside auth request handlers",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (api-core segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 — `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside AuthService::generate_token(); an OS-RNG failure panics the request task instead of returning 5xx.",
+        "Live callers on HTTP request paths: routes/auth/registration.rs:175 and :371, routes/auth/password_reset.rs:69. Verified against current tree 2026-08-20 (sibling .expect at auth.rs:62 is construction-time Argon2 params, not per-request)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "title": "ppt-web ContentModerationPage casts window.prompt string to action union with no validation before POST",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 4,
+      "status": "ready",
+      "sources": [
+        "tier1d-review 2026-08-19 + 2026-08-20 (ppt-web-ui segment)",
+        "tier1d duplicate signal code-review-ppt-web-ui-moderation-prompt-cast-unvalidated 2026-08-19"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:139 — handleTakeAction casts `actionType as 'remove'|'restrict'|'warn'|'approve'` and mutates; :175 handleDecideAppeal casts `decision as 'uphold'|'overturn'`. Only truthiness checks (`if(!actionType)return`) guard it — no membership check before the destructive moderation POST.",
+        "Verified against current tree 2026-08-20: the prompt/alert strings themselves DO go through t() (i18n is fine); only the unvalidated-union-cast half is real. TODO(Phase-2) markers at :127-128 and :163-164.",
+        "Supersedes duplicate signal id code-review-ppt-web-ui-moderation-prompt-cast-unvalidated (2026-08-19)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": "plans/code-review-ppt-web-ui-moderation-prompt-cast.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-singleton",
+      "title": "ppt-web api.ts eager `export default getApiClient()` binds a stale unconfigured axios singleton",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:321 — `export default getApiClient();` evaluates at module load with default config (createAxiosInstance() no args, :275). A later configureApiClient() (:298-301) reassigns module-level apiInstance but cannot rebind the already-evaluated default export; resetApiClient() (:307-311) nulls apiInstance while the default export still points at the old instance. Verified against current tree 2026-08-20."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-i18n",
+      "title": "ppt-web DsaReportsPage has no useTranslation — all strings + date locale hardcoded English",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-20 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx — no useTranslation import; hardcoded English in setFormError(:80,:98), alert(:108,:112,:124), all headings/labels (:144-318), and a hardcoded 'en-GB' locale in formatDate(:132). Stays English in sk/cs/de. Verified against current tree 2026-08-20."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-queue-never-invoked",
+      "title": "ppt-web AuthContext refreshToken/refresh-queue path may never be invoked (unverified)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:449-462 — tier1d flags the refreshToken impl / queued-request replay as never invoked. NOT independently verified this run; sibling api-401-onunauthorized claim from the same slice turned out already-fixed, so treat as review-candidate until the diff is opened."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-hardcoded-i18n",
+      "title": "ppt-web AmlDashboardPage hardcodes user-facing strings, bypassing i18n (unverified)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx — tier1d flags hardcoded English literals not routed through t(). NOT independently verified this run — review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-confirm-i18n",
+      "title": "ppt-web RegistryPage native window.confirm() prompts are hardcoded English (unverified)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-20 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,114,157,171 — destructive/approve confirmations use native window.confirm() with hardcoded English prompts; English-only in non-English locales. NOT independently verified this run — review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-delay-to-duration-mul-overflow",
+      "title": "api-server DelayConfig::to_duration() multiply can overflow (unverified)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (api-core segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-60 — tier1d flags DelayConfig::to_duration() unit multiply as overflow-prone on large configured delays. NOT independently verified this run — review candidate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-formatprice-minor-unit-contract",
+      "title": "mobile-native-kmp FormatUtils.formatPrice KDoc says 'minor units/cents' but contract is whole units",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/FormatUtils.kt:18-24 — formatPrice KDoc '@param price in minor units (e.g. cents)' contradicts the wire contract: api/DecimalStringSerializers.kt:37-49 DecimalAsLongSerializer drops sub-unit scale (whole-currency Longs); all 10 production call sites pass whole-unit listing.price. Latent 100x money-formatting defect for any future/iOS caller trusting the docstring. Mobile-only KDoc fix. NOT independently verified this run.",
+        "mobile-native-gated: AGP egress-blocked in cloud; landable only on a local/host build."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/FormatUtils.kt"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoinitiation-callback-unencoded",
+      "title": "mobile-native-kmp SsoInitiation.buildUrl splices callback/state into query with no percent-encoding",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-review 2026-08-19 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/shared/.../auth/SsoInitiation.kt buildUrl — `\"$PM_APP_SCHEME://sso?callback=$CALLBACK&state=$state\"` splices CALLBACK ('reality://sso', contains ':' and '//') and state into a query VALUE unencoded; asymmetric with DeepLinkRouter.kt inbound urlDecode. Currently non-exploitable (fixed constant + hex nonce) but brittle. Mobile-only encode fix. NOT independently verified this run.",
+        "mobile-native-gated: AGP egress-blocked in cloud."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoInitiation.kt"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null
     }
   ]
 }

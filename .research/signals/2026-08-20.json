@@ -1,0 +1,370 @@
+{
+  "generated_at": "2026-08-20T14:35:00Z",
+  "run_kind": "buffer-refill",
+  "trigger_payload": "buffer-low: claimable=6/72 — refill planner",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-08-19..2026-08-20",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "3 commits touched voice_webhooks.rs in the run window (PRs #2793, #2796, #2811)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/tests/suites/reports_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-08-19..2026-08-20",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "2 commits touched reports_tests.rs in the run window (PRs #2800, #2801)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-08-19..2026-08-20",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "2 commits touched reports.rs in the run window (PRs #2800, #2801)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "confidence": "high",
+      "evidence": [
+        "PR #2744 draft, 7d idle since last human touch, self-authored (needs-human-review); dispatcher already logs it — recording for goal-check audit trail"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-formatprice-minor-unit-contract",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (mobile-native-kmp segment)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "FormatUtils.formatPrice KDoc says 'minor units/cents' but the wire contract is whole-currency units; 10 call sites pass whole units — latent 100x formatting defect"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoinitiation-callback-unencoded",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (mobile-native-kmp segment)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "SsoInitiation.buildUrl splices callback/state into a query VALUE unencoded; asymmetric with inbound DeepLinkRouter.urlDecode"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-401-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (ppt-web-core segment)",
+      "segment": "ppt-web-core",
+      "score_delta": 0,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "Verified against current tree 2026-08-20 — pattern GONE: onUnauthorizedCallback captured at api.ts:196 and invoked at :219-221; resetApiClient clears it at :310. Signal suppressed (score_delta=0) — no backlog item created."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-queue-never-invoked",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (ppt-web-core segment)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "AuthContext.tsx:449-462 — tier1d flags refreshToken impl / queued-request replay as never invoked; NOT independently verified this run (sibling api-401 claim was already fixed, so treat as review-candidate)"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-singleton",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (ppt-web-core segment)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "Verified 2026-08-20: api.ts:321 `export default getApiClient();` binds an eagerly-evaluated instance with default config; configureApiClient() cannot rebind the default export, resetApiClient() nulls apiInstance leaving default export at the old ref"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (ppt-web-ui segment)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "ContentModerationPage.tsx:139 casts window.prompt string to action union unvalidated (verified 2026-08-20). Absorbed into item code-review-ppt-web-ui-moderation-prompt-cast (duplicate signal — same finding, later signal reworded)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-download-no-onsuccess",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (ppt-web-ui segment)",
+      "segment": "ppt-web-ui",
+      "score_delta": 0,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "Verified 2026-08-20 — pattern INCORRECT: hook useDownloadDsaReportPdf carries the success behavior (hooks.ts:234-242 window.open); per-call onError does not override hook-level onSuccess. Signal suppressed (score_delta=0) — no backlog item created."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (ppt-web-ui segment)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "AmlDashboardPage.tsx hardcoded English literals bypass i18n; NOT independently verified this run — review candidate"
+      ]
+    },
+    {
+      "id": "code-review-api-core-announcement-roles-legacy-membership",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (api-core segment)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "Verified 2026-08-20: scheduler mod.rs:663-681 roles arm queries legacy organization_members.role_id (UUID); the same function's 'all' arm at :584-597 and routes/announcements/shared.rs:325-340 both use the newer user_memberships (VARCHAR role name); scheduler + live path disagree on both table and role key. Missing target_ids.is_empty() early-return present in building/units arms."
+      ]
+    },
+    {
+      "id": "code-review-api-core-osrng-expect-panic-auth-paths",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (api-core segment)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "Verified 2026-08-20: services/auth.rs:97 `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside AuthService::generate_token(); live callers on request paths: routes/auth/registration.rs:175,:371 and routes/auth/password_reset.rs:69 — OS-RNG failure panics the request task instead of returning 5xx"
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-to-duration-mul-overflow",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-19 (api-core segment)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "services/actions/delay.rs:54-60 — tier1d flags DelayConfig::to_duration() multiply as overflow-prone on large configured delays; NOT independently verified this run — review candidate"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-20 (ppt-web-ui segment)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "Stacks with the 2026-08-19 -unvalidated signal on the same finding. Both handleTakeAction and handleDecideAppeal cast window.prompt output to a string-literal union with no validation. Verified 2026-08-20."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-20 (ppt-web-ui segment)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "Verified 2026-08-20: DsaReportsPage.tsx has no useTranslation import; hardcoded English in setFormError/alert/labels + hardcoded 'en-GB' locale in formatDate — English-only in sk/cs/de"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-confirm-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-review 2026-08-20 (ppt-web-ui segment)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "RegistryPage.tsx:100,114,157,171 — destructive/approve confirmations use native window.confirm() with hardcoded English prompts; NOT independently verified this run"
+      ]
+    },
+    {
+      "id": "resolved-code-review-reality-server-list-my-reports-total-page-length-pr-2801",
+      "type": "resolution",
+      "source": "PR #2801",
+      "score_delta": 0,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "PR #2801 merged 2026-08-20T10:26 — backlog row already status=done from prior run's absorption"
+      ]
+    },
+    {
+      "id": "resolved-code-review-reality-server-submit-report-no-rate-limit-pr-2800",
+      "type": "resolution",
+      "source": "PR #2800",
+      "score_delta": 0,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "evidence": [
+        "PR #2800 merged 2026-08-20T06:30 — plans/code-review-reality-server-submit-report-no-rate-limit.md shipped (backlog row status=done)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-20.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "double-scoring check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items >14d this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plan annotated in brief",
+      "observed": "annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, 4 metadata + 11 headings + 2 capability ticks + Mode + files exist",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged only .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs preserved",
+      "observed": "missing=0",
+      "expected": "missing=0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count only grows",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — no-op",
+      "observed": "skipped",
+      "expected": "skipped-or-valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
