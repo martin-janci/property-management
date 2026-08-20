@@ -1,0 +1,49 @@
+[
+  {
+    "id": "code-review-api-core-announcement-roles-legacy-membership",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/scheduler/mod.rs:666-680 — the announcement target-resolution helper's `\"roles\"` branch fans out via `SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id = $1 AND om.role_id = ANY($2) AND om.status = 'active'`, reading the LEGACY organization_members table (migration 00005).",
+      "The sibling `\"all\"` branch in the same match (mod.rs:584-598) was DELIBERATELY migrated off that table, with an in-code comment: 'membership lives in `user_memberships` (migration 00128, the canonical authz spine)' and joins `user_memberships` with revoked_at/expires_at freshness filters. The `\"roles\"` branch was not migrated and still trusts organization_members.",
+      "Migration 00128 (crates/db/migrations/00128_user_memberships.sql) declares user_memberships canonical and BACKFILLS from organization_members ('Backfill from `organization_members`. Map legacy role_type -> unified role') — i.e. organization_members is the legacy source, not the forward write path. If new/updated memberships are written only to user_memberships, role-targeted announcements will fan out to a stale audience and silently MISS residents whose active membership exists only in user_memberships (missed-notification correctness bug, not a style nit).",
+      "Schema divergence compounds it: announcement role targets are role_id UUIDs matched against organization_members.role_id, whereas user_memberships carries a `role VARCHAR(64)` enum and no role_id — so the fix is a real remodel (resolve role_id -> unified role, or dual-source), not a table rename. Landable backend-only investigation: confirm whether organization_members is still dual-written; if not, re-express the roles fanout against the canonical membership source. Reachable in production via publish_scheduled_announcements -> dispatch_announcement_notifications for any 'roles' target_type announcement."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-osrng-expect-panic-auth-paths",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/auth.rs:97 — `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside `generate_token()` (email-verification / password-reset tokens); the fn returns `String`, so a CSPRNG failure panics the request thread instead of surfacing an error.",
+      "backend/servers/api-server/src/services/oauth.rs:918 — same pattern in `generate_random_b64()`, the single entropy source for OAuth authorization codes, access/refresh tokens, client ids AND client secrets (per its own doc-comment). A panic here aborts the OAuth token/registration request mid-flight.",
+      "backend/servers/api-server/src/services/totp.rs:153 — same `.expect(\"OS rng failed\")` generating the AES-GCM nonce in `encrypt_secret()` on the MFA-enrollment path.",
+      "All three are per-request, security-critical, and infallible-signatured (`-> String`). OS getrandom failure is rare (fd exhaustion / broken /dev/urandom) but when it happens the response is a panic (dropped connection or 500 via catch-panic) rather than a clean 503/AuthError, and there is no test forcing the failure branch. Landable backend-only fix: change these helpers to return `Result<_, _>` and map the rng error to the existing error enums (AuthError / OAuth error / TotpError), or centralize on one fallible CSPRNG helper. Low-probability but auth-critical."
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-delay-to-duration-mul-overflow",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "api-core",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/servers/api-server/src/services/actions/delay.rs:54-60 — `DelayConfig::to_duration()` computes `Duration::from_secs(self.duration * 60|3600|86400)` where `self.duration: u64` is deserialized straight from user/workflow config (parse_config -> serde_json::from_value, no bound applied yet).",
+      "The MAX_DELAY_SECONDS (7 days) cap is only checked AFTER to_duration() runs (delay.rs:99-105: parse -> `to_duration()` -> then `if duration.as_secs() > MAX_DELAY_SECONDS`). So the multiplication happens on the still-unbounded value: a large `duration` with unit Days/Hours overflows the u64 multiply — panic in debug builds (arithmetic overflow), silent two's-complement wrap in release, which can even produce a small wrapped value that then passes the 7-day cap and schedules a wrong delay.",
+      "Reachable from workflow execution (Epic 94 delay action) with attacker/operator-controlled action config. Landable backend-only fix: validate `self.duration` against the max (or use `checked_mul` / `saturating_mul`) BEFORE constructing the Duration, so an out-of-range value is rejected with ConfigurationError instead of overflowing. Low severity (config-authoring path, not anonymous input) but a genuine unchecked-arithmetic-before-validation smell."
+    ],
+    "expert": "rust"
+  }
+]

@@ -250,6 +250,78 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "code-review-reality-server-list-my-reports-total-page-length",
+      "action": "reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-19T06:25:44Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T06:25:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-server-submit-report-no-rate-limit",
+      "action": "reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + moderation-queue bloat",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-19T06:25:44Z (score=2 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T06:25:44Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-reality-server-submit-report-no-rate-limit.md",
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-reality-server-create-review-body-length-uncapped",
+      "action": "reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs possible)",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-19T06:25:44Z (score=1 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T06:25:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "gh-issue-2802",
+      "action": "CI: backend test-shard jobs hang ~90m and get cancelled → merge pipeline wedged (dev base + all backend PRs) (Closes #2802)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-08-19T12:29:21Z (#2802)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T12:29:21Z",
+      "issue_ref": {
+        "number": 2802,
+        "url": "https://github.com/martin-janci/property-management/issues/2802",
+        "labels": [
+          "bug",
+          "infra",
+          "dispatcher"
+        ]
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"

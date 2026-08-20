@@ -1,0 +1,34 @@
+[
+  {
+    "id": "code-review-ppt-web-ui-automation-mutation-errors-swallowed",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await mutateAsync(...)` (deleteRule:58, updateRule:64, runRule:71) inside an async event handler with NO try/catch. A rejected mutation becomes an unhandled promise rejection: for delete, setDeleteConfirm(null) (line 59) never runs so the confirm modal stays stuck open, and none of deleteRule/updateRule/runRule expose `.error`/`.isError` anywhere in the JSX (grep confirms NONE), so the user gets zero feedback that the toggle/run/delete failed.",
+      "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx:53-60 — handleUseTemplate `await createFromTemplate.mutateAsync(template.id)` then dereferences `result?.id`; no try/catch and `createFromTemplate.error` is never rendered (grep: NONE). A failed 'Use template' silently discards the error and leaves the user on the library with no message.",
+      "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx:75 — handleRetry `await retryExecution.mutateAsync(log.id)` surfaces only `retryExecution.isPending` (line 273); the mutation's `.error` is never shown, so a failed execution-retry gives no user feedback.",
+      "This is inconsistent with the rest of the SAME feature, which handles it correctly: CreateRulePage.tsx:62 and EditRulePage.tsx:113 both render `{createRule.error && ...}` / `{updateRule.error && ...}` blocks, and the voting feature (VoteDetailPage.tsx:104-141, VoteCreatePage.tsx:147-181) wraps every mutateAsync in try/catch. Only these three automation pages drop the failure path.",
+      "Impact: on the automation-rules management surface, delete/toggle/run/create-from-template/retry failures are silently swallowed (unhandled rejection, no toast/inline error), and the delete confirmation modal hangs open on failure. Landable frontend-only fix: surface each mutation's `.error`/`.isError` inline (mirroring CreateRulePage/EditRulePage) or wrap the handlers in try/catch with a toast, and move setDeleteConfirm(null) into a finally so the modal always closes."
+    ],
+    "expert": "frontend"
+  },
+  {
+    "id": "code-review-ppt-web-ui-workflow-automation-hardcoded-i18n",
+    "type": "code-review-finding",
+    "source": "tier1d-dispatcher-generator",
+    "segment": "ppt-web-ui",
+    "score_delta": 1,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "All 5 workflow-automation page files hardcode English user-facing copy instead of react-i18next `t(...)`; none of them import useTranslation (grep of features/workflow-automation for useTranslation returns only 3 component files, zero pages). Examples: AutomationRulesPage.tsx:82 '<h1>Automation Rules</h1>', :101 'Create Rule', :180 'Failed to load automation rules. Please try again.', :217 'No automation rules yet', :306 'Deleting...'; CreateRulePage.tsx:50 'Back to Rules', :52 'Create Automation Rule', :64 'Failed to create automation rule...'; TemplateLibraryPage.tsx:74 'Template Library'; EditRulePage.tsx:47/:79 'Failed to load automation rule.'/'Loading...'.",
+      "This violates the project's multi-locale requirement (react-i18next 16; app targets sk/cs/de/en) and is inconsistent with the app norm — 269 of 440 feature .tsx files use useTranslation, including the sibling voting feature (VoteCreatePage.tsx, BallotQuestion.tsx) and even 3 components INSIDE workflow-automation (RuleBuilder.tsx, TemplatePreviewModal.tsx, ExecutionDetailsModal.tsx already use t()).",
+      "Impact: Slovak/Czech/German managers see raw English across the entire automation-rules feature (list, create, edit, template library, execution monitoring). Low severity, no functional break. Landable frontend-only fix: move the hardcoded strings into the i18n resource bundles and call t(...) in the 5 page files, matching the components that already do."
+    ],
+    "expert": "frontend"
+  }
+]
