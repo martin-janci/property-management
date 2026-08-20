@@ -153,6 +153,24 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// List the persisted conversation messages for an inquiry, oldest first.
+    ///
+    /// Ownership is expected to be verified by the caller (the detail handler
+    /// resolves the inquiry via [`Self::get_inquiry_for_realtor`] first), so
+    /// this query is scoped only by `inquiry_id`. Ordered by `created_at` so
+    /// the realtor sees the thread in chronological order.
+    pub async fn list_inquiry_messages(
+        &self,
+        inquiry_id: Uuid,
+    ) -> Result<Vec<InquiryMessage>, SqlxError> {
+        sqlx::query_as::<_, InquiryMessage>(
+            "SELECT * FROM inquiry_messages WHERE inquiry_id = $1 ORDER BY created_at ASC",
+        )
+        .bind(inquiry_id)
+        .fetch_all(&self.pool)
+        .await
+    }
+
     /// Mark inquiry as read.
     pub async fn mark_inquiry_read(&self, id: Uuid) -> Result<(), SqlxError> {
         sqlx::query("UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL")
