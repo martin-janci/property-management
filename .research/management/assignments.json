@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-20T20:29:44Z",
+  "generated": "2026-08-20T21:26:28Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,16 +26,16 @@
     {
       "task_id": "gh-issue-2814",
       "branch": "auto-impl/gh-issue-2814-8ebafc8f",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-08-20T20:26:31Z",
-      "last_updated": "2026-08-20T20:26:31Z",
-      "status_changed_at": "2026-08-20T20:26:31Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-20T21:26:28Z",
+      "status_changed_at": "2026-08-20T21:26:28Z",
+      "pr_number": 2815,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2815",
       "merged_at": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -44,7 +44,7 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=2815 done: widened portal_saved_searches.match_count int4->bigint (mig 00232 + i32->i64 model/repo); target regression tests 4/4 pass on live PG16, fmt/clippy clean, 940+ workspace tests green; scope_drift=owner_role pm-tech-lead vs backend/crates/db work (pm-rust-backend correct per issue)",
       "reviewer_summary": null
     }
   ]
