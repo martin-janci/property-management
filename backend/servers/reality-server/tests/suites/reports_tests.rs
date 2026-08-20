@@ -162,6 +162,89 @@ async fn list_my_reports_authenticated_returns_200(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::OK);
 }
 
+/// Regression: `total` in the paginated response must be the full matching
+/// row count, not the length of the current page. Before the fix
+/// `list_my_reports` returned `total = reports.len()`, so any non-final page
+/// reported `total == limit` and `ceil(total / limit)` pagination broke.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_my_reports_total_reflects_full_count_not_page_len(pool: PgPool) {
+    // Seed an org + listing + reporter user, then 3 reports by that user.
+    let org_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO organizations (name, slug, contact_email, status) \
+         VALUES ('Rep Org', 'rep-org-total', 'rep-total@org.test', 'active') RETURNING id",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("seed org");
+
+    let user_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO users (id, email, password_hash, name, principal_kind, status) \
+         VALUES ($1, $2, 'x', 'Rep User', 'platform', 'active')",
+    )
+    .bind(user_id)
+    .bind(format!("reports-total-{user_id}@test.internal"))
+    .execute(&pool)
+    .await
+    .expect("seed user");
+
+    let listing_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO listings \
+            (organization_id, created_by, status, transaction_type, title, \
+             property_type, price, currency, street, city, postal_code, country) \
+         VALUES ($1, $2, 'active', 'sale', 'Rep Listing', 'apartment', 100000.00, \
+                 'EUR', 'Test Street 1', 'Bratislava', '81101', 'SK') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_one(&pool)
+    .await
+    .expect("seed listing");
+
+    for i in 0..3 {
+        sqlx::query(
+            "INSERT INTO listing_reports \
+                (listing_id, reporter_user_id, problem_type, description, status) \
+             VALUES ($1, $2, 'spam', $3, 'received')",
+        )
+        .bind(listing_id)
+        .bind(user_id)
+        .bind(format!("report {i}"))
+        .execute(&pool)
+        .await
+        .expect("seed report");
+    }
+
+    let router = reports_router(pool);
+    let token = common::mint_token(user_id);
+
+    // Ask for a page of 2 out of 3.
+    let req = axum::http::Request::builder()
+        .method(Method::GET)
+        .uri("/api/v1/reports/me?limit=2")
+        .header(axum::http::header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let resp = router.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), axum::http::StatusCode::OK);
+
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .expect("read body");
+    let json: serde_json::Value = serde_json::from_slice(&bytes).expect("parse body");
+
+    assert_eq!(
+        json["reports"].as_array().expect("reports array").len(),
+        2,
+        "page should hold exactly `limit` (2) rows"
+    );
+    assert_eq!(
+        json["total"].as_u64().expect("total is a number"),
+        3,
+        "total must report the full matching count (3), not the page length (2)"
+    );
+}
+
 /// Regression (security: anonymous report flood): the anonymous POST is
 /// per-IP throttled. After the quota is exhausted from one IP, further requests
 /// get 429 and no new `listing_reports` rows are written.

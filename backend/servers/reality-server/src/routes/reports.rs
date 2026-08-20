@@ -377,6 +377,24 @@ pub async fn list_my_reports(
         })
         .collect();
 
-    let total = reports.len();
+    // Total row count for pagination must reflect ALL matching rows, not just
+    // the current page (LIMIT/OFFSET), so run a COUNT with the same filters.
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) AS total
+        FROM listing_reports
+        WHERE reporter_user_id = $1
+          AND ($2::text IS NULL OR status = $2)
+        "#,
+    )
+    .bind(principal.user_id)
+    .bind(&query.status)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("count reports", e))?;
+
+    let total_count: i64 = total_row.get("total");
+    let total = usize::try_from(total_count).unwrap_or(0);
+
     Ok(Json(MyReportsResponse { reports, total }))
 }
