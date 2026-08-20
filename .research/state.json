@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-19T04:36:00Z",
+  "last_run_iso": "2026-08-20T02:35:38Z",
   "last_run_ms": 60000,
-  "last_pr_seen": 2798,
-  "last_issue_seen": 2797,
-  "last_commit_sha": "bcc2d3a56e46ede13d420852db17da5765792a64",
+  "last_pr_seen": 2803,
+  "last_issue_seen": 2804,
+  "last_commit_sha": "590c237d759d92b28b47590fe350c27e2a990835",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -894,7 +894,32 @@
     "lag-warning-2026-08-19",
     "code-review-reality-server-submit-report-no-rate-limit",
     "code-review-reality-server-list-my-reports-total-page-length",
-    "code-review-reality-server-create-review-body-length-uncapped"
+    "code-review-reality-server-create-review-body-length-uncapped",
+    "code-review-api-core-announcement-roles-legacy-membership",
+    "code-review-api-core-osrng-expect-panic-auth-paths",
+    "code-review-api-core-delay-to-duration-mul-overflow",
+    "code-review-mobile-native-kmp-formatprice-minor-unit-contract",
+    "code-review-mobile-native-kmp-ssoinitiation-callback-unencoded",
+    "code-review-ppt-web-core-api-401-onunauthorized-unwired",
+    "code-review-ppt-web-core-refresh-queue-never-invoked",
+    "code-review-ppt-web-core-api-default-export-stale-singleton",
+    "code-review-ppt-web-ui-moderation-prompt-cast-unvalidated",
+    "code-review-ppt-web-ui-dsa-download-no-onsuccess",
+    "code-review-ppt-web-ui-compliance-hardcoded-i18n",
+    "code-review-reality-server-inquiry-detail-empty-messages",
+    "code-review-reality-server-test-connection-always-success",
+    "code-review-reality-server-link-account-noop-success",
+    "code-review-reality-web-profile-mock-data-shipped",
+    "code-review-reality-web-comparison-fetch-unvalidated-cast",
+    "code-review-reality-web-comparison-localstorage-unvalidated",
+    "dep-update-noise-pr-2583",
+    "dep-update-noise-pr-2584",
+    "dep-update-noise-pr-2585",
+    "dep-update-noise-pr-2586",
+    "dep-update-noise-pr-2588",
+    "dep-update-noise-pr-2589",
+    "dep-update-noise-pr-2590",
+    "dep-update-noise-pr-2591"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -908,8 +933,8 @@
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 67,
-    "vectors_created": 317,
+    "runs": 68,
+    "vectors_created": 334,
     "plans_created": 26,
     "quiet_days": 2,
     "auto_fix_count": 0

@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-19 04:35 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-20 02:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -34,6 +34,14 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-api-core-announcement-roles-legacy-membership` | the announcement target-resolution helper's `"roles"` branch fans out via `S... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-api-core-osrng-expect-panic-auth-paths` | `rng.try_fill_bytes(&mut bytes).expect("OS rng failed")` inside `generate_to... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-ppt-web-core-api-401-onunauthorized-unwired` | the hand-rolled axios response interceptor has an unauthorized branch `if (e... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-ppt-web-ui-dsa-download-no-onsuccess` | handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })` with O... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-prompt-cast-unvalidated` | handleTakeAction reads free-text `window.prompt(t('moderation.prompts.action... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | GET /api/v1/inquiries/{id} (get_inquiry, realtor-facing detail endpoint) alw... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-server-test-connection-always-success` | POST /api/v1/agencies/{id}/imports/test-connection (test_connection) is a st... | open | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-web-profile-mock-data-shipped` | the authenticated /[locale]/profile page renders entirely fabricated data: `... | open | 2026-08-20 |  |
 | 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | open | 2026-08-19 |  |
 | 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | ready | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
 | 2 | security | `code-review-api-handlers-voice-refresh-simulated-token-release` | voice /oauth/refresh mints a simulated access token in RELEASE builds when the platform OAuth client | done | 2026-08-18 |  |
@@ -144,6 +152,15 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | bug | `code-review-api-core-delay-to-duration-mul-overflow` | `DelayConfig::to_duration()` computes `Duration::from_secs(self.duration * 6... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-mobile-native-kmp-formatprice-minor-unit-contract` | FormatUtils.formatPrice(price: Long, currency) documents '@param price The p... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-mobile-native-kmp-ssoinitiation-callback-unencoded` | `fun buildUrl(state: String): String = "$PM_APP_SCHEME://sso?callback=$CALLB... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-ppt-web-core-api-default-export-stale-singleton` | `export default getApiClient();` is evaluated at module-load time. `getApiCl... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-ppt-web-core-refresh-queue-never-invoked` | `refreshToken` implements a careful concurrency-safe silent-refresh: it de-d... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-ppt-web-ui-compliance-hardcoded-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx har... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-reality-server-link-account-noop-success` | PortalUserService::link_account returns `LinkResult::Success` after only a `... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-reality-web-comparison-fetch-unvalidated-cast` | the shared-comparison loader fetches each id from `${getApiBase()}/api/v1/li... | open | 2026-08-20 |  |
+| 1 | bug | `code-review-reality-web-comparison-localstorage-unvalidated` | on mount the provider does `const parsed = JSON.parse(stored); setListings(p... | open | 2026-08-20 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard u | open | 2026-08-19 |  |
 | 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | open | 2026-08-19 |  |
 | 1 | bug | `code-review-api-handlers-voice-exchange-device-dedup` | voice /oauth/exchange generates a fresh random device_id every call with no upsert on (org,user,plat | done | 2026-08-18 |  |

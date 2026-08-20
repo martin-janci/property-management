@@ -1,0 +1,479 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-core-announcement-roles-legacy-membership",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:666-680 \u2014 the announcement target-resolution helper's `\"roles\"` branch fans out via `SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id = $1 AND om.role_id = ANY($2) AND om.status = 'active'`, reading the LEGACY organization_members table (migration 00005).",
+        "The sibling `\"all\"` branch in the same match (mod.rs:584-598) was DELIBERATELY migrated off that table, with an in-code comment: 'membership lives in `user_memberships` (migration 00128, the canonical authz spine)' and joins `user_memberships` with revoked_at/expires_at freshness filters. The `\"roles\"` branch was not migrated and still trusts organization_members.",
+        "Migration 00128 (crates/db/migrations/00128_user_memberships.sql) declares user_memberships canonical and BACKFILLS from organization_members ('Backfill from `organization_members`. Map legacy role_type -> unified role') \u2014 i.e. organization_members is the legacy source, not the forward write path. If new/updated memberships are written only to user_memberships, role-targeted announcements will fan out to a stale audience and silently MISS residents whose active membership exists only in user_memberships (missed-notification correctness bug, not a style nit).",
+        "Schema divergence compounds it: announcement role targets are role_id UUIDs matched against organization_members.role_id, whereas user_memberships carries a `role VARCHAR(64)` enum and no role_id \u2014 so the fix is a real remodel (resolve role_id -> unified role, or dual-source), not a table rename. Landable backend-only investigation: confirm whether organization_members is still dual-written; if not, re-express the roles fanout against the canonical membership source. Reachable in production via publish_scheduled_announcements -> dispatch_announcement_notifications for any 'roles' target_type announcement."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-osrng-expect-panic-auth-paths",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 \u2014 `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside `generate_token()` (email-verification / password-reset tokens); the fn returns `String`, so a CSPRNG failure panics the request thread instead of surfacing an error.",
+        "backend/servers/api-server/src/services/oauth.rs:918 \u2014 same pattern in `generate_random_b64()`, the single entropy source for OAuth authorization codes, access/refresh tokens, client ids AND client secrets (per its own doc-comment). A panic here aborts the OAuth token/registration request mid-flight.",
+        "backend/servers/api-server/src/services/totp.rs:153 \u2014 same `.expect(\"OS rng failed\")` generating the AES-GCM nonce in `encrypt_secret()` on the MFA-enrollment path.",
+        "All three are per-request, security-critical, and infallible-signatured (`-> String`). OS getrandom failure is rare (fd exhaustion / broken /dev/urandom) but when it happens the response is a panic (dropped connection or 500 via catch-panic) rather than a clean 503/AuthError, and there is no test forcing the failure branch. Landable backend-only fix: change these helpers to return `Result<_, _>` and map the rng error to the existing error enums (AuthError / OAuth error / TotpError), or centralize on one fallible CSPRNG helper. Low-probability but auth-critical."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-delay-to-duration-mul-overflow",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-60 \u2014 `DelayConfig::to_duration()` computes `Duration::from_secs(self.duration * 60|3600|86400)` where `self.duration: u64` is deserialized straight from user/workflow config (parse_config -> serde_json::from_value, no bound applied yet).",
+        "The MAX_DELAY_SECONDS (7 days) cap is only checked AFTER to_duration() runs (delay.rs:99-105: parse -> `to_duration()` -> then `if duration.as_secs() > MAX_DELAY_SECONDS`). So the multiplication happens on the still-unbounded value: a large `duration` with unit Days/Hours overflows the u64 multiply \u2014 panic in debug builds (arithmetic overflow), silent two's-complement wrap in release, which can even produce a small wrapped value that then passes the 7-day cap and schedules a wrong delay.",
+        "Reachable from workflow execution (Epic 94 delay action) with attacker/operator-controlled action config. Landable backend-only fix: validate `self.duration` against the max (or use `checked_mul` / `saturating_mul`) BEFORE constructing the Duration, so an out-of-range value is rejected with ConfigurationError instead of overflowing. Low severity (config-authoring path, not anonymous input) but a genuine unchecked-arithmetic-before-validation smell."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-formatprice-minor-unit-contract",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/FormatUtils.kt:18-24 \u2014 FormatUtils.formatPrice(price: Long, currency) documents '@param price The price in minor units (e.g., cents)', but the actual system contract is whole-currency units, so the docstring directly contradicts every real caller and the wire format.",
+        "The wire deserializer is explicit that prices are whole units: api/DecimalStringSerializers.kt:37-49 DecimalAsLongSerializer does `raw.substringBefore('.').toLong()` and its own doc says 'Prices in the portal models are whole-currency Longs, so the sub-unit scale carried by DECIMAL(15,2) is dropped' ('200000.00' -> 200000). listing/ListingModels.kt:96,123 declare `val price: Long` fed by that serializer.",
+        "All 10 production call sites pass the whole-unit `listing.price` (e.g. androidApp .../ui/listing/ListingHeaderSection.kt:55, ui/home/HomeScreen.kt:457,676, ui/search/SearchScreen.kt:1060, ui/favorites/FavoritesScreen.kt:551,625, ui/listing/ListingPriceHistory.kt:70,76,97). formatPriceAmount() also hard-codes whole-unit thresholds \u2014 `price >= 1_000_000` renders '1.00M' meaning one million currency units, not one million cents.",
+        "Impact: any future caller (or iOS port) that trusts the 'minor units / cents' docstring and passes cents will render prices 100x too large AND cross the M/K abbreviation thresholds 100x early. This is a latent money-formatting contract defect, not a style nit. Landable mobile-only fix: correct the KDoc to 'whole-currency units (sub-unit scale already dropped by DecimalAsLongSerializer)', matching the serializer's own wording."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoinitiation-callback-unencoded",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoInitiation.kt:buildUrl \u2014 `fun buildUrl(state: String): String = \"$PM_APP_SCHEME://sso?callback=$CALLBACK&state=$state\"` splices CALLBACK (= 'reality://sso', containing ':' and '//') into a query-parameter VALUE with no percent-encoding, and does not encode `state` either.",
+        "This is the asymmetric mirror of the inbound path, which is careful: navigation/DeepLinkRouter.kt.urlDecode form-url-DEcodes every query component and its KDoc records a previously-shipped encode/decode parity bug ('The shared router previously returned the raw, still-encoded substring ... breaking SSO validation on iOS'). The outbound leg has no matching encode step.",
+        "Currently non-exploitable because CALLBACK is a fixed constant with no '&' or extra '=' and the minted `state` nonce is 64-char hex (URL-safe) \u2014 but it is brittle: the moment the callback or state carries a reserved character ('&', '=', a query of its own) the PM app's query parser will mis-split the URL. Landable mobile-only fix: percent-encode the callback and state values (e.g. Ktor `encodeURLParameter()` / `encodeURLQueryComponent()`) in buildUrl, symmetric with DeepLinkRouter's decode. Covered by the existing SsoInitiationTest surface."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-401-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 \u2014 the hand-rolled axios response interceptor has an unauthorized branch `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`. `onUnauthorizedCallback` is a module-level `let` (api.ts:180) set ONLY inside `createAxiosInstance` from `config.onUnauthorized` (api.ts:196).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 \u2014 the sole production caller wires the client with `configureApiClient({ getToken: getAccessToken })` and passes NO `onUnauthorized`. Therefore `onUnauthorizedCallback` is `undefined` at runtime and the 401 branch (api.ts:220) is dead code in production \u2014 a 401 neither logs the user out nor triggers a token refresh; the request just rejects with a transformed ApiError.",
+        "The gap has real consumers: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:35+ and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts call `getApiClient()` directly, and their own header comments (useSentiment.ts:18-19, usePredictiveMaintenance.ts:9-10) advertise `401 -> onUnauthorized` as a benefit that never fires. When the access token expires, these production feature calls fail silently with an error instead of re-authenticating.",
+        "Impact / landable frontend-only fix: pass an `onUnauthorized` handler in the AuthContext.tsx:337 `configureApiClient({...})` call (e.g. invoke `logout()` or the queued `refreshToken()` + replay). Confidence medium: wiring is fully traced statically; net user impact depends on token TTL and whether the separate generated `@ppt/api-client` covers the main flows, so not upgraded to high."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-queue-never-invoked",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:449-462 \u2014 `refreshToken` implements a careful concurrency-safe silent-refresh: it de-duplicates concurrent callers via `isRefreshing`/`refreshPromise` refs so N parallel 401s coalesce into ONE `refreshTokenInternal()` round-trip. It is exposed on the context value (AuthContext.tsx:599 and dep array :610).",
+        "No production code path invokes it. A repo-wide grep for `refreshToken` consumers across apps/ppt-web/src returns only the definition, the context-value entries, and *.test.tsx files \u2014 no interceptor, hook, or component calls `useAuth().refreshToken()`. Combined with the dead `onUnauthorized` branch (see api-401 finding), ppt-web has NO 401 -> refresh -> retry pipeline for the hand-rolled `getApiClient()` client: an expired access token is never silently refreshed at request time.",
+        "So the queued-refresh machinery is effectively dead in production (exercised only by unit tests). Either it should be wired into the api.ts unauthorized branch (call `refreshToken()`, then replay the original request on success) or the runtime silent-refresh contract it implies is missing.",
+        "Impact: reliability/completeness gap on token expiry (low severity \u2014 sessions still work until the access token lapses, then the user hits errors/forced re-login instead of a transparent refresh). Landable frontend-only fix: connect `refreshToken()` to the 401 handler resolved by the api-401 finding above."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-singleton",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:321 \u2014 `export default getApiClient();` is evaluated at module-load time. `getApiClient()` lazily creates `apiInstance` via `createAxiosInstance()` with NO config, so the default export is permanently bound to an axios instance carrying the fallback `baseURL`/`timeout` (api.ts:63,68) and whatever the module-level getters were at import time.",
+        "Later, `configureApiClient(config)` (api.ts:298-300) REPLACES the module-level `apiInstance` with a brand-new `createAxiosInstance(config)` instance, and `resetApiClient()` (api.ts:307-311) sets it to null. Any importer of the `default` export keeps a reference to the ORIGINAL instance, which diverges from what `getApiClient()` returns afterward \u2014 a per-instance `baseURL`/`timeout` passed to `configureApiClient` would be silently ignored on the default-export instance (token injection happens to survive only because the getters are module-level `let`s read at request time).",
+        "Currently latent: no file imports the default (only named imports `{ configureApiClient, resetApiClient }` are used, AuthContext.tsx:39; lib/index.ts re-exports only named symbols). But it remains a footgun (a default export that is a stale, unconfigured singleton) plus an eager import-time side effect that constructs an axios instance nobody uses.",
+        "Impact: low \u2014 a trap for future callers, not an active bug. Landable frontend-only fix: drop the `export default getApiClient();` eager instantiation (prefer the explicit `getApiClient()` accessor), or make the default a lazy getter so it always resolves the current configured instance."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,139 \u2014 handleTakeAction reads free-text `window.prompt(t('moderation.prompts.actionType'), 'approve')` and then blindly casts it `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` into the takeAction mutation with NO allowlist/type-guard check. A moderator typo ('aprove', 'delete') is sent verbatim to the moderation-action API as an invalid enum.",
+        "Same defect in the appeal path, ContentModerationPage.tsx:165,175 \u2014 `const decision = window.prompt(t('moderation.prompts.decision'), 'uphold')` cast `decision: decision as 'uphold' | 'overturn'` with no validation before decideAppeal.mutate.",
+        "The safe pattern already exists in the SAME feature folder and was simply not applied here: frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:39 defines `const isAmlReviewDecision = (value): value is AmlReviewDecision => ...` and AmlDashboardPage.tsx:149 guards `if (!isAmlReviewDecision(decision)) { alert(...); return; }` before submitting. ContentModerationPage has no equivalent guard for its action_type / appeal-decision unions.",
+        "Impact: unvalidated user input crosses the client->API boundary for a security-sensitive content-moderation decision (remove/restrict/warn on user content, uphold/overturn on appeals). Landable frontend-only fix: add `is`-narrowing guards for the moderation action-type and appeal-decision unions mirroring isAmlReviewDecision, rejecting out-of-set prompt input before mutate. The `as` casts (ContentModerationPage.tsx:139,175) are the TS smell \u2014 an `as` cast on a `window.prompt(): string | null` result is a false type assertion."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-download-no-onsuccess",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:119-127 \u2014 handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })` with ONLY an onError callback and NO onSuccess. The mutation's resolved value (the fetched PDF payload) is never consumed.",
+        "downloadPdf is `useDownloadDsaReportPdf()` imported from the generated '@ppt/api-client' (DsaReportsPage.tsx:9,45). A generated mutation hook performs the HTTP request and returns the response body; it does not itself trigger a browser save. So without an onSuccess that turns the response into a Blob + object-URL anchor click (or opens the URL), clicking Download fires the request and silently discards the PDF \u2014 the user gets nothing on the happy path.",
+        "Contrast the sibling handlers in the same file which DO wire onSuccess for their side effects: handleGenerate (DsaReportsPage.tsx:91) resets the form, handlePublish (DsaReportsPage.tsx:107) alerts success. Only the download path \u2014 the one that must materialise a file \u2014 has no success handling.",
+        "Impact: the DSA transparency-report Download button is a functional no-op on success (completeness gap); a compliance officer cannot obtain the PDF. Landable frontend-only fix: add onSuccess to save the returned blob (createObjectURL + programmatic <a download> click, then revokeObjectURL), or navigate to the report's `download_url` (already mapped at DsaReportsPage.tsx:62). Confidence medium: hook internals live in generated client and were not compiled, but the handler unconditionally drops the success value regardless."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx hardcodes English user-facing strings instead of react-i18next `t(...)`: window.prompt copy at :116 ('Enter reason for initiating Enhanced Due Diligence:'), :143 ('Enter decision (approve, reject, escalate):'), :156 ('Enter review notes:') and alert copy at :127,:131,:169,:173.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx does the same: alert() copy at :108,:112,:124; page `<h1>DSA Transparency Reports</h1>` repeated at :144,:157,:177; loading text 'Loading reports...' at :147; and a locale hardcoded to 'en-GB' in toLocaleDateString at :132.",
+        "This is inconsistent with the rest of the app and the same feature folder \u2014 ContentModerationPage.tsx wraps its equivalent prompts/errors in t('moderation.prompts.*') (e.g. :129,:118) \u2014 and violates the project's multi-locale requirement (react-i18next 16; app targets sk/cs/de/en). Slovak/Czech/German managers see raw English for AML and DSA compliance flows, and the 'en-GB' date format is wrong for those locales.",
+        "Impact: i18n regression on two compliance pages (low severity, no functional break). Landable frontend-only fix: move the hardcoded prompt/alert/title/loading strings into the i18n resource bundles and call t(...); replace the hardcoded 'en-GB' with the active i18n language for date formatting."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-messages",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:706-709 \u2014 GET /api/v1/inquiries/{id} (get_inquiry, realtor-facing detail endpoint) always returns `InquiryDetailResponse { inquiry, messages: vec![] }` with the comment `// Would fetch conversation messages`. The conversation thread is hardcoded empty, so a realtor opening any inquiry never sees the message history \u2014 a shipped endpoint whose documented `messages` field (utoipa body = InquiryDetailResponse) is a permanent stub.",
+        "Ownership/scoping above the stub is correct (get_inquiry_for_realtor(id, principal.user_id) at :690, 404 on miss), so this is purely a completeness gap, not a security one. Landable backend-only fix: add a repo method to fetch the inquiry's conversation messages scoped to the same inquiry id and populate `messages` instead of `vec![]`.",
+        "Compare mark_as_read (:724) in the same file which is fully implemented \u2014 the detail read path was left as a placeholder while the mutation path shipped."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-reality-server-test-connection-always-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:243-253 \u2014 POST /api/v1/agencies/{id}/imports/test-connection (test_connection) is a stub: after membership + SSRF URL validation it unconditionally returns `TestConnectionResponse { success: true, message: \"Connection to provider '{}' successful (stub response)\", sample_record_count: Some(42) }` regardless of the real provider/credentials/feed reachability. An agency member testing a mistyped or dead feed URL gets a green 'Connection successful' with a fake 42-record count, which will mislead them into saving a broken import config.",
+        "The endpoint is mounted on the authenticated agency-import router and is documented as returning a real test result (utoipa body = TestConnectionResponse), so the placeholder is user-visible in production, not dev-only. Landable backend-only fix: perform an actual (timeout-bounded) fetch/parse of `data.feed_url` for the given provider and report real success/failure + record count, or explicitly gate the stub behind a 'not yet implemented' 501 rather than reporting a fabricated success."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-link-account-noop-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:376-385 \u2014 PortalUserService::link_account returns `LinkResult::Success` after only a `tracing::info!(\"Account linking requested\")`; the pm_user_id is never persisted (comment: `// Note: This would need a new repo method to update pm_user_id specifically / For now, we indicate success as the linking logic is in place`). Callers are told linking succeeded when nothing was written.",
+        "Mitigating context (why this is low, not medium): the same fn documents at :364-366 that the link concept is retired (pm_user_id column dropped from the PortalUser projection, guard kept for API compat), so the no-op may be intentional dead code. Landable follow-up: either remove the endpoint/return a explicit gone/unsupported status, or (if linking is still expected) implement the persistence \u2014 but do not keep reporting Success for a write that does not happen."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data-shipped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65 \u2014 the authenticated /[locale]/profile page renders entirely fabricated data: `const profile = MOCK_PROFILE` and it maps MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS. It is wrapped in ProtectedRoute (SSO), so every LOGGED-IN user \u2014 regardless of identity \u2014 is shown the same hardcoded persona 'Tom\u00e1\u0161 Novotn\u00fd' with fake PII (email t.novotny@email.sk, phone +421 911 123 456 in _mock.ts:46-57), fake stats (12 active listings, 47 deals, 4.7\u2605), and 3 fabricated listings/activity/reviews.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts \u2014 the mock is the sole data source; there is no live-data path. The page comment itself concedes it is a stub: 'Once /users/me + /listings/by-owner endpoints land, replace MOCK_* with live data via the SDK' \u2014 i.e. a known placeholder shipped on a real authenticated route, not a dev-only fixture.",
+        "Impact: a real user reaching their own profile sees someone else's fabricated identity/PII presented as their account \u2014 a completeness gap that reads as a privacy/trust bug on a public portal. Contrast PopularNeighbourhoods.tsx, whose hardcoded set is documented as an intentional curated marketing surface; this profile mock is not intentional, it is unfinished.",
+        "Landable frontend-only fix: gate the page on real /users/me + listings-by-owner SDK calls (with loading/empty/error states), or hide the tabbed profile behind a 'coming soon' state, until the endpoints land \u2014 do not render fabricated PII to authenticated users."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-fetch-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 \u2014 the shared-comparison loader fetches each id from `${getApiBase()}/api/v1/listings/${id}` and does `return response.json() as Promise<ListingSummary>` with NO runtime shape validation, then pushes result.value straight into addToComparison \u2192 rendered by ComparisonView (used on /[locale]/compare/page.tsx).",
+        "This diverges from the repo's own established hardening for the SAME endpoint family: src/app/[locale]/listings/[slug]/page.tsx:88-89 routes every 200 body through parseListingDetail() precisely because (its comment) 'A 200 does not guarantee a well-formed body \u2026 Rendering such a body crashes SSR'. The comparison path has no equivalent normalizer.",
+        "ComparisonView.tsx derefs listing fields per-row (row.getValue(l) across listings.map at lines 271/301); a malformed-but-truthy 200 (proxy partial response, wrong-typed collection field) for a shared id can therefore surface a broken/crashing comparison client-side instead of being dropped.",
+        "Landable frontend-only fix: validate/normalize each fetched body (reuse a ListingSummary parser mirroring parseListingDetail) before addToComparison; drop ids whose body fails the shape check, consistent with the existing per-id Promise.allSettled graceful-degrade."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-localstorage-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:37-46 \u2014 on mount the provider does `const parsed = JSON.parse(stored); setListings(parsed)` with no Array.isArray/shape guard. The try/catch only defends against JSON syntax errors, not a syntactically-valid-but-wrong-typed value (e.g. `\"null\"`, `\"{}\"`, `\"42\"`).",
+        "A non-array `parsed` then flows into listings and every consumer assumes an array: the save effect (line 55) reads `listings.length`, isInComparison (line 66) calls `.some`, removeFromComparison `.filter`, ComparisonView `.map` \u2014 all throw on a non-array, and ComparisonProvider wraps a large part of the app, so a single corrupted `ppt-comparison` localStorage entry (user/extension-editable) hard-crashes the surrounding tree with no recovery (the catch that would clear it is only around JSON.parse).",
+        "Landable frontend-only fix: after JSON.parse, guard `if (!Array.isArray(parsed)) { localStorage.removeItem(STORAGE_KEY); return; }` (and ideally filter to items with a string id) before setListings \u2014 mirrors the defensive-parse pattern already used in lib/auth-token.ts getSession()."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2583 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2584 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2585 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2586 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2588 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2589 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2590 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR #2591 open since 2026-07-30 (21d idle); noise-log only"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-20.md; head -1 matches # 2026-08-20",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; no open decay violations",
+      "observed": "true",
+      "expected": "true",
+      "notes": "no decay this run \u2014 every open item is inside 14d window"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run \u2014 no adversarial pass to record",
+      "observed": "0 new plans",
+      "expected": "each new plan documented"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans in staged diff",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan on staged .research/",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder rot in brief",
+      "observed": "no hits",
+      "expected": "no hits"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in plans/ or plans/_archive/",
+      "observed": "0 lost",
+      "expected": "0 lost"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "prior=8 now=8",
+      "expected": "now>=prior"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length bounds",
+      "observed": "0",
+      "expected": "<=3 total, <=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "no-op \u2014 Phase 1.6 skipped",
+      "observed": "pm_cursor bounds ok",
+      "expected": "no-op or artifacts valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
