@@ -252,26 +252,6 @@
       }
     },
     {
-      "id": "gh-issue-2807",
-      "action": "Follow-up: second voice-device link path (ai/voice.rs) can now 23505-violate the new active-device unique index (PR #2796) (Closes #2807)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-20T10:27:59Z (#2807)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-20T10:27:59Z",
-      "issue_ref": {
-        "number": 2807,
-        "url": "https://github.com/martin-janci/property-management/issues/2807",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "code-review-reality-server-inquiry-detail-empty-messages",
       "action": "reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inquiry conversation thread",
       "owner_role": "pm-backend",

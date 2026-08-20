@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-20T11:17:12Z",
+  "generated": "2026-08-20T14:32:29Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -22,54 +22,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-reality-server-inquiry-detail-empty-messages",
-      "branch": "auto-impl/code-review-reality-server-inquiry-detai-f9087b11",
-      "status": "review",
-      "claimed_at": "2026-08-20T12:31:54Z",
-      "last_updated": "2026-08-20T12:59:00Z",
-      "status_changed_at": "2026-08-20T12:59:00Z",
-      "pr_number": 2813,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2813",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2813 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=list_inquiry_messages added+wired; db clippy clean; server-crate verify blocked by swagger-ui 403 egress + no-DB (env, CI is gate)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "code-review-reality-server-saved-search-watermark-discard",
-      "branch": "auto-impl/code-review-reality-server-saved-search-58e9baa7",
-      "status": "review",
-      "claimed_at": "2026-08-20T12:31:54Z",
-      "last_updated": "2026-08-20T13:02:29Z",
-      "status_changed_at": "2026-08-20T12:51:31Z",
-      "pr_number": 2812,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2812",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2812 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=atomic enqueue+watermark tx (enqueue_and_advance_saved_search) mirrors favorite_alerts; worker warns on error; 3 non-ignored sqlx::test regressions; db+reality-server clippy+fmt green (db/rs tests deferred to CI, no local pg)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
     }
   ]
 }

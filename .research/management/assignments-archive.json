@@ -4957,6 +4957,30 @@
       "merge_attempted_at": "2026-08-07T14:24:13Z"
     },
     {
+      "task_id": "code-review-reality-server-inquiry-detail-empty-messages",
+      "branch": "auto-impl/code-review-reality-server-inquiry-detai-f9087b11",
+      "status": "merged",
+      "claimed_at": "2026-08-20T12:31:54Z",
+      "last_updated": "2026-08-20T14:32:29Z",
+      "status_changed_at": "2026-08-20T14:32:29Z",
+      "pr_number": 2813,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2813",
+      "merged_at": "2026-08-20T14:30:47Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2813 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=list_inquiry_messages added+wired; db clippy clean; server-crate verify blocked by swagger-ui 403 egress + no-DB (env, CI is gate)",
+      "reviewer_summary": "verdict=approve note=correct-fix-ownership-verified-upstream-test-solid-ci-green-posted-as-comment-self-pr",
+      "last_reviewed_oid": "e5ba24b4969bdbb75d059fff844b8ecfbbd6565d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-20T14:29:16Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-reality-server-inquiry-email-stub",
       "branch": "auto-impl/code-review-reality-server-inquiry-email-7bb5bd71",
       "status": "merged",
@@ -5175,6 +5199,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-09T08:12:08Z"
+    },
+    {
+      "task_id": "code-review-reality-server-saved-search-watermark-discard",
+      "branch": "auto-impl/code-review-reality-server-saved-search-58e9baa7",
+      "status": "merged",
+      "claimed_at": "2026-08-20T12:31:54Z",
+      "last_updated": "2026-08-20T14:32:29Z",
+      "status_changed_at": "2026-08-20T14:32:29Z",
+      "pr_number": 2812,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2812",
+      "merged_at": "2026-08-20T14:31:06Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2812 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=atomic enqueue+watermark tx (enqueue_and_advance_saved_search) mirrors favorite_alerts; worker warns on error; 3 non-ignored sqlx::test regressions; db+reality-server clippy+fmt green (db/rs tests deferred to CI, no local pg)",
+      "reviewer_summary": "verdict=approve note=atomic-tx-fix-correct-tests-green-posted-as-comment-self-pr",
+      "last_reviewed_oid": "20f7fc3a475f680cdd2f24b3a60a5cf92413d84f",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-20T14:29:16Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-reality-server-sso-backslash-redirect",
@@ -15033,5 +15081,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-20T12:40:35Z"
+  "archived_at": "2026-08-20T14:32:35Z"
 }
