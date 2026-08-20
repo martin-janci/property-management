@@ -294,3 +294,78 @@ async fn oauth_exchange_relink_reuses_single_device_row(pool: PgPool) {
         "re-link must not accumulate active device rows (found {active_count})"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Test 6: two CONCURRENT exchanges for the same (org, user, platform) still
+// leave exactly one active device row.
+//
+// Regression for #2794: the handler used to enforce the "at most one active
+// device per tuple" invariant with a sequential SELECT -> branch ->
+// INSERT-or-UPDATE, which two concurrent re-link requests can interleave so
+// that both observe "no existing row" and both INSERT — two active rows. The
+// invariant is now enforced at the DATABASE level by the
+// `uniq_voice_devices_active_org_user_platform` partial UNIQUE index
+// (WHERE is_active = TRUE, migration 00231), and the handler upserts via a
+// single atomic `INSERT ... ON CONFLICT ... DO UPDATE`. Firing both requests
+// with `tokio::join!` and asserting `COUNT(*) WHERE is_active = TRUE = 1`
+// proves the DB serialises the race down to one active row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn oauth_exchange_concurrent_relink_keeps_single_active_row(pool: PgPool) {
+    std::env::set_var("INTEGRATION_ENCRYPTION_KEY", TEST_KEY);
+
+    let config = TestConfig::default();
+    let secret = config.jwt_secret.clone();
+    let app = TestApp::with_config(pool.clone(), config).await;
+
+    let user_id = Uuid::new_v4();
+    let org_id = Uuid::new_v4();
+    let token = mint_access_token(&secret, user_id, Some(org_id));
+
+    let build_req = || {
+        Request::builder()
+            .method(Method::POST)
+            .uri(EXCHANGE_URI)
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .body(Body::from(exchange_body().to_string()))
+            .unwrap()
+    };
+
+    // Fire both linking requests concurrently for the same (org, user, platform).
+    // `TestApp::execute` clones the router internally, so both borrow `&app`.
+    let (resp1, resp2) = tokio::join!(app.execute(build_req()), app.execute(build_req()));
+
+    // Both requests succeed: one INSERTs, the other conflicts on the partial
+    // UNIQUE index and takes the DO UPDATE (token rotation) branch.
+    assert_eq!(
+        resp1.status,
+        StatusCode::OK,
+        "concurrent link #1 must succeed, got {}: {}",
+        resp1.status,
+        resp1.text()
+    );
+    assert_eq!(
+        resp2.status,
+        StatusCode::OK,
+        "concurrent link #2 must succeed, got {}: {}",
+        resp2.status,
+        resp2.text()
+    );
+
+    // The DB is the single writer of the invariant: exactly one active row.
+    let active_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM voice_assistant_devices \
+         WHERE organization_id = $1 AND user_id = $2 AND platform = $3 AND is_active = TRUE",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .bind("alexa")
+    .fetch_one(&pool)
+    .await
+    .expect("count active voice devices");
+
+    assert_eq!(
+        active_count, 1,
+        "concurrent re-link race must not produce >1 active device row (found {active_count})"
+    );
+}

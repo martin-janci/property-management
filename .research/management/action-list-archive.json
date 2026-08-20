@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-18T18:35:51Z",
+  "archived_at": "2026-08-20T06:35:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4659,6 +4659,30 @@
       "dispatcher_reconciled": "assignment merged as PR #2727 on 2026-08-09; action-list in-progress→done (dispatcher hygiene 2026-08-09)"
     },
     {
+      "id": "code-review-reality-server-create-review-body-length-uncapped",
+      "action": "reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs possible)",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-19T06:25:44Z (score=1 conf=high vector=security) | gc1-reconcile 2026-08-20T06:35:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T06:25:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2799,
+        "merged_at": "2026-08-20T06:33:46Z",
+        "at": "2026-08-20T06:35:31Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-db-error-leak-to-client",
       "action": "reality-server leaks raw sqlx::Error strings to internet-facing clients, bypassing util::errors::db_error",
       "owner_role": "pm-security",
@@ -5046,6 +5070,30 @@
         "merged_pr": 2668,
         "merged_at": "2026-08-06T10:11:34Z",
         "at": "2026-08-06T10:20:23Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-submit-report-no-rate-limit",
+      "action": "reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + moderation-queue bloat",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-19T06:25:44Z (score=2 conf=high vector=security) | gc1-reconcile 2026-08-20T06:35:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T06:25:44Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-reality-server-submit-report-no-rate-limit.md",
+        "score": 2,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2800,
+        "merged_at": "2026-08-20T06:33:46Z",
+        "at": "2026-08-20T06:35:31Z"
       }
     },
     {
@@ -13742,6 +13790,61 @@
         "merged_pr": 2790,
         "merged_at": "2026-08-17T22:27:21Z",
         "at": "2026-08-17T22:28:23Z"
+      }
+    },
+    {
+      "id": "gh-issue-2802",
+      "action": "CI: backend test-shard jobs hang ~90m and get cancelled → merge pipeline wedged (dev base + all backend PRs) (Closes #2802)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-19T12:29:21Z (#2802) | gc1-reconcile 2026-08-20T04:30:44Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-19T12:29:21Z",
+      "issue_ref": {
+        "number": 2802,
+        "url": "https://github.com/martin-janci/property-management/issues/2802",
+        "labels": [
+          "bug",
+          "infra",
+          "dispatcher"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2803,
+        "merged_at": "2026-08-20T04:30:05Z",
+        "at": "2026-08-20T04:30:44Z"
+      }
+    },
+    {
+      "id": "gh-issue-2804",
+      "action": "Follow-up: scope the RUSTSEC-2026-0258 (h2 DoS) advisory ignore to h2 0.3.x only (PR #2798) (Closes #2804)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-20T04:25:21Z (#2804) | gc1-reconcile 2026-08-20T06:35:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-20T04:25:21Z",
+      "issue_ref": {
+        "number": 2804,
+        "url": "https://github.com/martin-janci/property-management/issues/2804",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2805,
+        "merged_at": "2026-08-20T06:33:46Z",
+        "at": "2026-08-20T06:35:31Z"
       }
     },
     {

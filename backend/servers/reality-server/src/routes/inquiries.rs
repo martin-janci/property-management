@@ -84,7 +84,7 @@ fn validate_inquiry_lengths(
 /// front of reality-server, update that env var or the key derivation degrades:
 /// too-low trusts an attacker-supplied hop; too-high collapses everyone into
 /// the shared bucket (safe but over-throttling).
-fn client_ip_bucket(headers: &HeaderMap, trusted_hops: usize) -> Uuid {
+pub(crate) fn client_ip_bucket(headers: &HeaderMap, trusted_hops: usize) -> Uuid {
     let trusted_hops = trusted_hops.max(1);
 
     let client = headers

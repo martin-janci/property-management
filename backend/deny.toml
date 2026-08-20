@@ -85,12 +85,40 @@ ignore = [
     # advisory describes. Transitive-only, low-severity, no reachable exposure.
     # Follow-up: remove once the AWS SDK drops its hyper 0.14 / h2 0.3
     # dependency (smithy on hyper 1.x).
+    #
+    # SCOPING (GH #2804, follow-up to #2798): this advisory-id ignore is
+    # global by ID — cargo-deny (0.19.x) has NO way to scope a *vulnerability*
+    # ignore to a crate version: the `{ id, reason }` form rejects a `crate`
+    # key, and a bare package-spec entry in this list only suppresses *yanked*
+    # status, not advisories. So we cannot write "ignore RUSTSEC-2026-0258 for
+    # h2 0.3.x only" here directly. To keep the suppression effectively scoped
+    # to the un-upgradable 0.3.x line — and make a real, unpatched h2 on the
+    # 0.4.x line trip the build instead of being silently swept up — the 0.4.x
+    # patched-floor is enforced by the `[bans]` half-range guard on h2 below
+    # (same mechanism as the quick-xml pin). A genuinely new vuln on 0.4.x
+    # would in any case carry a different RUSTSEC id and is NOT covered by this
+    # ignore.
     "RUSTSEC-2026-0258",
 ]
 
 [bans]
 multiple-versions = "warn"
 deny = [
+    # h2 0.4.x PATCHED-FLOOR GUARD for RUSTSEC-2026-0258 (GH #2804, follow-up
+    # to #2798). RUSTSEC-2026-0258 (empty-DATA-frame DoS) is patched in
+    # h2 0.4.16; the residual h2 0.3.27 line is transitively pinned by the AWS
+    # SDK / hyper 0.14, has no patched upstream release, and is advisory-ignored
+    # above. cargo-deny cannot scope a vulnerability ignore to a crate version,
+    # so this ban does the scoping instead: it denies any h2 on the 0.4.x line
+    # BELOW the 0.4.16 patch floor. Effect — the advisory ignore stays confined
+    # to the un-upgradable 0.3.x line, while an unpatched h2 0.4.0–0.4.15 slipping
+    # into Cargo.lock (a downgrade or an in-range Dependabot bump) trips
+    # `cargo deny check bans` instead of being silently swept up by the ignore.
+    # It intentionally does NOT touch h2 0.3.x (< 0.4.0, allowed) or the patched
+    # h2 >= 0.4.16 (outside the range, allowed). Lift once the AWS SDK drops its
+    # hyper 0.14 / h2 0.3 dependency and the ignore above can be removed.
+    { name = "h2", version = ">=0.4.0, <0.4.16", reason = "RUSTSEC-2026-0258 patched-floor guard — h2 on the 0.4.x line must be >= 0.4.16; the advisory ignore is scoped to the un-upgradable 0.3.x line, so an unpatched 0.4.0–0.4.15 must trip cargo-deny rather than be swept up by it (GH #2804/#2798)" },
+
     # quick-xml XXE / billion-laughs SECURITY PIN (GH #2084, supersedes the
     # advisory pinned-dependency-guard.yml workflow). The inbound OTA parsers
     # in backend/crates/integrations/src/booking/ota_xml.rs rely on quick-xml
