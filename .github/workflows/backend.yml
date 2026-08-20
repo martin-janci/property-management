@@ -216,15 +216,26 @@ jobs:
       # behind it — PAP-68).
       # Same unbounded-apt hazard as the test-shard fonts step (issue #2802):
       # this runs in the REQUIRED `check` context, so a stalled mirror here
-      # would wedge the merge gate identically. Bound the network waits + add a
-      # step timeout backstop.
+      # would wedge the merge gate identically. apt's `Acquire::*::Timeout`
+      # alone does not kill a connection that stalls mid-transfer of an open
+      # https stream, so wrap each apt invocation in a PROCESS-level `timeout 90`
+      # (killed by signal on stall) inside a 3× retry loop, and force IPv4 to
+      # dodge the azure mirror's stalling IPv6 path. Same rationale as the fonts
+      # step below.
       - name: Install ripgrep (required by RLS enforcement check)
         if: needs.changes.outputs.backend == 'true'
-        timeout-minutes: 5
+        timeout-minutes: 6
         run: |
-          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
-          sudo apt-get $APT_OPTS update -qq
-          sudo apt-get $APT_OPTS install -y -qq ripgrep
+          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::ForceIPv4=true"
+          for attempt in 1 2 3; do
+            echo "::group::apt attempt $attempt"
+            if sudo timeout 90 apt-get $APT_OPTS update -qq && \
+               sudo timeout 90 apt-get $APT_OPTS install -y -qq ripgrep; then
+              echo "::endgroup::"; echo "ripgrep install OK on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "apt attempt $attempt stalled/failed; retrying after 10s"; sleep 10
+          done
+          echo "::error::ripgrep install failed after 3 attempts"; exit 1
 
       - name: RLS Enforcement Check
         if: needs.changes.outputs.backend == 'true'
@@ -443,16 +454,31 @@ jobs:
       # ~90 min on random shards (e.g. run 32215620438 shard 1: step ran
       # 04:35:38 → cancelled 06:05:13, so the test steps never started), which
       # cancelled the shard and failed the required `test` roll-up on `dev` and
-      # every backend PR. `Acquire::*::Timeout` caps each request, `Retries`
-      # rides out transient stalls, and the step-level `timeout-minutes` is a
-      # hard backstop so a pathological hang fails fast (minutes) instead of
-      # eating the whole 90-minute job budget.
+      # every backend PR. A first mitigation (`Acquire::*::Timeout` + a 5-min
+      # step timeout) did NOT hold: on 2026-08-19 20:45 the step still ate its
+      # full budget and hard-failed, because apt's `Acquire::*::Timeout` does
+      # not reliably kill a connection that stalls MID-TRANSFER of an already
+      # open https stream (azure mirror `Ign`s, fallback to archive.ubuntu.com,
+      # then `noble-security InRelease` hangs mid-body). The reliable fix is a
+      # PROCESS-level kill: wrap each apt invocation in `timeout 90` so a stalled
+      # stream is killed by signal, wrapped in a 3× retry loop so a transient
+      # single-mirror stall recovers on the next attempt. `ForceIPv4` avoids the
+      # azure mirror's frequently-stalling IPv6 path. fonts-liberation is
+      # test-critical (voting.rs / financial.rs load LiberationSans via genpdf
+      # and hard-error if absent), so this step must stay fatal — no `|| true`.
       - name: Install PDF report fonts
-        timeout-minutes: 5
+        timeout-minutes: 6
         run: |
-          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
-          sudo apt-get $APT_OPTS update
-          sudo apt-get $APT_OPTS install -y --no-install-recommends fonts-liberation
+          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::ForceIPv4=true"
+          for attempt in 1 2 3; do
+            echo "::group::apt attempt $attempt"
+            if sudo timeout 90 apt-get $APT_OPTS update && \
+               sudo timeout 90 apt-get $APT_OPTS install -y --no-install-recommends fonts-liberation; then
+              echo "::endgroup::"; echo "fonts install OK on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "apt attempt $attempt stalled/failed; retrying after 10s"; sleep 10
+          done
+          echo "::error::fonts-liberation install failed after 3 attempts"; exit 1
 
       # The archive extracts the FULL target/debug/deps test-binary set into
       # /tmp — tens of GB. Dependabot PR #2471's shard 3 died with ENOSPC
