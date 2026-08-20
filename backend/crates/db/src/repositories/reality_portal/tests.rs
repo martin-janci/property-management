@@ -183,3 +183,47 @@ async fn realtor_b_cannot_respond_to_realtor_a_inquiry() {
 
     cleanup(&pool, &emails).await;
 }
+
+/// Regression: the inquiry-detail path must surface persisted conversation
+/// messages instead of the previously hardcoded empty array.
+///
+/// Reproduces the bug where `get_inquiry` returned `messages: vec![]`
+/// unconditionally: a realtor responded to an inquiry (persisting a row in
+/// `inquiry_messages`), yet the detail response showed an empty thread.
+/// `list_inquiry_messages` — the method the detail handler now calls — must
+/// return the persisted message.
+#[tokio::test]
+#[ignore = "requires Postgres test database (test_pool); run with --ignored"]
+async fn list_inquiry_messages_returns_persisted_message() {
+    let pool = test_pool().await;
+    let emails = ["realtor_a_msgs@test.sk"];
+    cleanup(&pool, &emails).await;
+
+    let realtor_a = seed_portal_user(&pool, emails[0]).await;
+    let listing = seed_listing(&pool, realtor_a).await;
+    let inquiry_id = seed_inquiry(&pool, listing, realtor_a).await;
+
+    let repo = RealityPortalRepository::new(pool.clone());
+
+    // Persist a message on the conversation thread.
+    repo.respond_to_inquiry(inquiry_id, realtor_a, "Thanks, viewing on Friday?")
+        .await
+        .expect("repo call failed")
+        .expect("realtor A must be able to respond to own inquiry");
+
+    // The detail handler now loads the thread via this method.
+    let messages = repo
+        .list_inquiry_messages(inquiry_id)
+        .await
+        .expect("list_inquiry_messages failed");
+
+    assert_eq!(
+        messages.len(),
+        1,
+        "The persisted message must appear in the inquiry detail thread"
+    );
+    assert_eq!(messages[0].message, "Thanks, viewing on Friday?");
+    assert_eq!(messages[0].sender_type, "realtor");
+
+    cleanup(&pool, &emails).await;
+}

@@ -703,10 +703,24 @@ pub async fn get_inquiry(
         .mark_inquiry_read_for_realtor(id, principal.user_id)
         .await;
 
-    Ok(Json(InquiryDetailResponse {
-        inquiry,
-        messages: vec![], // Would fetch conversation messages
-    }))
+    // Load the persisted conversation thread. Ownership is already verified by
+    // the `get_inquiry_for_realtor` lookup above, so scoping by inquiry id is
+    // safe here.
+    let messages = state
+        .reality_portal_repo
+        .list_inquiry_messages(id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("list inquiry messages", e))?
+        .into_iter()
+        .map(|m| InquiryMessageResponse {
+            id: m.id,
+            sender_type: m.sender_type,
+            message: m.message,
+            created_at: m.created_at.to_rfc3339(),
+        })
+        .collect();
+
+    Ok(Json(InquiryDetailResponse { inquiry, messages }))
 }
 
 /// Mark inquiry as read.
