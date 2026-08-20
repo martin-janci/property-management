@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-20T04:30:05Z",
+  "generated": "2026-08-20T04:45:38Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -114,18 +114,18 @@
     {
       "task_id": "gh-issue-2804",
       "branch": "auto-impl/gh-issue-2804-5fb78670",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-20T04:30:05Z",
-      "last_updated": "2026-08-20T04:30:05Z",
-      "status_changed_at": "2026-08-20T04:30:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-20T04:45:38Z",
+      "status_changed_at": "2026-08-20T04:45:38Z",
+      "pr_number": 2805,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2805",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2805 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=cargo-deny cannot version-scope advisory ignores; enforced 0.3.x scoping via [bans] h2 >=0.4.0,<0.4.16 guard (quick-xml pattern); cargo deny check all green; deny.toml outside pm-tech-lead globs=advisory drift",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
