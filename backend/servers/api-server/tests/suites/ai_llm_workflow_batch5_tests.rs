@@ -873,6 +873,94 @@ async fn delete_voice_device_returns_no_content(pool: PgPool) {
     );
 }
 
+// POST /api/v1/ai/llm/voice/devices — re-link keeps exactly one active row.
+//
+// Regression for #2807: PR #2796 added the global partial UNIQUE index
+// `uniq_voice_devices_active_org_user_platform` (WHERE is_active = TRUE,
+// migration 00231) but only converted the OAuth-exchange *webhook* path to the
+// atomic upsert. This second link path (`ai/voice.rs::link_voice_device`, the
+// React-Native voice-linking flow) still went through a plain
+// `INSERT ... RETURNING *`, so a re-link for an (org, user, platform) that
+// already had an active row hit a Postgres `23505` unique-violation which the
+// handler mapped to an opaque 500. Routing it through `upsert_active_voice_device`
+// makes the DB the single writer: the first link inserts, the re-link conflicts
+// on the index and rotates the row in place. This test links twice for the same
+// tuple and asserts both calls are non-500 (201) and leave exactly one active
+// row — it fails on the pre-fix plain-insert path with a 500 on the second call.
+//
+// The OAuth platform is intentionally left unconfigured in the test env, so
+// `exchange_voice_oauth_tokens` returns no tokens and the device is stored with
+// a NULL access token (the dev/testing path) — exercising the link write itself
+// without a live provider.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn link_voice_device_relink_keeps_single_active_row(pool: PgPool) {
+    create_llm_tables(&pool).await;
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "llm-voice-relink").await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let session = app.session(token, org_id);
+
+    let link = |name: &str| {
+        session
+            .post("/api/v1/ai/llm/voice/devices")
+            .json(json!({
+                "platform": "alexa",
+                "auth_code": "test-auth-code",
+                "device_name": name,
+                "unit_id": null,
+            }))
+            .build()
+    };
+
+    // First link: inserts the device row.
+    let resp1 = app.execute(link("Kitchen Echo")).await;
+    assert_eq!(
+        resp1.status,
+        StatusCode::CREATED,
+        "first voice-device link must return 201; body={}",
+        resp1.text()
+    );
+
+    // Re-link for the same (org, user, platform): pre-fix this hit the new
+    // partial UNIQUE index and returned a 500; the upsert must make it idempotent.
+    let resp2 = app.execute(link("Kitchen Echo v2")).await;
+    assert_eq!(
+        resp2.status,
+        StatusCode::CREATED,
+        "re-link must upsert (not 23505 -> 500); body={}",
+        resp2.text()
+    );
+
+    // The DB is the single writer of the invariant: exactly one active row.
+    let active_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM voice_assistant_devices \
+         WHERE organization_id = $1 AND user_id = $2 AND platform = $3 AND is_active = TRUE",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .bind("alexa")
+    .fetch_one(&pool)
+    .await
+    .expect("count active voice devices");
+    assert_eq!(
+        active_count, 1,
+        "re-link must not accumulate active device rows (found {active_count})"
+    );
+
+    // The device_id (row id) is stable across the re-link: the upsert rotated the
+    // existing row rather than minting a new one.
+    let id1: Uuid = resp1.json::<serde_json::Value>()["device_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("first link returns a device_id");
+    let id2: Uuid = resp2.json::<serde_json::Value>()["device_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("re-link returns a device_id");
+    assert_eq!(id1, id2, "re-link must preserve the existing device row id");
+}
+
 // =============================================================================
 // ai/llm.rs — statistics and requests (3 endpoints)
 // =============================================================================

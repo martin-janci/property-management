@@ -86,10 +86,19 @@ pub(crate) async fn link_voice_device(
         }
     };
 
+    // #2807: route through the same single-writer upsert the OAuth-exchange
+    // webhook path uses. The `uniq_voice_devices_active_org_user_platform`
+    // partial UNIQUE index (migration 00231) constrains *every* insert into the
+    // table, so a plain `create_voice_device` here raised a `23505`
+    // unique-violation (surfaced as an opaque 500) whenever the caller re-linked
+    // a device that already had an active row for this (org, user, platform).
+    // The upsert makes the DB the arbiter: first link inserts, a re-link
+    // conflicts on the index and rotates the tokens on the existing row in
+    // place, keeping `device_id` stable and one active row per tuple.
     let device = state
         .llm_document_repo
-        .create_voice_device(
-            &mut **rls.conn(),
+        .upsert_active_voice_device(
+            rls.conn(),
             tenant_id,
             user_id,
             req.unit_id,
