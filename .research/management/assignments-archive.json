@@ -2675,6 +2675,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-voice-read-handlers-fabricate-data-retry2",
+      "branch": "auto-impl/code-review-api-core-voice-read-handlers-079ef66f",
+      "status": "failed",
+      "claimed_at": "2026-08-20T18:29:49Z",
+      "last_updated": "2026-08-20T18:32:27Z",
+      "status_changed_at": "2026-08-20T18:32:27Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed-on-dev; action_check_balance no longer fabricates (success:false,data:None) + regression test present; empty diff vs dev, no PR needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-voice-report-fault-not-persisted",
       "branch": "auto-impl/code-review-api-core-voice-report-fault-34a8b68f",
       "status": "merged",
@@ -15081,5 +15103,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-20T14:32:35Z"
+  "archived_at": "2026-08-20T18:33:01Z"
 }

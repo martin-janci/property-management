@@ -284,21 +284,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "code-review-api-core-voice-read-handlers-fabricate-data-retry2",
-      "action": "backend/servers/api-server/src/services/voice_commands.rs:235 action_check_balance returns a hardcoded response ('Your current balance is zero. You have no outstanding fees.') with data { balance: 0.0, currency: EUR } and success:true, rega [retry 2/2 of failed code-review-api-core-voice-read-handlers-fabricate-data]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-08-20T18:27:43Z (retry_of=code-review-api-core-voice-read-handlers-fabricate-data reason=failed-no-pr cooldown_ok newest_failure=2026-08-13T16:44:05Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-20T18:27:43Z",
-      "retry_of": "code-review-api-core-voice-read-handlers-fabricate-data",
-      "retry_round": 2,
-      "last_updated": "2026-08-20T18:29:49Z"
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
