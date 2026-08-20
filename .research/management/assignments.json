@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-20T02:32:50Z",
+  "generated": "2026-08-20T04:30:05Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -112,25 +112,25 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "gh-issue-2802",
-      "branch": "auto-impl/gh-issue-2802-4acbf280",
-      "status": "review",
-      "claimed_at": "2026-08-19T16:31:31Z",
-      "last_updated": "2026-08-20T02:32:50Z",
-      "status_changed_at": "2026-08-19T16:44:19Z",
-      "pr_number": 2803,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2803",
+      "task_id": "gh-issue-2804",
+      "branch": "auto-impl/gh-issue-2804-5fb78670",
+      "status": "in-progress",
+      "claimed_at": "2026-08-20T04:30:05Z",
+      "last_updated": "2026-08-20T04:30:05Z",
+      "status_changed_at": "2026-08-20T04:30:05Z",
+      "pr_number": null,
+      "pr_url": null,
       "merged_at": null,
-      "specialist": "generic",
-      "implementer_summary": "pr=2803 status=done specialist=generic scope_drift=true note=real cause = unbounded apt-get in test-shard fonts step hanging 90m on stalled mirror (role-root log is cosmetic healthcheck noise); bounded apt timeouts+retries+step-timeout in .github/workflows/backend.yml; needs green CI to confirm [dispatcher 2026-08-20 Phase5.7 keystone repair: apt steps hardened (process-level timeout 90 + 3x retry + ForceIPv4), pushed 5c449bc; awaiting CI re-run]",
+      "specialist": null,
+      "implementer_summary": null,
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": true,
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     }
   ]

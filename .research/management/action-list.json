@@ -303,23 +303,22 @@
       }
     },
     {
-      "id": "gh-issue-2802",
-      "action": "CI: backend test-shard jobs hang ~90m and get cancelled → merge pipeline wedged (dev base + all backend PRs) (Closes #2802)",
+      "id": "gh-issue-2804",
+      "action": "Follow-up: scope the RUSTSEC-2026-0258 (h2 DoS) advisory ignore to h2 0.3.x only (PR #2798) (Closes #2804)",
       "owner_role": "pm-tech-lead",
-      "priority": "high",
+      "priority": "medium",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-19T12:29:21Z (#2802)",
+      "source": "dispatcher-issue-ingest 2026-08-20T04:25:21Z (#2804)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-19T12:29:21Z",
+      "first_open_at": "2026-08-20T04:25:21Z",
       "issue_ref": {
-        "number": 2802,
-        "url": "https://github.com/martin-janci/property-management/issues/2802",
+        "number": 2804,
+        "url": "https://github.com/martin-janci/property-management/issues/2804",
         "labels": [
-          "bug",
-          "infra",
-          "dispatcher"
+          "follow-up",
+          "from-merged-review"
         ]
       }
     }
