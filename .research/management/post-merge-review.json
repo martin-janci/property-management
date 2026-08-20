@@ -1,9 +1,25 @@
 {
-  "generated": "2026-08-18T18:33:38Z",
+  "generated": "2026-08-20T02:28:41Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-20T02:28:41Z",
+      "prs_scanned": 2,
+      "clean": [
+        2795
+      ],
+      "with_issues": [
+        {
+          "pr": 2798,
+          "issue": 2804,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "h2 RUSTSEC-2026-0258 ignore is a bare advisory-ID (global); scope to h2 0.3.x so a future 0.4.x<0.4.16 regression on the reachable axum/hyper-1 server path still trips cargo-deny"
+        }
+      ]
+    },
     {
       "run_at": "2026-08-18T18:33:38Z",
       "prs_scanned": 15,
@@ -488,11 +504,11 @@
           "issue": 2630,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
+          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) — clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage — no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
         }
       ],
       "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run — auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) — still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
     },
     {
       "run_at": "2026-08-02T12:20:00Z",
@@ -538,31 +554,7 @@
       ],
       "with_issues": [],
       "skipped_already_reviewed": [],
-      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard \u2014 exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) \u2014 all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 \u2014 still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
-    },
-    {
-      "run_at": "2026-08-01T06:15:42Z",
-      "prs_scanned": 10,
-      "clean": [
-        2567,
-        2571,
-        2619,
-        2566,
-        2565,
-        2569,
-        2570,
-        2482,
-        2618
-      ],
-      "with_issues": [
-        {
-          "pr": 2549,
-          "issue": 2621,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "reality-web layout-revalidate records untrusted Host as target_tenant on pre-auth (503/401) paths"
-        }
-      ]
+      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard — exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) — all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 — still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
     }
   ]
 }
