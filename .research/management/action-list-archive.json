@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-20T10:36:46Z",
+  "archived_at": "2026-08-20T12:40:35Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3278,6 +3278,20 @@
         "merged_at": null,
         "at": "2026-08-13T12:25:29Z"
       }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-timing-cmp-retry2",
+      "action": "[DROPPED: already landed on dev 07615b3 — ghost retry] backend/servers/api-server/src/routes/voice_webhooks.rs:959 — webhook signature is verified with a non-constant-time comparison: `Ok(signature == expected)`, where `expected` is the base64 HMAC-SHA256 of the body. String `==` short-circuits [retry 2/2 of failed code-review-api-handlers-voice-webhook-timing-cmp]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-20T12:28:58Z (retry_of=code-review-api-handlers-voice-webhook-timing-cmp reason=failed-no-pr cooldown_ok newest_failure=2026-08-13T10:38:43Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-20T12:28:58Z",
+      "retry_of": "code-review-api-handlers-voice-webhook-timing-cmp",
+      "retry_round": 2
     },
     {
       "id": "code-review-api-handlers-voice-webhook-token-authbypass",

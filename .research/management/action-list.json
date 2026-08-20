@@ -270,6 +270,40 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-messages",
+      "action": "reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inquiry conversation thread",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-20T12:28:58Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-20T12:28:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-server-saved-search-watermark-discard",
+      "action": "reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing duplicate alerts on the next due run",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-08-20T12:28:58Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-20T12:28:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-07-30T03:23:02Z"
