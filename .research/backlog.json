@@ -8665,7 +8665,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 2,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "reality-server segment review 2026-08-19"
       ],
@@ -8680,7 +8680,12 @@
       ],
       "created_at": "2026-08-19",
       "updated_at": "2026-08-19",
-      "plan": "plans/code-review-reality-server-submit-report-no-rate-limit.md"
+      "plan": "plans/code-review-reality-server-submit-report-no-rate-limit.md",
+      "reconciled": {
+        "at": "2026-08-20T10:27:25Z",
+        "assignment_status": "merged",
+        "pr_number": 2800
+      }
     },
     {
       "id": "code-review-reality-server-list-my-reports-total-page-length",
@@ -8688,7 +8693,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "reality-server segment review 2026-08-19"
       ],
@@ -8703,7 +8708,12 @@
       ],
       "created_at": "2026-08-19",
       "updated_at": "2026-08-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-20T10:27:25Z",
+        "assignment_status": "merged",
+        "pr_number": 2801
+      }
     },
     {
       "id": "code-review-reality-server-create-review-body-length-uncapped",
@@ -8711,7 +8721,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "reality-server segment review 2026-08-19"
       ],
@@ -8725,7 +8735,68 @@
       ],
       "created_at": "2026-08-19",
       "updated_at": "2026-08-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-20T10:27:25Z",
+        "assignment_status": "merged",
+        "pr_number": 2799
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiry-detail-empty-messages",
+      "title": "reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inquiry conversation thread",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:706-709 — get_inquiry_detail returns `InquiryDetailResponse { inquiry, messages: vec![] }` with the inline comment `// Would fetch conversation messages`; the messages list is unconditionally empty regardless of what was sent on the inquiry.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:267-272 — the response type advertises `messages: Vec<InquiryMessageResponse>` documented as `Conversation messages`, so the OpenAPI schema and the KMP/Next.js clients expect a populated thread on this endpoint.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:758-797 — respond_to_inquiry DOES persist replies via `reality_portal_repo.respond_to_inquiry(id, principal.user_id, &req.message)` (returns an InquiryMessageResponse), so conversation messages exist in the DB; the detail GET simply never queries them. Net effect: a realtor opening any inquiry always sees a blank conversation even after messages have been exchanged — a stub returning hollow data on a shipped production endpoint."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-saved-search-watermark-discard",
+      "title": "reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing duplicate alerts on the next due run",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "tier1d-dispatcher-generator [reality-server]"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:237-240 — the watermark-advancing `repo.mark_saved_search_matched(&mut *conn, search.id, ids.len() as i64)` call is `let _ =`-discarded, so an UPDATE error is silently ignored and last_matched_at is not advanced.",
+        "The enqueue at :216-231 already committed (`enqueue_search_alert(...)` returned Ok and `queued += 1`), so when the subsequent mark fails the alert rows are already queued but the watermark still points at the old `since`. On the next due poll `find_new_match_listing_ids(&query, Some(since), ...)` at :197-205 re-derives the identical result set and `enqueue_search_alert` fires again — the same new listings are delivered to the user a second (and further) time.",
+        "Contrast with the sibling backend/servers/reality-server/src/services/favorite_alerts.rs:118,160-164 which deliberately wraps enqueue + watermark-advance in a single `REPEATABLE READ` transaction to keep the two writes atomic (documented against #1999). saved_search_alerts runs them as two separate autocommitted statements with the advance's Result swallowed, giving no atomicity and no failure signal. Fix: propagate/log the mark error and either advance the watermark in the same transaction as the enqueue or skip the enqueue-count so a failed advance doesn't double-notify."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-20",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
     }
   ]
 }

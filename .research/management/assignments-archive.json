@@ -3249,6 +3249,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-voice-webhook-default-secret-retry2",
+      "branch": "auto-impl/code-review-api-handlers-voice-webhook-d-2d345303",
+      "status": "merged",
+      "claimed_at": "2026-08-20T06:34:05Z",
+      "last_updated": "2026-08-20T10:26:45Z",
+      "status_changed_at": "2026-08-20T10:26:45Z",
+      "pr_number": 2806,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2806",
+      "merged_at": "2026-08-20T10:26:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2806 empty-secret fail-closed + regression test; fmt/clippy/621 lib tests green; sole cargo-test failure is PRE-EXISTING unrelated airbnb env-leak (set_var w/o remove_var), reproduces on dev, passes in isolation",
+      "reviewer_summary": "verdict=approve head_oid=0136060ef986865ee10599ae1ae136efab0495c5 note=empty+unset-secret-fail-closed-verified,regression-test-present,CI-green;posted-as-COMMENT(self-approve-blocked)",
+      "last_reviewed_oid": "0136060ef986865ee10599ae1ae136efab0495c5",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-20T10:26:45Z"
+    },
+    {
       "task_id": "code-review-api-handlers-voice-webhook-timing-cmp",
       "branch": "auto-impl/code-review-api-handlers-voice-webhook-t-c697ef3e",
       "status": "failed",
@@ -4997,6 +5019,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-06T16:17:58Z"
+    },
+    {
+      "task_id": "code-review-reality-server-list-my-reports-total-page-length",
+      "branch": "auto-impl/code-review-reality-server-list-my-repor-9772c137",
+      "status": "merged",
+      "claimed_at": "2026-08-19T06:27:35Z",
+      "last_updated": "2026-08-20T10:26:45Z",
+      "status_changed_at": "2026-08-20T10:26:45Z",
+      "pr_number": 2801,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2801",
+      "merged_at": "2026-08-20T10:26:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "[fix-round 2/3] merged origin/dev into branch; resolved additive conflict in reality-server reports_tests.rs (kept both the list_my_reports total-count regression test and dev's per-IP rate-limit tests + Arc/Duration imports); merge commit bb6dc03 pushed",
+      "reviewer_summary": "verdict=approve head_oid=bb6dc031956eb1767e65144e0f42cce17de3db56 note=prior-blockers-resolved-CI-green (posted as comment; self-approve blocked)",
+      "last_reviewed_oid": "bb6dc031956eb1767e65144e0f42cce17de3db56",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 2,
+      "merge_attempted_at": "2026-08-20T10:26:45Z"
     },
     {
       "task_id": "code-review-reality-server-listing-viewcount-hardcoded-zero",
@@ -14943,5 +14987,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-20T06:39:49Z"
+  "archived_at": "2026-08-20T10:36:46Z"
 }
