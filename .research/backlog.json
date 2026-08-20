@@ -8748,7 +8748,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator [reality-server]"
       ],
@@ -8768,7 +8768,12 @@
       "segment": "reality-server",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-08-20T16:23:17Z",
+        "assignment_status": "merged",
+        "pr_number": 2813
+      }
     },
     {
       "id": "code-review-reality-server-saved-search-watermark-discard",
@@ -8776,7 +8781,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "tier1d-dispatcher-generator [reality-server]"
       ],
@@ -8796,7 +8801,12 @@
       "segment": "reality-server",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-08-20T16:23:17Z",
+        "assignment_status": "merged",
+        "pr_number": 2812
+      }
     }
   ]
 }
