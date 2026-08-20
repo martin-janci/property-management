@@ -18,6 +18,14 @@ use sqlx::Row;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+/// Maximum length (in bytes) of a review `body`.
+///
+/// Without a cap, an authenticated user can post an arbitrary-size string that
+/// bloats DB rows, log files and the request body (multi-MiB blobs observed).
+/// 5000 mirrors the existing report-description / inquiry-message caps in this
+/// server so free-text limits stay consistent.
+const MAX_REVIEW_BODY_LEN: usize = 5000;
+
 /// Create agent reviews router.
 /// Mounted at /api/v1/realtors/:id/reviews via main.rs.
 pub fn router() -> Router<AppState> {
@@ -198,6 +206,15 @@ pub async fn create_review(
             axum::http::StatusCode::BAD_REQUEST,
             "Rating must be between 1 and 5".to_string(),
         ));
+    }
+
+    if let Some(body) = data.body.as_deref() {
+        if body.len() > MAX_REVIEW_BODY_LEN {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!("Review body must be at most {MAX_REVIEW_BODY_LEN} characters"),
+            ));
+        }
     }
 
     let mut conn = state
