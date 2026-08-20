@@ -83,7 +83,7 @@ async fn list_my_reports_total_reflects_full_count_not_page_len(pool: PgPool) {
     let user_id = Uuid::new_v4();
     sqlx::query(
         "INSERT INTO users (id, email, password_hash, name, principal_kind, status) \
-         VALUES ($1, $2, 'x', 'Rep User', 'public', 'active')",
+         VALUES ($1, $2, 'x', 'Rep User', 'platform', 'active')",
     )
     .bind(user_id)
     .bind(format!("reports-total-{user_id}@test.internal"))
