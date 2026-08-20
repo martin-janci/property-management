@@ -1486,14 +1486,19 @@ fn ct_eq_str(a: &str, b: &str) -> bool {
 
 /// Verify HMAC-SHA256 signature.
 ///
-/// Issue #2658 (#2): fails **closed** when `VOICE_WEBHOOK_SECRET` is unset.
-/// The previous `unwrap_or("default_secret")` verified against a literal
-/// present in source, letting anyone forge signatures; the sibling receivers
-/// (`PORTAL_WEBHOOK_SECRET`, `AIRBNB_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`)
-/// all fail closed, and so do we now.
+/// Issue #2658 (#2): fails **closed** when `VOICE_WEBHOOK_SECRET` is unset
+/// **or empty**. The previous `unwrap_or("default_secret")` verified against a
+/// literal present in source, letting anyone forge signatures; the sibling
+/// receivers (`PORTAL_WEBHOOK_SECRET`, `AIRBNB_WEBHOOK_SECRET`,
+/// `STRIPE_WEBHOOK_SECRET`) read the secret with `unwrap_or_default()` and then
+/// reject a blank value as "not configured" (see `routes/integrations/webhook.rs`),
+/// so an empty env var can never key the HMAC. We mirror that here: unset and
+/// empty both fail closed.
 fn verify_hmac_signature(signature: &str, body: &str) -> Result<bool, String> {
-    let secret = std::env::var("VOICE_WEBHOOK_SECRET")
-        .map_err(|_| "VOICE_WEBHOOK_SECRET is not configured".to_string())?;
+    let secret = std::env::var("VOICE_WEBHOOK_SECRET").unwrap_or_default();
+    if secret.is_empty() {
+        return Err("VOICE_WEBHOOK_SECRET is not configured".to_string());
+    }
 
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
         .map_err(|e| format!("Invalid HMAC key: {}", e))?;
