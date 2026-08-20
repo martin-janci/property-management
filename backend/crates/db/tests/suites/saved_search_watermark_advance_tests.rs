@@ -58,8 +58,11 @@ async fn seed_saved_search(repo: &RealityPortalRepository, user_id: Uuid) -> Uui
     .id
 }
 
-async fn match_count(pool: &PgPool, search_id: Uuid) -> i32 {
-    sqlx::query_scalar::<_, i32>("SELECT match_count FROM portal_saved_searches WHERE id = $1")
+async fn match_count(pool: &PgPool, search_id: Uuid) -> i64 {
+    // `match_count` is `bigint` (i64) since migration 00232 (#2814) — was
+    // `int4` before, which overflowed and permanently wedged high-traffic
+    // saved searches once the alert-advance became atomic.
+    sqlx::query_scalar::<_, i64>("SELECT match_count FROM portal_saved_searches WHERE id = $1")
         .bind(search_id)
         .fetch_one(pool)
         .await
@@ -98,7 +101,7 @@ async fn enqueue_and_advance_commits_both_writes(pool: PgPool) {
     );
     assert_eq!(
         match_count(&pool, search).await,
-        2,
+        2_i64,
         "match_count must advance by the number of matched listings",
     );
     assert!(
@@ -132,10 +135,16 @@ async fn enqueue_and_advance_with_no_matches_only_advances_watermark(pool: PgPoo
 
 /// Regression (#983): if the watermark advance fails, the enqueue must roll back
 /// so no orphaned `pending` alert is left behind. We force the advance to fail
-/// by pushing `match_count` to `i32::MAX`, so the `match_count + N` update
-/// overflows `integer` and aborts the transaction. The pre-enqueued alert row
+/// by pushing `match_count` to `i64::MAX`, so the `match_count + N` update
+/// overflows `bigint` and aborts the transaction. The pre-enqueued alert row
 /// must NOT survive, and a subsequent successful run must then queue exactly one
 /// alert — not two — proving a failed advance never causes a duplicate send.
+///
+/// Note: pre-#2814 the column was `int4` and this test primed to `i32::MAX`.
+/// Since migration 00232 widened it to `bigint`, `i32::MAX + N` fits fine —
+/// we still exercise the same rollback contract by climbing to `i64::MAX`.
+/// The realism of the prime doesn't matter; what matters is that a DB-side
+/// arithmetic failure inside the tx rolls both writes back.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn failed_watermark_advance_rolls_back_enqueue(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
@@ -143,13 +152,13 @@ async fn failed_watermark_advance_rolls_back_enqueue(pool: PgPool) {
     let search = seed_saved_search(&repo, user).await;
 
     // Force the watermark advance (`match_count = match_count + N`) to overflow
-    // int4 and abort the transaction.
+    // bigint and abort the transaction.
     sqlx::query("UPDATE portal_saved_searches SET match_count = $2 WHERE id = $1")
         .bind(search)
-        .bind(i32::MAX)
+        .bind(i64::MAX)
         .execute(&pool)
         .await
-        .expect("prime match_count to i32::MAX");
+        .expect("prime match_count to i64::MAX");
 
     let listing = Uuid::new_v4();
     let err = repo
@@ -166,7 +175,7 @@ async fn failed_watermark_advance_rolls_back_enqueue(pool: PgPool) {
     );
     assert_eq!(
         match_count(&pool, search).await,
-        i32::MAX,
+        i64::MAX,
         "the watermark must be unchanged after the aborted transaction",
     );
 
@@ -187,5 +196,54 @@ async fn failed_watermark_advance_rolls_back_enqueue(pool: PgPool) {
         repo.count_pending_search_alerts(user).await.unwrap(),
         1,
         "the retry must queue exactly one alert — a failed advance must not duplicate",
+    );
+}
+
+/// Regression (#2814): a saved search whose accumulated `match_count` is
+/// already past the old `int4` ceiling MUST continue to advance its watermark
+/// and deliver alerts. Before migration 00232 widened the column to `bigint`,
+/// `match_count + N` overflowed `integer` and the atomic-run contract
+/// (introduced by PR #2812) rolled the whole run back — so the search stopped
+/// delivering alerts forever with no self-recovery. This test locks the fix
+/// in: prime `match_count` just past `i32::MAX`, run one more advance, and
+/// prove the run commits (watermark timestamp stamped, count grows, one alert
+/// queued) rather than being rolled back.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn watermark_advances_past_i32_max_boundary(pool: PgPool) {
+    let repo = RealityPortalRepository::new(pool.clone());
+    let user = seed_portal_user(&pool, "watermark-past-i32-max@test.sk").await;
+    let search = seed_saved_search(&repo, user).await;
+
+    // Prime to a value that would have overflowed the pre-#2814 `int4` column
+    // on any non-trivial advance. `bigint` swallows this comfortably.
+    let primed: i64 = i32::MAX as i64;
+    sqlx::query("UPDATE portal_saved_searches SET match_count = $2 WHERE id = $1")
+        .bind(search)
+        .bind(primed)
+        .execute(&pool)
+        .await
+        .expect("prime match_count past i32::MAX");
+
+    let listing = Uuid::new_v4();
+    repo.enqueue_and_advance_saved_search(search, user, &[listing])
+        .await
+        .expect(
+            "advance past i32::MAX must commit — the pre-widening column overflowed here and \
+             permanently wedged the search",
+        );
+
+    assert_eq!(
+        repo.count_pending_search_alerts(user).await.unwrap(),
+        1,
+        "the run must queue exactly one alert once the ceiling is gone",
+    );
+    assert_eq!(
+        match_count(&pool, search).await,
+        primed + 1,
+        "match_count must grow past i32::MAX now that the column is bigint",
+    );
+    assert!(
+        last_matched_at_is_set(&pool, search).await,
+        "the watermark timestamp must be stamped so the cadence window restarts",
     );
 }

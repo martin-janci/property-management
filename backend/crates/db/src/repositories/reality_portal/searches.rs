@@ -133,6 +133,12 @@ impl RealityPortalRepository {
 
     /// Advance a saved search's match watermark (`last_matched_at = now()`) and
     /// add `new_matches` to its running `match_count`.
+    ///
+    /// `match_count` is stored as `bigint` (i64) — see migration 00232 and
+    /// #2814. The pre-widening `int4` column could overflow near `i32::MAX`
+    /// and wedge the search forever once PR #2812 made the advance atomic
+    /// (a failed advance rolls the enqueue back). `bigint` pushes the ceiling
+    /// far past any realistic per-search match volume.
     pub async fn mark_saved_search_matched<'e, E>(
         &self,
         executor: E,
@@ -152,7 +158,7 @@ impl RealityPortalRepository {
             "#,
         )
         .bind(id)
-        .bind(new_matches as i32)
+        .bind(new_matches)
         .execute(executor)
         .await?;
         Ok(())
