@@ -1,9 +1,29 @@
 {
-  "generated": "2026-08-20T02:28:41Z",
+  "generated": "2026-08-20T18:35:13Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-20T18:35:13Z",
+      "prs_scanned": 5,
+      "clean": [
+        2813,
+        2811,
+        2801,
+        2806
+      ],
+      "with_issues": [
+        {
+          "pr": 2812,
+          "issue": 2814,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "correctness(low): portal_saved_searches.match_count is int4 and the watermark advance is `match_count = match_count + N`. PR #2812's own new test (failed_watermark_advance_rolls_back_enqueue) proves the failure mode -- once match_count nears i32::MAX the advance overflows int4, aborts the now-atomic tx, rolls back, and the search wedges permanently: never advances last_matched_at, never sends alerts again, no self-recovery/alerting. Proposed: widen column to bigint (migration + i64), OR saturate via LEAST(match_count + N, 2147483647) so last_matched_at still advances. Latent/pre-existing (fix itself is correct & well-tested); low severity but unbounded+monotonic+silent."
+        }
+      ],
+      "note": "DISPATCHER_OWNED_COMMIT=1 (Tier 1d demand-driven vector gen, buffer starved) -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static diff review only. Window merged-to-dev 14d (>=2026-08-06), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Label-based enumeration surfaced 5 unlabeled in-window merged PRs (2812,2813,2811,2801,2806); dependabot 2751/2750 were closed-unmerged (no merged_at) and skipped; all older in-window PRs already carried post-merge-reviewed. Reviewed all 5 via fresh diff review and applied post-merge-reviewed labels so they will not resurface. 1 new issue opened (#2814 on PR #2812). Per-PR: #2812 (reality-server saved-search: makes enqueue+watermark-advance atomic in one tx via enqueue_and_advance_saved_search, propagates the previously-swallowed advance error, 3 SQLx regression tests incl. rollback-no-duplicate -- CLEAN fix; filed #2814 for the latent int4 match_count overflow edge its own test exercises). #2813 (reality-server inquiry detail: replaces hardcoded messages: vec![] with real list_inquiry_messages ordered created_at ASC; ownership pre-verified by get_inquiry_for_realtor; regression test -- clean). #2811 (api-server ai/voice link path routed through single-writer upsert_active_voice_device to respect the partial-unique active-device index from #2796; access_token now Option<&str> with COALESCE keep-existing + token_expires_at/access_token_hash kept in lock-step with the token via CASE; re-link idempotency test asserts single active row + stable device_id -- clean). #2801 (reality-server list_my_reports: total now a COUNT(*) with WHERE parity to the list query -- verified reporter_user_id + optional status filters match exactly -- instead of reports.len(); regression test -- clean). #2806 (api-server voice webhook HMAC now fails closed on empty VOICE_WEBHOOK_SECRET, not just unset, mirroring sibling PORTAL/AIRBNB/STRIPE receivers; test covers blank secret -- clean security fix). No duplicate issue: searched open issues for match_count/watermark overflow, only a closed unrelated #1627 (pagination truncation)."
+    },
     {
       "run_at": "2026-08-20T02:28:41Z",
       "prs_scanned": 2,
@@ -504,11 +524,11 @@
           "issue": 2630,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) — clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage — no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
+          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
         }
       ],
       "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run — auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) — still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
+      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
     },
     {
       "run_at": "2026-08-02T12:20:00Z",
@@ -531,30 +551,6 @@
       ],
       "skipped_already_reviewed": [],
       "note": "Tier-1d demand-driven refill (claim buffer starved: 0 honest-claimable). The 2 genuinely-new PRs since the 08:16 run are 2627 (workflow api_call.rs SSRF validator drift -> delegates to shared common::url_validation; multicast regression test) and 2626 (idempotency middleware tenant_scope drops the client X-Tenant-ID header fallback for a server-side 'global' sentinel; cross-tenant no-collide + spoofed-header tests) -- both exemplary security self-fixes, clean. To generate fresh actionable work, also reviewed 4 substantive never-reviewed in-window PRs from the 2026-07-23 data-audit wave (the 08-02/08-01 runs only ever reviewed the 15 newest by number; the older data-* wave was never labeled, so 100+ remain unlabeled but most are test-un-quarantine/docs noise). 2521 (fault KPI unification: single-source fault_counts_by_status, global==sum-of-per-org regression test) clean; 2541 (reality-web listing.viewed analytics bus+session+instrumentation, unit-tested, dataLayer/tag-manager transport is the documented design) clean; 2524 (support-audit-event docs-only definitions doc, self-declares gaps A-D) clean; 2526 -> NET-NEW #2628 (data layer unwired end-to-end). NET-NEW actionable issues: 1. Did not label PRs (mcp label-add not in scope; DISPATCHER_OWNED_COMMIT single-writer)."
-    },
-    {
-      "run_at": "2026-08-02T08:16:55Z",
-      "prs_scanned": 15,
-      "clean": [
-        2625,
-        2624,
-        2623,
-        2622,
-        2620,
-        2554,
-        2553,
-        2552,
-        2551,
-        2550,
-        2548,
-        2547,
-        2546,
-        2545,
-        2544
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Phase 2.5 24h sweep. Reviewed the 15 newest unlabeled merged PRs in the 14d window (122 unlabeled total; max_prs=15 cap). NET-NEW actionable issues: 0. Genuinely-new PRs this run: 2620 (RAG retrieval observability via metrics facade), 2622 (docs-only mobile-native analytics-parity audit), 2623 (Booking.com push auth-bypass fix + shared verify_timestamped_signature helper + Airbnb ts-parity + dedup guard — exemplary, closes gap-2528), 2624 (reality-web layout-revalidate stops recording untrusted Host as target_tenant on pre-auth paths, closes #2621), 2625 (quinn-proto 0.11.14->0.11.15 RUSTSEC-2026-0185 dep bump) — all clean, well-tested. Root cause of re-surfacing (same as 2026-07-31/08-01 notes): the 2026-07-29 run reviewed 2544/2545/2546/2547/2548/2550/2551/2552/2553/2554 but never applied the post-merge-reviewed PR label, so 10 already-reviewed PRs reappeared in the unlabeled search. Re-verified all 10 — still clean; the only prior issues from that run (2550->#2562 unwired get_dispute_kpis, 2546->#2564 S3 orphan cleanup) were since RESOLVED by merged #2572 (KPI reporting endpoint) and #2571 (org-scoped DELETE-by-file_key route). Labeled all 15 this run to stop the re-review loop."
     }
   ]
 }
