@@ -114,7 +114,11 @@ pub struct PortalSavedSearch {
     pub alerts_enabled: bool,
     pub alert_frequency: String,
     pub last_matched_at: Option<DateTime<Utc>>,
-    pub match_count: i32,
+    /// Running total of listings matched by this saved search across every
+    /// alert run. Widened to `bigint` (i64) in migration 00232 so a long-lived,
+    /// high-traffic search can never wedge itself on integer overflow — see
+    /// #2814 and the `saved_search_watermark_advance_tests` suite.
+    pub match_count: i64,
     pub last_alert_sent_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
