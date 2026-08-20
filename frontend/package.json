@@ -24,7 +24,7 @@
     "test:e2e": "pnpm -r --filter './apps/*' e2e"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.5",
+    "@biomejs/biome": "^2.5.8",
     "typescript": "^5.3.0"
   },
   "engines": {
