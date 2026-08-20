@@ -32,6 +32,17 @@ use chrono::{DateTime, Utc};
 use sqlx::{Error as SqlxError, Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
+/// Whether a database error is a transient conflict worth retrying: Postgres
+/// `40P01` deadlock_detected, `40001` serialization_failure, or `55P03`
+/// lock_not_available (a `lock_timeout` expiry). See
+/// `LlmDocumentRepository::upsert_active_voice_device` (#2794).
+fn is_retryable_upsert_error(err: &SqlxError) -> bool {
+    err.as_database_error()
+        .and_then(|db| db.code())
+        .map(|code| matches!(code.as_ref(), "40P01" | "40001" | "55P03"))
+        .unwrap_or(false)
+}
+
 /// Repository for LLM document generation operations.
 ///
 /// Stateless: every method receives an RLS-context-bearing executor. The repo
@@ -1887,42 +1898,144 @@ impl LlmDocumentRepository {
         .await
     }
 
-    /// Find the active voice device for an `(organization, user, platform)`
-    /// tuple.
+    /// Atomically upsert the single active voice device for an
+    /// `(organization_id, user_id, platform)` tuple.
     ///
-    /// This is the lookup key the OAuth-exchange (account-linking) path upserts
-    /// on: a re-link must rotate the tokens on the *existing* device row for the
-    /// tuple rather than insert an independent row. Without it, each re-link
-    /// minted a fresh `device_id` and a new row, leaving the previous row active
-    /// with its own still-usable stored token (stale-token accumulation).
-    /// Scoping to `organization_id` as well as `user_id` keeps devices a user
-    /// linked under different tenants distinct.
-    pub async fn find_active_voice_device_by_org_user_and_platform<'e, E>(
+    /// This is the account-linking (OAuth-exchange) write path. The
+    /// `uniq_voice_devices_active_org_user_platform` partial UNIQUE index
+    /// (`WHERE is_active = TRUE`, migration 00231) is the single writer of the
+    /// "at most one active device per tuple" invariant, and is the arbiter of
+    /// the `ON CONFLICT` below. On first link the row is inserted; a re-link
+    /// conflicts on that index and rotates the tokens on the existing row **in
+    /// place** — its `id`/`device_id` are preserved, and its previously stored
+    /// (now superseded) token is overwritten, so the concurrent-re-link race the
+    /// previous find -> branch -> insert/update path allowed can no longer
+    /// produce two active rows (#2794). Scoping to `organization_id` as well as
+    /// `user_id` keeps devices a user linked under different tenants distinct.
+    ///
+    /// # Concurrency (#2794 shard-3 hang)
+    ///
+    /// A bare `INSERT ... ON CONFLICT ... DO UPDATE` on a **partial** unique
+    /// index is safe for two concurrent inserts of the same key in isolation,
+    /// but the regression test fires two re-links for the same tuple at once and
+    /// the speculative-insert contention two such statements create against the
+    /// partial-index arbiter could wedge a request (and thus the CI shard) for
+    /// long enough to be cancelled rather than error out. To make this path
+    /// deterministically non-blocking we run the upsert inside a short
+    /// transaction that first takes a **per-tuple advisory transaction lock**
+    /// (`pg_advisory_xact_lock`), so concurrent re-links for the same
+    /// `(org, user, platform)` are serialized: the first inserts, the second
+    /// waits only for the first transaction to commit and then takes the
+    /// `DO UPDATE` (token-rotation) branch. `SET LOCAL lock_timeout` bounds any
+    /// wait so a pathological block fails fast instead of hanging, and the whole
+    /// attempt is retried a bounded number of times on a transient
+    /// serialization / deadlock / lock-timeout error. The connection is left in
+    /// autocommit state on return (the transaction is fully committed or rolled
+    /// back before this method returns).
+    #[allow(clippy::too_many_arguments)]
+    pub async fn upsert_active_voice_device(
         &self,
-        executor: E,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         user_id: Uuid,
+        unit_id: Option<Uuid>,
         platform: &str,
-    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as::<_, VoiceAssistantDevice>(
-            r#"
-            SELECT * FROM voice_assistant_devices
-            WHERE organization_id = $1
-              AND user_id = $2
-              AND platform = $3
-              AND is_active = TRUE
-            ORDER BY linked_at DESC
-            LIMIT 1
-            "#,
-        )
-        .bind(organization_id)
-        .bind(user_id)
-        .bind(platform)
-        .fetch_optional(executor)
-        .await
+        device_id: &str,
+        device_name: Option<&str>,
+        access_token_encrypted: &str,
+        refresh_token_encrypted: Option<&str>,
+        token_expires_at: Option<DateTime<Utc>>,
+        capabilities: serde_json::Value,
+        // Keyed HMAC-SHA256 of the access token (#2662): kept in lock-step with
+        // `access_token_encrypted` so the indexed lookup stays correct.
+        access_token_hash: Option<&[u8]>,
+    ) -> Result<VoiceAssistantDevice, SqlxError> {
+        use sqlx::Acquire;
+
+        // Stable per-tuple key for the advisory lock. Same tuple -> same key ->
+        // serialized re-links; different tuples never contend.
+        let lock_key = format!("voice_device:{organization_id}:{user_id}:{platform}");
+
+        // Bounded retry: with the advisory lock a transient serialization /
+        // deadlock is not expected, but retrying a few times is cheap insurance
+        // and, together with `lock_timeout`, guarantees this path can never
+        // block a request indefinitely.
+        const MAX_ATTEMPTS: u32 = 5;
+        let mut attempt = 0u32;
+        loop {
+            attempt += 1;
+
+            let attempt_result: Result<VoiceAssistantDevice, SqlxError> = async {
+                let mut tx = conn.begin().await?;
+
+                // Bound any lock wait (advisory lock or row lock) so a
+                // pathological block errors fast instead of hanging the shard.
+                sqlx::query("SET LOCAL lock_timeout = '15s'")
+                    .execute(&mut *tx)
+                    .await?;
+
+                // Serialize concurrent re-links for this exact tuple so two
+                // upserts never race on the partial-unique-index conflict
+                // arbiter. `hashtextextended(text, bigint) -> bigint` yields the
+                // 64-bit advisory lock key.
+                sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+                    .bind(&lock_key)
+                    .execute(&mut *tx)
+                    .await?;
+
+                let device = sqlx::query_as::<_, VoiceAssistantDevice>(
+                    r#"
+                    INSERT INTO voice_assistant_devices (
+                        organization_id, user_id, unit_id, platform, device_id,
+                        device_name, access_token_encrypted, refresh_token_encrypted,
+                        token_expires_at, capabilities, access_token_hash, linked_at
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+                    ON CONFLICT (organization_id, user_id, platform) WHERE is_active = TRUE
+                    DO UPDATE SET
+                        access_token_encrypted  = EXCLUDED.access_token_encrypted,
+                        refresh_token_encrypted = COALESCE(
+                            EXCLUDED.refresh_token_encrypted,
+                            voice_assistant_devices.refresh_token_encrypted
+                        ),
+                        token_expires_at        = EXCLUDED.token_expires_at,
+                        access_token_hash       = EXCLUDED.access_token_hash,
+                        updated_at              = NOW()
+                    RETURNING *
+                    "#,
+                )
+                .bind(organization_id)
+                .bind(user_id)
+                .bind(unit_id)
+                .bind(platform)
+                .bind(device_id)
+                .bind(device_name)
+                .bind(access_token_encrypted)
+                .bind(refresh_token_encrypted)
+                .bind(token_expires_at)
+                .bind(&capabilities)
+                .bind(access_token_hash)
+                .fetch_one(&mut *tx)
+                .await?;
+
+                tx.commit().await?;
+                Ok(device)
+            }
+            .await;
+
+            match attempt_result {
+                Ok(device) => return Ok(device),
+                Err(e) if attempt < MAX_ATTEMPTS && is_retryable_upsert_error(&e) => {
+                    tracing::warn!(
+                        attempt,
+                        error = %e,
+                        "voice device upsert hit a transient conflict; retrying",
+                    );
+                    continue;
+                }
+                Err(e) => return Err(e),
+            }
+        }
     }
 
     // =========================================================================
