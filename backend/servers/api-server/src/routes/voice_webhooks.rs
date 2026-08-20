@@ -2420,6 +2420,14 @@ fwIDAQAB
         // (Err) rather than silently verifying against a hardcoded default.
         std::env::remove_var("VOICE_WEBHOOK_SECRET");
         assert!(verify_hmac_signature(&good, body).is_err());
+
+        // ...and a *blank* secret is treated the same as unset — never key the
+        // HMAC with an empty value (mirrors the sibling PORTAL/AIRBNB/STRIPE
+        // receivers). Both a correct-looking and a bogus signature must Err.
+        std::env::set_var("VOICE_WEBHOOK_SECRET", "");
+        assert!(verify_hmac_signature(&good, body).is_err());
+        assert!(verify_hmac_signature("anything", body).is_err());
+        std::env::remove_var("VOICE_WEBHOOK_SECRET");
     }
 
     // --- ct_eq_str / voice_device_token_matches (issue #2658) -----------
