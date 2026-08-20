@@ -6,10 +6,13 @@
 //! anonymous-friendly via the optional wrapper; the list-my-reports path
 //! requires a real principal.
 
+use crate::handlers::inquiries::{InquiriesHandler, InquiryResult};
+use crate::routes::inquiries::client_ip_bucket;
 use crate::state::AppState;
 use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
 use axum::{
     extract::{Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -128,12 +131,41 @@ pub struct MyReportsQuery {
     pub offset: Option<i64>,
 }
 
+/// Enforce the per-IP anonymous report-submission throttle. Returns `Err(429)`
+/// when the client has exceeded the quota.
+///
+/// Reuses the same per-client-IP limiter and spoof-resistant bucket key as the
+/// anonymous inquiry POSTs (`state.inquiry_rate_limiters` +
+/// [`client_ip_bucket`]): the abuse profile is identical (listing-scoped
+/// anonymous POST), so a shared budget keeps the blast radius to a single
+/// state field. If an operator later needs an independent budget, split off a
+/// dedicated `state.report_rate_limiters` slot.
+async fn enforce_public_report_rate_limit(
+    state: &AppState,
+    headers: &HeaderMap,
+    listing_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let key = client_ip_bucket(headers, state.inquiry_trusted_proxy_hops);
+    let decision = state.inquiry_rate_limiters.check(key).await;
+    match InquiriesHandler::rate_limit_result(decision) {
+        Some(InquiryResult::RateLimited) => {
+            tracing::warn!(%listing_id, "Anonymous report rate limit tripped");
+            Err((
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Too many requests. Please try again in a minute.".to_string(),
+            ))
+        }
+        _ => Ok(()),
+    }
+}
+
 /// Submit a listing report (UC-23).
 ///
 /// Auth is optional — anonymous reports allowed (per screen-map
 /// `reality/report-listing`). Authenticated reports get a faster SLA because
-/// the moderator can follow up; anonymous reports still go through but should
-/// be rate-limited by IP at the moderation layer.
+/// the moderator can follow up; anonymous reports go through the same per-IP
+/// throttle enforced at the route layer (`enforce_public_report_rate_limit`,
+/// reusing the inquiry limiter) before any validation or DB work.
 #[utoipa::path(
     post,
     path = "/api/v1/reports",
@@ -149,9 +181,15 @@ pub struct MyReportsQuery {
 pub async fn submit_report(
     State(state): State<AppState>,
     OptionalRequestPrincipal(principal): OptionalRequestPrincipal,
+    headers: HeaderMap,
     Json(data): Json<SubmitReportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<SubmitReportResponse>), (axum::http::StatusCode, String)>
 {
+    // Reject anonymous floods at the routing layer BEFORE any validation or DB
+    // work — an unauthenticated attacker could otherwise bloat `listing_reports`
+    // and the moderation queue unboundedly from a single IP.
+    enforce_public_report_rate_limit(&state, &headers, data.listing_id).await?;
+
     if data.description.trim().is_empty() {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
