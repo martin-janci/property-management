@@ -284,6 +284,26 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-2816",
+      "action": "Follow-up: overflow-hardening left a parallel orphaned `saved_searches` path on int4 (PR #2815) (Closes #2816)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-08-21T08:24:07Z (#2816)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-21T08:24:07Z",
+      "issue_ref": {
+        "number": 2816,
+        "url": "https://github.com/martin-janci/property-management/issues/2816",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-08-20T20:28:24Z"
