@@ -4847,6 +4847,50 @@
       "merge_attempted_at": "2026-08-03T10:13:52Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-submission-preview-modal-orphan",
+      "branch": "auto-impl/code-review-ppt-web-ui-submission-previe-06b66faa",
+      "status": "merged",
+      "claimed_at": "2026-08-21T16:27:20Z",
+      "last_updated": "2026-08-21T16:52:08Z",
+      "status_changed_at": "2026-08-21T16:52:08Z",
+      "pr_number": 2818,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2818",
+      "merged_at": "2026-08-21T16:50:20Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2818 done: removed dead SubmissionPreviewModal+silent-catch (page has inline preview); added IG3 test; verify green (2257 tests)",
+      "reviewer_summary": "verdict=approve note=clean-scoped-dead-code-removal; deadness+silent-catch+test verified; no hot-path (comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "6f8d11a69918cd22d675d486eb321bb864b3e245",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-21T16:48:48Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-verification-badge-expired-as-soon",
+      "branch": "auto-impl/code-review-ppt-web-ui-verification-badg-27a381c4",
+      "status": "merged",
+      "claimed_at": "2026-08-21T16:27:20Z",
+      "last_updated": "2026-08-21T16:52:08Z",
+      "status_changed_at": "2026-08-21T16:52:08Z",
+      "pr_number": 2819,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2819",
+      "merged_at": "2026-08-21T16:50:15Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2819 done: expired badges render (Expired) not (Expiring soon); IG3 fails-on-dev/passes-on-fix; verify+goal-check green (2262 tests)",
+      "reviewer_summary": "verdict=approve note=correct-scoped-fix-with-failing-on-prefix-IG3-test (comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "ba322b1141d51a2ac55ce180fc97dcf4ecf6f398",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-21T16:48:48Z"
+    },
+    {
       "task_id": "code-review-reality-server-agency-members-unauth-idor",
       "branch": "auto-impl/code-review-reality-server-agency-member-b424e568",
       "status": "failed",
@@ -15125,5 +15169,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-21T10:32:36Z"
+  "archived_at": "2026-08-21T16:52:08Z"
 }
