@@ -8814,7 +8814,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -8833,7 +8833,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-21T18:24:56Z",
+        "assignment_status": "merged",
+        "pr_number": 2819
+      }
     },
     {
       "id": "code-review-ppt-web-ui-vote-detail-hardcoded-en",
@@ -8868,7 +8873,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -8887,7 +8892,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "completeness"
+      "expert": "completeness",
+      "reconciled": {
+        "at": "2026-08-21T18:24:56Z",
+        "assignment_status": "merged",
+        "pr_number": 2818
+      }
     }
   ]
 }

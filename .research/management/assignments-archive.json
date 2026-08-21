@@ -4891,6 +4891,28 @@
       "merge_attempted_at": "2026-08-21T16:48:48Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-vote-detail-hardcoded-en",
+      "branch": "auto-impl/code-review-ppt-web-ui-vote-detail-hardc-6d9304e3",
+      "status": "merged",
+      "claimed_at": "2026-08-21T16:27:20Z",
+      "last_updated": "2026-08-21T18:31:56Z",
+      "status_changed_at": "2026-08-21T18:31:56Z",
+      "pr_number": 2820,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2820",
+      "merged_at": "2026-08-21T18:29:05Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2820 done: i18n VoteDetailPage; voting.detail.* keys in 6 locales; window.prompt label via t() (matches compliance pattern); +regression test; verify green (2258); drift=pm-tech-lead owner-map artifact, all files in ppt-web",
+      "reviewer_summary": "verdict=approve note=scope-drift-false-positive-confirmed(all-8-paths-ppt-web); window.prompt-i18n matches ContentModerationPage; 37-camelCase-keys x6 locales (comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "b469ef6230d5bb14d21e1da5d88f67637450ca40",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-21T18:31:56Z"
+    },
+    {
       "task_id": "code-review-reality-server-agency-members-unauth-idor",
       "branch": "auto-impl/code-review-reality-server-agency-member-b424e568",
       "status": "failed",
@@ -15169,5 +15191,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-21T16:52:08Z"
+  "archived_at": "2026-08-21T18:32:04Z"
 }

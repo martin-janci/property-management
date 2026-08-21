@@ -304,23 +304,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "code-review-ppt-web-ui-vote-detail-hardcoded-en",
-      "action": "ppt-web VoteDetailPage hardcodes English (native window.prompt + toast titles) on i18n voting page",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-21T16:24:49Z (score=1 conf=medium vector=i18n)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-21T16:24:49Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "i18n"
-      }
     }
   ],
   "generated": "2026-08-20T20:28:24Z"
