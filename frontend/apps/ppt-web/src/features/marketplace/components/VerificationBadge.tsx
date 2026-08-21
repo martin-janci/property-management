@@ -121,14 +121,22 @@ export function VerificationBadge({
   const config = badgeConfig[badge.type];
   const classes = sizeClasses[size];
 
+  const msUntilExpiry = badge.expiresAt
+    ? new Date(badge.expiresAt).getTime() - new Date().getTime()
+    : undefined;
+  // Already past the expiry instant → expired, not "expiring soon".
+  const isExpired = msUntilExpiry !== undefined && msUntilExpiry <= 0;
+  // Only a not-yet-expired badge inside the 30-day window is "expiring soon".
   const isExpiring =
-    badge.expiresAt &&
-    new Date(badge.expiresAt).getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000;
+    msUntilExpiry !== undefined && msUntilExpiry > 0 && msUntilExpiry < 30 * 24 * 60 * 60 * 1000;
+
+  const statusSuffix = isExpired ? ' (Expired)' : isExpiring ? ' (Expiring soon)' : '';
+  const ringClass = isExpired ? 'ring-2 ring-red-400' : isExpiring ? 'ring-2 ring-orange-300' : '';
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full font-medium ${config.bgColor} ${config.textColor} ${classes.badge} ${isExpiring ? 'ring-2 ring-orange-300' : ''}`}
-      title={showTooltip ? `${config.label}${isExpiring ? ' (Expiring soon)' : ''}` : undefined}
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${config.bgColor} ${config.textColor} ${classes.badge} ${ringClass}`}
+      title={showTooltip ? `${config.label}${statusSuffix}` : undefined}
     >
       <svg
         className={classes.icon}
@@ -153,10 +161,16 @@ export function VerificationStatusBadge({
   const classes = sizeClasses[size];
   const typeLabel = verificationTypeLabels[verification.type];
 
+  const msUntilExpiry = verification.expiryDate
+    ? new Date(verification.expiryDate).getTime() - new Date().getTime()
+    : undefined;
+  // "Soon" only for a still-valid verification inside the 30-day window —
+  // an already-expired date (msUntilExpiry <= 0) must not read as expiring soon.
   const isExpiring =
     verification.status === 'verified' &&
-    verification.expiryDate &&
-    new Date(verification.expiryDate).getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000;
+    msUntilExpiry !== undefined &&
+    msUntilExpiry > 0 &&
+    msUntilExpiry < 30 * 24 * 60 * 60 * 1000;
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
