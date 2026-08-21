@@ -12841,6 +12841,28 @@
       "merge_attempted_at": "2026-08-20T12:33:56Z"
     },
     {
+      "task_id": "gh-issue-2816",
+      "branch": "auto-impl/gh-issue-2816-b4176076",
+      "status": "merged",
+      "claimed_at": "2026-08-21T08:27:05Z",
+      "last_updated": "2026-08-21T10:29:59Z",
+      "status_changed_at": "2026-08-21T10:29:59Z",
+      "pr_number": 2817,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2817",
+      "merged_at": "2026-08-21T10:29:59Z",
+      "specialist": null,
+      "implementer_summary": "pr=2817 done: removed orphaned int4 saved_searches path (7 dead PortalRepository methods + SavedSearch models + migration 00233 dropping table/RLS/trigger); grep-verified zero callers; fmt+clippy(-p db)+test --no-run clean; sqlx regen not needed (runtime query_as); live db tests need postgres",
+      "reviewer_summary": "verdict=approve note=verified-orphan-removal-ci-green-selfapprove-blocked-posted-as-comment",
+      "last_reviewed_oid": "ed8258b2c988783bdd443f6b16e9f275d8bba643",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-21T10:28:26Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -15103,5 +15125,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-20T18:33:01Z"
+  "archived_at": "2026-08-21T10:32:36Z"
 }

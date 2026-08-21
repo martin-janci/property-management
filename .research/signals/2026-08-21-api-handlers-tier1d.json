@@ -1,0 +1,48 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-21T10:30:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:168 and :307 — alexa_webhook and google_actions_webhook take `mut rls: RlsConnection` as a handler argument, making a validated Property-Management principal a hard precondition for the handler body to run.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:229-232 — RlsConnection::from_request_parts first runs ValidatedTenantExtractor::from_request_parts; backend/crates/api-core/src/extractors/tenant.rs:135-137 — ValidatedTenantExtractor first requires AuthUser (a valid PM JWT Bearer token) and returns 401 when it is absent/invalid. Extractors run before the handler body.",
+        "backend/servers/api-server/src/lib.rs:339-342 — the router is nested at /api/v1/webhooks/voice with no auth-injecting middleware that supplies a synthetic tenant context, so nothing provides the JWT the extractor demands.",
+        "CONSEQUENCE: real Alexa / Google Assistant requests authenticate with a platform SIGNATURE (verified inside the handler at voice_webhooks.rs:172 via verify_alexa_signature and :312 via verify_google_request), never a PM JWT. The RlsConnection extractor therefore rejects every genuine platform request with 401 BEFORE the signature-verification and VoiceCommandProcessor logic ever executes — the two primary voice endpoints are unreachable by the callers they exist to serve, and the entire hardened Alexa/Google signature surface is dead code in production.",
+        "CORROBORATION (correct pattern): sibling signature-authenticated webhooks in backend/servers/api-server/src/routes/portal_webhooks.rs:318-321 take only State/HeaderMap/Bytes and require no JWT; and voice_webhooks.rs oauth_token_refresh at :694-707 documents that `voice_assistant_devices` is NOT RLS-bound and does its device lookup on RlsPool::acquire_public() (context-cleared) with an explicit ownership check — that is the pattern alexa_webhook/google_actions_webhook should use (authz is already done by authenticate_voice_user matching the presented voice token, voice_webhooks.rs:1574-1681).",
+        "WHY UNCAUGHT: the unit tests deliberately do not exercise the handler entrypoints — voice_webhooks.rs:1826-1838 states the four handlers holding a live DB connection are left to an integration harness — so the extractor never runs in-test and the reachability regression is invisible to the suite.",
+        "FIX DIRECTION: drop `RlsConnection` from alexa_webhook/google_actions_webhook and acquire the connection internally after signature verification via RlsPool::acquire_public() (mirroring oauth_token_refresh and portal_webhooks), keeping authenticate_voice_user as the authorization gate."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:172-178 — alexa_webhook returns on every error branch (signature failure :174, body parse :181, authenticate_voice_user :197, process_command :224/:246) WITHOUT calling rls.release().await, even though the RlsConnection was already extracted (a pooled connection acquired and RLS context set) before the body ran.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:197-220 — the Drop impl preserves correctness (it spawns spawn_clear_context to clear the RLS GUCs before the pooled connection is reused) BUT logs a WARN \"RlsConnection dropped without calling release()\" and spawns an extra task on every such drop.",
+        "INCONSISTENCY: google_actions_webhook DOES release on its verify-failure branch (voice_webhooks.rs:314) but NOT on its authenticate_voice_user (:331) or process_command (:361) error returns — the release discipline is applied unevenly across branches within the same file.",
+        "IMPACT: low — no cross-tenant leak (Drop clears context), but because these are public, attacker-reachable endpoints, a flood of failing requests (e.g. bad signatures) each spawns a cleanup task and emits a WARN, an avoidable log-spam / task-churn amplification. NOTE: this is partly subsumed by the reachability finding above — if the handlers are moved off RlsConnection to acquire_public(), these branches no longer hold an RlsConnection to release."
+      ]
+    }
+  ]
+}
