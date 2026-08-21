@@ -1,0 +1,364 @@
+{
+  "generated": "2026-08-21T20:00:00Z",
+  "signals": [
+    {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-104 — EmailExecutor::execute() only logs via tracing::info! and returns ActionResult::success(...); the real send is commented out ('// Simulate email sending (in production, integrate with EmailService)' / '// email_service.send_template_email(...).await?'). No EmailService is ever invoked.",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — EmailExecutor::new() is registered into the production ActionRegistry (ActionRegistry::new()), which WorkflowExecutorTask uses in prod (workflow_executor.rs:236 and :286). This is the executor that runs for real workflow 'send email' actions, not a test double.",
+        "backend/servers/api-server/src/services/workflow_executor.rs:951-972 + :894 — a successful (stub) execute() marks the execution step step_status::COMPLETED and then set_execution_status(COMPLETED). Every automation email a manager configures is silently dropped while the workflow reports success; no error is surfaced to any channel. Data loss on a user-facing feature (Epic 94 workflow actions)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:159-205 — NotificationExecutor::execute() only emits a tracing::info! and returns ActionResult::success; the real send is a comment ('// In production, this would actually send notifications via the notification service'). No NotificationService / push_fanout call is made.",
+        "notification.rs:116-131 — resolve_target() for Role and Building never queries users; it returns literal placeholder strings format!(\"role:{}\", role) / format!(\"building:{}\", resolved) (comments: 'In production, this would query users with the role' / '...building residents'), so even once a send is wired the recipient set is unresolved garbage.",
+        "backend/servers/api-server/src/services/actions/mod.rs:205 — NotificationExecutor::new() is registered in the production ActionRegistry consumed by WorkflowExecutorTask (workflow_executor.rs:236,286); a workflow 'notify' action records step COMPLETED + execution COMPLETED (workflow_executor.rs:951-972,894) while delivering nothing. Sibling stub to the email-action finding — same false-success class, distinct executor."
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 — action_contact_manager() returns a hardcoded placeholder email (manager@example.com / spravca@example.com / spravce@example.com) in response_text, ssml, the VoiceCard.content, AND the data.manager_email field, all with success:true. It never resolves the device's building/org real manager contact (the VoiceAssistantDevice parameter is bound as _device and unused).",
+        "This is the live Alexa/Google voice-webhook handler (voice_commands is the production voice command dispatcher and a repeat churn hotspot). A resident asking their assistant to 'contact the manager' is read back a fabricated example.com address as if it were real contact info.",
+        "Distinct from the 2026-08-20 api-core finding on action_book_facility (voice-facility-contact-fabricated-success): different intent handler, different defect class — fabricated PII/contact data returned to the user rather than a fabricated booking-success."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:168 and :307 — alexa_webhook and google_actions_webhook take `mut rls: RlsConnection` as a handler argument, making a validated Property-Management principal a hard precondition for the handler body to run.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:229-232 — RlsConnection::from_request_parts first runs ValidatedTenantExtractor::from_request_parts; backend/crates/api-core/src/extractors/tenant.rs:135-137 — ValidatedTenantExtractor first requires AuthUser (a valid PM JWT Bearer token) and returns 401 when it is absent/invalid. Extractors run before the handler body.",
+        "backend/servers/api-server/src/lib.rs:339-342 — the router is nested at /api/v1/webhooks/voice with no auth-injecting middleware that supplies a synthetic tenant context, so nothing provides the JWT the extractor demands.",
+        "CONSEQUENCE: real Alexa / Google Assistant requests authenticate with a platform SIGNATURE (verified inside the handler at voice_webhooks.rs:172 via verify_alexa_signature and :312 via verify_google_request), never a PM JWT. The RlsConnection extractor therefore rejects every genuine platform request with 401 BEFORE the signature-verification and VoiceCommandProcessor logic ever executes — the two primary voice endpoints are unreachable by the callers they exist to serve, and the entire hardened Alexa/Google signature surface is dead code in production.",
+        "CORROBORATION (correct pattern): sibling signature-authenticated webhooks in backend/servers/api-server/src/routes/portal_webhooks.rs:318-321 take only State/HeaderMap/Bytes and require no JWT; and voice_webhooks.rs oauth_token_refresh at :694-707 documents that `voice_assistant_devices` is NOT RLS-bound and does its device lookup on RlsPool::acquire_public() (context-cleared) with an explicit ownership check — that is the pattern alexa_webhook/google_actions_webhook should use (authz is already done by authenticate_voice_user matching the presented voice token, voice_webhooks.rs:1574-1681).",
+        "WHY UNCAUGHT: the unit tests deliberately do not exercise the handler entrypoints — voice_webhooks.rs:1826-1838 states the four handlers holding a live DB connection are left to an integration harness — so the extractor never runs in-test and the reachability regression is invisible to the suite.",
+        "FIX DIRECTION: drop `RlsConnection` from alexa_webhook/google_actions_webhook and acquire the connection internally after signature verification via RlsPool::acquire_public() (mirroring oauth_token_refresh and portal_webhooks), keeping authenticate_voice_user as the authorization gate."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:172-178 — alexa_webhook returns on every error branch (signature failure :174, body parse :181, authenticate_voice_user :197, process_command :224/:246) WITHOUT calling rls.release().await, even though the RlsConnection was already extracted (a pooled connection acquired and RLS context set) before the body ran.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:197-220 — the Drop impl preserves correctness (it spawns spawn_clear_context to clear the RLS GUCs before the pooled connection is reused) BUT logs a WARN \"RlsConnection dropped without calling release()\" and spawns an extra task on every such drop.",
+        "INCONSISTENCY: google_actions_webhook DOES release on its verify-failure branch (voice_webhooks.rs:314) but NOT on its authenticate_voice_user (:331) or process_command (:361) error returns — the release discipline is applied unevenly across branches within the same file.",
+        "IMPACT: low — no cross-tenant leak (Drop clears context), but because these are public, attacker-reachable endpoints, a flood of failing requests (e.g. bad signatures) each spawns a cleanup task and emits a WARN, an avoidable log-spam / task-churn amplification. NOTE: this is partly subsumed by the reachability finding above — if the handlers are moved off RlsConnection to acquire_public(), these branches no longer hold an RlsConnection to release."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-no-token-expiry-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 — initializeAuth() (the mount-time effect) branch `if (storedUser && accessToken)` carries the comment 'Validate the token is not expired (basic check)' but then just calls setUser(storedUser). No expiry validation is performed: an expired access token persisted in localStorage is accepted verbatim and the app renders an authenticated session on cold boot.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:221-233 — decodeJwtPayload() already extracts the unverified JWT claims (used by deriveActiveRole) and could read `exp`, so the guard the comment promises is trivially implementable with an existing utility; it is simply not wired into the cold-boot path.",
+        "Impact/reachability: on every reload with a stale token the user is treated as authenticated until the first API call returns 401 and the axios response interceptor (lib/api.ts:218-221) fires onUnauthorizedCallback. During that window protected UI can flash and deriveActiveRole runs against an expired token. Self-recovering via the 401 flow (hence medium, not high), but the comment/code mismatch is a real auth-correctness gap on the app's core session-init path."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-verification-badge-expired-as-soon",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:124-126 — isExpiring = expiresAt && (new Date(expiresAt).getTime() - Date.now() < 30d) has NO lower bound; an already-EXPIRED badge yields a negative delta which is also < 30d, so an expired verification renders as a still-valid badge with an orange ring and '(Expiring soon)' tooltip instead of expired/invalid — a misleading trust signal on the marketplace",
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:155-158 — same unguarded window in VerificationStatusBadge (status==='verified' && expiryDate && delta < 30d): a verified record whose expiryDate is in the past shows orange 'Expires: <date> (Soon)' rather than an expired state. Fix: require 0 <= delta < 30d (and surface a distinct expired state when delta < 0)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-vote-detail-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:131 — handleCancel captures the cancellation reason via native window.prompt('Reason for cancelling this vote?'): hardcoded English + native browser dialog anti-pattern on a business-critical governance flow, even though this file uses react-i18next (15 t() calls) and the app ships sk/cs/de/en",
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:120,122 — runAction shows toast titles built from English template literals `${label} done` / `${label} failed` (label = 'Cancel'/'Publish'/'Close'), and L143 'Failed to post comment' plus 'Unexpected error' fallbacks (L124,146) are hardcoded English strings that stay English in every non-EN locale"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-submission-preview-modal-orphan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx — exported from components/index.ts barrel (Epic 41) but rendered by NO page: GuestReportSubmissionPage.tsx implements its own inline Step-2 preview (L508-514 '<h2>Submission Preview</h2>') and never imports the modal; SubmissionListItem/SubmissionStatus pages don't use it either. Orphaned/dead component duplicating the inline preview",
+        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx:80-86 — its handleConfirm catch{} silently swallows onConfirm() failures (only resets progress to 0, no error toast/message), and the progress bar is fake simulated progress (setInterval incrementing to MAX_SIMULATED_PROGRESS), so if this component is ever wired to a real regulatory submission it would hide failures from the user"
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "churn window 2026-08-19..2026-08-21",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched backend/servers/api-server/src/routes/voice_webhooks.rs since last run (voice OAuth exchange, single-active-device, empty-secret fail-closed)",
+        "runs_seen=3 (was 2 at 2026-08-17); repeat-emit — score_delta suppressed per cumulative-signal rule"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/reality_portal/searches.rs",
+      "type": "churn-hotspot",
+      "source": "churn window 2026-08-19..2026-08-21",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched backend/crates/db/src/repositories/reality_portal/searches.rs since last run (PR #2812 watermark-advance error, PR #2815 int4→bigint widen, PR #2817 orphan int4 path removal)"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-21",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Previous routine run at 2026-08-19T04:36:00Z; current run 2026-08-21T20:00:00Z (~61h gap, >36h threshold)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: npm-minor-patch group (32 updates)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: cargo-minor-patch group (9 updates)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: androidx.compose:compose-bom 2026.06.01→2026.08.00"
+      ]
+    },
+    {
+      "id": "resolved-by-pr-2820-code-review-ppt-web-ui-vote-detail-hardcoded-en",
+      "type": "resolved-by-pr",
+      "source": "PR #2820",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #2820 title matches backlog item id code-review-ppt-web-ui-vote-detail-hardcoded-en; row promoted done via resolution check"
+      ]
+    },
+    {
+      "id": "resolved-by-pr-2819-code-review-ppt-web-ui-verification-badge-expired-as-soon",
+      "type": "resolved-by-pr",
+      "source": "PR #2819",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #2819 title matches backlog item id code-review-ppt-web-ui-verification-badge-expired-as-soon; row promoted done via resolution check"
+      ]
+    },
+    {
+      "id": "resolved-by-pr-2818-code-review-ppt-web-ui-submission-preview-modal-orphan",
+      "type": "resolved-by-pr",
+      "source": "PR #2818",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #2818 title matches backlog item id code-review-ppt-web-ui-submission-preview-modal-orphan; row promoted done via resolution check"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-21.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursor/seen/history diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal not double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8 filter len == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "per new plan, brief annotation adversarial pass",
+      "observed": "both matched",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count/metadata/headings/mode/caps/files-on-disk",
+      "observed": "2 plans, all valid",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures this run",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "all present",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count NOW>=HEAD",
+      "observed": "8>=8",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

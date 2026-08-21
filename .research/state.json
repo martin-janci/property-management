@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-19T04:36:00Z",
+  "last_run_iso": "2026-08-21T20:00:00Z",
   "last_run_ms": 60000,
-  "last_pr_seen": 2798,
-  "last_issue_seen": 2797,
-  "last_commit_sha": "bcc2d3a56e46ede13d420852db17da5765792a64",
+  "last_pr_seen": 2820,
+  "last_issue_seen": 2816,
+  "last_commit_sha": "028a662e864cce27ebc283393298cff0932f155c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -468,14 +468,19 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-17",
-      "recent_churn": 2897
+      "runs_seen": 3,
+      "last_seen": "2026-08-21",
+      "recent_churn": 3
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
       "last_seen": "2026-08-17",
       "recent_churn": 352
+    },
+    "backend/crates/db/src/repositories/reality_portal/searches.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-21",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -894,23 +899,40 @@
     "lag-warning-2026-08-19",
     "code-review-reality-server-submit-report-no-rate-limit",
     "code-review-reality-server-list-my-reports-total-page-length",
-    "code-review-reality-server-create-review-body-length-uncapped"
+    "code-review-reality-server-create-review-body-length-uncapped",
+    "code-review-api-core-email-action-stub-drops-mail",
+    "code-review-api-core-notif-action-stub-noop",
+    "code-review-api-core-voice-contact-mgr-fake-email",
+    "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+    "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
+    "code-review-ppt-web-core-authctx-no-token-expiry-check",
+    "code-review-ppt-web-ui-verification-badge-expired-as-soon",
+    "code-review-ppt-web-ui-vote-detail-hardcoded-en",
+    "code-review-ppt-web-ui-submission-preview-modal-orphan",
+    "churn-hotspot-backend/crates/db/src/repositories/reality_portal/searches.rs",
+    "lag-warning-2026-08-21",
+    "dep-update-noise-pr-2810",
+    "dep-update-noise-pr-2809",
+    "dep-update-noise-pr-2808",
+    "resolved-by-pr-2820-code-review-ppt-web-ui-vote-detail-hardcoded-en",
+    "resolved-by-pr-2819-code-review-ppt-web-ui-verification-badge-expired-as-soon",
+    "resolved-by-pr-2818-code-review-ppt-web-ui-submission-preview-modal-orphan"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-18",
+    "api-handlers": "2026-08-21",
     "api-core": "2026-08-21",
     "reality-server": "2026-08-19",
-    "ppt-web-ui": "2026-08-16",
+    "ppt-web-ui": "2026-08-21",
     "ppt-web-core": "2026-08-21",
     "reality-web": "2026-08-18",
     "mobile-rn": "2026-08-17",
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 67,
-    "vectors_created": 317,
-    "plans_created": 26,
+    "runs": 68,
+    "vectors_created": 324,
+    "plans_created": 28,
     "quiet_days": 2,
     "auto_fix_count": 0
   },

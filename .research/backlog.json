@@ -8814,13 +8814,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui]"
+        "rotating-expert-review [ppt-web-ui]",
+        "PR #2819"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:124-126 — isExpiring = expiresAt && (new Date(expiresAt).getTime() - Date.now() < 30d) has NO lower bound; an already-EXPIRED badge yields a negative delta which is also < 30d, so an expired verification renders as a still-valid badge with an orange ring and '(Expiring soon)' tooltip instead of expired/invalid — a misleading trust signal on the marketplace",
-        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:155-158 — same unguarded window in VerificationStatusBadge (status==='verified' && expiryDate && delta < 30d): a verified record whose expiryDate is in the past shows orange 'Expires: <date> (Soon)' rather than an expired state. Fix: require 0 <= delta < 30d (and surface a distinct expired state when delta < 0)"
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:155-158 — same unguarded window in VerificationStatusBadge (status==='verified' && expiryDate && delta < 30d): a verified record whose expiryDate is in the past shows orange 'Expires: <date> (Soon)' rather than an expired state. Fix: require 0 <= delta < 30d (and surface a distinct expired state when delta < 0)",
+        "resolved: PR #2819 merged 2026-08-21 — render expired verification badges as expired"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx"
@@ -8841,13 +8843,15 @@
       "vector": "i18n",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui]"
+        "rotating-expert-review [ppt-web-ui]",
+        "PR #2820"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:131 — handleCancel captures the cancellation reason via native window.prompt('Reason for cancelling this vote?'): hardcoded English + native browser dialog anti-pattern on a business-critical governance flow, even though this file uses react-i18next (15 t() calls) and the app ships sk/cs/de/en",
-        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:120,122 — runAction shows toast titles built from English template literals `${label} done` / `${label} failed` (label = 'Cancel'/'Publish'/'Close'), and L143 'Failed to post comment' plus 'Unexpected error' fallbacks (L124,146) are hardcoded English strings that stay English in every non-EN locale"
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:120,122 — runAction shows toast titles built from English template literals `${label} done` / `${label} failed` (label = 'Cancel'/'Publish'/'Close'), and L143 'Failed to post comment' plus 'Unexpected error' fallbacks (L124,146) are hardcoded English strings that stay English in every non-EN locale",
+        "resolved: PR #2820 merged 2026-08-21 — i18n VoteDetailPage user-facing strings"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx"
@@ -8868,13 +8872,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui]"
+        "rotating-expert-review [ppt-web-ui]",
+        "PR #2818"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx — exported from components/index.ts barrel (Epic 41) but rendered by NO page: GuestReportSubmissionPage.tsx implements its own inline Step-2 preview (L508-514 '<h2>Submission Preview</h2>') and never imports the modal; SubmissionListItem/SubmissionStatus pages don't use it either. Orphaned/dead component duplicating the inline preview",
-        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx:80-86 — its handleConfirm catch{} silently swallows onConfirm() failures (only resets progress to 0, no error toast/message), and the progress bar is fake simulated progress (setInterval incrementing to MAX_SIMULATED_PROGRESS), so if this component is ever wired to a real regulatory submission it would hide failures from the user"
+        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx:80-86 — its handleConfirm catch{} silently swallows onConfirm() failures (only resets progress to 0, no error toast/message), and the progress bar is fake simulated progress (setInterval incrementing to MAX_SIMULATED_PROGRESS), so if this component is ever wired to a real regulatory submission it would hide failures from the user",
+        "resolved: PR #2818 merged 2026-08-21 — remove orphaned SubmissionPreviewModal dead component"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx"
@@ -8888,6 +8894,152 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "completeness"
+    },
+    {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "title": "EmailExecutor logs and returns success without invoking EmailService",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review [api-core] 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-104 — EmailExecutor::execute() only logs via tracing::info! and returns ActionResult::success(...); real send commented out",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — EmailExecutor::new() is registered into the production ActionRegistry used by WorkflowExecutorTask (workflow_executor.rs:236, :286)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-api-core-email-action-stub-drops-mail.md"
+    },
+    {
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "title": "NotificationExecutor never persists in-app notifications (workflow send-notification is a no-op)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-core] 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:159-205 — NotificationExecutor::execute() only builds a config, logs, and returns success; no NotificationRepository call, no delivery attempt",
+        "Registered into production ActionRegistry via mod.rs; user-visible workflow actions marked 'send notification' silently succeed with nothing dispatched"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/notification.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "title": "voice action_contact_manager fabricates a placeholder email address instead of loading manager contact",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-core] 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 — action_contact_manager builds ContactAction with hard-coded 'manager@example.com'; no repository lookup",
+        "User-facing voice output claims the manager was contacted at that fake address; no actual dispatch"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+      "title": "voice webhook uses non-RLS pool then wraps in RlsConn, bypassing tenant isolation",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs — webhook handler acquires a raw pool connection then wraps it as an RlsConn without setting the SET LOCAL app.tenant guc; downstream queries operate outside RLS policy",
+        "Path reachable via any authenticated voice webhook post; existing RLS-bypass pattern flagged Medium in prior audits"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-api-handlers-voice-webhook-rlsconn-unreachable.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
+      "title": "voice webhook releases the RLS connection on some paths and leaks it on others",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs — some early-return branches drop the RlsConn without calling reset_role/release, leaking the pool guc onto the next checkout"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-no-token-expiry-check",
+      "title": "AuthContext trusts stored access token without expiry validation on hydrate",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-core] 2026-08-21"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/auth/AuthContext.tsx — after localStorage token hydrate, the ctx eagerly reports authenticated without decoding exp, so an expired token yields authed UI until the first 401 round-trip"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/auth/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-portal-searches",
+      "title": "reality_portal/searches.rs is a churn hotspot (3 commits in 2 days)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn window 2026-08-19..2026-08-21"
+      ],
+      "evidence": [
+        "PRs #2812 (watermark-advance error), #2815 (int4→bigint widen), #2817 (orphan int4 path removal) — all touched backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
     }
   ]
 }
