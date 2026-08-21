@@ -8807,6 +8807,87 @@
         "assignment_status": "merged",
         "pr_number": 2812
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-verification-badge-expired-as-soon",
+      "title": "ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal shown as valid",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:124-126 — isExpiring = expiresAt && (new Date(expiresAt).getTime() - Date.now() < 30d) has NO lower bound; an already-EXPIRED badge yields a negative delta which is also < 30d, so an expired verification renders as a still-valid badge with an orange ring and '(Expiring soon)' tooltip instead of expired/invalid — a misleading trust signal on the marketplace",
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx:155-158 — same unguarded window in VerificationStatusBadge (status==='verified' && expiryDate && delta < 30d): a verified record whose expiryDate is in the past shows orange 'Expires: <date> (Soon)' rather than an expired state. Fix: require 0 <= delta < 30d (and surface a distinct expired state when delta < 0)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-vote-detail-hardcoded-en",
+      "title": "ppt-web VoteDetailPage hardcodes English (native window.prompt + toast titles) on i18n voting page",
+      "vector": "i18n",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:131 — handleCancel captures the cancellation reason via native window.prompt('Reason for cancelling this vote?'): hardcoded English + native browser dialog anti-pattern on a business-critical governance flow, even though this file uses react-i18next (15 t() calls) and the app ships sk/cs/de/en",
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:120,122 — runAction shows toast titles built from English template literals `${label} done` / `${label} failed` (label = 'Cancel'/'Publish'/'Close'), and L143 'Failed to post comment' plus 'Unexpected error' fallbacks (L124,146) are hardcoded English strings that stay English in every non-EN locale"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "i18n",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-submission-preview-modal-orphan",
+      "title": "ppt-web SubmissionPreviewModal is exported but rendered by no page — orphaned dead component with silent-catch",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx — exported from components/index.ts barrel (Epic 41) but rendered by NO page: GuestReportSubmissionPage.tsx implements its own inline Step-2 preview (L508-514 '<h2>Submission Preview</h2>') and never imports the modal; SubmissionListItem/SubmissionStatus pages don't use it either. Orphaned/dead component duplicating the inline preview",
+        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx:80-86 — its handleConfirm catch{} silently swallows onConfirm() failures (only resets progress to 0, no error toast/message), and the progress bar is fake simulated progress (setInterval incrementing to MAX_SIMULATED_PROGRESS), so if this component is ever wired to a real regulatory submission it would hide failures from the user"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/government-portal/components/SubmissionPreviewModal.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "completeness"
     }
   ]
 }
