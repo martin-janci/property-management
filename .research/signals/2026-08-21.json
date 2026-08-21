@@ -1,0 +1,82 @@
+{
+  "date": "2026-08-21",
+  "run_note": "buffer-low refill run — merged-PR window 2026-08-19T04:36Z..now; incorporated Phase 1.5 findings from 2026-08-21-api-core-tier1d.json into backlog.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-21",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.last_run_iso=2026-08-19T04:36:00Z; now≈2026-08-21T04:40Z → ~48h since previous routine run (threshold 36h). Trigger payload: buffer-low: claimable=6/72."
+      ]
+    },
+    {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "type": "code-review-finding",
+      "source": "api-core segment review 2026-08-21 (relayed from signals/2026-08-21-api-core-tier1d.json)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-113 — EmailExecutor::execute() only logs and returns ActionResult::success; the real EmailService.send_template_email(...) is commented out.",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — EmailExecutor::new() is registered into the production ActionRegistry consumed by WorkflowExecutorTask (workflow_executor.rs:236,286).",
+        "backend/servers/api-server/src/services/workflow_executor.rs:894,951-972 — a stub-success execute() marks step + execution as COMPLETED; workflow reports success while email is silently dropped."
+      ]
+    },
+    {
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "type": "code-review-finding",
+      "source": "api-core segment review 2026-08-21 (relayed from signals/2026-08-21-api-core-tier1d.json)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:159-209 — NotificationExecutor::execute() only logs and returns ActionResult::success; notification_service.send_batch(...) is commented out.",
+        "backend/servers/api-server/src/services/actions/notification.rs:116-131 — resolve_target() for Role/Building returns literal placeholder strings instead of expanding to user ids.",
+        "backend/servers/api-server/src/services/actions/mod.rs:205 — NotificationExecutor::new() is registered into the production ActionRegistry consumed by WorkflowExecutorTask (workflow_executor.rs:236,286)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "type": "code-review-finding",
+      "source": "api-core segment review 2026-08-21 (relayed from signals/2026-08-21-api-core-tier1d.json)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 — action_contact_manager() returns a hardcoded placeholder email (manager@example.com / spravca@example.com / spravce@example.com) in response_text, ssml, VoiceCard.content, AND data.manager_email, all with success:true; VoiceAssistantDevice parameter is bound as _device and unused.",
+        "Live Alexa/Google voice-webhook handler; distinct from the 2026-08-20 api-core finding on action_book_facility."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-08-21.md && head -1 == '# 2026-08-21'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json fields advanced vs HEAD", "observed": "last_pr_seen advanced 2798→2815; seen_signals grew; stats.runs++", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique ids in backlog", "observed": "350/350 unique", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "signal-id vs prior seen_signals with non-cumulative check", "observed": "no non-cumulative id re-emitted with non-zero score_delta", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay", "observed": "no score>8; no open items >14d without decay/drop", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "adversarial pass annotated in brief for each new plan", "observed": "2/2 annotated", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans, all 15 required sections + Mode declared + Files exist", "observed": "2 new plans, all pass", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets / private hostnames in staged .research/ diff", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no phase failures this run", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present or archived", "observed": "all present", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD archive count", "observed": "7 == 7", "expected": ">=0" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (kill switch honored, per-run caps, idempotency)", "observed": "0 actions this run; kill switch not set; per-run caps trivially satisfied", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run — gate is a no-op", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token literal in staged diff", "observed": "0", "expected": "0" }
+  ]
+}

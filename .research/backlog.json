@@ -8284,7 +8284,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8301,7 +8301,7 @@
         "backend/servers/reality-server/src/routes/realtors.rs"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-21",
       "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md"
     },
     {
@@ -8807,6 +8807,80 @@
         "assignment_status": "merged",
         "pr_number": 2812
       }
+    },
+    {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "title": "api-core EmailExecutor::execute() logs and returns success without invoking EmailService — every workflow email action silently drops",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "api-core segment review 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-113 — execute() only logs via tracing::info! then returns ActionResult::success(...); the real send is a commented-out call to email_service.send_template_email().",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — EmailExecutor::new() is registered into the production ActionRegistry consumed by WorkflowExecutorTask (workflow_executor.rs:236,286).",
+        "backend/servers/api-server/src/services/workflow_executor.rs:894,951-972 — a stub-success execute() marks the step + execution as COMPLETED; every automation email is silently dropped while the workflow reports success.",
+        "backend/servers/api-server/src/services/notification.rs:23,137,150 — EmailService is already used elsewhere (scheduler / NotificationService); wiring exists, it is just not plugged into the workflow action path."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs",
+        "backend/servers/api-server/src/services/workflow_executor.rs",
+        "backend/servers/api-server/src/services/notification.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-api-core-email-action-stub-drops-mail.md"
+    },
+    {
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "title": "api-core NotificationExecutor::execute() is a no-op stub and resolve_target() returns placeholder strings — every workflow notify action silently no-ops",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "api-core segment review 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:159-209 — execute() only calls tracing::info! then returns ActionResult::success(...); the real send is a commented-out notification_service.send_batch(...) call.",
+        "backend/servers/api-server/src/services/actions/notification.rs:116-131 — resolve_target() for Role/Building returns literal strings (format!(\"role:{}\"), format!(\"building:{}\")); recipient set is never expanded to real user ids.",
+        "backend/servers/api-server/src/services/actions/mod.rs:205 — NotificationExecutor::new() is registered into the production ActionRegistry consumed by WorkflowExecutorTask (workflow_executor.rs:236,286).",
+        "backend/servers/api-server/src/services/notification.rs:135-146,168-169 — NotificationService already exists with a real send path used by the scheduler; wiring exists, it is just not plugged into the workflow action path."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/notification.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs",
+        "backend/servers/api-server/src/services/workflow_executor.rs",
+        "backend/servers/api-server/src/services/notification.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-api-core-notif-action-stub-noop.md"
+    },
+    {
+      "id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "title": "api-core action_contact_manager() returns hardcoded manager@example.com / spravca@example.com — voice assistant reads fake contact info to residents",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-core segment review 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 — action_contact_manager() returns a hardcoded placeholder email (manager@example.com / spravca@example.com / spravce@example.com) in response_text, ssml, VoiceCard.content, AND data.manager_email, all with success:true; VoiceAssistantDevice parameter is bound as _device and unused.",
+        "This is the live Alexa/Google voice-webhook handler (voice_commands is the production voice command dispatcher and a repeat churn hotspot). A resident asking their assistant to \"contact the manager\" is read back a fabricated example.com address as if it were real contact info.",
+        "Distinct from the 2026-08-20 api-core finding on action_book_facility (voice-facility-contact-fabricated-success): different intent handler, different defect class — fabricated PII/contact data returned to the user rather than a fabricated booking-success."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
     }
   ]
 }
