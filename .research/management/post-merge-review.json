@@ -1,9 +1,23 @@
 {
-  "generated": "2026-08-20T18:35:13Z",
+  "generated": "2026-08-21T06:31:06Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-21T06:31:06Z",
+      "prs_scanned": 1,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2815,
+          "issue": 2816,
+          "findings": 1,
+          "specialist": "pm-rust-backend",
+          "note": "overflow fix left parallel orphaned saved_searches (int4) path; remove dead cluster or widen class-wide"
+        }
+      ]
+    },
     {
       "run_at": "2026-08-20T18:35:13Z",
       "prs_scanned": 5,
@@ -529,28 +543,6 @@
       ],
       "skipped_already_reviewed": [],
       "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
-    },
-    {
-      "run_at": "2026-08-02T12:20:00Z",
-      "prs_scanned": 6,
-      "clean": [
-        2627,
-        2626,
-        2541,
-        2521,
-        2524
-      ],
-      "with_issues": [
-        {
-          "pr": 2526,
-          "issue": 2628,
-          "findings": 3,
-          "specialist": "rust-backend",
-          "note": "OAuth token-usage analytics data layer (migration 00224 + models + OAuthTokenEventRepository record/usage_per_client/totals/cleanup_before, well-tested) is never wired: tree-wide grep shows the only refs are the 4 data-layer files + repositories/mod.rs export. No producer calls record() on oauth.rs token()/revoke() paths (table stays empty -> dashboard reads zeros), no platform-admin read route exposes usage_per_client/totals, cleanup_before unscheduled. Same class as #2531/#2532/#2533."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: 0 honest-claimable). The 2 genuinely-new PRs since the 08:16 run are 2627 (workflow api_call.rs SSRF validator drift -> delegates to shared common::url_validation; multicast regression test) and 2626 (idempotency middleware tenant_scope drops the client X-Tenant-ID header fallback for a server-side 'global' sentinel; cross-tenant no-collide + spoofed-header tests) -- both exemplary security self-fixes, clean. To generate fresh actionable work, also reviewed 4 substantive never-reviewed in-window PRs from the 2026-07-23 data-audit wave (the 08-02/08-01 runs only ever reviewed the 15 newest by number; the older data-* wave was never labeled, so 100+ remain unlabeled but most are test-un-quarantine/docs noise). 2521 (fault KPI unification: single-source fault_counts_by_status, global==sum-of-per-org regression test) clean; 2541 (reality-web listing.viewed analytics bus+session+instrumentation, unit-tested, dataLayer/tag-manager transport is the documented design) clean; 2524 (support-audit-event docs-only definitions doc, self-declares gaps A-D) clean; 2526 -> NET-NEW #2628 (data layer unwired end-to-end). NET-NEW actionable issues: 1. Did not label PRs (mcp label-add not in scope; DISPATCHER_OWNED_COMMIT single-writer)."
     }
   ]
 }
