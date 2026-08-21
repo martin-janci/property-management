@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-21T08:32:25Z",
+  "generated": "2026-08-21T09:03:59Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2816",
       "branch": "auto-impl/gh-issue-2816-b4176076",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-21T08:27:05Z",
-      "last_updated": "2026-08-21T08:27:05Z",
-      "status_changed_at": "2026-08-21T08:27:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-21T09:03:59Z",
+      "status_changed_at": "2026-08-21T09:03:59Z",
+      "pr_number": 2817,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2817",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=2817 done: removed orphaned int4 saved_searches path (7 dead PortalRepository methods + SavedSearch models + migration 00233 dropping table/RLS/trigger); grep-verified zero callers; fmt+clippy(-p db)+test --no-run clean; sqlx regen not needed (runtime query_as); live db tests need postgres",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
