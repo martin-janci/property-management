@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T18:35:16Z",
+  "generated": "2026-08-21T04:15:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -378,13 +378,14 @@
       "evidence": [
         "ppt-web lib/api.ts + api.test.tsx @hey-api client",
         "PR #1616 auth interceptor; PR #1830 reconcile 79.1 done",
-        "All five ACs verified: announcements/faults/documents/voting/error-handling wired"
+        "All five ACs verified: announcements/faults/documents/voting/error-handling wired",
+        "Upkeep 2026-08-21: no ppt-web api-client changes in PRs #2799-#2815 (all reality-server / api-server hardening); status stable"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-79",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-08-21",
       "screen_refs": []
     },
     {
@@ -401,11 +402,12 @@
         "AuthContext login/logout/refresh + concurrent-refresh guard + test",
         "LoginPage + AuthCallbackPage test; screen login buildStatus=shipped",
         "PR #1173 promote 79.2 done; PR #1822 SSO e2e coverage",
-        "PR #2553 (2026-07-29) \u2014 routed AuthContext cold-boot init through refreshTokenInternal (fixes stale-role init)"
+        "PR #2553 (2026-07-29) \u2014 routed AuthContext cold-boot init through refreshTokenInternal (fixes stale-role init)",
+        "Upkeep 2026-08-21: no AuthContext / OAuth surface changes in PRs #2799-#2815; last verified state holds"
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-08-21",
       "screen_refs": [
         {
           "screen_id": "ppt/login",
@@ -440,11 +442,12 @@
       "evidence": [
         "lib/errorHandler.ts parseApiError + formatValidationErrors fully tested",
         "Toast.tsx + ToastProvider + ErrorBoundary shipped in App.tsx",
-        "PR #2002 error-handler coverage; screen-map buildStatus=shipped"
+        "PR #2002 error-handler coverage; screen-map buildStatus=shipped",
+        "Upkeep 2026-08-21: no error-handler or Toast changes in PRs #2799-#2815"
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-08-21",
       "screen_refs": [
         {
           "screen_id": "ppt/accessibility-settings",
@@ -467,11 +470,12 @@
       "evidence": [
         "WebSocketContext Story 79.4; lib/websocket.ts + delivery test",
         "useIotWebSocket + messaging realtime wired",
-        "PR #1685 IoT WS; backend WS PR #1644; mobile getWsBaseUrl()"
+        "PR #1685 IoT WS; backend WS PR #1644; mobile getWsBaseUrl()",
+        "Upkeep 2026-08-21: no WS layer changes in PRs #2799-#2815; stable"
       ],
       "gaps": [],
       "epic": "epic-79",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-08-21",
       "screen_refs": [
         {
           "screen_id": "ppt/privacy-settings",

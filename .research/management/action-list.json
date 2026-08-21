@@ -284,7 +284,41 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "qa-regression-test-inquiry-detail-messages-2026-08-21",
+      "action": "reality-server /inquiries/{id} detail: add regression test asserting persisted messages are returned (PR #2813 flipped the empty-array default; behavior currently untested)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-qa 2026-08-21 (post-merge PR #2813 shipped no test file)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-21T04:15:00Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "qa-regression-test-voice-webhook-empty-secret-2026-08-21",
+      "action": "voice-webhook HMAC empty-secret fail-closed: add explicit regression test for PR #2806 (retry2 landed as a small handler patch without a dedicated test asserting the deny path)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-qa 2026-08-21 (post-merge PR #2806 shipped no test file)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-21T04:15:00Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
     }
   ],
-  "generated": "2026-08-20T20:28:24Z"
+  "generated": "2026-08-21T04:15:00Z"
 }

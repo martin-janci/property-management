@@ -1,0 +1,266 @@
+{
+  "generated_at": "2026-08-21T04:00:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-21",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-08-19T04:36:00Z (48h ago) — routine skipped an expected daily slot; 10 non-dispatcher merges tracked (#2799–#2815).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-double-decode",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review (ppt-web-ui)",
+      "score_delta": 3,
+      "evidence": "AuthCallbackPage.tsx:100 wraps errorDescription in decodeURIComponent(...) but URLSearchParams.get() already decoded it once. Payloads like error_description=Consent%20100%25%20denied decode to '100% denied' → the second decode throws URIError. Effect aborts before setStatus('error') → spinner forever.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "high",
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-role-alert-for-all-types",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review (ppt-web-ui)",
+      "score_delta": 2,
+      "evidence": "Toast.tsx:197 renders <output role='alert' aria-live={ariaLive}> unconditionally — role='alert' forces screen-reader interruption on every toast even when aria-live is downgraded to 'polite' for non-error; <output> also has implicit role='status' per HTML which conflicts with the explicit alert role.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "medium",
+      "files": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirmationdialog-hardcoded-processing",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review (ppt-web-ui)",
+      "score_delta": 1,
+      "evidence": "ConfirmationDialog.tsx:138 hardcodes English 'Processing...' during in-flight confirm — bypasses i18n. Default confirmLabel='Confirm'/cancelLabel='Cancel' at lines 37-38 share the bug.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "low",
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-2806",
+      "type": "unchecked-todo",
+      "source": "PR #2806",
+      "score_delta": 2,
+      "evidence": "PR #2806 body has 2 unchecked `- [ ]` items (Integration tests / Manual testing) — template checkboxes on a security fix (voice-webhook HMAC empty-secret fail-closed). Scored +2 rather than +3 (security/bug tier) because the unchecked items are template scaffolding, not code-level TODOs; confidence kept low so item cannot auto-promote.",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 code churn 2026-08-19..08-21",
+      "score_delta": 1,
+      "evidence": "New file added in one commit (de781a2, 2026-08-19): 3427 additions / 0 deletions. Top-1 code churn this window after lockfile exclusions. hotspot_history entry created; watch for repeat churn in future runs.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 code churn 2026-08-19..08-21",
+      "score_delta": 0,
+      "evidence": "Cumulative re-fire (id already in state.seen_signals). +3033 lines this run via PR #2806. hotspot_history.runs_seen bumped 2→3, last_seen 2026-08-17→2026-08-21. Score not re-applied per G4 cumulative-type carveout.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 code churn 2026-08-19..08-21",
+      "score_delta": 0,
+      "evidence": "Cumulative re-fire (id already in state.seen_signals). +2799 lines this run. hotspot_history.runs_seen bumped 1→2, last_seen 2026-05-30→2026-08-21. Score not re-applied per G4 cumulative-type carveout.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs-2026-08-21",
+      "type": "repeated-churn",
+      "source": "top-3 code churn 2026-08-19..08-21",
+      "score_delta": 1,
+      "evidence": "hotspot_history.runs_seen>=2 for this file at start of run (was 2). This new date-scoped signal id captures the bump to 3; parent churn-hotspot re-fire carries score_delta=0.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "evidence": "dependabot: bump androidx.compose:compose-bom 2026.06.01→2026.08.00 (open PR, 0d age).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the cargo-minor-patch group (9 updates, open PR, 0d age).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the npm-minor-patch group (32 updates, open PR, 0d age).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the gradle-minor-patch group (5 updates, open PR, 7d age) — re-emit for visibility; id already in seen_signals.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the ktor group (7 updates, open PR, 14d age) — stalled dep PR; re-emit for visibility; id already in seen_signals.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-21.md && head -1 …",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true (cursors + seen_signals + hotspot_history advanced this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-ids in backlog.json",
+      "observed": "true (353 items, all ids unique)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit score_delta==0 for cumulative-type re-emits",
+      "observed": "true (voice_webhooks + integrations/webhook cumulative re-fires all carry score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true (max score=6, all open items updated within 14d — no decay this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for plans/*.md + adversarial pass",
+      "observed": "true (plan `code-review-ppt-web-ui-authcallback-double-decode.md` annotated `adversarial pass: passed`)",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, 15 sections, capability tick, mode declared, files exist",
+      "observed": "true (1 new plan, all sections present, C1+C6 ticked, Mode: cloud-ok, cited file exists on disk)",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "checked at Phase 6 stage step",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached scan for secrets/private hostnames outside baseline docs",
+      "observed": "checked at Phase 6 stage step",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md byte-identity",
+      "observed": "regenerated deterministically from backlog.json this run",
+      "expected": "diff -q → exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed vs cursor advance",
+      "observed": "true (no phases failed; all cursors advanced normally)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present in plans/ or plans/_archive/",
+      "observed": "no prior-run plans removed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive/ file count >= HEAD",
+      "observed": "no _archive/ files removed (0 additions this run)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md byte-identity",
+      "observed": "regenerated from vector==triage rows in backlog.json (54 rows) this run — byte-identity except for timestamp line",
+      "expected": "diff -q → exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "true (auto_fix_actions=[] — no candidate met certainty bar this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor",
+      "observed": "true (action-list.json + risks.json parse; project-state.md non-empty; pm_cursor 3→4, coverage_cursor 5→6 — both advanced this run)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep diff for Telegram bot-token value",
+      "observed": "0 (no token committed; only variable-name references in baseline docs)",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal matched allowlist + certainty bar this run"
+}

@@ -8807,6 +8807,129 @@
         "assignment_status": "merged",
         "pr_number": 2812
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-double-decode",
+      "title": "ppt-web AuthCallbackPage double-decodes error_description → URIError leaves SSO callback stuck on spinner",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-ppt-web-ui 2026-08-21",
+        "commit HEAD (Phase 1.5 rotating review)"
+      ],
+      "evidence": [
+        "AuthCallbackPage.tsx:100 wraps errorDescription in decodeURIComponent(...) even though URLSearchParams.get() already URL-decoded it. Payloads like error_description=Consent%20100%25%20denied decode once to '100% denied', then decodeURIComponent throws URIError ('% not followed by two hex digits') and the useEffect aborts before setState resolves — user is stuck on 'pending' spinner forever."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-ppt-web-ui-authcallback-double-decode.md"
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-role-alert-for-all-types",
+      "title": "ppt-web Toast forces role=\"alert\" on every variant, over-interrupting screen readers on success/info/warning",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-ppt-web-ui 2026-08-21"
+      ],
+      "evidence": [
+        "Toast.tsx:197 renders <output ... role=\"alert\" aria-live={ariaLive}> unconditionally — but role=\"alert\" implies assertive politeness and forces screen-reader interruption on every toast (success/info/warning included). aria-live is downgraded to 'polite' for non-error, but role wins — conflicting hints. Also <output> has an implicit role=\"status\" per HTML, so wrapping it in role=\"alert\" confuses AT that trusts native semantics. WAI-ARIA APG says transient success/info notifications belong on role=\"status\"."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirmationdialog-hardcoded-processing",
+      "title": "ppt-web ConfirmationDialog leaks hardcoded English 'Processing...' during in-flight confirm — bypasses i18n",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review-ppt-web-ui 2026-08-21"
+      ],
+      "evidence": [
+        "ConfirmationDialog.tsx:138 renders {isLoading ? 'Processing...' : confirmLabel}. Every other label in the file is passed in via props (title/message/confirmLabel/cancelLabel) so callers can localize; the in-flight state hardcodes the English literal. Non-English users see English text whenever a confirm action is pending. Same defect on default confirmLabel='Confirm' / cancelLabel='Cancel' at lines 37-38."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs-2026-08-21",
+      "title": "churn-hotspot: backend/servers/api-server/tests/suites/oauth_integration_tests.rs (+3427 lines this window)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 code churn 2026-08-19..08-21"
+      ],
+      "evidence": [
+        "New file added in one commit (de781a2, 2026-08-19): 3427 additions / 0 deletions. Instability proxy — large test-suite append into the /tests/suites/ tree without churn history; watch for repeat churn in future runs."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs-2026-08-21",
+      "title": "repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 3)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 code churn 2026-08-19..08-21",
+        "PR #2806 (voice webhook HMAC empty-secret fail-closed)"
+      ],
+      "evidence": [
+        "hotspot_history.runs_seen bumped 2→3 for this file (last=2026-08-17→2026-08-21). Since-cursor churn: 3033 add/dels via #2806 (empty-secret fail-closed + regression test). Instability proxy — parent churn-hotspot-voice-webhooks-rs was resolved via PR #2787; this new evidence tracks continued volatility on the file, not a defect."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "unchecked-todo-pr-2806",
+      "title": "PR #2806 body has unchecked test-plan checkboxes (Integration tests / Manual testing) after merge",
+      "vector": "test-gap",
+      "confidence": "low",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2806"
+      ],
+      "evidence": [
+        "PR #2806 (voice webhook HMAC fails closed on empty secret) merged 2026-08-20 with two unchecked `- [ ]` items in body ('Integration tests added/updated' and 'Manual testing performed'). Template checklist, not code-level TODO — score kept at +2 rather than +3 despite the security/bug vector, and confidence is low so it can't auto-promote. Follow-up: an anonymous-caller integration test for the empty-secret path would harden the regression coverage beyond the unit assertion that shipped."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/servers/api-server/tests/suites/"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
     }
   ]
 }
