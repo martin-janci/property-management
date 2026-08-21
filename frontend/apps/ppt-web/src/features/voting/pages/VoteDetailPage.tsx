@@ -20,6 +20,7 @@ import {
   useVoteResults,
 } from '@ppt/api-client';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Spinner, useToast } from '../../../components';
 import { BallotQuestion, QuestionResults, QuorumTile, VoteStatusBadge } from '../components';
 import { QUORUM_TYPE_LABELS } from '../types';
@@ -36,6 +37,7 @@ function formatDateTime(value: string | null): string {
 }
 
 export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: vote, isLoading, error } = useVote(voteId);
   const { data: eligibility } = useVoteEligibility(voteId);
@@ -72,16 +74,18 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
   if (error || !vote) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <h1 className="text-lg font-semibold text-gray-900">Vote unavailable</h1>
+        <h1 className="text-lg font-semibold text-gray-900">
+          {t('voting.detail.unavailableTitle')}
+        </h1>
         <p className="mt-2 text-sm text-gray-500">
-          {error instanceof Error ? error.message : 'This vote could not be loaded.'}
+          {error instanceof Error ? error.message : t('voting.detail.unavailableBody')}
         </p>
         <button
           type="button"
           onClick={onBack}
           className="mt-6 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Back to voting
+          {t('voting.detail.backToVoting')}
         </button>
       </div>
     );
@@ -93,44 +97,54 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
 
   const handleCast = async () => {
     if (!effectiveUnit) {
-      showToast({ type: 'error', title: 'Select a unit to vote with' });
+      showToast({ type: 'error', title: t('voting.detail.selectUnitError') });
       return;
     }
     const missing = vote.questions.filter((q) => q.is_required && answers[q.id] === undefined);
     if (missing.length > 0) {
-      showToast({ type: 'error', title: 'Answer all required questions' });
+      showToast({ type: 'error', title: t('voting.detail.answerRequiredError') });
       return;
     }
     try {
       await castVote.mutateAsync({ unit_id: effectiveUnit, answers });
-      showToast({ type: 'success', title: 'Ballot submitted', message: 'Your vote was recorded.' });
+      showToast({
+        type: 'success',
+        title: t('voting.detail.ballotSubmittedTitle'),
+        message: t('voting.detail.ballotSubmittedBody'),
+      });
       setAnswers({});
     } catch (e) {
       showToast({
         type: 'error',
-        title: 'Failed to submit ballot',
-        message: e instanceof Error ? e.message : 'Unexpected error',
+        title: t('voting.detail.ballotFailedTitle'),
+        message: e instanceof Error ? e.message : t('voting.detail.unexpectedError'),
       });
     }
   };
 
-  const runAction = async (label: string, fn: () => Promise<unknown>) => {
+  const runAction = async (
+    successTitle: string,
+    failureTitle: string,
+    fn: () => Promise<unknown>
+  ) => {
     try {
       await fn();
-      showToast({ type: 'success', title: `${label} done` });
+      showToast({ type: 'success', title: successTitle });
     } catch (e) {
       showToast({
         type: 'error',
-        title: `${label} failed`,
-        message: e instanceof Error ? e.message : 'Unexpected error',
+        title: failureTitle,
+        message: e instanceof Error ? e.message : t('voting.detail.unexpectedError'),
       });
     }
   };
 
   const handleCancel = () => {
-    const reason = window.prompt('Reason for cancelling this vote?');
+    const reason = window.prompt(t('voting.detail.cancelReasonPrompt'));
     if (!reason) return;
-    void runAction('Cancel', () => cancelVote.mutateAsync({ reason }));
+    void runAction(t('voting.detail.cancelDone'), t('voting.detail.cancelFailed'), () =>
+      cancelVote.mutateAsync({ reason })
+    );
   };
 
   const handleAddComment = async () => {
@@ -141,8 +155,8 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
     } catch (e) {
       showToast({
         type: 'error',
-        title: 'Failed to post comment',
-        message: e instanceof Error ? e.message : 'Unexpected error',
+        title: t('voting.detail.commentFailedTitle'),
+        message: e instanceof Error ? e.message : t('voting.detail.unexpectedError'),
       });
     }
   };
@@ -153,7 +167,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">
-        ← Back to voting
+        ← {t('voting.detail.backToVoting')}
       </button>
 
       {/* Header */}
@@ -161,7 +175,9 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
         <div>
           <div className="flex items-center gap-2">
             <VoteStatusBadge status={vote.status} />
-            <span className="text-xs text-gray-500">Closes {formatDateTime(vote.end_at)}</span>
+            <span className="text-xs text-gray-500">
+              {t('voting.detail.closes', { date: formatDateTime(vote.end_at) })}
+            </span>
           </div>
           <h1 className="mt-1.5 text-2xl font-bold text-gray-900">{vote.title}</h1>
         </div>
@@ -170,20 +186,30 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
             <button
               type="button"
               disabled={busy}
-              onClick={() => void runAction('Publish', () => publishVote.mutateAsync({}))}
+              onClick={() =>
+                void runAction(
+                  t('voting.detail.publishDone'),
+                  t('voting.detail.publishFailed'),
+                  () => publishVote.mutateAsync({})
+                )
+              }
               className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              Publish now
+              {t('voting.detail.publishNow')}
             </button>
           ) : null}
           {vote.status === 'active' ? (
             <button
               type="button"
               disabled={busy}
-              onClick={() => void runAction('Close', () => closeVote.mutateAsync())}
+              onClick={() =>
+                void runAction(t('voting.detail.closeDone'), t('voting.detail.closeFailed'), () =>
+                  closeVote.mutateAsync()
+                )
+              }
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              Close now
+              {t('voting.detail.closeNow')}
             </button>
           ) : null}
           {vote.status === 'draft' || vote.status === 'scheduled' || vote.status === 'active' ? (
@@ -193,7 +219,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
               onClick={handleCancel}
               className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
-              Cancel vote
+              {t('voting.detail.cancelVote')}
             </button>
           ) : null}
         </div>
@@ -202,7 +228,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
       {/* Meta + quorum */}
       <div className="mt-4 flex flex-wrap items-center gap-6 rounded-lg bg-white p-4 shadow">
         <div className="text-sm">
-          <span className="text-gray-500">Quorum:</span>{' '}
+          <span className="text-gray-500">{t('voting.detail.quorumLabel')}</span>{' '}
           <span className="font-medium text-gray-900">{QUORUM_TYPE_LABELS[vote.quorum_type]}</span>
         </div>
         <QuorumTile
@@ -215,7 +241,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
       {/* Description */}
       {vote.description ? (
         <div className="mt-4 rounded-lg bg-white p-5 shadow">
-          <h2 className="text-sm font-semibold text-gray-900">Description</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t('voting.detail.description')}</h2>
           <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{vote.description}</p>
         </div>
       ) : null}
@@ -223,16 +249,16 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
       {/* Ballot */}
       {vote.status === 'active' ? (
         <div className="mt-4 rounded-lg bg-white p-5 shadow">
-          <h2 className="text-sm font-semibold text-gray-900">Cast your ballot</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t('voting.detail.castBallot')}</h2>
           {eligibleUnits.length === 0 ? (
             <p className="mt-2 text-sm text-gray-500">
-              {eligibility?.reason ?? 'You have no eligible units for this vote.'}
+              {eligibility?.reason ?? t('voting.detail.noEligibleUnits')}
             </p>
           ) : (
             <>
               {eligibleUnits.length > 1 ? (
                 <label className="mt-3 block text-sm font-medium text-gray-700">
-                  Voting as unit
+                  {t('voting.detail.votingAsUnit')}
                   <select
                     className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     value={effectiveUnit}
@@ -241,7 +267,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
                     {eligibleUnits.map((u) => (
                       <option key={u.unit_id} value={u.unit_id}>
                         {u.unit_designation ?? u.unit_id}
-                        {u.already_voted ? ' (already voted)' : ''}
+                        {u.already_voted ? ` (${t('voting.detail.alreadyVoted')})` : ''}
                       </option>
                     ))}
                   </select>
@@ -263,7 +289,9 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
                 onClick={handleCast}
                 className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {castVote.isPending ? 'Submitting…' : 'Submit ballot'}
+                {castVote.isPending
+                  ? t('voting.detail.submitting')
+                  : t('voting.detail.submitBallot')}
               </button>
             </>
           )}
@@ -274,10 +302,13 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
       {results && results.questions.length > 0 ? (
         <div className="mt-4 rounded-lg bg-white p-5 shadow">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Results</h2>
+            <h2 className="text-sm font-semibold text-gray-900">{t('voting.detail.results')}</h2>
             <span className="text-xs text-gray-500">
-              {Math.round(results.participation_rate * 100)}% turnout ·{' '}
-              {results.quorum_met ? 'quorum met' : 'quorum not met'}
+              {t('voting.detail.turnout', {
+                percent: Math.round(results.participation_rate * 100),
+              })}{' '}
+              ·{' '}
+              {results.quorum_met ? t('voting.detail.quorumMet') : t('voting.detail.quorumNotMet')}
             </span>
           </div>
           <div className="mt-3 space-y-4">
@@ -290,7 +321,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
 
       {/* Discussion */}
       <div className="mt-4 rounded-lg bg-white p-5 shadow">
-        <h2 className="text-sm font-semibold text-gray-900">Discussion</h2>
+        <h2 className="text-sm font-semibold text-gray-900">{t('voting.detail.discussion')}</h2>
         <div className="mt-3 space-y-3">
           {comments && comments.length > 0 ? (
             comments.map((c) => (
@@ -303,7 +334,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
               </div>
             ))
           ) : (
-            <p className="text-sm text-gray-500">No comments yet.</p>
+            <p className="text-sm text-gray-500">{t('voting.detail.noComments')}</p>
           )}
         </div>
         <div className="mt-4 flex gap-2">
@@ -311,7 +342,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Add a comment"
+            placeholder={t('voting.detail.addCommentPlaceholder')}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void handleAddComment();
             }}
@@ -322,7 +353,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
             onClick={() => void handleAddComment()}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            Post
+            {t('voting.detail.post')}
           </button>
         </div>
       </div>
