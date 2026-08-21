@@ -1,10 +1,23 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-19 04:35 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-21 16:43 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 3 | bug | `code-review-api-core-email-action-stub-drops-mail` | api-core: 104 — EmailExecutor::execute() only logs via tracing::info! and returns ActionResult::succ | open | 2026-08-21 |  |
+| 3 | bug | `code-review-api-core-notif-action-stub-noop` | api-core: 205 — NotificationExecutor::execute() only emits a tracing::info! and returns ActionResult | open | 2026-08-21 |  |
+| 3 | bug | `code-review-api-core-rls-context-pool-not-conn` | api-core: 251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use t | open | 2026-08-21 |  |
+| 3 | bug | `code-review-api-handlers-board-vote-wrong-member-id` | api-handlers: 745 — cast_vote() (wired at line 124: POST /motions/{id}/vote) persists every board-me | open | 2026-08-21 |  |
+| 3 | bug | `code-review-api-handlers-voice-webhook-jwt-gated` | Alexa/Google voice webhooks are unreachable in production — the RlsConnection extractor 401s every r | ready | 2026-08-21 | [plan](plans/code-review-api-handlers-voice-webhook-jwt-gated.md) |
+| 3 | bug | `code-review-ppt-web-core-no-401-refresh-wiring` | ppt-web never wires 401 -> refreshToken: an expired access token permanently breaks the session | ready | 2026-08-21 | [plan](plans/code-review-ppt-web-core-no-401-refresh-wiring.md) |
+| 3 | bug | `code-review-reality-server-imports-feed-url-ssrf` | reality-server: backend/servers/reality-server/src/routes/imports.rs:339 create_feed / :399 update_f | open | 2026-08-21 |  |
+| 3 | bug | `code-review-reality-server-sso-introspect-negcache-poison` | reality-server: 762 — introspect_pm_token() conflates 'the PM token is genuinely inactive' with 'the | open | 2026-08-21 |  |
+| 3 | bug | `code-review-reality-server-url-validator-ipv4-mapped-ipv6-ssrf` | reality-server: the Host::Ipv6 arm of validate_fetch_url() only rejects is_loopback(), fc00::/7 (uni | open | 2026-08-21 |  |
+| 3 | security | `code-review-reality-server-users-login-no-rate-limit` | reality-server: 47 register the PUBLIC UNAUTHENTICATED auth endpoints POST /api/v1/users/login (:204 | open | 2026-08-21 |  |
+| 3 | bug | `code-review-reality-web-realtor-id-mock-data` | reality-web /realtor/[id] renders MOCK_AGENT for every realtor — fabricated public contact details | open | 2026-08-21 |  |
+| 3 | bug | `code-review-reality-web-report-page-fake-submit` | reality-web: 41 — handleSubmit() validates (problem set, non-empty description, gdprAccepted) then c | open | 2026-08-21 |  |
+| 3 | bug | `code-review-reality-web-sell-page-fake-submit` | reality-web: 731 — the final step of the multi-step public 'Sell your property' wizard collects prop | open | 2026-08-21 |  |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | open | 2026-08-16 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
@@ -34,8 +47,56 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | open | 2026-08-19 |  |
-| 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | ready | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
+| 2 | bug | `code-review-api-core-accounting-confirm-no-tx` | api-core: 257 (confirm_match) performs three separate money-mutating writes in sequence with no tran | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-accounting-cross-currency-match` | api-core: 174 (run_payment_matcher) scores a bank-statement line against each open invoice using ONL | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-announcement-roles-legacy-membership` | api-core: 680 — the announcement target-resolution helper's `"roles"` branch fans out via `SELECT DI | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-delay-duration-overflow` | api-core: 60 (DelayConfig::to_duration) multiplies the user-supplied `duration: u64` field (declared | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-osrng-expect-panic-auth-paths` | api-core: `rng.try_fill_bytes(&mut bytes).expect("OS rng failed")` inside `generate_token()` (email- | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-syndication-stub-never-called` | api-core: 405 — `SyndicationService::process_syndication_job` (public API) has zero callers in the t | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-voice-contact-mgr-fake-email` | api-core: 556 — action_contact_manager() returns a hardcoded placeholder email (manager@example.com  | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-core-voice-facility-contact-fabricated-success` | api-core: 467 — `action_book_facility` returns `VoiceActionResult { success: true, .. }` while speak | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-handlers-ai-pagination-no-cap` | api-handlers: list_sessions passes query.limit.unwrap_or(50) straight through to the repo. Paginatio | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-handlers-financial-error-swallow` | api-handlers: 571 (unit-ledger handler) matches on `state.financial_repo.get_account_with_transactio | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-handlers-financial-f64-money` | api-handlers: backend/servers/api-server/src/routes/financial.rs:1796,1828,1894 (XLSX renderers rend | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-handlers-install-swallowed-db-error` | api-handlers: backend/servers/api-server/src/routes/integrations/install.rs (Booking.com reservation | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-handlers-marketplace-limit-no-cap` | api-handlers: 289 — search_providers reads `query.limit.unwrap_or(20)` / `query.offset.unwrap_or(0)` | open | 2026-08-21 |  |
+| 2 | bug | `code-review-api-handlers-platform-admin-audit-swallow` | api-handlers: backend/servers/api-server/src/routes/platform_admin/audit.rs support-user-detail hand | open | 2026-08-21 |  |
+| 2 | security | `code-review-api-handlers-voice-oauth-error-leak` | voice_webhooks OAuth exchange/refresh leak raw upstream provider errors to the client | open | 2026-08-21 |  |
+| 2 | bug | `code-review-mobile-rn-meter-read-fake-ok` | mobile-rn MeterReadingScreen shows success while online though the reading is only queued, never POS | open | 2026-08-21 |  |
+| 2 | bug | `code-review-mobile-rn-settings-route-gap` | mobile-rn Settings / WidgetSettings deep links silently land on Dashboard — WidgetSettingsScreen unr | open | 2026-08-21 |  |
+| 2 | bug | `code-review-mobile-rn-useapi-401-no-refresh` | mobile-rn: 92 — the central online client `apiRequest()` throws a bare `new Error(\`HTTP ${response. | open | 2026-08-21 |  |
+| 2 | security | `code-review-ppt-web-core-dashboard-route-unguarded` | ppt-web /dashboard/manager route has no ProtectedRoute wrapper and the target page has no auth or ro | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-core-home-cta-role-drift` | ppt-web Home dashboard CTA sends org_admin/property_manager to the resident dashboard | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-core-rentals-mutation-swallow-err` | ppt-web-core: frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311,323,417,427 — all four rentals | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-core-rentals-noop-actions` | ppt-web-core: 383 — BookingsPageRoute wires onCancelBooking, onCheckIn and onCheckOut to `() => {}`. | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-event-name-mismatch` | ppt-web-core: 40 — eventToQueryKeys subscribes to COLON-form event names ('entity:announcement','ent | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-ai-chat-delete-swallows-err` | ppt-web-ui: 142 (useDeleteSession) calls `await fetch(\`${API_BASE}/sessions/${sessionId}\`, { metho | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-ai-chat-ocr-fetch-no-auth` | ppt-web-ui: 46 (apiFetch) and frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts: | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-autorules-mutate-unhandled` | ppt-web-ui: 72 — confirmDelete (line 58 `await deleteRule.mutateAsync(deleteConfirm.id)`), handleTog | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-createdispute-fake-submit` | ppt-web-ui: 42 — handleSubmit() collects the full dispute form (respondentId/category/subject/descri | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-dsa-download-no-onsuccess` | ppt-web-ui: 127 — handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })` with ONLY an | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-execmonitor-retry-unhandled` | ppt-web-ui: 77 — handleRetry does `await retryExecution.mutateAsync(log.id); setSelectedLog(null);`  | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-facilities-swallowed-errors` | ppt-web-ui: frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx — the manage | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-moderation-prompt-cast` | ppt-web-ui: 152 — handleTakeAction reads action_type from window.prompt (default 'approve') and cast | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-portfoliolist-mock-data` | ppt-web-ui: 49 ships a shipped, route-mounted page that renders a HARDCODED `mockPortfolios` constan | open | 2026-08-21 |  |
+| 2 | bug | `code-review-ppt-web-ui-verification-badge-expired-as-soon` | ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal s | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-server-review-body-no-cap` | reality-server: 266 (create_review) validates only `data.rating` (1..=5 at :196) and then binds the  | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-server-saved-search-alert-cap-dataloss` | reality-server: 240 (run_once matching loop) advances each saved search's watermark UNCONDITIONALLY  | open | 2026-08-21 |  |
+| 2 | security | `code-review-reality-server-sso-error-leak` | reality-server: backend/servers/reality-server/src/routes/sso.rs — SSO handlers surface raw internal | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-server-sso-http-no-timeout` | reality-server: backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — three bare `reqwe | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-server-test-connection-always-success` | reality-server: 253 — POST /api/v1/agencies/{id}/imports/test-connection (test_connection) is a stub | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-agency-slug-no-i18n` | reality-web: frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the public agency p | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-compare-label-currency-guard` | reality-web: 169 (getHighlightClass) gates a correctness guard on a DISPLAY STRING: `if ((row.label  | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-import-mutations-silent-fail` | reality-web: Systematic gap across the Epic 46 agency-import feature: every state-changing mutation  | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-inquiry-cancel-silent-fail` | reality-web: 50 — handleCancel fires cancelInquiry.mutate(inquiry.id) as fire-and-forget then immedi | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-journal-newsletter-fake-submit` | reality-web: 116 — `handleSubscribe(e)` calls `e.preventDefault()` then `if (email.trim()) setSubscr | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-profile-mock-data-shipped` | reality-web: frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65 — the authenticated / | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-realtor-page-no-i18n` | reality-web: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the public agent/rea | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-sitemap-locale-prefix` | reality-web sitemap hardcodes 'en' as the unprefixed locale but defaultLocale is 'sk' — every sitema | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-web-sso-callback-error-passthrough` | reality-web: 91 — the SSO callback pulls `error` and `error_description` off the query string with s | open | 2026-08-21 |  |
+| 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inqui | done | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | done | 2026-08-19 |  |
+| 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | done | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
 | 2 | security | `code-review-api-handlers-voice-refresh-simulated-token-release` | voice /oauth/refresh mints a simulated access token in RELEASE builds when the platform OAuth client | done | 2026-08-18 |  |
 | 2 | bug | `code-review-api-core-payment-matcher-multi-suggest` | payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good | done | 2026-08-17 |  |
 | 2 | bug | `code-review-api-handlers-share-pw-no-throttle` | SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockou | done | 2026-08-17 |  |
@@ -144,8 +205,17 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | refactor | `code-review-api-handlers-alexa-rls-no-release` | alexa_webhook leaves the RLS connection to Drop on five error exits; google_actions_webhook disagree | open | 2026-08-21 |  |
+| 1 | i18n | `code-review-mobile-rn-list-header-i18n` | mobile-rn: hardcoded English header subtitles and labels on six i18n'd list screens | open | 2026-08-21 |  |
+| 1 | bug | `code-review-ppt-web-ui-submission-preview-modal-orphan` | ppt-web SubmissionPreviewModal is exported but rendered by no page — orphaned dead component with si | open | 2026-08-21 |  |
+| 1 | i18n | `code-review-ppt-web-ui-vote-detail-hardcoded-en` | ppt-web VoteDetailPage hardcodes English (native window.prompt + toast titles) on i18n voting page | open | 2026-08-21 |  |
+| 1 | i18n | `code-review-reality-web-price-map-i18n` | reality-web public price-map page hardcodes Slovak labels for all six locales | open | 2026-08-21 |  |
+| 1 | dx | `dx-stalled-review-pr-2744` | PR #2744 has sat in draft for 8 days with a reviewer approve verdict — the only active WIP slot is p | needs-human-judgement | 2026-08-21 |  |
+| 1 | refactor | `refactor-churn-llm-document-repo` | llm_document.rs churn hotspot — 3 commits / 2396 lines this window (voice-device single-writer work) | open | 2026-08-21 |  |
+| 1 | refactor | `refactor-churn-reality-inquiries-route` | reality-server routes/inquiries.rs churn hotspot — 3 commits / 999 lines this window | open | 2026-08-21 |  |
+| 1 | bug | `code-review-reality-server-saved-search-watermark-discard` | reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing  | done | 2026-08-20 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard u | open | 2026-08-19 |  |
-| 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | open | 2026-08-19 |  |
+| 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | done | 2026-08-19 |  |
 | 1 | bug | `code-review-api-handlers-voice-exchange-device-dedup` | voice /oauth/exchange generates a fresh random device_id every call with no upsert on (org,user,plat | done | 2026-08-18 |  |
 | 1 | security | `code-review-api-handlers-voice-oauth-exchange-no-rate-limit` | voice /oauth/exchange makes a live upstream OAuth call (exchange_code) per request with no per-user  | done | 2026-08-18 |  |
 | 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | done | 2026-08-17 |  |
@@ -309,6 +379,16 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
+| 0 | bug | `code-review-api-handlers-voice-webhook-rlsconn-unreachable` | api-handlers: backend/servers/api-server/src/routes/voice_webhooks.rs:168 and :307 — alexa_webhook a | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-core-api-401-onunauthorized-unwired` | ppt-web-core: 221 — the hand-rolled axios response interceptor has an unauthorized branch `if (error | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-core-api-client-no-onunauthorized` | ppt-web-core: AuthProvider wires the hand-rolled axios client via `configureApiClient({ getToken: ge | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-core-api-onunauthorized-unwired` | ppt-web-core: 221 — the hand-rolled axios response interceptor handles 401 via `if (error.response?. | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-core-authctx-init-no-exp-check` | ppt-web-core: 415 (initializeAuth) — cold-boot restores the session as authenticated whenever BOTH a | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-ui-createdispute-stub-discard` | ppt-web-ui: 42 — handleSubmit is a fake-success stub: `await new Promise((resolve) => setTimeout(res | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-ui-moderation-prompt-cast-unvalidated` | ppt-web-ui: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,139 —  | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-ppt-web-ui-moderation-unvalidated-cast` | ppt-web-ui: 146 — handleTakeAction reads a free-text `window.prompt('Enter action type (remove, rest | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-reality-server-sso-negcache-transient` | reality-server: 785 (introspect_pm_token) caches PM token-validation results in a 60s TTL cache (Tok | dropped | 2026-08-21 |  |
+| 0 | bug | `code-review-reality-web-inquiry-cancel-no-error` | reality-web: 50 — InquiryCard.handleCancel calls `cancelInquiry.mutate(inquiry.id)` fire-and-forget  | dropped | 2026-08-21 |  |
 | 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | dropped | 2026-07-09 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-document-rs` | Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06- | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-form-rs` | Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock) | dropped | 2026-07-05 |  |

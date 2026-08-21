@@ -1,0 +1,450 @@
+{
+  "generated_at": "2026-08-21T16:41:23Z",
+  "generator": "research-routine",
+  "trigger": "buffer-low: claimable=9/72 — refill planner (mobile-native-gated items dominate; need cloud-landable vectors)",
+  "segments_reviewed": [
+    "api-handlers",
+    "ppt-web-core",
+    "mobile-rn",
+    "reality-web"
+  ],
+  "notes": [
+    "risky-churn: checked PR #2806 (voice webhook HMAC fails closed on empty secret) against the voice_webhooks.rs hotspot. The PR-file-list heuristic flagged it as test-free, but reading the diff shows it DOES add assertions in the file's inline #[cfg(test)] module. No risky-churn signal emitted — file-name-based test detection is wrong for Rust inline test modules.",
+    "screen-map-drift: no merged PR this run touched frontend route files (all 11 merged PRs are backend/CI). No drift or orphan signals.",
+    "untriaged-issue: all 6 issues touched this run are labelled and closed. No triage rows created.",
+    "concurrency incident: the run's first commit f56342aa was lost to a concurrent dispatcher push (7d496e63/ff997e51/55341a9a). Re-landed by rebasing onto the dispatcher's current dev and re-running backlog-refill.sh --apply against its LIVE action-list.json, so its 3 new claims and 4 assignment rows are preserved. The routine and dispatcher share .research/ with no lockfile.",
+    "LANDING BLOCKED: research-land.yml run 645 could not push to dev — 'protected branch hook declined; 2 of 2 required status checks are expected'. dev has acquired branch protection, invalidating the workflow's documented assumption that ruleset 11341260 covers only main + release/*. The commit remains on claude/wonderful-gates-fv8pvt. The dispatcher's own Phase 6 direct push to dev will hit the same wall."
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-voice-webhook-jwt-gated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:168 — `mut rls: RlsConnection,` is an extractor argument of alexa_webhook, so it runs BEFORE the handler body on POST /api/v1/webhooks/voice/alexa.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:307 — same problem in google_actions_webhook: `mut rls: RlsConnection,`.",
+        "backend/servers/api-server/src/lib.rs:339-342 — the router is nested at /api/v1/webhooks/voice with no auth-exempting layer; voice_webhooks.rs:130-142 voice_webhook_router() applies no layer either (verified in-run).",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:232 — the extractor's first step is `let tenant = ValidatedTenantExtractor::from_request_parts(parts, state).await?;`.",
+        "backend/crates/api-core/src/extractors/tenant.rs:137 — `let auth_user = AuthUser::from_request_parts(parts, state).await?;` — a PM JWT is mandatory.",
+        "backend/crates/api-core/src/extractors/auth.rs:272 — `.ok_or((StatusCode::UNAUTHORIZED, \"Missing Authorization header\"))?` — Amazon/Google never send a PM bearer token, so every genuine delivery is rejected with a plain-text 401 before verify_alexa_signature, authenticate_voice_user, or VoiceCommandProcessor ever run.",
+        "backend/servers/api-server/tests/ — grep for 'webhooks/voice' matches only voice_oauth_exchange_auth_tests.rs and voice_oauth_refresh_auth_tests.rs; no test ever POSTs to /api/v1/webhooks/voice/alexa or /google, which is why the ~60 unit tests in voice_webhooks.rs (all calling helpers directly) never caught it.",
+        "Impact context: voice_webhooks.rs is this run's #1 churn hotspot (4 commits, repeated-churn runs_seen=3). The signature/HMAC hardening merged in PR #2806 and its siblings is being applied to code no real request can reach.",
+        "confidence=high: the full call path from the mounted route to the 401 rejection was independently re-traced during this routine run (route mount, router layers, extractor chain all read directly)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:500 — format!(\"Failed to exchange authorization code: {}\", e) is interpolated into the client-facing ErrorResponse for POST /api/v1/webhooks/voice/oauth/exchange, forwarding the raw Amazon/Google error (provider trace ids, redirect_uri/client_id mismatch detail, grant state) to the caller.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:788 — same pattern in oauth_token_refresh: format!(\"Failed to refresh token: {}\", e).",
+        "backend/servers/api-server/src/routes/ai/voice.rs:23 — the sibling handler was already hardened: const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = \"Authorization code exchange failed\"; used at ai/voice.rs:210 with the detail only logged (ai/voice.rs:203).",
+        "backend/servers/api-server/src/routes/ai/voice.rs:364 — the existing regression test asserts !body.contains(\"Failed to exchange authorization code:\"), naming the exact string voice_webhooks.rs:500 still emits — the fix was applied to one of the two exchange paths only."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-alexa-rls-no-release",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:174-177 — the signature-rejection branch returns without rls.release().await; same at 183-189 (parse failure), 197 (authenticate_voice_user(...).await?), and 226-229 / 248-251 (processing errors).",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:314 — the sibling google_actions_webhook does it correctly on its rejection branch (rls.release().await; immediately before the 401), showing the two handlers disagree; google still misses it on the ? at line 331.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:202-208 — the Drop fallback is best-effort and noisy: a tracing::warn! plus a detached spawn_clear_context. On a public webhook the signature-rejection branch is the hottest path, so every unsigned probe emits a WARN and detaches a cleanup task.",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:26 — the module contract states 'Every authenticated path calls rls.release().await before returning.'"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-read-fake-ok",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:119 — addToQueue({type:'CREATE', endpoint:'/api/v1/meter-readings', method:'POST'}) is the ONLY write path; the screen never calls the API even when isConnected is true (no useApiMutation/apiRequest import in the file).",
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:136 — Alert.alert(t('common.done'), t('meters.submitSuccess'), ...) fires a hard success + navigates away purely because isConnected is true, though nothing was submitted.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:649 — addToQueue ends in catch { console.error(...) } and returns void, so a failed AsyncStorage write is swallowed and the screen's catch at MeterReadingScreen.tsx:148 can never run.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:549 — the queue is drained only from inside the NetInfo.addEventListener callback, so enqueuing while already online triggers no flush; the reading sits in AsyncStorage with syncStatus:'syncing' until the next connectivity flip or app restart.",
+        "MeterReadingScreen.tsx has no test file anywhere in the repo (only MetersScreen.test.ts / MeterDetailScreen.test.ts exist)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-settings-route-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:43-44 — registered routes { screen:'Settings', pattern:'settings' } and { screen:'WidgetSettings', pattern:'settings/widgets' }.",
+        "frontend/apps/mobile/src/services/deepLinkRouting.ts:79 — case 'WidgetSettings': return { screen: 'Settings' }; 'Settings' is a declared member of the Screen union at deepLinkRouting.ts:32.",
+        "frontend/apps/mobile/src/App.tsx:119-241 — renderScreen()'s switch has no case 'Settings' and ends in default: return <DashboardScreen .../> (App.tsx:240), so ppt://settings and ppt://settings/widgets both render the Dashboard with no error.",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:28 — exported through screens/settings/index.ts:6 and screens/index.ts:46 but never referenced by App.tsx, i.e. unrenderable in the shipped app."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-list-header-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/leases/LeasesScreen.tsx:162 — <Text style={s.headerSubtitle}>Your active and past rental agreements.</Text> while the component destructures const { t } = useTranslation() at line 143.",
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:149 and :202 — 'Meters registered to your unit.' and 'Submit reading →' (t obtained at line 129).",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:151 — 'Planned and active utility interruptions.' (t at line 120).",
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx:92 — 'Updates from your building and neighbourhood.' (t at line 61).",
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx:119 — 'Properties associated with your account.' (t at line 100).",
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx:185 and :195 — 'Monthly rent' and 'Upcoming payments' (t at line 130).",
+        "frontend/apps/mobile/src/App.tsx:368 — 'Everything else available in the app.' in the More menu."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-no-401-refresh-wiring",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — configureApiClient({ getToken: getAccessToken }); passes only getToken; onUnauthorized is never supplied, so the axios client has no 401 recovery hook.",
+        "frontend/apps/ppt-web/src/lib/api.ts:219 — if (error.response?.status === 401 && onUnauthorizedCallback) { is dead code: onUnauthorizedCallback is only ever assigned from config.onUnauthorized (lib/api.ts:196), which no caller sets.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 — the comment promises an expiry check but none is performed; a reload with an expired access token re-authenticates the UI and never reaches the refreshTokenInternal() branch on line 426.",
+        "grep for refreshToken across src excluding tests and AuthContext.tsx returns zero hits — the refreshToken member exposed on AuthContextValue (AuthContext.tsx:82) has no call site anywhere in the app: no silent-refresh path exists, reactive or proactive."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:167 — <Route path=\"/dashboard/manager\" element={<ManagerDashboardPage />} /> with no <ProtectedRoute> wrapper, unlike every sibling route in the same file (e.g. line 174 requiredRoles={['org_admin','super_admin']}).",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:162-166 — the redirect comment claims 'the ProtectedRoute / role check on the target page handles auth + role-based fan-out', then sends every visitor to /dashboard/manager.",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:22-30 — the only role logic gates the customize link (canCustomize); nothing gates the page itself, so an unauthenticated visitor or a resident renders the full manager dashboard shell. The claim in the route comment is false."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-home-cta-role-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — onClick={() => navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')} — an exact string compare against a single role.",
+        "frontend/apps/ppt-web/src/routes/shared.tsx:36-42 — MANAGER_ROLES = ['manager','org_admin','super_admin','technical_manager','property_manager'] documented as the single source of truth 'so the two cannot drift apart', with isManagerRole at shared.tsx:48.",
+        "frontend/apps/ppt-web/src/App.tsx:109 — const isOperator = isManagerRole(user?.role); the nav bar on the same page already uses the shared helper, so an org_admin sees operator nav links but the Home 'Open dashboard' button routes them to /dashboard/resident."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:20 — const agent = MOCK_AGENT; the page never reads its [id] route param (no useParams import anywhere in the file), so every realtor URL renders the same fabricated profile.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11 — imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from ./_mock; listings (line 237) and reviews (line 333) are likewise rendered from the mock arrays.",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:181 — href={`/realtor/${member.id}`} — the public agency profile, which fetches real team members via useRealtors(agency.id), links straight into this route, so real visitors land on the mock agent's name, phone and e-mail.",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts:169 — export function useRealtor(agencyId, realtorId) — a real data hook already exists and is unused by the page."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-sitemap-locale-prefix",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/sitemap.ts:32 — const localePrefix = locale === 'en' ? '' : `/${locale}`; hardcodes en as the unprefixed locale.",
+        "frontend/apps/reality-web/src/app/sitemap.ts:40 — the same wrong assumption in the hreflang alternates.languages map.",
+        "frontend/apps/reality-web/src/i18n/config.ts:20 — export const defaultLocale: Locale = 'sk'; and src/i18n/routing.ts:8 — localePrefix: 'as-needed' — so the bare path serves Slovak and /sk/... is redirected by the next-intl middleware, while /en/... is the real English URL.",
+        "frontend/apps/reality-web/src/lib/page-metadata.ts:17 — return locale === defaultLocale ? '' : `/${locale}`; — the canonical-URL helper gets it right, so every page's alternates.canonical directly contradicts the sitemap entry for the same page."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:30-33 — filter chips { value: 'all', label: 'Vsetky' } plus 'Byty', 'Domy', 'Pozemky' are hardcoded Slovak.",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:161 — the sale/rent segmented control is hardcoded Slovak ('Predaj' / 'Prenajom').",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:77,82,87,95 plus 341 and 348 — insight tile labels and the selected-district panel are hardcoded Slovak.",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:40 — const t = useTranslations('pages.priceMap'); is set up but used exactly once (t('h1') on line 138), and messages/en.json:455-460 already carries pages.priceMap.{title,h1,subtitle,clickHint} — the namespace exists, the page just bypasses it for all six locales."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/llm_document.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-19T04:36Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 distinct commits, 2396 lines changed (PRs #2811, #2796 voice-device single-writer line)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/inquiries.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-19T04:36Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 distinct commits, 999 lines changed (PRs #2813, #2800)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-19T04:36Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit (G4 carve-out): 4 distinct commits, 3033 lines this window; runs_seen 2 -> 3",
+        "score_delta NOT re-applied — id already in seen_signals"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit (G4 carve-out): runs_seen=3",
+        "correlated finding this run: code-review-api-handlers-voice-webhook-jwt-gated — the churn is hardening code no real request can reach"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "open 8 days (created 2026-08-13), draft=true, mergeable_state=clean, label needs-human-review",
+        "assignments.json reviewer_summary: verdict=approve, formal APPROVE blocked on self-PR — only a human can mark ready + merge",
+        "this is the single active WIP assignment, so the slot stays occupied until a human acts"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "last routine run 2026-08-19T04:36Z — 60h (2d 12h) ago, over the 36h threshold; below the 3d stale-routine alert line"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-2805",
+      "type": "hotfix-no-test",
+      "source": "PR #2805",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "fix(api-server): scope RUSTSEC-2026-0258 h2 DoS ignore to the h2 0.3.x line — 1 file (backend/deny.toml), no test diff",
+        "score suppressed: the change is cargo-deny advisory configuration; the cargo-deny CI job IS the check, so a unit test would be meaningless. Logged for visibility only, no backlog row created."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR open against dev; logged, not scored"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR open against dev; logged, not scored"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot PR open against dev; logged, not scored"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal met confidence=high AND backlog score>=3 this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-21.md && head -1 | grep '^# 2026-08-21$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:.research/state.json) …",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id]|(length==(unique|length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emits must have score_delta==0",
+      "observed": "the only re-emitted ids are churn-hotspot/repeated-churn on voice_webhooks.rs (cumulative allowlist) and both carry score_delta=0 anyway; every other signal id is new",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay sweep",
+      "observed": "no score >8 or <0; decay sweep ran and found no open row older than 14 days",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep each new plan path + 'adversarial pass:' on one brief line",
+      "observed": "both plans annotated 'adversarial pass: passed'",
+      "expected": "both annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plan count + 4 metadata + 11 headings + capability tick + Mode + Files exist",
+      "observed": "2 new plans; both complete; every Files bullet resolves on disk",
+      "expected": "<=2, all complete"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "staged-diff secret/hostname grep (baseline docs excluded)",
+      "observed": "0 after rewording two prose references to the Authorization header name (no credential was ever present; the literal was reworded rather than exempted so the gate stays meaningful)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' line vs cursors",
+      "observed": "no phase failed; Phase 1.6 was deliberately skipped and both pm_cursor and coverage_cursor were left unadvanced, as the brief states Separately: the run's first commit was clobbered by a concurrent dispatcher push and re-landed by rebase; recorded under 'Concurrency incident' in the brief. No cursor was advanced on stale state.",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
+      "observed": "no missing slugs",
+      "expected": "none missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive tracked-file count now vs HEAD",
+      "observed": "8 >= 8",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps",
+      "observed": "auto_fix_actions empty — no candidate met confidence=high AND score>=3",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifact + pm_cursor + GC7 coverage_cursor checks",
+      "observed": "no-op: Phase 1.6 was skipped this run, pm_cursor.next_index unchanged at 3 vs HEAD. action-list.json still parses (jq -e .items) after the refill + supersede edits.",
+      "expected": "no-op when Phase 1.6 skipped"
+    }
+  ]
+}

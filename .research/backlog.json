@@ -8888,6 +8888,1923 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "completeness"
+    },
+    {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "title": "api-core: 104 — EmailExecutor::execute() only logs via tracing::info! and returns ActionResult::success(...); the real send is commented out ('// Simulate email",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-21-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-104 — EmailExecutor::execute() only logs via tracing::info! and returns ActionResult::success(...); the real send is commented out ('// Simulate email sending (in production, integrate with EmailService)' / '// email_service.send_template_email(...).await?'). No EmailService is ever invoked.",
+        "backend/servers/api-server/src/services/actions/mod.rs:204 — EmailExecutor::new() is registered into the production ActionRegistry (ActionRegistry::new()), which WorkflowExecutorTask uses in prod (workflow_executor.rs:236 and :286). This is the executor that runs for real workflow 'send email' actions, not a test double.",
+        "backend/servers/api-server/src/services/workflow_executor.rs:951-972 + :894 — a successful (stub) execute() marks the execution step step_status::COMPLETED and then set_execution_status(COMPLETED). Every automation email a manager configures is silently dropped while the workflow reports success; no error is surfaced to any channel. Data loss on a user-facing feature (Epic 94 workflow actions).",
+        "promoted from stranded review signal in .research/signals/2026-08-21-api-core-tier1d.json (emitted 2026-08-21); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs",
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "title": "api-core: 205 — NotificationExecutor::execute() only emits a tracing::info! and returns ActionResult::success; the real send is a comment ('// In production, th",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-21-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:159-205 — NotificationExecutor::execute() only emits a tracing::info! and returns ActionResult::success; the real send is a comment ('// In production, this would actually send notifications via the notification service'). No NotificationService / push_fanout call is made.",
+        "notification.rs:116-131 — resolve_target() for Role and Building never queries users; it returns literal placeholder strings format!(\"role:{}\", role) / format!(\"building:{}\", resolved) (comments: 'In production, this would query users with the role' / '...building residents'), so even once a send is wired the recipient set is unresolved garbage.",
+        "backend/servers/api-server/src/services/actions/mod.rs:205 — NotificationExecutor::new() is registered in the production ActionRegistry consumed by WorkflowExecutorTask (workflow_executor.rs:236,286); a workflow 'notify' action records step COMPLETED + execution COMPLETED (workflow_executor.rs:951-972,894) while delivering nothing. Sibling stub to the email-action finding — same false-success class, distinct executor.",
+        "promoted from stranded review signal in .research/signals/2026-08-21-api-core-tier1d.json (emitted 2026-08-21); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/notification.rs",
+        "backend/servers/api-server/src/services/actions/mod.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+      "title": "api-handlers: backend/servers/api-server/src/routes/voice_webhooks.rs:168 and :307 — alexa_webhook and google_actions_webhook take `mut rls: RlsConnection` as a",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-21-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:168 and :307 — alexa_webhook and google_actions_webhook take `mut rls: RlsConnection` as a handler argument, making a validated Property-Management principal a hard precondition for the handler body to run.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:229-232 — RlsConnection::from_request_parts first runs ValidatedTenantExtractor::from_request_parts; backend/crates/api-core/src/extractors/tenant.rs:135-137 — ValidatedTenantExtractor first requires AuthUser (a valid PM JWT Bearer token) and returns 401 when it is absent/invalid. Extractors run before the handler body.",
+        "backend/servers/api-server/src/lib.rs:339-342 — the router is nested at /api/v1/webhooks/voice with no auth-injecting middleware that supplies a synthetic tenant context, so nothing provides the JWT the extractor demands.",
+        "CONSEQUENCE: real Alexa / Google Assistant requests authenticate with a platform SIGNATURE (verified inside the handler at voice_webhooks.rs:172 via verify_alexa_signature and :312 via verify_google_request), never a PM JWT. The RlsConnection extractor therefore rejects every genuine platform request with 401 BEFORE the signature-verification and VoiceCommandProcessor logic ever executes — the two primary voice endpoints are unreachable by the callers they exist to serve, and the entire hardened Alexa/Google signature surface is dead code in production.",
+        "CORROBORATION (correct pattern): sibling signature-authenticated webhooks in backend/servers/api-server/src/routes/portal_webhooks.rs:318-321 take only State/HeaderMap/Bytes and require no JWT; and voice_webhooks.rs oauth_token_refresh at :694-707 documents that `voice_assistant_devices` is NOT RLS-bound and does its device lookup on RlsPool::acquire_public() (context-cleared) with an explicit ownership check — that is the pattern alexa_webhook/google_actions_webhook should use (authz is already done by authenticate_voice_user matching the presented voice token, voice_webhooks.rs:1574-1681).",
+        "WHY UNCAUGHT: the unit tests deliberately do not exercise the handler entrypoints — voice_webhooks.rs:1826-1838 states the four handlers holding a live DB connection are left to an integration harness — so the extractor never runs in-test and the reachability regression is invisible to the suite.",
+        "FIX DIRECTION: drop `RlsConnection` from alexa_webhook/google_actions_webhook and acquire the connection internally after signature verification via RlsPool::acquire_public() (mirroring oauth_token_refresh and portal_webhooks), keeping authenticate_voice_user as the authorization gate.",
+        "promoted from stranded review signal in .research/signals/2026-08-21-api-handlers-tier1d.json (emitted 2026-08-21); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-api-handlers-voice-webhook-jwt-gated] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/crates/api-core/src/extractors/rls_connection.rs",
+        "backend/crates/api-core/src/extractors/tenant.rs",
+        "backend/servers/api-server/src/lib.rs",
+        "backend/servers/api-server/src/routes/portal_webhooks.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-imports-feed-url-ssrf",
+      "title": "reality-server: backend/servers/reality-server/src/routes/imports.rs:339 create_feed / :399 update_feed / :436 sync_feed persist and later trigger a fetch of a ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-13-reality-server-tier1d-2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:339 create_feed / :399 update_feed / :436 sync_feed persist and later trigger a fetch of a caller-supplied feed_url (models::reality_portal::CreateFeedSubscription.feed_url / UpdateFeedSubscription.feed_url) with NO validate_fetch_url() SSRF guard and no scheme/length check — a portal agency user can register feed_url=http://169.254.169.254/... or http://localhost:.../ and have the import/sync worker fetch it (SSRF against cloud metadata / internal services).",
+        "SSRF-inconsistency: the sibling import surface backend/servers/reality-server/src/routes/agency_imports.rs:238 (test_connection) and :290 (run_import) explicitly call crate::util::url_validator::validate_fetch_url(url) on feed_url at submission time with a 'SECURITY (H3, round-9 audit): reject SSRF-prone feed URLs at submission time' comment. validate_fetch_url is used ONLY in agency_imports.rs — imports.rs never references it, so the /api/v1/imports/feeds{,/{id},/{id}/sync} routes are an unhardened parallel of the same feature.",
+        "Fix: in create_feed and update_feed, call validate_fetch_url(&feed_url) (the shared guard in util/url_validator.rs) before persisting, mirroring agency_imports.rs; reject on Err with 400. Belt-and-suspenders: also re-validate at fetch time in the sync worker to defend against DNS-rebind / TOCTOU.",
+        "promoted from stranded review signal in .research/signals/2026-08-13-reality-server-tier1d-2.json (emitted 2026-08-13); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "title": "reality-server: 762 — introspect_pm_token() conflates 'the PM token is genuinely inactive' with 'the introspection HTTP call failed'. On the cache-miss path, wh",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-13-reality-server-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:743-762 — introspect_pm_token() conflates 'the PM token is genuinely inactive' with 'the introspection HTTP call failed'. On the cache-miss path, when the PM introspect endpoint returns a non-success status (`!response.status().is_success()` at line 755 — i.e. a transient 5xx / 429 / network blip, NOT a valid `{active:false}` body), the code executes `state.token_cache.set(token, false, None, None)` (line 758, comment 'Cache inactive tokens too (to prevent repeated failed validations)') and THEN returns Err. This poisons the 60s-TTL cache: a still-valid PM token is now cached as active=false.",
+        "backend/servers/reality-server/src/routes/sso.rs:730-739 — the very next introspect_pm_token call for that same valid token within the TTL is served from cache and returns a SUCCESS value `TokenIntrospectionResponse { active: false, .. }` (no Err this time), so callers see 'token inactive' rather than 'introspection unavailable'.",
+        "backend/servers/reality-server/src/routes/sso.rs:1067-1101 — blast radius in sync_session(): a cache-hit with active=false takes the `if !token_info.active` branch (line 1082) and calls `session_service.invalidate_session(portal_session)` — it actively TEARS DOWN the user's live portal session. Net effect: a single transient PM-API introspection failure force-logs-out a validly-authenticated user from the Reality Portal for up to the full cache TTL, with no way to recover until the poisoned entry expires.",
+        "Fix: only write a negative cache entry when PM returns a well-formed response that explicitly says active=false. On transport/HTTP-status failures, return Err WITHOUT calling token_cache.set(...) so transient upstream failures fail-open on caching (they still fail-closed on the individual request via the returned Err) instead of persisting a false 'inactive' verdict that later reads as an authoritative logout signal.",
+        "promoted from stranded review signal in .research/signals/2026-08-13-reality-server-tier1d.json (emitted 2026-08-13); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-13",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sell-page-fake-submit",
+      "title": "reality-web: 731 — the final step of the multi-step public 'Sell your property' wizard collects property details + seller contact info, but the submit button's ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-12-reality-web-tier1d-2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-731 — the final step of the multi-step public 'Sell your property' wizard collects property details + seller contact info, but the submit button's onClick only runs validateStep() then setSubmitted(true). No network call is made: grep for fetch|mutate|apiClient|.post over the file returns 0 hits. The success screen renders while the captured seller lead is silently dropped — the form never persists anything to reality-server.",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:730 — `if (Object.keys(stepErrors).length === 0) setSubmitted(true);` is the entire submit action.",
+        "Impact: business-lead data loss on a public conversion surface. Same fake-submit pattern class as the previously-flagged realtor-contact-fake-submit (2026-08-12 signals) but on a different, higher-traffic route.",
+        "promoted from stranded review signal in .research/signals/2026-08-12-reality-web-tier1d-2.json (emitted 2026-08-12); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-report-page-fake-submit",
+      "title": "reality-web: 41 — handleSubmit() validates (problem set, non-empty description, gdprAccepted) then calls setSubmitted(true) with no network submit. grep for fet",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-12-reality-web-tier1d-2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit() validates (problem set, non-empty description, gdprAccepted) then calls setSubmitted(true) with no network submit. grep for fetch|mutate|apiClient|.post over the file returns 0 hits. The 'Report a listing' abuse/problem-report form shows a success confirmation but the report is never sent to any backend.",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:3-4 — file header 'Report a listing — problem report form'; REPORT_PROBLEMS categories are imported from a local ./_mock module.",
+        "Impact: content/abuse reports are silently discarded. Beyond data loss, a listing-report surface that captures nothing carries DSA/notice-and-action compliance risk for a public EU real-estate portal.",
+        "promoted from stranded review signal in .research/signals/2026-08-12-reality-web-tier1d-2.json (emitted 2026-08-12); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-08-12",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "title": "api-core: 251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but it enfo",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-09-api-core-tier1d-2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:185-251 — `require_rls_context` is documented (lines 181-184) as 'a stricter version ... Use this for routes that MUST have tenant isolation', but it enforces NOTHING: it calls `db::tenant_context::set_request_context(pool.as_ref(), Some(tenant_id), Some(user_id), is_super_admin)` (line 232) then runs the handler via `next.run(request)` (line 245). `set_request_context<E: Executor>` (backend/crates/db/src/tenant_context.rs:18) issues its `set_config`/SET on a connection sqlx transiently checks out of the POOL and immediately returns; the handler later acquires a DIFFERENT pooled connection where the RLS GUCs are unset. Result: tenant-isolation is silently NOT applied to the handler's queries — a cross-tenant data-exposure footgun for any route that adopts this middleware believing the doc.",
+        "The module's own header (rls_context.rs:1-37) already diagnoses this exact defect ('Setting RLS on the pool doesn't affect individual connections'; 'PostgreSQL session settings are connection-scoped, not pool-scoped') and marks the module DEPRECATED — yet the file is not `#[deprecated]`, and BOTH broken functions plus `rls_context_middleware` are glob re-exported to consumers via `pub use rls_context::*;` (backend/crates/api-core/src/middleware/mod.rs:16). The contradiction (top says 'do NOT use'; `require_rls_context` docstring says 'use this for routes that MUST have tenant isolation') is the trap.",
+        "Not currently mounted in either server (grep of servers/ finds no call site), so severity is a LATENT bypass rather than a live one — hence confidence medium, not high. But it is live-ready API surface: a future route author who follows the `require_rls_context` docstring gets a compiling, plausible-looking guard that leaks across tenants with no error.",
+        "Fix: delete the deprecated module (the correct path is the `RlsConnection` extractor, which sets RLS on the same dedicated connection it hands the handler — see extractors/rls_connection.rs), or at minimum stop re-exporting it and add `#[deprecated]` + `compile_error!`-style guards; do NOT leave a function named `require_rls_context` that provides no isolation.",
+        "promoted from stranded review signal in .research/signals/2026-08-09-api-core-tier1d-2.json (emitted 2026-08-09); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs",
+        "backend/crates/db/src/tenant_context.rs",
+        "backend/crates/api-core/src/middleware/mod.rs"
+      ],
+      "created_at": "2026-08-09",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-users-login-no-rate-limit",
+      "title": "reality-server: 47 register the PUBLIC UNAUTHENTICATED auth endpoints POST /api/v1/users/login (:204 login), POST /api/v1/users/register (:145) and POST /api/v1",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-07-30-reality-server-tier1d-2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/users.rs:45-47 register the PUBLIC UNAUTHENTICATED auth endpoints POST /api/v1/users/login (:204 login), POST /api/v1/users/register (:145) and POST /api/v1/users/password-reset (:437) — none of their handler signatures take an auth extractor, and none consult any per-IP / per-account throttle, failed-attempt counter, lockout, backoff or captcha.",
+        "backend/servers/reality-server/src/handlers/users/mod.rs:251-269 login() does a plain find_user_by_email + verify_password with NO failed-attempt tracking and NO lockout — an attacker can submit unlimited password guesses per account. A crate-wide grep for RateLimit/Governor/tower_governor/throttle/captcha/login_attempt/lockout finds ZERO middleware or handler-level protection (matches are only the unrelated InquiryResult::RateLimited enum variant at handlers/inquiries/mod.rs:36, the observability ErrorCategory::RateLimit label, and saved-search alert daily/weekly throttles). reality-server is internet-facing, so this is an unauthenticated credential-stuffing / password brute-force surface; the same gap makes register an account-spam vector and password-reset a mail/DB-flooding vector.",
+        "DISTINCT from the 2026-07-29 'inquiries-no-rate-limit' finding: that covered the anonymous inquiry/viewing spam surface; this is the higher-severity AUTH surface (login brute-force + credential stuffing) on different endpoints. Confidence medium because an upstream gateway/WAF could in principle throttle these, but there is no in-code evidence of it and brute-force protection is normally expected at the app layer. Fix: add per-IP + per-account rate limiting / progressive backoff (or a tower rate-limit layer) in front of login/register/password-reset before the DB lookup.",
+        "promoted from stranded review signal in .research/signals/2026-07-30-reality-server-tier1d-2.json (emitted 2026-07-30); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/users.rs",
+        "backend/servers/reality-server/src/handlers/users/mod.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-url-validator-ipv4-mapped-ipv6-ssrf",
+      "title": "reality-server: the Host::Ipv6 arm of validate_fetch_url() only rejects is_loopback(), fc00::/7 (unique-local) and fe80::/10 (link-local). It never normalizes I",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-07-30-reality-server-tier1d-3.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:150 — the Host::Ipv6 arm of validate_fetch_url() only rejects is_loopback(), fc00::/7 (unique-local) and fe80::/10 (link-local). It never normalizes IPv4-mapped / IPv4-compatible IPv6 addresses, so an attacker-supplied feed/import URL like https://[::ffff:169.254.169.254]/latest/meta-data/ parses as Host::Ipv6, passes every check, and reaches the cloud metadata endpoint at fetch time. Ipv6Addr::is_loopback() is false for ::ffff:127.0.0.1, so ::ffff:10.0.0.5, ::ffff:127.0.0.1 and ::ffff:169.254.169.254 all bypass the carefully-written IPv4 private-range block above (url_validator.rs:96-146).",
+        "backend/servers/reality-server/src/util/url_validator.rs:71 — this validator is the documented SSRF gate for user-supplied server-side-fetched URLs (agency import feeds); the IPv4-mapped gap defeats its stated purpose. Fix: call ip.to_ipv4_mapped()/to_ipv4() and, when Some(v4), run the same IPv4 forbidden-range checks; also reject NAT64 64:ff9b::/96 and unspecified ::.",
+        "promoted from stranded review signal in .research/signals/2026-07-30-reality-server-tier1d-3.json (emitted 2026-07-30); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "created_at": "2026-07-30",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-board-vote-wrong-member-id",
+      "title": "api-handlers: 745 — cast_vote() (wired at line 124: POST /motions/{id}/vote) persists every board-meeting vote against `let board_member_id = motion_id;` — an e",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "signals/2026-07-23-api-handlers-tier1d-governance.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/board_meetings.rs:740-745 — cast_vote() (wired at line 124: POST /motions/{id}/vote) persists every board-meeting vote against `let board_member_id = motion_id;` — an explicit placeholder that uses the motion's own UUID as the voting member's identity, then calls board_meeting_repo.cast_vote(conn, board_member_id, input). The in-code comment admits it: 'In production, we'd look up the board_member_id from user.user_id ... For now, we'll use a placeholder - this should be retrieved from the board_members table'. Full call path is live production (not TODO-gated): route registered -> RLS org check on the motion -> vote written. Consequences (data integrity / data corruption on a governance path): (1) all votes on a given motion are attributed to the SAME bogus board_member_id (= the motion id), so the real voter is never recorded; (2) any per-member uniqueness constraint or tally that keys on board_member_id will collapse/collide across distinct voters or across motions; (3) audit/quorum computations built on MotionVote.board_member_id are unreliable. Fix: resolve the actual board_member_id from the authenticated user (rls principal / user_id) against the board_members table before writing the vote.",
+        "promoted from stranded review signal in .research/signals/2026-07-23-api-handlers-tier1d-governance.json (emitted 2026-07-23); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/board_meetings.rs"
+      ],
+      "created_at": "2026-07-23",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "title": "api-core: 556 — action_contact_manager() returns a hardcoded placeholder email (manager@example.com / spravca@example.com / spravce@example.com) in response_tex",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-21-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 — action_contact_manager() returns a hardcoded placeholder email (manager@example.com / spravca@example.com / spravce@example.com) in response_text, ssml, the VoiceCard.content, AND the data.manager_email field, all with success:true. It never resolves the device's building/org real manager contact (the VoiceAssistantDevice parameter is bound as _device and unused).",
+        "This is the live Alexa/Google voice-webhook handler (voice_commands is the production voice command dispatcher and a repeat churn hotspot). A resident asking their assistant to 'contact the manager' is read back a fabricated example.com address as if it were real contact info.",
+        "Distinct from the 2026-08-20 api-core finding on action_book_facility (voice-facility-contact-fabricated-success): different intent handler, different defect class — fabricated PII/contact data returned to the user rather than a fabricated booking-success.",
+        "promoted from stranded review signal in .research/signals/2026-08-21-api-core-tier1d.json (emitted 2026-08-21); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "title": "ppt-web-ui: 152 — handleTakeAction reads action_type from window.prompt (default 'approve') and casts the raw string `as 'remove' | 'restrict' | 'warn' | 'appro",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:127-152 — handleTakeAction reads action_type from window.prompt (default 'approve') and casts the raw string `as 'remove' | 'restrict' | 'warn' | 'approve'` with no validation, then POSTs it via takeAction.mutate to the moderation API; any typo/invalid value crosses the API boundary as an unchecked union cast on destructive content-moderation actions",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:165-190 — same pattern in handleDecideAppeal: window.prompt decision cast `as 'uphold' | 'overturn'` unvalidated and sent to decideAppeal.mutate; the TODO(Phase-2) notes this is a stub but it is live on a production route with no client-side guard",
+        "promoted from stranded review signal in .research/signals/2026-08-20-ppt-web-ui-tier1d.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-facility-contact-fabricated-success",
+      "title": "api-core: 467 — `action_book_facility` returns `VoiceActionResult { success: true, .. }` while speaking 'Facility booking is not yet available via voice assista",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:447-467 — `action_book_facility` returns `VoiceActionResult { success: true, .. }` while speaking 'Facility booking is not yet available via voice assistant. Please use the mobile app or web portal.' The success flag contradicts the message: the caller (Alexa/Google integration in routes/voice_webhooks.rs) treats `success: true` as a completed action for logging, telemetry, and follow-up prompts. Callers that decide on `success` (e.g. the analytics stream, the 'anything else?' re-prompt gate) misclassify this as a completed booking.",
+        "backend/servers/api-server/src/services/voice_commands.rs:531-557 — `action_contact_manager` returns `success: true` AND embeds a hardcoded placeholder email `manager@example.com` in the response text (in en/sk/cs), the voice card `content` (:549), and the `data` payload (`{\"manager_email\": \"manager@example.com\"}` :554). This is a live production webhook path — Alexa Smart Home / Google Actions users are literally spoken 'contact the manager at manager@example.com', a fabricated address unowned by the organization. There is no lookup of the real building manager's email from OrganizationMember/User/Building repositories.",
+        "This is the exact anti-pattern the same file's own comments flag and that the sibling `action_check_balance` was FIXED to avoid: see :262-274 ('this used to fabricate a 'your balance is zero' success response ... code review: fabricated success') where the fix set `success: false`. Sibling `action_check_announcements` (:399-410) and `action_check_meter` (:475-494) were likewise re-worked to actually query `announcement_repo.count_unread_rls` and `meter_repo.get_pending_readings_for_unit_rls`. Two of the four fabricated-success intents were fixed; `book_facility` and `contact_manager` were left with the same anti-pattern. Regression test coverage exists for check_balance/check_announcements/check_meter (see tests at :819-, :870-, :941-) but nothing pins book_facility/contact_manager to the same honesty contract.",
+        "Related backlog history: `code-review-api-core-voice-actions-fabricated-empty` (2026-08-09 signals, backlog status=dropped) covered check_announcements+check_meter, which have since been fixed — but the sister-actions that were part of the same anti-pattern were not swept in. Landable backend-only fix: (a) `action_contact_manager` should look up the organization's/building's real manager email(s) via OrganizationMember/UnitResident lookup (BUILDING_MANAGER role) and fail honestly (`success: false`, `should_end_session: false` retained) when none is configured, instead of speaking a fabricated address; (b) `action_book_facility` should either implement the FacilityRepository booking flow or return `success: false` like `check_balance` does, so downstream telemetry/re-prompt logic stops classifying a not-implemented feature as a completed action.",
+        "promoted from stranded review signal in .research/signals/2026-08-20-api-core-tier1d.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-syndication-stub-never-called",
+      "title": "api-core: 405 — `SyndicationService::process_syndication_job` (public API) has zero callers in the tree. `rg 'process_syndication_job|build_listing_payload' bac",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-405 — `SyndicationService::process_syndication_job` (public API) has zero callers in the tree. `rg 'process_syndication_job|build_listing_payload' backend/` returns only the definitions themselves. Meanwhile `SyndicationService::enqueue_publish`/`enqueue_status_change`/`enqueue_remove` (:117-260) ARE called from routes/listings.rs (:540, :655) and enqueue rows into the `SYNDICATION_QUEUE` background_jobs queue. Grep confirms `SYNDICATION_QUEUE` is only referenced INSIDE syndication.rs itself (enqueue writers + get_queue_stats reader) — no background worker binary, no scheduler tick, no CLI consumer dequeues from this queue. Result: portal publish/update/remove requests silently backlog forever; users see 'queued for syndication' in the UI while nothing ever runs.",
+        "The body of `process_syndication_job` (:308-405) does not perform any HTTP call to Sreality/Nehnutelnosti/Bezrealitky/etc. — the doc comment at :285-288 admits it: 'This is a placeholder for the actual portal API integration. In production, this would call the respective portal APIs.' On PUBLISH it fabricates an external id via `format!(\"{}_{}\", payload.portal, Uuid::new_v4())` (:318) and calls `update_syndication_status(..., syndication_status::SYNCED, Some(&external_id), None)` (:321-330). STATUS_CHANGE (:334-360) and UPDATE (:361-382) likewise stamp `SYNCED` without any real portal I/O. If a worker is ever wired to consume the queue without first replacing the body, every listing would be marked SYNCED with a fake external id — a data-integrity + user-trust break (the operator's dashboard says 'live on Sreality', nothing is actually live).",
+        "The support scaffolding is dead too: `build_listing_payload` (:417) constructs a portal-ready JSON body from every listing field and is never called (rg confirms). It is the only code path that would build the request body a real integration needs, so its non-invocation is proof the caller never landed.",
+        "Prior signal `code-review-api-core-syndication-fake-synced` (.research/signals/2026-08-09-api-core-tier1d-2.json) raised the same finding on 2026-08-09; it did not survive into backlog.json (no matching id/evidence there). The code has not moved since — `git log --since=\"30 days ago\" -- backend/servers/api-server/src/services/syndication.rs` shows only the 2026-08-19 dispatcher commit that re-checked in the whole services/ tree. Refreshing so it lands as a live signal. Landable backend-only investigation: either implement the four operations against the per-portal HTTP clients that already live in the integrations crate (portal secrets are wired in AppState per CLAUDE.md), or make the routes reject enqueue attempts with a clear NOT_IMPLEMENTED so users are not silently misled by a working-looking UI backed by a queue nothing drains.",
+        "promoted from stranded review signal in .research/signals/2026-08-20-api-core-tier1d.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-financial-error-swallow",
+      "title": "api-handlers: 571 (unit-ledger handler) matches on `state.financial_repo.get_account_with_transactions(account.id, 20).await` with only two arms: `Ok(Some(respo",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/financial.rs:561-571 (unit-ledger handler) matches on `state.financial_repo.get_account_with_transactions(account.id, 20).await` with only two arms: `Ok(Some(response)) => Ok(Json(response))` and a catch-all `_ => Ok(Json(FinancialAccountResponse { account, recent_transactions: vec![] }))`.",
+        "The `_ =>` arm collapses `Ok(None)` (legitimately empty) together with `Err(e)` (a real DB failure). A transient DB error therefore returns HTTP 200 with `recent_transactions: []` instead of surfacing a 500 -- the client is shown a financial account that appears to have zero recent transactions when in fact the fetch failed. On a money/ledger endpoint this is misleading financial data plus a swallowed error (no tracing on the error branch, so the failure is also invisible in logs).",
+        "Matches the reviewer pattern 'Axum handler that returns StatusCode::OK on an error branch'. Landable backend-only fix: split the arms so `Err(e)` maps to a 500 (with a `tracing::error!`) and only `Ok(None)` yields the empty-transactions fallback.",
+        "promoted from stranded review signal in .research/signals/2026-08-20-api-handlers-tier1d.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-ocr-fetch-no-auth",
+      "title": "ppt-web-ui: 46 (apiFetch) and frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 (ocrFetch) issue requests with the native browser `fet",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-ppt-web-ui-tier1d-r2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:31-46 (apiFetch) and frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 (ocrFetch) issue requests with the native browser `fetch()` and set only `Content-Type` — they never attach an `Authorization` header carrying a bearer token. The whole ai-chat feature (sessions/messages/feedback/escalated at API_BASE `/api/v1/ai/chat`, useAiChat.ts:19) and the OCR meter-reading endpoints thus call the management API unauthenticated.",
+        "Auth in this app is injected exclusively by the axios request interceptor (frontend/apps/ppt-web/src/lib/api.ts:198 — \"Request interceptor: Add JWT token to requests\", token read from localStorage) and by the generated @ppt/api-client. Sibling raw-fetch data layers correctly compensate by injecting the token themselves: accounting/api/paymentMatching.ts:63-66 (`if (token) headers.Authorization = \\`Bearer ${token}\\``) and notification-analytics/hooks/useNotificationAnalytics.ts:35-39. The ai-chat and OCR helpers do neither.",
+        "A repo-wide grep for a global fetch override (`window.fetch`/`globalThis.fetch` reassignment) in apps/ppt-web/src returns no hits, so native `fetch` calls are NOT wrapped — the axios interceptor cannot apply to them. Since the api-server is Bearer-JWT based (no cookie session), these requests reach the backend with no credential and should be rejected with 401, breaking AI-chat and OCR for authenticated users. Fix: route these through the shared axios client / @ppt/api-client, or inject `getToken()` into the fetch headers like paymentMatching.ts does. (The news pages — features/news/pages/*.tsx — use the same header-less native-fetch pattern and are likely affected too.)",
+        "promoted from stranded review signal in .research/signals/2026-08-20-ppt-web-ui-tier1d-r2.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-delete-swallows-err",
+      "title": "ppt-web-ui: 142 (useDeleteSession) calls `await fetch(\\`${API_BASE}/sessions/${sessionId}\\`, { method: 'DELETE' })` directly and never checks `response.ok`, unl",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-ppt-web-ui-tier1d-r2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:131-142 (useDeleteSession) calls `await fetch(\\`${API_BASE}/sessions/${sessionId}\\`, { method: 'DELETE' })` directly and never checks `response.ok`, unlike every other call in the file which routes through `apiFetch` (L31-46) that throws on a non-2xx status. The mutationFn's return value is discarded, so a 403/404/500 DELETE resolves as a SUCCESS.",
+        "On that false success `onSuccess` (L138) runs `invalidateQueries({ queryKey: aiChatKeys.sessions() })`, which refetches the session list. Net user-visible effect: the session row briefly disappears (optimistic-looking) then reappears when the refetch returns the still-present session, and no error toast / isError branch ever fires — the deletion silently failed with zero feedback.",
+        "Fix: wrap the DELETE in the existing `apiFetch` helper (or add an explicit `if (!response.ok) throw ...`) so failures propagate to the mutation's error state and the UI can surface them, consistent with useCreateSession/useSendMessage/useMessageFeedback in the same file.",
+        "promoted from stranded review signal in .research/signals/2026-08-20-ppt-web-ui-tier1d-r2.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-import-mutations-silent-fail",
+      "title": "reality-web: Systematic gap across the Epic 46 agency-import feature: every state-changing mutation fires without an onError handler, isError branch, or user-vi",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "Systematic gap across the Epic 46 agency-import feature: every state-changing mutation fires without an onError handler, isError branch, or user-visible toast/alert. When the server rejects the request (network / 403 / validation / rate-limit), the UI silently proceeds as if success — this is the same class of bug as the 2026-08-18-reality-web finding on inquiries/page.tsx cancel, but affects a broader surface (CRM + feed imports + branding + sync schedule).",
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:168-172 — handleDelete awaits deleteMutation.mutateAsync(connection.id) with no try/catch; grep of the whole file yields zero onError / isError / toast references. Line 215 syncMutation.mutate() and lines 372/391 test+create mutateAsync calls have the same gap.",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:154-165 — handleTogglePause + handleDelete both await mutateAsync with no error catch; line 207 syncMutation.mutate() is pure fire-and-forget. Whole file also has zero onError / isError / toast.",
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave awaits updateMutation.mutateAsync(...) then unconditionally setIsEditing(false); a failed save closes the edit form and the user sees the OLD schedule values re-rendered as though they saved.",
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:78-95 — handleSave awaits updateBranding.mutateAsync({logo, coverImage, primaryColor, ...}) with no try/catch; a failed logo/cover upload becomes a silent unhandled promise rejection (browser-console only).",
+        "Fix vector: add a shared useMutationToast helper (or Sonner/react-hot-toast) and wire onError on every mutation hook — or at minimum an isError branch that surfaces the message in the existing card/modal.",
+        "promoted from stranded review signal in .research/signals/2026-08-20-reality-web-tier1d.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-error-passthrough",
+      "title": "reality-web: 91 — the SSO callback pulls `error` and `error_description` off the query string with searchParams.get(...) and passes them straight into setError(",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-20-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:83-91 — the SSO callback pulls `error` and `error_description` off the query string with searchParams.get(...) and passes them straight into setError(errorDescription || errorParam), which then renders as <p style={styles.errorMessage}>{error}</p> on line 131. There is no allow-list of expected error codes, no length cap, and no scrubbing.",
+        "React JSX escaping prevents HTML/JS injection so this is NOT XSS, but an attacker who can hand a victim a link to /<locale>/auth/callback?error=x&error_description=Please+call+1-800-... renders arbitrary attacker-controlled body text under our origin, with our SSO chrome and our real 'Return Home' button — a page-shaped phishing surface hosted from the real reality-web SSO callback URL. Because the URL is legitimately linked from OAuth error redirects, users are trained to trust content on that route.",
+        "Additionally the same file (162 lines) has zero next-intl usage on the 4-locale portal: 'Login Failed' (L130), 'Return Home' (L133), 'Loading...' (L66), 'Completing login...' (L144), and the constructed 'Invalid state token. Please try logging in again.' (L106) all render English regardless of locale.",
+        "Fix vector: constrain error to a known enum ('access_denied', 'invalid_state', 'server_error', ...) and translate via useTranslations('auth.sso.error.<code>'); fall back to a single generic key when the code is unknown. Drop the raw error_description from the rendered UI (log it only). Wrap the remaining strings in t().",
+        "promoted from stranded review signal in .research/signals/2026-08-20-reality-web-tier1d.json (emitted 2026-08-20); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "created_at": "2026-08-20",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-announcement-roles-legacy-membership",
+      "title": "api-core: 680 — the announcement target-resolution helper's `\"roles\"` branch fans out via `SELECT DISTINCT om.user_id FROM organization_members om WHERE om.orga",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-19-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:666-680 — the announcement target-resolution helper's `\"roles\"` branch fans out via `SELECT DISTINCT om.user_id FROM organization_members om WHERE om.organization_id = $1 AND om.role_id = ANY($2) AND om.status = 'active'`, reading the LEGACY organization_members table (migration 00005).",
+        "The sibling `\"all\"` branch in the same match (mod.rs:584-598) was DELIBERATELY migrated off that table, with an in-code comment: 'membership lives in `user_memberships` (migration 00128, the canonical authz spine)' and joins `user_memberships` with revoked_at/expires_at freshness filters. The `\"roles\"` branch was not migrated and still trusts organization_members.",
+        "Migration 00128 (crates/db/migrations/00128_user_memberships.sql) declares user_memberships canonical and BACKFILLS from organization_members ('Backfill from `organization_members`. Map legacy role_type -> unified role') — i.e. organization_members is the legacy source, not the forward write path. If new/updated memberships are written only to user_memberships, role-targeted announcements will fan out to a stale audience and silently MISS residents whose active membership exists only in user_memberships (missed-notification correctness bug, not a style nit).",
+        "Schema divergence compounds it: announcement role targets are role_id UUIDs matched against organization_members.role_id, whereas user_memberships carries a `role VARCHAR(64)` enum and no role_id — so the fix is a real remodel (resolve role_id -> unified role, or dual-source), not a table rename. Landable backend-only investigation: confirm whether organization_members is still dual-written; if not, re-express the roles fanout against the canonical membership source. Reachable in production via publish_scheduled_announcements -> dispatch_announcement_notifications for any 'roles' target_type announcement.",
+        "promoted from stranded review signal in .research/signals/2026-08-19-api-core-tier1d.json (emitted 2026-08-19); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-08-19",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-osrng-expect-panic-auth-paths",
+      "title": "api-core: `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside `generate_token()` (email-verification / password-reset tokens); the fn returns `Strin",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-19-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 — `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside `generate_token()` (email-verification / password-reset tokens); the fn returns `String`, so a CSPRNG failure panics the request thread instead of surfacing an error.",
+        "backend/servers/api-server/src/services/oauth.rs:918 — same pattern in `generate_random_b64()`, the single entropy source for OAuth authorization codes, access/refresh tokens, client ids AND client secrets (per its own doc-comment). A panic here aborts the OAuth token/registration request mid-flight.",
+        "backend/servers/api-server/src/services/totp.rs:153 — same `.expect(\"OS rng failed\")` generating the AES-GCM nonce in `encrypt_secret()` on the MFA-enrollment path.",
+        "All three are per-request, security-critical, and infallible-signatured (`-> String`). OS getrandom failure is rare (fd exhaustion / broken /dev/urandom) but when it happens the response is a panic (dropped connection or 500 via catch-panic) rather than a clean 503/AuthError, and there is no test forcing the failure branch. Landable backend-only fix: change these helpers to return `Result<_, _>` and map the rng error to the existing error enums (AuthError / OAuth error / TotpError), or centralize on one fallible CSPRNG helper. Low-probability but auth-critical.",
+        "promoted from stranded review signal in .research/signals/2026-08-19-api-core-tier1d.json (emitted 2026-08-19); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs",
+        "backend/servers/api-server/src/services/oauth.rs",
+        "backend/servers/api-server/src/services/totp.rs"
+      ],
+      "created_at": "2026-08-19",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-401-onunauthorized-unwired",
+      "title": "ppt-web-core: 221 — the hand-rolled axios response interceptor has an unauthorized branch `if (error.response?.status === 401 && onUnauthorizedCallback) { onUna",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-19-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 — the hand-rolled axios response interceptor has an unauthorized branch `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`. `onUnauthorizedCallback` is a module-level `let` (api.ts:180) set ONLY inside `createAxiosInstance` from `config.onUnauthorized` (api.ts:196).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — the sole production caller wires the client with `configureApiClient({ getToken: getAccessToken })` and passes NO `onUnauthorized`. Therefore `onUnauthorizedCallback` is `undefined` at runtime and the 401 branch (api.ts:220) is dead code in production — a 401 neither logs the user out nor triggers a token refresh; the request just rejects with a transformed ApiError.",
+        "The gap has real consumers: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:35+ and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts call `getApiClient()` directly, and their own header comments (useSentiment.ts:18-19, usePredictiveMaintenance.ts:9-10) advertise `401 -> onUnauthorized` as a benefit that never fires. When the access token expires, these production feature calls fail silently with an error instead of re-authenticating.",
+        "Impact / landable frontend-only fix: pass an `onUnauthorized` handler in the AuthContext.tsx:337 `configureApiClient({...})` call (e.g. invoke `logout()` or the queued `refreshToken()` + replay). Confidence medium: wiring is fully traced statically; net user impact depends on token TTL and whether the separate generated `@ppt/api-client` covers the main flows, so not upgraded to high.",
+        "promoted from stranded review signal in .research/signals/2026-08-19-ppt-web-core-tier1d.json (emitted 2026-08-19); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-core-no-401-refresh-wiring] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-08-19",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast-unvalidated",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,139 — handleTakeAction reads free-text `window.prompt(t('moderatio",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-19-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,139 — handleTakeAction reads free-text `window.prompt(t('moderation.prompts.actionType'), 'approve')` and then blindly casts it `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` into the takeAction mutation with NO allowlist/type-guard check. A moderator typo ('aprove', 'delete') is sent verbatim to the moderation-action API as an invalid enum.",
+        "Same defect in the appeal path, ContentModerationPage.tsx:165,175 — `const decision = window.prompt(t('moderation.prompts.decision'), 'uphold')` cast `decision: decision as 'uphold' | 'overturn'` with no validation before decideAppeal.mutate.",
+        "The safe pattern already exists in the SAME feature folder and was simply not applied here: frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:39 defines `const isAmlReviewDecision = (value): value is AmlReviewDecision => ...` and AmlDashboardPage.tsx:149 guards `if (!isAmlReviewDecision(decision)) { alert(...); return; }` before submitting. ContentModerationPage has no equivalent guard for its action_type / appeal-decision unions.",
+        "Impact: unvalidated user input crosses the client->API boundary for a security-sensitive content-moderation decision (remove/restrict/warn on user content, uphold/overturn on appeals). Landable frontend-only fix: add `is`-narrowing guards for the moderation action-type and appeal-decision unions mirroring isAmlReviewDecision, rejecting out-of-set prompt input before mutate. The `as` casts (ContentModerationPage.tsx:139,175) are the TS smell — an `as` cast on a `window.prompt(): string | null` result is a false type assertion.",
+        "promoted from stranded review signal in .research/signals/2026-08-19-ppt-web-ui-tier1d.json (emitted 2026-08-19); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-ui-moderation-prompt-cast] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-19",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-download-no-onsuccess",
+      "title": "ppt-web-ui: 127 — handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })` with ONLY an onError callback and NO onSuccess. The mutation's resolved ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-19-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:119-127 — handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })` with ONLY an onError callback and NO onSuccess. The mutation's resolved value (the fetched PDF payload) is never consumed.",
+        "downloadPdf is `useDownloadDsaReportPdf()` imported from the generated '@ppt/api-client' (DsaReportsPage.tsx:9,45). A generated mutation hook performs the HTTP request and returns the response body; it does not itself trigger a browser save. So without an onSuccess that turns the response into a Blob + object-URL anchor click (or opens the URL), clicking Download fires the request and silently discards the PDF — the user gets nothing on the happy path.",
+        "Contrast the sibling handlers in the same file which DO wire onSuccess for their side effects: handleGenerate (DsaReportsPage.tsx:91) resets the form, handlePublish (DsaReportsPage.tsx:107) alerts success. Only the download path — the one that must materialise a file — has no success handling.",
+        "Impact: the DSA transparency-report Download button is a functional no-op on success (completeness gap); a compliance officer cannot obtain the PDF. Landable frontend-only fix: add onSuccess to save the returned blob (createObjectURL + programmatic <a download> click, then revokeObjectURL), or navigate to the report's `download_url` (already mapped at DsaReportsPage.tsx:62). Confidence medium: hook internals live in generated client and were not compiled, but the handler unconditionally drops the success value regardless.",
+        "promoted from stranded review signal in .research/signals/2026-08-19-ppt-web-ui-tier1d.json (emitted 2026-08-19); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
+      ],
+      "created_at": "2026-08-19",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-test-connection-always-success",
+      "title": "reality-server: 253 — POST /api/v1/agencies/{id}/imports/test-connection (test_connection) is a stub: after membership + SSRF URL validation it unconditionally ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-18-reality-server-tier1d-r2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:243-253 — POST /api/v1/agencies/{id}/imports/test-connection (test_connection) is a stub: after membership + SSRF URL validation it unconditionally returns `TestConnectionResponse { success: true, message: \"Connection to provider '{}' successful (stub response)\", sample_record_count: Some(42) }` regardless of the real provider/credentials/feed reachability. An agency member testing a mistyped or dead feed URL gets a green 'Connection successful' with a fake 42-record count, which will mislead them into saving a broken import config.",
+        "The endpoint is mounted on the authenticated agency-import router and is documented as returning a real test result (utoipa body = TestConnectionResponse), so the placeholder is user-visible in production, not dev-only. Landable backend-only fix: perform an actual (timeout-bounded) fetch/parse of `data.feed_url` for the given provider and report real success/failure + record count, or explicitly gate the stub behind a 'not yet implemented' 501 rather than reporting a fabricated success.",
+        "promoted from stranded review signal in .research/signals/2026-08-18-reality-server-tier1d-r2.json (emitted 2026-08-18); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-error-leak",
+      "title": "reality-server: backend/servers/reality-server/src/routes/sso.rs — SSO handlers surface raw internal error strings to unauthenticated clients via `SsoError::new",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-18-reality-server-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs — SSO handlers surface raw internal error strings to unauthenticated clients via `SsoError::new(<code>, &e.to_string())`. On INTERNAL_SERVER_ERROR paths this leaks DB / crypto / JWT / reqwest internals in the API response body. Sites: lines 265 (token_exchange_failed), 275/439/923/1114 (user_info_failed), 287/515/958/1131/1158 (user_create_failed), 299/527/971/1142/1169 (session_create_failed), 451 (token_create_failed), 1079 (pm_session_invalid). ~15 call sites.",
+        "Contrast — the correct pattern already exists in the same crate: backend/servers/reality-server/src/routes/users.rs:154-190 maps `RegistrationResult::CryptoError(e)` / `DatabaseError(e)` to a generic client message \"Registration failed\" (StatusCode 500) while keeping `e` internal; login does the same with \"Login failed\". sso.rs should follow suit — return a generic code/message to the client and move `e` into a `tracing::error!(error = %e, ...)` log.",
+        "Landable backend-only fix (Rust, no schema change): replace `&e.to_string()` in the client-facing `SsoError::new(...)` args with a fixed generic string per error code and add a `tracing::error!`/`warn!` carrying `%e` beside each `map_err`, mirroring routes/users.rs. Reachable in prod: every one of these handlers is mounted on the public SSO router.",
+        "promoted from stranded review signal in .research/signals/2026-08-18-reality-server-tier1d.json (emitted 2026-08-18); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "title": "reality-server: backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — three bare `reqwest::Client::new()` instances used for the PM OAuth token exc",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-18-reality-server-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — three bare `reqwest::Client::new()` instances used for the PM OAuth token exchange (exchange_code_for_tokens), the OAuth userinfo fetch (get_user_info), and the token introspection cache-miss call. reqwest's default client has NO request timeout, so a hung / slow PM OAuth upstream blocks the reality-server request (and its DB conn + Tokio worker) indefinitely — an availability/DoS-adjacent hazard on the critical auth path (every SSO login + every token-validation cache miss).",
+        "Contrast — the crate already knows to set one: backend/servers/reality-server/src/state.rs:756-759 (`PmApiClient::new`) builds its reqwest client with `.timeout(Duration::from_secs(timeout_seconds))`. The inline sso.rs clients skip that hardening.",
+        "Secondary smell: constructing a fresh `reqwest::Client` per request also discards connection pooling / keep-alive for the busiest outbound path. Landable backend-only fix: build one timeout-configured `reqwest::Client` once (e.g. store it on AppState alongside PmApiClient, or a shared helper) and reuse it in all three sso.rs call sites.",
+        "promoted from stranded review signal in .research/signals/2026-08-18-reality-server-tier1d.json (emitted 2026-08-18); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data-shipped",
+      "title": "reality-web: frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65 — the authenticated /[locale]/profile page renders entirely fabricated data: `con",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-18-reality-web-tier1d-r2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65 — the authenticated /[locale]/profile page renders entirely fabricated data: `const profile = MOCK_PROFILE` and it maps MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS. It is wrapped in ProtectedRoute (SSO), so every LOGGED-IN user — regardless of identity — is shown the same hardcoded persona 'Tomáš Novotný' with fake PII (email t.novotny@email.sk, phone +421 911 123 456 in _mock.ts:46-57), fake stats (12 active listings, 47 deals, 4.7★), and 3 fabricated listings/activity/reviews.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts — the mock is the sole data source; there is no live-data path. The page comment itself concedes it is a stub: 'Once /users/me + /listings/by-owner endpoints land, replace MOCK_* with live data via the SDK' — i.e. a known placeholder shipped on a real authenticated route, not a dev-only fixture.",
+        "Impact: a real user reaching their own profile sees someone else's fabricated identity/PII presented as their account — a completeness gap that reads as a privacy/trust bug on a public portal. Contrast PopularNeighbourhoods.tsx, whose hardcoded set is documented as an intentional curated marketing surface; this profile mock is not intentional, it is unfinished.",
+        "Landable frontend-only fix: gate the page on real /users/me + listings-by-owner SDK calls (with loading/empty/error states), or hide the tabbed profile behind a 'coming soon' state, until the endpoints land — do not render fabricated PII to authenticated users.",
+        "promoted from stranded review signal in .research/signals/2026-08-18-reality-web-tier1d-r2.json (emitted 2026-08-18); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-silent-fail",
+      "title": "reality-web: 50 — handleCancel fires cancelInquiry.mutate(inquiry.id) as fire-and-forget then immediately closes the confirm dialog (setShowCancelConfirm(false)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-18-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel fires cancelInquiry.mutate(inquiry.id) as fire-and-forget then immediately closes the confirm dialog (setShowCancelConfirm(false)); the useCancelInquiry mutation has no onError, and nothing renders cancelInquiry.isError, so a failed cancellation (network/409/permission) leaves the user believing the inquiry was cancelled while it still stands — a silent user-facing failure on a state-changing action. The list query on the same page does handle isLoading/error, so the mutation path is the gap.",
+        "promoted from stranded review signal in .research/signals/2026-08-18-reality-web-tier1d.json (emitted 2026-08-18); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-18",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "title": "reality-web: 50 — InquiryCard.handleCancel calls `cancelInquiry.mutate(inquiry.id)` fire-and-forget and immediately `setShowCancelConfirm(false)`. The mutation ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-17-reality-web-tier1d-r1828.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — InquiryCard.handleCancel calls `cancelInquiry.mutate(inquiry.id)` fire-and-forget and immediately `setShowCancelConfirm(false)`. The mutation result (`useCancelInquiry()` from @ppt/reality-api-client) is never read: grep of the file shows no `cancelInquiry.isError`, `.isPending`, `.error`, and no `onError`/`onSuccess` callback anywhere. If the cancel POST fails (network / 409 already-cancelled / 403), the confirm dialog closes, the card shows no feedback, and the inquiry silently stays pending — the user believes it was cancelled.",
+        "Secondary: because `cancelInquiry.isPending` is not read, the Cancel button is not disabled during the in-flight request, so a double-click fires two cancel mutations.",
+        "This is a deviation from the codebase's own established pattern, not a missing convention: the sibling public write path frontend/apps/reality-web/src/components/listings/ContactForm.tsx does it correctly — it renders `{createInquiry.error && <div className=\"error-message\">{t('failedToSend')}</div>}` (:213) and `disabled={createInquiry.isPending}` with a sending label (:215-216). The inquiries cancel flow should mirror that: surface `cancelInquiry.error` and gate the button on `cancelInquiry.isPending`.",
+        "Landable reality-web-only fix (no API/schema change): read the mutation state in InquiryCard — disable the confirm button while `cancelInquiry.isPending`, keep the confirm open and show an inline error string on `cancelInquiry.isError` instead of unconditionally closing it, and only `setShowCancelConfirm(false)` in an onSuccess. Reuse an i18n key rather than a hardcoded string (see the i18n-gap finding on the same file).",
+        "promoted from stranded review signal in .research/signals/2026-08-17-reality-web-tier1d-r1828.json (emitted 2026-08-17); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-reality-web-inquiry-cancel-silent-fail] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/components/listings/ContactForm.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-install-swallowed-db-error",
+      "title": "api-handlers: backend/servers/api-server/src/routes/integrations/install.rs (Booking.com reservation sync loop, ~L1116-1136) swallows transient DB errors with `",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-17-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs (Booking.com reservation sync loop, ~L1116-1136) swallows transient DB errors with `.await.ok().flatten()`. The unit-connection lookup `rental_repo.find_connection_by_unit_platform(room_uuid, \"booking\").await.ok().flatten()` maps any Err (DB timeout, pool exhaustion, deadlock) to None, and the following `match unit_conn { Some(ref conn) if conn.unit_id != nil => .., _ => continue }` silently drops that reservation. Net effect: a transient DB error during sync makes real Booking.com reservations vanish from the import with no error surfaced — only a pulled_count vs persisted_count gap in an info log — i.e. silent data loss masquerading as a successful sync.",
+        "Same pattern on the dedup guard immediately below: `let already_exists = rental_repo.find_booking_by_external_id(\"booking\", &reservation.reservation_id).await.ok().flatten().is_some();` (~L1128-1131). On a DB error `.ok()` -> None -> already_exists=false, so the loop falls through to create_booking and attempts a duplicate insert; it relies entirely on a downstream DB unique constraint (create_booking Err arm at ~L1183 only logs a warning) to avoid a true duplicate. Contrast with the adjacent availability check which correctly uses `unwrap_or(false)` with an explicit fail-safe comment — the two find_* calls should propagate the error (return 502/500) or at minimum count and surface DB failures rather than treating them as 'not found'.",
+        "Severity medium: reachable on the production Booking.com channel-sync path; impact is silent dropped bookings and a dedup bypass under DB stress, not a crash. Confidence medium (static trace of the loop; the exact repository error semantics and unique-constraint presence were not runtime-confirmed).",
+        "promoted from stranded review signal in .research/signals/2026-08-17-api-handlers-tier1d.json (emitted 2026-08-17); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-platform-admin-audit-swallow",
+      "title": "api-handlers: backend/servers/api-server/src/routes/platform_admin/audit.rs support-user-detail handler swallows DB errors on security-relevant reads: `state.pl",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-17-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin/audit.rs support-user-detail handler swallows DB errors on security-relevant reads: `state.platform_admin_repo.get_user_memberships(id).await.unwrap_or_default()` (~L201-205) and `get_user_sessions(id).await.unwrap_or_default()` (~L207-211) both map an Err to an empty Vec. A transient DB failure therefore renders a platform-admin support view showing the user as having NO org memberships and NO active sessions, when in fact the query merely failed.",
+        "This is misleading data on an admin/security surface: an operator using this view to decide whether to revoke a compromised user's sessions, or to audit a user's org access, could wrongly conclude there are no active sessions / no memberships to act on. The same `.unwrap_or_default()`-on-DB-result pattern recurs in this file at ~L133, L357, and L484 (audit-log / listing queries), each of which silently returns an empty result set on error instead of signalling failure to the caller.",
+        "Fix: propagate the repository error (return 500/502) or render an explicit 'data unavailable' state rather than an empty list, so an admin never mistakes a query failure for an authoritative empty result. Severity medium (admin-only, no crash, but wrong security-relevant data); confidence medium (static).",
+        "promoted from stranded review signal in .research/signals/2026-08-17-api-handlers-tier1d.json (emitted 2026-08-17); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin/audit.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-saved-search-alert-cap-dataloss",
+      "title": "reality-server: 240 (run_once matching loop) advances each saved search's watermark UNCONDITIONALLY after a capped scan, so any match beyond the cap in that cad",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-17-reality-server-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs:197-240 (run_once matching loop) advances each saved search's watermark UNCONDITIONALLY after a capped scan, so any match beyond the cap in that cadence window is permanently dropped. The scan is `find_new_match_listing_ids(&query, Some(since), self.config.match_limit)` where match_limit defaults to 100 (SavedSearchAlertConfig::default, :80). Its SQL (crates/db/src/repositories/reality_portal/searches.rs:68-104) is `... WHERE l.published_at > $12 ORDER BY l.published_at DESC LIMIT $13` — it returns only the NEWEST match_limit listings published since the watermark.",
+        "After the capped scan the worker calls `mark_saved_search_matched(&mut *conn, search.id, ids.len())` (saved_search_alerts.rs:237-240), and that repo fn sets `last_matched_at = now()` UNCONDITIONALLY (searches.rs:134-159, `SET last_matched_at = now()`). It takes no timestamp argument, so the watermark always jumps to the wall clock, never to the oldest listing actually processed. Consequence: if more than match_limit (100) listings match a saved search within one cadence window — entirely plausible for a broad daily/weekly search such as 'flats in Bratislava' after a bulk portal import — the query keeps the newest 100 (DESC), the watermark leaps to now(), and every OLDER matching listing in that window is skipped forever. Because ORDER BY is `published_at DESC`, the dropped rows are precisely the OLDEST matches (the ones that have waited longest), and the next run resumes from `published_at > now()` so they can never be re-selected. There is no continuation cursor and no carry-over.",
+        "This silently defeats the feature's stated purpose ('new listing matches your search -> you're notified', header doc :1-17) under exactly the high-volume conditions where alerts matter most, with no error and no log — the user simply never receives alerts for the majority of a large batch. Fix options (all local to this worker + repo): (a) advance the watermark to the MIN published_at of the returned ids minus epsilon (resume-from-oldest) so the next due run drains the remainder instead of skipping it; or (b) loop find_new_match_listing_ids page-by-page until fewer than match_limit rows come back before advancing to now(); or (c) at minimum emit a tracing::warn when ids.len() == match_limit so the truncation is observable. Confidence medium: the DESC+LIMIT query and the unconditional now() watermark are both confirmed in source and the full path from run_once -> query -> watermark is traced; the >100-per-window trigger depends on listing volume rather than being unconditionally reachable, so not upgraded to high.",
+        "promoted from stranded review signal in .research/signals/2026-08-17-reality-server-tier1d.json (emitted 2026-08-17); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-page-no-i18n",
+      "title": "reality-web: frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the public agent/realtor profile page (route /[locale]/realtor/[id], screen-map ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-17-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the public agent/realtor profile page (route /[locale]/realtor/[id], screen-map docs/screens/reality/agent-profile.md) imports NO useTranslations/getTranslations (grep count 0) across ~621 non-comment lines, yet reality-web is an explicitly 4-locale public portal (sk/cs/de/en per CLAUDE.md).",
+        "Every user-facing label is a hardcoded Slovak literal: line 161 'Aktívne inzeráty', 162 'Predaných (12m)', 163 'Priem. dni na trhu', 165 'Hodnotenie', 291 'Predaj'/'Prenájom' (sale/rent badge). So a cs/de/en visitor to an indexed agent profile sees the entire page in Slovak. The page carries data-i18n=\"pages.agent-profile.root\" marker attributes but they are never wired to a translation namespace.",
+        "line 311 also hardcodes the number/date formatting locale to 'sk-SK' (toLocaleString('sk-SK')), so price/stat formatting is Slovak-grouped for all four locales regardless of visitor.",
+        "Landable frontend-only fix: introduce a realtor/agent-profile translation namespace (next-intl messages for sk/cs/de/en), replace the hardcoded literals with t('...') via useTranslations, and derive the Intl locale from the route [locale] param instead of the 'sk-SK' literal. Matches the previously-shipped ComparisonView i18n finding (code-review-reality-web-comparison-view-i18n).",
+        "promoted from stranded review signal in .research/signals/2026-08-17-reality-web-tier1d.json (emitted 2026-08-17); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "docs/screens/reality/agent-profile.md"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "title": "reality-web: frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the public agency profile page (~325 lines) has zero useTranslations/getTransla",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-17-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the public agency profile page (~325 lines) has zero useTranslations/getTranslations (grep count 0) on the same 4-locale public portal.",
+        "User-facing strings are hardcoded Slovak, including the two state screens that a non-sk visitor is most likely to hit: line 36 loading state '>Načítavam…<', line 46 not-found state '>Kancelária sa nenašla.<', line 223 empty-listings state '>Žiadne aktívne ponuky.<', and line 302 CTA '🌐 Navštíviť web'. The not-found and empty states render Slovak for cs/de/en visitors of an SEO-indexed page.",
+        "Landable frontend-only fix: add an agency-profile next-intl namespace (sk/cs/de/en) and replace the loading / not-found / empty-state / CTA literals with t('...') resolved from the route [locale].",
+        "promoted from stranded review signal in .research/signals/2026-08-17-reality-web-tier1d.json (emitted 2026-08-17); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-08-17",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "title": "ppt-web-core: 221 — the hand-rolled axios response interceptor handles 401 via `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCa",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-16-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:219-221 — the hand-rolled axios response interceptor handles 401 via `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }`, reading a module-level `onUnauthorizedCallback` (declared api.ts:180, assigned only inside configureApiClient at api.ts:196).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 is the ONLY production call site of configureApiClient and it passes `configureApiClient({ getToken: getAccessToken })` with NO `onUnauthorized`. `onUnauthorizedCallback` therefore stays undefined at runtime and the 401 branch in api.ts is dead — a 401 from this client neither refreshes the session nor logs the user out; it just rejects with a transformed ApiError. (grep confirms no other non-test configureApiClient call.)",
+        "The behavior the missing callback should provide is explicitly documented as present by consumers: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:19 and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:10 both describe the shared client as doing '401 -> onUnauthorized'. That contract is not wired, so those feature endpoints silently fail on session expiry with no recovery.",
+        "There is also no response-side refresh interceptor on the generated @ppt/api-client: registerAuthInterceptors (packages/api-client/src/auth/interceptors.ts:36-51, invoked at apps/ppt-web/src/main.tsx:26) registers only a REQUEST interceptor that injects Authorization + X-Tenant-ID headers. So neither client performs silent refresh-on-401 app-wide. Fix: pass an onUnauthorized handler (trigger AuthContext.refreshToken with single-flight, fall back to logout) at the configureApiClient call site, or remove the dead branch + misleading hook comments.",
+        "promoted from stranded review signal in .research/signals/2026-08-16-ppt-web-core-tier1d.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-core-no-401-refresh-wiring] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-init-no-exp-check",
+      "title": "ppt-web-core: 415 (initializeAuth) — cold-boot restores the session as authenticated whenever BOTH a stored user and a stored access token exist: `if (storedUse",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-16-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 (initializeAuth) — cold-boot restores the session as authenticated whenever BOTH a stored user and a stored access token exist: `if (storedUser && accessToken) { setUser(storedUser); }`. No expiry check is performed on the access token despite the inline comment at L413-414 explicitly flagging the gap ('Validate the token is not expired (basic check)' / 'In production, we might verify with the server').",
+        "The cold-boot refresh branch at AuthContext.tsx:416 (`else if (refreshTokenValue)`) only runs when the access token is ABSENT. A returning user with a still-present but EXPIRED access token (and a valid refresh token) therefore skips refresh entirely and is shown an authenticated UI backed by a dead token.",
+        "A `decodeJwtPayload` helper already exists in this same file (AuthContext.tsx:220-232) and returns the JWT `exp` claim, so a cheap client-side expiry check is readily available but unused on the init path. Fix: if the stored access token's `exp` is in the past, fall through to the `refreshTokenValue` branch instead of calling setUser(storedUser).",
+        "Impact is compounded by the absence of any silent refresh-on-401 interceptor (see companion finding code-review-ppt-web-core-api-onunauthorized-unwired): with no auto-recovery, the expired-token session does not self-heal and the user sees failing requests until a manual re-login.",
+        "promoted from stranded review signal in .research/signals/2026-08-16-ppt-web-core-tier1d.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-core-no-401-refresh-wiring] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-swallowed-errors",
+      "title": "ppt-web-ui: frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx — the manager-facing approve/reject actions swallow API failures with no",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-16-ppt-web-ui-tier1d-r1430.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx — the manager-facing approve/reject actions swallow API failures with no user-facing feedback. handleApprove (L54-63) and handleRejectConfirm (L74-89) wrap approveBooking/rejectBooking in try/catch whose only failure handling is `console.error(...)`; on error the in-try `refreshBookings()` is skipped so the list is not even reloaded. A manager who clicks Approve on a booking that fails server-side sees the row unchanged and NO error — indistinguishable from a slow success — and may believe the booking was approved when it was not.",
+        "Same file, refreshBookings (L30-44): a failed listPendingBookings is caught to console.error only, then isLoading is set false with bookings left as the previous/empty array. On the initial load path this renders the BookingList empty-state, so a fetch error is shown to the manager as 'no pending bookings' — actively hiding pending approvals. Identical masking in features/facilities/pages/FacilitiesPage.tsx (fetchFacilities L58-72: catch → console.error only → empty FacilityList) and features/facilities/pages/MyBookingsPage.tsx (fetch L38-39 and cancel L75-76: catch → console.error only).",
+        "Confirmed no error surface exists in the whole feature: grep for setError|toast|ErrorBanner|<Alert|errorMessage across PendingBookingsPage.tsx, MyBookingsPage.tsx, FacilitiesPage.tsx returns nothing. The codebase already has the correct pattern to copy — features/emergency/pages/EmergencyContactDirectoryPage.tsx handleCreate/handleUpdate (L97-133) set an error state AND use i18n: `setError(err instanceof Error ? err.message : t('emergency.errors.failedToCreate'))`. Fix: give the facilities pages the same error state (surface a banner/toast on load + action failure, and do not render the empty-state when the last load errored), reusing t('...') keys. Confidence medium: reachability is certain; whether the backend can realistically 4xx these calls in normal use was not runtime-confirmed.",
+        "expert: frontend",
+        "promoted from stranded review signal in .research/signals/2026-08-16-ppt-web-ui-tier1d-r1430.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfoliolist-mock-data",
+      "title": "ppt-web-ui: 49 ships a shipped, route-mounted page that renders a HARDCODED `mockPortfolios` constant instead of real data. The comment on L10 says '// Mock dat",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-16-ppt-web-ui-tier1d-r1430.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioListPage.tsx:11-49 ships a shipped, route-mounted page that renders a HARDCODED `mockPortfolios` constant instead of real data. The comment on L10 says '// Mock data - would be fetched from API'. The page imports only React, useState, and PortfolioCard (L2-4) — there is no API client, no useQuery, no loading/error state — so every manager who opens the Portfolio list is shown three fabricated portfolios with fake financials (e.g. 'Core Investment Portfolio' €2,500,000 value / €1,200,000 equity / 4 properties, L14-23).",
+        "The fake data drives real UI math: the summary tiles are computed from the mock via `mockPortfolios.filter(p => p.isActive).reduce(...)` (L60-71, totalValue/totalEquity/propertyCount) and the show-inactive toggle filters the mock (L57-58). Nothing here degrades gracefully to real data — the API wiring simply does not exist, so this is fabricated business data presented as genuine, not a stub placeholder.",
+        "Distinct from the existing (dropped) `dx-portfolio-dashboard-stubs` signal, which concerns PortfolioDashboardPage.tsx no-op alert mutations + navigation TODOs — a different file and different concern. Fix: replace mockPortfolios with the real portfolios list query (mirror the useQuery + loading/empty/error pattern used elsewhere in the feature) and delete the constant. Confidence medium: the mock rendering is certain from static read; whether a backing portfolios list endpoint/client already exists was not fully traced.",
+        "expert: completeness",
+        "promoted from stranded review signal in .research/signals/2026-08-16-ppt-web-ui-tier1d-r1430.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioListPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-unvalidated-cast",
+      "title": "ppt-web-ui: 146 — handleTakeAction reads a free-text `window.prompt('Enter action type (remove, restrict, warn, approve):')` and passes it to the API with an un",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-16-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:130-146 — handleTakeAction reads a free-text `window.prompt('Enter action type (remove, restrict, warn, approve):')` and passes it to the API with an unchecked type assertion: `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` (L143). There is NO runtime validation; a typo (e.g. 'aprove', 'Remove ', 'delete') is cast straight through and sent to the DSA moderation mutation as an invalid action_type. Same pattern in handleDecideAppeal (L169-179): `decision as 'uphold' | 'overturn'` with no validation of the prompt result.",
+        "This is an `as` cast that crosses the API boundary on a regulated DSA content-moderation path — exactly the class the safe sibling avoids. AmlDashboardPage.handleReview (same feature dir, AmlDashboardPage.tsx:143-154) collects the identical free-text prompt but GUARDS it: `if (!isAmlReviewDecision(decision)) { alert('Invalid decision ...'); return; }` before mutating. ContentModerationPage has no equivalent guard, so the two regulated flows diverge in safety.",
+        "Fix: add `isModerationActionType` / `isAppealDecision` type-guard predicates (mirroring isAmlReviewDecision at AmlDashboardPage.tsx:39) and reject-with-message on invalid input before calling takeAction.mutate / decideAppeal.mutate, dropping the `as` casts. Confidence medium: reachability confirmed (handlers wired to case-action buttons) but the API's own server-side rejection of a bad action_type was not traced.",
+        "promoted from stranded review signal in .research/signals/2026-08-16-ppt-web-ui-tier1d.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-ui-moderation-prompt-cast] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-negcache-transient",
+      "title": "reality-server: 785 (introspect_pm_token) caches PM token-validation results in a 60s TTL cache (TokenValidationCache::new(60, 10000), state.rs:947). On a cache",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-16-reality-server-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:731-785 (introspect_pm_token) caches PM token-validation results in a 60s TTL cache (TokenValidationCache::new(60, 10000), state.rs:947). On a cache miss it POSTs to the PM introspection endpoint (sso.rs:749-757). When that HTTP call returns a NON-2xx status (line 759 `if !response.status().is_success()`), the code executes `state.token_cache.set(token, false, None, None)` (line 762) — caching the token as active:false — then returns Err.",
+        "Bug: a non-2xx from an RFC 7662 introspection endpoint is NOT evidence the token is inactive. An inactive token is signalled by HTTP 200 with body `{\"active\": false}` (parsed at line 769-780). A non-2xx status means the introspection endpoint itself failed — PM API 5xx during a deploy/overload, a 429 rate-limit, or a 401 from a client_id/client_secret misconfig. The comment at line 761 (\"Cache inactive tokens too (to prevent repeated failed validations)\") conflates 'introspection call failed (transient/unknown)' with 'token is definitively inactive'.",
+        "Impact / reachability: introspect_pm_token is the shared validation primitive for the portal-session paths — e.g. the PM<->Reality session sync (sso.rs:1070-1101, which on an inactive result logs 'Invalidated portal session due to inactive PM token' and tears the session down). During ANY PM introspection outage, the FIRST request for each distinct token poisons the cache with active:false, and every subsequent request for that token within the 60s TTL is served the cached active:false straight from sso.rs:736-743 WITHOUT re-calling PM — so valid portal users are rejected as inactive / logged out for up to 60s even after PM has fully recovered. A rolling PM deploy that briefly 503s thus amplifies into a 60s auth-rejection window for the entire active portal user base.",
+        "Landable backend-only fix: only write a negative cache entry when introspection DEFINITIVELY reports inactivity — i.e. move the `set(token, false, ...)` into the 2xx branch guarded by `!result.active` (after line 769), and on a non-2xx / transport failure return Err WITHOUT caching (optionally cache a short-lived 'unknown' sentinel with a much smaller TTL if repeated-validation load is a concern). Note the transport-error path (`.send().await?`, line 757) already correctly does NOT poison the cache — this fix makes the non-2xx path consistent with it.",
+        "promoted from stranded review signal in .research/signals/2026-08-16-reality-server-tier1d.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-reality-server-sso-introspect-negcache-poison] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-compare-label-currency-guard",
+      "title": "reality-web: 169 (getHighlightClass) gates a correctness guard on a DISPLAY STRING: `if ((row.label === 'Price' || row.label === 'Price per m²') && !currenciesM",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-16-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:163-169 (getHighlightClass) gates a correctness guard on a DISPLAY STRING: `if ((row.label === 'Price' || row.label === 'Price per m²') && !currenciesMatch()) return '';` — i.e. 'suppress the best-price highlight when the compared listings use different currencies' is keyed off `row.label` equality against the English literals. The rows are defined with `label: 'Price per m²'` (L83) etc., and that same `label` field is ALSO rendered to the user as the row header, so it is inherently a translatable display string, not a stable key.",
+        "Latent silent break: this is a public sk/cs/de/en portal and the comparison feature currently ships these labels as hardcoded English (see companion i18n finding). The moment the labels are translated — which the i18n fix requires — `row.label === 'Price'` no longer matches (Slovak 'Cena', German 'Preis', …), the guard stops firing, and cross-currency price rows get the `highlight-best` 'lowest price' badge again. Concretely: a 12,000,000 CZK flat would be badged 'best price' against a 450,000 EUR flat because raw numeric price is compared with the currency guard defeated — exactly the misleading comparison currenciesMatch() (L157-161) exists to prevent.",
+        "Even pre-i18n it is fragile design: business logic coupled to a rendered label rather than to a stable discriminator. Fix: give each ComparisonRow a stable `id`/`key` (e.g. `id: 'price' | 'price_per_m2' | …`) separate from its display `label`, and branch on `row.id` in getHighlightClass (and the L167 check). Frontend-only, self-contained to ComparisonView.tsx. Confidence medium: today's English labels match so the guard works at rest; the defect activates on translation/label edit, which is imminent given the co-located i18n gap.",
+        "promoted from stranded review signal in .research/signals/2026-08-16-reality-web-tier1d.json (emitted 2026-08-16); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx"
+      ],
+      "created_at": "2026-08-16",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-delay-duration-overflow",
+      "title": "api-core: 60 (DelayConfig::to_duration) multiplies the user-supplied `duration: u64` field (declared at delay.rs:44) by the unit factor with a plain `*`: `Durat",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-15-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:53-60 (DelayConfig::to_duration) multiplies the user-supplied `duration: u64` field (declared at delay.rs:44) by the unit factor with a plain `*`: `Duration::from_secs(self.duration * 60)` (Minutes), `* 3600` (Hours), `* 86400` (Days). None of these multiplications is checked or saturating.",
+        "The multiply runs BEFORE the range validation. DelayExecutor::execute calls `let duration = delay_config.to_duration();` at delay.rs:100 and only THEN checks `if duration.as_secs() > MAX_DELAY_SECONDS` at delay.rs:103 (MAX_DELAY_SECONDS = 7 days, delay.rs:65). So the overflow happens inside to_duration() — the 7-day cap can never guard the arithmetic that precedes it.",
+        "Reachability: workflow action `config` is arbitrary serde_json deserialized straight into DelayConfig (parse_config at delay.rs:78-80, no bound on `duration`). A workflow-action definition with e.g. `{\"duration\": 9223372036854775807, \"unit\": \"days\"}` makes `self.duration * 86400` overflow u64. In debug / overflow-checks builds (the profile CI runs `cargo test` under) this PANICS, killing the workflow-executor task that drives the delay step (DoS of the action pipeline); in release it silently wraps to an arbitrary small value that then passes the MAX_DELAY_SECONDS check — a validation bypass rather than the intended ConfigurationError rejection.",
+        "This is an oversight, not a house convention: the sibling backoff helper in the SAME crate was explicitly hardened against exactly this class of bug — backend/servers/api-server/src/services/workflow_executor.rs:35-46 (compute_backoff_seconds) caps the exponent and uses `base.saturating_mul(multiplier)` with a doc comment citing the overflow audit. Landable backend-only fix: use `checked_mul`/`saturating_mul` in to_duration() (returning a ConfigurationError on overflow), or validate `self.duration` magnitude in parse_config before the unit multiply, so an out-of-range delay is rejected as a config error instead of panicking or wrapping past the 7-day cap.",
+        "promoted from stranded review signal in .research/signals/2026-08-15-api-core-tier1d.json (emitted 2026-08-15); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs",
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "title": "ppt-web-core: 40 — eventToQueryKeys subscribes to COLON-form event names ('entity:announcement','entity:fault','entity:vote','entity:document','entity:message',",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-15-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 — eventToQueryKeys subscribes to COLON-form event names ('entity:announcement','entity:fault','entity:vote','entity:document','entity:message','entity:neighbor'), and :313 subscribes to generic 'entity:updated'/'entity:created'/'entity:deleted'. These are the ONLY keys wired for TanStack Query cache invalidation on server push.",
+        "The server publishes DOT-form event names. Confirmed in backend/servers/api-server/src/routes/ws_notifications.rs:92-95 (WsEvent.event mirrors PubSubMessage::event_type, e.g. 'notification.created','preference.updated') and backend/servers/api-server/src/services/notification_pipeline.rs:169 (`let event_type = format!(\"{}.notification\", entity_type)` → 'announcements.notification','fault.notification', etc.). Other confirmed literals: 'fault.created','vote.closed'.",
+        "frontend/apps/ppt-web/src/lib/websocket.ts:65-82 parseServerMessage maps the server envelope's `event` string straight onto `message.type` with NO dot→colon normalization, and WebSocketService.subscribe (websocket.ts:466) keys handlers off that raw `message.type`. Grep confirms there is no remapping layer anywhere in lib/hooks/contexts and no subscriber uses the dot-form names.",
+        "Net effect: the colon-form subscription keys can NEVER match the dot-form event names the server actually emits, so WebSocket-driven query invalidation is entirely dead — real-time announcements/faults/votes/documents pushes never invalidate any cache and the UI shows stale data until a manual refetch/navigation. Traced both ends (server publish site → client subscribe keys), no overlap → high confidence.",
+        "Fix: align the client subscription keys with the server's dot-form event_type namespace (e.g. map 'announcements.notification'/'fault.created'/'vote.closed'/'*.notification' → the right query keys), or normalize server event names to the colon scheme in parseServerMessage. Add a test asserting an emitted 'fault.created' frame invalidates the ['faults'] query.",
+        "promoted from stranded review signal in .research/signals/2026-08-15-ppt-web-core-tier1d.json (emitted 2026-08-15); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "backend/servers/api-server/src/routes/ws_notifications.rs",
+        "backend/servers/api-server/src/services/notification_pipeline.rs",
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-client-no-onunauthorized",
+      "title": "ppt-web-core: AuthProvider wires the hand-rolled axios client via `configureApiClient({ getToken: getAccessToken })`, passing ONLY getToken and never an `onUnau",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-15-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — AuthProvider wires the hand-rolled axios client via `configureApiClient({ getToken: getAccessToken })`, passing ONLY getToken and never an `onUnauthorized` callback.",
+        "frontend/apps/ppt-web/src/lib/api.ts:195-196,219-220 — createAxiosInstance stores `onUnauthorizedCallback = config.onUnauthorized` (module global) and the response interceptor only reacts to a 401 when `onUnauthorizedCallback` is truthy: `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();`. Because AuthContext never supplies it, the callback is permanently undefined and the entire 401 branch is dead for this client.",
+        "This client is NOT unused: frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts:19 and frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:10 both document their reliance on it ('401 → onUnauthorized') — an expectation the wiring silently breaks.",
+        "Net effect: when a feature hook using getApiClient() hits a 401 (access token expired mid-session), there is no silent token refresh, no logout, and no redirect-to-login — the user just gets a failed request and a stuck/dead session until they manually reload. The AuthProvider already owns a refreshToken() routine that could be wired here.",
+        "Fix: pass `onUnauthorized` into configureApiClient (e.g. attempt refreshToken(); on failure call logout()), matching the documented contract in the sentiment/predictive-maintenance hooks.",
+        "promoted from stranded review signal in .research/signals/2026-08-15-ppt-web-core-tier1d.json (emitted 2026-08-15); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-core-no-401-refresh-wiring] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-createdispute-fake-submit",
+      "title": "ppt-web-ui: 42 — handleSubmit() collects the full dispute form (respondentId/category/subject/description) but never calls any create-dispute API: the try block",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-15-ppt-web-ui-tier1d-2.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit() collects the full dispute form (respondentId/category/subject/description) but never calls any create-dispute API: the try block is just `await new Promise((resolve) => setTimeout(resolve, 1000))` (line 35) then `navigate('/disputes')` (line 36). The form data is silently discarded; the user sees a 1s spinner and a redirect that looks like success. This is an abandoned first-cut stub of the real FileDisputePage.",
+        "It is an orphan: the /disputes/new route is wired to FileDisputePageRoute (frontend/apps/ppt-web/src/routes/groups/disputes.tsx:482), NOT CreateDisputePage. But CreateDisputePage is still exported from the public barrel (frontend/apps/ppt-web/src/features/disputes/pages/index.ts:6 and features/disputes/index.ts), so it remains importable/discoverable and would silently drop data if ever mounted.",
+        "Secondary: CreateDisputePage.tsx uses hardcoded English JSX strings with no i18n — 'Back to Disputes' (line 50), 'File New Dispute' (line 52), the intro paragraph (line 53-55), the error string 'Failed to create dispute. Please try again.' (line 38), 'Respondent ID' (line 67), 'Enter the ID of the other party' (line 77) — inconsistent with the fully-i18n'd sibling MediationWorkspacePage/FileDisputePage.",
+        "Same recognized pattern as the already-landed backlog item code-review-mobile-rn-report-fault-fake-submit (RN report-fault fake submit). Fix: delete CreateDisputePage (dead duplicate) and drop its barrel export, or wire it to the real useFileDispute mutation + i18n if it is meant to be the canonical page.",
+        "Static-analysis only (no compile/run). Severity medium: dead-code/completeness defect that discards user input if the orphan is ever mounted; currently not reachable via routing, hence confidence medium not high.",
+        "promoted from stranded review signal in .research/signals/2026-08-15-ppt-web-ui-tier1d-2.json (emitted 2026-08-15); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-createdispute-stub-discard",
+      "title": "ppt-web-ui: 42 — handleSubmit is a fake-success stub: `await new Promise((resolve) => setTimeout(resolve, 1000)); navigate('/disputes');`. It NEVER sends the co",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "signals/2026-08-15-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit is a fake-success stub: `await new Promise((resolve) => setTimeout(resolve, 1000)); navigate('/disputes');`. It NEVER sends the collected `formData` (CreateDisputeRequest: respondentId, title, description, category, desiredResolution) to any API. The user fills the full 'File New Dispute' form, clicks Submit, sees a 1s spinner then a redirect that looks like success — but nothing is ever persisted. Every field the user typed is silently discarded.",
+        "This is a duplicate/orphan of the REAL create flow. The routed page for /disputes/new is FileDisputePageRoute (routes/groups/disputes.tsx:482 `<Route path=\"/disputes/new\" element={<FileDisputePageRoute />} />`), which wraps FileDisputePage and wires the genuine `useCreateDispute` mutation (FileDisputePageRoute.tsx:32,42 `createDispute.mutateAsync(...)`). CreateDisputePage is exported from the barrel (features/disputes/pages/index.ts:6) but is NOT routed or referenced by any component/test — a latent trap: any dev who wires this exported 'CreateDisputePage' up gets a form that drops disputes on the floor.",
+        "Fix: delete the dead CreateDisputePage.tsx and remove its barrel export, OR wire handleSubmit to the existing useCreateDispute mutation (mutateAsync + try/catch surfacing the error) instead of the setTimeout stub. Verify no import references remain (grep found only the self-export).",
+        "promoted from stranded review signal in .research/signals/2026-08-15-ppt-web-ui-tier1d.json (emitted 2026-08-15); never entered backlog/action-list until 2026-08-21",
+        "[SUPERSEDED by code-review-ppt-web-ui-createdispute-fake-submit] same defect, same file — duplicate slug emitted by a later rotating-review pass; collapsed 2026-08-21 to keep one non-terminal unit of work per defect"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-journal-newsletter-fake-submit",
+      "title": "reality-web: 116 — `handleSubscribe(e)` calls `e.preventDefault()` then `if (email.trim()) setSubscribed(true)` and returns. There is NO fetch / API mutation: t",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-15-reality-web-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:113-116 — `handleSubscribe(e)` calls `e.preventDefault()` then `if (email.trim()) setSubscribed(true)` and returns. There is NO fetch / API mutation: the entered email is never sent anywhere, it is simply discarded when the component unmounts.",
+        "The UI nonetheless renders a localized success confirmation: line 217-218 `{subscribed ? <p>{t('newsletterSuccess')}</p> : <form onSubmit={handleSubscribe}>...}` — a public visitor who submits the Journal newsletter form is told (via `pages.journal.newsletterSuccess`) they subscribed, but no subscription was recorded server-side. Grep confirms the file contains no `fetch`/`api`/`subscribe` network call (only i18n keys named *newsletter*).",
+        "Distinct from the prior 2026-08-12 fake-submit findings (sell/page.tsx, report/page.tsx, realtor/[id] contact form) — this is the /[locale]/journal route. User-facing data-loss-of-intent on a public SEO page. Fix: POST the email to the reality-server newsletter/subscription endpoint (or a Next route) inside handleSubscribe, gate `setSubscribed(true)` on a 2xx, and surface a localized error state on failure.",
+        "promoted from stranded review signal in .research/signals/2026-08-15-reality-web-tier1d.json (emitted 2026-08-15); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx"
+      ],
+      "created_at": "2026-08-15",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-cross-currency-match",
+      "title": "api-core: 174 (run_payment_matcher) scores a bank-statement line against each open invoice using ONLY the variable symbol (line 133-138, +0.8) and the numeric a",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:129-174 (run_payment_matcher) scores a bank-statement line against each open invoice using ONLY the variable symbol (line 133-138, +0.8) and the numeric amount (line 141-146: `line.amount == remaining_amount` +0.15, or `line.amount <= remaining_amount` +0.05). It never compares currencies.",
+        "Both sides carry a currency: `BankStatementLine.currency` (set from the CSV at accounting.rs:77, model at backend/crates/db/src/models/accounting.rs) and `Invoice.currency: String` (backend/crates/db/src/models/accounting.rs:84). The matcher ignores both — `line.amount == remaining_amount` compares raw Decimals across potentially different currencies.",
+        "Reachability: a variable-symbol match alone contributes 0.8, which already clears the `confidence >= 0.5` suggest threshold (accounting.rs:150) regardless of currency. So a 1000 CZK bank line whose variable symbol collides with a 1000 EUR invoice is emitted as a Suggested PaymentMatch. On confirm_match (accounting.rs:248-254) the invoice's paid_amount is incremented by `line.amount` (the CZK figure) via update_invoice_payment_status_rls — applying a wrong-currency value to an EUR invoice balance. The manager confirming the suggestion has no currency signal that the match is invalid.",
+        "Impact: financial-data corruption / incorrect AR settlement whenever variable symbols (or equal numeric amounts) collide across currencies — the accounting subsystem is explicitly multi-currency (CZK default IBAN at accounting.rs:56, per-line currency from CSV). Landable backend-only fix: gate the whole scoring block (or at minimum the amount corroboration) on `line.currency == invoice.currency`, skipping the invoice when they differ, so no cross-currency match is ever suggested.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-api-core-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs",
+        "backend/crates/db/src/models/accounting.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-confirm-no-tx",
+      "title": "api-core: 257 (confirm_match) performs three separate money-mutating writes in sequence with no transaction: (1) upsert_payment_match_rls sets the match to Conf",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-api-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:182-257 (confirm_match) performs three separate money-mutating writes in sequence with no transaction: (1) upsert_payment_match_rls sets the match to Confirmed (line 232-235), (2) update_bank_statement_line_match_state_rls sets the line to \"matched\" (line 238-245), (3) update_invoice_payment_status_rls increments the invoice paid_amount by `line.amount` (line 248-254).",
+        "The executor is a bare pooled connection, not a transaction: routes/accounting/matches.rs:34-49 calls `confirm_match(&mut rls, ...)` where `rls: RlsConnection` — no `.begin()`/`.commit()` anywhere on this path. Each repo call therefore autocommits independently. If write (3) fails (transient DB error / RLS-excluded invoice row), writes (1) and (2) have already committed: the match reads Confirmed and the line reads \"matched\", but the invoice paid_amount was never credited — a permanently inconsistent AR state that no retry reconciles.",
+        "reject_match (accounting.rs:260-338) has the mirror-image hazard: it flips the match to Rejected (write 1, line 288-291) BEFORE unapplying the previously-credited amount via `-line.amount` (write 2, line 307-313). A failure between them leaves the match Rejected while the invoice paid_amount stays overstated (payment still counted as applied).",
+        "This is demonstrably an oversight, not a convention: the sibling multi-write handler in the SAME module family wraps its writes correctly — routes/accounting/invoices.rs:241 `let mut tx = rls.begin()...` / :269 `tx.commit()`. Landable backend-only fix: thread a single `Transaction` through confirm_match/reject_match (begin in the handler, pass `&mut *tx` to the three repo calls, commit once at the end) so the state-machine transition and the invoice balance update are atomic.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-api-core-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-financial-f64-money",
+      "title": "api-handlers: backend/servers/api-server/src/routes/financial.rs:1796,1828,1894 (XLSX renderers render_income_statement_xlsx / render_balance_sheet_xlsx) and :1",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/financial.rs:1796,1828,1894 (XLSX renderers render_income_statement_xlsx / render_balance_sheet_xlsx) and :1975,2007 (PDF renderers) all convert monetary figures through f64 with the identical pattern `line.amount.to_string().parse::<f64>().unwrap_or(0.0)` (and `line.balance...` at :1894) before writing them into the exported financial report.",
+        "The source fields are exact-precision `Decimal` (confirmed on the accounting/report models in backend/crates/db/src/models — e.g. `pub amount: Decimal`, `pub balance: Decimal`). Round-tripping a Decimal through binary f64 for an income statement / balance sheet reintroduces floating-point representation error into money values that were deliberately kept exact — the class of penny/rounding drift these Decimal columns exist to prevent, now surfacing on the customer-facing PDF/XLSX exports.",
+        "The `.unwrap_or(0.0)` fallback is a second, worse defect: if `line.amount.to_string()` ever fails to re-parse as f64, the code silently writes 0.00 into a financial statement instead of erroring. A silent wrong zero in a balance sheet is a data-integrity/correctness failure, not a cosmetic one — the export renders as authoritative with no signal that a line was dropped.",
+        "Landable (self-contained backend Rust in financial.rs report renderers, no API/schema change). Fix: format the Decimal directly for the cell (write the value as a string, or serialize via rust_decimal to a fixed 2-dp representation) instead of parsing to f64; and replace `.unwrap_or(0.0)` with propagation of the existing `Result<Vec<u8>, String>` error so an unrenderable amount fails the export rather than becoming a silent 0.00.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-api-handlers-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/financial.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-ai-pagination-no-cap",
+      "title": "api-handlers: list_sessions passes query.limit.unwrap_or(50) straight through to the repo. PaginationQuery (backend/servers/api-server/src/routes/ai/mod.rs:104-",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs:101 — list_sessions passes query.limit.unwrap_or(50) straight through to the repo. PaginationQuery (backend/servers/api-server/src/routes/ai/mod.rs:104-107) declares `limit: Option<i64>` with no bound/validation, so the raw client-supplied value flows to SQL.",
+        "backend/crates/db/src/repositories/ai_chat.rs:133-163 — list_user_sessions binds the caller-supplied `limit: i64` directly into `LIMIT $2` with NO upper clamp. Same unclamped bind in list_session_messages (ai_chat.rs:223-, `LIMIT $4`) and the third list method (ai_chat.rs:365-, `LIMIT $2`).",
+        "Same unclamped `query.limit.unwrap_or(N)` -> repo LIMIT pattern repeats across the whole AI surface with no `.min()` anywhere under routes/ai/: ai/sessions.rs:205,924,997; ai/equipment.rs:203,297,379; ai/voice.rs:308; ai/llm.rs:1448.",
+        "Contrast proving this is an oversight, not a convention: admin/users.rs:58 clamps `.min(100)`, admin/audit.rs:235,254 clamp `.min(500)`/`.min(50_000)`, and listing repo backend/crates/db/src/repositories/listing.rs:136 clamps `query.limit.unwrap_or(20).min(100)`. The AI routes are the outlier.",
+        "Impact (availability): an authenticated user requesting `?limit=100000000` (limit is i64, up to 9.2e18) forces an unbounded scan + full result-set materialization into memory on the shared pool — slow-query / memory-exhaustion DoS. Landable backend-only fix: clamp at the handler or repo, e.g. `query.limit.unwrap_or(50).min(100)`, mirroring listing.rs:136.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-api-handlers-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs",
+        "backend/servers/api-server/src/routes/ai/mod.rs",
+        "backend/crates/db/src/repositories/ai_chat.rs",
+        "backend/crates/db/src/repositories/listing.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-marketplace-limit-no-cap",
+      "title": "api-handlers: 289 — search_providers reads `query.limit.unwrap_or(20)` / `query.offset.unwrap_or(0)` (MarketplaceSearchQuery.limit/offset are `Option<i32>`, bac",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-api-handlers-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/marketplace.rs:224-289 — search_providers reads `query.limit.unwrap_or(20)` / `query.offset.unwrap_or(0)` (MarketplaceSearchQuery.limit/offset are `Option<i32>`, backend/crates/db/src/models/marketplace.rs:333-335) and string-formats them into `ORDER BY {} {} LIMIT {} OFFSET {}` (marketplace.rs:278) wrapped in `sqlx::AssertSqlSafe(sql)` — with NO upper clamp on limit.",
+        "Route callers pass the raw user-supplied limit unclamped: routes/marketplace.rs:1105, :1252; get_verification_queue at routes/marketplace.rs:1434 -> repo marketplace.rs:1209 (`LIMIT $1`); list_provider_reviews at routes/marketplace.rs:1727 -> repo marketplace.rs:1465 (`LIMIT $2`). None apply `.min()`.",
+        "Not an injection: sort_by/sort_order are whitelisted (marketplace.rs:274-286 map to fixed column names / ASC|DESC) and limit/offset are i32 (non-injectable). The defect is availability only — `?limit=2147483647` forces a full scan + large materialization on the marketplace provider-search path (public/authenticated-reachable), a slow-query/memory DoS.",
+        "Landable backend-only fix: clamp before the format!/bind, e.g. `let limit = query.limit.unwrap_or(20).clamp(1, 100);`, consistent with the admin/listing repos that already cap.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-api-handlers-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/marketplace.rs",
+        "backend/crates/db/src/models/marketplace.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-401-no-refresh",
+      "title": "mobile-rn: 92 — the central online client `apiRequest()` throws a bare `new Error(\\`HTTP ${response.status}\\`)` on any non-ok response and has NO 401 -> refresh",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-mobile-rn-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:83-92 — the central online client `apiRequest()` throws a bare `new Error(\\`HTTP ${response.status}\\`)` on any non-ok response and has NO 401 -> refresh -> retry interception. `useApiQuery` (107-117) and `useApiMutation` (142-155) both flow through it, so when the access token expires while the app is foregrounded, every query/mutation fails with `HTTP 401` even though a valid refresh_token sits in SecureStore unused.",
+        "There is no global recovery either: frontend/apps/mobile/src/App.tsx:47-55 configures the QueryClient with only `staleTime`/`gcTime`/`retry: 3` and no `QueryCache`/`MutationCache` `onError`, and grep for `refreshToken()` / `refreshAccessToken` inside hooks/useApi.ts returns nothing. `retry: 3` actually makes it worse — a 401 is re-sent 3 times with the same expired bearer before surfacing.",
+        "The app already knows how to do this on the OTHER path: frontend/apps/mobile/src/hooks/useOfflineSupport.ts:34 lists 401 in `RETRYABLE_HTTP_STATUSES` and comments (lines 20, 281-285) that a 401 replay 'replays with a refreshed token'. AuthContext.refreshToken() (contexts/AuthContext.tsx:174-211) exists but is only invoked at session restore (jwt staleness) and after biometric re-auth (275, 326) — never reactively from the online request path and with no AppState/interval proactive timer. Effect: a session left open past the (short, per docs/api) access-token TTL degrades into wall-to-wall error banners until the user backgrounds/relaunches or re-logs-in. Fix: wrap apiRequest so a 401 triggers a single-flight refresh + one retry (and exclude non-retryable 4xx from `retry: 3`).",
+        "promoted from stranded review signal in .research/signals/2026-08-14-mobile-rn-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useApi.ts",
+        "frontend/apps/mobile/src/App.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-swallow-err",
+      "title": "ppt-web-core: frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311,323,417,427 — all four rentals mutations (createConnection, syncPlatforms, checkIn, checkO",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311,323,417,427 — all four rentals mutations (createConnection, syncPlatforms, checkIn, checkOut) use the exact same handler: `onError: (error) => handleRentalsAuthError(error, logout)`. That is the ONLY error handling attached to any of them.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:220-226 — handleRentalsAuthError() only reacts to session-loss codes (SESSION_EXPIRED / TOKEN_EXPIRED / TOKEN_INVALID); for every other failure it returns `false` and does nothing. Its own doc comment says 'Non-auth errors are left for the caller to surface' — but the callers ignore the boolean return and surface nothing.",
+        "Net effect: a failed check-in / check-out / create-connection / sync-platforms (validation 4xx, backend 5xx, network error) produces ZERO user feedback — no toast, no error state, the button just silently no-ops. The user cannot tell the action failed and may retry blindly or assume success.",
+        "Inconsistency proof: the sibling route group frontend/apps/ppt-web/src/routes/groups/financial.tsx:179-185,204-210 does this correctly — its mutation onError handlers call showToast({ type: 'error', ... }) with a t()-wrapped title and the error message. Fix: give the rentals mutations a real onError that, when handleRentalsAuthError returns false, surfaces an error toast (useToast) as financial.tsx does.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-ppt-web-core-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-actions",
+      "title": "ppt-web-core: 383 — BookingsPageRoute wires onCancelBooking, onCheckIn and onCheckOut to `() => {}`. These are live action buttons on the bookings LIST that sil",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-ppt-web-core-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:381-383 — BookingsPageRoute wires onCancelBooking, onCheckIn and onCheckOut to `() => {}`. These are live action buttons on the bookings LIST that silently do nothing when clicked.",
+        "This is not a not-yet-built stub: the very same check-in / check-out actions ARE implemented as real mutations in BookingDetailPageRoute (rentals.tsx:409-428, rentalsApiCheckIn / rentalsApiCheckOut). So the list-level buttons are dead handlers for functionality that already exists one screen deeper — a genuine wiring gap, not a missing endpoint.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:333-339 (PlatformConnectionsPageRoute onConnect/onDisconnect/onSettings) and :449-456 (BookingDetailPageRoute onEdit/onCancel/onDeleteGuest) are likewise wired to `() => {}` — user-facing buttons that render as functional but perform no action and give no feedback.",
+        "Fix: wire the list-page check-in/check-out/cancel handlers to the existing mutations (or navigate to the detail route that owns them), and either implement or visibly disable the remaining no-op actions so the UI does not present dead controls as functional.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-ppt-web-core-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-autorules-mutate-unhandled",
+      "title": "ppt-web-ui: 72 — confirmDelete (line 58 `await deleteRule.mutateAsync(deleteConfirm.id)`), handleToggle (line 64 `await updateRule.mutateAsync(...)`) and handle",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete (line 58 `await deleteRule.mutateAsync(deleteConfirm.id)`), handleToggle (line 64 `await updateRule.mutateAsync(...)`) and handleRun (line 71 `await runRule.mutateAsync(rule.id)`) all call mutateAsync with NO try/catch. mutateAsync returns a rejecting promise on failure, so any backend/network error becomes an unhandled promise rejection.",
+        "The page never surfaces these mutation errors to the user: grep for updateRule.error / deleteRule.error / runRule.error (and .isError) in the file returns nothing — only the *query* error is rendered ({error} at line 178, from useAutomationRules). So a failed delete/enable-toggle/run silently does nothing on-screen: confirmDelete's `setDeleteConfirm(null)` at line 59 never runs (modal sticks) and the toggle switch visually reverts with no explanation. Contrast EditRulePage.tsx:113 which does render {updateRule.error}. Fix: wrap each handler in try/catch (or use .mutate with onError) and render the mutation error states.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-ppt-web-ui-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-execmonitor-retry-unhandled",
+      "title": "ppt-web-ui: 77 — handleRetry does `await retryExecution.mutateAsync(log.id); setSelectedLog(null);` with no try/catch. On a failed retry the mutateAsync promise",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-ppt-web-ui-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx:74-77 — handleRetry does `await retryExecution.mutateAsync(log.id); setSelectedLog(null);` with no try/catch. On a failed retry the mutateAsync promise rejects (unhandled rejection) and setSelectedLog(null) never fires, so the details modal stays open with no error shown.",
+        "The page surfaces the *query* error (logsError rendered at line 189) but never renders retryExecution.error / retryExecution.isError (grep confirms no such reference), so the retry action has no failure feedback path. Same unhandled-mutation-rejection class as AutomationRulesPage. Fix: try/catch the retry and render retryExecution.error near the retry control.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-ppt-web-ui-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-review-body-no-cap",
+      "title": "reality-server: 266 (create_review) validates only `data.rating` (1..=5 at :196) and then binds the free-text `data.body` straight into the `INSERT INTO realtor",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signals/2026-08-14-reality-server-tier1d.json",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:190-266 (create_review) validates only `data.rating` (1..=5 at :196) and then binds the free-text `data.body` straight into the `INSERT INTO realtor_reviews (... body ...)` at :255-266 with NO length validation anywhere. CreateReviewRequest.body is `Option<String>` (agent_reviews.rs:47) and there is no MAX_* constant or `.len()` check on it in the whole file (confirmed: grep for body length/cap on this file returns nothing).",
+        "This is an authenticated-but-public portal write endpoint (RequestPrincipal, principal_kind = 'public'), i.e. exactly the abuse surface the sibling reality-server endpoints explicitly cap. reports.rs caps its free text at MAX_REPORT_DESCRIPTION_LEN = 5000 (reports.rs:27, enforced at :161) and inquiries.rs caps its message at MAX_INQUIRY_MESSAGE_LEN = 5000 (inquiries.rs:27, enforced at :54 and :446). agent_reviews.rs is the outlier that skipped the same H6 input-hygiene control.",
+        "Impact (H6 abuse / resource): a portal user can POST an arbitrarily large review body (bounded only by the global request-body limit, not by an application cap), bloating `realtor_reviews` rows and every log line / response that echoes the review body — the exact unbounded-string abuse the neighboring endpoints were hardened against. The review body is also surfaced back verbatim in list_reviews (:115,:157), amplifying the bloat on every reader.",
+        "Landable backend-only fix (self-contained, no API/schema change): add a `const MAX_REVIEW_BODY_LEN: usize = 5000;` and reject over-length `data.body` with 400 before the insert, mirroring reports.rs:161 / inquiries.rs:54. Optionally also reject an all-whitespace/empty body to match the input-hygiene posture of the sibling handlers.",
+        "promoted from stranded review signal in .research/signals/2026-08-14-reality-server-tier1d.json (emitted 2026-08-14); never entered backlog/action-list until 2026-08-21"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs"
+      ],
+      "created_at": "2026-08-14",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-jwt-gated",
+      "title": "Alexa/Google voice webhooks are unreachable in production — the RlsConnection extractor 401s every real delivery",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:168 — `mut rls: RlsConnection,` is an extractor argument of alexa_webhook, so it runs BEFORE the handler body on POST /api/v1/webhooks/voice/alexa.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:307 — same problem in google_actions_webhook: `mut rls: RlsConnection,`.",
+        "backend/servers/api-server/src/lib.rs:339-342 — the router is nested at /api/v1/webhooks/voice with no auth-exempting layer; voice_webhooks.rs:130-142 voice_webhook_router() applies no layer either (verified in-run).",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:232 — the extractor's first step is `let tenant = ValidatedTenantExtractor::from_request_parts(parts, state).await?;`.",
+        "backend/crates/api-core/src/extractors/tenant.rs:137 — `let auth_user = AuthUser::from_request_parts(parts, state).await?;` — a PM JWT is mandatory.",
+        "backend/crates/api-core/src/extractors/auth.rs:272 — `.ok_or((StatusCode::UNAUTHORIZED, \"Missing Authorization header\"))?` — Amazon/Google never send a PM bearer token, so every genuine delivery is rejected with a plain-text 401 before verify_alexa_signature, authenticate_voice_user, or VoiceCommandProcessor ever run.",
+        "backend/servers/api-server/tests/ — grep for 'webhooks/voice' matches only voice_oauth_exchange_auth_tests.rs and voice_oauth_refresh_auth_tests.rs; no test ever POSTs to /api/v1/webhooks/voice/alexa or /google, which is why the ~60 unit tests in voice_webhooks.rs (all calling helpers directly) never caught it.",
+        "Impact context: voice_webhooks.rs is this run's #1 churn hotspot (4 commits, repeated-churn runs_seen=3). The signature/HMAC hardening merged in PR #2806 and its siblings is being applied to code no real request can reach.",
+        "confidence=high: the full call path from the mounted route to the 401 rejection was independently re-traced during this routine run (route mount, router layers, extractor chain all read directly).",
+        "suggested approach: Replace the RlsConnection extractor in alexa_webhook and google_actions_webhook with State(state) plus an explicitly acquired, un-principaled connection — the same RlsPool::new(state.db.clone()).acquire_public() / acquire_with_rls(device.organization_id, device.user_id, false) pattern that oauth_token_refresh already uses at voice_webhooks.rs:697-704 and 843-855. Authenticate the caller from the platform signature plus authenticate_voice_user (which already resolves the owning device), then bind RLS context from the resolved device's org/user before invoking VoiceCommandProcessor. This is the posture the sibling inbound receivers in routes/integrations/webhook.rs use: no request principal, authenticity from the signature, RLS bound to the server-resolved owner.",
+        "test plan: Add backend/servers/api-server/tests/suites/voice_alexa_webhook_route_tests.rs (registered in tests/suite_8.rs next to the existing voice_oauth_*_auth_tests mods) that POSTs an Alexa body to /api/v1/webhooks/voice/alexa with NO Authorization and NO X-Tenant-ID header and asserts the response is the handler's JSON {\"code\":\"INVALID_SIGNATURE\"} 401 (i.e. the handler body executed) rather than the extractor's plain-text 'Missing Authorization header'. Today it fails on the plain-text rejection. Run: cd backend && cargo test -p api-server --test suite_8 voice_alexa_webhook"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/servers/api-server/src/lib.rs",
+        "backend/crates/api-core/src/extractors/rls_connection.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-api-handlers-voice-webhook-jwt-gated.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-error-leak",
+      "title": "voice_webhooks OAuth exchange/refresh leak raw upstream provider errors to the client",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:500 — format!(\"Failed to exchange authorization code: {}\", e) is interpolated into the client-facing ErrorResponse for POST /api/v1/webhooks/voice/oauth/exchange, forwarding the raw Amazon/Google error (provider trace ids, redirect_uri/client_id mismatch detail, grant state) to the caller.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:788 — same pattern in oauth_token_refresh: format!(\"Failed to refresh token: {}\", e).",
+        "backend/servers/api-server/src/routes/ai/voice.rs:23 — the sibling handler was already hardened: const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = \"Authorization code exchange failed\"; used at ai/voice.rs:210 with the detail only logged (ai/voice.rs:203).",
+        "backend/servers/api-server/src/routes/ai/voice.rs:364 — the existing regression test asserts !body.contains(\"Failed to exchange authorization code:\"), naming the exact string voice_webhooks.rs:500 still emits — the fix was applied to one of the two exchange paths only.",
+        "suggested approach: In voice_webhooks.rs, keep tracing::error! for the provider detail (already present at lines 495 and 783) but replace both interpolated format!(...) bodies with fixed generic strings, reusing the constant already defined in routes/ai/voice.rs (promote OAUTH_EXCHANGE_FAILED_MESSAGE to pub(crate) and import it, or add a matching TOKEN_REFRESH_FAILED_MESSAGE). The error codes OAUTH_EXCHANGE_FAILED / TOKEN_REFRESH_FAILED already give the client everything actionable.",
+        "test plan: Extend the #[cfg(test)] mod tests in backend/servers/api-server/src/routes/voice_webhooks.rs (starts at line 1839) with a test mirroring ai/voice.rs:351 that serializes the exchange and refresh error bodies and asserts neither contains 'Failed to exchange authorization code:' nor 'Failed to refresh token:'. Run: cd backend && cargo test -p api-server voice_webhooks::tests"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/servers/api-server/src/routes/ai/voice.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-alexa-rls-no-release",
+      "title": "alexa_webhook leaves the RLS connection to Drop on five error exits; google_actions_webhook disagrees with it",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:174-177 — the signature-rejection branch returns without rls.release().await; same at 183-189 (parse failure), 197 (authenticate_voice_user(...).await?), and 226-229 / 248-251 (processing errors).",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:314 — the sibling google_actions_webhook does it correctly on its rejection branch (rls.release().await; immediately before the 401), showing the two handlers disagree; google still misses it on the ? at line 331.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:202-208 — the Drop fallback is best-effort and noisy: a tracing::warn! plus a detached spawn_clear_context. On a public webhook the signature-rejection branch is the hottest path, so every unsigned probe emits a WARN and detaches a cleanup task.",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:26 — the module contract states 'Every authenticated path calls rls.release().await before returning.'",
+        "suggested approach: Restructure alexa_webhook (and the ? at google_actions_webhook:331) the way routes/signatures.rs:84-87 and routes/ai/voice.rs:303-324 already do: compute the whole fallible flow into a let result = async { ... }.await; then call rls.release().await; unconditionally on the single exit, and only afterwards return result. Best combined with the RlsConnection removal in code-review-api-handlers-voice-webhook-jwt-gated — whichever connection type ends up here must be released on one deterministic exit.",
+        "test plan: Add a unit test in the existing #[cfg(test)] mod tests of backend/servers/api-server/src/routes/voice_webhooks.rs that reads include_str!(\"voice_webhooks.rs\"), slices the async fn alexa_webhook body, and asserts a single-exit shape with exactly one rls.release().await and no return Err between the extractor and the release. Run: cd backend && cargo test -p api-server voice_webhooks::tests"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/crates/api-core/src/extractors/rls_connection.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-meter-read-fake-ok",
+      "title": "mobile-rn MeterReadingScreen shows success while online though the reading is only queued, never POSTed",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:119 — addToQueue({type:'CREATE', endpoint:'/api/v1/meter-readings', method:'POST'}) is the ONLY write path; the screen never calls the API even when isConnected is true (no useApiMutation/apiRequest import in the file).",
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:136 — Alert.alert(t('common.done'), t('meters.submitSuccess'), ...) fires a hard success + navigates away purely because isConnected is true, though nothing was submitted.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:649 — addToQueue ends in catch { console.error(...) } and returns void, so a failed AsyncStorage write is swallowed and the screen's catch at MeterReadingScreen.tsx:148 can never run.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:549 — the queue is drained only from inside the NetInfo.addEventListener callback, so enqueuing while already online triggers no flush; the reading sits in AsyncStorage with syncStatus:'syncing' until the next connectivity flip or app restart.",
+        "MeterReadingScreen.tsx has no test file anywhere in the repo (only MetersScreen.test.ts / MeterDetailScreen.test.ts exist).",
+        "suggested approach: In handleSubmit, branch on connectivity like ReportFaultScreen does: when online, POST to /api/v1/meter-readings through useApiMutation/apiRequest and only show meters.submitSuccess after the request resolves; fall back to addToQueue + the meters.savedOffline alert when offline or on a network error. Make addToQueue (useOfflineSupport.ts:631) rethrow or resolve to a boolean instead of swallowing the AsyncStorage failure, so the caller's catch at MeterReadingScreen.tsx:148 can surface meters.submitFailed.",
+        "test plan: Add frontend/apps/mobile/src/screens/meters/MeterReadingScreen.test.tsx mirroring ReportFaultScreen.test.tsx: mock useOfflineSupport to return { isConnected: true, addToQueue: jest.fn() }, mock apiRequest, render, type a reading, press submit, assert apiRequest was called with /api/v1/meter-readings before any Alert.alert carrying meters.submitSuccess. Second case: addToQueue rejecting must produce meters.submitFailed, not common.done. Run: cd frontend && pnpm --filter @ppt/mobile test -- MeterReadingScreen"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-settings-route-gap",
+      "title": "mobile-rn Settings / WidgetSettings deep links silently land on Dashboard — WidgetSettingsScreen unrenderable",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:43-44 — registered routes { screen:'Settings', pattern:'settings' } and { screen:'WidgetSettings', pattern:'settings/widgets' }.",
+        "frontend/apps/mobile/src/services/deepLinkRouting.ts:79 — case 'WidgetSettings': return { screen: 'Settings' }; 'Settings' is a declared member of the Screen union at deepLinkRouting.ts:32.",
+        "frontend/apps/mobile/src/App.tsx:119-241 — renderScreen()'s switch has no case 'Settings' and ends in default: return <DashboardScreen .../> (App.tsx:240), so ppt://settings and ppt://settings/widgets both render the Dashboard with no error.",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:28 — exported through screens/settings/index.ts:6 and screens/index.ts:46 but never referenced by App.tsx, i.e. unrenderable in the shipped app.",
+        "suggested approach: Add a case 'Settings': return <WidgetSettingsScreen onNavigate={handleNavigate} />; to renderScreen() in App.tsx alongside the existing cases, importing it from ./screens. If a settings hub is not in scope, change deepLinkRouting.ts:79 to keep { screen: 'WidgetSettings' } and add the matching App case, so the deep-link target and the render switch agree.",
+        "test plan: Extend frontend/apps/mobile/src/App.authgate.test.tsx (it already stubs every screen incl. WidgetSettingsScreen): render <App /> authenticated with Linking.getInitialURL mocked to ppt://settings/widgets, assert the WidgetSettings stub rendered rather than the Dashboard stub. Run: cd frontend && pnpm --filter @ppt/mobile test -- App.authgate"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/App.tsx",
+        "frontend/apps/mobile/src/services/deepLinkRouting.ts",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-list-header-i18n",
+      "title": "mobile-rn: hardcoded English header subtitles and labels on six i18n'd list screens",
+      "vector": "i18n",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/leases/LeasesScreen.tsx:162 — <Text style={s.headerSubtitle}>Your active and past rental agreements.</Text> while the component destructures const { t } = useTranslation() at line 143.",
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx:149 and :202 — 'Meters registered to your unit.' and 'Submit reading →' (t obtained at line 129).",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:151 — 'Planned and active utility interruptions.' (t at line 120).",
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx:92 — 'Updates from your building and neighbourhood.' (t at line 61).",
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx:119 — 'Properties associated with your account.' (t at line 100).",
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx:185 and :195 — 'Monthly rent' and 'Upcoming payments' (t at line 130).",
+        "frontend/apps/mobile/src/App.tsx:368 — 'Everything else available in the app.' in the More menu.",
+        "suggested approach: Add keys (leases.listSubtitle, meters.listSubtitle, meters.submitReadingLink, outages.listSubtitle, news.listSubtitle, buildings.listSubtitle, leases.monthlyRent, leases.upcomingPayments, more.subtitle) to every locale bundle under frontend/apps/mobile/src/i18n/ and replace the literal JSX text with {t('<key>')} at the cited lines.",
+        "test plan: Add frontend/apps/mobile/src/screens/shared/no-hardcoded-headers.i18n.test.ts in the style of src/i18n/no-bare-tolocale.test.ts: read the six screen sources and assert no <Text> node in a file that imports useTranslation contains a bare multi-word Latin sentence. Run: cd frontend && pnpm --filter @ppt/mobile test -- i18n"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/leases/LeasesScreen.tsx",
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx",
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/leases/LeaseDetailScreen.tsx",
+        "frontend/apps/mobile/src/App.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-no-401-refresh-wiring",
+      "title": "ppt-web never wires 401 -> refreshToken: an expired access token permanently breaks the session",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — configureApiClient({ getToken: getAccessToken }); passes only getToken; onUnauthorized is never supplied, so the axios client has no 401 recovery hook.",
+        "frontend/apps/ppt-web/src/lib/api.ts:219 — if (error.response?.status === 401 && onUnauthorizedCallback) { is dead code: onUnauthorizedCallback is only ever assigned from config.onUnauthorized (lib/api.ts:196), which no caller sets.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 — the comment promises an expiry check but none is performed; a reload with an expired access token re-authenticates the UI and never reaches the refreshTokenInternal() branch on line 426.",
+        "grep for refreshToken across src excluding tests and AuthContext.tsx returns zero hits — the refreshToken member exposed on AuthContextValue (AuthContext.tsx:82) has no call site anywhere in the app: no silent-refresh path exists, reactive or proactive.",
+        "suggested approach: In the AuthContext effect at AuthContext.tsx:325-344, pass onUnauthorized to configureApiClient so a 401 triggers the already-implemented, de-duplicated refreshToken() (AuthContext.tsx:449) and, if that rejects, clears storage and de-auths. In initializeAuth (AuthContext.tsx:405-443) use the existing decodeJwtPayload helper to read the exp claim and fall through to the refreshTokenInternal() branch when the stored access token is already expired. Also make lib/api.ts's response interceptor retry the original request once after a successful refresh.",
+        "test plan: New file frontend/apps/ppt-web/src/contexts/AuthContext.unauthorized-refresh.test.tsx: (a) seed localStorage with ppt_user + an expired ppt_access_token + a valid ppt_refresh_token, mount <AuthProvider>, assert createAuthApi().refreshToken was called — fails today because init short-circuits on line 412; (b) mount <AuthProvider>, have getApiClient().get('/x') respond 401 via a mocked adapter and assert the refresh endpoint was hit. Run: cd frontend && pnpm --filter @ppt/web test src/contexts/AuthContext.unauthorized-refresh.test.tsx"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": "plans/code-review-ppt-web-core-no-401-refresh-wiring.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-unguarded",
+      "title": "ppt-web /dashboard/manager route has no ProtectedRoute wrapper and the target page has no auth or role check",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:167 — <Route path=\"/dashboard/manager\" element={<ManagerDashboardPage />} /> with no <ProtectedRoute> wrapper, unlike every sibling route in the same file (e.g. line 174 requiredRoles={['org_admin','super_admin']}).",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:162-166 — the redirect comment claims 'the ProtectedRoute / role check on the target page handles auth + role-based fan-out', then sends every visitor to /dashboard/manager.",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:22-30 — the only role logic gates the customize link (canCustomize); nothing gates the page itself, so an unauthenticated visitor or a resident renders the full manager dashboard shell. The claim in the route comment is false.",
+        "suggested approach: Wrap /dashboard/manager in <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}> (MANAGER_ROLES is already imported at core.tsx:41) and /dashboard/resident in a plain <ProtectedRoute>. Then correct or delete the comment on the /dashboard redirect at core.tsx:162-165.",
+        "test plan: New file frontend/apps/ppt-web/src/routes/groups/core.dashboard-guard.test.tsx following src/routes/groups/rentals.auth-guard.test.tsx: render <MemoryRouter initialEntries={['/dashboard/manager']}><AppRoutes/></MemoryRouter> with useAuth mocked to { isAuthenticated: false, isLoading: false } and assert the login redirect; a second case with role resident asserts the errors.accessDenied heading. Run: cd frontend && pnpm --filter @ppt/web test src/routes/groups/core.dashboard-guard.test.tsx"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-home-cta-role-drift",
+      "title": "ppt-web Home dashboard CTA sends org_admin/property_manager to the resident dashboard",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — onClick={() => navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')} — an exact string compare against a single role.",
+        "frontend/apps/ppt-web/src/routes/shared.tsx:36-42 — MANAGER_ROLES = ['manager','org_admin','super_admin','technical_manager','property_manager'] documented as the single source of truth 'so the two cannot drift apart', with isManagerRole at shared.tsx:48.",
+        "frontend/apps/ppt-web/src/App.tsx:109 — const isOperator = isManagerRole(user?.role); the nav bar on the same page already uses the shared helper, so an org_admin sees operator nav links but the Home 'Open dashboard' button routes them to /dashboard/resident.",
+        "suggested approach: Import isManagerRole from ../shared in routes/groups/core.tsx (the file already imports MANAGER_ROLES from there on line 41) and replace the inline compare with navigate(isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident').",
+        "test plan: New file frontend/apps/ppt-web/src/routes/groups/core.home-cta.test.tsx: mock useAuth to return { isAuthenticated: true, user: { role: 'org_admin' } }, render <Home/> inside a MemoryRouter with a spied useNavigate, click the nav.dashboard button, assert navigate was called with /dashboard/manager (fails today — receives /dashboard/resident); repeat for property_manager and resident. Run: cd frontend && pnpm --filter @ppt/web test src/routes/groups/core.home-cta.test.tsx"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-mock-data",
+      "title": "reality-web /realtor/[id] renders MOCK_AGENT for every realtor — fabricated public contact details",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:20 — const agent = MOCK_AGENT; the page never reads its [id] route param (no useParams import anywhere in the file), so every realtor URL renders the same fabricated profile.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11 — imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from ./_mock; listings (line 237) and reviews (line 333) are likewise rendered from the mock arrays.",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:181 — href={`/realtor/${member.id}`} — the public agency profile, which fetches real team members via useRealtors(agency.id), links straight into this route, so real visitors land on the mock agent's name, phone and e-mail.",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts:169 — export function useRealtor(agencyId, realtorId) — a real data hook already exists and is unused by the page.",
+        "suggested approach: Read the route param (const { id } = useParams<{ id: string }>()) and drive the page from useRealtor(...) / the realtor's listings hook in @ppt/reality-api-client instead of MOCK_AGENT, mirroring the loading/error/not-found branches agency/[slug]/page.tsx already has (lines 32-50). Delete _mock.ts once the last import is gone, or keep it only as test fixture data. Until a realtor-by-id endpoint is wired, the page must at minimum render a not-found state rather than fabricated contact details.",
+        "test plan: Add frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.test.tsx that vi.mock('next/navigation') to return useParams: () => ({ id: 'realtor-42' }), mocks @ppt/reality-api-client, renders the page and asserts the realtor hook was called with 'realtor-42' and that MOCK_AGENT.name is NOT in the document. Run: cd frontend && pnpm --filter @ppt/reality-web test -- realtor"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sitemap-locale-prefix",
+      "title": "reality-web sitemap hardcodes 'en' as the unprefixed locale but defaultLocale is 'sk' — every sitemap URL contradicts its canonical",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/sitemap.ts:32 — const localePrefix = locale === 'en' ? '' : `/${locale}`; hardcodes en as the unprefixed locale.",
+        "frontend/apps/reality-web/src/app/sitemap.ts:40 — the same wrong assumption in the hreflang alternates.languages map.",
+        "frontend/apps/reality-web/src/i18n/config.ts:20 — export const defaultLocale: Locale = 'sk'; and src/i18n/routing.ts:8 — localePrefix: 'as-needed' — so the bare path serves Slovak and /sk/... is redirected by the next-intl middleware, while /en/... is the real English URL.",
+        "frontend/apps/reality-web/src/lib/page-metadata.ts:17 — return locale === defaultLocale ? '' : `/${locale}`; — the canonical-URL helper gets it right, so every page's alternates.canonical directly contradicts the sitemap entry for the same page.",
+        "suggested approach: Import defaultLocale from ../i18n/config in app/sitemap.ts and replace both locale === 'en' / alt === 'en' comparisons with === defaultLocale, ideally by exporting and reusing the existing localePrefix() helper from src/lib/page-metadata.ts so the sitemap and the canonical tags cannot drift again. Also fix the stale comment in app/robots.ts:10 that claims the default locale is en.",
+        "test plan: Add frontend/apps/reality-web/src/app/sitemap.test.ts importing the default export and asserting urls contains the sk (unprefixed) listings URL and the /en/listings URL, and does NOT contain a /sk/listings URL. Run: cd frontend && pnpm --filter @ppt/reality-web test -- sitemap"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/sitemap.ts"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n",
+      "title": "reality-web public price-map page hardcodes Slovak labels for all six locales",
+      "vector": "i18n",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-21 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:30-33 — filter chips { value: 'all', label: 'Vsetky' } plus 'Byty', 'Domy', 'Pozemky' are hardcoded Slovak.",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:161 — the sale/rent segmented control is hardcoded Slovak ('Predaj' / 'Prenajom').",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:77,82,87,95 plus 341 and 348 — insight tile labels and the selected-district panel are hardcoded Slovak.",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx:40 — const t = useTranslations('pages.priceMap'); is set up but used exactly once (t('h1') on line 138), and messages/en.json:455-460 already carries pages.priceMap.{title,h1,subtitle,clickHint} — the namespace exists, the page just bypasses it for all six locales.",
+        "suggested approach: Move PROPERTY_OPTIONS label resolution inside the component (keep value in the const, resolve the label with t('propertyType.' + value)), and replace the transaction toggle text and the four insight labels with t(...) calls. Add the corresponding pages.priceMap.* keys to all six files under frontend/apps/reality-web/messages/.",
+        "test plan: Add frontend/apps/reality-web/src/app/[locale]/price-map/page.test.tsx that renders the page inside NextIntlClientProvider with locale='en' and messages/en.json, mocks usePriceMap to return a small district fixture, and asserts the Slovak chip label is absent while the English chip label is present. Run: cd frontend && pnpm --filter @ppt/reality-web test -- price-map"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx",
+        "frontend/apps/reality-web/messages/en.json"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-llm-document-repo",
+      "title": "llm_document.rs churn hotspot — 3 commits / 2396 lines this window (voice-device single-writer work)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-hotspot 2026-08-21"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/llm_document.rs — 3 distinct commits, 2396 lines changed since 2026-08-19 (PRs #2811, #2796 voice-device dedup line)",
+        "instability proxy only — no defect asserted; runs_seen=1"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/llm_document.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-reality-inquiries-route",
+      "title": "reality-server routes/inquiries.rs churn hotspot — 3 commits / 999 lines this window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-hotspot 2026-08-21"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs — 3 distinct commits, 999 lines changed since 2026-08-19 (PRs #2813, #2800)",
+        "instability proxy only — no defect asserted; runs_seen=1"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-2744",
+      "title": "PR #2744 has sat in draft for 8 days with a reviewer approve verdict — the only active WIP slot is parked",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 (fix(dispatcher): un-wedge oversize-archive push #1162 + close retry-remint cross-id ghost #2460) opened 2026-08-13, still draft=true, mergeable_state=clean, label needs-human-review.",
+        ".research/management/assignments.json — the single active assignment gh-issue-2743 is status=review with reviewer_summary 'verdict=approve … (posted as comment; formal APPROVE blocked on self-PR)'.",
+        "Only a human can mark the PR ready-for-review and merge it: the dispatcher cannot formally approve its own PR, so the slot stays occupied indefinitely."
+      ],
+      "files": [
+        ".research/mcp-push-size-guard.sh",
+        ".research/retry-remint.sh"
+      ],
+      "created_at": "2026-08-21",
+      "updated_at": "2026-08-21",
+      "plan": null
     }
   ]
 }
