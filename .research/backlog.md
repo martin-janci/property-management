@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-19 04:35 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-21 12:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -34,8 +34,9 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | open | 2026-08-19 |  |
-| 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | ready | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
+| 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inqui | done | 2026-08-20 |  |
+| 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | done | 2026-08-19 |  |
+| 2 | security | `code-review-reality-server-submit-report-no-rate-limit` | reality-server anonymous POST /api/v1/reports has no per-IP rate limit — unbounded report flood + mo | done | 2026-08-19 | [plan](plans/code-review-reality-server-submit-report-no-rate-limit.md) |
 | 2 | security | `code-review-api-handlers-voice-refresh-simulated-token-release` | voice /oauth/refresh mints a simulated access token in RELEASE builds when the platform OAuth client | done | 2026-08-18 |  |
 | 2 | bug | `code-review-api-core-payment-matcher-multi-suggest` | payment matcher never surfaces multiple suggestions — early-return on first match hides equally-good | done | 2026-08-17 |  |
 | 2 | bug | `code-review-api-handlers-share-pw-no-throttle` | SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockou | done | 2026-08-17 |  |
@@ -144,8 +145,9 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | bug | `code-review-reality-server-saved-search-watermark-discard` | reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing  | done | 2026-08-20 |  |
 | 1 | bug | `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard u | open | 2026-08-19 |  |
-| 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | open | 2026-08-19 |  |
+| 1 | security | `code-review-reality-server-create-review-body-length-uncapped` | reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs pos | done | 2026-08-19 |  |
 | 1 | bug | `code-review-api-handlers-voice-exchange-device-dedup` | voice /oauth/exchange generates a fresh random device_id every call with no upsert on (org,user,plat | done | 2026-08-18 |  |
 | 1 | security | `code-review-api-handlers-voice-oauth-exchange-no-rate-limit` | voice /oauth/exchange makes a live upstream OAuth call (exchange_code) per request with no per-user  | done | 2026-08-18 |  |
 | 1 | test-gap | `churn-hotspot-voice-oauth-refresh-auth-tests` | voice_oauth_refresh_auth_tests.rs — new 270-line suite pins /oauth/refresh device-owner authz contra | done | 2026-08-17 |  |

@@ -1,0 +1,131 @@
+{
+  "generated": "2026-08-21T12:35:00Z",
+  "run_kind": "incremental",
+  "since": "2026-08-19T04:36:00Z",
+  "notes": [
+    "buffer-low payload received: dispatcher claimable=6/72 all-mobile-native; routine did not promote a new landable plan this run — no candidate cleared score>=3 gate. Phase 1.5 (code-review skill) skipped to conserve tokens; see brief for operator options.",
+    "Phase 1.6 (project-management skill) skipped this run; pm_cursor and coverage_cursor not advanced."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-19T04:36:00Z",
+      "score_delta": 0,
+      "evidence": ["Routine last ran 2026-08-19T04:36:00Z; now 2026-08-21T12:35:00Z (~56h). Dispatcher continued to tick on its own branch (last dispatcher commit 2026-08-21T10:35Z)."],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/tests/suites/reports_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2800, #2801",
+      "score_delta": 1,
+      "evidence": ["reports_tests.rs +253/-2 lines across #2800 (rate-limit regressions) and #2801 (list_my_reports total count regression); 2 PRs in one window."],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/suites/saved_search_watermark_advance_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2812, #2815",
+      "score_delta": 1,
+      "evidence": ["saved_search_watermark_advance_tests.rs added in #2812 (+191) then re-edited in #2815 (+67/-9) when the column widened i32→i64."],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/ai_llm_workflow_batch5_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2811",
+      "score_delta": 1,
+      "evidence": ["ai_llm_workflow_batch5_tests.rs +88/-0 in #2811 — added link_voice_device_relink_keeps_single_active_row regression."],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "evidence": ["Dependabot npm-minor-patch group bump (32 updates), opened 2026-08-20, open. Supersedes #2751."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "evidence": ["Dependabot cargo-minor-patch group bump (9 updates), opened 2026-08-20, open. Supersedes #2750."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "evidence": ["Dependabot androidx.compose:compose-bom bump 2026.06.01 → 2026.08.00, opened 2026-08-20, open. Mobile-native-kmp (cloud-unlandable)."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "evidence": ["Dependabot gradle-minor-patch group bump (5 updates), open 7 days. Mobile-native-kmp (cloud-unlandable)."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": ["Dependabot ktor group bump (7 updates), open 14 days — oldest open dependabot PR. Mobile-native-kmp (cloud-unlandable)."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2751",
+      "type": "dep-update-noise",
+      "source": "PR #2751",
+      "score_delta": 0,
+      "evidence": ["Closed unmerged 2026-08-20: dependabot npm-minor-patch group (28 updates) superseded by #2810."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2750",
+      "type": "dep-update-noise",
+      "source": "PR #2750",
+      "score_delta": 0,
+      "evidence": ["Closed unmerged 2026-08-20: dependabot cargo-minor-patch group (6 updates) superseded by #2809."],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal — no screen-map-drift, no screen-map-orphan, no new fixme-in-merged-code, no lockfile-drift, no stalled non-dependabot open PRs; dependabot PRs excluded from auto-fix",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/2026-08-21.md && head -1 matches ^# 2026-08-21$", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "jq slurpfile prev state.json advance check", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq unique ids in backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "jq dedup non-cumulative signals vs prev seen", "observed": "true", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "jq [.items[] | select(.score>8)] length==0 + decay (no items due decay this run)", "observed": "true (cap); n/a (decay — 0 items with updated_at <= 2026-08-07)", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "grep adversarial-pass annotation for new plans", "observed": "n/a — 0 new plans this run", "expected": "n/a" },
+    { "goal": "G7",  "passed": true,  "command": "count new plans <= 2; per-plan sections/metadata/mode/files exist", "observed": "0 new plans this run", "expected": "<=2" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "grep -E 'sk-ant-|ANTHROPIC_API_KEY|Authorization: Bearer|\\.rlt\\.sk|192\\.168\\.13\\.|10\\.8\\.0\\.|\\$2y\\$05\\$' on staged (excluding baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "cross-check brief 'Phases that failed' vs cursor advances", "observed": "no phase reported failure this run; Phase 1.5/1.6 SKIPPED (not failed) — cursors correctly NOT advanced", "expected": "consistent" },
+    { "goal": "G12", "passed": true,  "command": "verify prior-run plans still in plans/ or plans/_archive/", "observed": "22 plans in plans/, 8 in _archive/, 0 disappearances vs HEAD", "expected": "no silent deletions" },
+    { "goal": "G13", "passed": true,  "command": "[ ls-files _archive/ | wc -l >= ls-tree HEAD _archive/ | wc -l ]", "observed": "now=8, prev=8", "expected": ">=" },
+    { "goal": "G14", "passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "jq auto_fix_actions caps + idempotency + kill-switch", "observed": "auto_fix_actions: []; ROUTINE_AUTOFIX_DISABLED not set; no candidate matched allowlist", "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "management-artifact validity + pm_cursor + coverage_cursor GC7", "observed": "no-op — Phase 1.6 SKIPPED this run (pm_cursor/coverage_cursor unchanged vs HEAD; gate is no-op when Phase 1.6 skipped)", "expected": "no-op when Phase 1.6 skipped" },
+    { "goal": "G17", "passed": true,  "command": "grep telegram-token pattern in staged +lines (excluding baseline docs)", "observed": "0", "expected": "0" }
+  ]
+}
