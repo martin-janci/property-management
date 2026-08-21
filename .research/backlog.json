@@ -8846,7 +8846,7 @@
       "vector": "i18n",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -8865,7 +8865,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "i18n",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-08-21T22:22:10Z",
+        "assignment_status": "merged",
+        "pr_number": 2820
+      }
     },
     {
       "id": "code-review-ppt-web-ui-submission-preview-modal-orphan",
