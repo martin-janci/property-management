@@ -1,0 +1,588 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-21",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-08-19T04:36Z; today 2026-08-21T02:30Z; gap ~46h > 36h threshold"
+      ]
+    },
+    {
+      "id": "merged-pr-2799",
+      "type": "merged-pr",
+      "source": "PR #2799",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2799 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2800",
+      "type": "merged-pr",
+      "source": "PR #2800",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2800 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2801",
+      "type": "merged-pr",
+      "source": "PR #2801",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2801 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2803",
+      "type": "merged-pr",
+      "source": "PR #2803",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2803 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2805",
+      "type": "merged-pr",
+      "source": "PR #2805",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2805 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2806",
+      "type": "merged-pr",
+      "source": "PR #2806",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2806 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2811",
+      "type": "merged-pr",
+      "source": "PR #2811",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2811 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2812",
+      "type": "merged-pr",
+      "source": "PR #2812",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2812 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2813",
+      "type": "merged-pr",
+      "source": "PR #2813",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2813 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "merged-pr-2815",
+      "type": "merged-pr",
+      "source": "PR #2815",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2815 merged to dev between 2026-08-19T04:36:00Z and 2026-08-21T02:30:00Z"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot open PR #2810 \u2014 log-only, no backlog score"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot open PR #2809 \u2014 log-only, no backlog score"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot open PR #2749 \u2014 log-only, no backlog score"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot open PR #2673 \u2014 log-only, no backlog score"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Dependabot open PR #2808 \u2014 log-only, no backlog score"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2750",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2750",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Dependabot PR #2750 closed unmerged (superseded by newer version bump)"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2751",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2751",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Dependabot PR #2751 closed unmerged (superseded by newer version bump)"
+      ]
+    },
+    {
+      "id": "code-review-api-core-announcement-roles-legacy-membership",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:666-680 \u2014 the announcement target-resolution helper's `\"roles\"` branch fans out via `SELECT D"
+      ]
+    },
+    {
+      "id": "code-review-api-core-osrng-expect-panic-auth-paths",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 \u2014 `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` inside `generate_token()` (email-verific"
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-to-duration-mul-overflow",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-60 \u2014 `DelayConfig::to_duration()` computes `Duration::from_secs(self.duration * 60|3600|86"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-formatprice-minor-unit-contract",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/util/FormatUtils.kt:18-24 \u2014 FormatUtils.formatPrice(price: Long, currency) docume"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoinitiation-callback-unencoded",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoInitiation.kt:buildUrl \u2014 `fun buildUrl(state: String): String = \"$PM_APP_"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-401-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 \u2014 the hand-rolled axios response interceptor has an unauthorized branch `if (error.response?.status === 4"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-queue-never-invoked",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:449-462 \u2014 `refreshToken` implements a careful concurrency-safe silent-refresh: it de-duplicates con"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-singleton",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:321 \u2014 `export default getApiClient();` is evaluated at module-load time. `getApiClient()` lazily creates `apiInst"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast-unvalidated",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129,139 \u2014 handleTakeAction reads free-text `window.prompt(t('moderation."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-download-no-onsuccess",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:119-127 \u2014 handleDownload calls `downloadPdf.mutate(reportId, { onError: ... })`"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx hardcodes English user-facing strings instead of react-i18next `t(...)`: wind"
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-facility-contact-fabricated-success",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:447-467 \u2014 `action_book_facility` returns `VoiceActionResult { success: true, .. }` while spe"
+      ]
+    },
+    {
+      "id": "code-review-api-core-syndication-stub-never-called",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-405 \u2014 `SyndicationService::process_syndication_job` (public API) has zero callers in the tr"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-list-limit-unclamped",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Multiple list handlers under backend/servers/api-server/src/routes/ take a user-controlled `limit` query param and forward it to the DB with only a de"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-financial-error-swallow",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/financial.rs:561-571 (unit-ledger handler) matches on `state.financial_repo.get_account_with_transactions(accoun"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-ocr-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:31-46 (apiFetch) and frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-delete-swallows-err",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:131-142 (useDeleteSession) calls `await fetch(\\`${API_BASE}/sessions/${sessionId}\\`, { m"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-querykey-paging",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts \u2014 useAiChatSessions(limit=50, offset=0) (L49-60), useAiChatMessages(sessionId, limit=100"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:127-152 \u2014 handleTakeAction reads action_type from window.prompt (default"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:108,112,117,124 \u2014 user-facing status strings are hardcoded English literals in "
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-confirm-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,114,157,171 \u2014 destructive/approve confirmations use native window.confirm() wit"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-import-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Systematic gap across the Epic 46 agency-import feature: every state-changing mutation fires without an onError handler, isError branch, or user-visib"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listinggrid-empty-i18n",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx \u2014 the PRIMARY listing-search-results grid has zero next-intl usage (no useTranslatio"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-error-passthrough",
+      "type": "code-review-finding",
+      "source": "tier1d-dispatcher-generator",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:83-91 \u2014 the SSO callback pulls `error` and `error_description` off the query string "
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-21.md && head -1",
+      "observed": "# 2026-08-21",
+      "expected": "# 2026-08-21"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs current",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen-signal double-score",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score-cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 (no promotions)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 external",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "prev=8 now=8",
+      "expected": "now>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions",
+      "observed": "empty",
+      "expected": "empty (no candidate)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "all present, pm_cursor.next_index=3 (unchanged this run \u2014 Phase 1.6 skipped)",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram tokens",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
