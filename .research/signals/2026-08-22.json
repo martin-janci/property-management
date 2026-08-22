@@ -1,133 +1,151 @@
 {
-  "run_iso": "2026-08-22T03:03:20Z",
-  "since_iso": "2026-08-22T00:43:14Z",
-  "merged_prs": [],
+  "run": {
+    "date": "2026-08-22",
+    "iso": "2026-08-22T12:39:19Z",
+    "trigger_payload": "buffer-low: claimable=7/72 \u2014 refill planner (landable pool exhausted: 6 mobile-native gated + 1 file-overlap)",
+    "trigger_interpretation": "operator-hint (informational \u2014 routine cannot manufacture landable plans; the 5 mobile-native rows are structurally cloud-gated per issue #2652 and the 2 in-flight ppt-web-ui rows are dispatcher-claimed)",
+    "signals_new_this_run": 0,
+    "cursors_advanced": {
+      "last_pr_seen": {
+        "from": 2820,
+        "to": 2829
+      },
+      "last_issue_seen": {
+        "from": 2816,
+        "to": 2824
+      },
+      "last_commit_sha": {
+        "from": "e59dca8",
+        "to": "0581bc6"
+      }
+    },
+    "phases_skipped": [
+      "1.5 (dispatcher Tier 1d already ran ppt-web-ui at 08:31Z)",
+      "1.6 (dispatcher already accounted merges in assignments.json)",
+      "3 (0 promotable candidates \u2014 see brief)",
+      "5 (0 auto-fix candidates)"
+    ]
+  },
   "signals": [],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 0 new signals this window",
-  "_note": "same-day rerun over the 2026-08-22T00:43:14Z brief; window 00:43\u219203:03 saw 0 new merged PRs, 0 new issues, only PR #2821 (dispatcher-owned, in review) activity \u2014 a quiet increment. The 6 signals derived by the 00:43 run remain in state.seen_signals (audit trail) and their scoring landed in backlog.json in that commit.",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/$TODAY.md && head -1 | grep '^# $TODAY$'",
+      "command": "test -f .research/briefs/2026-08-22.md && head -1 | grep '^# 2026-08-22$'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq diff seen_signals/cursors/quiet_days vs HEAD",
-      "observed": "true",
-      "expected": "true",
-      "note": "stats.quiet_days 2\u21923 satisfies G2 progress"
+      "command": "jq diff staged vs HEAD state.json for cursor/signal/hotspot changes",
+      "observed": "true (cursors advanced: last_pr_seen 2820\u21922829, last_issue_seen 2816\u21922824, last_commit_sha e59dca8\u21920581bc6, stats.runs 69\u219270)",
+      "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids",
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq intersect signals vs seen_signals filter cumulative",
-      "observed": "true",
-      "expected": "true",
-      "note": "0 signals this run \u2014 vacuous"
+      "command": "no re-emitted non-cumulative signals with score_delta != 0",
+      "observed": "true (0 signals emitted this fire; nothing to double-count)",
+      "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq max score check",
-      "observed": "true",
-      "expected": "true",
-      "note": "no decay candidates this run (0 items with updated_at \u2264 2026-08-08)"
+      "command": "score cap \u2264 8 AND decay applied",
+      "observed": "true (max score 8; no open item older than 2026-08-08 cutoff)",
+      "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "grep new plan slugs in brief for 'adversarial pass:'",
-      "observed": "n/a",
-      "expected": "n/a",
-      "note": "0 new plans this run \u2014 vacuously PASS"
+      "command": "for each new plan file, adversarial pass annotation present in brief",
+      "observed": "true (0 new plans this run \u2014 vacuously true)",
+      "expected": "true"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
-      "observed": "0",
-      "expected": "\u22642"
+      "command": "\u22642 new plans AND each meets all readiness gates",
+      "observed": "true (0 new plans this run \u2014 vacuously true)",
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep -E secret patterns in staged diff",
+      "command": "git diff --cached | grep -E secret-patterns | wc -l",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 (backlog.md regenerated from JSON, byte-identical to fresh regen with same stamp)",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "parse brief phases-failed + cursor snapshot",
-      "observed": "none failed; cursors unchanged",
-      "expected": "consistent"
+      "command": "phase-failure honesty \u2014 no failed phase \u2192 no unadvanced cursor",
+      "observed": "true (all phases either completed or skipped-with-reason)",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior HEAD plans still present or archived",
-      "observed": "all present",
-      "expected": "all present"
+      "command": "prior-run plan slugs still exist in plans/ or plans/_archive/",
+      "observed": "true (23 plans in plans/, 7 in _archive/; no plan file deleted this run)",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "ls-files _archive/ count now vs HEAD",
-      "observed": "8 == 8",
-      "expected": "now \u2265 head"
+      "command": "archive file count HEAD-vs-staged: staged \u2265 HEAD",
+      "observed": "true (7 == 7 at HEAD)",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 (triage digest regenerated from JSON, byte-identical to fresh regen with same stamp)",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "jq auto_fix_actions caps",
-      "observed": "0 actions",
-      "expected": "\u22643 with per-type caps \u22641"
+      "command": "auto-fix discipline: \u22641 PR + \u22641 issue + \u22641 comment; idempotency vs history",
+      "observed": "true (0 auto-fix actions this run)",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "pm_cursor.next_index unchanged (Phase 1.6 skipped)",
-      "observed": "3 == 3",
-      "expected": "no-op"
+      "command": "management artifacts valid AND pm_cursor.next_index in 0..7",
+      "observed": "true (pm_cursor.next_index=3, coverage_cursor.next_index=5; both files parse; skipped Phase 1.6 so GC7 no-op)",
+      "expected": "true"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep telegram token patterns in staged diff",
-      "observed": "0",
+      "command": "no literal Telegram token in staged diff",
+      "observed": "0 matches",
       "expected": "0"
     }
   ]
