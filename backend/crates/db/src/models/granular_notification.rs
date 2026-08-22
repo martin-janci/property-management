@@ -284,10 +284,23 @@ pub struct HeldNotification {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,
     pub channels: Vec<String>,
+    /// Channels already delivered successfully on a prior drain tick (issue
+    /// #2823). `deliver_held` skips these so a partial-failure retry never
+    /// re-delivers a channel that already succeeded.
+    #[serde(default)]
+    pub delivered_channels: Vec<String>,
     pub held_at: DateTime<Utc>,
     pub release_at: DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub released_at: Option<DateTime<Utc>>,
+    /// Number of quiet-hours drain attempts made against this row (issue #2823).
+    /// Once it reaches the worker's cap the row is dead-lettered, not retried.
+    #[serde(default)]
+    pub attempts: i32,
+    /// Set when the row exhausted its retry budget and delivery was given up
+    /// (issue #2823). Excluded from the release query like `released_at`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dead_lettered_at: Option<DateTime<Utc>>,
     pub is_priority: bool,
 }
 
