@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T14:27:20Z",
+  "generated": "2026-08-22T14:37:00Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-facilities-bookin-a0428081",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-22T14:27:20Z",
-      "last_updated": "2026-08-22T14:27:20Z",
-      "status_changed_at": "2026-08-22T14:27:20Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-22T14:37:00Z",
+      "status_changed_at": "2026-08-22T14:37:00Z",
+      "pr_number": 2830,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2830",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2830 done: i18n facilities booking titles+empty-state across MyBookings/PendingBookings/BookFacility/BookingList; new facilities.bookings keys in all 6 locales; biome+typecheck+4 facilities tests green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
