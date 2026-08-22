@@ -12,7 +12,12 @@
 
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type Badge, VerificationBadge, VerificationStatusBadge } from './VerificationBadge';
+import {
+  type Badge,
+  getExpiryState,
+  VerificationBadge,
+  VerificationStatusBadge,
+} from './VerificationBadge';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date('2026-08-21T12:00:00.000Z');
@@ -35,6 +40,35 @@ afterEach(() => {
 function badgeTitle(container: HTMLElement): string | null {
   return container.querySelector('span[title]')?.getAttribute('title') ?? null;
 }
+
+describe('getExpiryState', () => {
+  const NOW_MS = NOW.getTime();
+
+  it('returns "valid" when no expiry date is given', () => {
+    expect(getExpiryState(undefined, NOW_MS)).toBe('valid');
+  });
+
+  it('returns "expired" for a date that already passed', () => {
+    expect(getExpiryState(iso(-5 * DAY), NOW_MS)).toBe('expired');
+  });
+
+  it('returns "expired" exactly at the expiry instant (boundary)', () => {
+    expect(getExpiryState(iso(0), NOW_MS)).toBe('expired');
+  });
+
+  it('returns "expiring" inside the 30-day window', () => {
+    expect(getExpiryState(iso(10 * DAY), NOW_MS)).toBe('expiring');
+  });
+
+  it('returns "valid" just outside the 30-day window', () => {
+    expect(getExpiryState(iso(31 * DAY), NOW_MS)).toBe('valid');
+  });
+
+  it('defaults `now` to the current time', () => {
+    // 5 days ago is expired regardless of the exact wall clock.
+    expect(getExpiryState(new Date(Date.now() - 5 * DAY).toISOString())).toBe('expired');
+  });
+});
 
 describe('VerificationBadge expiry state', () => {
   it('marks an already-expired badge as (Expired), not (Expiring soon)', () => {
