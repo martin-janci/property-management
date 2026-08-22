@@ -12951,6 +12951,50 @@
       "merge_attempted_at": "2026-08-21T10:28:26Z"
     },
     {
+      "task_id": "gh-issue-2822",
+      "branch": "auto-impl/gh-issue-2822-9102c8ed",
+      "status": "merged",
+      "claimed_at": "2026-08-22T08:28:03Z",
+      "last_updated": "2026-08-22T10:24:03Z",
+      "status_changed_at": "2026-08-22T10:24:03Z",
+      "pr_number": 2827,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2827",
+      "merged_at": "2026-08-22T10:24:03Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2827 done(salvaged): neutralize CR/LF in CSV export sanitizer (audit.rs + reports/helpers.rs); local verify stalled on slow workspace clippy -> CI is gate",
+      "reviewer_summary": "verdict=approve note=crlf-neutralization-in-shared-sanitize_csv_cell-covers-all-free-form-paths-tests-sound-scope-clean-CI-gating",
+      "last_reviewed_oid": "fd5a15c1e05525c3a3a0ed81beedd1af18b3681b",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-22T10:24:03Z"
+    },
+    {
+      "task_id": "gh-issue-2823",
+      "branch": "auto-impl/gh-issue-2823-9e869ab5",
+      "status": "merged",
+      "claimed_at": "2026-08-22T08:28:03Z",
+      "last_updated": "2026-08-22T10:24:03Z",
+      "status_changed_at": "2026-08-22T10:24:03Z",
+      "pr_number": 2826,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2826",
+      "merged_at": "2026-08-22T10:24:03Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2826 done(salvaged): per-channel merge_delivered bookkeeping + bounded retry(attempts+dead-letter) for quiet-hours held-notification drain; migration 00234; local verify stalled on slow workspace clippy -> CI is gate",
+      "reviewer_summary": "verdict=approve note=per-channel-skip+dead-letter-cap-correct-migration-additive-safe-as_str-strings-match-CI-authority",
+      "last_reviewed_oid": "7907852f35d94d19ad1b8640dcf51d6d3abf4b3c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-22T10:24:03Z"
+    },
+    {
       "task_id": "gh-issue-2824",
       "branch": "auto-impl/gh-issue-2824-7e5a8d86",
       "status": "merged",
@@ -15235,5 +15279,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-22T08:51:20Z"
+  "archived_at": "2026-08-22T10:31:18Z"
 }
