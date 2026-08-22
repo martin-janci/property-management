@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-22T22:40:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (tied 2026-08-16 with mobile-native-kmp; picked ppt-web-ui as the landable one — mobile-native-kmp is structurally unlandable in the cloud runner and is saturated with 5 open code-review findings). ppt-web-ui has 0 open code-review findings, not saturated. Focused on churn-warm disputes + documents features (Phase-1 hotspots: MediationWorkspacePage, MediationResolutionForm, MediationChatThread, FileDisputePage, MoveFolderDialog).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-file-dispute-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx — the entire page's user-facing copy is hardcoded English despite `useTranslation` being imported (line 15) and `t()` being used only for a couple of aria labels and the draft-restored status. Hardcoded headings/labels/buttons include: 'File a Dispute' (193), 'Submit a formal dispute. All fields marked * are required.' (195-196), 'Dispute type' (212), 'Location'/'Unit'/'Select unit…' (281,286,296), 'Other party (optional)'/'Not specified' (317,324), 'Details'/'Subject'/'Brief summary of the dispute' (339,345,351), the description placeholder (375), 'Min 30 characters' (390), 'Evidence (optional)' + helptext (402-406), the whole 'What happens next?' info box with 5 list items (413-420), 'Cancel'/'Filing…'/'File Dispute' (431,444,447), and '← Back to Disputes' (189).",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:33-44 — the zod schema messages are raw English literals ('Please select a dispute type.', 'Subject must be at least 5 characters.', 'Description must be at least 30 characters.', 'Please select a unit.') and are rendered directly via `errors.<field>.message` at lines 273, 304, 361, 385 WITHOUT passing through `t()`. Contrast with the sibling MediationResolutionForm.tsx which stores i18n keys as the zod message and wraps them in `t()` (line 169) — so validation errors on this filing form are un-localizable.",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:52-83 — TYPE_META label+description strings ('Noise', 'Excessive noise, disturbances, quiet hours violations', 'Property Damage', 'Payment / Fees', etc.) are hardcoded English rendered at 250-251. This is a primary user-facing flow (Epic 80 dispute filing) and the app ships sk/cs/de/en (default Slovak) — non-English users see the whole page in English. Distinct file from all prior ppt-web-ui i18n findings (forms/reports/buildings/accounting/government-portal)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-move-folder-dialog-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx — imports and uses `useTranslation` (t() is used for the two aria labels aria.moveDocuments/aria.close at 323,333) but ALL visible copy is hardcoded SLOVAK literals, so 3 of the 4 supported locales (cs/de/en) render Slovak text: title 'Presunúť do priečinka' (328), doc-count '{n} dokumentov' (355), 'Cieľ:' (361), 'Koreň (bez priečinka)' (376), 'Všetky dokumenty (bez priečinka)' (402), the error message 'Priečinky sa nepodarilo načítať.' (429), and empty-state 'Žiadne priečinky' (434).",
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx:50 — the expand/collapse toggle aria-label is also a hardcoded Slovak ternary `aria-label={expanded ? 'Zbaliť' : 'Rozbaliť'}` inside the FolderOption subcomponent, so screen-reader users on non-Slovak locales get Slovak announcements for every folder row.",
+        "Notable as the mirror-image of the other ppt-web-ui i18n findings: those hardcode English, this hardcodes Slovak — same root cause (bypassing i18n) but shows the gap runs in both directions. High-churn file (Phase-1 hotspot, ~800 line churn) reachable from the documents move flow."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-mediation-notes-swallowed-load-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx:28 — `const { data: notes = [], isLoading } = useMediationNotes(disputeId);` destructures only data+isLoading; the query's `isError`/`error` is never captured. On a failed notes fetch, `notes` defaults to `[]` and the component renders the 'no messages' empty state (line 69-73) — indistinguishable from a genuinely empty thread. A mediation participant whose message history failed to load is silently shown an empty conversation.",
+        "The component already has an `onError` callback prop (13, 43-47) but it is wired ONLY to the send-note mutation catch — the load path has no equivalent error surfacing. Compare MoveFolderDialog.tsx which correctly captures `error` from its query and renders a role=alert message.",
+        "Distinct defect class from the two i18n findings in this batch (silent query-load failure, not a localization gap). Low severity — degrades gracefully rather than crashing — but a real correctness/UX gap on the disputes mediation chat (Phase-1 churn hotspot)."
+      ]
+    }
+  ]
+}

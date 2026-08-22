@@ -420,20 +420,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "84-2-esignature-email-retry1",
-      "action": "Build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign planned→shipped) consuming the shipped signing API; verify signature-request/invitation email delivery end-to-end. Scope to the shipped backend API (signatures.rs). [retry 1/2 of failed 84-2-esignature-email]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-22T20:31:02Z (retry_of=84-2-esignature-email reason=failed-no-pr cooldown_ok newest_failure=2026-08-15T18:33:32Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T20:31:02Z",
-      "retry_of": "84-2-esignature-email",
-      "retry_round": 1
     }
   ],
   "generated": "2026-08-20T20:28:24Z"

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T20:27:40Z",
+  "generated": "2026-08-22T22:38:52Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -28,7 +28,7 @@
       "branch": "auto-impl/gh-issue-2831-b861089e",
       "status": "review",
       "claimed_at": "2026-08-22T20:27:40Z",
-      "last_updated": "2026-08-22T20:47:14Z",
+      "last_updated": "2026-08-22T22:38:45Z",
       "status_changed_at": "2026-08-22T20:47:14Z",
       "pr_number": 2834,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2834",
@@ -42,29 +42,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2832",
-      "branch": "auto-impl/gh-issue-2832-24ac66e1",
-      "status": "review",
-      "claimed_at": "2026-08-22T20:27:40Z",
-      "last_updated": "2026-08-22T20:38:49Z",
-      "status_changed_at": "2026-08-22T20:38:49Z",
-      "pr_number": 2833,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2833",
-      "merged_at": null,
-      "specialist": "react-web",
-      "implementer_summary": "pr=2833 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=keyed AML EDD/Review dialogs per assessment; regression test fails-without/passes-with; ppt-web verify green",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]

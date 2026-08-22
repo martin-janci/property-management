@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-22T16:32:39Z",
+  "archived_at": "2026-08-22T22:39:01Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -499,6 +499,25 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-15T18:34:10Z"
+      }
+    },
+    {
+      "id": "84-2-esignature-email-retry1",
+      "action": "Build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign planned→shipped) consuming the shipped signing API; verify signature-request/invitation email delivery end-to-end. Scope to the shipped backend API (signatures.rs). [retry 1/2 of failed 84-2-esignature-email]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-22T20:31:02Z (retry_of=84-2-esignature-email reason=failed-no-pr cooldown_ok newest_failure=2026-08-15T18:33:32Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-22T20:31:02Z",
+      "retry_of": "84-2-esignature-email",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "reason": "landed-out-of-band-under-different-id",
+        "evidence": "DocumentSignPage.tsx + DocumentSignaturePanel.tsx + documentSignI18n.test.ts + backend signatures.rs all present on origin/dev via PR #2756 (gap-84-2-build-document-sign-page); original 84-2-esignature-email failed with already-landed/No-PR-needed summary. Ghost retry: current retry-remint.sh on dev lacks the intrinsic already-landed guard that PR #2744 adds.",
+        "at": "2026-08-22T22:27:45Z"
       }
     },
     {
