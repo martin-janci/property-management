@@ -386,7 +386,7 @@
       "action": "ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslation on a localized app",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,

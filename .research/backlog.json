@@ -8939,7 +8939,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "ppt-web-ui segment review 2026-08-22"
       ],
@@ -8955,7 +8955,12 @@
       ],
       "created_at": "2026-08-22",
       "updated_at": "2026-08-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-22T14:23:43Z",
+        "assignment_status": "merged",
+        "pr_number": 2828
+      }
     },
     {
       "id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
@@ -8986,7 +8991,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "ppt-web-ui segment review 2026-08-22"
       ],
@@ -9000,7 +9005,12 @@
       ],
       "created_at": "2026-08-22",
       "updated_at": "2026-08-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-22T14:23:43Z",
+        "assignment_status": "merged",
+        "pr_number": 2829
+      }
     }
   ]
 }
