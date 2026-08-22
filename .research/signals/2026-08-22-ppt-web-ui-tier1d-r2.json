@@ -1,0 +1,55 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (tied 2026-08-16 with mobile-native-kmp; picked ppt-web-ui as the landable one — mobile-native-kmp is structurally unlandable in the cloud runner). Not saturated (1 open code-review-finding < 3).",
+  "generator": "dispatcher-tier1d-demand",
+  "generated_at": "2026-08-22T16:40:00Z",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "note": "Second ppt-web-ui slice today. Earlier run (2026-08-22-ppt-web-ui-tier1d.json) mined i18n gaps (forms/reports/buildings); prior backlog already carries registry-confirm-i18n and dsa-reports-i18n. This slice deliberately AVOIDS i18n and targets error-handling / SPA-navigation / UX-consistency defects that were never mined. Vetted-and-clean during the sweep (no finding): EmergencyContactDirectoryPage (sets error state + i18n on every mutation), meters/ReadingForm OCR catch (intentional graceful degradation with comment), AdvancedNotificationSettingsPage (surfaces updateError). All 3 findings are landable ppt-web frontend.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-183 — all FOUR destructive/approval mutation handlers (handlePetDelete L98, handlePetReview L111, handleVehicleDelete L155, handleVehicleReview L168) catch the mutation rejection with ONLY `console.error(...)` — no toast, no setError, no re-render of mutation.isError. grep for isError/setError/Toast/alert over the file returns nothing but the four console.error lines.",
+        "Reachability confirmed (high confidence): the handlers are passed as `onDelete`/`onReview` props to the rendered RegistryTable at L305-308 (pets) and L323-326 (vehicles), so they fire on real manager clicks in production. When deletePetMutation / reviewPetMutation (etc.) reject server-side, the row silently stays; the manager who clicked 'Approve' or 'Delete' sees no error and believes the action succeeded — a false-success on an approval/deletion workflow.",
+        "This is the same silent-failure class already VERIFIED for facilities booking (code-review-ppt-web-ui-facilities-booking-silent-errors), now in a different feature. The fix pattern already exists in the sibling file: features/registry/pages/RegistryRulesPage.tsx:122 renders `updateRulesMutation.isError && (...)`, proving RegistryPage is the outlier. Distinct from the recorded registry-confirm-i18n finding, which is about the confirm() copy, not error surfacing."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-fullpage-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx uses raw `window.location.href = ...` for ALL 6 navigations: handlePetView L91, handlePetEdit L95, handlePetCreate L128, handleVehicleView L149, handleVehicleEdit L153, handleVehicleCreate L184 (grep -c window.location.href = 6).",
+        "This triggers a full browser page reload on every view/edit/create click, discarding the SPA's React/TanStack-Query cache and in-memory state and re-downloading the bundle — a real UX/perf regression on a react-router-dom app. The sibling RegistryRulesPage.tsx:10,24 already imports and uses `useNavigate()` from react-router-dom, so the correct SPA-navigation pattern is established in the same feature and this page is the outlier. Fix: replace the 6 window.location.href assignments with `navigate(path)`.",
+        "Also L100/L170 use native window.confirm(...) for destructive delete / approval instead of the app's own components/ConfirmationDialog.tsx (which exists and is used elsewhere) — same modernization refactor, adjacent context."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-native-alert-ux",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:104,111,123 — publish/download feedback is delivered via the blocking native `alert(...)`: L104 alert('Report published successfully.') on success, L111 alert('Failed to publish report. Please try again.') and L123 alert('Failed to download report. Please try again.') on error.",
+        "Native alert() is a blocking, unstyled, non-dismissible-in-app modal that bypasses the app's Toast component (components/Toast.tsx exists and is the established feedback surface). It halts the JS event loop, cannot be tested/queried like an in-DOM toast, and is inconsistent with the rest of ppt-web. Distinct from the recorded dsa-reports-i18n finding: this is the alert()-vs-Toast UX-consistency defect, not the hardcoded-English copy (the English strings are a separate, already-tracked concern). Fix: route these through the existing toast mechanism."
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-22T08:51:22Z",
+  "archived_at": "2026-08-22T16:32:39Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4532,6 +4532,29 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
+      "action": "ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslation on a localized app",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-22T10:25:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "pr": 2830,
+        "merged_at": "2026-08-22T16:29:02Z",
+        "landing_commit": "caffcef617b089a5a773cf9bc69ae7005860bb1d",
+        "by": "dispatcher-phase6"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-moderation-fabricated-context",

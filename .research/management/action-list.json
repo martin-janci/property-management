@@ -380,23 +380,6 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-22T10:24:03Z"
-    },
-    {
-      "id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
-      "action": "ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslation on a localized app",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T10:25:53Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
     }
   ],
   "generated": "2026-08-20T20:28:24Z"

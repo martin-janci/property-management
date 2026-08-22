@@ -4711,6 +4711,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-facilities-bookin-a0428081",
+      "status": "merged",
+      "claimed_at": "2026-08-22T14:27:20Z",
+      "last_updated": "2026-08-22T16:31:15Z",
+      "status_changed_at": "2026-08-22T16:31:15Z",
+      "pr_number": 2830,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2830",
+      "merged_at": "2026-08-22T16:29:02Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2830 done: i18n facilities booking titles+empty-state across MyBookings/PendingBookings/BookFacility/BookingList; new facilities.bookings keys in all 6 locales; biome+typecheck+4 facilities tests green",
+      "reviewer_summary": "verdict=approve note=self-PR; approval posted as issue comment; i18n complete across all 6 ppt-web locales, scope clean, CI green",
+      "last_reviewed_oid": "87a08d818bc4bab1955746fe7d2b8e5b7da33d25",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-22T16:31:15Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
       "branch": "auto-impl/code-review-ppt-web-ui-facilities-bookin-f27739b4",
       "status": "merged",
@@ -15323,5 +15345,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-22T12:32:12Z"
+  "archived_at": "2026-08-22T16:31:53Z"
 }
