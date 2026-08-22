@@ -8927,6 +8927,74 @@
       "created_at": "2026-08-22",
       "updated_at": "2026-08-22",
       "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-fail",
+      "title": "ppt-web RegistryPage pet+vehicle mutations swallow errors — silent write failure UX",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "segment": "ppt-web-ui",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-22"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-126 — handlePetDelete/handlePetReview await deletePetMutation.mutateAsync / reviewPetMutation.mutateAsync inside try/catch whose catch only console.error(...). Page-level error banner at :286 gates on petsError/vehiclesError (query errors), not mutation errors — a backend rejection is invisible.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:155-183 — handleVehicleDelete/handleVehicleReview repeat the same pattern for vehicle registrations. Users confirm delete/approve via window.confirm, see no error toast on failure, and are led to believe the write succeeded; list refetches only on mutation success so the row stays and there is no rollback signal.",
+        "Same silent-write-failure anti-pattern the segment previously fixed on AccountingInvoiceManagementPage (PR #2631) — this is the surviving instance in the registry feature."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-aml-dash-native-prompt",
+      "title": "ppt-web AmlDashboardPage native window.prompt/alert on regulator EDD/review flows — no i18n",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "segment": "ppt-web-ui",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-22"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:116,143,156 — handleInitiateEdd and handleReview collect regulator-facing input (EDD reason, AML review decision, review notes) via native window.prompt() with hardcoded English labels. File imports no useTranslation and never calls t() — sk/cs/de users see English regulatory prompts on a compliance surface.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:127,131,150,169,173 — success and error feedback for the same mutations uses native window.alert() with hardcoded English. Same anti-pattern the segment just fixed for VoteDetailPage (PR #2820) — this AML instance is the un-migrated regulatory surface."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-modn-unvalidated-cast",
+      "title": "ppt-web ContentModerationPage: unvalidated `as` cast on action_type/decision unions",
+      "vector": "bug",
+      "score": 1,
+      "status": "open",
+      "confidence": "medium",
+      "segment": "ppt-web-ui",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-22"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-139 — actionType is read from a free-text window.prompt (default `approve`) then submitted as `action_type: actionType as (remove|restrict|warn|approve)` with no runtime validation. Any typo (`warm`, `aprove`, empty override) is sent to the moderation API as an untyped string — the TS cast silences the type error rather than guarding it.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:165-175 — same pattern in handleDecideAppeal: `decision as (uphold|overturn)` without validating that decision is one of the two allowed values.",
+        "Sibling AmlDashboardPage.tsx:37-40,148-154 shows the correct fix — a readonly union + isAmlReviewDecision type-guard rejects the invalid input before mutating. Adopt the same guard here."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
     }
   ]
 }

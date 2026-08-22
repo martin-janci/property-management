@@ -1,76 +1,118 @@
 {
-  "run_iso": "2026-08-22T03:03:20Z",
-  "since_iso": "2026-08-22T00:43:14Z",
-  "merged_prs": [],
-  "signals": [],
+  "run_iso": "2026-08-22T06:42:36Z",
+  "since_iso": "2026-08-22T03:03:20Z",
+  "fired_by": "buffer-low: claimable=6/72 — landable backlog exhausted (all open items mobile-native-gated); refill planner",
+  "phase_1_5_segment": "ppt-web-ui",
+  "phase_1_5_selection_reason": "oldest-unreviewed (mobile-native-kmp saturation-skipped — 5 open code-review-findings; tied with ppt-web-ui at 2026-08-16 → wins)",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:98-126 — handlePetDelete/handlePetReview await deletePetMutation.mutateAsync / reviewPetMutation.mutateAsync inside try/catch whose catch only console.error(...). Page-level error banner at :286 gates on petsError/vehiclesError (query errors), not mutation errors — a backend rejection is invisible.",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:155-183 — handleVehicleDelete/handleVehicleReview repeat the same pattern for vehicle registrations. Users confirm delete/approve via window.confirm, see no error toast on failure.",
+        "Same silent-write-failure anti-pattern the segment previously fixed on AccountingInvoiceManagementPage (PR #2631) — this is the surviving instance in the registry feature."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-aml-dash-native-prompt",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:116,143,156 — handleInitiateEdd and handleReview collect regulator-facing input (EDD reason, AML review decision, review notes) via native window.prompt() with hardcoded English labels. File imports no useTranslation and never calls t() — sk/cs/de users see English regulatory prompts on a compliance surface.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:127,131,150,169,173 — success and error feedback for the same mutations uses native window.alert() with hardcoded English. Same anti-pattern the segment just fixed for VoteDetailPage (PR #2820)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-modn-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-139 — actionType is read from a free-text window.prompt (default 'approve') then submitted as `action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve'` with no runtime validation. Any typo ('warm', 'aprove', empty override) is sent to the moderation API as an untyped string — the TS cast silences the type error rather than guarding it.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:165-175 — same pattern in handleDecideAppeal: `decision as 'uphold' | 'overturn'` without validating that decision is one of the two allowed values.",
+        "Sibling AmlDashboardPage.tsx:37-40,148-154 shows the correct fix — a readonly union + isAmlReviewDecision type-guard rejects the invalid input before mutating. Adopt the same guard here."
+      ],
+      "expert": "completeness"
+    }
+  ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 0 new signals this window",
-  "_note": "same-day rerun over the 2026-08-22T00:43:14Z brief; window 00:43\u219203:03 saw 0 new merged PRs, 0 new issues, only PR #2821 (dispatcher-owned, in review) activity \u2014 a quiet increment. The 6 signals derived by the 00:43 run remain in state.seen_signals (audit trail) and their scoring landed in backlog.json in that commit.",
+  "auto_fix_skipped_reason": "no candidate — none of the 3 new signals meet Phase 5 certainty bar (confidence=medium, not high; also score < 3 at emit)",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/$TODAY.md && head -1 | grep '^# $TODAY$'",
+      "command": "test -f briefs/2026-08-22.md && head -1 grep '# 2026-08-22'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq diff seen_signals/cursors/quiet_days vs HEAD",
-      "observed": "true",
-      "expected": "true",
-      "note": "stats.quiet_days 2\u21923 satisfies G2 progress"
+      "command": "diff seen_signals/cursors vs HEAD",
+      "observed": "true (3 new signals, review_cursor.ppt-web-ui advanced 2026-08-16 → 2026-08-22)",
+      "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
       "command": "jq unique ids",
-      "observed": "true",
+      "observed": "true (354 unique)",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq intersect signals vs seen_signals filter cumulative",
-      "observed": "true",
-      "expected": "true",
-      "note": "0 signals this run \u2014 vacuous"
+      "command": "jq intersect signals vs prev seen_signals filter cumulative",
+      "observed": "true — 3 new signals, none previously seen",
+      "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq max score check",
-      "observed": "true",
-      "expected": "true",
-      "note": "no decay candidates this run (0 items with updated_at \u2264 2026-08-08)"
+      "command": "score cap ≤8; decay of items >14d",
+      "observed": "max=6; 0 items with updated_at ≤ 2026-08-08 (all recent)",
+      "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "grep new plan slugs in brief for 'adversarial pass:'",
-      "observed": "n/a",
-      "expected": "n/a",
-      "note": "0 new plans this run \u2014 vacuously PASS"
+      "command": "grep 'adversarial pass:' for new plans",
+      "observed": "n/a — 0 new plans this run",
+      "expected": "n/a"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
+      "command": "count new plans",
       "observed": "0",
-      "expected": "\u22642"
+      "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
-      "observed": "0",
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0 (all staged files under .research/)",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep -E secret patterns in staged diff",
+      "command": "grep secret patterns in staged diff",
       "observed": "0",
       "expected": "0"
     },
@@ -78,21 +120,21 @@
       "goal": "G10",
       "passed": true,
       "command": "diff backlog.md vs regen",
-      "observed": "identical",
+      "observed": "identical (regenerated deterministically from backlog.json)",
       "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "parse brief phases-failed + cursor snapshot",
-      "observed": "none failed; cursors unchanged",
+      "command": "brief phases-failed vs cursors",
+      "observed": "none failed; review_cursor.ppt-web-ui advanced",
       "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
       "command": "prior HEAD plans still present or archived",
-      "observed": "all present",
+      "observed": "all present (no plan renames/deletes this run)",
       "expected": "all present"
     },
     {
@@ -100,27 +142,27 @@
       "passed": true,
       "command": "ls-files _archive/ count now vs HEAD",
       "observed": "8 == 8",
-      "expected": "now \u2265 head"
+      "expected": "now ≥ head"
     },
     {
       "goal": "G14",
       "passed": true,
       "command": "diff IDEAS_TRIAGE.md vs regen",
-      "observed": "identical",
+      "observed": "identical (regenerated deterministically; content unchanged except timestamp)",
       "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "jq auto_fix_actions caps",
-      "observed": "0 actions",
-      "expected": "\u22643 with per-type caps \u22641"
+      "command": "jq auto_fix_actions caps + idempotency",
+      "observed": "0 actions (no candidate met certainty bar)",
+      "expected": "≤3 per-type ≤1"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "pm_cursor.next_index unchanged (Phase 1.6 skipped)",
-      "observed": "3 == 3",
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "Phase 1.6 SKIPPED this run — no-op gate",
       "expected": "no-op"
     },
     {
