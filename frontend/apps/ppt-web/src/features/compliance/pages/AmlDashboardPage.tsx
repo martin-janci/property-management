@@ -355,14 +355,24 @@ export const AmlDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Decision dialogs (replace the Phase-1 window.prompt/alert flow) */}
+      {/* Decision dialogs (replace the Phase-1 window.prompt/alert flow).
+       *
+       * The `key` binds each dialog's identity to the assessment it acts on so
+       * React remounts a fresh instance per assessment (and on close → reopen).
+       * Without it the dialogs stay mounted — they only render `null` while
+       * closed — and their internal reason/notes/decision state would leak from
+       * one assessment into the next one opened (#2832). The `-closed` sentinels
+       * force a remount across the closed state so a same-assessment reopen also
+       * starts blank. */}
       <InitiateEddDialog
+        key={eddAssessmentId ?? 'edd-closed'}
         isOpen={eddAssessmentId !== null}
         isSubmitting={initiateEdd.isPending}
         onSubmit={submitEdd}
         onClose={() => setEddAssessmentId(null)}
       />
       <ReviewAssessmentDialog
+        key={reviewAssessmentId ?? 'review-closed'}
         isOpen={reviewAssessmentId !== null}
         isSubmitting={reviewAssessment.isPending}
         onSubmit={submitReview}

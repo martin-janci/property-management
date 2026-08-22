@@ -36,9 +36,17 @@ const assessment = {
   updated_at: '2026-01-02T00:00:00Z',
 };
 
+// A second assessment so the dialogs can be opened for one assessment and then
+// re-opened for another (the #2832 stale-state regression path).
+const assessment2 = {
+  ...assessment,
+  id: 'assess-2',
+  subject_id: 'party-2',
+};
+
 vi.mock('@ppt/api-client', () => ({
   useAmlAssessments: vi.fn(() => ({
-    data: { assessments: [assessment] },
+    data: { assessments: [assessment, assessment2] },
     isLoading: false,
     error: null,
   })),
@@ -56,12 +64,13 @@ function renderPage() {
   );
 }
 
-function openReviewDialog() {
-  fireEvent.click(screen.getByRole('button', { name: /review assessment/i }));
+// Each assessment card renders its own action button, so target one by index.
+function openReviewDialog(cardIndex = 0) {
+  fireEvent.click(screen.getAllByRole('button', { name: /review assessment/i })[cardIndex]);
 }
 
-function openEddDialog() {
-  fireEvent.click(screen.getByRole('button', { name: /initiate edd/i }));
+function openEddDialog(cardIndex = 0) {
+  fireEvent.click(screen.getAllByRole('button', { name: /initiate edd/i })[cardIndex]);
 }
 
 describe('AmlDashboardPage decision flow', () => {
@@ -148,5 +157,40 @@ describe('AmlDashboardPage decision flow', () => {
       reason: 'high risk score',
       documents_requested: [],
     });
+  });
+
+  // Regression (#2832): the review dialog must not carry notes/decision from a
+  // previously-reviewed assessment into the next one opened.
+  it('resets review notes and decision when re-opened for a different assessment', () => {
+    renderPage();
+
+    // Open for the first assessment, pick a non-default decision and type notes,
+    // then close without submitting.
+    openReviewDialog(0);
+    fireEvent.change(screen.getByLabelText(/decision/i), { target: { value: 'escalate' } });
+    fireEvent.change(screen.getByLabelText(/review notes/i), {
+      target: { value: 'stale notes for assess-1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    // Open for the second assessment — the form must start blank/default.
+    openReviewDialog(1);
+    expect((screen.getByLabelText(/review notes/i) as HTMLTextAreaElement).value).toBe('');
+    expect((screen.getByLabelText(/decision/i) as HTMLSelectElement).value).toBe('approve');
+  });
+
+  // Regression (#2832): the EDD dialog must not carry a reason from a
+  // previously-viewed assessment into the next one opened.
+  it('resets the EDD reason when re-opened for a different assessment', () => {
+    renderPage();
+
+    openEddDialog(0);
+    fireEvent.change(screen.getByLabelText(/reason/i), {
+      target: { value: 'stale reason for assess-1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    openEddDialog(1);
+    expect((screen.getByLabelText(/reason/i) as HTMLTextAreaElement).value).toBe('');
   });
 });
