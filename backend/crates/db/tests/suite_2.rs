@@ -29,6 +29,8 @@ mod favorite_alert_read_idempotent_tests;
 mod form_rls_repo_tests;
 #[path = "suites/government_portal_connection_cross_org_idor_tests.rs"]
 mod government_portal_connection_cross_org_idor_tests;
+#[path = "suites/held_notification_replica_claim_tests.rs"]
+mod held_notification_replica_claim_tests;
 #[path = "suites/inquiry_mark_read_idor_tests.rs"]
 mod inquiry_mark_read_idor_tests;
 #[path = "suites/insurance_rls_repo_tests.rs"]

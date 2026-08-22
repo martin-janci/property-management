@@ -34,6 +34,14 @@ pub struct QuietHoursDrainConfig {
     /// being retried forever (which would also keep re-delivering its healthy
     /// channels every tick).
     pub max_attempts: i32,
+    /// Claim lease in seconds (issue #2831): the drain claims each due row
+    /// (stamping `claimed_at`) so only one api-server replica delivers it. A
+    /// claim older than this lease is treated as unclaimed, so a worker that
+    /// crashed mid-delivery does not strand the row — another replica re-claims
+    /// it once the lease expires. Must comfortably exceed the time it takes one
+    /// tick to deliver a full `batch_limit` so a live worker's in-flight rows
+    /// are never stolen by a peer.
+    pub claim_lease_secs: u64,
 }
 
 impl Default for QuietHoursDrainConfig {
@@ -43,6 +51,7 @@ impl Default for QuietHoursDrainConfig {
             poll_interval_secs: 60,
             batch_limit: 500,
             max_attempts: 10,
+            claim_lease_secs: 300,
         }
     }
 }
@@ -52,6 +61,7 @@ impl QuietHoursDrainConfig {
     /// - `QUIET_HOURS_DRAIN_ENABLED` (default `true`)
     /// - `QUIET_HOURS_DRAIN_INTERVAL_SECS` (default `60`)
     /// - `QUIET_HOURS_DRAIN_MAX_ATTEMPTS` (default `10`)
+    /// - `QUIET_HOURS_DRAIN_CLAIM_LEASE_SECS` (default `300`)
     pub fn from_env() -> Self {
         let default = Self::default();
         let enabled = std::env::var("QUIET_HOURS_DRAIN_ENABLED")
@@ -66,10 +76,16 @@ impl QuietHoursDrainConfig {
             .and_then(|v| v.parse().ok())
             .filter(|&n| n > 0)
             .unwrap_or(default.max_attempts);
+        let claim_lease_secs = std::env::var("QUIET_HOURS_DRAIN_CLAIM_LEASE_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .filter(|&n| n > 0)
+            .unwrap_or(default.claim_lease_secs);
         Self {
             enabled,
             poll_interval_secs,
             max_attempts,
+            claim_lease_secs,
             ..default
         }
     }
@@ -130,11 +146,24 @@ impl QuietHoursDrainWorker {
     }
 
     /// Release every held notification whose `release_at` has passed.
+    ///
+    /// Issue #2831: rows are *claimed* atomically, not merely selected, so that
+    /// when more than one api-server replica runs this worker each due row is
+    /// delivered by exactly one of them. `claim_notifications_to_release` stamps
+    /// `claimed_at` under `FOR UPDATE SKIP LOCKED` and hands back only the rows
+    /// this replica won; a peer polling the same tick claims a disjoint set.
     async fn drain_due(&self) {
-        let due = match self.granular_repo.get_notifications_to_release().await {
+        let due = match self
+            .granular_repo
+            .claim_notifications_to_release(
+                self.config.batch_limit as i64,
+                self.config.claim_lease_secs as i64,
+            )
+            .await
+        {
             Ok(rows) => rows,
             Err(e) => {
-                tracing::error!(error = %e, "[#980] Failed to fetch held notifications to release");
+                tracing::error!(error = %e, "[#980] Failed to claim held notifications to release");
                 return;
             }
         };
@@ -144,7 +173,7 @@ impl QuietHoursDrainWorker {
 
         let mut released = 0usize;
         let mut dead_lettered = 0usize;
-        for held in due.into_iter().take(self.config.batch_limit) {
+        for held in due {
             // Deliver first, then decide. A held row is marked released ONLY
             // when delivery left nothing to retry (no channel reported a
             // transient `Failed`). If any channel failed we leave `released_at`
@@ -385,5 +414,25 @@ mod tests {
         // A garbage / non-positive override falls back to the default cap so a
         // misconfiguration can never make every row dead-letter on tick one.
         assert_eq!(QuietHoursDrainConfig::default().max_attempts, 10);
+    }
+
+    // --- Issue #2831: cross-replica claim lease -----------------------------
+
+    #[test]
+    fn claim_lease_default_is_positive_and_exceeds_poll_interval() {
+        // The lease must be a positive duration and comfortably longer than a
+        // single poll interval: a live worker must finish delivering a claimed
+        // batch (or clear/release each row) well within the lease, so a peer
+        // replica never re-claims a row that is still in flight. A lease at or
+        // below the poll interval would let peers steal in-flight rows and
+        // reintroduce the double-delivery this fix removes.
+        let cfg = QuietHoursDrainConfig::default();
+        assert!(cfg.claim_lease_secs > 0);
+        assert!(
+            cfg.claim_lease_secs > cfg.poll_interval_secs,
+            "claim lease ({}) must exceed the poll interval ({})",
+            cfg.claim_lease_secs,
+            cfg.poll_interval_secs
+        );
     }
 }

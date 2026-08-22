@@ -301,6 +301,13 @@ pub struct HeldNotification {
     /// (issue #2823). Excluded from the release query like `released_at`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dead_lettered_at: Option<DateTime<Utc>>,
+    /// When the drain worker last claimed this row for delivery (issue #2831).
+    /// The claim is a lease: the drain stamps this atomically at selection time
+    /// (`UPDATE ... FOR UPDATE SKIP LOCKED`) so a held notification is delivered
+    /// by at most one api-server replica, and a claim older than the lease is
+    /// re-claimable so a crashed worker's row is not stranded.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claimed_at: Option<DateTime<Utc>>,
     pub is_priority: bool,
 }
 
