@@ -773,7 +773,12 @@ impl NotificationPipeline {
         }
 
         let mut result = PipelineResult::default();
-        for ch in &held.channels {
+        // Issue #2823: only attempt channels that have not already been
+        // delivered on a previous drain tick. Re-sending an already-delivered
+        // channel would give the user a duplicate notification when a *sibling*
+        // channel failed and kept the whole row held for retry.
+        let pending = pending_held_channels(held);
+        for ch in &pending {
             let channel = match ch.as_str() {
                 "push" => NotificationChannel::Push,
                 "email" => NotificationChannel::Email,
@@ -864,6 +869,21 @@ impl NotificationPipeline {
     }
 }
 
+/// Channels on a held row that still need a delivery attempt: the row's
+/// configured `channels` minus any already recorded in `delivered_channels`
+/// from a previous partial-success drain tick (issue #2823).
+///
+/// Skipping already-delivered channels is what prevents duplicate delivery when
+/// a held row is retried because a *different* channel on the same row failed.
+/// Order and duplicates from `channels` are preserved for the surviving entries.
+fn pending_held_channels(held: &HeldNotification) -> Vec<String> {
+    held.channels
+        .iter()
+        .filter(|c| !held.delivered_channels.iter().any(|d| d == *c))
+        .cloned()
+        .collect()
+}
+
 // ============================================================================
 // Tests
 // ============================================================================
@@ -872,6 +892,49 @@ impl NotificationPipeline {
 mod tests {
     use super::*;
     use common::notifications::{Notification, NotificationCategory, NotificationPriority};
+
+    fn held_row(channels: &[&str], delivered: &[&str]) -> HeldNotification {
+        HeldNotification {
+            id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            event_type: "announcements.notification".to_string(),
+            title: "T".to_string(),
+            body: None,
+            data: None,
+            channels: channels.iter().map(|s| s.to_string()).collect(),
+            delivered_channels: delivered.iter().map(|s| s.to_string()).collect(),
+            held_at: chrono::Utc::now(),
+            release_at: chrono::Utc::now(),
+            released_at: None,
+            attempts: 0,
+            dead_lettered_at: None,
+            is_priority: false,
+        }
+    }
+
+    #[test]
+    fn pending_channels_excludes_already_delivered() {
+        // Issue #2823 regression: push already delivered on a prior tick must
+        // NOT be re-attempted when the row is retried for a failed email —
+        // otherwise the user receives a duplicate push.
+        let held = held_row(&["push", "email"], &["push"]);
+        assert_eq!(pending_held_channels(&held), vec!["email".to_string()]);
+    }
+
+    #[test]
+    fn pending_channels_all_when_none_delivered() {
+        let held = held_row(&["push", "email"], &[]);
+        assert_eq!(
+            pending_held_channels(&held),
+            vec!["push".to_string(), "email".to_string()]
+        );
+    }
+
+    #[test]
+    fn pending_channels_empty_when_all_delivered() {
+        let held = held_row(&["push", "email"], &["push", "email"]);
+        assert!(pending_held_channels(&held).is_empty());
+    }
 
     fn make_notification(user_id: Uuid) -> Notification {
         Notification::new(

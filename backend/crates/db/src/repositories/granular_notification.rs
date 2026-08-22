@@ -359,11 +359,17 @@ impl GranularNotificationRepository {
     }
 
     /// Get held notifications ready for release.
+    ///
+    /// Excludes rows that have been dead-lettered (issue #2823): a row that
+    /// exhausted its retry budget is given up on and must not be re-selected,
+    /// the same way an already-released row is not.
     pub async fn get_notifications_to_release(&self) -> Result<Vec<HeldNotification>, SqlxError> {
         sqlx::query_as::<_, HeldNotification>(
             r#"
             SELECT * FROM held_notifications
-            WHERE released_at IS NULL AND release_at <= $1
+            WHERE released_at IS NULL
+              AND dead_lettered_at IS NULL
+              AND release_at <= $1
             ORDER BY release_at
             "#,
         )
@@ -375,6 +381,38 @@ impl GranularNotificationRepository {
     /// Mark held notification as released.
     pub async fn mark_notification_released(&self, id: Uuid) -> Result<(), SqlxError> {
         sqlx::query("UPDATE held_notifications SET released_at = now() WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Persist progress after a partial-failure drain tick (issue #2823):
+    /// record the channels delivered so far and the bumped attempt counter so
+    /// the next retry skips already-delivered channels and the retry budget is
+    /// enforced. The row stays held (`released_at`/`dead_lettered_at` untouched).
+    pub async fn record_held_attempt(
+        &self,
+        id: Uuid,
+        delivered_channels: &[String],
+        attempts: i32,
+    ) -> Result<(), SqlxError> {
+        sqlx::query(
+            "UPDATE held_notifications SET delivered_channels = $2, attempts = $3 WHERE id = $1",
+        )
+        .bind(id)
+        .bind(delivered_channels)
+        .bind(attempts)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Give up on a held row that has exhausted its retry budget (issue #2823):
+    /// stamp `dead_lettered_at` so it is no longer re-selected for release,
+    /// instead of looping forever and re-delivering its healthy channels.
+    pub async fn mark_notification_dead_lettered(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query("UPDATE held_notifications SET dead_lettered_at = now() WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;
