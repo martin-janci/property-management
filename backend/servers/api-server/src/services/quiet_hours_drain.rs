@@ -158,7 +158,8 @@ impl QuietHoursDrainWorker {
                 // succeed this tick so they are not re-delivered (duplicate),
                 // and bump the attempt counter so a permanently-failing row is
                 // eventually dead-lettered instead of looping forever.
-                let delivered = merge_delivered(&held.delivered_channels, &delivered_channels(&outcome));
+                let delivered =
+                    merge_delivered(&held.delivered_channels, &delivered_channels(&outcome));
                 let attempts = held.attempts.saturating_add(1);
                 if let Err(e) = self
                     .granular_repo
@@ -169,7 +170,10 @@ impl QuietHoursDrainWorker {
                 }
                 if should_give_up(attempts, self.config.max_attempts) {
                     // Dead-letter: stop retrying a row that never drains cleanly.
-                    if let Err(e) = self.granular_repo.mark_notification_dead_lettered(held.id).await
+                    if let Err(e) = self
+                        .granular_repo
+                        .mark_notification_dead_lettered(held.id)
+                        .await
                     {
                         tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to dead-letter exhausted held notification; will keep retrying");
                     } else {
