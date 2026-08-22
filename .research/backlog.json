@@ -8903,6 +8903,30 @@
         "assignment_status": "merged",
         "pr_number": 2818
       }
+    },
+    {
+      "id": "code-review-api-handlers-booking-connect-non-manager-hijack",
+      "title": "SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing manager gate on install.rs credential writes",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "api-handlers segment review 2026-08-22"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:907 — `connect_booking` (POST /api/v1/integrations/organizations/{org_id}/booking/connect) gates only on `verify_org_access`, which passes for any org member; caller-supplied hotel_id/username/password are persisted via `create_or_update_booking_connection`.",
+        "backend/servers/api-server/src/routes/integrations/oauth.rs:140 — sibling `booking_token_exchange` (OAuth path for the same integration) DOES gate on `verify_manager_role_in_org` before writing tokens; direct-connect path was skipped.",
+        "backend/servers/api-server/src/routes/integrations/install.rs — matching missing-gate pattern in `disconnect_booking` (line 1247), `disconnect_airbnb` (line 756); `airbnb_oauth_callback` at oauth.rs:773 also lacks the manager gate.",
+        "Blast radius: a plain org member can overwrite the org's Booking.com credentials (username/password stored as access_token/refresh_token) — subsequent `push_booking_availability` / `push_booking_rates` (install.rs:1318/:1466) push real property data to the attacker's OTA account. Same class as the Issue #765 IDOR family."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs",
+        "backend/servers/api-server/src/routes/integrations/oauth.rs"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md"
     }
   ]
 }
