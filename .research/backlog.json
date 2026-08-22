@@ -8910,7 +8910,7 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "api-handlers segment review 2026-08-22"
       ],
@@ -8926,7 +8926,81 @@
       ],
       "created_at": "2026-08-22",
       "updated_at": "2026-08-22",
-      "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md"
+      "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md",
+      "reconciled": {
+        "at": "2026-08-22T08:24:47Z",
+        "assignment_status": "merged",
+        "pr_number": 2821
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
+      "title": "ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manager & tenant see no failure feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-22"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx:75-79 — handleCancelConfirm catch only does `console.error('Failed to cancel booking:', error)`; no error state is set, the CancelBookingDialog is left open with isCancelling reset, so a failed cancel (409/permission) gives the tenant zero feedback.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:60-64 (approve) and :82-86 (reject) — same pattern: on failure the list just silently refreshes with no user-visible error; a manager cannot tell an approval/rejection failed.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx:38-42 and PendingBookingsPage.tsx:39-43 — fetch failures only console.error; the page then renders an empty BookingList with no error state (no isError branch), indistinguishable from 'no bookings'.",
+        "Contrast: frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx:58-63 establishes the repo's error pattern (setError(err.message ?? t('...')) + render). The facilities pages import neither an error state nor useTranslation, diverging from it."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
+      "title": "ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslation on a localized app",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-22"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:102 `title=\"Pending Booking Approvals\"` and :111 `<p ...>All caught up! No pending bookings to review.</p>` — literal English, no t().",
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx:95 `title=\"My Bookings\"` — literal English; the file does not import useTranslation at all.",
+        "Both files omit `import { useTranslation }`, unlike sibling ppt-web pages (e.g. emergency, person-months) which wrap all user-facing text in t('...')."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow",
+      "title": "ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcoded English strings (TODO Phase-2 unshipped)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-22"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:112-137 — handleInitiateEdd collects the EDD reason via window.prompt(...) and reports success/failure via alert(...); marked `TODO(Phase-2): Replace window.prompt with proper modal form with document selection` and still shipped.",
+        "AmlDashboardPage.tsx:139-179 — handleReview collects the compliance decision and notes via two window.prompt calls and reports via alert; documents_requested is hardcoded to [] so no evidence documents can be attached to an EDD from the UI.",
+        "All prompt/alert strings ('Enter reason for initiating Enhanced Due Diligence:', 'Enhanced Due Diligence initiated successfully.', etc.) are literal English with no t() on an AML/compliance-critical path."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
     }
   ]
 }
