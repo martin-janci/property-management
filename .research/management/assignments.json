@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T02:30:21Z",
+  "generated": "2026-08-22T02:50:41Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "code-review-api-handlers-booking-connect-non-manager-hijack",
       "branch": "auto-impl/code-review-api-handlers-booking-connect-b137587e",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-22T02:27:02Z",
-      "last_updated": "2026-08-22T02:27:02Z",
-      "status_changed_at": "2026-08-22T02:27:02Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-22T02:50:41Z",
+      "status_changed_at": "2026-08-22T02:50:41Z",
+      "pr_number": 2821,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2821",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2821 done: manager-gate added to connect/disconnect_booking, disconnect_airbnb, airbnb_oauth_callback + 5 IG3 tests; fmt+clippy green, cargo test deferred to CI (no local pg)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
