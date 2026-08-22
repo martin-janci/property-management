@@ -19,7 +19,7 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use super::sync::{verify_org_access, OrgIdPath, ResourceIdPath};
+use super::sync::{verify_manager_role_in_org, verify_org_access, OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
 
 const MAX_BATCH_SIZE: usize = 500;
@@ -754,6 +754,9 @@ pub async fn disconnect_airbnb(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // SECURITY: wiping the org's Airbnb connection is a manager-only mutation;
+    // `verify_org_access` alone lets any org member tear down the integration.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -905,6 +908,12 @@ pub async fn connect_booking(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // SECURITY: storing Booking.com credentials is a manager-only mutation.
+    // `verify_org_access` passes for any org member (including plain residents);
+    // without this gate a non-manager could overwrite the org's active OTA
+    // credentials with attacker-controlled ones. Mirror the manager gate already
+    // enforced by `booking_token_exchange` (oauth.rs) and `direct_connect_airbnb`.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1245,6 +1254,9 @@ pub async fn disconnect_booking(
 
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // SECURITY: wiping the org's Booking.com connection is a manager-only
+    // mutation; `verify_org_access` alone lets any org member tear it down.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 

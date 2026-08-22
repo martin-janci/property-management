@@ -771,6 +771,11 @@ pub async fn airbnb_oauth_callback(
     // forgeable). Require the authenticated caller to actually be a member of
     // the organization before binding Airbnb tokens to it.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // SECURITY: binding Airbnb OAuth tokens to the org is a manager-only
+    // mutation, matching `airbnb_token_exchange` and `booking_token_exchange`.
+    // `verify_org_access` alone would let any org member complete a callback and
+    // overwrite the org's outward-facing Airbnb channel credentials.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     // Issue #711: pull Airbnb OAuth credentials from the AppState-cached
     // config rather than re-reading the env on every callback.

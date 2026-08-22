@@ -359,3 +359,165 @@ async fn booking_conflicts_manager_member_passes_gate(pool: PgPool) {
         response.text()
     );
 }
+
+// ---------------------------------------------------------------------------
+// Test 4 — direct-connect credential writers on the install surface enforce
+// the manager gate (install.rs `connect_booking` / `disconnect_booking` /
+// `disconnect_airbnb`, and oauth.rs `airbnb_oauth_callback`).
+// ---------------------------------------------------------------------------
+//
+// SECURITY (install.rs:907 non-manager-hijack): these direct-connect handlers
+// previously gated only on `verify_org_access`, which passes for ANY org member
+// — including a plain resident. A resident could therefore POST attacker-owned
+// Booking.com credentials (persisted as the org's active OTA integration) or
+// `DELETE` the legitimate connection, mirroring the #1787 gap on the
+// `booking_channel.rs` push surface. The fix adds
+// `verify_manager_role_in_org` after `verify_org_access`, matching the sibling
+// gated writers (`booking_token_exchange`, `direct_connect_airbnb`).
+//
+// Each test mints a token whose `role` claim is `manager` while the DB
+// membership is `resident`: on the pre-fix code the handler admits the caller
+// and proceeds past the gate (network/encryption error, 404, or 503 — never a
+// `403`), so `assert_eq!(status, FORBIDDEN)` FAILS on old code and PASSES on the
+// DB-backed manager gate — the IG3 failing-on-main property. The gate fires
+// before any network call or DB lookup, so the resident rejection is
+// deterministic and hermetic.
+
+/// `POST /booking/connect`: a `resident` member is rejected with `403` even
+/// though the JWT carries a `manager` role claim. Before the fix this stored
+/// the caller's Booking.com credentials as the org's active connection.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn connect_booking_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "connect-booking-resident").await;
+    let user_id = seed_user(&pool, "connect-booking-resident@test.local").await;
+    seed_membership(&pool, org_x, user_id, "resident").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/booking/connect");
+    let body = serde_json::json!({
+        "hotel_id": "ATTACKER-HOTEL",
+        "username": "attacker",
+        "password": "attacker-secret",
+    });
+    let response = app
+        .execute(authed_req(Method::POST, &uri, &token, Some(body)))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "a resident must be 403 on booking/connect despite a manager JWT claim; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
+
+/// `DELETE /booking`: a `resident` member is rejected with `403` — they cannot
+/// wipe the org's legitimate Booking.com connection.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn disconnect_booking_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "disconnect-booking-resident").await;
+    let user_id = seed_user(&pool, "disconnect-booking-resident@test.local").await;
+    seed_membership(&pool, org_x, user_id, "resident").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/booking");
+    let response = app
+        .execute(authed_req(Method::DELETE, &uri, &token, None))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "a resident must be 403 on DELETE booking despite a manager JWT claim; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
+
+/// `DELETE /airbnb`: a `resident` member is rejected with `403` — they cannot
+/// tear down the org's legitimate Airbnb connection.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn disconnect_airbnb_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "disconnect-airbnb-resident").await;
+    let user_id = seed_user(&pool, "disconnect-airbnb-resident@test.local").await;
+    seed_membership(&pool, org_x, user_id, "resident").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/airbnb");
+    let response = app
+        .execute(authed_req(Method::DELETE, &uri, &token, None))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "a resident must be 403 on DELETE airbnb despite a manager JWT claim; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
+
+/// `GET /airbnb/callback`: a `resident` member is rejected with `403` before
+/// any token exchange — they cannot bind Airbnb OAuth tokens to the org. The
+/// state is well-formed (`{org_id}:{nonce}`) so it clears the CSRF/state checks
+/// and reaches the membership + manager gate; with no state store wired the
+/// consume path is `StoreUnavailable` (proceeds), so the manager gate is what
+/// short-circuits.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_oauth_callback_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "airbnb-callback-resident").await;
+    let user_id = seed_user(&pool, "airbnb-callback-resident@test.local").await;
+    seed_membership(&pool, org_x, user_id, "resident").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let state = format!("{org_x}:{}", Uuid::new_v4());
+    let uri = format!(
+        "/api/v1/integrations/organizations/{org_x}/airbnb/callback?code=attacker-code&state={state}"
+    );
+    let response = app
+        .execute(authed_req(Method::GET, &uri, &token, None))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "a resident must be 403 on airbnb/callback despite a manager JWT claim; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
+
+/// No-lockout sanity for the install surface: a `manager` DB member passes the
+/// `DELETE /booking` gate (NOT `403`). With no Booking.com connection the
+/// handler returns `404`, so we assert only that the manager gate does not block.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn disconnect_booking_manager_member_passes_gate(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_x = seed_org(&pool, "disconnect-booking-manager").await;
+    let user_id = seed_user(&pool, "disconnect-booking-manager@test.local").await;
+    seed_membership(&pool, org_x, user_id, "manager").await;
+
+    let token = mint_manager_claim_token(user_id, org_x);
+    let uri = format!("/api/v1/integrations/organizations/{org_x}/booking");
+    let response = app
+        .execute(authed_req(Method::DELETE, &uri, &token, None))
+        .await;
+
+    assert_ne!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "a legitimate manager member must NOT be blocked by the manager gate on DELETE booking; got {}: {}",
+        response.status,
+        response.text()
+    );
+}
