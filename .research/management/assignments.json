@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T10:24:03Z",
+  "generated": "2026-08-22T10:48:49Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -48,18 +48,18 @@
     {
       "task_id": "code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow",
       "branch": "auto-impl/code-review-ppt-web-ui-aml-dashboard-pro-3a8933bb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-22T10:24:03Z",
-      "last_updated": "2026-08-22T10:24:03Z",
-      "status_changed_at": "2026-08-22T10:24:03Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-22T10:48:49Z",
+      "status_changed_at": "2026-08-22T10:48:49Z",
+      "pr_number": 2829,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2829",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2829 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=AML dashboard prompt/alert flow replaced with dialogs+Toast+i18n (6 locales); typecheck/biome clean, ppt-web suite 2408 pass; owner_role hint pm-backend mismatched real frontend area",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
