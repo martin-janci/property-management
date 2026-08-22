@@ -2031,5 +2031,37 @@
       "cancelDone": "Hlasování zrušeno",
       "cancelFailed": "Nepodařilo se zrušit hlasování"
     }
+  },
+  "marketplace": {
+    "verificationBadge": {
+      "expired": "Vypršelo",
+      "expiringSoon": "Brzy vyprší",
+      "soon": "Brzy",
+      "expires": "Platnost do",
+      "noVerifications": "Zatím nebyla odeslána žádná ověření",
+      "moreCount": "+{{count}} dalších",
+      "badge": {
+        "verified_business": "Ověřená firma",
+        "insured": "Pojištěno",
+        "certified": "Certifikováno",
+        "top_rated": "Nejlépe hodnocené",
+        "fast_responder": "Rychlá odezva",
+        "preferred": "Preferováno"
+      },
+      "status": {
+        "pending": "Čeká na vyřízení",
+        "under_review": "Probíhá kontrola",
+        "verified": "Ověřeno",
+        "rejected": "Zamítnuto",
+        "expired": "Vypršelo"
+      },
+      "type": {
+        "business_registration": "Registrace podniku",
+        "insurance": "Pojištění",
+        "certification": "Certifikace",
+        "license": "Licence",
+        "identity": "Totožnost"
+      }
+    }
   }
 }

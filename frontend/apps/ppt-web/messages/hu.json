@@ -1897,5 +1897,37 @@
       "cancelDone": "Szavazás visszavonva",
       "cancelFailed": "A szavazás visszavonása sikertelen"
     }
+  },
+  "marketplace": {
+    "verificationBadge": {
+      "expired": "Lejárt",
+      "expiringSoon": "Hamarosan lejár",
+      "soon": "Hamarosan",
+      "expires": "Lejár",
+      "noVerifications": "Még nincsenek beküldött ellenőrzések",
+      "moreCount": "+{{count}} további",
+      "badge": {
+        "verified_business": "Ellenőrzött vállalkozás",
+        "insured": "Biztosított",
+        "certified": "Tanúsított",
+        "top_rated": "Kiemelt értékelésű",
+        "fast_responder": "Gyors válaszadó",
+        "preferred": "Előnyben részesített"
+      },
+      "status": {
+        "pending": "Függőben",
+        "under_review": "Felülvizsgálat alatt",
+        "verified": "Ellenőrzött",
+        "rejected": "Elutasítva",
+        "expired": "Lejárt"
+      },
+      "type": {
+        "business_registration": "Cégbejegyzés",
+        "insurance": "Biztosítás",
+        "certification": "Tanúsítás",
+        "license": "Engedély",
+        "identity": "Személyazonosság"
+      }
+    }
   }
 }

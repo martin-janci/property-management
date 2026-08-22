@@ -1924,5 +1924,37 @@
       "cancelDone": "Abstimmung abgebrochen",
       "cancelFailed": "Abstimmung konnte nicht abgebrochen werden"
     }
+  },
+  "marketplace": {
+    "verificationBadge": {
+      "expired": "Abgelaufen",
+      "expiringSoon": "Läuft bald ab",
+      "soon": "Bald",
+      "expires": "Läuft ab",
+      "noVerifications": "Noch keine Verifizierungen eingereicht",
+      "moreCount": "+{{count}} weitere",
+      "badge": {
+        "verified_business": "Verifiziertes Unternehmen",
+        "insured": "Versichert",
+        "certified": "Zertifiziert",
+        "top_rated": "Top bewertet",
+        "fast_responder": "Schnelle Reaktion",
+        "preferred": "Bevorzugt"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "under_review": "In Prüfung",
+        "verified": "Verifiziert",
+        "rejected": "Abgelehnt",
+        "expired": "Abgelaufen"
+      },
+      "type": {
+        "business_registration": "Gewerbeanmeldung",
+        "insurance": "Versicherung",
+        "certification": "Zertifizierung",
+        "license": "Lizenz",
+        "identity": "Identität"
+      }
+    }
   }
 }
