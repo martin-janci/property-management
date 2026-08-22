@@ -8,12 +8,14 @@ import type { BookingStatus, BookingWithDetails } from '@ppt/api-client';
 import { cancelBooking, getMyBookings } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { BookingList, CancelBookingDialog } from '../components';
 
 const PAGE_SIZE = 10;
 
 export function MyBookingsPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [total, setTotal] = useState(0);
@@ -36,7 +38,11 @@ export function MyBookingsPage() {
       setBookings(response.items);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
+      showToast({
+        type: 'error',
+        title: 'Failed to load bookings',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +79,11 @@ export function MyBookingsPage() {
       await fetchBookings(page, statusFilter);
       setCancelDialogBooking(null);
     } catch (error) {
-      console.error('Failed to cancel booking:', error);
+      showToast({
+        type: 'error',
+        title: 'Failed to cancel booking',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+      });
     } finally {
       setIsCancelling(false);
     }
