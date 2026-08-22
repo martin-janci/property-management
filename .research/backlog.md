@@ -1,11 +1,13 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-22 03:03 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-22 18:40 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
-| 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | ready | 2026-08-22 | [plan](plans/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
+| 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
+| 3 | bug | `code-review-reality-web-realtor-mock-ignores-id` | reality-web /[locale]/realtor/[id] renders MOCK_AGENT for every id — public SEO-indexed page shows d | ready | 2026-08-22 | [plan](plans/code-review-reality-web-realtor-mock-ignores-id.md) |
+| 3 | bug | `gh-issue-2831-quiet-hours-drain-concurrent-race` | quiet-hours drain double-delivers held notifications under >1 api-server replica (no FOR UPDATE SKIP | ready | 2026-08-22 | [plan](plans/gh-issue-2831-quiet-hours-drain-concurrent-race.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | open | 2026-08-16 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
@@ -35,6 +37,9 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
+| 2 | bug | `code-review-reality-web-agency-soft-404` | reality-web /[locale]/agency/[slug] client-side page returns 200 for unknown slugs (soft-404 crawler | open | 2026-08-22 |  |
+| 2 | bug | `gh-issue-2832-aml-dialog-stale-state` | AML EDD / Review dialogs retain stale reason/notes across assessments — mounted-forever pattern poll | open | 2026-08-22 |  |
 | 2 | bug | `code-review-ppt-web-ui-verification-badge-expired-as-soon` | ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal s | done | 2026-08-21 |  |
 | 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inqui | done | 2026-08-20 |  |
 | 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | done | 2026-08-19 |  |
@@ -147,6 +152,9 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | bug | `code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow` | ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcod | done | 2026-08-22 |  |
+| 1 | bug | `code-review-ppt-web-ui-facilities-booking-hardcoded-i18n` | ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslat | done | 2026-08-22 |  |
+| 1 | test-gap | `code-review-reality-web-agency-i18n-slovak` | reality-web /[locale]/agency/[slug] hardcodes Slovak UI strings on a locale-scoped route (non-sk vie | open | 2026-08-22 |  |
 | 1 | bug | `code-review-ppt-web-ui-submission-preview-modal-orphan` | ppt-web SubmissionPreviewModal is exported but rendered by no page — orphaned dead component with si | done | 2026-08-21 |  |
 | 1 | i18n | `code-review-ppt-web-ui-vote-detail-hardcoded-en` | ppt-web VoteDetailPage hardcodes English (native window.prompt + toast titles) on i18n voting page | done | 2026-08-21 |  |
 | 1 | bug | `code-review-reality-server-saved-search-watermark-discard` | reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing  | done | 2026-08-20 |  |

@@ -8968,14 +8968,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "ppt-web-ui segment review 2026-08-22"
+        "ppt-web-ui segment review 2026-08-22",
+        "PR #2830"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:102 `title=\"Pending Booking Approvals\"` and :111 `<p ...>All caught up! No pending bookings to review.</p>` — literal English, no t().",
         "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx:95 `title=\"My Bookings\"` — literal English; the file does not import useTranslation at all.",
-        "Both files omit `import { useTranslation }`, unlike sibling ppt-web pages (e.g. emergency, person-months) which wrap all user-facing text in t('...')."
+        "Both files omit `import { useTranslation }`, unlike sibling ppt-web pages (e.g. emergency, person-months) which wrap all user-facing text in t('...').",
+        "resolved: PR #2830 merged 2026-08-22 — added `facilities.bookings` i18n namespace to all six locales and wired `useTranslation` in `MyBookingsPage.tsx`, `PendingBookingsPage.tsx`, `BookFacilityPage.tsx`, `components/BookingList.tsx`."
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx",
@@ -9011,6 +9013,124 @@
         "assignment_status": "merged",
         "pr_number": 2829
       }
+    },
+    {
+      "id": "gh-issue-2831-quiet-hours-drain-concurrent-race",
+      "title": "quiet-hours drain double-delivers held notifications under >1 api-server replica (no FOR UPDATE SKIP LOCKED)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2831 (follow-up on PR #2826)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:709-715 — `QuietHoursDrainWorker::new(...) → worker.start()` runs on every api-server replica; gated only by env, no leader election.",
+        "backend/crates/db/src/repositories/granular_notification.rs:366-379 — `get_notifications_to_release` is a plain SELECT; no FOR UPDATE SKIP LOCKED and no LIMIT; every replica reads the same due rows before `delivered_channels` is persisted, so `deliver_held` fires 1× per replica.",
+        "Issue #2831 body traces the race — PR #2826 closed only the sequential-retry duplicate case; the concurrent-worker case is untouched."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs",
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs",
+        "backend/servers/api-server/src/services/notification_pipeline.rs",
+        "backend/servers/api-server/src/main.rs"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": "plans/gh-issue-2831-quiet-hours-drain-concurrent-race.md"
+    },
+    {
+      "id": "gh-issue-2832-aml-dialog-stale-state",
+      "title": "AML EDD / Review dialogs retain stale reason/notes across assessments — mounted-forever pattern pollutes audit trail",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #2832 (follow-up on PR #2829)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:359-366 — `<InitiateEddDialog isOpen={eddAssessmentId !== null} …/>` and `<ReviewAssessmentDialog isOpen={reviewAssessmentId !== null} …/>` are rendered unconditionally at the page bottom.",
+        "frontend/apps/ppt-web/src/features/compliance/components/InitiateEddDialog.tsx:28-31 — component early-returns null when !isOpen but holds reason/showError in local useState; closing only sets the assessment id back to null, so state is never torn down between opens.",
+        "Consequence (from issue #2832): typing a reason for assessment A, closing, then opening for assessment B shows A's text — a compliance audit-trail hazard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/components/InitiateEddDialog.tsx",
+        "frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx",
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-mock-ignores-id",
+      "title": "reality-web /[locale]/realtor/[id] renders MOCK_AGENT for every id — public SEO-indexed page shows duplicate/wrong data",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-08-22 reality-web segment"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:1-20 — use client page; imports MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS from ./_mock; never reads useParams/params; assigns const agent = MOCK_AGENT unconditionally.",
+        "backend/servers/reality-server/src/routes/realtors.rs:86 — GET /api/v1/realtors/{user_id}/profile already exists and matches the route shape.",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts:169-173 — useRealtor(agencyId, realtorId) hook exists; needs an id-only alternative or the SSR fetch pattern that listings/[slug]/page.tsx uses.",
+        "Sibling [locale]/listings/[slug]/page.tsx documents the anti-pattern and demonstrates the fix (server fetch + notFound() on 404)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts",
+        "backend/servers/reality-server/src/routes/realtors.rs"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": "plans/code-review-reality-web-realtor-mock-ignores-id.md"
+    },
+    {
+      "id": "code-review-reality-web-agency-soft-404",
+      "title": "reality-web /[locale]/agency/[slug] client-side page returns 200 for unknown slugs (soft-404 crawler pollution)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-22 reality-web segment"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:1 — use client page; unknown slug renders `Kancelária sa nenašla.` at :42-50 with HTTP 200.",
+        "Sibling listings/[slug]/page.tsx explicitly documents this anti-pattern and calls notFound() from next/navigation; agency/[slug] should follow the same server-fetch + notFound() shape.",
+        "Impact: crawlers index deleted / non-existent agencies as soft-200s — pollutes SERP + duplicate-content ranking."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-i18n-slovak",
+      "title": "reality-web /[locale]/agency/[slug] hardcodes Slovak UI strings on a locale-scoped route (non-sk viewers see Slovak)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-22 reality-web segment"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,46,125,157,169,219,223,279,302,314 — hardcoded Slovak strings (`Načítavam…`, `Kancelária sa nenašla.`, `✓ Overená`, `O kancelárii`, `Náš tím`, `Aktívne ponuky`, `Žiadne aktívne ponuky.`, `Kontakt`, `Navštíviť web`, `Licencia:`) on a [locale] route that ships messages/en|cs|de|hu|pl.",
+        "The file comment itself admits the mismatch — next-intl useTranslations is used elsewhere in the app but not here."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-08-22",
+      "updated_at": "2026-08-22",
+      "plan": null
     }
   ]
 }

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-22T03:03:20Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2820,
-  "last_issue_seen": 2816,
-  "last_commit_sha": "e59dca8b157df58eceb9a612c61585efd07216ac",
+  "last_run_iso": "2026-08-22T18:41:31Z",
+  "last_run_ms": 45000,
+  "last_pr_seen": 2830,
+  "last_issue_seen": 2832,
+  "last_commit_sha": "7335031a149c268e5872a1d0a9fd5a72fa503c4c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -902,7 +902,12 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-reality-web-realtor-mock-ignores-id",
+    "code-review-reality-web-agency-soft-404",
+    "code-review-reality-web-agency-i18n-slovak",
+    "gh-issue-2831-quiet-hours-drain-concurrent-race",
+    "gh-issue-2832-aml-dialog-stale-state"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -911,14 +916,14 @@
     "reality-server": "2026-08-19",
     "ppt-web-ui": "2026-08-16",
     "ppt-web-core": "2026-08-21",
-    "reality-web": "2026-08-18",
+    "reality-web": "2026-08-22",
     "mobile-rn": "2026-08-17",
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 69,
-    "vectors_created": 318,
-    "plans_created": 27,
+    "runs": 70,
+    "vectors_created": 323,
+    "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

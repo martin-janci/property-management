@@ -1,134 +1,117 @@
 {
-  "run_iso": "2026-08-22T03:03:20Z",
-  "since_iso": "2026-08-22T00:43:14Z",
-  "merged_prs": [],
-  "signals": [],
-  "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate \u2014 0 new signals this window",
-  "_note": "same-day rerun over the 2026-08-22T00:43:14Z brief; window 00:43\u219203:03 saw 0 new merged PRs, 0 new issues, only PR #2821 (dispatcher-owned, in review) activity \u2014 a quiet increment. The 6 signals derived by the 00:43 run remain in state.seen_signals (audit trail) and their scoring landed in backlog.json in that commit.",
-  "goal_checks": [
+  "run_iso": "2026-08-22T18:40:31Z",
+  "since_iso": "2026-08-22T03:03:20Z",
+  "trigger_payload": "buffer-low: claimable=6/72 — all open backlog is mobile-native (cloud-unlandable); need landable vector refill",
+  "merged_prs": [
+    { "number": 2830, "title": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n: i18n facilities booking UI strings", "merged_at": "2026-08-22T16:29:02Z" },
+    { "number": 2829, "title": "code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow: replace AML dashboard prompt/alert decision flow", "merged_at": "2026-08-22T12:31:13Z" },
+    { "number": 2828, "title": "code-review-ppt-web-ui-facilities-booking-silent-errors: surface booking fetch/approve/reject/cancel errors", "merged_at": "2026-08-22T12:31:01Z" },
+    { "number": 2827, "title": "gh-issue-2822: neutralize CR/LF in CSV export sanitizer (Closes #2822)", "merged_at": "2026-08-22T10:23:40Z" },
+    { "number": 2826, "title": "gh-issue-2823: per-channel bookkeeping + bounded retry for held-notification drain", "merged_at": "2026-08-22T10:23:42Z" },
+    { "number": 2825, "title": "gh-issue-2824: i18n VerificationBadge expiry copy + de-duplicate expiry logic", "merged_at": "2026-08-22T08:50:50Z" },
+    { "number": 2821, "title": "code-review-api-handlers-booking-connect-non-manager-hijack: gate direct-connect OTA credential writes", "merged_at": "2026-08-22T08:23:39Z" }
+  ],
+  "signals": [
     {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f .research/briefs/$TODAY.md && head -1 | grep '^# $TODAY$'",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "id": "code-review-reality-web-realtor-mock-ignores-id",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:1-20 — use client page; imports MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS from ./_mock; never reads useParams/params; assigns const agent = MOCK_AGENT unconditionally. SEO-indexed public route that will show one person for every id."
+      ],
+      "expert": "frontend"
     },
     {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq diff seen_signals/cursors/quiet_days vs HEAD",
-      "observed": "true",
-      "expected": "true",
-      "note": "stats.quiet_days 2\u21923 satisfies G2 progress"
+      "id": "code-review-reality-web-agency-soft-404",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:1,42-50 — use client page; unknown slug renders `Kancelária sa nenašla.` with HTTP 200 (soft-404). Sibling listings/[slug]/page.tsx documents this anti-pattern and calls notFound()."
+      ],
+      "expert": "frontend"
     },
     {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq unique ids",
-      "observed": "true",
-      "expected": "true"
+      "id": "code-review-reality-web-agency-i18n-slovak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,46,125,157,169,219,223,279,302,314 — hardcoded Slovak strings on a [locale] route that ships messages/en|cs|de|hu|pl. next-intl useTranslations is used elsewhere in the app."
+      ],
+      "expert": "frontend"
     },
     {
-      "goal": "G4",
-      "passed": true,
-      "command": "jq intersect signals vs seen_signals filter cumulative",
-      "observed": "true",
-      "expected": "true",
-      "note": "0 signals this run \u2014 vacuous"
+      "id": "gh-issue-2831-quiet-hours-drain-concurrent-race",
+      "type": "code-review-finding",
+      "source": "gh-issue-followup",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Issue #2831 (from-merged-review) traces the race: backend/servers/api-server/src/main.rs:709-715 starts QuietHoursDrainWorker unconditionally on every replica; backend/crates/db/src/repositories/granular_notification.rs:366-379 has no FOR UPDATE SKIP LOCKED. Verified against current tree.",
+        "PR #2826 closed only the sequential-retry duplicate case; concurrent workers still double-deliver held notifications."
+      ],
+      "expert": "rust"
     },
     {
-      "goal": "G5",
-      "passed": true,
-      "command": "jq max score check",
-      "observed": "true",
-      "expected": "true",
-      "note": "no decay candidates this run (0 items with updated_at \u2264 2026-08-08)"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "grep new plan slugs in brief for 'adversarial pass:'",
-      "observed": "n/a",
-      "expected": "n/a",
-      "note": "0 new plans this run \u2014 vacuously PASS"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
-      "observed": "0",
-      "expected": "\u22642"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "grep -E secret patterns in staged diff",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff backlog.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "parse brief phases-failed + cursor snapshot",
-      "observed": "none failed; cursors unchanged",
-      "expected": "consistent"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "prior HEAD plans still present or archived",
-      "observed": "all present",
-      "expected": "all present"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "ls-files _archive/ count now vs HEAD",
-      "observed": "8 == 8",
-      "expected": "now \u2265 head"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "jq auto_fix_actions caps",
-      "observed": "0 actions",
-      "expected": "\u22643 with per-type caps \u22641"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "pm_cursor.next_index unchanged (Phase 1.6 skipped)",
-      "observed": "3 == 3",
-      "expected": "no-op"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "grep telegram token patterns in staged diff",
-      "observed": "0",
-      "expected": "0"
+      "id": "gh-issue-2832-aml-dialog-stale-state",
+      "type": "code-review-finding",
+      "source": "gh-issue-followup",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Issue #2832 (from-merged-review): frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx:359-366 mounts InitiateEddDialog and ReviewAssessmentDialog unconditionally; components early-return null on !isOpen but hold useState (reason/notes/showError) that survives across opens. Verified: InitiateEddDialog.tsx:28-31 uses useState + `if (!isOpen) return null;` pattern.",
+        "Compliance/audit-trail hazard: reason typed for assessment A may end up submitted for assessment B."
+      ],
+      "expert": "frontend"
     }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — none of this run's 5 signals matches Phase 5's safe-shape allowlist (screen-map-drift/orphan, fixme-in-merged-code, lockfile-drift, stalled-review). Code-review-finding signals are not in the allowlist — they need the manual implementer path.",
+  "phase_1_5": {
+    "segment_reviewed": "reality-web",
+    "selection_reason": "oldest-unreviewed (last: 2026-08-18, 4d)",
+    "experts_used": ["frontend"],
+    "findings_count": 3
+  },
+  "resolutions": [
+    {
+      "backlog_id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
+      "resolved_by_pr": 2830,
+      "resolution": "PR-body match — item id matches PR title verbatim; PR body describes wiring useTranslation across the exact files listed in item.files"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-22.md && head -1 matches '# 2026-08-22'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq diff seen_signals/cursors/quiet_days vs HEAD", "observed": "true", "expected": "true", "note": "last_pr_seen 2820→2830; last_issue_seen 2816→2832; seen_signals +5; last_commit_sha advanced" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | length == (unique | length)'", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id in prev seen_signals with score_delta != 0", "observed": "true", "expected": "true", "note": "all 5 signals this run are new (not in prior seen_signals)" },
+    { "goal": "G5", "passed": true,  "command": "jq max score check + decay check", "observed": "no item > 8; 0 open items with updated_at ≤ 2026-08-08 (all open items dated 2026-08-11 or newer)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "grep 'adversarial pass:' in brief for each new plan slug", "observed": "both new plans annotated `adversarial pass: passed` in brief", "expected": "match" },
+    { "goal": "G7", "passed": true,  "command": "count new plans ≤ 2; all 15 sections + 4 metadata; Mode declared; files exist", "observed": "2 new plans (both 15-section, Mode: cloud-ok, files verified on disk)", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/'", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "grep -E secret patterns in staged diff (excluding baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "parse brief phases-failed + cursor snapshot", "observed": "no failed phases; every advanced cursor is authoritative", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior HEAD plans still present or archived", "observed": "all prior plan slugs still resolve in plans/ or plans/_archive/", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ HEAD count", "observed": "unchanged this run (no new archives added; no archived plan removed)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen from triage rows", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency", "observed": "auto_fix_actions is empty; kill switch not set", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + pm_cursor bounds", "observed": "Phase 1.6 SKIPPED this run — no delta to management artifacts; gate is a no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep telegram token URL/bare-token pattern in staged diff", "observed": "0", "expected": "0" }
   ]
 }
