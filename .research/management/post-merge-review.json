@@ -1,9 +1,50 @@
 {
-  "generated": "2026-08-21T06:31:06Z",
+  "generated": "2026-08-22T06:31:34Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-22T06:31:34Z",
+      "prs_scanned": 15,
+      "clean": [
+        2820,
+        2818,
+        2817,
+        2737,
+        2736,
+        2735,
+        2734,
+        2733,
+        2732,
+        2730,
+        2728,
+        2727
+      ],
+      "with_issues": [
+        {
+          "pr": 2731,
+          "issue": 2822,
+          "findings": 1,
+          "specialist": "pm-rust-backend",
+          "note": "security/correctness(low): shared sanitize_csv_cell + voting_csv_row neutralize leading formula triggers and commas but NOT embedded CR/LF; hand-rolled unquoted export means a vote title with \\n injects fabricated CSV rows (row-injection/report tampering). Same helper backs admin audit export. Proposed: strip/escape CR/LF in sanitize_csv_cell (or switch to csv crate Writer) + regression test."
+        },
+        {
+          "pr": 2729,
+          "issue": 2823,
+          "findings": 1,
+          "specialist": "pm-rust-backend",
+          "note": "correctness/reliability(medium): #2729 correctly stops dropping held notifications on transient failure, but retry is row-granular while deliver_held re-fires EVERY channel each tick -> duplicate delivery of already-sent channels on partial failure, and no attempt cap/dead-letter -> a permanently-failing row loops forever re-delivering healthy channels. Proposed: per-channel success bookkeeping (delivered_channels[] or one row per channel) + bounded attempts/dead-letter + tests."
+        },
+        {
+          "pr": 2819,
+          "issue": 2824,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "i18n(low)+DRY(low): expiry state bug fixed well, but suffixes ' (Expired)'/' (Expiring soon)'/'(Soon)' and config.label are hardcoded English (ppt-web is actively i18n-ing this class, cf #2820/#2737/#2736); and msUntilExpiry/isExpired/30d window logic is duplicated across VerificationBadge + VerificationStatusBadge. Proposed: route suffixes+labels through react-i18next across 6 locales + key-presence test; extract shared getExpiryState() helper."
+        }
+      ]
+    },
     {
       "run_at": "2026-08-21T06:31:06Z",
       "prs_scanned": 1,
@@ -522,27 +563,6 @@
           "note": "OAuth token-event record awaited inline on hot path; unbounded per-client read; sequential reads"
         }
       ]
-    },
-    {
-      "run_at": "2026-08-03T04:10:17Z",
-      "prs_scanned": 5,
-      "clean": [
-        2627,
-        2626,
-        2527,
-        2522
-      ],
-      "with_issues": [
-        {
-          "pr": 2629,
-          "issue": 2630,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "2629 wires all 3 legs of #2628 (producer on OAuth issue/refresh/revoke + GET /platform-admin/oauth/token-usage read route + daily scheduler prune w/ unit-tested cadence gate) \u2014 clean, complete. One test gap: the 2 new integration tests only cover the producer + repository rollups called directly (usage_per_client/totals); the HTTP read route has NO executing coverage \u2014 no super-admin/AuditRead deny-path (403), no malformed-since 400 (INVALID_SINCE), no 200-through-router body/camelCase assertion. Same regression-net class as #2357/#2359. -> NET-NEW #2630."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=5 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push). In-window (>=2026-07-20) merged-to-dev PRs: nearly all already carry post-merge-reviewed or were reviewed in prior runs (many older data-*/BIT-* un-quarantine wave PRs remain unlabeled but were already reviewed 07-24..08-02). Genuinely never-reviewed substantive PRs scanned this run: 2629 (NEW since 08-02 12:20 run \u2014 auto-impl closing #2628), 2527 (admin-web layout-editor inline-style -> .styles.ts extraction, no behaviour) CLEAN, 2522 (mobile layout-cache logout/re-login round-trip test-only) CLEAN. Re-verified 2627/2626 (reviewed clean 08-02, still unlabeled) \u2014 still clean. NET-NEW actionable issues: 1 (#2630). Note: MCP label-add on merged PRs not applied (single-writer / not in scope), so unlabeled-but-reviewed PRs will keep re-surfacing in the unlabeled search until a labeling pass runs."
     }
   ]
 }
