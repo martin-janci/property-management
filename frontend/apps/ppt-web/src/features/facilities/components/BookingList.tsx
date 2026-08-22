@@ -6,6 +6,7 @@
 
 import type { BookingStatus, BookingWithDetails } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BookingCard } from './BookingCard';
 
 interface BookingListProps {
@@ -41,7 +42,7 @@ export function BookingList({
   pageSize,
   isLoading,
   isManager,
-  title = 'Bookings',
+  title,
   onPageChange,
   onStatusFilter,
   onDateRangeFilter,
@@ -50,6 +51,8 @@ export function BookingList({
   onApprove,
   onReject,
 }: BookingListProps) {
+  const { t } = useTranslation();
+  const displayTitle = title ?? t('facilities.bookings.listTitle');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -75,7 +78,7 @@ export function BookingList({
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{displayTitle}</h1>
       </div>
 
       {/* Filters */}
@@ -146,7 +149,7 @@ export function BookingList({
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <p className="mt-4">No bookings found.</p>
+          <p className="mt-4">{t('facilities.bookings.empty')}</p>
         </div>
       ) : (
         <div className="grid gap-4">

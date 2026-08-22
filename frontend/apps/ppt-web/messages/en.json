@@ -479,6 +479,16 @@
     "title": "Property Management System",
     "welcome": "Welcome to the Property Management System."
   },
+  "facilities": {
+    "bookings": {
+      "myTitle": "My Bookings",
+      "pendingTitle": "Pending Booking Approvals",
+      "listTitle": "Bookings",
+      "bookFacility": "Book Facility",
+      "empty": "No bookings found.",
+      "allCaughtUp": "All caught up! No pending bookings to review."
+    }
+  },
   "faults": {
     "title": "Fault Reports",
     "failedToLoad": "Failed to load faults",

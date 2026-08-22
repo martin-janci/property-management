@@ -7,6 +7,7 @@
 import type { BookingStatus, BookingWithDetails } from '@ppt/api-client';
 import { cancelBooking, getMyBookings } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../components';
 import { BookingList, CancelBookingDialog } from '../components';
@@ -14,6 +15,7 @@ import { BookingList, CancelBookingDialog } from '../components';
 const PAGE_SIZE = 10;
 
 export function MyBookingsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -102,7 +104,7 @@ export function MyBookingsPage() {
         pageSize={PAGE_SIZE}
         isLoading={isLoading}
         isManager={false}
-        title="My Bookings"
+        title={t('facilities.bookings.myTitle')}
         onPageChange={handlePageChange}
         onStatusFilter={handleStatusFilter}
         onView={handleView}

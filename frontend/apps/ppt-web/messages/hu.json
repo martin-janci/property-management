@@ -460,6 +460,16 @@
     "title": "Ingatlankezelő rendszer",
     "welcome": "Üdvözöljük az ingatlankezelő rendszerben."
   },
+  "facilities": {
+    "bookings": {
+      "myTitle": "Foglalásaim",
+      "pendingTitle": "Jóváhagyásra váró foglalások",
+      "listTitle": "Foglalások",
+      "bookFacility": "Létesítmény foglalása",
+      "empty": "Nem található foglalás.",
+      "allCaughtUp": "Minden rendben! Nincsenek jóváhagyásra váró foglalások."
+    }
+  },
   "faults": {
     "title": "Hibajelentések",
     "failedToLoad": "Nem sikerült betölteni a hibákat",
