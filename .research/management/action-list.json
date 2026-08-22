@@ -306,20 +306,63 @@
       }
     },
     {
-      "id": "code-review-api-handlers-booking-connect-non-manager-hijack",
-      "action": "SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing manager gate on install.rs credential writes",
-      "owner_role": "pm-security",
+      "id": "gh-issue-2822",
+      "action": "Follow-up: CSV export sanitizer does not neutralize CR/LF in free-form cells (PR #2731) (Closes #2822)",
+      "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-22T02:24:40Z (score=3 conf=high vector=security)",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2822)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-22T02:24:40Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md",
-        "score": 3,
-        "vector": "security"
+      "first_open_at": "2026-08-22T08:25:09Z",
+      "issue_ref": {
+        "number": 2822,
+        "url": "https://github.com/martin-janci/property-management/issues/2822",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2823",
+      "action": "Follow-up: held-notification drain re-delivers already-sent channels on partial failure + no retry cap (PR #2729) (Closes #2823)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2823)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-22T08:25:09Z",
+      "issue_ref": {
+        "number": 2823,
+        "url": "https://github.com/martin-janci/property-management/issues/2823",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2824",
+      "action": "Follow-up: VerificationBadge expiry suffixes are hardcoded English + logic duplicated across two components (PR #2819) (Closes #2824)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2824)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-22T08:25:09Z",
+      "issue_ref": {
+        "number": 2824,
+        "url": "https://github.com/martin-janci/property-management/issues/2824",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],

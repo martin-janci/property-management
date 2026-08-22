@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-21T18:32:04Z",
+  "archived_at": "2026-08-22T08:29:05Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2748,6 +2748,29 @@
         "merged_pr": 2694,
         "merged_at": "2026-08-07T00:06:49Z",
         "at": "2026-08-07T02:05:57Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-booking-connect-non-manager-hijack",
+      "action": "SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing manager gate on install.rs credential writes",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-22T02:24:40Z (score=3 conf=high vector=security) | dev-reconcile 2026-08-22T08:24:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-22T02:24:40Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md",
+        "score": 3,
+        "vector": "security"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "466a0f866aebe2ca4823e9e2b0c66c06d9905ae9",
+        "subject": "code-review-api-handlers-booking-connect-non-manager-hijack: gate direct-connect OTA credential writes on manager role (#2821)",
+        "at": "2026-08-22T08:24:47Z"
       }
     },
     {

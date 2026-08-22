@@ -2787,6 +2787,28 @@
       "merge_attempted_at": "2026-08-06T22:31:26Z"
     },
     {
+      "task_id": "code-review-api-handlers-booking-connect-non-manager-hijack",
+      "branch": "auto-impl/code-review-api-handlers-booking-connect-b137587e",
+      "status": "merged",
+      "claimed_at": "2026-08-22T02:27:02Z",
+      "last_updated": "2026-08-22T08:24:42Z",
+      "status_changed_at": "2026-08-22T08:24:42Z",
+      "pr_number": 2821,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2821",
+      "merged_at": "2026-08-22T08:23:39Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2821 done: manager-gate added to connect/disconnect_booking, disconnect_airbnb, airbnb_oauth_callback + 5 IG3 tests; fmt+clippy green, cargo test deferred to CI (no local pg)",
+      "reviewer_summary": "verdict=approve note=round2-gate-unchanged-csrf-test-reconciled-ci-green (posted as comment; formal APPROVE blocked on self-PR authored by bot account)",
+      "last_reviewed_oid": "996c0f20088e6a557fa77f27fe3577e1b7f10284",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-community-cross-tenant-idor",
       "branch": "auto-impl/code-review-api-handlers-community-cross-a199f2a2",
       "status": "merged",
@@ -15191,5 +15213,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-21T18:32:04Z"
+  "archived_at": "2026-08-22T08:29:05Z"
 }
