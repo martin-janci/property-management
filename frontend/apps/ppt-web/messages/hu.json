@@ -1,4 +1,103 @@
 {
+  "aml": {
+    "dashboard": {
+      "title": "AML megfelelőségi irányítópult",
+      "subtitle": "Kövesse nyomon a pénzmosás elleni kockázatértékeléseket és a megfelelőségi állapotot.",
+      "loading": "AML-adatok betöltése...",
+      "loadError": "Az AML-adatok betöltése sikertelen: {{message}}",
+      "retry": "Újrapróbálkozás"
+    },
+    "thresholds": {
+      "title": "AML küszöbértékek",
+      "transaction": "Tranzakciós küszöbérték",
+      "cumulative": "Kumulatív küszöbérték",
+      "reviewScore": "Felülvizsgálati pontszám küszöbértéke"
+    },
+    "countryRisks": {
+      "title": "Országkockázati adatbázis",
+      "country": "Ország",
+      "riskRating": "Kockázati besorolás",
+      "sanctioned": "Szankcionált",
+      "fatfStatus": "FATF állapot"
+    },
+    "filters": {
+      "title": "Kockázatértékelések",
+      "status": "Állapot",
+      "allStatuses": "Minden állapot",
+      "riskLevel": "Kockázati szint",
+      "allLevels": "Minden szint",
+      "flaggedOnly": "Csak a felülvizsgálatra megjelöltek"
+    },
+    "status": {
+      "pending": "Függőben",
+      "in_progress": "Folyamatban",
+      "completed": "Befejezett",
+      "requires_review": "Felülvizsgálat szükséges",
+      "approved": "Jóváhagyva",
+      "rejected": "Elutasítva"
+    },
+    "riskLevel": {
+      "low": "Alacsony",
+      "medium": "Közepes",
+      "high": "Magas",
+      "critical": "Kritikus"
+    },
+    "emptyState": {
+      "none": "Nem található a feltételeknek megfelelő AML-kockázatértékelés.",
+      "hint": "Az értékelések automatikusan létrejönnek, amikor a tranzakciók meghaladják a küszöbértéket."
+    },
+    "card": {
+      "title": "AML-kockázatértékelés",
+      "party": "Fél: {{type}}",
+      "country": "Ország: {{code}}",
+      "transactionAmount": "Tranzakció összege:",
+      "verificationStatus": "Ellenőrzési állapot",
+      "idVerified": "Személyazonosság ellenőrizve",
+      "sourceOfFunds": "Pénzeszközök forrása",
+      "pepCheck": "PEP-ellenőrzés",
+      "sanctionsCheck": "Szankcióellenőrzés",
+      "yes": "I",
+      "no": "N",
+      "riskFactors": "Kockázati tényezők",
+      "weight": "Súly: {{weight}}",
+      "recommendations": "Ajánlások",
+      "flaggedForReview": "Felülvizsgálatra megjelölve",
+      "initiateEdd": "EDD indítása",
+      "reviewAssessment": "Értékelés felülvizsgálata"
+    },
+    "edd": {
+      "title": "Fokozott ügyfél-átvilágítás (EDD) indítása",
+      "description": "Adja meg a fokozott ügyfél-átvilágítás indításának okát ehhez az értékeléshez.",
+      "reasonLabel": "Indok",
+      "reasonPlaceholder": "Adja meg a fokozott ügyfél-átvilágítás indításának okát",
+      "reasonRequired": "Az indok megadása kötelező.",
+      "submit": "EDD indítása",
+      "submitting": "Indítás...",
+      "successTitle": "Fokozott ügyfél-átvilágítás elindítva",
+      "successMessage": "A fokozott ügyfél-átvilágítás sikeresen elindult.",
+      "errorTitle": "Az EDD indítása sikertelen",
+      "errorMessage": "Az EDD indítása sikertelen. Kérjük, próbálja újra."
+    },
+    "review": {
+      "title": "Értékelés felülvizsgálata",
+      "description": "Rögzítsen megfelelőségi döntést ehhez a kockázatértékeléshez.",
+      "decisionLabel": "Döntés",
+      "decision": {
+        "approve": "Jóváhagyás",
+        "reject": "Elutasítás",
+        "escalate": "Eszkaláció"
+      },
+      "notesLabel": "Felülvizsgálati megjegyzések",
+      "notesPlaceholder": "Adja meg a felülvizsgálati megjegyzéseket",
+      "notesRequired": "A felülvizsgálati megjegyzések megadása kötelező.",
+      "submit": "Döntés elküldése",
+      "submitting": "Küldés...",
+      "successTitle": "Értékelés felülvizsgálva",
+      "successMessage": "Az értékelés sikeresen felülvizsgálva.",
+      "errorTitle": "Az értékelés felülvizsgálata sikertelen",
+      "errorMessage": "Az értékelés felülvizsgálata sikertelen. Kérjük, próbálja újra."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Tartalommoderálási irányítópult",

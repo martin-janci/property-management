@@ -1,4 +1,103 @@
 {
+  "aml": {
+    "dashboard": {
+      "title": "AML Compliance Dashboard",
+      "subtitle": "Monitor anti-money laundering risk assessments and compliance status.",
+      "loading": "Loading AML data...",
+      "loadError": "Failed to load AML data: {{message}}",
+      "retry": "Retry"
+    },
+    "thresholds": {
+      "title": "AML Thresholds",
+      "transaction": "Transaction Threshold",
+      "cumulative": "Cumulative Threshold",
+      "reviewScore": "Review Score Threshold"
+    },
+    "countryRisks": {
+      "title": "Country Risk Database",
+      "country": "Country",
+      "riskRating": "Risk Rating",
+      "sanctioned": "Sanctioned",
+      "fatfStatus": "FATF Status"
+    },
+    "filters": {
+      "title": "Risk Assessments",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "riskLevel": "Risk Level",
+      "allLevels": "All Levels",
+      "flaggedOnly": "Flagged for Review Only"
+    },
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "requires_review": "Requires Review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "riskLevel": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "emptyState": {
+      "none": "No AML risk assessments found matching the criteria.",
+      "hint": "Assessments are automatically created when transactions exceed the threshold."
+    },
+    "card": {
+      "title": "AML Risk Assessment",
+      "party": "Party: {{type}}",
+      "country": "Country: {{code}}",
+      "transactionAmount": "Transaction Amount:",
+      "verificationStatus": "Verification Status",
+      "idVerified": "ID Verified",
+      "sourceOfFunds": "Source of Funds",
+      "pepCheck": "PEP Check",
+      "sanctionsCheck": "Sanctions Check",
+      "yes": "Y",
+      "no": "N",
+      "riskFactors": "Risk Factors",
+      "weight": "Weight: {{weight}}",
+      "recommendations": "Recommendations",
+      "flaggedForReview": "Flagged for Review",
+      "initiateEdd": "Initiate EDD",
+      "reviewAssessment": "Review Assessment"
+    },
+    "edd": {
+      "title": "Initiate Enhanced Due Diligence",
+      "description": "Provide a reason for initiating Enhanced Due Diligence on this assessment.",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Enter reason for initiating Enhanced Due Diligence",
+      "reasonRequired": "A reason is required.",
+      "submit": "Initiate EDD",
+      "submitting": "Initiating...",
+      "successTitle": "Enhanced Due Diligence initiated",
+      "successMessage": "Enhanced Due Diligence initiated successfully.",
+      "errorTitle": "Failed to initiate EDD",
+      "errorMessage": "Failed to initiate EDD. Please try again."
+    },
+    "review": {
+      "title": "Review Assessment",
+      "description": "Record a compliance decision for this risk assessment.",
+      "decisionLabel": "Decision",
+      "decision": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "escalate": "Escalate"
+      },
+      "notesLabel": "Review notes",
+      "notesPlaceholder": "Enter review notes",
+      "notesRequired": "Review notes are required.",
+      "submit": "Submit decision",
+      "submitting": "Submitting...",
+      "successTitle": "Assessment reviewed",
+      "successMessage": "Assessment reviewed successfully.",
+      "errorTitle": "Failed to review assessment",
+      "errorMessage": "Failed to review assessment. Please try again."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Content Moderation Dashboard",
