@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T04:32:20Z",
+  "generated": "2026-08-22T04:44:59Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,10 +26,10 @@
     {
       "task_id": "code-review-api-handlers-booking-connect-non-manager-hijack",
       "branch": "auto-impl/code-review-api-handlers-booking-connect-b137587e",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-22T02:27:02Z",
-      "last_updated": "2026-08-22T04:29:55Z",
-      "status_changed_at": "2026-08-22T04:29:55Z",
+      "last_updated": "2026-08-22T04:44:59Z",
+      "status_changed_at": "2026-08-22T04:44:59Z",
       "pr_number": 2821,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2821",
       "merged_at": null,
