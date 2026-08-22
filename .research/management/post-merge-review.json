@@ -1,9 +1,36 @@
 {
-  "generated": "2026-08-22T06:31:34Z",
+  "generated": "2026-08-22T18:31:02Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-22T18:31:02Z",
+      "prs_scanned": 7,
+      "clean": [
+        2830,
+        2828,
+        2827,
+        2825,
+        2821
+      ],
+      "with_issues": [
+        {
+          "pr": 2826,
+          "issue": 2831,
+          "findings": 1,
+          "specialist": "ppt-rust-backend",
+          "note": "perf/correctness(medium): drain worker started on every api-server replica with plain SELECT (no FOR UPDATE SKIP LOCKED / leader lock) -> concurrent workers double-deliver held notifications; per-channel dedup only covers sequential retries"
+        },
+        {
+          "pr": 2829,
+          "issue": 2832,
+          "findings": 1,
+          "specialist": "ppt-frontend",
+          "note": "correctness(medium): AML EDD/Review dialogs stay mounted (return null when closed) so reason/notes/decision/showError state leaks across assessments -> wrong justification can be submitted on a compliance audit surface; fix: key/conditionally-mount dialogs"
+        }
+      ]
+    },
     {
       "run_at": "2026-08-22T06:31:34Z",
       "prs_scanned": 15,
@@ -539,30 +566,6 @@
       ],
       "skipped_already_reviewed": [],
       "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=9 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Scanned 13 never-reviewed PRs (2638-2653) not carrying post-merge-reviewed; the 2626-2637 + 2544-2551 wave already labeled/reviewed and skipped. 12 CLEAN: 2638 (offline sync false-complete: adds pending field, isComplete=pending===0, halt+drain tests), 2639 (push-token console.log DEV-gating source-shape guard + no-raw-token assertion), 2640 (AuthProvider now calls configureApiClient so getApiClient() carries Bearer; real fix+test), 2642 (i18n empty/error/loading across ~18 mobile screens, 6 locales, representative FaultsListScreen test), 2644 (screen-map sync to #2636, docs-only), 2645 (offline transient 5xx NEVER dropped past old 3-retry budget; data-loss fix + survival test), 2646 (route-outlet ErrorBoundary keyed on pathname; shell survives stale-chunk lazy reject; 3 tests), 2647 (route-wrapper 'X not found' i18n across 6 locales + Slovak regression test), 2648 (rentals mutation auth guard: requireRentalsAuthHeaders throws typed AuthError not TypeError, onError->logout; thorough tests), 2649 (financial payments allocate/auto-match onError toasts + prod-route test), 2650 (logout cache-purge: adds accounting/financial/reports/rentals/meters/auth/predictive-maintenance/sentiment/notification-analytics roots to AUTHED_QUERY_KEY_ROOTS; security fix + exhaustive test), 2653 (pick-target-epic ascii_downcase so camelCase-derived epic_prefix passes T21; shell fix+test). Minor non-filed observation: 2649 financial onError toast surfaces raw err.message (ppt-web manager-facing; QueryErrorBanner mobile contract says never leak raw error) - too weak to file. Labeling: update_pull_request has no labels param and issue_write-update would clobber existing PR labels (e.g. app-tsx-queue on 2646), so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run. NET-NEW actionable issues: 1 (#2654)."
-    },
-    {
-      "run_at": "2026-08-03T20:17:45Z",
-      "prs_scanned": 10,
-      "clean": [
-        2626,
-        2627,
-        2631,
-        2632,
-        2633,
-        2634,
-        2635,
-        2636,
-        2637
-      ],
-      "with_issues": [
-        {
-          "pr": 2629,
-          "issue": 2643,
-          "findings": 3,
-          "specialist": "pm-rust",
-          "note": "OAuth token-event record awaited inline on hot path; unbounded per-client read; sequential reads"
-        }
-      ]
     }
   ]
 }

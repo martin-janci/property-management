@@ -8968,7 +8968,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "ppt-web-ui segment review 2026-08-22"
       ],
@@ -8983,7 +8983,12 @@
       ],
       "created_at": "2026-08-22",
       "updated_at": "2026-08-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-22T18:26:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2830
+      }
     },
     {
       "id": "code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow",
