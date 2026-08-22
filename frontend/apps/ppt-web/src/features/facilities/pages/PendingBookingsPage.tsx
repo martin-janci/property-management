@@ -8,6 +8,7 @@ import type { BookingWithDetails } from '@ppt/api-client';
 import { approveBooking, listPendingBookings, rejectBooking } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { BookingList, RejectBookingDialog } from '../components';
 
 const PAGE_SIZE = 10;
@@ -15,6 +16,7 @@ const PAGE_SIZE = 10;
 export function PendingBookingsPage() {
   const { buildingId } = useParams<{ buildingId: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [total, setTotal] = useState(0);
@@ -37,7 +39,11 @@ export function PendingBookingsPage() {
       setBookings(response.items);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to fetch pending bookings:', error);
+      showToast({
+        type: 'error',
+        title: 'Failed to load pending bookings',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +64,11 @@ export function PendingBookingsPage() {
       await approveBooking(id);
       await refreshBookings();
     } catch (error) {
-      console.error('Failed to approve booking:', error);
+      showToast({
+        type: 'error',
+        title: 'Failed to approve booking',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -80,7 +90,11 @@ export function PendingBookingsPage() {
       await refreshBookings();
       setRejectDialogBooking(null);
     } catch (error) {
-      console.error('Failed to reject booking:', error);
+      showToast({
+        type: 'error',
+        title: 'Failed to reject booking',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+      });
     } finally {
       setIsProcessing(false);
     }
