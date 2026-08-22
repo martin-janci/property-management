@@ -1,0 +1,26 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-22T05:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-inproc-ratelimit-not-distributed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/rate_limit.rs:35 — `pub type InProcessRateLimiter<K> = Mutex<HashMap<K, RateLimitEntry>>;` is a process-local counter with no shared/Redis backing. The module's own doc comment (rate_limit.rs:18) already flags this: 'The counter is per-process; a Redis-backed counter (the sessions Redis is ...) [would be needed for distributed enforcement]'.",
+        "backend/servers/api-server/src/routes/mfa.rs:44 & :82 — the MFA recovery-code verify and MFA setup-verify endpoints (6-digit TOTP / recovery-code, mfa.rs:71 comment 'checks a 6-digit TOTP', verify at :307/:391 and :980/:985) are throttled ONLY by `static MFA_RECOVERY_RATE_LIMITER`/`MFA_SETUP_VERIFY_RATE_LIMITER: LazyLock<UserRateLimiter>` (in-process), 10 attempts/window. Across N horizontally-scaled api-server replicas behind the load balancer the effective online-guess budget is ~10*N per window, and every deploy/restart resets all counters — materially raising online TOTP/recovery-code brute-force feasibility against a 10^6 code space.",
+        "backend/servers/api-server/src/routes/documents/shares.rs:42 — `static SHARE_ACCESS_RATE_LIMITER: LazyLock<InProcessRateLimiter<String>>` throttles the public unauthenticated `POST /api/v1/documents/shared/{token}/access` password brute-force (added in response to prior finding code-review-api-handlers-share-pw-no-throttle). Same per-process limitation: the control it restored is bypassable by fanning attempts across replicas and is wiped on restart. auth/mod.rs (login/forgot-password) and voice_webhooks.rs share the identical in-process pattern.",
+        "Feasible fix already in reach: AppState carries a live `redis_client` (used for OAuth single-use state in routes/integrations/oauth_state.rs and for sessions), so these security-sensitive limiters can be moved to a shared Redis counter (atomic INCR + EXPIRE) to make brute-force throttling hold across replicas and survive restarts. This is a follow-on to the now-fixed 'no throttle' finding, not a duplicate: the throttle exists but is not distributed."
+      ]
+    }
+  ]
+}
