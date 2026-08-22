@@ -1,0 +1,55 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (landable; mobile-native-kmp excluded as unlandable in cloud runner)",
+  "generator": "dispatcher-tier1d",
+  "generated_at": "2026-08-22T14:34:41Z",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "note": "ppt-web-ui is heavily mined (registry/compliance/portfolio/disputes-mediation all previously flagged or verified-clean). Deliberately targeted NEVER-mined features. Disputes Mediation churn hotspots (MediationResolutionForm/ChatThread/WorkspacePage) reviewed and found clean (proper i18n + error handling + isError guards) — no finding. All 3 findings are fresh cross-locale i18n gaps: whole features/pages with no useTranslation import, shipping English-only in a 4-locale app (sk/cs/de/en).",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/forms/pages/ — ALL 5 page components (AvailableFormsPage.tsx, FillFormPage.tsx, ViewFormPage.tsx, CreateFormPage.tsx, FormsPage.tsx) have NO `useTranslation`/`i18n` import (grep -l useTranslation over forms/pages/*.tsx returns nothing). Every user-facing string is hardcoded English on a shipped, resident-facing feature.",
+        "forms/pages/AvailableFormsPage.tsx:63,88,97,130,164,200 — hardcoded '>Available Forms<', placeholder=\"Search forms...\", '>Search<', '>No forms available<', '>Category<', '>Deadline<'. forms/pages/FillFormPage.tsx:34,42,97 — '>Expired<', '>Form Expired<', '>Signature required<' (this is the resident form-fill path). forms/pages/ViewFormPage.tsx:85,158,162,166,170 — '>Back<','>Fields<','>Submissions<','>Pending Review<','>Downloads<'.",
+        "App declares 4 locales (sk, cs, de, en per CLAUDE.md reality-web i18n; ppt-web ships react-i18next). Non-English residents/managers see the entire forms feature in English only. Sibling reports/components/ScheduleForm.tsx already carries a comment about a previously-fixed hardcoded-English leak, confirming this is an active i18n-debt class in this area — the forms pages were missed. Distinct from all prior ppt-web-ui i18n findings (vote-detail-hardcoded-en, dsa-reports-i18n, dialog-i18n-gap, registry-confirm-i18n), which were single components in other features."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-reports-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/pages/ReportsPage.tsx (422 lines) has NO `useTranslation` import; user-facing text is hardcoded English: L221 '>Key Metrics<', L231 '>Trends<', L247 '>Analytics<', L258 '>Building Performance<', L293 '>Saved Reports<', L311 '>No reports created yet<', L365 '>Create Schedule<', plus chart title=\"Revenue Trend\" (L234) and title=\"Monthly Performance\" (L249).",
+        "These include tab labels and the empty-state ('No reports created yet'), so the whole reports dashboard renders English-only for sk/cs/de users. Fresh — reports feature has never been flagged in any prior signal.",
+        "Also L280/L284 throw new Error('Preview handler not provided') / ('Invalid preview result') inside an async onPreview passed to ReportBuilder — dev-guard throws (not user-facing copy), noted only as adjacent context, not the finding."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-building-detail-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingDetailPage.tsx has NO `useTranslation` import; hardcoded English labels: L66 '>Building not found<' (error state), L159 '>Type<', L163/193 '>Units<'/'>Floors<', L167 '>Floors<', L172 '>Year Built<', L178 '>Total Area<', L222 '>Common Areas<'.",
+        "Includes the not-found error state and the building fact sheet, so a non-English manager opening any building detail sees English-only field labels. Fresh — buildings feature has never been flagged. Sibling buildings/components/BuildingList.tsx and UnitForm.tsx do localize, so this page is an isolated miss (not a whole-feature gap like forms)."
+      ]
+    }
+  ]
+}
