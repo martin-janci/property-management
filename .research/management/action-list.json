@@ -304,6 +304,23 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-api-handlers-booking-connect-non-manager-hijack",
+      "action": "SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing manager gate on install.rs credential writes",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-22T02:26:40Z (score=3 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-22T02:26:40Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-api-handlers-booking-connect-non-manager-hijack.md",
+        "score": 3,
+        "vector": "security"
+      }
     }
   ],
   "generated": "2026-08-20T20:28:24Z"
