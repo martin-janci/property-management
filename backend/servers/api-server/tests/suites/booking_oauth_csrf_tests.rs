@@ -710,17 +710,18 @@ async fn airbnb_callback_idor_rejects_non_member(pool: PgPool) {
     );
 }
 
-/// Membership-gate boundary: unlike the token-exchange POST (which additionally
-/// requires a manager role), the browser callback gates only on `verify_org_access`
-/// (membership). A `resident` member therefore clears the state gate AND the
-/// membership check and reaches the unconfigured token exchange → 503 (NOT 403).
-/// Pins this deliberate asymmetry so a future gate change is caught.
+/// Manager-gate boundary: the browser callback now mirrors the token-exchange
+/// POST — after `verify_org_access` (membership) it runs `verify_manager_role_in_org`.
+/// A `resident` member therefore clears the state gate AND the membership check
+/// but is short-circuited by the manager gate → 403 (NOT the 503 it used to
+/// reach at the unconfigured token exchange). Pins the manager gate so a
+/// regression that drops it is caught.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn airbnb_callback_resident_member_passes_membership_gate(pool: PgPool) {
+async fn airbnb_callback_resident_member_rejected_by_manager_gate(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "cb-resident").await;
     let user_id = seed_user(&pool, "cb-resident@test.local").await;
-    // Only a `resident` — still a member, and the callback has no manager gate.
+    // Only a `resident` — a member, but the callback now requires a manager.
     seed_membership(&pool, org_id, user_id, "resident").await;
     let token = mint_token(user_id, org_id);
 
@@ -734,9 +735,9 @@ async fn airbnb_callback_resident_member_passes_membership_gate(pool: PgPool) {
 
     assert_eq!(
         resp.status,
-        StatusCode::SERVICE_UNAVAILABLE,
-        "resident member must clear the membership-only callback gate → 503, \
-         not 403; got {}: {}",
+        StatusCode::FORBIDDEN,
+        "resident member must be blocked by the callback manager gate → 403; \
+         got {}: {}",
         resp.status,
         resp.text()
     );
