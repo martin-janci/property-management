@@ -1903,5 +1903,37 @@
       "cancelDone": "Głosowanie anulowane",
       "cancelFailed": "Nie udało się anulować głosowania"
     }
+  },
+  "marketplace": {
+    "verificationBadge": {
+      "expired": "Wygasłe",
+      "expiringSoon": "Wkrótce wygasa",
+      "soon": "Wkrótce",
+      "expires": "Wygasa",
+      "noVerifications": "Nie przesłano jeszcze żadnych weryfikacji",
+      "moreCount": "+{{count}} więcej",
+      "badge": {
+        "verified_business": "Zweryfikowana firma",
+        "insured": "Ubezpieczony",
+        "certified": "Certyfikowany",
+        "top_rated": "Najwyżej oceniane",
+        "fast_responder": "Szybka reakcja",
+        "preferred": "Preferowany"
+      },
+      "status": {
+        "pending": "Oczekujące",
+        "under_review": "W trakcie weryfikacji",
+        "verified": "Zweryfikowano",
+        "rejected": "Odrzucone",
+        "expired": "Wygasłe"
+      },
+      "type": {
+        "business_registration": "Rejestracja działalności",
+        "insurance": "Ubezpieczenie",
+        "certification": "Certyfikacja",
+        "license": "Licencja",
+        "identity": "Tożsamość"
+      }
+    }
   }
 }

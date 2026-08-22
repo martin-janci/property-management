@@ -4214,5 +4214,37 @@
       "cancelDone": "Vote cancelled",
       "cancelFailed": "Failed to cancel vote"
     }
+  },
+  "marketplace": {
+    "verificationBadge": {
+      "expired": "Expired",
+      "expiringSoon": "Expiring soon",
+      "soon": "Soon",
+      "expires": "Expires",
+      "noVerifications": "No verifications submitted yet",
+      "moreCount": "+{{count}} more",
+      "badge": {
+        "verified_business": "Verified Business",
+        "insured": "Insured",
+        "certified": "Certified",
+        "top_rated": "Top Rated",
+        "fast_responder": "Fast Responder",
+        "preferred": "Preferred"
+      },
+      "status": {
+        "pending": "Pending",
+        "under_review": "Under Review",
+        "verified": "Verified",
+        "rejected": "Rejected",
+        "expired": "Expired"
+      },
+      "type": {
+        "business_registration": "Business Registration",
+        "insurance": "Insurance",
+        "certification": "Certification",
+        "license": "License",
+        "identity": "Identity"
+      }
+    }
   }
 }
