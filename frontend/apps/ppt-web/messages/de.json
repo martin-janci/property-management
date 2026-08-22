@@ -460,6 +460,16 @@
     "title": "Immobilienverwaltungssystem",
     "welcome": "Willkommen im Immobilienverwaltungssystem."
   },
+  "facilities": {
+    "bookings": {
+      "myTitle": "Meine Buchungen",
+      "pendingTitle": "Ausstehende Buchungsgenehmigungen",
+      "listTitle": "Buchungen",
+      "bookFacility": "Einrichtung buchen",
+      "empty": "Keine Buchungen gefunden.",
+      "allCaughtUp": "Alles erledigt! Keine ausstehenden Buchungen zu prüfen."
+    }
+  },
   "faults": {
     "title": "Störungsmeldungen",
     "failedToLoad": "Störungen konnten nicht geladen werden",

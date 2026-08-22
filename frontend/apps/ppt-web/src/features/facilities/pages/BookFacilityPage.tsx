@@ -7,10 +7,12 @@
 import type { AvailableSlot, CreateBookingRequest, Facility } from '@ppt/api-client';
 import { checkAvailability, createBooking, getFacility } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BookingForm } from '../components';
 
 export function BookFacilityPage() {
+  const { t } = useTranslation();
   const { buildingId, facilityId } = useParams<{ buildingId: string; facilityId: string }>();
   const navigate = useNavigate();
 
@@ -122,7 +124,9 @@ export function BookFacilityPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Book Facility</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        {t('facilities.bookings.bookFacility')}
+      </h1>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">

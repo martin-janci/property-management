@@ -461,6 +461,16 @@
     "title": "Systém správy nemovitostí",
     "welcome": "Vítejte v systému správy nemovitostí."
   },
+  "facilities": {
+    "bookings": {
+      "myTitle": "Moje rezervace",
+      "pendingTitle": "Rezervace čekající na schválení",
+      "listTitle": "Rezervace",
+      "bookFacility": "Rezervovat prostor",
+      "empty": "Nebyly nalezeny žádné rezervace.",
+      "allCaughtUp": "Vše vyřízeno! Žádné čekající rezervace ke kontrole."
+    }
+  },
   "faults": {
     "title": "Hlášení závad",
     "failedToLoad": "Nepodařilo se načíst závady",

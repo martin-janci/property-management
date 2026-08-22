@@ -7,6 +7,7 @@
 import type { BookingWithDetails } from '@ppt/api-client';
 import { approveBooking, listPendingBookings, rejectBooking } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../../components';
 import { BookingList, RejectBookingDialog } from '../components';
@@ -14,6 +15,7 @@ import { BookingList, RejectBookingDialog } from '../components';
 const PAGE_SIZE = 10;
 
 export function PendingBookingsPage() {
+  const { t } = useTranslation();
   const { buildingId } = useParams<{ buildingId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -113,7 +115,7 @@ export function PendingBookingsPage() {
         pageSize={PAGE_SIZE}
         isLoading={isLoading || isProcessing}
         isManager={true}
-        title="Pending Booking Approvals"
+        title={t('facilities.bookings.pendingTitle')}
         onPageChange={handlePageChange}
         onView={handleView}
         onApprove={handleApprove}
@@ -122,7 +124,7 @@ export function PendingBookingsPage() {
 
       {bookings.length === 0 && !isLoading && (
         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-700">All caught up! No pending bookings to review.</p>
+          <p className="text-green-700">{t('facilities.bookings.allCaughtUp')}</p>
         </div>
       )}
 

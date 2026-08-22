@@ -462,6 +462,16 @@
     "title": "System zarządzania nieruchomościami",
     "welcome": "Witamy w systemie zarządzania nieruchomościami."
   },
+  "facilities": {
+    "bookings": {
+      "myTitle": "Moje rezerwacje",
+      "pendingTitle": "Rezerwacje oczekujące na zatwierdzenie",
+      "listTitle": "Rezerwacje",
+      "bookFacility": "Zarezerwuj obiekt",
+      "empty": "Nie znaleziono rezerwacji.",
+      "allCaughtUp": "Wszystko załatwione! Brak oczekujących rezerwacji do sprawdzenia."
+    }
+  },
   "faults": {
     "title": "Zgłoszenia usterek",
     "failedToLoad": "Nie udało się załadować usterek",
