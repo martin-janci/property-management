@@ -100,10 +100,12 @@ pub(super) async fn estimate_report_row_count(
 /// is routed through the shared [`sanitize_csv_cell`] guard to neutralize
 /// spreadsheet formula injection: a title beginning with `=`, `+`, `-`, or
 /// `@` is prefixed with `'` so Excel/Sheets treat it as text rather than a
-/// formula. Commas are then replaced with `;` so the cell cannot spill into
-/// adjacent columns (this hand-rolled export does not use the `csv` crate's
-/// quoting). Extracted into its own function so the neutralization is unit
-/// testable without a database.
+/// formula. The shared guard also collapses any embedded `\r`/`\n` to a space
+/// so a crafted title cannot inject a fabricated *record* into this hand-rolled
+/// export (which terminates rows with a raw `\n` and does not use the `csv`
+/// crate's quoting — see #2822). Commas are then replaced with `;` so the cell
+/// cannot spill into adjacent columns. Extracted into its own function so the
+/// neutralization is unit testable without a database.
 fn voting_csv_row(v: &VoteParticipationDetail) -> String {
     format!(
         "{},{},{},{},{},{},{},{:.1}%,{},{}\n",
@@ -376,5 +378,30 @@ mod tests {
     fn voting_csv_row_escapes_commas_in_title() {
         let row = voting_csv_row(&sample_vote("Roof, Facade, Windows"));
         assert_eq!(title_cell(&row), "Roof; Facade; Windows");
+    }
+
+    /// Regression (#2822): a title carrying an embedded CR/LF must not inject a
+    /// fabricated record. The only newline in the rendered row is the trailing
+    /// terminator, the title cell contains no raw CR/LF, and it does not spill
+    /// into adjacent columns.
+    #[test]
+    fn voting_csv_row_neutralizes_crlf_in_title() {
+        let row = voting_csv_row(&sample_vote("Roof\r\nInjected,row"));
+
+        // Exactly one newline — the row terminator at the very end.
+        assert_eq!(
+            row.matches('\n').count(),
+            1,
+            "crafted CR/LF must not add extra records: {row:?}"
+        );
+        assert!(row.ends_with('\n'));
+        assert!(!row.trim_end_matches('\n').contains('\r'));
+
+        // The row still has exactly 10 comma-separated fields (no spill).
+        assert_eq!(row.trim_end_matches('\n').split(',').count(), 10);
+
+        // The title cell has the separators neutralized to spaces and the
+        // comma escaped to `;`.
+        assert_eq!(title_cell(&row), "Roof  Injected;row");
     }
 }
