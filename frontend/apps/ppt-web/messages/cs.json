@@ -1,4 +1,103 @@
 {
+  "aml": {
+    "dashboard": {
+      "title": "Dashboard souladu AML",
+      "subtitle": "Sledujte hodnocení rizika praní špinavých peněz a stav souladu.",
+      "loading": "Načítají se data AML...",
+      "loadError": "Nepodařilo se načíst data AML: {{message}}",
+      "retry": "Zkusit znovu"
+    },
+    "thresholds": {
+      "title": "Prahové hodnoty AML",
+      "transaction": "Prahová hodnota transakce",
+      "cumulative": "Kumulativní prahová hodnota",
+      "reviewScore": "Prahové skóre pro přezkum"
+    },
+    "countryRisks": {
+      "title": "Databáze rizik zemí",
+      "country": "Země",
+      "riskRating": "Hodnocení rizika",
+      "sanctioned": "Sankcionovaná",
+      "fatfStatus": "Stav FATF"
+    },
+    "filters": {
+      "title": "Hodnocení rizika",
+      "status": "Stav",
+      "allStatuses": "Všechny stavy",
+      "riskLevel": "Úroveň rizika",
+      "allLevels": "Všechny úrovně",
+      "flaggedOnly": "Pouze označené k přezkumu"
+    },
+    "status": {
+      "pending": "Čeká se",
+      "in_progress": "Probíhá",
+      "completed": "Dokončeno",
+      "requires_review": "Vyžaduje přezkum",
+      "approved": "Schváleno",
+      "rejected": "Zamítnuto"
+    },
+    "riskLevel": {
+      "low": "Nízká",
+      "medium": "Střední",
+      "high": "Vysoká",
+      "critical": "Kritická"
+    },
+    "emptyState": {
+      "none": "Nebyla nalezena žádná hodnocení rizika AML odpovídající kritériím.",
+      "hint": "Hodnocení se vytvářejí automaticky, když transakce překročí prahovou hodnotu."
+    },
+    "card": {
+      "title": "Hodnocení rizika AML",
+      "party": "Strana: {{type}}",
+      "country": "Země: {{code}}",
+      "transactionAmount": "Částka transakce:",
+      "verificationStatus": "Stav ověření",
+      "idVerified": "Ověřená totožnost",
+      "sourceOfFunds": "Původ finančních prostředků",
+      "pepCheck": "Kontrola PEP",
+      "sanctionsCheck": "Kontrola sankcí",
+      "yes": "A",
+      "no": "N",
+      "riskFactors": "Rizikové faktory",
+      "weight": "Váha: {{weight}}",
+      "recommendations": "Doporučení",
+      "flaggedForReview": "Označeno k přezkumu",
+      "initiateEdd": "Spustit EDD",
+      "reviewAssessment": "Přezkoumat hodnocení"
+    },
+    "edd": {
+      "title": "Spustit rozšířenou hloubkovou kontrolu (EDD)",
+      "description": "Uveďte důvod spuštění rozšířené hloubkové kontroly pro toto hodnocení.",
+      "reasonLabel": "Důvod",
+      "reasonPlaceholder": "Zadejte důvod spuštění rozšířené hloubkové kontroly",
+      "reasonRequired": "Důvod je povinný.",
+      "submit": "Spustit EDD",
+      "submitting": "Spouští se...",
+      "successTitle": "Rozšířená hloubková kontrola spuštěna",
+      "successMessage": "Rozšířená hloubková kontrola byla úspěšně spuštěna.",
+      "errorTitle": "Nepodařilo se spustit EDD",
+      "errorMessage": "Nepodařilo se spustit EDD. Zkuste to znovu."
+    },
+    "review": {
+      "title": "Přezkoumat hodnocení",
+      "description": "Zaznamenejte rozhodnutí o souladu pro toto hodnocení rizika.",
+      "decisionLabel": "Rozhodnutí",
+      "decision": {
+        "approve": "Schválit",
+        "reject": "Zamítnout",
+        "escalate": "Eskalovat"
+      },
+      "notesLabel": "Poznámky k přezkumu",
+      "notesPlaceholder": "Zadejte poznámky k přezkumu",
+      "notesRequired": "Poznámky k přezkumu jsou povinné.",
+      "submit": "Odeslat rozhodnutí",
+      "submitting": "Odesílá se...",
+      "successTitle": "Hodnocení přezkoumáno",
+      "successMessage": "Hodnocení bylo úspěšně přezkoumáno.",
+      "errorTitle": "Nepodařilo se přezkoumat hodnocení",
+      "errorMessage": "Nepodařilo se přezkoumat hodnocení. Zkuste to znovu."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Nástěnka moderování obsahu",

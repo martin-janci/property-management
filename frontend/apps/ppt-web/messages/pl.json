@@ -1,4 +1,103 @@
 {
+  "aml": {
+    "dashboard": {
+      "title": "Panel zgodności AML",
+      "subtitle": "Monitoruj oceny ryzyka prania pieniędzy i status zgodności.",
+      "loading": "Ładowanie danych AML...",
+      "loadError": "Nie udało się załadować danych AML: {{message}}",
+      "retry": "Spróbuj ponownie"
+    },
+    "thresholds": {
+      "title": "Progi AML",
+      "transaction": "Próg transakcji",
+      "cumulative": "Próg skumulowany",
+      "reviewScore": "Próg oceny do przeglądu"
+    },
+    "countryRisks": {
+      "title": "Baza ryzyka krajów",
+      "country": "Kraj",
+      "riskRating": "Ocena ryzyka",
+      "sanctioned": "Objęty sankcjami",
+      "fatfStatus": "Status FATF"
+    },
+    "filters": {
+      "title": "Oceny ryzyka",
+      "status": "Status",
+      "allStatuses": "Wszystkie statusy",
+      "riskLevel": "Poziom ryzyka",
+      "allLevels": "Wszystkie poziomy",
+      "flaggedOnly": "Tylko oznaczone do przeglądu"
+    },
+    "status": {
+      "pending": "Oczekujące",
+      "in_progress": "W toku",
+      "completed": "Zakończone",
+      "requires_review": "Wymaga przeglądu",
+      "approved": "Zatwierdzone",
+      "rejected": "Odrzucone"
+    },
+    "riskLevel": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "critical": "Krytyczny"
+    },
+    "emptyState": {
+      "none": "Nie znaleziono ocen ryzyka AML spełniających kryteria.",
+      "hint": "Oceny są tworzone automatycznie, gdy transakcje przekroczą próg."
+    },
+    "card": {
+      "title": "Ocena ryzyka AML",
+      "party": "Strona: {{type}}",
+      "country": "Kraj: {{code}}",
+      "transactionAmount": "Kwota transakcji:",
+      "verificationStatus": "Status weryfikacji",
+      "idVerified": "Tożsamość zweryfikowana",
+      "sourceOfFunds": "Źródło środków",
+      "pepCheck": "Weryfikacja PEP",
+      "sanctionsCheck": "Weryfikacja sankcji",
+      "yes": "T",
+      "no": "N",
+      "riskFactors": "Czynniki ryzyka",
+      "weight": "Waga: {{weight}}",
+      "recommendations": "Zalecenia",
+      "flaggedForReview": "Oznaczone do przeglądu",
+      "initiateEdd": "Rozpocznij EDD",
+      "reviewAssessment": "Przejrzyj ocenę"
+    },
+    "edd": {
+      "title": "Rozpocznij wzmożoną należytą staranność (EDD)",
+      "description": "Podaj powód rozpoczęcia wzmożonej należytej staranności dla tej oceny.",
+      "reasonLabel": "Powód",
+      "reasonPlaceholder": "Wprowadź powód rozpoczęcia wzmożonej należytej staranności",
+      "reasonRequired": "Powód jest wymagany.",
+      "submit": "Rozpocznij EDD",
+      "submitting": "Rozpoczynanie...",
+      "successTitle": "Wzmożona należyta staranność rozpoczęta",
+      "successMessage": "Wzmożona należyta staranność została pomyślnie rozpoczęta.",
+      "errorTitle": "Nie udało się rozpocząć EDD",
+      "errorMessage": "Nie udało się rozpocząć EDD. Spróbuj ponownie."
+    },
+    "review": {
+      "title": "Przejrzyj ocenę",
+      "description": "Zarejestruj decyzję dotyczącą zgodności dla tej oceny ryzyka.",
+      "decisionLabel": "Decyzja",
+      "decision": {
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć",
+        "escalate": "Eskaluj"
+      },
+      "notesLabel": "Notatki z przeglądu",
+      "notesPlaceholder": "Wprowadź notatki z przeglądu",
+      "notesRequired": "Notatki z przeglądu są wymagane.",
+      "submit": "Prześlij decyzję",
+      "submitting": "Przesyłanie...",
+      "successTitle": "Ocena przejrzana",
+      "successMessage": "Ocena została pomyślnie przejrzana.",
+      "errorTitle": "Nie udało się przejrzeć oceny",
+      "errorMessage": "Nie udało się przejrzeć oceny. Spróbuj ponownie."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Panel moderacji treści",

@@ -31,6 +31,8 @@ export type {
 } from './EddRecordCard';
 // Story 67.2: Enhanced Due Diligence
 export { EddRecordCard } from './EddRecordCard';
+// Epic 90: AML EDD / review decision dialogs (replace window.prompt/alert flow)
+export { InitiateEddDialog } from './InitiateEddDialog';
 export type {
   ContentOwnerInfo,
   ModeratedContentType,
@@ -48,3 +50,4 @@ export type {
   PriorityCount,
 } from './ModerationQueueStats';
 export { ModerationQueueStats } from './ModerationQueueStats';
+export { ReviewAssessmentDialog } from './ReviewAssessmentDialog';

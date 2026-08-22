@@ -1,4 +1,103 @@
 {
+  "aml": {
+    "dashboard": {
+      "title": "AML-Compliance-Dashboard",
+      "subtitle": "Überwachen Sie Risikobewertungen zur Geldwäschebekämpfung und den Compliance-Status.",
+      "loading": "AML-Daten werden geladen...",
+      "loadError": "AML-Daten konnten nicht geladen werden: {{message}}",
+      "retry": "Erneut versuchen"
+    },
+    "thresholds": {
+      "title": "AML-Schwellenwerte",
+      "transaction": "Transaktionsschwellenwert",
+      "cumulative": "Kumulativer Schwellenwert",
+      "reviewScore": "Prüfungsschwellenwert"
+    },
+    "countryRisks": {
+      "title": "Länderrisiko-Datenbank",
+      "country": "Land",
+      "riskRating": "Risikobewertung",
+      "sanctioned": "Sanktioniert",
+      "fatfStatus": "FATF-Status"
+    },
+    "filters": {
+      "title": "Risikobewertungen",
+      "status": "Status",
+      "allStatuses": "Alle Status",
+      "riskLevel": "Risikostufe",
+      "allLevels": "Alle Stufen",
+      "flaggedOnly": "Nur zur Prüfung markierte"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "in_progress": "In Bearbeitung",
+      "completed": "Abgeschlossen",
+      "requires_review": "Prüfung erforderlich",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt"
+    },
+    "riskLevel": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "critical": "Kritisch"
+    },
+    "emptyState": {
+      "none": "Keine AML-Risikobewertungen gefunden, die den Kriterien entsprechen.",
+      "hint": "Bewertungen werden automatisch erstellt, wenn Transaktionen den Schwellenwert überschreiten."
+    },
+    "card": {
+      "title": "AML-Risikobewertung",
+      "party": "Partei: {{type}}",
+      "country": "Land: {{code}}",
+      "transactionAmount": "Transaktionsbetrag:",
+      "verificationStatus": "Verifizierungsstatus",
+      "idVerified": "Identität verifiziert",
+      "sourceOfFunds": "Herkunft der Mittel",
+      "pepCheck": "PEP-Prüfung",
+      "sanctionsCheck": "Sanktionsprüfung",
+      "yes": "J",
+      "no": "N",
+      "riskFactors": "Risikofaktoren",
+      "weight": "Gewichtung: {{weight}}",
+      "recommendations": "Empfehlungen",
+      "flaggedForReview": "Zur Prüfung markiert",
+      "initiateEdd": "EDD einleiten",
+      "reviewAssessment": "Bewertung prüfen"
+    },
+    "edd": {
+      "title": "Erweiterte Sorgfaltsprüfung (EDD) einleiten",
+      "description": "Geben Sie einen Grund für die Einleitung der erweiterten Sorgfaltsprüfung für diese Bewertung an.",
+      "reasonLabel": "Grund",
+      "reasonPlaceholder": "Grund für die Einleitung der erweiterten Sorgfaltsprüfung eingeben",
+      "reasonRequired": "Ein Grund ist erforderlich.",
+      "submit": "EDD einleiten",
+      "submitting": "Wird eingeleitet...",
+      "successTitle": "Erweiterte Sorgfaltsprüfung eingeleitet",
+      "successMessage": "Erweiterte Sorgfaltsprüfung wurde erfolgreich eingeleitet.",
+      "errorTitle": "EDD konnte nicht eingeleitet werden",
+      "errorMessage": "EDD konnte nicht eingeleitet werden. Bitte versuchen Sie es erneut."
+    },
+    "review": {
+      "title": "Bewertung prüfen",
+      "description": "Erfassen Sie eine Compliance-Entscheidung für diese Risikobewertung.",
+      "decisionLabel": "Entscheidung",
+      "decision": {
+        "approve": "Genehmigen",
+        "reject": "Ablehnen",
+        "escalate": "Eskalieren"
+      },
+      "notesLabel": "Prüfungsnotizen",
+      "notesPlaceholder": "Prüfungsnotizen eingeben",
+      "notesRequired": "Prüfungsnotizen sind erforderlich.",
+      "submit": "Entscheidung senden",
+      "submitting": "Wird gesendet...",
+      "successTitle": "Bewertung geprüft",
+      "successMessage": "Bewertung wurde erfolgreich geprüft.",
+      "errorTitle": "Bewertung konnte nicht geprüft werden",
+      "errorMessage": "Bewertung konnte nicht geprüft werden. Bitte versuchen Sie es erneut."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Dashboard zur Inhaltsmoderation",

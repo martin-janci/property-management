@@ -1,11 +1,14 @@
 /**
  * AML Dashboard Page (Epic 67, Story 67.1).
  * Epic 90, Story 90.5: Wire up AML dashboard handlers to API.
+ * Epic 90: replace the Phase-1 window.prompt/window.alert EDD + review decision
+ * flow with in-app modal dialogs + toast feedback, and localize all copy.
  *
  * Dashboard for AML risk assessments and compliance monitoring.
  */
 
 import {
+  type ReviewAmlAssessmentRequest,
   useAmlAssessments,
   useAmlThresholds,
   useCountryRisks,
@@ -14,8 +17,12 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components';
 import type { AmlRiskAssessment } from '../components/AmlRiskAssessmentCard';
 import { AmlRiskAssessmentCard } from '../components/AmlRiskAssessmentCard';
+import { InitiateEddDialog } from '../components/InitiateEddDialog';
+import { ReviewAssessmentDialog } from '../components/ReviewAssessmentDialog';
 
 interface AmlThresholdsDisplay {
   transaction_threshold_eur: number;
@@ -32,18 +39,20 @@ interface CountryRiskDisplay {
   fatf_status?: string;
 }
 
-type AmlReviewDecision = 'approve' | 'reject' | 'escalate';
-
-const AML_REVIEW_DECISIONS: readonly AmlReviewDecision[] = ['approve', 'reject', 'escalate'];
-
-const isAmlReviewDecision = (value: string): value is AmlReviewDecision =>
-  (AML_REVIEW_DECISIONS as readonly string[]).includes(value);
+type AmlReviewDecision = ReviewAmlAssessmentRequest['decision'];
 
 export const AmlDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riskLevelFilter, setRiskLevelFilter] = useState<string>('');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
+
+  // Decision dialogs: which assessment (if any) each dialog is acting on.
+  const [eddAssessmentId, setEddAssessmentId] = useState<string | null>(null);
+  const [reviewAssessmentId, setReviewAssessmentId] = useState<string | null>(null);
 
   // Fetch assessments from API
   const {
@@ -109,73 +118,75 @@ export const AmlDashboardPage: React.FC = () => {
     fatf_status: c.fatf_status,
   }));
 
-  const handleInitiateEdd = useCallback(
-    (assessmentId: string) => {
-      // TODO(Phase-2): Replace window.prompt with proper modal form with document selection
-      // Phase 1: Basic prompt for collecting reason
-      const reason = window.prompt('Enter reason for initiating Enhanced Due Diligence:');
-      if (!reason) return;
+  const handleInitiateEdd = useCallback((assessmentId: string) => {
+    setEddAssessmentId(assessmentId);
+  }, []);
 
+  const handleReview = useCallback((assessmentId: string) => {
+    setReviewAssessmentId(assessmentId);
+  }, []);
+
+  const submitEdd = useCallback(
+    (reason: string) => {
+      if (!eddAssessmentId) return;
       initiateEdd.mutate(
         {
-          assessment_id: assessmentId,
+          assessment_id: eddAssessmentId,
           reason,
           documents_requested: [],
         },
         {
           onSuccess: () => {
-            alert('Enhanced Due Diligence initiated successfully.');
+            setEddAssessmentId(null);
+            showToast({
+              type: 'success',
+              title: t('aml.edd.successTitle'),
+              message: t('aml.edd.successMessage'),
+            });
           },
           onError: (err) => {
             console.error('Failed to initiate EDD:', err);
-            alert('Failed to initiate EDD. Please try again.');
+            showToast({
+              type: 'error',
+              title: t('aml.edd.errorTitle'),
+              message: t('aml.edd.errorMessage'),
+            });
           },
         }
       );
     },
-    [initiateEdd]
+    [eddAssessmentId, initiateEdd, showToast, t]
   );
 
-  const handleReview = useCallback(
-    (assessmentId: string) => {
-      // TODO(Phase-2): Replace window.prompt with proper modal form with validation
-      // Phase 1: Basic prompts for collecting decision and notes
-      const decisionInput = window.prompt('Enter decision (approve, reject, escalate):', 'approve');
-      if (!decisionInput) return;
-
-      // Validate the free-text prompt against the allowed decision union before
-      // submitting — a typo (e.g. "aprove") must not reach the API as a decision.
-      const decision = decisionInput.trim().toLowerCase();
-      if (!isAmlReviewDecision(decision)) {
-        alert(
-          `Invalid decision "${decisionInput}". Please enter one of: approve, reject, escalate.`
-        );
-        return;
-      }
-
-      const notes = window.prompt('Enter review notes:');
-      if (!notes) return;
-
+  const submitReview = useCallback(
+    (decision: AmlReviewDecision, notes: string) => {
+      if (!reviewAssessmentId) return;
       reviewAssessment.mutate(
         {
-          assessmentId,
-          request: {
-            decision,
-            notes,
-          },
+          assessmentId: reviewAssessmentId,
+          request: { decision, notes },
         },
         {
           onSuccess: () => {
-            alert('Assessment reviewed successfully.');
+            setReviewAssessmentId(null);
+            showToast({
+              type: 'success',
+              title: t('aml.review.successTitle'),
+              message: t('aml.review.successMessage'),
+            });
           },
           onError: (err) => {
             console.error('Failed to review assessment:', err);
-            alert('Failed to review assessment. Please try again.');
+            showToast({
+              type: 'error',
+              title: t('aml.review.errorTitle'),
+              message: t('aml.review.errorMessage'),
+            });
           },
         }
       );
     },
-    [reviewAssessment]
+    [reviewAssessmentId, reviewAssessment, showToast, t]
   );
 
   // Loading state
@@ -183,10 +194,10 @@ export const AmlDashboardPage: React.FC = () => {
     return (
       <div className="aml-dashboard-page">
         <div className="aml-dashboard-header">
-          <h1>AML Compliance Dashboard</h1>
-          <p>Monitor anti-money laundering risk assessments and compliance status.</p>
+          <h1>{t('aml.dashboard.title')}</h1>
+          <p>{t('aml.dashboard.subtitle')}</p>
         </div>
-        <div className="aml-loading">Loading AML data...</div>
+        <div className="aml-loading">{t('aml.dashboard.loading')}</div>
       </div>
     );
   }
@@ -196,17 +207,17 @@ export const AmlDashboardPage: React.FC = () => {
     return (
       <div className="aml-dashboard-page">
         <div className="aml-dashboard-header">
-          <h1>AML Compliance Dashboard</h1>
-          <p>Monitor anti-money laundering risk assessments and compliance status.</p>
+          <h1>{t('aml.dashboard.title')}</h1>
+          <p>{t('aml.dashboard.subtitle')}</p>
         </div>
         <div className="aml-dashboard-error" role="alert">
-          Failed to load AML data: {assessmentsError.message}
+          {t('aml.dashboard.loadError', { message: assessmentsError.message })}
           <button
             type="button"
             onClick={() => window.location.reload()}
             className="aml-retry-button"
           >
-            Retry
+            {t('aml.dashboard.retry')}
           </button>
         </div>
       </div>
@@ -216,30 +227,30 @@ export const AmlDashboardPage: React.FC = () => {
   return (
     <div className="aml-dashboard-page">
       <div className="aml-dashboard-header">
-        <h1>AML Compliance Dashboard</h1>
-        <p>Monitor anti-money laundering risk assessments and compliance status.</p>
+        <h1>{t('aml.dashboard.title')}</h1>
+        <p>{t('aml.dashboard.subtitle')}</p>
       </div>
 
       {/* Thresholds Info */}
       {thresholds && (
         <div className="aml-thresholds-section">
-          <h2>AML Thresholds</h2>
+          <h2>{t('aml.thresholds.title')}</h2>
           <div className="aml-thresholds-grid">
             <div className="aml-threshold-card">
               <div className="aml-threshold-value">
                 {thresholds.transaction_threshold_eur.toLocaleString()} EUR
               </div>
-              <div className="aml-threshold-label">Transaction Threshold</div>
+              <div className="aml-threshold-label">{t('aml.thresholds.transaction')}</div>
             </div>
             <div className="aml-threshold-card">
               <div className="aml-threshold-value">
                 {thresholds.cumulative_threshold_eur.toLocaleString()} EUR
               </div>
-              <div className="aml-threshold-label">Cumulative Threshold</div>
+              <div className="aml-threshold-label">{t('aml.thresholds.cumulative')}</div>
             </div>
             <div className="aml-threshold-card">
               <div className="aml-threshold-value">{thresholds.review_threshold_score}</div>
-              <div className="aml-threshold-label">Review Score Threshold</div>
+              <div className="aml-threshold-label">{t('aml.thresholds.reviewScore')}</div>
             </div>
           </div>
         </div>
@@ -247,14 +258,14 @@ export const AmlDashboardPage: React.FC = () => {
 
       {/* Country Risks */}
       <div className="aml-country-risks-section">
-        <h2>Country Risk Database</h2>
+        <h2>{t('aml.countryRisks.title')}</h2>
         <table className="aml-country-risks-table">
           <thead>
             <tr>
-              <th>Country</th>
-              <th>Risk Rating</th>
-              <th>Sanctioned</th>
-              <th>FATF Status</th>
+              <th>{t('aml.countryRisks.country')}</th>
+              <th>{t('aml.countryRisks.riskRating')}</th>
+              <th>{t('aml.countryRisks.sanctioned')}</th>
+              <th>{t('aml.countryRisks.fatfStatus')}</th>
             </tr>
           </thead>
           <tbody>
@@ -268,7 +279,7 @@ export const AmlDashboardPage: React.FC = () => {
                     {country.risk_rating.toUpperCase()}
                   </span>
                 </td>
-                <td>{country.is_sanctioned ? 'Yes' : 'No'}</td>
+                <td>{country.is_sanctioned ? t('common.yes') : t('common.no')}</td>
                 <td>{country.fatf_status || '-'}</td>
               </tr>
             ))}
@@ -278,36 +289,36 @@ export const AmlDashboardPage: React.FC = () => {
 
       {/* Filters */}
       <div className="aml-filters-section">
-        <h2>Risk Assessments</h2>
+        <h2>{t('aml.filters.title')}</h2>
         <div className="aml-filters">
           <div className="aml-filter">
-            <label htmlFor="statusFilter">Status</label>
+            <label htmlFor="statusFilter">{t('aml.filters.status')}</label>
             <select
               id="statusFilter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="requires_review">Requires Review</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="">{t('aml.filters.allStatuses')}</option>
+              <option value="pending">{t('aml.status.pending')}</option>
+              <option value="in_progress">{t('aml.status.in_progress')}</option>
+              <option value="completed">{t('aml.status.completed')}</option>
+              <option value="requires_review">{t('aml.status.requires_review')}</option>
+              <option value="approved">{t('aml.status.approved')}</option>
+              <option value="rejected">{t('aml.status.rejected')}</option>
             </select>
           </div>
           <div className="aml-filter">
-            <label htmlFor="riskLevelFilter">Risk Level</label>
+            <label htmlFor="riskLevelFilter">{t('aml.filters.riskLevel')}</label>
             <select
               id="riskLevelFilter"
               value={riskLevelFilter}
               onChange={(e) => setRiskLevelFilter(e.target.value)}
             >
-              <option value="">All Levels</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+              <option value="">{t('aml.filters.allLevels')}</option>
+              <option value="low">{t('aml.riskLevel.low')}</option>
+              <option value="medium">{t('aml.riskLevel.medium')}</option>
+              <option value="high">{t('aml.riskLevel.high')}</option>
+              <option value="critical">{t('aml.riskLevel.critical')}</option>
             </select>
           </div>
           <div className="aml-filter checkbox">
@@ -318,7 +329,7 @@ export const AmlDashboardPage: React.FC = () => {
                 checked={flaggedOnly}
                 onChange={(e) => setFlaggedOnly(e.target.checked)}
               />
-              Flagged for Review Only
+              {t('aml.filters.flaggedOnly')}
             </label>
           </div>
         </div>
@@ -339,10 +350,24 @@ export const AmlDashboardPage: React.FC = () => {
         </div>
       ) : (
         <div className="aml-empty-state">
-          <p>No AML risk assessments found matching the criteria.</p>
-          <p>Assessments are automatically created when transactions exceed the threshold.</p>
+          <p>{t('aml.emptyState.none')}</p>
+          <p>{t('aml.emptyState.hint')}</p>
         </div>
       )}
+
+      {/* Decision dialogs (replace the Phase-1 window.prompt/alert flow) */}
+      <InitiateEddDialog
+        isOpen={eddAssessmentId !== null}
+        isSubmitting={initiateEdd.isPending}
+        onSubmit={submitEdd}
+        onClose={() => setEddAssessmentId(null)}
+      />
+      <ReviewAssessmentDialog
+        isOpen={reviewAssessmentId !== null}
+        isSubmitting={reviewAssessment.isPending}
+        onSubmit={submitReview}
+        onClose={() => setReviewAssessmentId(null)}
+      />
     </div>
   );
 };
