@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-23T08:39:06Z",
+  "archived_at": "2026-08-23T12:25:24Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1967,6 +1967,26 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-16T10:23:37Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-voice-webhooks-rs-retry1",
+      "action": "voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google JWKS, /oauth/refresh authz) [retry 1/2 of failed churn-hotspot-voice-webhooks-rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-08-23T08:25:34Z (retry_of=churn-hotspot-voice-webhooks-rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-16T06:33:30Z) | dev-reconcile 2026-08-23T12:23:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T08:25:34Z",
+      "retry_of": "churn-hotspot-voice-webhooks-rs",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "5ef575c7c45a4f9ccbc88db4689a35642a731ce2",
+        "subject": "churn-hotspot-voice-webhooks-rs-retry1: centralize voice OAuth token encryption (#2838)",
+        "at": "2026-08-23T12:23:41Z"
       }
     },
     {

@@ -420,20 +420,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "churn-hotspot-voice-webhooks-rs-retry1",
-      "action": "voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google JWKS, /oauth/refresh authz) [retry 1/2 of failed churn-hotspot-voice-webhooks-rs]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-23T08:25:34Z (retry_of=churn-hotspot-voice-webhooks-rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-16T06:33:30Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-23T08:25:34Z",
-      "retry_of": "churn-hotspot-voice-webhooks-rs",
-      "retry_round": 1
     }
   ],
   "generated": "2026-08-20T20:28:24Z"
