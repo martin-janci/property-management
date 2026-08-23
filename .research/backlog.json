@@ -9023,7 +9023,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [mobile-rn]"
       ],
@@ -9037,7 +9037,12 @@
       ],
       "created_at": "2026-08-23",
       "updated_at": "2026-08-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-23T12:23:42Z",
+        "assignment_status": "merged",
+        "pr_number": 2835
+      }
     },
     {
       "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
@@ -9045,7 +9050,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [mobile-rn]"
       ],
@@ -9059,7 +9064,12 @@
       ],
       "created_at": "2026-08-23",
       "updated_at": "2026-08-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-23T12:23:42Z",
+        "assignment_status": "merged",
+        "pr_number": 2837
+      }
     },
     {
       "id": "code-review-mobile-rn-thread-detail-hardcoded-en",
@@ -9067,7 +9077,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [mobile-rn]"
       ],
@@ -9081,7 +9091,12 @@
       ],
       "created_at": "2026-08-23",
       "updated_at": "2026-08-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-23T12:23:42Z",
+        "assignment_status": "merged",
+        "pr_number": 2836
+      }
     }
   ]
 }
