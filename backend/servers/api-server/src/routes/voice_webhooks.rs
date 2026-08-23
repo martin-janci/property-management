@@ -41,6 +41,10 @@ use uuid::Uuid;
 
 type HmacSha256 = Hmac<Sha256>;
 
+/// Encrypted voice OAuth token material ready for storage:
+/// `(access_ciphertext, refresh_ciphertext, access_hash)`.
+type EncryptedVoiceTokens = (String, Option<String>, Option<Vec<u8>>);
+
 /// Map a fail-closed encryption error to an HTTP 500.
 ///
 /// Issue #765: persisted voice OAuth tokens must always be encrypted; when
@@ -76,7 +80,7 @@ fn encrypt_voice_token_pair(
     crypto: Option<&IntegrationCrypto>,
     access_token: &str,
     refresh_token: Option<&str>,
-) -> Result<(String, Option<String>, Option<Vec<u8>>), (StatusCode, Json<ErrorResponse>)> {
+) -> Result<EncryptedVoiceTokens, (StatusCode, Json<ErrorResponse>)> {
     let access_encrypted =
         encrypt_required(crypto, access_token).map_err(voice_encryption_required)?;
     let refresh_encrypted =
