@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-23T05:00:00Z",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-votedetail-conditional-hooks",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:120-137 — the `if (!voteId) return (...)` missing-param guard runs BEFORE the component's data hooks: useApiQuery x3 (139/145/151), useApiMutation (157), useState (163), useMemo (169/177), useState (182). Only useTranslation (115) and useQueryClient (116) precede the early return. This violates the Rules of Hooks: when the component first renders without a voteId (early-return branch → 2 hooks) and later re-renders with a voteId set (→ 9+ hooks), React throws 'Rendered more hooks than during the previous render' and the screen crashes.",
+        "The sibling e-signature screen frontend/apps/mobile/src/screens/leases/LeaseSignatureScreen.tsx:82-114 solves the identical missing-id case CORRECTLY and documents why: it calls useApiQuery/useApiMutation unconditionally first (with `enabled: Boolean(esignatureId)`), then does `if (!esignatureId) return` AFTER all hook calls — the exact inverse of VoteDetailScreen. The established in-repo pattern is being contradicted.",
+        "Fix: move the three useApiQuery calls (gate with `enabled: Boolean(voteId)`), the useApiMutation, and the useState/useMemo above the `if (!voteId)` guard, mirroring LeaseSignatureScreen. Distinct from the existing ppt-web-ui vote-detail finding (code-review-ppt-web-ui-vote-detail-hardcoded-en) — different platform, different defect class (hook ordering vs i18n)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts:202-282 — executeVoiceCommand() returns user-facing `confirmationMessage`/`errorMessage` strings hardcoded in English ('Opening fault report form', 'Showing announcements', 'Opening voting', 'Checking notifications', 'Going to home', 'Opening settings', and the default \"I didn't understand that command. Try saying 'Report a fault'...\"). None go through react-i18next t().",
+        "getSuggestedCommands() (287-301) and formatCommandForDisplay() (306-319) likewise return English-only phrase/description/label literals ('Report a fault', 'Open fault reporting form', intentLabels map).",
+        "The app ships 6 locales (frontend/apps/mobile/src/locales/{sk,cs,en,de,hu,pl}.json), so a non-English user hears/sees English voice-assistant responses. i18n gap across the whole voice-command UX (Epic 49 / Story 49.2). Fix: route these strings through t() with keys under a `voice.*` namespace."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-thread-detail-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx — several user-facing strings are hardcoded English instead of t(): the back link '← Messages' (210), the composer placeholder 'Write a message…' (267), the send-button label 'Send' (278), and the 'Syncing…' indicator (249).",
+        "The message-mapping helpers also hardcode English fallbacks: toUiMessages() sets authorName to 'You' / 'Participant' (139) and threadTitle() falls back to 'Conversation' (157) — all rendered directly in the UI.",
+        "Same screen already uses t() for its empty/error/loading states, so the fix is mechanical: replace these literals with t('messages.*') keys (adding them to the 6 locale files). i18n gap; distinct from the send-failure finding (code-review-mobile-rn-thread-send-silent-fail) which was about error handling, not string localization."
+      ]
+    }
+  ]
+}

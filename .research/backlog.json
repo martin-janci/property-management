@@ -9016,6 +9016,72 @@
         "assignment_status": "merged",
         "pr_number": 2829
       }
+    },
+    {
+      "id": "code-review-mobile-rn-votedetail-conditional-hooks",
+      "title": "VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn]"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:120-137 — the `if (!voteId) return (...)` guard runs BEFORE the data hooks: useApiQuery x3 (139/145/151), useApiMutation (157), useState (163), useMemo (169/177), useState (182). Only useTranslation (115) + useQueryClient (116) precede it. First render without voteId (2 hooks) then a re-render with voteId set (9+ hooks) makes React throw 'Rendered more hooks than during the previous render' and crashes the screen.",
+        "Sibling frontend/apps/mobile/src/screens/leases/LeaseSignatureScreen.tsx:82-114 handles the identical missing-id case correctly and documents it: hooks called unconditionally first (useApiQuery with `enabled: Boolean(esignatureId)`), then `if (!esignatureId) return` AFTER all hooks — the exact inverse of VoteDetailScreen.",
+        "Fix: hoist the three useApiQuery calls (gate with `enabled: Boolean(voteId)`), useApiMutation, and the useState/useMemo above the `if (!voteId)` guard, mirroring LeaseSignatureScreen. Distinct from code-review-ppt-web-ui-vote-detail-hardcoded-en (different platform + defect class)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
+      "title": "Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn]"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts:202-282 — executeVoiceCommand() returns user-facing confirmationMessage/errorMessage strings hardcoded in English ('Opening fault report form', 'Showing announcements', 'Opening voting', 'Checking notifications', 'Going to home', 'Opening settings', and the default unknown-command message); none use react-i18next t().",
+        "getSuggestedCommands() (287-301) and formatCommandForDisplay() (306-319) also return English-only phrase/description/intentLabel literals.",
+        "The app ships 6 locales (frontend/apps/mobile/src/locales/{sk,cs,en,de,hu,pl}.json), so non-English users get English voice responses. Fix: route these strings through t() under a `voice.*` namespace and add keys to the locale files."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-thread-detail-hardcoded-en",
+      "title": "ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn]"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx — hardcoded English instead of t(): back link '← Messages' (210), composer placeholder 'Write a message…' (267), send-button label 'Send' (278), 'Syncing…' indicator (249).",
+        "Mapping helpers hardcode English fallbacks rendered in the UI: toUiMessages() authorName 'You' / 'Participant' (139) and threadTitle() fallback 'Conversation' (157).",
+        "The same screen already localizes its empty/error/loading states, so the fix is mechanical — replace the literals with t('messages.*') keys added to the 6 locale files. Distinct from code-review-mobile-rn-thread-send-silent-fail (error handling, not localization)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
     }
   ]
 }
