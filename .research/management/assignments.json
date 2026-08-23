@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-23T09:15:06Z",
+  "generated": "2026-08-23T10:32:48Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,23 +26,23 @@
     {
       "task_id": "churn-hotspot-voice-webhooks-rs-retry1",
       "branch": "auto-impl/churn-hotspot-voice-webhooks-rs-retry1-35387ece",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-08-23T08:27:40Z",
-      "last_updated": "2026-08-23T09:15:06Z",
-      "status_changed_at": "2026-08-23T09:11:40Z",
+      "last_updated": "2026-08-23T10:28:15Z",
+      "status_changed_at": "2026-08-23T10:28:15Z",
       "pr_number": 2838,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2838",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2838 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=NOT-a-no-op: extracted encrypt_voice_token_pair helper dedup'ing #765/#2662 token-encryption across 4 OAuth sites +fail-closed test; fmt+clippy green, 633/634 tests (1 fail=env-only DNS-rebinding SSRF in untouched api_call.rs)",
-      "reviewer_summary": "verdict=approve note=refactor preserves #765 fail-closed + #2662 hash lock-step at all 4 sites; new fail-closed test hits shared choke point; unrelated DNS-rebinding failure in untouched api_call.rs",
+      "reviewer_summary": null,
       "last_reviewed_oid": "0e8a16f06163c15dde5d7e8278a8cee8cb5e226b",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": "2026-08-23T09:15:06Z"
     }
   ]
