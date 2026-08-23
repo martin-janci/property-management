@@ -115,43 +115,29 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // `voteId` is missing only if navigation was wired up wrong — render an
-  // explicit error rather than silently fetching `/voting/undefined`.
-  if (!voteId) {
-    return (
-      <View style={s.container}>
-        <View style={s.header}>
-          {onBack && (
-            <Pressable onPress={onBack} style={styles.backLink}>
-              <Text style={styles.backLinkText}>← {t('common.back') ?? 'Back'}</Text>
-            </Pressable>
-          )}
-          <Text style={s.headerTitle}>{t('voting.title') ?? 'Voting'}</Text>
-        </View>
-        <View style={s.emptyState}>
-          <Text style={s.emptyIcon}>⚠️</Text>
-          <Text style={s.emptyTitle}>{t('voting.missingId') ?? 'No vote selected'}</Text>
-        </View>
-      </View>
-    );
-  }
+  // Every hook below must run unconditionally on each render, so the
+  // `voteId`-missing case is handled with an early return *after* all hooks
+  // (see below) — never before — to respect React's Rules of Hooks. The
+  // queries are gated on `enabled: !!voteId` so a missing id never fetches
+  // `/voting/undefined`.
+  const hasVoteId = !!voteId;
 
   const detailQuery = useApiQuery<ApiVoteDetails>(
     ['voting', 'detail', voteId],
     `/api/v1/voting/${voteId}`,
-    { staleTime: 30_000 }
+    { staleTime: 30_000, enabled: hasVoteId }
   );
 
   const questionsQuery = useApiQuery<ApiVoteQuestion[]>(
     ['voting', 'questions', voteId],
     `/api/v1/voting/${voteId}/questions`,
-    { staleTime: 30_000 }
+    { staleTime: 30_000, enabled: hasVoteId }
   );
 
   const eligibilityQuery = useApiQuery<ApiVoteEligibility>(
     ['voting', 'eligibility', voteId],
     `/api/v1/voting/${voteId}/eligibility`,
-    { staleTime: 30_000 }
+    { staleTime: 30_000, enabled: hasVoteId }
   );
 
   const castMutation = useApiMutation<ApiVoteReceipt, CastVoteVariables>(
@@ -180,6 +166,30 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
     [eligibility]
   );
   const [selectedUnitId, setSelectedUnitId] = useState<string | undefined>(undefined);
+
+  // `voteId` is missing only if navigation was wired up wrong — render an
+  // explicit error rather than silently fetching `/voting/undefined`. This
+  // early return MUST stay below every hook call above so hook order is
+  // stable across renders (React's Rules of Hooks).
+  if (!voteId) {
+    return (
+      <View style={s.container}>
+        <View style={s.header}>
+          {onBack && (
+            <Pressable onPress={onBack} style={styles.backLink}>
+              <Text style={styles.backLinkText}>← {t('common.back') ?? 'Back'}</Text>
+            </Pressable>
+          )}
+          <Text style={s.headerTitle}>{t('voting.title') ?? 'Voting'}</Text>
+        </View>
+        <View style={s.emptyState}>
+          <Text style={s.emptyIcon}>⚠️</Text>
+          <Text style={s.emptyTitle}>{t('voting.missingId') ?? 'No vote selected'}</Text>
+        </View>
+      </View>
+    );
+  }
+
   const activeUnit =
     eligibility?.eligible_units.find((u) => u.unit_id === selectedUnitId) ?? defaultUnit;
 
