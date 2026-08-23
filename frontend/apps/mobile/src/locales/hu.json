@@ -499,7 +499,14 @@
     "threadLoadError": "A beszélgetés nem tölthető be",
     "threadEmptyTitle": "Még nincsenek üzenetek",
     "threadEmptyText": "Köszönjön, és kezdje el a beszélgetést.",
-    "threadSendError": "Az üzenet elküldése nem sikerült. Kérjük, próbálja újra."
+    "threadSendError": "Az üzenet elküldése nem sikerült. Kérjük, próbálja újra.",
+    "backToList": "Üzenetek",
+    "threadTitleFallback": "Beszélgetés",
+    "composerPlaceholder": "Írjon üzenetet…",
+    "syncing": "Szinkronizálás…",
+    "authorYou": "Ön",
+    "authorFallback": "Résztvevő",
+    "send": "Küldés"
   },
   "leases": {
     "loadError": "A bérleti szerződések nem tölthetők be",

@@ -125,9 +125,24 @@ export function formatMessageTime(sentAt: string): string {
   return formatTime(d, { hour: '2-digit', minute: '2-digit' });
 }
 
+/** Author labels for messages, injected by the screen from i18n so the pure
+ *  mapper stays translation-agnostic (and unit-testable without an i18n
+ *  runtime). Defaults keep the English wording when omitted. */
+export interface AuthorLabels {
+  /** Shown for the current user's own messages. */
+  you: string;
+  /** Fallback when a sender has no resolvable name. */
+  participant: string;
+}
+
 /** Map api-server messages onto UI bubbles, oldest first. `currentUserId`
- *  drives the `fromMe` flag. Exported for unit testing. */
-export function toUiMessages(detail: ApiThreadDetail | null, currentUserId?: string): Message[] {
+ *  drives the `fromMe` flag. `labels` supplies the localized author strings.
+ *  Exported for unit testing. */
+export function toUiMessages(
+  detail: ApiThreadDetail | null,
+  currentUserId?: string,
+  labels: AuthorLabels = { you: 'You', participant: 'Participant' }
+): Message[] {
   return (detail?.messages ?? [])
     .map((m) => {
       const fromMe = !!currentUserId && m.sender?.id === currentUserId;
@@ -136,7 +151,7 @@ export function toUiMessages(detail: ApiThreadDetail | null, currentUserId?: str
         body: m.content,
         sentAt: m.createdAt,
         fromMe,
-        authorName: fromMe ? 'You' : participantName(m.sender) || 'Participant',
+        authorName: fromMe ? labels.you : participantName(m.sender) || labels.participant,
       };
     })
     .sort((a, b) => {
@@ -154,7 +169,7 @@ interface ThreadDetailScreenProps {
 
 export function ThreadDetailScreen({
   threadId,
-  participantName: participantNameProp = 'Conversation',
+  participantName: participantNameProp,
   onBack,
 }: ThreadDetailScreenProps) {
   const { t } = useTranslation();
@@ -173,8 +188,11 @@ export function ThreadDetailScreen({
   );
 
   const detail = parseThreadDetail(data);
-  const messages = toUiMessages(detail, user?.id);
-  const title = threadTitle(detail, participantNameProp);
+  const messages = toUiMessages(detail, user?.id, {
+    you: t('messages.authorYou'),
+    participant: t('messages.authorFallback'),
+  });
+  const title = threadTitle(detail, participantNameProp ?? t('messages.threadTitleFallback'));
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -207,7 +225,7 @@ export function ThreadDetailScreen({
       <View style={s.header}>
         {onBack && (
           <Pressable onPress={onBack} style={styles.backLink}>
-            <Text style={styles.backLinkText}>← Messages</Text>
+            <Text style={styles.backLinkText}>← {t('messages.backToList')}</Text>
           </Pressable>
         )}
         <Text style={s.headerTitle}>{title}</Text>
@@ -246,7 +264,9 @@ export function ThreadDetailScreen({
             </View>
           ))
         )}
-        {isFetching && !isLoading ? <Text style={styles.syncing}>Syncing…</Text> : null}
+        {isFetching && !isLoading ? (
+          <Text style={styles.syncing}>{t('messages.syncing')}</Text>
+        ) : null}
         <View style={s.bottomSpacer} />
       </ScrollView>
 
@@ -264,7 +284,7 @@ export function ThreadDetailScreen({
           style={styles.composerInput}
           value={draft}
           onChangeText={setDraft}
-          placeholder="Write a message…"
+          placeholder={t('messages.composerPlaceholder')}
           multiline
         />
         <Pressable
@@ -275,7 +295,9 @@ export function ThreadDetailScreen({
           ]}
           disabled={!draft.trim() || sendMessage.isPending}
         >
-          <Text style={styles.sendButtonText}>{sendMessage.isPending ? '…' : 'Send'}</Text>
+          <Text style={styles.sendButtonText}>
+            {sendMessage.isPending ? '…' : t('messages.send')}
+          </Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

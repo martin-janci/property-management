@@ -539,7 +539,14 @@
     "threadLoadError": "Nepodarilo sa načítať konverzáciu",
     "threadEmptyTitle": "Zatiaľ žiadne správy",
     "threadEmptyText": "Pozdravte a začnite konverzáciu.",
-    "threadSendError": "Správu sa nepodarilo odoslať. Skúste to znova."
+    "threadSendError": "Správu sa nepodarilo odoslať. Skúste to znova.",
+    "backToList": "Správy",
+    "threadTitleFallback": "Konverzácia",
+    "composerPlaceholder": "Napíšte správu…",
+    "syncing": "Synchronizuje sa…",
+    "authorYou": "Vy",
+    "authorFallback": "Účastník",
+    "send": "Odoslať"
   },
   "leases": {
     "loadError": "Nepodarilo sa načítať nájomné zmluvy",

@@ -499,7 +499,14 @@
     "threadLoadError": "Unterhaltung konnte nicht geladen werden",
     "threadEmptyTitle": "Noch keine Nachrichten",
     "threadEmptyText": "Sagen Sie Hallo, um das Gespräch zu beginnen.",
-    "threadSendError": "Ihre Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    "threadSendError": "Ihre Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "backToList": "Nachrichten",
+    "threadTitleFallback": "Unterhaltung",
+    "composerPlaceholder": "Nachricht schreiben…",
+    "syncing": "Wird synchronisiert…",
+    "authorYou": "Sie",
+    "authorFallback": "Teilnehmer",
+    "send": "Senden"
   },
   "leases": {
     "loadError": "Mietverträge konnten nicht geladen werden",
