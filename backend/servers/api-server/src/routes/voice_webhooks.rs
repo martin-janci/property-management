@@ -56,6 +56,35 @@ fn voice_encryption_required(e: CryptoError) -> (StatusCode, Json<ErrorResponse>
     )
 }
 
+/// Encrypt a freshly exchanged / refreshed voice OAuth token pair for storage.
+///
+/// `oauth_token_exchange` and `oauth_token_refresh` (real and simulated
+/// branches alike) persist upstream Amazon/Google tokens the same way and must
+/// stay in lock-step on two security invariants:
+/// - #765: encryption is MANDATORY — [`encrypt_required`] fails closed when no
+///   `INTEGRATION_ENCRYPTION_KEY` is configured, mapped here to HTTP 500 so a
+///   token is never written in plaintext.
+/// - #2662: the indexed `access_token_hash` is derived from the SAME plaintext
+///   as the stored ciphertext, so the O(1) device lookup can never drift out of
+///   sync with the encrypted access token.
+///
+/// Returns `(access_ciphertext, refresh_ciphertext, access_hash)`; the caller
+/// supplies `expires_at`, which is provider- or simulation-specific. Keeping
+/// this in one place means the four call sites cannot silently diverge on
+/// either invariant.
+fn encrypt_voice_token_pair(
+    crypto: Option<&IntegrationCrypto>,
+    access_token: &str,
+    refresh_token: Option<&str>,
+) -> Result<(String, Option<String>, Option<Vec<u8>>), (StatusCode, Json<ErrorResponse>)> {
+    let access_encrypted =
+        encrypt_required(crypto, access_token).map_err(voice_encryption_required)?;
+    let refresh_encrypted =
+        encrypt_optional_required(crypto, refresh_token).map_err(voice_encryption_required)?;
+    let access_hash = voice_access_token_hash(access_token);
+    Ok((access_encrypted, refresh_encrypted, access_hash))
+}
+
 /// Whether an unconfigured voice OAuth platform may fall back to minting a
 /// locally-simulated token instead of failing the request.
 ///
@@ -502,14 +531,13 @@ async fn oauth_token_exchange(
                 )
             })?;
 
-        // Issue #765: encryption is MANDATORY — fail closed if no key is set.
-        let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
-            .map_err(voice_encryption_required)?;
-        let refresh_encrypted =
-            encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
-                .map_err(voice_encryption_required)?;
-        // #2662: derive the indexed lookup hash from the plaintext token.
-        let access_hash = voice_access_token_hash(&tokens.access_token);
+        // #765 (fail-closed encryption) + #2662 (indexed hash in lock-step),
+        // centralized in `encrypt_voice_token_pair`.
+        let (access_encrypted, refresh_encrypted, access_hash) = encrypt_voice_token_pair(
+            crypto.as_ref(),
+            &tokens.access_token,
+            tokens.refresh_token.as_deref(),
+        )?;
 
         (
             access_encrypted,
@@ -527,14 +555,11 @@ async fn oauth_token_exchange(
         );
         let simulated_access = format!("voice_access_{}_{}", request.platform, Uuid::new_v4());
         let simulated_refresh = format!("voice_refresh_{}_{}", request.platform, Uuid::new_v4());
-        let access_hash = voice_access_token_hash(&simulated_access);
+        let (access_encrypted, refresh_encrypted, access_hash) =
+            encrypt_voice_token_pair(crypto.as_ref(), &simulated_access, Some(&simulated_refresh))?;
         (
-            encrypt_required(crypto.as_ref(), &simulated_access)
-                .map_err(voice_encryption_required)?,
-            Some(
-                encrypt_required(crypto.as_ref(), &simulated_refresh)
-                    .map_err(voice_encryption_required)?,
-            ),
+            access_encrypted,
+            refresh_encrypted,
             Some(Utc::now() + Duration::hours(1)),
             access_hash,
         )
@@ -790,14 +815,13 @@ async fn oauth_token_refresh(
                     )
                 })?;
 
-            // Issue #765: encryption is MANDATORY — fail closed if no key is set.
-            let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
-                .map_err(voice_encryption_required)?;
-            let refresh_encrypted =
-                encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
-                    .map_err(voice_encryption_required)?;
-            // #2662: keep the indexed lookup hash in lock-step with the new token.
-            let access_hash = voice_access_token_hash(&tokens.access_token);
+            // #765 (fail-closed encryption) + #2662 (indexed hash in lock-step),
+            // centralized in `encrypt_voice_token_pair`.
+            let (access_encrypted, refresh_encrypted, access_hash) = encrypt_voice_token_pair(
+                crypto.as_ref(),
+                &tokens.access_token,
+                tokens.refresh_token.as_deref(),
+            )?;
 
             (
                 access_encrypted,
@@ -814,11 +838,11 @@ async fn oauth_token_refresh(
                 device.platform
             );
             let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
-            let access_hash = voice_access_token_hash(&new_access);
+            let (access_encrypted, refresh_encrypted, access_hash) =
+                encrypt_voice_token_pair(crypto.as_ref(), &new_access, None)?;
             (
-                encrypt_required(crypto.as_ref(), &new_access)
-                    .map_err(voice_encryption_required)?,
-                None,
+                access_encrypted,
+                refresh_encrypted,
                 Some(Utc::now() + Duration::hours(1)),
                 access_hash,
             )
@@ -2713,6 +2737,19 @@ fwIDAQAB
     fn encryption_required_maps_to_500() {
         let (status, body) =
             voice_encryption_required(CryptoError::KeyNotConfigured("no key".to_string()));
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.code, "ENCRYPTION_REQUIRED");
+    }
+
+    #[test]
+    fn encrypt_voice_token_pair_fails_closed_without_crypto() {
+        // #765: the shared token-encryption choke point used by both the
+        // exchange and refresh handlers must refuse to produce a token pair
+        // (HTTP 500 ENCRYPTION_REQUIRED) when no encryption key is configured —
+        // never emit a plaintext access/refresh token. Passing `Some(refresh)`
+        // ensures the failure is on the access token, before the refresh branch.
+        let (status, body) = encrypt_voice_token_pair(None, "access-token", Some("refresh-token"))
+            .expect_err("must fail closed when crypto is unconfigured");
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(body.0.code, "ENCRYPTION_REQUIRED");
     }
