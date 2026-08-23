@@ -1,9 +1,32 @@
 {
-  "generated": "2026-08-22T18:31:02Z",
+  "generated": "2026-08-23T14:30:40Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-23T14:30:40Z",
+      "prs_scanned": 6,
+      "clean": [
+        2838,
+        2837,
+        2836,
+        2835,
+        2834,
+        2833
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d demand-driven post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI NOT installed -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 6 PR diffs reviewed inline (static diff review only). Window merged-to-dev 14d (>=2026-08-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run reviewed through #2830 (2026-08-22T18:31Z). Label-based enumeration surfaced exactly 6 unlabeled net-new in-window merged PRs (#2833-#2838); all older in-window PRs already carried post-merge-reviewed; dependabot #2750/#2751 skipped (closed-unmerged, no merged_at). THIS RUN APPLIED post-merge-reviewed labels to all 6 via issue_write.update (they carried no pre-existing labels, so no clobber). No open from-merged-review issues existed to dedup against (searched). ALL 6 CLEAN, 0 net-new issues -- another strong auto-impl batch, each a code-review correctness/security/i18n fix shipped WITH a targeted regression test + rationale doc-comments. Details: #2838 (api-server voice_webhooks: extracts shared encrypt_voice_token_pair choke point used by all 4 exchange/refresh call sites -- keeps #765 fail-closed encryption + #2662 indexed access_token_hash in lock-step so real and simulated branches cannot silently diverge; behavior-preserving refactor, simulated-exchange refresh now via encrypt_optional_required(Some) == prior mandatory encrypt; +fail-closed-without-crypto unit test). #2834 (db: replaces plain-SELECT get_notifications_to_release with atomic claim_notifications_to_release -- UPDATE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED LIMIT $) RETURNING * stamps claimed_at, so the quiet-hours drain running in every api-server replica delivers each held row at-most-once (issue #2831, closes the cross-replica double-delivery the per-channel dedup #2823 could not); self-healing claim lease (QUIET_HOURS_DRAIN_CLAIM_LEASE_SECS default 300 > poll 60) re-claims crashed-worker rows; record_held_attempt clears claimed_at for prompt partial-failure retry; migration 00235 additive column reuses 00234 partial index; 2 real-Postgres sqlx regression tests (at-most-one-replica + clear-on-partial-retry) + lease>poll config test). #2833 (ppt-web AmlDashboardPage: keys the InitiateEdd/ReviewAssessment dialogs on assessmentId ?? '<x>-closed' so React remounts a fresh instance per assessment and across close->reopen -- fixes #2832 stale reason/notes/decision leaking across assessments on a compliance surface; 2 regression tests for review + edd reset). #2835 (mobile VoteDetailScreen: moves the voteId-missing early return BELOW every hook and gates the 3 queries on enabled:!!voteId -- fixes a Rules-of-Hooks violation (different hook count between renders -> 'Rendered more hooks' crash on missing->present voteId); 3 tests incl. rerender-no-throw + enabled:false + missing-id error state). #2836 (mobile ThreadDetailScreen: localizes 7 hardcoded EN literals -- backToList/threadTitleFallback/composerPlaceholder/syncing/send + author You/Participant -- via messages.* across 6 locales; pure toUiMessages mapper stays translation-agnostic by taking injected AuthorLabels; render + resource-coverage tests, sibling send.test updated). #2837 (mobile VoiceCommands.executeVoiceCommand: moves 9 confirmation strings + unknownCommand error off hardcoded EN onto voice.* i18n keys read from the i18next singleton (mirrors i18n/format.ts module-fn convention), interpolating {{category}}/{{query}}; behavior + resource-coverage tests across 6 locales). Considered-but-not-filed: (a) #2837's COMMAND_PATTERNS parsing regex stays English-only and the localized unknownCommand hint quotes English phrases -- pre-existing, plausibly by design for the ASR locale, out of scope for this i18n-of-output PR. (b) #2834's 300s lease vs batch_limit=500 could in principle be tight under a very slow push provider (~0.6s/row), but is documented, self-healing, and tested (lease>poll) -- config tradeoff, not a code-shape defect. NET-NEW actionable issues: 0. Every PR labeled post-merge-reviewed so it will not resurface.",
+      "focus_prs": [
+        2833,
+        2834,
+        2835,
+        2836,
+        2837,
+        2838
+      ]
+    },
     {
       "run_at": "2026-08-22T18:31:02Z",
       "prs_scanned": 7,
@@ -537,35 +560,6 @@
         2656,
         2657
       ]
-    },
-    {
-      "run_at": "2026-08-04T08:09:21Z",
-      "prs_scanned": 13,
-      "clean": [
-        2638,
-        2639,
-        2640,
-        2642,
-        2644,
-        2645,
-        2646,
-        2647,
-        2648,
-        2649,
-        2650,
-        2653
-      ],
-      "with_issues": [
-        {
-          "pr": 2641,
-          "issue": 2654,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "ThreadDetailScreen send-error banner ships a hardcoded English literal (\"Couldn't send your message. Please try again.\") while sibling PR #2642 i18n'd every other empty/error/loading string in the SAME screen across 6 locales; banner is half-localized (retry uses common.retry, message does not). low-severity i18n convention gap -> NET-NEW #2654."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=9 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Scanned 13 never-reviewed PRs (2638-2653) not carrying post-merge-reviewed; the 2626-2637 + 2544-2551 wave already labeled/reviewed and skipped. 12 CLEAN: 2638 (offline sync false-complete: adds pending field, isComplete=pending===0, halt+drain tests), 2639 (push-token console.log DEV-gating source-shape guard + no-raw-token assertion), 2640 (AuthProvider now calls configureApiClient so getApiClient() carries Bearer; real fix+test), 2642 (i18n empty/error/loading across ~18 mobile screens, 6 locales, representative FaultsListScreen test), 2644 (screen-map sync to #2636, docs-only), 2645 (offline transient 5xx NEVER dropped past old 3-retry budget; data-loss fix + survival test), 2646 (route-outlet ErrorBoundary keyed on pathname; shell survives stale-chunk lazy reject; 3 tests), 2647 (route-wrapper 'X not found' i18n across 6 locales + Slovak regression test), 2648 (rentals mutation auth guard: requireRentalsAuthHeaders throws typed AuthError not TypeError, onError->logout; thorough tests), 2649 (financial payments allocate/auto-match onError toasts + prod-route test), 2650 (logout cache-purge: adds accounting/financial/reports/rentals/meters/auth/predictive-maintenance/sentiment/notification-analytics roots to AUTHED_QUERY_KEY_ROOTS; security fix + exhaustive test), 2653 (pick-target-epic ascii_downcase so camelCase-derived epic_prefix passes T21; shell fix+test). Minor non-filed observation: 2649 financial onError toast surfaces raw err.message (ppt-web manager-facing; QueryErrorBanner mobile contract says never leak raw error) - too weak to file. Labeling: update_pull_request has no labels param and issue_write-update would clobber existing PR labels (e.g. app-tsx-queue on 2646), so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run. NET-NEW actionable issues: 1 (#2654)."
     }
   ]
 }
