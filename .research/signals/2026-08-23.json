@@ -1,0 +1,155 @@
+{
+  "generated_at": "2026-08-23T03:16:00Z",
+  "window_start": "2026-08-22T03:03:20Z",
+  "window_end": "2026-08-23T03:16:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-quiet_hours_drain-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2826 (+#2834)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs: ~242 additions+deletions this window across PR #2826 (per-channel bookkeeping + bounded retry, +179 -8 changes) and PR #2834 (atomic claim lease, +52 -3 changes). First hotspot appearance (runs_seen=1).",
+        "Both PRs are structural rewrites of the same worker (issue #2823 → #2831 → #2834 chain — successive fixes to the same drain loop). Not repeated-churn yet but a candidate for next-run repeated-churn if the drain gets a third round."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-suites-integrations_cross_org_idor_tests-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2821",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/integrations_cross_org_idor_tests.rs: +162 additions in PR #2821 — 4 new IG3 tests + 1 no-lockout sanity check for the direct-connect manager gate (booking connect/disconnect, airbnb disconnect, airbnb OAuth callback). Not a code file per se — test-only churn."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular_notification-rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2826 (+#2834)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/crates/db/src/repositories/granular_notification.rs: ~99 additions+deletions across PR #2826 (delivered_channels + attempts + dead_lettered_at columns, record_held_attempt, mark_notification_dead_lettered) and PR #2834 (claim_notifications_to_release atomic FOR UPDATE SKIP LOCKED). Same drain-hardening chain as quiet_hours_drain.rs above."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d (reality-server) 2026-08-23",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 — after send succeeds (any_ok == true), mark_search_alert_notified() failure is only tracing::error!'d; neither notified_at set nor record_search_alert_notify_failure() called → row stays in list_undelivered_search_alerts and re-drains on the next poll.",
+        "Same bug class saved_search_alerts.rs (#983, services/saved_search_alerts.rs:222-229) already fixed for the enqueue→advance boundary.",
+        "SearchAlertDrainerConfig::default().enabled = true, poll every 60s → reachable in production. Existing search_alert_drainer_tests.rs covers happy drain + all-channels-fail, not the send-ok-mark-fails edge."
+      ],
+      "note": "Ingested from dispatcher's separate Tier 1d generator (see .research/signals/2026-08-23-reality-server-tier1d.json). Not double-scored: score_delta applied once here."
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d (reality-server) 2026-08-23",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 — sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>> unbounded map, init empty at state.rs:991. Entries inserted on SSO initiation (routes/sso.rs:94), removed ONLY on successful callback lookup (routes/sso.rs:243).",
+        "10-minute expiry (routes/sso.rs:251-257) is enforced LAZILY after a callback removes the entry — no background sweeper / retain() proactively evicts.",
+        "Authorize/initiation endpoint is PUBLIC → unauthenticated caller can grow the map without bound → gradual memory-exhaustion DoS across the reality-server process."
+      ],
+      "note": "Ingested from dispatcher's Tier 1d generator."
+    },
+    {
+      "id": "code-review-reality-server-url-validator-cgnat-gap",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier 1d (reality-server) 2026-08-23",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:71-105 — ipv4_forbidden_reason() omits 100.64.0.0/10 (RFC 6598 CGNAT), 192.0.0.0/24, 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24 (TEST-NET), 198.18.0.0/15 (RFC 2544 benchmarking).",
+        "CGNAT is the notable gap — internal services behind CGNAT space become SSRF pivots the current string-time check misses. IPv6-mapped path (lines 152-159) inherits the same omissions via reuse of ipv4_forbidden_reason.",
+        "Low severity because module doc (lines 13-15, 112-115) says the import worker MUST re-resolve+re-validate post-DNS — this is defense-in-depth, not sole control."
+      ],
+      "note": "Ingested from dispatcher's Tier 1d generator."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-notification-repository-dead-endpoints",
+      "type": "code-review-finding",
+      "source": "routine Phase 1.5 (mobile-native-kmp segment review 2026-08-23)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt:35 — client.get(\"$baseUrl/api/v1/notifications\")",
+        "backend/servers/reality-server/src/main.rs:475-519 — router-nest block does NOT include /api/v1/notifications; grep .route.*notifications on reality-server returns 0 matches → every one of NotificationRepository's 9 methods 404s against the real backend.",
+        "MockEngine tests only assert body shape, never the URL path — the contract drift is invisible to the KMP test suite."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiry-viewing-endpoints-wrong-path",
+      "type": "code-review-finding",
+      "source": "routine Phase 1.5 (mobile-native-kmp segment review 2026-08-23)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "InquiryRepository.kt:134,153,176,197,216 — POST /api/v1/inquiries, POST /api/v1/inquiries/{id}/replies, GET/POST/DELETE /api/v1/viewings*",
+        "backend/servers/reality-server/src/routes/inquiries.rs:181-190 — real router exposes POST /contact/{listing_id}, POST /viewing/{listing_id}, GET /, GET /{id}, PUT /{id}/read, POST /{id}/respond under /api/v1/inquiries. NO /replies, NO bare POST /inquiries.",
+        "backend/servers/reality-server/src/main.rs — no /api/v1/viewings nest → sending inquiry, replying, and every viewings action fail with HTTP 404."
+      ]
+    }
+  ],
+  "hotspots": [
+    { "path": "backend/servers/api-server/src/services/quiet_hours_drain.rs", "churn": 242 },
+    { "path": "backend/servers/api-server/tests/suites/integrations_cross_org_idor_tests.rs", "churn": 162 },
+    { "path": "backend/crates/db/src/repositories/granular_notification.rs", "churn": 99 }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "mobile-native-kmp",
+    "selection_reason": "oldest-unreviewed (last_reviewed 2026-08-16); churn hotspots this run were all api-server files whose segments (api-core, api-handlers, tests) were reviewed within 48h",
+    "experts_used": ["kotlin"],
+    "findings_count": 2,
+    "skipped": false
+  },
+  "phase_1_6": {
+    "skipped": true,
+    "reason": "budget: routine focused Phase 2/3 on ingesting dispatcher Tier 1d reality-server findings + minting 2 mobile-native-kmp plans; pm_cursor and coverage_cursor unchanged"
+  },
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1",  "passed": true, "command": "head -1 briefs/2026-08-23.md == '# 2026-08-23'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true, "command": "state cursor comparison vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true, "command": "unique backlog ids", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "no non-cumulative signal id re-scored", "observed": "true", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "score cap ≤8; no open item >14d", "observed": "cap ok, 0 items eligible for decay", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "each new plan has 'adversarial pass:' in brief", "observed": "2/2", "expected": "2/2" },
+    { "goal": "G7",  "passed": true, "command": "≤2 new plans + 15 sections + capability + mode + files", "observed": "2 plans, all sections present, files resolve", "expected": "all pass" },
+    { "goal": "G8",  "passed": true, "command": "only .research/ paths staged", "observed": "0 non-.research paths", "expected": "0" },
+    { "goal": "G9",  "passed": true, "command": "no secrets/private hostnames", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief phases-that-failed honesty", "observed": "'none'", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present", "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count ≥ HEAD", "observed": "8 ≥ 8", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps + idempotency + kill-switch", "observed": "0/0/0 actions", "expected": "≤1 each" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped → no-op", "observed": "pm_cursor.next_index=3 unchanged", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal", "observed": "0", "expected": "0" }
+  ]
+}
