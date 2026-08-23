@@ -665,6 +665,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "84-2-esignature-email-retry1",
+      "branch": "auto-impl/84-2-esignature-email-retry1-4e92b6ac",
+      "status": "failed",
+      "claimed_at": "2026-08-23T06:29:58Z",
+      "last_updated": "2026-08-23T06:36:32Z",
+      "status_changed_at": "2026-08-23T06:36:32Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "pm-frontend",
+      "implementer_summary": "pr=none status=done specialist=pm-frontend scope_drift=false code_reuse_warn=none note=already-shipped-on-dev-noop-retry-full-deliverable-present",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "84-4-notification-triggers",
       "branch": "auto-impl/84-4-notification-triggers-0c5567ab",
       "status": "failed",
@@ -15389,5 +15411,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-23T00:36:30Z"
+  "archived_at": "2026-08-23T06:36:32Z"
 }

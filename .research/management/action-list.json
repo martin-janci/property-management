@@ -420,6 +420,71 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-mobile-rn-votedetail-conditional-hooks",
+      "action": "VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-23T06:24:27Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-thread-detail-hardcoded-en",
+      "action": "ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-23T06:24:27Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
+      "action": "Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-23T06:24:27Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "84-2-esignature-email-retry1",
+      "action": "Build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign planned→shipped) consuming the shipped signing API; verify signature-request/invitation email delivery end-to-end. Scope to the shipped backend API (signatures.rs). [retry 1/2 of failed 84-2-esignature-email]",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-08-23T06:24:35Z (retry_of=84-2-esignature-email reason=failed-no-pr cooldown_ok newest_failure=2026-08-15T18:33:32Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:35Z",
+      "retry_of": "84-2-esignature-email",
+      "retry_round": 1
     }
   ],
   "generated": "2026-08-20T20:28:24Z"
