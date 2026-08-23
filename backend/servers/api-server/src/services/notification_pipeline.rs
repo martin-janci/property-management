@@ -908,6 +908,7 @@ mod tests {
             released_at: None,
             attempts: 0,
             dead_lettered_at: None,
+            claimed_at: None,
             is_priority: false,
         }
     }
