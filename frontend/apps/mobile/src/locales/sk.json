@@ -573,5 +573,21 @@
     "noMatches": "Žiadne zhody",
     "emptyText": "Obyvatelia, ktorí sa prihlásia do zoznamu, sa zobrazia tu.",
     "noMatchesText": "Skúste iné meno alebo číslo bytu."
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Otváram hlásenie poruchy pre problém: {{category}}",
+      "reportFaultForm": "Otváram formulár hlásenia poruchy",
+      "announcements": "Zobrazujem oznamy",
+      "voting": "Otváram hlasovanie",
+      "documentsSearch": "Vyhľadávam dokumenty pre: {{query}}",
+      "documents": "Otváram dokumenty",
+      "notifications": "Kontrolujem notifikácie",
+      "dashboard": "Prechádzam na domovskú obrazovku",
+      "settings": "Otváram nastavenia"
+    },
+    "errors": {
+      "unknownCommand": "Tomuto príkazu som nerozumel. Skúste povedať „Report a fault“ alebo „Show announcements“."
+    }
   }
 }

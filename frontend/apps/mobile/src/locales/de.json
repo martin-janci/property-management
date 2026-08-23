@@ -533,5 +533,21 @@
     "noMatches": "Keine Treffer",
     "emptyText": "Bewohner, die sich für das Verzeichnis anmelden, erscheinen hier.",
     "noMatchesText": "Versuchen Sie einen anderen Namen oder eine andere Wohnungsnummer."
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Schadensmeldung für Problem wird geöffnet: {{category}}",
+      "reportFaultForm": "Formular zur Schadensmeldung wird geöffnet",
+      "announcements": "Ankündigungen werden angezeigt",
+      "voting": "Abstimmung wird geöffnet",
+      "documentsSearch": "Dokumente werden gesucht nach: {{query}}",
+      "documents": "Dokumente werden geöffnet",
+      "notifications": "Benachrichtigungen werden geprüft",
+      "dashboard": "Zur Startseite wechseln",
+      "settings": "Einstellungen werden geöffnet"
+    },
+    "errors": {
+      "unknownCommand": "Ich habe diesen Befehl nicht verstanden. Sagen Sie z. B. „Report a fault“ oder „Show announcements“."
+    }
   }
 }

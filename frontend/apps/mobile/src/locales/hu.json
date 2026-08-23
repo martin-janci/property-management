@@ -533,5 +533,21 @@
     "noMatches": "Nincs találat",
     "emptyText": "A névjegyzékbe jelentkező lakók itt jelennek meg.",
     "noMatchesText": "Próbáljon meg más nevet vagy lakásszámot."
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Hibabejelentés megnyitása a következő problémához: {{category}}",
+      "reportFaultForm": "Hibabejelentő űrlap megnyitása",
+      "announcements": "Közlemények megjelenítése",
+      "voting": "Szavazás megnyitása",
+      "documentsSearch": "Dokumentumok keresése erre: {{query}}",
+      "documents": "Dokumentumok megnyitása",
+      "notifications": "Értesítések ellenőrzése",
+      "dashboard": "Ugrás a kezdőképernyőre",
+      "settings": "Beállítások megnyitása"
+    },
+    "errors": {
+      "unknownCommand": "Nem értettem ezt a parancsot. Próbáld mondani: „Report a fault” vagy „Show announcements”."
+    }
   }
 }

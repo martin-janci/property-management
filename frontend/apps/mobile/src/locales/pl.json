@@ -533,5 +533,21 @@
     "noMatches": "Brak wyników",
     "emptyText": "Mieszkańcy, którzy dołączą do katalogu, pojawią się tutaj.",
     "noMatchesText": "Spróbuj innego imienia lub numeru mieszkania."
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Otwieram zgłoszenie usterki dla problemu: {{category}}",
+      "reportFaultForm": "Otwieram formularz zgłoszenia usterki",
+      "announcements": "Wyświetlam ogłoszenia",
+      "voting": "Otwieram głosowanie",
+      "documentsSearch": "Wyszukuję dokumenty dla: {{query}}",
+      "documents": "Otwieram dokumenty",
+      "notifications": "Sprawdzam powiadomienia",
+      "dashboard": "Przechodzę do ekranu głównego",
+      "settings": "Otwieram ustawienia"
+    },
+    "errors": {
+      "unknownCommand": "Nie zrozumiałem tego polecenia. Spróbuj powiedzieć „Report a fault” lub „Show announcements”."
+    }
   }
 }
