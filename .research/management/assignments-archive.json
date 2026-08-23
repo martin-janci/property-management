@@ -4137,6 +4137,28 @@
       "merge_attempted_at": "2026-07-06T06:23:31Z"
     },
     {
+      "task_id": "code-review-mobile-rn-thread-detail-hardcoded-en",
+      "branch": "auto-impl/code-review-mobile-rn-thread-detail-hard-cd2e704c",
+      "status": "merged",
+      "claimed_at": "2026-08-23T06:29:58Z",
+      "last_updated": "2026-08-23T08:37:46Z",
+      "status_changed_at": "2026-08-23T08:37:46Z",
+      "pr_number": 2836,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2836",
+      "merged_at": "2026-08-23T08:37:46Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2836 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=localized-threaddetail-6-locales-verify-green-662-tests [merged 2026-08-23T08:37:46Z sha=3016c66]",
+      "reviewer_summary": "verdict=approve note=all-7-strings-i18n across 6 locales, defaults preserve unit tests, scope-drift within mobile only",
+      "last_reviewed_oid": "37c8476673253298c6af806cd83aa6da34ce16bd",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-23T08:36:36Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-thread-send-silent-fail",
       "branch": "auto-impl/code-review-mobile-rn-thread-send-silent-cce38dd7",
       "status": "merged",
@@ -4157,6 +4179,50 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-03T20:20:00Z"
+    },
+    {
+      "task_id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
+      "branch": "auto-impl/code-review-mobile-rn-voice-cmd-hardcode-5527d8ad",
+      "status": "merged",
+      "claimed_at": "2026-08-23T06:29:58Z",
+      "last_updated": "2026-08-23T08:37:46Z",
+      "status_changed_at": "2026-08-23T08:37:46Z",
+      "pr_number": 2837,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2837",
+      "merged_at": "2026-08-23T08:37:46Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2837 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=localized-voice-6-locales-tdd-verify-ok-671-tests [merged 2026-08-23T08:37:46Z sha=1d57776]",
+      "reviewer_summary": "verdict=approve note=voice.* i18n complete across 6 locales, interpolation+singleton pattern correct, clean TDD split, scope-drift within frontend/apps/mobile",
+      "last_reviewed_oid": "a7c7cc0192b436bb3dcddb5156937861264f0a2e",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-23T08:36:36Z"
+    },
+    {
+      "task_id": "code-review-mobile-rn-votedetail-conditional-hooks",
+      "branch": "auto-impl/code-review-mobile-rn-votedetail-conditi-7ae4b449",
+      "status": "merged",
+      "claimed_at": "2026-08-23T06:29:58Z",
+      "last_updated": "2026-08-23T08:37:46Z",
+      "status_changed_at": "2026-08-23T08:37:46Z",
+      "pr_number": 2835,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2835",
+      "merged_at": "2026-08-23T08:37:46Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2835 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=moved-hooks-above-early-return-ig3-regression-verify-ok-662-tests [merged 2026-08-23T08:37:46Z sha=d141df0]",
+      "reviewer_summary": "verdict=approve note=hooks-moved-above-early-return, enabled:!!voteId gating intact, IG3 test fails pre-fix; scope_drift within frontend/apps/mobile ok",
+      "last_reviewed_oid": "e194e616b0110297f13ff8f40db7c4c523d29276",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-23T08:36:36Z"
     },
     {
       "task_id": "code-review-ppt-web-aml-review-decision-untrusted-cast",
@@ -15411,5 +15477,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-23T06:36:32Z"
+  "archived_at": "2026-08-23T08:38:51Z"
 }

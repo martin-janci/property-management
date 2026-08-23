@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-22T22:39:01Z",
+  "archived_at": "2026-08-23T08:39:06Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3983,6 +3983,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-thread-detail-hardcoded-en",
+      "action": "ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-23T06:24:27Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-08-23T08:39:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2836,
+        "merged_at": "2026-08-23T08:37:46Z",
+        "at": "2026-08-23T08:39:06Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-thread-send-silent-fail",
       "action": "mobile: ThreadDetailScreen.handleSend send-message mutation has onSuccess only, no onError — failed sends are silent",
       "owner_role": "pm-backend",
@@ -4004,6 +4028,54 @@
         "merged_pr": 2641,
         "merged_at": "2026-08-03T20:25:36Z",
         "at": "2026-08-03T20:27:32Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
+      "action": "Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-23T06:24:27Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-08-23T08:39:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2837,
+        "merged_at": "2026-08-23T08:37:46Z",
+        "at": "2026-08-23T08:39:06Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-votedetail-conditional-hooks",
+      "action": "VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-23T06:24:27Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-23T08:39:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-23T06:24:27Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2835,
+        "merged_at": "2026-08-23T08:37:46Z",
+        "at": "2026-08-23T08:39:06Z"
       }
     },
     {
