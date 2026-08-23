@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-22T03:03:20Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2820,
-  "last_issue_seen": 2816,
-  "last_commit_sha": "e59dca8b157df58eceb9a612c61585efd07216ac",
+  "last_run_iso": "2026-08-23T04:45:00Z",
+  "last_run_ms": 900000,
+  "last_pr_seen": 2834,
+  "last_issue_seen": 2832,
+  "last_commit_sha": "334c221bcbc7677a77bf727813f82455ce5c0b54",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -481,6 +481,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-22",
       "recent_churn": 3427
+    },
+    "backend/servers/api-server/src/services/quiet_hours_drain.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-23",
+      "recent_churn": 165
+    },
+    "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-23",
+      "recent_churn": 90
+    },
+    "backend/crates/db/repositories/granular_notification.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-23",
+      "recent_churn": 100
     }
   },
   "seen_signals": [
@@ -512,6 +527,7 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/repositories/granular_notification.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
@@ -532,6 +548,7 @@
     "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
@@ -571,6 +588,7 @@
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
@@ -686,6 +704,7 @@
     "code-review-ppt-web-ui-untranslated-strings",
     "code-review-reality-server-agency-members-unauth-idor",
     "code-review-reality-server-create-review-body-length-uncapped",
+    "code-review-reality-server-drainer-mark-fail-redeliver",
     "code-review-reality-server-inquiries-no-ratelimit",
     "code-review-reality-server-inquiry-email-stub",
     "code-review-reality-server-inquiry-read-idor",
@@ -694,17 +713,23 @@
     "code-review-reality-server-orphan-listinghandler-stub-detail",
     "code-review-reality-server-orphan-schedule-viewing-stub",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-reality-server-sso-sessions-unbounded-map",
     "code-review-reality-server-submit-report-no-rate-limit",
+    "code-review-reality-server-url-validator-cgnat-gap",
     "code-review-reality-web-agency-errorstate-i18n",
     "code-review-reality-web-agency-import-i18n",
+    "code-review-reality-web-category-cards-missing-key",
     "code-review-reality-web-comparison-share-all-or-nothing",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-comparison-view-i18n",
     "code-review-reality-web-inline-tenant-json-xss",
+    "code-review-reality-web-language-switcher-hardcoded-aria",
+    "code-review-reality-web-listing-card-locale-loss",
     "code-review-reality-web-listing-metadata-shape",
     "code-review-reality-web-listing-page-ssr-crash",
     "code-review-reality-web-listingform-nan-validation",
     "code-review-reality-web-listingform-no-i18n",
+    "code-review-reality-web-listings-count-plural-loss",
     "code-review-reality-web-protectedroute-i18n",
     "code-review-reality-web-realtor-mgmt-i18n",
     "code-review-reality-web-realtor-mgmt-silent-error",
@@ -908,17 +933,17 @@
   "review_cursor": {
     "api-handlers": "2026-08-22",
     "api-core": "2026-08-21",
-    "reality-server": "2026-08-19",
+    "reality-server": "2026-08-23",
     "ppt-web-ui": "2026-08-16",
     "ppt-web-core": "2026-08-21",
-    "reality-web": "2026-08-18",
+    "reality-web": "2026-08-23",
     "mobile-rn": "2026-08-17",
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 69,
-    "vectors_created": 318,
-    "plans_created": 27,
+    "runs": 70,
+    "vectors_created": 325,
+    "plans_created": 28,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

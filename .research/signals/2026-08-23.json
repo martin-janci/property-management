@@ -1,0 +1,177 @@
+{
+  "generated_at": "2026-08-23T04:45:00Z",
+  "window": {
+    "since_iso": "2026-08-22T03:03:20Z",
+    "until_iso": "2026-08-23T04:45:00Z",
+    "lag_hours": 25
+  },
+  "phases": {
+    "phase1_observe": "ok",
+    "phase1_5_review": "ok (segment=reality-web, oldest-cloud-landable; also carried in reality-server tier1d findings from 2026-08-23-reality-server-tier1d.json)",
+    "phase1_6_pm": "skipped (Phase 1.6 not run — payload was buffer-refill, delivery digest handled by dispatcher; pm_cursor / coverage_cursor unchanged)",
+    "phase2_decide": "ok",
+    "phase3_promote": "ok (1 plan promoted, cap 2 not reached)",
+    "phase3_5_adversarial": "ok (listing-card locale-loss: passed)",
+    "phase5_autofix": "no candidate (0 signals matched allowlist × certainty bar this run)"
+  },
+  "signals": [
+    {
+      "id": "code-review-reality-web-listing-card-locale-loss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-web",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx:11 imports Link from 'next/link' (should be the locale-aware Link re-exported from '@/i18n/routing' — createNavigation over the routing table)",
+        "Verified against dev HEAD 334c221: line 36 renders <Link href={`/listings/${listing.slug}`}> — under localePrefix:'as-needed' + defaultLocale:'sk', non-default-locale visitor loses the locale prefix on every card click and lands on the Slovak default",
+        "Sibling components using the locale-aware Link: grep -l \"from '@/i18n/routing'\" returns 5 hits (CookieConsentBanner, PriceAlerts, login/page.tsx, not-found.tsx, sell/page.tsx) — this component was missed by the i18n rollout"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-category-cards-missing-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-web",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx:192 calls t('browseByTypeSubtitle', {defaultValue: '...'}) but 'browseByTypeSubtitle' is NOT in any of messages/{en,sk,cs,de,pl,hu}.json (verified: en.json contains only browseByType + listingsCount under the home namespace)",
+        "next-intl's t() has no 'defaultValue' option — values map is only for ICU interpolation — so the call renders the literal key `home.browseByTypeSubtitle` or throws IntlError, defacing the homepage subtitle in every locale"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-language-switcher-hardcoded-aria",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-web",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/ui/LanguageSwitcher.tsx:110 aria-label={`Language: ${localeNames[locale]}`} on trigger + line 157 aria-label='Select language' on listbox — neither goes through useTranslations()",
+        "Screen-reader users on non-EN locales hear the language picker announced in English, breaking WCAG language-of-parts on the one control non-English speakers need most"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-count-plural-loss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx:206 calls t('listingsCount', {count: category.count.toLocaleString()}) — Number#toLocaleString() with no locale arg uses JS runtime default (not useLocale()), and the string result breaks ICU plural selection",
+        "Slavic locales (sk/cs/pl) need one/few/other plural forms; passing a string prevents next-intl from selecting them"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-server (tier1d 2026-08-23)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 — after transport send succeeds (any_ok == true), mark_search_alert_notified() error is only tracing::error!'d; notified_at not set, record_search_alert_notify_failure() not called → row stays in undelivered set, re-drained every 60s, unbounded (max_attempts only consumed on all-channels-failed branch, line 323)",
+        "Same class as sibling saved_search_alerts.rs #983 fix (services/saved_search_alerts.rs:222-229): 'this used to enqueue and advance as two separate statements ... when the enqueue succeeded but the advance failed ... the next due run re-enqueued a duplicate'",
+        "Drainer enabled by default (SearchAlertDrainerConfig::default().enabled = true, poll 60s); existing tests (tests/suites/search_alert_drainer_tests.rs) cover happy drain and all-channels-fail attempt budget — send-ok-but-mark-fails edge untested"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-server (tier1d 2026-08-23)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>, unbounded in-memory map, entries inserted on SSO initiation (routes/sso.rs:94) and removed ONLY on successful callback lookup (routes/sso.rs:243)",
+        "10-minute expiry (routes/sso.rs:251-257) enforced lazily AFTER callback removes the entry — no background sweeper / retain() to proactively evict; abandoned/scripted authorize initiations leave entries resident for process lifetime",
+        "Authorize endpoint is public → unauthenticated caller can grow map unbounded → gradual memory-exhaustion DoS; fix: sweep on insert, or move to Redis with TTL (crate already uses Redis for sessions)"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-cgnat-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-reality-server (tier1d 2026-08-23)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:71-105 — ipv4_forbidden_reason() (SSRF defense-in-depth allowlist for validate_fetch_url) omits 100.64.0.0/10 (RFC 6598 CGNAT), 192.0.0.0/24 + TEST-NET blocks (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24), 198.18.0.0/15 (RFC 2544 benchmarking)",
+        "CGNAT is the notable gap: on providers placing internal services behind CGNAT space it is an SSRF pivot; IPv6-mapped path (lines 152-159) reuses ipv4_forbidden_reason and inherits omissions",
+        "Low severity because module documents (lines 13-15, 112-115) that import worker MUST re-resolve + re-validate post-DNS — this is defense-in-depth, not sole control"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2826 + #2834",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2826 (per-channel bookkeeping + bounded retry) added ~110 net lines to quiet_hours_drain.rs",
+        "PR #2834 (atomic claim across replicas, migration 00235) added ~52 more net lines within 24h — three tightly-coupled fixes on the same drain path in one week"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2829 + #2833",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2829 (replaced window.prompt/alert with in-app dialogs + i18n) rewrote large sections of AmlDashboardPage.tsx",
+        "PR #2833 (reset EDD/Review dialog state per assessment) added the per-assessment key= fix + regression tests within 6h of #2829 landing"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/repositories/granular_notification.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2826 + #2834",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Touched by PR #2826 (delivered_channels/attempts/dead_lettered_at columns + per-channel deliver_held logic) and PR #2834 (claim_notifications_to_release + record_held_attempt clearing claimed_at) — coordinated notification-persistence patches in one week"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — 7 code-review-finding signals + 3 churn-hotspot signals emitted this run; none matched Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review). All code-review actions require a manual plan.",
+  "goal_checks": [
+    {"goal": "G1", "passed": true,  "command": "test -f briefs/2026-08-23.md && head matches # 2026-08-23", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true,  "command": "state.json advanced vs HEAD (cursors + seen_signals + hotspot_history + stats)", "observed": "true", "expected": "true"},
+    {"goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true,  "command": "no non-cumulative signal id in this run's signals also in prev seen_signals with score_delta != 0", "observed": "true", "expected": "true"},
+    {"goal": "G5", "passed": true,  "command": "score cap ≤ 8 + decay applied for updated_at ≤ today-14", "observed": "no open item older than 14d; cap ok (max=6)", "expected": "true"},
+    {"goal": "G6", "passed": true,  "command": "every new plan annotated in brief with 'adversarial pass:'", "observed": "listing-card-locale-loss: passed", "expected": "annotated"},
+    {"goal": "G7", "passed": true,  "command": "≤2 new plans; 4 metadata + 11 headings; capability ticked; Mode declared; Files exist", "observed": "1 new plan, all sections present, Mode: cloud-ok, C1+C6 ticked, both files exist", "expected": "true"},
+    {"goal": "G8", "passed": true,  "command": "git diff --cached --name-only contains only .research/", "observed": "run before commit", "expected": "0 non-.research paths"},
+    {"goal": "G9", "passed": true,  "command": "no secrets or private hostnames in staged diff outside baseline docs", "observed": "clean grep", "expected": "0 matches"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "byte-identical", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "phases-that-failed line matches unadvanced cursors", "observed": "no phase failed; all cursors advanced", "expected": "consistent"},
+    {"goal": "G12", "passed": true, "command": "prior-run plan slugs still exist in plans/ or plans/_archive/", "observed": "no plan removed this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count ≥ HEAD count", "observed": "7 == 7", "expected": "≥"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from backlog.json vector=triage)", "observed": "byte-identical", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions ≤ 3 with per-type caps, idempotency, kill switch honored", "observed": "0 actions this run", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run (no-op)", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "no literal Telegram bot-token in staged diff", "observed": "0 matches", "expected": "0"}
+  ]
+}

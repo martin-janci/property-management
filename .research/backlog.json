@@ -9016,6 +9016,180 @@
         "assignment_status": "merged",
         "pr_number": 2829
       }
+    },
+    {
+      "id": "code-review-reality-web-listing-card-locale-loss",
+      "title": "reality-web ListingCard uses next/link, dropping locale prefix on every card click",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "review-2026-08-23-reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx:11 imports Link from 'next/link' (verified against dev HEAD 334c221) instead of the locale-aware Link re-exported from '@/i18n/routing' (createNavigation over routing table); every card click strips the current locale prefix under localePrefix:'as-needed'",
+        "The routing table (src/i18n/routing.ts) is consumed correctly by 5+ sibling components (CookieConsentBanner, PriceAlerts, login/page.tsx, not-found.tsx, sell/page.tsx) — this component was missed",
+        "Impact: non-default-locale visitor (en/cs/de/pl/hu) navigating from /cs/listings to any card lands on /listings/<slug> (Slovak default) — loses their language mid-flow"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx",
+        "frontend/apps/reality-web/src/components/listings/ListingCard.test.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": "plans/code-review-reality-web-listing-card-locale-loss.md"
+    },
+    {
+      "id": "code-review-reality-web-category-cards-missing-key",
+      "title": "reality-web CategoryCards uses missing i18n key browseByTypeSubtitle with fake defaultValue option",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "review-2026-08-23-reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx:192 calls t('browseByTypeSubtitle', {defaultValue: '...'}) — key not present in any of messages/{en,sk,cs,de,pl,hu}.json (verified; en.json has browseByType/listingsCount but no browseByTypeSubtitle)",
+        "next-intl's t() has no `defaultValue` option (values map is only for ICU interpolation) — so the call either renders the literal key `home.browseByTypeSubtitle` or throws IntlError; homepage subtitle under 'Browse by property type' defaced in every locale",
+        "Fix: add browseByTypeSubtitle to all six message files under home namespace and drop the bogus 2nd argument"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx",
+        "frontend/apps/reality-web/messages/en.json",
+        "frontend/apps/reality-web/messages/sk.json",
+        "frontend/apps/reality-web/messages/cs.json",
+        "frontend/apps/reality-web/messages/de.json",
+        "frontend/apps/reality-web/messages/pl.json",
+        "frontend/apps/reality-web/messages/hu.json"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-language-switcher-hardcoded-aria",
+      "title": "reality-web LanguageSwitcher aria-labels are hardcoded English across all six locales",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "review-2026-08-23-reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/ui/LanguageSwitcher.tsx:110 sets aria-label={`Language: ${localeNames[locale]}`} on the trigger and (line 157) aria-label='Select language' on the listbox — neither passes through useTranslations()",
+        "Screen-reader users on the Slovak/Czech/German/Polish/Hungarian site hear the language picker announced in English, breaking WCAG language-of-parts consistency on the one control non-English speakers need most",
+        "Fix: add languageTrigger/languageMenu (or common.*) keys in the six message files, call useTranslations() in the component, render both aria-labels via t()"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/ui/LanguageSwitcher.tsx",
+        "frontend/apps/reality-web/messages/en.json",
+        "frontend/apps/reality-web/messages/sk.json",
+        "frontend/apps/reality-web/messages/cs.json",
+        "frontend/apps/reality-web/messages/de.json",
+        "frontend/apps/reality-web/messages/pl.json",
+        "frontend/apps/reality-web/messages/hu.json"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listings-count-plural-loss",
+      "title": "reality-web CategoryCards passes preformatted string to ICU count, breaking Slavic plural + locale-aware grouping",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "review-2026-08-23-reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx:206 calls t('listingsCount', {count: category.count.toLocaleString()}); Number#toLocaleString() with no locale argument uses the JS runtime default (not the app locale from useLocale()), and the resulting string is not a valid ICU plural argument",
+        "Slovak/Czech/Polish need one/few/other plural forms (e.g. ponuka/ponuky/ponúk); passing a string prevents next-intl from selecting them and grouping separators (1,234 vs 1 234) come out wrong",
+        "Fix: rewrite the ICU message with plural syntax ({count, plural, one {# ponuka} few {# ponuky} other {# ponúk}}) and pass the raw number"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx",
+        "frontend/apps/reality-web/messages/en.json",
+        "frontend/apps/reality-web/messages/sk.json",
+        "frontend/apps/reality-web/messages/cs.json",
+        "frontend/apps/reality-web/messages/de.json",
+        "frontend/apps/reality-web/messages/pl.json",
+        "frontend/apps/reality-web/messages/hu.json"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "title": "reality-server search_alert_drainer redelivers already-sent alerts when mark_search_alert_notified fails",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "review-2026-08-23-reality-server-tier1d"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 — after a transport send succeeds (any_ok == true), the drainer calls mark_search_alert_notified(alert.id); if that DB write returns Err it is only tracing::error!'d. Neither notified_at is set NOR record_search_alert_notify_failure() is called on this branch, so the row stays in the undelivered set (list_undelivered_search_alerts) and is re-drained on the very next poll — re-sending the same email + push fan-out to every device, unbounded, because max_attempts is only consumed on the all-channels-failed branch (line 323)",
+        "Same class as sibling saved_search_alerts.rs #983 fix (services/saved_search_alerts.rs:222-229): 'this used to enqueue and advance as two separate statements ... when the enqueue succeeded but the advance failed ... the next due run re-enqueued a duplicate' — reintroduced here",
+        "Drainer runs by default (SearchAlertDrainerConfig::default().enabled = true, poll every 60s); path reachable in production. Existing tests (tests/suites/search_alert_drainer_tests.rs) cover only happy drain and all-channels-fail attempt budget — the send-ok-but-mark-fails edge is untested"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "title": "reality-server PendingSsoSession in-memory map grows unbounded under abandoned SSO flows — DoS pivot",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "review-2026-08-23-reality-server-tier1d"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 — sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>, unbounded in-memory map initialised empty at state.rs:991; entries inserted on SSO initiation (routes/sso.rs:94) and removed ONLY on a successful callback lookup (routes/sso.rs:243)",
+        "10-minute expiry (routes/sso.rs:251-257) is enforced lazily AFTER a callback removes the entry — no background sweeper / retain() proactively evicts expired PendingSsoSession rows; abandoned/scripted authorize initiations leave entries resident for the whole process lifetime",
+        "Authorize endpoint is public (SSO login start, no prior session) → unauthenticated caller can grow the map unbounded, gradual memory-exhaustion DoS across the reality-server process; fix: sweep on insert, or move to Redis with a TTL (crate already uses Redis for sessions)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs",
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-url-validator-cgnat-gap",
+      "title": "reality-server ipv4_forbidden_reason omits CGNAT / TEST-NET / benchmarking ranges — SSRF defense-in-depth gap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "review-2026-08-23-reality-server-tier1d"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:71-105 — ipv4_forbidden_reason() (SSRF defense-in-depth allowlist used by validate_fetch_url for user-supplied fetch URLs, e.g. agency import feeds) omits 100.64.0.0/10 (RFC 6598 CGNAT — routable to internal infra on many cloud/ISP networks), 192.0.0.0/24 + 192.0.2.0/24 / 198.51.100.0/24 / 203.0.113.0/24 (TEST-NET), 198.18.0.0/15 (RFC 2544 benchmarking)",
+        "CGNAT is the notable gap: on providers that place internal services behind CGNAT space it is an SSRF pivot the current guard passes through; IPv6-mapped path (lines 152-159) reuses ipv4_forbidden_reason and inherits the same omissions",
+        "Low severity because the module documents (lines 13-15, 112-115) that the import worker MUST re-resolve and re-validate the resolved IP post-DNS — this static check is defense-in-depth, not the sole control. Hardening: add the missing ranges so the string-time check matches the post-DNS policy"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
     }
   ]
 }
