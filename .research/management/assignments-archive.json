@@ -13083,6 +13083,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2831",
+      "branch": "auto-impl/gh-issue-2831-b861089e",
+      "status": "merged",
+      "claimed_at": "2026-08-22T20:27:40Z",
+      "last_updated": "2026-08-23T00:32:20Z",
+      "status_changed_at": "2026-08-23T00:32:20Z",
+      "pr_number": 2834,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2834",
+      "merged_at": "2026-08-23T00:30:55Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2834 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=atomic claim-lease drain (migration 00235 claimed_at + FOR UPDATE SKIP LOCKED); fmt+db clippy green; full-workspace gate blocked by swagger-ui github egress 403 (env, not code) — CI runs authoritative gate",
+      "reviewer_summary": "verdict=approve note=E0063-fixed;atomic-claim+lease+migration-00235-correct;IG3-tests-adequate;CI-green;scope-drift-benign",
+      "last_reviewed_oid": "9c578efe6add59bf76c1122497c53fc43755e4d5",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-23T00:32:20Z"
+    },
+    {
       "task_id": "gh-issue-2832",
       "branch": "auto-impl/gh-issue-2832-24ac66e1",
       "status": "merged",
@@ -15367,5 +15389,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-22T22:38:52Z"
+  "archived_at": "2026-08-23T00:36:30Z"
 }

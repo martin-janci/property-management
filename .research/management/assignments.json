@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-22T22:38:52Z",
+  "generated": "2026-08-23T00:32:20Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-22T20:27:40Z",
+      "last_updated": "2026-08-23T00:32:20Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -21,28 +21,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2831",
-      "branch": "auto-impl/gh-issue-2831-b861089e",
-      "status": "review",
-      "claimed_at": "2026-08-22T20:27:40Z",
-      "last_updated": "2026-08-22T22:38:45Z",
-      "status_changed_at": "2026-08-22T20:47:14Z",
-      "pr_number": 2834,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2834",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2834 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=atomic claim-lease drain (migration 00235 claimed_at + FOR UPDATE SKIP LOCKED); fmt+db clippy green; full-workspace gate blocked by swagger-ui github egress 403 (env, not code) — CI runs authoritative gate",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]
