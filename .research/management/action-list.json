@@ -473,17 +473,17 @@
       }
     },
     {
-      "id": "84-2-esignature-email-retry1",
-      "action": "Build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign planned→shipped) consuming the shipped signing API; verify signature-request/invitation email delivery end-to-end. Scope to the shipped backend API (signatures.rs). [retry 1/2 of failed 84-2-esignature-email]",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
+      "id": "churn-hotspot-voice-webhooks-rs-retry1",
+      "action": "voice_webhooks.rs churn — 3 security fixes landed +556 lines this run (Alexa cert timeouts, Google JWKS, /oauth/refresh authz) [retry 1/2 of failed churn-hotspot-voice-webhooks-rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-23T06:24:35Z (retry_of=84-2-esignature-email reason=failed-no-pr cooldown_ok newest_failure=2026-08-15T18:33:32Z)",
+      "source": "dispatcher-retry-remint 2026-08-23T08:25:34Z (retry_of=churn-hotspot-voice-webhooks-rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-16T06:33:30Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-08-23T06:24:35Z",
-      "retry_of": "84-2-esignature-email",
+      "first_open_at": "2026-08-23T08:25:34Z",
+      "retry_of": "churn-hotspot-voice-webhooks-rs",
       "retry_round": 1
     }
   ],
