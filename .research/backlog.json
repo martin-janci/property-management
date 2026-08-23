@@ -9097,6 +9097,135 @@
         "assignment_status": "merged",
         "pr_number": 2836
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-hardcoded-manager",
+      "title": "ppt-web FacilitiesPage useIsManager() hardcoded to return true — Create/Edit UI shown to residents",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-23"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `function useIsManager(): boolean { return true; }` with a `Placeholder: Returns true during development` comment.",
+        "Passed to `FacilityList isManager={isManager} onCreate={handleCreate} onEdit={handleEdit}` at line ~116 so every viewer sees manager-only actions.",
+        "Backend gates (verify_manager_role_in_org) still enforce the real role check, so a resident clicking Create is rejected — the risk is misleading UX and any missing backend gate becoming an IDOR-shaped escalation."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-bookfacility-hardcoded-english",
+      "title": "ppt-web BookFacilityPage error/fallback strings hardcoded English — sk/cs/de/pl/hu see raw en on failure paths",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-23"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx — `setError('Failed to load facility details')`, `setError('Failed to create booking')`, `<p>{error || 'Facility not found'}</p>`, `<p>This facility is not available for booking</p>`, `Go back` button label — all bypass react-i18next.",
+        "Non-English locale users see raw English on the most-important booking failure paths, breaking the app's localization contract used everywhere else on the page."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-overdue-todo",
+      "title": "ppt-web ContentModerationPage 'Show overdue' button silently filters by status=pending (no overdue param)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui segment review 2026-08-23"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx — `handleShowOverdue = useCallback(() => { setStatusFilter('pending'); /* TODO: Add overdue filter parameter when API supports it */ }, [])`.",
+        "Moderator clicks 'Show overdue' expecting SLA-breached cases and gets every pending case with no visual distinction — misleads about the true overdue queue."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-quiet-hours-drain-rs-2026-08-23",
+      "title": "quiet_hours_drain.rs repeated changes across PRs #2826 + #2834 — held-notification drain instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2826",
+        "PR #2834"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs — 242 lines changed across 2 merged PRs since 2026-08-22, both patching held-notification drain semantics (per-channel bookkeeping, then atomic-claim for replicas).",
+        "Two follow-up issues (#2823, #2831) traced back to the same file, suggesting the module's invariants aren't fully covered by tests yet."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-aml-dashboard-page-tsx-2026-08-23",
+      "title": "AmlDashboardPage.tsx repeated changes across PRs #2829 + #2833 — AML dialog flow instability",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2829",
+        "PR #2833"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx — 199 lines changed across 2 merged PRs since 2026-08-22 (replaced prompt/alert flow with dialogs, then reset dialog state per assessment).",
+        "Follow-up issue #2832 was needed to fix stale dialog reason/notes carried across assessments — suggests the initial dialog refactor missed a lifecycle case."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-review-assessment-dialog-tsx-2026-08-23",
+      "title": "ReviewAssessmentDialog.tsx new component churning during AML dashboard rework (153 lines this run)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2829"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx — 153 lines added in PR #2829 (part of AML prompt/alert → dialog rework).",
+        "New component, no existing test file alongside it — flag for regression coverage."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx"
+      ],
+      "created_at": "2026-08-23",
+      "updated_at": "2026-08-23",
+      "plan": null
     }
   ]
 }

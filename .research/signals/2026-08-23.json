@@ -1,0 +1,215 @@
+{
+  "date": "2026-08-23",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-22T03:03:20Z (41h ago, >36h threshold)",
+      "score_delta": 0,
+      "evidence": "Previous routine run wrote state at 2026-08-22T03:03:20Z; this run started at 2026-08-23T20:38Z (41 hours later). No stale-routine alert (<3 days).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2826, PR #2834",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/quiet_hours_drain.rs \u2014 242 lines changed across 2 merged PRs this window (per-channel bookkeeping + atomic-claim). New hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2829, PR #2833",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx \u2014 199 lines across 2 merged PRs (dialog rework + follow-up state fix). New hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2829",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx \u2014 153 lines (new component in AML dashboard rework). New hotspot.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-hardcoded-manager",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-23",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 \u2014 `useIsManager(): boolean { /* Placeholder */ return true; }`. Passed to `<FacilityList isManager={isManager} onCreate onEdit>` so every viewer sees manager-only actions. Backend gates still enforce real role, so this is misleading UX + latent-IDOR-shape (if any backend gate is missing).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-bookfacility-hardcoded-english",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-23",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx \u2014 hardcoded English on error/fallback: `setError('Failed to load facility details')`, `setError('Failed to create booking')`, `{error || 'Facility not found'}`, `'This facility is not available for booking'`, `'Go back'`. sk/cs/de/pl/hu users see raw English on the most-important booking failure paths.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-overdue-todo",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-23",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx \u2014 `handleShowOverdue = useCallback(() => { setStatusFilter('pending'); /* TODO: Add overdue filter parameter when API supports it */ }, [])`. 'Show overdue' silently filters by pending, so moderators can't distinguish SLA-breached cases.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches # YYYY-MM-DD",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state vs HEAD advancement",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique(backlog[].id)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "decay applied to open >=14d",
+      "observed": "true",
+      "expected": "true (no items in scope this run)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotated per new plan",
+      "observed": "n/a",
+      "expected": "n/a (0 new plans)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "diff-exit 0",
+      "expected": "diff-exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures",
+      "expected": "no phase failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still resolvable",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=8 head=8",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "diff-exit 0",
+      "expected": "diff-exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7",
+      "observed": "epics=13 cc=5->6 pm=3->4",
+      "expected": "cc advanced AND cc in [0,epics)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 all new signals score < 3 and none match the auto-fix allowlist (no screen-map-drift/orphan, no fixme-in-merged-code, no lockfile-drift, no stalled-review >7d)",
+  "segment_reviewed": "ppt-web-ui",
+  "segment_selection_reason": "oldest-unreviewed (2026-08-16, tied with mobile-native-kmp); preferred over KMP because cloud-landable buffer needs refill per buffer-low payload",
+  "churn_top_files": [
+    {
+      "file": "backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "churn": 242
+    },
+    {
+      "file": "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "churn": 199
+    },
+    {
+      "file": "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+      "churn": 175
+    }
+  ],
+  "notes": "Churn tally excludes commit 6d8b033 (i18n VerificationBadge squash included ~4700-file rebase footprint that would otherwise dominate). Post-exclusion, real code churn is small and focused on the AML dialog rework + held-notification drain. voice_webhooks.rs also churned (95 lines) but not top-3 this run \u2014 hotspot_history entry unchanged."
+}
