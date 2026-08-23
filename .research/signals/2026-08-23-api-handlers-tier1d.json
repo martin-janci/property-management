@@ -1,0 +1,54 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-23T05:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "experts_used": ["rust", "security"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-summarize-discards-persist-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — in handler `ai_summarize_document` (fn at :601) the summary persistence result is fully discarded: `let _ = state.document_repo.update_summary(id, &summary, key_points_json, None, None, Some(word_count), Some(language)).await;`. The whole purpose of the endpoint is to store the generated summary on the document.",
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:836-845 — immediately after the discarded write, the handler unconditionally returns `Ok(Json(AiSummarizeResponse { ... }))` (HTTP 200) with the summary. If `update_summary` fails (DB error, RLS rejection, serialization row-mismatch) the client is told the document was summarized, but a later GET returns no stored summary — silent data loss / read-after-write inconsistency, and wasted LLM spend with nothing persisted.",
+        "Contrast: the sibling best-effort writes in ai/llm.rs (:658, :708) that use the same `let _ =` pattern carry an explicit comment 'best-effort; status row is non-critical'. This update_summary discard has NO such comment and is the endpoint's primary side effect, so the swallow looks unintentional. Fix: surface the error (map to 500) or at minimum `if let Err(e) = ... { tracing::error!(...) }` and reflect a partial-failure status."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-workflow-enable-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:696-714 — in the import-from-template handler, the `enabled` request flag is applied via `if req.enabled.unwrap_or(false) { let _ = state.workflow_repo.update(&mut **rls.conn(), workflow.id, tenant_id, UpdateWorkflow { ..., enabled: Some(true) }).await; }`. The update Result is discarded.",
+        "The handler then returns success (the workflow-imported response ~:725). If the enable update fails, the workflow is created but stays DISABLED while the API reports success — the user's explicit `enabled: true` is silently dropped and the automation never runs until manually re-toggled.",
+        "Inconsistent with the code directly above it (ai/workflows.rs:687-693) which handles the same repo's `add_action` failure with `if let Err(e) = ... { tracing::warn!(\"Failed to add action to imported workflow: {}\", e); }`. The enable path should at least log on error and ideally reflect the failure in the response."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-upload-folderid-parse-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/core.rs:2005-2017 — in the document-upload multipart handler, the `folder_id` field is read as text and parsed with `if !text.is_empty() { folder_id = text.parse::<Uuid>().ok(); }`. A malformed (non-UUID) folder_id silently collapses to `None` via `.ok()`.",
+        "Effect: a client that sends a garbled folder_id gets HTTP 2xx and the document is filed at the org root instead of the intended folder, with no 400 and no signal that the target was ignored — a silent mis-filing / UX bug. Note the adjacent required fields (`category` at :1995, the `folder_id` text read itself at :2006) DO map read errors to `BAD_REQUEST`, so the swallow is only on the parse step. Fix: map the parse error to `BAD_REQUEST` (`text.parse::<Uuid>().map_err(|_| bad_request(\"invalid folder_id\"))?`) rather than `.ok()`."
+      ]
+    }
+  ]
+}
