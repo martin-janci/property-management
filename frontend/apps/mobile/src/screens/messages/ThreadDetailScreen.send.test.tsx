@@ -89,10 +89,10 @@ describe('ThreadDetailScreen — send outcomes', () => {
     renderScreen();
 
     fireEvent.changeText(
-      screen.getByPlaceholderText('Write a message…'),
+      screen.getByPlaceholderText('messages.composerPlaceholder'),
       'Please fix the elevator'
     );
-    fireEvent.press(screen.getByText('Send'));
+    fireEvent.press(screen.getByText('messages.send'));
 
     // The send was actually attempted (not a silent no-op).
     expect(mockMutationFn).toHaveBeenCalledTimes(1);
@@ -114,8 +114,8 @@ describe('ThreadDetailScreen — send outcomes', () => {
   it('clears the draft and shows no error banner on a successful send', () => {
     renderScreen();
 
-    fireEvent.changeText(screen.getByPlaceholderText('Write a message…'), 'Thanks!');
-    fireEvent.press(screen.getByText('Send'));
+    fireEvent.changeText(screen.getByPlaceholderText('messages.composerPlaceholder'), 'Thanks!');
+    fireEvent.press(screen.getByText('messages.send'));
 
     expect(mockMutationFn).toHaveBeenCalledTimes(1);
     expect(screen.queryByDisplayValue('Thanks!')).toBeNull();

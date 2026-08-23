@@ -539,7 +539,14 @@
     "threadLoadError": "Couldn't load conversation",
     "threadEmptyTitle": "No messages yet",
     "threadEmptyText": "Say hello to start the conversation.",
-    "threadSendError": "Couldn't send your message. Please try again."
+    "threadSendError": "Couldn't send your message. Please try again.",
+    "backToList": "Messages",
+    "threadTitleFallback": "Conversation",
+    "composerPlaceholder": "Write a message…",
+    "syncing": "Syncing…",
+    "authorYou": "You",
+    "authorFallback": "Participant",
+    "send": "Send"
   },
   "leases": {
     "loadError": "Couldn't load leases",

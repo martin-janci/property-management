@@ -499,7 +499,14 @@
     "threadLoadError": "Nie można załadować rozmowy",
     "threadEmptyTitle": "Brak wiadomości",
     "threadEmptyText": "Przywitaj się, aby rozpocząć rozmowę.",
-    "threadSendError": "Nie udało się wysłać wiadomości. Spróbuj ponownie."
+    "threadSendError": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+    "backToList": "Wiadomości",
+    "threadTitleFallback": "Rozmowa",
+    "composerPlaceholder": "Napisz wiadomość…",
+    "syncing": "Synchronizowanie…",
+    "authorYou": "Ty",
+    "authorFallback": "Uczestnik",
+    "send": "Wyślij"
   },
   "leases": {
     "loadError": "Nie można załadować umów najmu",
