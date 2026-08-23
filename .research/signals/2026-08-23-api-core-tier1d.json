@@ -1,0 +1,41 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-23T18:30:00Z",
+  "segment_reviewed": "api-core",
+  "selection_reason": "saturation-skip",
+  "selection_note": "CHURN_FILES empty. Oldest review_cursor is ppt-web-ui (2026-08-16), tied with mobile-native-kmp (2026-08-16). mobile-native-kmp is saturated (6 open findings) AND unlandable in the cloud runner -> skipped per skill saturation rule. ppt-web-ui is also effectively saturated: it received 5 tier1d dev-review sweeps in the last 2 days (2026-08-22 x4 + 2026-08-23) with ~13 findings, and its RegistryPage/DsaReports/MoveFolderDialog/MediationChatThread issues are already emitted -> skipped to avoid duplicates. Next landable segment not swept today and not recently swamped: api-core (last tier1d 2026-08-21). Backend Rust, landable.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-core-syndication-processor-unwired-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-406 — SyndicationService::process_syndication_job() is a SIMULATION STUB, not a real portal integration. The PUBLISH arm comment says '// Simulate publishing to portal', it mints a MOCK external id via `format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4())` (line 316-317), and then marks the listing syndication_status = SYNCED (line 322-330). It makes NO HTTP call to the external real-estate portal — there is no reqwest/http/Client reference anywhere in syndication.rs (grep confirms 0 hits). The STATUS_CHANGE / UPDATE / REMOVE arms likewise only log via tracing::info! and flip syndication_status without contacting the portal. The fetched `photos` (line 302-306) and the whole build_listing_payload() (line 417) are computed but never transmitted.",
+        "backend/servers/api-server/src/services/syndication.rs — process_syndication_job has ZERO callers in the entire backend: `grep -rn process_syndication_job backend --include=*.rs` matches only the definition. create_publish_jobs (line 108), create_status_change_jobs (line 158) and create_update_job (line 239) are called from routes/listings.rs:540,655,661 and enqueue background jobs into the SYNDICATION_QUEUE (\"syndication\", line 15) with max_attempts=3. But the only background-job worker loop in api-server is push_fanout.rs:1334 process_pending_jobs, which drains a DIFFERENT queue. No worker dequeues the \"syndication\" queue and dispatches to process_syndication_job. Net effect: when a manager marks a listing for portal syndication, jobs are persisted but NEVER processed — the listing is never published to the external portal and never even reaches SYNCED, silently, with no error surfaced to the user.",
+        "Landable fix (backend-only, api-core): (1) wire a syndication-queue worker that claims jobs from SYNDICATION_QUEUE and calls process_syndication_job, OR fold syndication dispatch into an existing job runner; and (2) replace the mock-external-id/no-HTTP body of process_syndication_job with a real portal client call (build_listing_payload + photos are already prepared). Until then the whole listing-syndication feature (Story 105.x) is wired at the UI/enqueue layer but non-functional end-to-end. Mirrors the previously-flagged voice-cmd-fabricated-success / community-wired-nonfunctional class."
+      ]
+    },
+    {
+      "id": "code-review-api-core-docgen-empty-llm-blank-doc",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:535-540 — after calling self.llm_client.chat(...).await?, the code does `let content = response.choices.first().map(|c| c.message.content.clone()).unwrap_or_default();`. When the LLM returns an EMPTY `choices` array (provider returned no completion — content-filter block, truncated/streamed-away response, or a provider returning 200 with zero choices), `unwrap_or_default()` yields an empty String \"\" instead of erroring. The empty content is then parsed and returned as a SUCCESSFUL document generation.",
+        "backend/servers/api-server/src/services/document_generation.rs:706-711 — identical pattern in the announcement-draft path: `response.choices.first().map(|c| c.message.content.clone()).unwrap_or_default()` feeds parse_announcement_drafts(&content) with \"\" on empty choices, so an LLM no-op silently produces zero/blank drafts reported as success rather than a retriable error.",
+        "Impact: a transient LLM failure that returns no choices is laundered into a blank document / empty draft set that looks like a valid result to the caller (and to the user who requested the generated document). Landable fix: treat an empty `choices` (or empty/whitespace content) as an explicit error return (e.g. a DocumentGenerationError::EmptyCompletion) so the request fails loudly / is retried, instead of unwrap_or_default() masking it. Note: the unwrap_or_default() calls at lines ~661 and ~773 are benign (optional audience/building-context formatting) and are NOT part of this finding."
+      ]
+    }
+  ]
+}
