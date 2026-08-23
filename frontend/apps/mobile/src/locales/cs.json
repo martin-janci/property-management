@@ -566,5 +566,21 @@
     "noMatches": "Žádné shody",
     "emptyText": "Obyvatelé, kteří se přihlásí do seznamu, se zobrazí zde.",
     "noMatchesText": "Zkuste jiné jméno nebo číslo bytu."
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Otevírám hlášení závady pro problém: {{category}}",
+      "reportFaultForm": "Otevírám formulář hlášení závady",
+      "announcements": "Zobrazuji oznámení",
+      "voting": "Otevírám hlasování",
+      "documentsSearch": "Vyhledávám dokumenty pro: {{query}}",
+      "documents": "Otevírám dokumenty",
+      "notifications": "Kontroluji oznámení",
+      "dashboard": "Přecházím na domovskou obrazovku",
+      "settings": "Otevírám nastavení"
+    },
+    "errors": {
+      "unknownCommand": "Tomuto příkazu jsem nerozuměl. Zkuste říci „Report a fault“ nebo „Show announcements“."
+    }
   }
 }

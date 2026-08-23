@@ -566,5 +566,21 @@
     "noMatches": "No matches",
     "emptyText": "Residents who opt into the directory will appear here.",
     "noMatchesText": "Try a different name or apartment number."
+  },
+  "voice": {
+    "confirmations": {
+      "reportFaultCategory": "Opening fault report for {{category}} issue",
+      "reportFaultForm": "Opening fault report form",
+      "announcements": "Showing announcements",
+      "voting": "Opening voting",
+      "documentsSearch": "Searching documents for {{query}}",
+      "documents": "Opening documents",
+      "notifications": "Checking notifications",
+      "dashboard": "Going to home",
+      "settings": "Opening settings"
+    },
+    "errors": {
+      "unknownCommand": "I didn't understand that command. Try saying “Report a fault” or “Show announcements”."
+    }
   }
 }
