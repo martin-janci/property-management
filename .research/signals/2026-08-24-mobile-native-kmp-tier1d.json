@@ -1,0 +1,40 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T00:00:00Z",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-implemented",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:490-495 — the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every tap of the Publish button in CreateListingScreen unconditionally returns a NotImplementedError; the screen then shows either the 'network' or 'publish failed' banner via CreateListingScreen.kt:120-125. UC-51.4 (Realtor: publish a new listing) is not functionally deliverable in the Android app.",
+        "The entry point is reachable in production: MyListingsScreen exposes a 'Create' button wired to `navController.navigate(Screen.CreateListing.route)` (Navigation.kt:484), and the CreateListingScreen scaffold + form fields + Publish CTA are all rendered without any feature-gate or 'coming soon' state. A signed-in realtor can navigate to it directly from the realtor dashboard.",
+        "The KMP shared surface has no matching backend call: `grep -rn 'createListing\\|CreateListing' mobile-native/shared` returns zero hits, and PortalListingsRepository.kt exposes only listMyListings + getListingAnalytics + getPortfolioAnalytics — there is no POST /api/v1/listings method to wire the callback to. Fix requires (a) adding `suspend fun createListing(input: CreateListingRequest): Result<PortalListing>` to PortalListingsRepository against the reality-server `POST` route, (b) mapping the composable's CreateListingInput to the wire request, and (c) replacing the NotImplementedError lambda with a real dispatch. Until then the CreateListing route should be feature-flagged off or the button hidden."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-notnull-assertions",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "Systemic `!!` non-null assertions on nullable UI-state properties across the Compose androidApp: ListingDetailScreen.kt:121,125,132,149,160 (`state.errorMessage!!`, `state.listing!!` from `viewModel.state.collectAsState()`); InquiriesScreen.kt:169 (`errorMessage!!` from a local `var by remember { mutableStateOf<String?>(null) }`); FavoritesScreen.kt:164 (same pattern); AccountScreen.kt:174 (`notificationPrefs!!` inside `if (notificationsExpanded && notificationPrefs != null)`). Kotlin cannot smart-cast a property getter on `state` nor a delegated `var`, so the branch guard does not imply non-null at the use site.",
+        "The pattern is a latent crash class: while Compose's snapshot system usually keeps reads within one composition consistent, any state update between the null-check condition evaluation and the argument-list evaluation (e.g. the ViewModel's StateFlow emitting from a coroutine mid-composition, or a `LaunchedEffect` in a sibling branch mutating the local `errorMessage` state) will throw KotlinNullPointerException. This is the exact category of bug that killed VoteDetailScreen (see the neighbour segment's 2026-08-23 finding on Rules of Hooks) — silent-until-it-crashes state-management fragility.",
+        "Idiomatic fix mirrors how the same file already gates other branches: capture the value into a local val at the top of the `when` branch, e.g. `state.listing != null -> { val listing = state.listing; ... ListingContent(listing = listing, ...) }` or use `state.listing?.let { listing -> ... } ?: return`. The FavoritesScreen retry lambda demonstrates the safer style with `.fold(onSuccess = { ... })`. Applying the fix removes the `!!` and lets the compiler enforce the invariant."
+      ]
+    }
+  ]
+}
