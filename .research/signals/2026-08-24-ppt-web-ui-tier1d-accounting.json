@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T08:40:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "note": "A prior tier1d run today (2026-08-24-ppt-web-ui-tier1d.json) already covered the facilities feature of this segment. These 3 findings are distinct (accounting + news) and were deliberately restricted to production-REACHABLE code: three otherwise-tempting findings (compliance AmlDashboardPage fabricated verification fields, ContentModerationPage unvalidated window.prompt casts, portfolio-performance dead PropertyCard onClick) were DISCARDED after confirming `compliance` and `portfolio-performance` are in UNWIRED_FEATURES (frontend/apps/ppt-web/src/features/unwired-features.ts) — intentionally built-but-not-routed per board decision PAP-55, guarded by src/test/unwired-features.test.ts, so findings there are not landable/reachable.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-invoice-empty-items",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:75-89 — handleSubmit validates `items.length === 0` (line 75) BEFORE the submitted payload is built with `items: items.filter((i) => i.description.trim() !== '')` (line 87). `description` is never among the validated fields, and addItem/removeItem keep at least one row (line 100 `if (items.length > 1)`). So a user who leaves every line-item description blank passes validation, and the invoice is submitted with an EMPTY items array while the totals preview (useMemo lines 49-70) was computed from the un-filtered rows — a data-integrity mismatch (invoice created with zero line items but a non-zero displayed total).",
+        "This is production-reachable: AccountingInvoiceManagementPage.tsx:91-96 renders <AccountingInvoiceForm onSubmit={(data) => createMutation.mutate(data)} />, and the page is mounted at /accounting/invoices via routes/groups/accounting.tsx:12 (accountingRoutes() is mounted in AppRoutes.tsx:53). accounting is NOT in UNWIRED_FEATURES.",
+        "Same handler uses a native browser `alert('Please fill all required fields')` (line 76) — hardcoded English, no i18n, inconsistent with the app's ConfirmationDialog/toast pattern; on an invalid submit non-EN managers get an English blocking dialog.",
+        "Fix is scoped to one file: validate the filtered item set (and require at least one non-blank description) before calling onSubmit, and replace alert() with an i18n'd inline/toast error."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-table-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:57-62 — the client hardcodes a CZ/SK VAT rate table in the totals useMemo: standard = country==='CZ'?21:20, reduced = 10 (flat, country-independent), first_reduced = country==='CZ'?15:10, zero = 0. These statutory rates are duplicated in the UI with no shared constant / no server round-trip, so the displayed base/vat/total can drift from the api-server's authoritative invoice calculation and from statute.",
+        "Concrete drift risk: Czechia consolidated its two reduced VAT rates (15% and 10%) into a single 12% reduced rate effective 2024-01-01; this table still encodes reduced=10 and first_reduced(CZ)=15, so a CZ reduced-rate line renders a stale VAT preview. (Value not asserted as definitively wrong from static read — flagged as a duplication/drift hazard on a money path; confirm against the server calc and current statute.)",
+        "Landable as a refactor: derive totals from a single source of truth (server preview endpoint or a shared @ppt/* rate constant) rather than a hand-maintained rate ladder inside a React component."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-native-confirm-dialogs",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "completeness",
+      "evidence": [
+        "Destructive-action confirmations on WIRED pages use native browser confirm()/alert() with hardcoded English, bypassing both react-i18next and the app's own ConfirmationDialog component (frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx): frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx:75 `if (!confirm('Are you sure you want to delete this article?')) return;` (mounted at /news via routes/groups/documents.tsx:117) and frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 `if (confirm('Are you sure you want to delete this invoice?'))`.",
+        "The app already recognizes this as a deviation: routes/groups/faults.tsx:259 comments that faults were aligned with 'the rest of the app's destructive actions (registry/news/accounting, ...)' — i.e. these native-dialog call sites are the known outliers.",
+        "Impact: on a multi-locale ppt-web (messages/*.json) the confirmation text renders English regardless of the active locale, and native confirm()/alert() are unstyled/untestable and inconsistent with the design system. Low severity, batchable into one sweep that routes these through ConfirmationDialog + t(...) keys."
+      ]
+    }
+  ]
+}
