@@ -8284,7 +8284,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -9097,6 +9097,66 @@
         "assignment_status": "merged",
         "pr_number": 2836
       }
+    },
+    {
+      "id": "churn-hotspot-quiet-hours-drain-rs",
+      "title": "churn hotspot: backend/servers/api-server/src/services/quiet_hours_drain.rs — 3 touches in 48h (notification-pipeline cluster)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --since=2026-08-22"
+      ],
+      "evidence": [
+        "3 file-touches in the 2026-08-22 → 2026-08-24 window (PRs #2826, #2829-family, #2834 — quiet-hours drain / atomic-claim cluster). First-time hotspot: runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-notification-pipeline-rs",
+      "title": "churn hotspot: backend/servers/api-server/src/services/notification_pipeline.rs — 3 touches in 48h",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --since=2026-08-22"
+      ],
+      "evidence": [
+        "3 file-touches in the 2026-08-22 → 2026-08-24 window; co-changes with quiet_hours_drain.rs and granular_notification.rs. First-time hotspot: runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-granular-notification-repository-rs",
+      "title": "churn hotspot: backend/crates/db/src/repositories/granular_notification.rs — 3 touches in 48h",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log --since=2026-08-22"
+      ],
+      "evidence": [
+        "3 file-touches in the 2026-08-22 → 2026-08-24 window; co-changes with the notification-pipeline cluster (PRs #2826, #2834). First-time hotspot: runs_seen=1."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": null
     }
   ]
 }

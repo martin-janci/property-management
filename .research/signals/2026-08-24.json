@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-08-24T04:32:48Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-22T03:03:20Z",
+      "score_delta": 0,
+      "evidence": [
+        "48h since last routine run \u2014 threshold 36h; dispatcher continued (10+ dispatcher commits in the window)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-08-22T03:03:20Z",
+      "score_delta": 1,
+      "evidence": [
+        "quiet_hours_drain.rs: 3 file-touches in 48h; quiet-hours drain / atomic-claim cluster (PRs #2826, #2829-family, #2834). First-time hotspot (runs_seen=1)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "backlog_id": "churn-hotspot-quiet-hours-drain-rs"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/notification_pipeline.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-08-22T03:03:20Z",
+      "score_delta": 1,
+      "evidence": [
+        "notification_pipeline.rs: 3 file-touches in 48h; co-changes with quiet_hours_drain.rs and granular_notification.rs. First-time hotspot (runs_seen=1)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "backlog_id": "churn-hotspot-notification-pipeline-rs"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/granular_notification.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-08-22T03:03:20Z",
+      "score_delta": 1,
+      "evidence": [
+        "granular_notification.rs: 3 file-touches in 48h; part of the notification-pipeline cluster. First-time hotspot (runs_seen=1)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "backlog_id": "churn-hotspot-granular-notification-repository-rs"
+    },
+    {
+      "id": "dep-update-noise-open-backlog-2026-08-24",
+      "type": "dep-update-noise",
+      "source": "gh pr list --state open --author 'app/dependabot'",
+      "score_delta": 0,
+      "evidence": [
+        "13 open dependabot PRs (backlog range #2583-#2810): npm/cargo/gradle/ktor/expo groups; oldest is #2673 (ktor group, 18 days old)."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-low-planner-2026-08-24",
+      "type": "buffer-low",
+      "source": "routine-fire payload (dispatcher signal)",
+      "score_delta": 0,
+      "evidence": [
+        "Dispatcher-reported claimable=6/72 (all mobile-native/KMP items blocked by AGP-egress runner limitation, issue #2652). Only 5 open backlog rows, one already 'ready' with plan (KMP inquiries-response-contract). No new promotable items surfaced this run."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible allowlist signal (only churn-hotspots this run, which are analytical-only)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/YYYY-MM-DD.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-vs-HEAD delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no duplicate non-cumulative score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true (no items >8; no items crossed 14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotations",
+      "observed": "no new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + all sections",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only .research/",
+      "observed": "0 non-.research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures listed + cursors not advanced",
+      "observed": "no phase failures",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans converge (no silent deletions)",
+      "observed": "no plans deleted this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=8 head=8",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor / coverage_cursor",
+      "observed": "Phase 1.6 skipped this run \u2014 no-op per gate carve-out",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
