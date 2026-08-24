@@ -2389,6 +2389,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-quiet-drain-drops-failed-delivery-retry2",
+      "branch": "auto-impl/code-review-api-core-quiet-drain-drops-f-7c489853",
+      "status": "failed",
+      "claimed_at": "2026-08-24T14:27:51Z",
+      "last_updated": "2026-08-24T14:31:06Z",
+      "status_changed_at": "2026-08-24T14:31:06Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=failed [ghost-retry: work ALREADY LANDED on dev — quiet_hours_drain.rs:265 should_mark_released()=>failed==0 guard present w/ regression tests (orig via PR #2729 3096f0f, retry1 5fdcab0). empty diff, no PR needed. Root-cause fix = intrinsic-row already-landed guard in retry-remint.sh sits in PR #2744 (human-gated/unmerged), so old retry-remint re-minted this. RETRY_MAX_ROUNDS=2 reached — terminal, no retry3.]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-quiet-schedule-err-failopen",
       "branch": "auto-impl/code-review-api-core-quiet-schedule-err-a4812fd8",
       "status": "merged",
@@ -15521,5 +15543,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-24T12:34:12Z"
+  "archived_at": "2026-08-24T14:35:25Z"
 }
