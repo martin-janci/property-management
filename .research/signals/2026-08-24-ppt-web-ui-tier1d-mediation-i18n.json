@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T00:00:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (tie at 2026-08-16 with mobile-native-kmp; overrode the mobile-native tie to the non-mobile-native segment per Tier-1d landability constraint)",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-mediation-sessions-swallowed-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:85 — const { data: sessions = [], isLoading: sessionsLoading } = useMediationSessions(disputeId); destructures only isLoading. There is no isError/sessionsError branch anywhere in the file (grep confirms only sessionsLoading is used, at :85 and :413).",
+        "MediationWorkspacePage.tsx:413 — sessionsLoading is threaded into the sessions panel, but a failed useMediationSessions query falls through to the `sessions = []` default, so a load failure renders as an EMPTY sessions panel indistinguishable from a dispute that genuinely has no scheduled mediation sessions. The manager gets no error, no retry, and may (re)schedule blindly.",
+        "The primary dispute query in the SAME file IS handled correctly (isError: disputeError at :80 → explicit error banner with refetch at :203-240), which shows the intended pattern; the sessions sub-query diverges from it. Distinct from the already-emitted 2026-08-22 finding code-review-ppt-web-ui-mediation-notes-swallowed-load-error, which covers a DIFFERENT file/hook (MediationChatThread.tsx / useMediationNotes) — this is the sessions sub-query in the workspace page."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-date-number-formatters-no-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/leases/components/LeaseCard.tsx:34 formatDate() calls new Date(dateString).toLocaleDateString() with NO locale argument, and :38 new Intl.NumberFormat(undefined, {...}) for currency — both fall back to the browser's default locale, not the app's selected i18n language (sk/cs/de/en). Same pattern repeats: PaymentHistoryTable.tsx:32,36; ApplicationDetailPage.tsx:75,80; ViolationDetailPage.tsx:56,61; LeaseDetailPage.tsx:85,89; LeasesDashboardPage.tsx:59; TemplatesPage.tsx:153; ViolationCard.tsx:70; ApplicationCard.tsx:35; plus messaging ThreadList.tsx:22 and MessageBubble.tsx:22,27.",
+        "Repo-wide there are 129 toLocale{Date,Time,}String() call sites with no locale arg under features/ vs 68 that DO pass a locale — the divergence is systemic, not a one-off.",
+        "The codebase already has the correct pattern: frontend/apps/ppt-web/src/features/disputes/utils/formatTime.ts takes a `locale` param and MediationChatThread.tsx calls formatTime(note.createdAt, i18n.language). Fix is to thread useTranslation().i18n.language into these formatters. Net-new: no prior emitted finding targets the leases/messaging date/number formatters."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts:46-49 — showToast title 'Stiahnutie zlyhalo' and message 'Dokument sa nepodarilo stiahnuť.' are hardcoded Slovak string literals, not wrapped in t().",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts:24-40 — user-facing toast strings 'Dokument presunutý', 'Presun zlyhal', '„…\" bol presunutý do priečinka./do koreňa.', 'Dokument sa nepodarilo presunúť.' are all hardcoded Slovak literals; non-Slovak (cs/de/en) users see untranslated text.",
+        "Confirmed inconsistency: FileDisputePageRoute.tsx:66-90 issues the identical success/warning/error toast pattern via t('disputes.filedSuccessfully', 'fallback') etc., so the i18n convention is established and these two churn-hot documents-feature hooks diverge from it. Net-new: prior documents i18n findings (code-review-ppt-web-ui-movefolder-i18n, -move-folder-dialog-hardcoded-sk, -sharepanel-i18n) target the MoveFolderDialog / DocumentSharePanel components, not these hooks."
+      ]
+    }
+  ]
+}
