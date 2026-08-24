@@ -1,0 +1,747 @@
+{
+  "generated_at": "2026-08-24T14:40:00Z",
+  "generator": "routine",
+  "signal_count": 33,
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-24",
+      "type": "lag_warning",
+      "source": "routine-run",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Last routine run 2026-08-22T03:03:20Z; current run 2026-08-24 (~59h gap; threshold 36h)."
+      ],
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-quiet-hours-drain-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2826, PR #2834",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/services/quiet_hours_drain.rs"
+      ],
+      "evidence": [
+        "quiet-hours drain worker hardened twice in <36h (PR #2826 per-channel dedup + PR #2834 cross-replica claim); +242 changed lines across two consecutive PRs — first-time hotspot."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2826, PR #2834",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "evidence": [
+        "granular-notification repo API extended twice in <36h (record_held_attempt in #2826 + claim_notifications_to_release in #2834); +99 lines — first-time hotspot."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-marketplace-components-verification-badge-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2825",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.tsx"
+      ],
+      "evidence": [
+        "Full i18n rewrite of marketplace VerificationBadge in PR #2825 (+134 lines); likely sibling marketplace components still hardcoded — Epic 68 residuals — first-time hotspot."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #2744 (auto-impl/gh-issue-2743) open 11 days as draft with `needs-human-review` label; blocks dispatcher unwedge for archive-push + retry-remint (gh-issue-2743). Not cloud-landable — self-PR the bot cannot merge/un-draft."
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-api-core-docgen-empty-llm-blank-doc",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [api-core]",
+      "segment": "api-core",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:535-540 — after calling self.llm_client.chat(...).await?, the code does `let content = response.choices.first().map(|c| c.message.content.clone()).unwrap_or_default();`. When the LLM returns an EMPTY `choices` array (provider returned no completion — content-filter block, truncated/streamed-away response, or a provider returning 200 with zero choices), `unwrap_or_default()` yields an empty String \"\" instead of erroring. The empty content is then parsed and returned as a SUCCESSFUL document generation.",
+        "backend/servers/api-server/src/services/document_generation.rs:706-711 — identical pattern in the announcement-draft path: `response.choices.first().map(|c| c.message.content.clone()).unwrap_or_default()` feeds parse_announcement_drafts(&content) with \"\" on empty choices, so an LLM no-op silently produces zero/blank drafts reported as success rather than a retriable error.",
+        "Impact: a transient LLM failure that returns no choices is laundered into a blank document / empty draft set that looks like a valid result to the caller (and to the user who requested the generated document). Landable fix: treat an empty `choices` (or empty/whitespace content) as an explicit error return (e.g. a DocumentGenerationError::EmptyCompletion) so the request fails loudly / is retried, instead of unwrap_or_default() masking it. Note: the unwrap_or_default() calls at lines ~661 and ~773 are benign (optional audience/building-context formatting) and are NOT part of this finding."
+      ]
+    },
+    {
+      "id": "code-review-api-core-syndication-processor-unwired-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [api-core]",
+      "segment": "api-core",
+      "expert": "rust",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-406 — SyndicationService::process_syndication_job() is a SIMULATION STUB, not a real portal integration. The PUBLISH arm comment says '// Simulate publishing to portal', it mints a MOCK external id via `format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4())` (line 316-317), and then marks the listing syndication_status = SYNCED (line 322-330). It makes NO HTTP call to the external real-estate portal — there is no reqwest/http/Client reference anywhere in syndication.rs (grep confirms 0 hits). The STATUS_CHANGE / UPDATE / REMOVE arms likewise only log via tracing::info! and flip syndication_status without contacting the portal. The fetched `photos` (line 302-306) and the whole build_listing_payload() (line 417) are computed but never transmitted.",
+        "backend/servers/api-server/src/services/syndication.rs — process_syndication_job has ZERO callers in the entire backend: `grep -rn process_syndication_job backend --include=*.rs` matches only the definition. create_publish_jobs (line 108), create_status_change_jobs (line 158) and create_update_job (line 239) are called from routes/listings.rs:540,655,661 and enqueue background jobs into the SYNDICATION_QUEUE (\"syndication\", line 15) with max_attempts=3. But the only background-job worker loop in api-server is push_fanout.rs:1334 process_pending_jobs, which drains a DIFFERENT queue. No worker dequeues the \"syndication\" queue and dispatches to process_syndication_job. Net effect: when a manager marks a listing for portal syndication, jobs are persisted but NEVER processed — the listing is never published to the external portal and never even reaches SYNCED, silently, with no error surfaced to the user.",
+        "Landable fix (backend-only, api-core): (1) wire a syndication-queue worker that claims jobs from SYNDICATION_QUEUE and calls process_syndication_job, OR fold syndication dispatch into an existing job runner; and (2) replace the mock-external-id/no-HTTP body of process_syndication_job with a real portal client call (build_listing_payload + photos are already prepared). Until then the whole listing-syndication feature (Story 105.x) is wired at the UI/enqueue layer but non-functional end-to-end. Mirrors the previously-flagged voice-cmd-fabricated-success / community-wired-nonfunctional class."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-summarize-discards-persist-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [api-handlers]",
+      "segment": "api-handlers",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:814-825 — in handler `ai_summarize_document` (fn at :601) the summary persistence result is fully discarded: `let _ = state.document_repo.update_summary(id, &summary, key_points_json, None, None, Some(word_count), Some(language)).await;`. The whole purpose of the endpoint is to store the generated summary on the document.",
+        "backend/servers/api-server/src/routes/documents/intelligence.rs:836-845 — immediately after the discarded write, the handler unconditionally returns `Ok(Json(AiSummarizeResponse { ... }))` (HTTP 200) with the summary. If `update_summary` fails (DB error, RLS rejection, serialization row-mismatch) the client is told the document was summarized, but a later GET returns no stored summary — silent data loss / read-after-write inconsistency, and wasted LLM spend with nothing persisted.",
+        "Contrast: the sibling best-effort writes in ai/llm.rs (:658, :708) that use the same `let _ =` pattern carry an explicit comment 'best-effort; status row is non-critical'. This update_summary discard has NO such comment and is the endpoint's primary side effect, so the swallow looks unintentional. Fix: surface the error (map to 500) or at minimum `if let Err(e) = ... { tracing::error!(...) }` and reflect a partial-failure status."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-upload-folderid-parse-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [api-handlers]",
+      "segment": "api-handlers",
+      "expert": "rust",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/documents/core.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents/core.rs:2005-2017 — in the document-upload multipart handler, the `folder_id` field is read as text and parsed with `if !text.is_empty() { folder_id = text.parse::<Uuid>().ok(); }`. A malformed (non-UUID) folder_id silently collapses to `None` via `.ok()`.",
+        "Effect: a client that sends a garbled folder_id gets HTTP 2xx and the document is filed at the org root instead of the intended folder, with no 400 and no signal that the target was ignored — a silent mis-filing / UX bug. Note the adjacent required fields (`category` at :1995, the `folder_id` text read itself at :2006) DO map read errors to `BAD_REQUEST`, so the swallow is only on the parse step. Fix: map the parse error to `BAD_REQUEST` (`text.parse::<Uuid>().map_err(|_| bad_request(\"invalid folder_id\"))?`) rather than `.ok()`."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-workflow-enable-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [api-handlers]",
+      "segment": "api-handlers",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:696-714 — in the import-from-template handler, the `enabled` request flag is applied via `if req.enabled.unwrap_or(false) { let _ = state.workflow_repo.update(&mut **rls.conn(), workflow.id, tenant_id, UpdateWorkflow { ..., enabled: Some(true) }).await; }`. The update Result is discarded.",
+        "The handler then returns success (the workflow-imported response ~:725). If the enable update fails, the workflow is created but stays DISABLED while the API reports success — the user's explicit `enabled: true` is silently dropped and the automation never runs until manually re-toggled.",
+        "Inconsistent with the code directly above it (ai/workflows.rs:687-693) which handles the same repo's `add_action` failure with `if let Err(e) = ... { tracing::warn!(\"Failed to add action to imported workflow: {}\", e); }`. The enable path should at least log on error and ideally reflect the failure in the response."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-notnull-assertions",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-native-kmp]",
+      "segment": "mobile-native-kmp",
+      "expert": "kotlin",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "evidence": [
+        "Systemic `!!` non-null assertions on nullable UI-state properties across the Compose androidApp: ListingDetailScreen.kt:121,125,132,149,160 (`state.errorMessage!!`, `state.listing!!` from `viewModel.state.collectAsState()`); InquiriesScreen.kt:169 (`errorMessage!!` from a local `var by remember { mutableStateOf<String?>(null) }`); FavoritesScreen.kt:164 (same pattern); AccountScreen.kt:174 (`notificationPrefs!!` inside `if (notificationsExpanded && notificationPrefs != null)`). Kotlin cannot smart-cast a property getter on `state` nor a delegated `var`, so the branch guard does not imply non-null at the use site.",
+        "The pattern is a latent crash class: while Compose's snapshot system usually keeps reads within one composition consistent, any state update between the null-check condition evaluation and the argument-list evaluation (e.g. the ViewModel's StateFlow emitting from a coroutine mid-composition, or a `LaunchedEffect` in a sibling branch mutating the local `errorMessage` state) will throw KotlinNullPointerException. This is the exact category of bug that killed VoteDetailScreen (see the neighbour segment's 2026-08-23 finding on Rules of Hooks) — silent-until-it-crashes state-management fragility.",
+        "Idiomatic fix mirrors how the same file already gates other branches: capture the value into a local val at the top of the `when` branch, e.g. `state.listing != null -> { val listing = state.listing; ... ListingContent(listing = listing, ...) }` or use `state.listing?.let { listing -> ... } ?: return`. The FavoritesScreen retry lambda demonstrates the safer style with `.fold(onSuccess = { ... })`. Applying the fix removes the `!!` and lets the compiler enforce the invariant."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-implemented",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-native-kmp]",
+      "segment": "mobile-native-kmp",
+      "expert": "kotlin",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:490-495 — the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every tap of the Publish button in CreateListingScreen unconditionally returns a NotImplementedError; the screen then shows either the 'network' or 'publish failed' banner via CreateListingScreen.kt:120-125. UC-51.4 (Realtor: publish a new listing) is not functionally deliverable in the Android app.",
+        "The entry point is reachable in production: MyListingsScreen exposes a 'Create' button wired to `navController.navigate(Screen.CreateListing.route)` (Navigation.kt:484), and the CreateListingScreen scaffold + form fields + Publish CTA are all rendered without any feature-gate or 'coming soon' state. A signed-in realtor can navigate to it directly from the realtor dashboard.",
+        "The KMP shared surface has no matching backend call: `grep -rn 'createListing\\|CreateListing' mobile-native/shared` returns zero hits, and PortalListingsRepository.kt exposes only listMyListings + getListingAnalytics + getPortfolioAnalytics — there is no POST /api/v1/listings method to wire the callback to. Fix requires (a) adding `suspend fun createListing(input: CreateListingRequest): Result<PortalListing>` to PortalListingsRepository against the reality-server `POST` route, (b) mapping the composable's CreateListingInput to the wire request, and (c) replacing the NotImplementedError lambda with a real dispatch. Until then the CreateListing route should be feature-flagged off or the button hidden."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-thread-detail-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-rn]",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.ts"
+      ],
+      "evidence": [
+        "already resolved in backlog (status=done) — signal re-emitted with score_delta=0 to close seen_signals dedup gap",
+        "frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx — several user-facing strings are hardcoded English instead of t(): the back link '← Messages' (210), the composer placeholder 'Write a message…' (267), the send-button label 'Send' (278), and the 'Syncing…' indicator (249).",
+        "The message-mapping helpers also hardcode English fallbacks: toUiMessages() sets authorName to 'You' / 'Participant' (139) and threadTitle() falls back to 'Conversation' (157) — all rendered directly in the UI.",
+        "Same screen already uses t() for its empty/error/loading states, so the fix is mechanical: replace these literals with t('messages.*') keys (adding them to the 6 locale files). i18n gap; distinct from the send-failure finding (code-review-mobile-rn-thread-send-silent-fail) which was about error handling, not string localization."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-rn]",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts"
+      ],
+      "evidence": [
+        "already resolved in backlog (status=done) — signal re-emitted with score_delta=0 to close seen_signals dedup gap",
+        "frontend/apps/mobile/src/voice/VoiceCommands.ts:202-282 — executeVoiceCommand() returns user-facing `confirmationMessage`/`errorMessage` strings hardcoded in English ('Opening fault report form', 'Showing announcements', 'Opening voting', 'Checking notifications', 'Going to home', 'Opening settings', and the default \"I didn't understand that command. Try saying 'Report a fault'...\"). None go through react-i18next t().",
+        "getSuggestedCommands() (287-301) and formatCommandForDisplay() (306-319) likewise return English-only phrase/description/label literals ('Report a fault', 'Open fault reporting form', intentLabels map).",
+        "The app ships 6 locales (frontend/apps/mobile/src/locales/{sk,cs,en,de,hu,pl}.json), so a non-English user hears/sees English voice-assistant responses. i18n gap across the whole voice-command UX (Epic 49 / Story 49.2). Fix: route these strings through t() with keys under a `voice.*` namespace."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-votedetail-conditional-hooks",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-rn]",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.ts",
+        "frontend/apps/mobile/src/screens/leases/LeaseSignatureScreen.ts"
+      ],
+      "evidence": [
+        "already resolved in backlog (status=done) — signal re-emitted with score_delta=0 to close seen_signals dedup gap",
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:120-137 — the `if (!voteId) return (...)` missing-param guard runs BEFORE the component's data hooks: useApiQuery x3 (139/145/151), useApiMutation (157), useState (163), useMemo (169/177), useState (182). Only useTranslation (115) and useQueryClient (116) precede the early return. This violates the Rules of Hooks: when the component first renders without a voteId (early-return branch → 2 hooks) and later re-renders with a voteId set (→ 9+ hooks), React throws 'Rendered more hooks than during the previous render' and the screen crashes.",
+        "The sibling e-signature screen frontend/apps/mobile/src/screens/leases/LeaseSignatureScreen.tsx:82-114 solves the identical missing-id case CORRECTLY and documents why: it calls useApiQuery/useApiMutation unconditionally first (with `enabled: Boolean(esignatureId)`), then does `if (!esignatureId) return` AFTER all hook calls — the exact inverse of VoteDetailScreen. The established in-repo pattern is being contradicted.",
+        "Fix: move the three useApiQuery calls (gate with `enabled: Boolean(voteId)`), the useApiMutation, and the useState/useMemo above the `if (!voteId)` guard, mirroring LeaseSignatureScreen. Distinct from the existing ppt-web-ui vote-detail finding (code-review-ppt-web-ui-vote-detail-hardcoded-en) — different platform, different defect class (hook ordering vs i18n)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-bookfacility-silent-availability",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-56 — the checkAvailability fetch effect swallows failures with only console.error('Failed to fetch availability', err); no error state is set and no user-facing message is shown. On an availability API/network failure the booking form renders an empty slot list, indistinguishable from a facility that genuinely has no free slots (silent failure on a user-facing path, Epic 56).",
+        "Same effect (BookFacilityPage.tsx:52) never resets availableSlots before/on the failed fetch: setAvailableSlots(slots) is only reached on success. When the user changes selectedDate (dependency at :59) and the new date's checkAvailability call throws, the previously loaded slots for the OLD date remain in state and stay rendered and bookable — a stale-data correctness bug that can let a resident submit a booking against a slot that does not apply to the selected date.",
+        "Contrast BookFacilityPage.tsx:70-71 (submit path) and :91-105 (facility-load path) which DO surface an error via setError(...)/error UI — only the availability branch is silent, so this is an inconsistency within the same file rather than an app-wide pattern.",
+        "BookFacilityPage.tsx is a current churn hotspot (2 touches since 2026-08-15); no useQuery/useMutation here — the feature hand-rolls fetch + useState, so there is no TanStack Query isError fallback to catch this."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-buildings-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "completeness",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingDetailPage.ts",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingDetailPage.tsx - no useTranslation (grep count 0); hardcoded English on a core, high-traffic building-management screen: L66 'Building not found', L159 'Type', L163 'Units', L167 'Floors', L172 'Year Built', L178 'Total Area', L193 'Floors', L222 'Common Areas'.",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx - no useTranslation (grep count 0); hardcoded L70 'Error loading buildings'. Buildings is a wired core feature (not in unwired-features.ts), so this renders English for all sk/cs/de users."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-wired-nonfunctional",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.ts",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.ts",
+        "frontend/apps/ppt-web/src/features/unwired-features.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:20-40 - FeedPageRoute passes posts={[]}, total={0}, and every handler (onCreatePost/onLikePost/onCommentPost/onSharePost/onEditPost/onDeletePost/onLoadMore) is a no-op () => {}; the community feed never loads data and no post action persists.",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:73-114 - GroupDetailPageRoute renders a hardcoded '// Mock group data' object (mockGroup: name 'Sample Group', description 'A sample community group'); GroupsPageRoute/EventsPageRoute/MarketplacePageRoute (community) all pass empty arrays + no-op handlers; CreateGroupPageRoute.onSubmit shows a fake 'Group created' success toast and navigates WITHOUT calling any @ppt/api-client mutation - a create that silently discards user input.",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:51 - communityRoutes() is mounted in the production router (/community, /community/groups, /community/groups/new, /community/groups/:groupId, /community/events, /community/marketplace), so this non-functional shell IS exposed to paying customers. 'community' is NOT listed in frontend/apps/ppt-web/src/features/unwired-features.ts UNWIRED_FEATURES - unlike the 10 intentionally-hidden features - so this is an unintended half-built surface, exactly the PAP-55 board decision says to hide until wired."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "completeness",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.ts",
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.ts",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:95,101,112,118 — user-facing fallback strings 'Facility not found', 'Go back' (x2), and 'This facility is not available for booking' are hardcoded English JSX, while the rest of the same file uses t('facilities.bookings.*'). The app ships 6 locales (en/de/cs/sk/pl/hu — see frontend/apps/ppt-web/messages/*.json), so these render English regardless of the active locale.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx:74,80 — same hardcoded 'Facility not found' / 'Go back' fallback UI, same gap.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:46,71,97 and MyBookingsPage.tsx:45,71,87 — error toast titles ('Failed to load pending bookings', 'Failed to approve booking', 'Failed to reject booking', 'Failed to load bookings', 'Failed to cancel booking') and the generic message 'An unexpected error occurred.' are hardcoded English even though these pages already import and use useTranslation for their list titles.",
+        "Low severity (no functional break) but a consistent localization gap concentrated in the facilities feature; batchable into one i18n key sweep."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-silent-load-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-71 — the listFacilities fetch catch block only calls console.error('Failed to fetch facilities', error) and then setIsLoading(false); it sets no error state and does not clear facilities. On a list-load failure the page transitions loading->empty and shows its normal empty/list UI, so an API/network error is presented to the manager as 'this building has no facilities'.",
+        "Recurring silent-load-error pattern in the same feature: BookFacilityPage.tsx:53-55 (checkAvailability) has the identical console.error-only branch. Both are user-facing GET paths in Epic 56 that hand-roll fetch+useState without TanStack Query, so there is no shared isError boundary — each page must surface its own error and none of these does.",
+        "Sibling pages that DO surface load errors (PendingBookingsPage.tsx:43-48, MyBookingsPage.tsx:42-47 both showToast on catch) show the correct pattern already exists in the feature; FacilitiesPage and BookFacilityPage's availability branch are the outliers.",
+        "FacilitiesPage.tsx is a current churn hotspot (list route /buildings/:id/facilities)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-empty-items",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:75-89 — handleSubmit validates `items.length === 0` (line 75) BEFORE the submitted payload is built with `items: items.filter((i) => i.description.trim() !== '')` (line 87). `description` is never among the validated fields, and addItem/removeItem keep at least one row (line 100 `if (items.length > 1)`). So a user who leaves every line-item description blank passes validation, and the invoice is submitted with an EMPTY items array while the totals preview (useMemo lines 49-70) was computed from the un-filtered rows — a data-integrity mismatch (invoice created with zero line items but a non-zero displayed total).",
+        "This is production-reachable: AccountingInvoiceManagementPage.tsx:91-96 renders <AccountingInvoiceForm onSubmit={(data) => createMutation.mutate(data)} />, and the page is mounted at /accounting/invoices via routes/groups/accounting.tsx:12 (accountingRoutes() is mounted in AppRoutes.tsx:53). accounting is NOT in UNWIRED_FEATURES.",
+        "Same handler uses a native browser `alert('Please fill all required fields')` (line 76) — hardcoded English, no i18n, inconsistent with the app's ConfirmationDialog/toast pattern; on an invalid submit non-EN managers get an English blocking dialog.",
+        "Fix is scoped to one file: validate the filtered item set (and require at least one non-blank description) before calling onSubmit, and replace alert() with an i18n'd inline/toast error."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-table-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:57-62 — the client hardcodes a CZ/SK VAT rate table in the totals useMemo: standard = country==='CZ'?21:20, reduced = 10 (flat, country-independent), first_reduced = country==='CZ'?15:10, zero = 0. These statutory rates are duplicated in the UI with no shared constant / no server round-trip, so the displayed base/vat/total can drift from the api-server's authoritative invoice calculation and from statute.",
+        "Concrete drift risk: Czechia consolidated its two reduced VAT rates (15% and 10%) into a single 12% reduced rate effective 2024-01-01; this table still encodes reduced=10 and first_reduced(CZ)=15, so a CZ reduced-rate line renders a stale VAT preview. (Value not asserted as definitively wrong from static read — flagged as a duplication/drift hazard on a money path; confirm against the server calc and current statute.)",
+        "Landable as a refactor: derive totals from a single source of truth (server preview endpoint or a shared @ppt/* rate constant) rather than a hand-maintained rate ladder inside a React component."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-native-confirm-dialogs",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "completeness",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.ts",
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.ts",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.ts"
+      ],
+      "evidence": [
+        "Destructive-action confirmations on WIRED pages use native browser confirm()/alert() with hardcoded English, bypassing both react-i18next and the app's own ConfirmationDialog component (frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx): frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx:75 `if (!confirm('Are you sure you want to delete this article?')) return;` (mounted at /news via routes/groups/documents.tsx:117) and frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 `if (confirm('Are you sure you want to delete this invoice?'))`.",
+        "The app already recognizes this as a deviation: routes/groups/faults.tsx:259 comments that faults were aligned with 'the rest of the app's destructive actions (registry/news/accounting, ...)' — i.e. these native-dialog call sites are the known outliers.",
+        "Impact: on a multi-locale ppt-web (messages/*.json) the confirmation text renders English regardless of the active locale, and native confirm()/alert() are unstyled/untestable and inconsistent with the design system. Low severity, batchable into one sweep that routes these through ConfirmationDialog + t(...) keys."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-reports-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/pages/ReportsPage.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/reports/pages/ReportsPage.tsx - 422-line core Reports & Analytics screen imports NO useTranslation (grep count 0) yet is a wired, nav-exposed manager screen; all headings render English for every locale.",
+        "Hardcoded UI text: L168 'Reports & Analytics', L221 'Key Metrics', L231 'Trends', L247 'Analytics', L258 'Building Performance', L293 'Saved Reports'."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-server]",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:317-325 — after a transport send succeeds (any_ok == true), the drainer calls mark_search_alert_notified(alert.id); if that DB write returns Err it is only tracing::error!'d. Neither notified_at is set NOR record_search_alert_notify_failure() is called on this branch, so the row stays in the undelivered set (list_undelivered_search_alerts) and is re-drained on the very next poll — re-sending the same email + push fan-out to every device, unbounded, because max_attempts is only consumed on the all-channels-failed branch (line 323).",
+        "This is the exact bug class the sibling saved_search_alerts.rs already fixed: see the #983 note at services/saved_search_alerts.rs:222-229 ('this used to enqueue and advance as two separate statements ... when the enqueue succeeded but the advance failed ... the next due run re-enqueued a duplicate'). The drainer reintroduces the same succeed-then-persist-fails → duplicate-delivery gap for the send→mark step.",
+        "The drainer runs by default (SearchAlertDrainerConfig::default().enabled = true, poll every 60s) so the path is reachable in production. The existing test suite (tests/suites/search_alert_drainer_tests.rs) covers only the happy drain and the all-channels-fail attempt-budget path (failed_delivery_increments_attempts_until_budget_exhausted) — the send-ok-but-mark-fails redelivery edge is untested."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-server]",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 — sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>, an unbounded in-memory map initialised empty at state.rs:991. Entries are inserted on SSO initiation (routes/sso.rs:94) and removed ONLY on a successful callback lookup (routes/sso.rs:243).",
+        "The 10-minute expiry (routes/sso.rs:251-257) is enforced lazily AFTER a callback removes the entry — there is no background sweeper / retain() that proactively evicts expired PendingSsoSession rows. Any SSO flow that starts but never completes the callback (user abandons, or an attacker scripts the authorize initiation) leaves its entry resident for the whole process lifetime.",
+        "The authorize/initiation endpoint is public (SSO login start, no prior session), so an unauthenticated caller can grow the map without bound → gradual memory-exhaustion DoS across the reality-server process. Fix: sweep expired entries on insert, or move pending SSO sessions to Redis with a TTL (the crate already uses Redis for sessions per the stack docs)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-cgnat-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-server]",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/util/url_validator.rs:71-105 — ipv4_forbidden_reason() (the SSRF defense-in-depth IP allowlist used by validate_fetch_url for user-supplied fetch URLs, e.g. agency import feeds) omits several reserved ranges: 100.64.0.0/10 (RFC 6598 Carrier-Grade NAT — routable to internal infra on many cloud/ISP networks), 192.0.0.0/24 + 192.0.2.0/24 / 198.51.100.0/24 / 203.0.113.0/24 (TEST-NET), and 198.18.0.0/15 (RFC 2544 benchmarking).",
+        "CGNAT (100.64.0.0/10) is the notable gap: on providers that place internal services behind CGNAT space it is an SSRF pivot the current guard passes through. The IPv6-mapped path (lines 152-159) reuses ipv4_forbidden_reason so it inherits the same omissions.",
+        "Low severity because the module documents (lines 13-15, 112-115) that the import worker MUST re-resolve and re-validate the resolved IP post-DNS — this static check is defense-in-depth, not the sole control. Hardening: add the missing ranges to ipv4_forbidden_reason so the string-time check matches the post-DNS policy."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web]",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the PUBLIC, SEO-indexed agency profile page imports NO next-intl (no useTranslations/getTranslations, grep count 0); its own header comment even claims strings are 'via next-intl' but nothing is wrapped. Every visible string is hardcoded Slovak on the 4-locale portal (sk/cs/de/en), so cs/de/en visitors and crawlers see Slovak-only content.",
+        "Hardcoded Slovak literals: L36 'Načítavam…' (loading state), L46 'Kancelária sa nenašla.' (not-found state), L223 'Žiadne aktívne ponuky.' (empty-listings state), L279 heading 'Kontakt', L302 link label '🌐 Navštíviť web'.",
+        "Higher impact than the prior (done) reality-web component i18n findings: this is a full public route (not a widget), SEO-relevant, and hardcoded in Slovak rather than English — so 3 of the 4 supported locales render the wrong language on a page indexed by search engines. Distinct file from ComparisonView/RealtorManagement/AgencyErrorStates already covered."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-checksession-5xx-logout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web]",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-context.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:142-149 — checkSession() (runs on every mount) treats ANY non-ok /api/v1/users/me response as a definitive auth failure: `if (meResp.ok) {...return} clearStoredSession()`. A transient 5xx (500/502/503 backend blip, gateway restart) therefore wipes the stored bearer session and logs the user out.",
+        "The sibling refreshSession() at L221-237 handles the exact same call correctly: it only calls clearStoredSession()/setUser(null) on `meResp.status === 401 || 403` and explicitly leaves 5xx as transient ('Any other status (5xx, etc.) is treated as transient'). checkSession lacks that status discrimination, so the two entry points disagree on the same server response.",
+        "Effect: a momentary reality-server hiccup at page load silently signs valid users out (and drops them to the cookie/SSO path which, per the login() comment, isn't fully shipped). Fix: gate the clearStoredSession() in checkSession on 401/403 like refreshSession does."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-compare-button-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web]",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx — per-listing-card 'add to comparison' button (Epic 51 Story 51.1) imports NO next-intl; all user-facing strings are hardcoded English on the 4-locale portal.",
+        "Hardcoded strings: L47 title 'Remove from comparison' / 'Add to comparison', L62 button label 'Comparing' / 'Compare', L66 role=alert warning 'Maximum 4 properties. Remove one first.'",
+        "Rendered on every ListingCard in search results/grids, so the English button label and the max-4 warning toast show untranslated to sk/cs/de visitors. Sibling untranslated component to ComparisonTray — same Epic 51 feature, distinct file/fix."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-tray-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web]",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx — the persistent floating comparison tray (Epic 51 Story 51.1) imports NO next-intl (no useTranslations/getTranslations, grep count 0); every visible string is hardcoded English on a 4-locale public portal (sk/cs/de/en), so non-EN visitors always see English.",
+        "Hardcoded strings: L23 '{n}/4 properties to compare', L24 'Clear all', L37 alt 'Thumbnail for {title}', L46 aria-label 'Remove {title} from comparison', L68 'Compare' + '(need at least 2)' / '{n} properties'.",
+        "This tray is fixed-position and rendered across all listing/search pages whenever items are queued, so the untranslated text is broadly visible. Distinct from the prior (done) reality-web ComparisonView i18n finding — different file, the /compare detail view vs. this always-on tray."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web]",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel() fires `cancelInquiry.mutate(inquiry.id)` and immediately `setShowCancelConfirm(false)` with no error handling: the useCancelInquiry mutation has no onError, and the component renders no isError branch for it. A failed cancel (network error / 4xx-5xx) is swallowed — the confirm dialog closes, no toast/alert is shown, and the inquiry silently stays active while the user believes it was cancelled.",
+        "Contrast with the page's query error handling (L332 'Failed to load inquiries. Please try again.'), which does surface load failures — only the mutation path lacks equivalent feedback.",
+        "Low severity (no crash/data loss) but a real UX-correctness gap on an authenticated action. Fix: pass onError to mutate() (or read cancelInquiry.isError) and surface a retry/error message; keep the confirm open or re-open on failure."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web]",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx — the search-results empty state (Epic 44 Story 44.2) is hardcoded English; the component imports NO next-intl (grep count 0).",
+        "L76 '<h3>No listings found</h3>' and L77-79 'Try adjusting your filters or search criteria to find more properties.' render in English for all locales.",
+        "This is the primary zero-results surface for the public search on a 4-locale portal (sk/cs/de/en); a Slovak/Czech/German visitor with no matches sees English-only guidance. The sibling isLoading skeleton and populated states carry no text, so only the empty branch needs wrapping in useTranslations."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-08-24.md && head -1 .research/briefs/2026-08-24.md | grep -q '^# 2026-08-24$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:.research/state.json) '(.last_pr_seen != $p.last_pr_seen) or ...' .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s per G4 spec (non-cumulative signals with score_delta!=0 not in prior seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5_cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5_decay",
+      "passed": true,
+      "command": "no open items older than 14 days (none qualified this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'plans/<slug>.md' brief for 'adversarial pass:' — both plans annotated",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7_count",
+      "passed": true,
+      "command": "count of new .md files under plans/ (excluding _archive)",
+      "observed": "2",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7_metadata",
+      "passed": true,
+      "command": "all 4 metadata fields present in both new plans",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7_headings",
+      "passed": true,
+      "command": "all 11 ## headings present in both new plans",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7_capability",
+      "passed": true,
+      "command": "at least one - [x] in both plans",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7_mode",
+      "passed": true,
+      "command": "grep -E '^Mode: (local-only|cloud-ok)$' both plans",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7_files_exist",
+      "passed": true,
+      "command": "all bullets under ## Files resolve on disk",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached grep -E 'sk-ant-|ANTHROPIC_API_KEY|...|.rlt.sk|192.168.13.|10.8.0.|$2y$05$' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md == staged backlog.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run",
+      "observed": "n/a",
+      "expected": "pass on no-failure runs"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs exist in plans/ or plans/_archive/",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now (8) >= at HEAD (8)",
+      "observed": "8>=8",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md == staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length <= 3 and 0 in all categories (kill switch not set; no candidate met bar)",
+      "observed": "[]",
+      "expected": "[]"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 not run this fire (buffer-refill mode); management artifacts unchanged",
+      "observed": "n/a",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached — telegram token pattern search",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

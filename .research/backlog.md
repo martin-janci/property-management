@@ -1,11 +1,14 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-22 03:03 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-24 15:00 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
-| 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | ready | 2026-08-22 | [plan](plans/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
+| 3 | bug | `code-review-api-core-syndication-processor-unwired-stub` | api-core: syndication processor is a simulation stub — no HTTP call to portal, no worker drains SYND | ready | 2026-08-24 | [plan](plans/code-review-api-core-syndication-processor-unwired-stub.md) |
+| 3 | bug | `code-review-mobile-native-kmp-create-listing-not-implemented` | mobile-native-kmp: the CreateListing screen renders a form but the submit handler is a no-op — nothi | open | 2026-08-24 |  |
+| 3 | bug | `code-review-ppt-web-ui-community-wired-nonfunctional` | ppt-web-ui: /community routes are mounted in production but every handler is a no-op and pages rende | ready | 2026-08-24 | [plan](plans/code-review-ppt-web-ui-community-wired-nonfunctional.md) |
+| 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | open | 2026-08-16 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
@@ -35,6 +38,19 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-api-core-docgen-empty-llm-blank-doc` | api-core: document-generation service ships a blank template when LLM returns empty — no fallback, n | open | 2026-08-24 |  |
+| 2 | bug | `code-review-api-handlers-summarize-discards-persist-err` | api-handlers: document-summarize handler discards persist errors — the LLM output never lands but th | open | 2026-08-24 |  |
+| 2 | bug | `code-review-api-handlers-workflow-enable-silent-fail` | api-handlers: workflow enable endpoint silently returns 200 when the DB update fails — the workflow  | open | 2026-08-24 |  |
+| 2 | bug | `code-review-mobile-native-kmp-compose-notnull-assertions` | mobile-native-kmp: several Compose screens use `!!` on nullable state; a null slips through and NPE  | open | 2026-08-24 |  |
+| 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-24 |  |
+| 2 | bug | `code-review-ppt-web-ui-bookfacility-silent-availability` | ppt-web-ui: BookFacility silently treats an availability-lookup error as `available=true` — users ca | open | 2026-08-24 |  |
+| 2 | bug | `code-review-ppt-web-ui-facilities-silent-load-errors` | ppt-web-ui: FacilitiesPage swallows list-load errors — the UI shows an empty grid instead of an erro | open | 2026-08-24 |  |
+| 2 | bug | `code-review-ppt-web-ui-invoice-empty-items` | ppt-web-ui: AccountingInvoiceForm lets the user submit an invoice with zero line-items — 400 comes b | open | 2026-08-24 |  |
+| 2 | bug | `code-review-reality-server-drainer-mark-fail-redeliver` | reality-server: search-alert drainer marks a job failed but does not schedule redelivery — one flaky | open | 2026-08-24 |  |
+| 2 | bug | `code-review-reality-server-sso-sessions-unbounded-map` | reality-server: SSO in-memory session map grows unbounded — no TTL, no LRU; leaks memory over time a | open | 2026-08-24 |  |
+| 2 | bug | `code-review-reality-web-agency-slug-i18n` | reality-web: realtor agency slug labels are hardcoded English — not routed through next-intl | open | 2026-08-24 |  |
+| 2 | bug | `code-review-reality-web-checksession-5xx-logout` | reality-web: auth-context treats every /check-session 5xx as an expired session and forces logout —  | open | 2026-08-24 |  |
+| 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-ppt-web-ui-verification-badge-expired-as-soon` | ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal s | done | 2026-08-21 |  |
 | 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inqui | done | 2026-08-20 |  |
 | 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | done | 2026-08-19 |  |
@@ -107,7 +123,7 @@
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic,  | done | 2026-07-05 |  |
 | 2 | test-gap | `test-gap-hotfix-no-test-pr-959-reality-listings-pagination` | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | done | 2026-07-05 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic  | done | 2026-06-16 |  |
-| 2 | test-gap | `unchecked-todo-pr-1196` | PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO  | dropped | 2026-06-10 |  |
+| 2 | test-gap | `unchecked-todo-pr-1196` | PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO | dropped | 2026-06-10 |  |
 | 2 | dx | `dx-push-fanout-blpop-drain` | PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op | done | 2026-06-06 |  |
 | 2 | refactor | `refactor-ai-rs-module-split` | ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod | done | 2026-06-06 |  |
 | 2 | refactor | `refactor-announcements-rs-hot` | announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work) | done | 2026-06-06 |  |
@@ -147,6 +163,25 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | refactor | `churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs` | granular_notification.rs churn-hotspot — backend/crates/db/src/repositories/granular_notification.rs | open | 2026-08-24 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-quiet-hours-drain-rs` | quiet_hours_drain.rs churn-hotspot — backend/servers/api-server/src/services/quiet_hours_drain.rs (f | open | 2026-08-24 |  |
+| 1 | refactor | `churn-hotspot-frontend-apps-ppt-web-src-features-marketplace-components-verification-badge-tsx` | VerificationBadge.tsx churn-hotspot — frontend/apps/ppt-web/src/features/marketplace/components/Veri | open | 2026-08-24 |  |
+| 1 | bug | `code-review-api-handlers-upload-folderid-parse-swallow` | api-handlers: document upload silently swallows a malformed folder_id — file lands in root instead o | open | 2026-08-24 |  |
+| 1 | refactor | `code-review-mobile-rn-thread-detail-hardcoded-en` | ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks) | done | 2026-08-24 |  |
+| 1 | refactor | `code-review-mobile-rn-voice-cmd-hardcoded-en` | Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX) | done | 2026-08-24 |  |
+| 1 | bug | `code-review-ppt-web-ui-buildings-pages-no-i18n` | ppt-web-ui: buildings pages render hardcoded English labels — not routed through t(), no locale bund | open | 2026-08-24 |  |
+| 1 | refactor | `code-review-ppt-web-ui-facilities-hardcoded-i18n` | ppt-web-ui: BookFacility page uses hardcoded English labels — not localised to sk/cs/de/en | open | 2026-08-24 |  |
+| 1 | bug | `code-review-ppt-web-ui-invoice-vat-table-drift` | ppt-web-ui: AccountingInvoiceForm VAT-rate table drifted from the backend — 21% row is stale and cal | open | 2026-08-24 |  |
+| 1 | refactor | `code-review-ppt-web-ui-native-confirm-dialogs` | ppt-web-ui: ConfirmationDialog uses window.confirm() in 6 call-sites — bypasses design system + hard | open | 2026-08-24 |  |
+| 1 | bug | `code-review-ppt-web-ui-reports-page-no-i18n` | ppt-web-ui: ReportsPage headings and empty-state strings are hardcoded English — not routed through  | open | 2026-08-24 |  |
+| 1 | bug | `code-review-reality-server-url-validator-cgnat-gap` | reality-server: SSRF URL validator blocks RFC1918 + link-local but misses the CGNAT range 100.64.0.0 | open | 2026-08-24 |  |
+| 1 | bug | `code-review-reality-web-compare-button-i18n` | reality-web: CompareButton label is hardcoded English — no next-intl key | open | 2026-08-24 |  |
+| 1 | bug | `code-review-reality-web-comparison-tray-i18n` | reality-web: ComparisonTray strings are hardcoded English — no next-intl keys | open | 2026-08-24 |  |
+| 1 | bug | `code-review-reality-web-inquiry-cancel-no-error` | reality-web: cancel-inquiry action shows a success toast even on 5xx failures — user thinks it was c | open | 2026-08-24 |  |
+| 1 | bug | `code-review-reality-web-listing-grid-empty-i18n` | reality-web: ListingGrid empty-state text is hardcoded English — no next-intl key | open | 2026-08-24 |  |
+| 1 | refactor | `stalled-review-pr-2744` | Stalled review: PR #2744 (auto-impl/gh-issue-2743) 11 days open, needs-human-review, self-PR the bot | open | 2026-08-24 |  |
+| 1 | bug | `code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow` | ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcod | done | 2026-08-22 |  |
+| 1 | bug | `code-review-ppt-web-ui-facilities-booking-hardcoded-i18n` | ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslat | done | 2026-08-22 |  |
 | 1 | bug | `code-review-ppt-web-ui-submission-preview-modal-orphan` | ppt-web SubmissionPreviewModal is exported but rendered by no page — orphaned dead component with si | done | 2026-08-21 |  |
 | 1 | i18n | `code-review-ppt-web-ui-vote-detail-hardcoded-en` | ppt-web VoteDetailPage hardcodes English (native window.prompt + toast titles) on i18n voting page | done | 2026-08-21 |  |
 | 1 | bug | `code-review-reality-server-saved-search-watermark-discard` | reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing  | done | 2026-08-20 |  |
