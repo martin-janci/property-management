@@ -1,0 +1,277 @@
+{
+  "run": {
+    "date": "2026-08-24",
+    "iso": "2026-08-24T04:00:00Z",
+    "trigger": "buffer-low: claimable=6/72 \u2014 all open backlog is mobile-native-gated; refill planner with landable backend/frontend/reality work",
+    "lag_hours": 49
+  },
+  "phase_1": {
+    "merged_prs_since_last_run": 13,
+    "pr_range": {
+      "lo": 2821,
+      "hi": 2838
+    },
+    "new_issues": 0,
+    "open_prs_touched": 3
+  },
+  "phase_1_5": {
+    "segment_reviewed": "ppt-web-ui",
+    "selection_reason": "churn-aligned",
+    "experts_used": [
+      "frontend"
+    ],
+    "findings_count": 2
+  },
+  "phase_1_6": {
+    "skipped": true,
+    "reason": "trigger-focused run \u2014 buffer refill priority; skip role rotation and coverage-upkeep to conserve budget. pm_cursor and coverage_cursor unchanged (G16 gate is no-op when Phase 1.6 skipped)."
+  },
+  "phase_2": {
+    "signals_applied": 9,
+    "backlog_items_created": 4,
+    "decayed": [],
+    "resolved_by_merged_pr": []
+  },
+  "phase_3": {
+    "promoted": [],
+    "cap": 2,
+    "reason_no_promotion": "Both new landable code-review findings score 2 (medium confidence, non-security), below score>=3 promotion gate. The 5 pre-existing open items are all mobile-native (unlandable in cloud); the sole score-3 item already has an active plan."
+  },
+  "phase_5": {
+    "skipped": true,
+    "reason": "no candidate \u2014 Phase 5 allowlist requires signal.confidence=high AND score>=3. All this-run signals with high confidence (dep-update-noise, lag_warning, churn-*) have score_delta=0 or are logged-only."
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-24",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine has not run since 2026-08-22T03:03Z (48h ago, ~2d)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2810 (open): chore(deps): bump the npm-minor-patch group across 1 directory with 32 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2809 (open): chore(deps): bump the cargo-minor-patch group across 1 directory with 9 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2808 (open): chore(deps): bump androidx.compose:compose-bom from 2026.06.01 to 2026.08.00"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-quiet-hours-drain-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2834",
+      "file": "backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2834 touched quiet_hours_drain.rs (+52/-3) adding at-most-once replica claim (issue #2831)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2834",
+      "file": "backend/crates/db/src/repositories/granular_notification.rs",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2834 touched granular_notification.rs (+47/-12) replacing plain SELECT with atomic UPDATE ... FOR UPDATE SKIP LOCKED claim"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "repeated-churn",
+      "source": "PR #2838",
+      "file": "backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #2838 (churn-hotspot-voice-webhooks-rs-retry1) merged 2026-08-23 \u2014 centralized voice OAuth token encryption (+68/-27); runs_seen now 4, addressed by refactor"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-votedetail-window-prompt",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.tsx:143 \u2014 cancel-vote reason collected via window.prompt(); same anti-pattern PR #2829 just replaced in AmlDashboardPage with an accessible in-app dialog (see InitiateEddDialog/ReviewAssessmentDialog). Churn-warm (PR #2820 touched this file 2026-08-21)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-booking-toast-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:46 \u2014 error toasts introduced by PR #2828 use hardcoded English titles ('Failed to load pending bookings', 'Failed to approve booking', 'Failed to reject booking') though the file already calls useTranslation() and uses t() (line 118). Same regression in MyBookingsPage.tsx:45,86 (cancel + fetch toasts). Fresh i18n gap on the exact user-facing error path the PR was meant to fix."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ... state.json",
+      "observed": "true",
+      "expected": "true",
+      "note": "last_pr_seen 2820\u21922838; seen_signals +9; hotspot_history +2 rows"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq \u2014 no re-scored non-cumulative signal ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true",
+      "note": "decay N/A this run \u2014 all open items updated within 14d"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans in _archive listing \u2014 0 promoted",
+      "observed": "0 promotions",
+      "expected": "0 promotions match 0 adversarial annotations"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached -A -- plans/ | count",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | secrets grep",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed this run",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs all still resolve (no deletions this run)",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + kill-switch honored (no actions this run)",
+      "observed": "0 actions",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 G16 is a no-op",
+      "observed": "SKIP",
+      "expected": "no-op when Phase 1.6 skipped",
+      "note": "pm_cursor/coverage_cursor unchanged; no management artifacts written"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
+  ]
+}
