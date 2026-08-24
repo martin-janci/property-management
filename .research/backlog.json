@@ -2,6 +2,106 @@
   "version": 1,
   "items": [
     {
+      "id": "code-review-mobile-native-kmp-android-session-not-persisted",
+      "title": "mobile-native-kmp Android: SsoService scoped to MainActivity + no session token store — rotation / cold restart silently signs the user out",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-08-24 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "MainActivity.kt:37 — private val ssoService = SsoService() scopes auth session to the Activity instance",
+        "AndroidManifest.xml:25 — .MainActivity has no android:configChanges; framework recreates on rotation / dark-mode / locale / fontScale",
+        "SsoService.kt:29 — _authState and sessionToken are in-memory-only fields",
+        "SsoService.kt:318 — restoreSession() exists; iOS calls it (RealityPortalApp.swift:87), Android has no caller",
+        "grep for EncryptedSharedPreferences|SharedPreferences|DataStore under androidApp/src/main + shared/src returns 0 hits — no persistence primitive at all"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
+        "mobile-native/androidApp/src/main/AndroidManifest.xml",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": "plans/code-review-mobile-native-kmp-android-session-not-persisted.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub-submit",
+      "title": "mobile-native-kmp Android CreateListingScreen Publish button is a hard NotImplementedError stub — realtor can't create listings; live POST /api/v1/my/listings exists",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-08-24 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "Navigation.kt:493 — onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) } for the live Screen.CreateListing route",
+        "CreateListingScreen.kt:318-344 — DraftSavedPill + ProgressHeader hard-coded to 100% / DRAFT SAVED, misleading UI while the submit always fails",
+        "backend/servers/reality-server/src/routes/portal_listings.rs:24 — POST / (create_listing at line 207) already exists and returns 201; the mobile stub is blocking a live endpoint",
+        "PortalListingsRepository.kt has list/analytics/portfolio methods but no createListing — the stub's blocker is the missing repo method, not a missing endpoint"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-agency-hub-fabricated-metrics",
+      "title": "mobile-native-kmp Android AgencyHubScreen renders hardcoded '42 active / 18 new / 2.4h avg' stats and an invented activity feed on a live release route",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-08-24 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "AgencyHubScreen.kt:167 / :174 / :182 — StatCard(value=\"42\", delta=\"+3\"), StatCard(value=\"18\", delta=\"+5\"), StatCard(value=\"2.4h\", delta=\"-12%\") — literals dressed as live metrics",
+        "AgencyHubScreen.kt:440-470 activitySamples() invents rows: 'Katarína Molnár · 4 min ago', 'Peter Varga · Tue 16:00' — fake activity feed",
+        "Navigation.kt:410 — Screen.AgencyHub route registered as a real release destination (not @Preview)",
+        "AgencyHubScreen composable takes no data parameters (line 39-46 — only nav lambdas), so there is no seam through which real data could arrive; structurally unwired",
+        "AccountScreen.kt:145 comment 'null so StatCard renders an em-dash instead of a fake 0.' shows the app already has an honest-empty-state convention this screen ignores"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/agency/AgencyHubScreen.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "title": "stalled review: PR #2744 dispatcher un-wedge (11d open as DRAFT, CI green, dispatcher-reviewer verdict=approve, blocking whole pipeline)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 open 11d as DRAFT with label needs-human-review; no GitHub reviewDecision",
+        "assignments.json reviewer_summary: verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green (2026-08-24T02:26Z)",
+        "all 28 check-runs completed with success/skipped — 0 failures; verify-all.sh --quick success; mergeable_state=clean",
+        "PR fixes recurrence-15 open self-improvement finding: dispatcher archive-push wedge (assignments-archive.json is now 758KB, action-list-archive.json is 702KB, both ~11x over the 64KiB MCP inline ceiling)",
+        "dispatcher pipeline buffer-drained on every run since 2026-08-23 12:25 (0 claimed / 0 reviewed / 0 merged); #2744 is its only active row"
+      ],
+      "files": [
+        ".research/README.md"
+      ],
+      "created_at": "2026-08-24",
+      "updated_at": "2026-08-24",
+      "plan": null
+    },
+    {
       "id": "test-gap-inquiry-idor-regression",
       "title": "Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497)",
       "vector": "test-gap",

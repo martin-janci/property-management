@@ -1,0 +1,248 @@
+{
+  "generated_at": "2026-08-24T03:20:00Z",
+  "range": {
+    "since_iso": "2026-08-22T03:03:20Z",
+    "last_pr_seen_before": 2820,
+    "last_issue_seen_before": 2816,
+    "last_commit_sha_before": "e59dca8b157df58eceb9a612c61585efd07216ac"
+  },
+  "phases": {
+    "phase_1": "ok",
+    "phase_1_5": "ok — mobile-native-kmp segment reviewed; 3 findings",
+    "phase_1_6": "ok — pm-qa role rotation + Scrum Master synthesis; coverage upkeep on epic index 5",
+    "phase_2": "ok",
+    "phase_3": "ok — 1 plan promoted (android-session-not-persisted)",
+    "phase_4": "ok",
+    "phase_5": "no candidate — allowlist matched no signal at score>=3 confidence=high this run",
+    "phase_6": "pending"
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 1.5 findings are score<=3 but their signal type (code-review-finding) is not on the Phase 5 allowlist; stalled-review-pr-2744 matched allowlist but the routine intentionally did not comment — the human already sees it and a routine ping on an approved-but-drafted PR would be noise, not signal",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-24",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-08-22T03:03:20Z (~48h ago); exceeds 36h lag threshold"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2744 (fix(dispatcher): un-wedge oversize-archive push (#1162) + close retry-remint cross-id ghost (#2460)) open 11d as DRAFT, no GitHub reviewDecision",
+        "assignments.json reviewer_summary: verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green as of 2026-08-24T02:26:18Z",
+        "all 28 check-runs completed with success/skipped, 0 failures; verify-all.sh --quick success; mergeable_state=clean",
+        "dispatcher pipeline buffer-drained (0/6 claimable) on every run since 2026-08-23 12:25; #2744 is its only active row",
+        "PR fixes recurrence-15 self-improvement finding: archive files 758KB + 702KB, both ~11x over the 64KiB MCP inline push ceiling; guard fail-closes wedging Phase 6 push"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "type": "churn-hotspot",
+      "source": "commit range e59dca8b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "quiet_hours_drain.rs +/- 242 lines across #2826 (per-channel bookkeeping) and #2834 (atomic claim); two follow-ups to the held-notification drain in one week"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commit range e59dca8b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "AmlDashboardPage.tsx +/- 199 lines across #2829 (prompt/alert -> in-app dialogs) and #2833 (state-reset follow-up) within 10h"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx",
+      "type": "churn-hotspot",
+      "source": "commit range e59dca8b..origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "ReviewAssessmentDialog.tsx +/- 153 lines in #2829"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-android-session-not-persisted",
+      "type": "code-review-finding",
+      "source": "review:mobile-native-kmp",
+      "score_delta": 3,
+      "severity": "high",
+      "evidence": [
+        "MainActivity.kt:37 — private val ssoService = SsoService() scopes auth to the Activity instance",
+        "AndroidManifest.xml:25 — .MainActivity declared without android:configChanges",
+        "SsoService.kt:29 — _authState + sessionToken are in-memory-only fields",
+        "SsoService.kt:318 — restoreSession() exists; iOS calls it (RealityPortalApp.swift:87), Android has no caller",
+        "grep EncryptedSharedPreferences|SharedPreferences|DataStore under androidApp/src/main + shared/src returns 0 hits"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub-submit",
+      "type": "code-review-finding",
+      "source": "review:mobile-native-kmp",
+      "score_delta": 2,
+      "severity": "medium",
+      "evidence": [
+        "Navigation.kt:493 — onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) } on the live Screen.CreateListing route",
+        "backend/servers/reality-server/src/routes/portal_listings.rs:24 — POST / (create_listing at line 207) already exists and returns 201",
+        "PortalListingsRepository.kt exposes list/analytics/portfolio but no createListing"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-agency-hub-fabricated-metrics",
+      "type": "code-review-finding",
+      "source": "review:mobile-native-kmp",
+      "score_delta": 2,
+      "severity": "medium",
+      "evidence": [
+        "AgencyHubScreen.kt:167/:174/:182 — StatCard(value=\"42\"/\"18\"/\"2.4h\", delta=\"+3\"/\"+5\"/\"-12%\") — literals dressed as live metrics",
+        "AgencyHubScreen.kt:440-470 activitySamples() invents rows: 'Katarína Molnár · 4 min ago', 'Peter Varga · Tue 16:00'",
+        "Navigation.kt:410 — Screen.AgencyHub route is a real release destination (not @Preview)",
+        "composable takes no data parameters — structurally unwired, not merely unpopulated"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id]|length==unique|length .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s cumulative-carveout dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay walk",
+      "observed": "[.items[]|select(.score>8)]|length==0=true; decay violations=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep new plan basenames in brief with adversarial pass:",
+      "observed": "OK for 1 new plan",
+      "expected": "OK for each"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "metadata=4/4 headings=11/11 cap>=1 mode declared files-on-disk",
+      "observed": "1 new plan, meta=4/4 headings=11/11 cap=2 mode=1 files-exist=3/3",
+      "expected": "all"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed: line",
+      "observed": "none",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "walk prior HEAD plan slugs vs current tree",
+      "observed": "no silent deletes",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "8>=8",
+      "expected": "cur>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq caps on auto_fix_actions",
+      "observed": "[]",
+      "expected": "len<=3, pr<=1, issue<=1, comment<=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + GC7 coverage_cursor advance",
+      "observed": "epics=13 cc=5->6 pm=3->4",
+      "expected": "cc in [0,epics) and advanced when pm advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "scan staged + lines for Telegram bot-token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

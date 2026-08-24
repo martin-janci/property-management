@@ -71,7 +71,7 @@
       "action": "dispatcher: two previously-fixed defects have recurred — archives again exceed MCP push ceiling (was #1162), retry-remint ghost retry (was #2460) (Closes #2743)",
       "owner_role": "pm-tech-lead",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-08-13T04:24:01Z (#2743)",
       "deadline": null,
       "dependency": null,
@@ -86,7 +86,9 @@
           "infra",
           "dispatcher"
         ]
-      }
+      },
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "closed by issue #2743 close (dispatcher un-wedge); draft PR #2744 still open — tracked as a separate coordination action"
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
@@ -179,7 +181,7 @@
       "action": "repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 2)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -189,7 +191,9 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2838 merged 2026-08-23 — voice OAuth token encryption centralized"
     },
     {
       "id": "code-review-mobile-rn-nfc-securestore-2kb-blob",
@@ -310,7 +314,7 @@
       "action": "Follow-up: CSV export sanitizer does not neutralize CR/LF in free-form cells (PR #2731) (Closes #2822)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2822)",
       "deadline": null,
       "dependency": null,
@@ -323,14 +327,16 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2827 merged 2026-08-22 — CSV export sanitizer neutralizes CR/LF"
     },
     {
       "id": "gh-issue-2823",
       "action": "Follow-up: held-notification drain re-delivers already-sent channels on partial failure + no retry cap (PR #2729) (Closes #2823)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2823)",
       "deadline": null,
       "dependency": null,
@@ -343,14 +349,16 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2826 merged 2026-08-22 — per-channel bookkeeping + bounded retry for held-notification drain"
     },
     {
       "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
       "action": "ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manager & tenant see no failure feedback",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -361,14 +369,16 @@
         "score": 2,
         "vector": "bug"
       },
-      "last_updated": "2026-08-22T10:24:03Z"
+      "last_updated": "2026-08-22T10:24:03Z",
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2828 merged 2026-08-22 — booking fetch/approve/reject/cancel errors surfaced"
     },
     {
       "id": "code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow",
       "action": "ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcoded English strings (TODO Phase-2 unshipped)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -379,14 +389,16 @@
         "score": 1,
         "vector": "bug"
       },
-      "last_updated": "2026-08-22T10:24:03Z"
+      "last_updated": "2026-08-22T10:24:03Z",
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2829 merged 2026-08-22 — prompt/alert decision flow replaced with in-app dialogs + i18n (spawned #2832)"
     },
     {
       "id": "gh-issue-2831",
       "action": "Follow-up: quiet-hours drain still double-delivers held notifications under >1 api-server replica (PR #2826) (Closes #2831)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-08-22T18:32:16Z (#2831)",
       "deadline": null,
       "dependency": null,
@@ -399,14 +411,16 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2834 merged 2026-08-23 — atomic replica claim, at-most-once held-notification delivery"
     },
     {
       "id": "gh-issue-2832",
       "action": "Follow-up: AML EDD / Review dialogs retain stale reason/notes across assessments (PR #2829) (Closes #2832)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-08-22T18:32:16Z (#2832)",
       "deadline": null,
       "dependency": null,
@@ -419,8 +433,248 @@
           "follow-up",
           "from-merged-review"
         ]
+      },
+      "resolved_at": "2026-08-24T03:12:08Z",
+      "resolution": "PR #2833 merged 2026-08-23 — AML EDD/Review dialog state reset per assessment"
+    },
+    {
+      "id": "pm-qa-migration-prs-require-sqlx-test",
+      "action": "Add a mechanical pre-merge gate: any PR whose diff touches backend/crates/db/migrations/** MUST add >=1 #[sqlx::test] in the same diff. Evidence: PR #2826 shipped migration 00234 + GranularNotificationRepository changes with 8 pure in-process #[test] and ZERO DB-backed tests, and regressed 48h later as #2831 (cross-replica double delivery); the fix PR #2834 then added exactly the two #[sqlx::test] cases that would have caught it.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-qa-reviewer-prompt-test-level-table",
+      "action": "Add a risk-class -> required-test-level table to .research/management/pr-reviewer-prompt.md and carve concurrency / cross-process / component-lifecycle changes out of its current 'Test files ... Skim: read assertions but don't deeply audit fixtures' rule. Both intra-window regressions this window were LEVEL mismatches (unit where DB/multi-replica was needed; happy-path render where remount was needed), not missing-tests.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-qa-dialog-remount-reset-test-convention",
+      "action": "Make 're-open the dialog for a different subject' a required test case for every ppt-web dialog that holds useState (the #2832 defect class). PR #2833 added exactly two such cases to AmlDashboardPage.test.tsx; the sibling dialogs (ReviewAssessmentDialog.tsx, InitiateEddDialog.tsx) still have no test file of their own.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-qa-compliance-feature-test-floor",
+      "action": "ppt-web features/compliance ships 3 pages + 7 components behind a single test file (AmlDashboardPage.test.tsx). Add test files for ReviewAssessmentDialog, InitiateEddDialog and ContentModerationPage before further regulated-flow (AML/EDD/DSA) changes land — this is the highest-churn UI area with the thinnest test floor.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-qa-voice-token-encryption-regression-tests",
+      "action": "Add regression tests for the centralized voice OAuth token encryption from PR #2838 (single-file crypto refactor, 1 test marker, on a file that is a repeat churn hotspot): encrypt/decrypt round-trip, wrong-key reject, and the legacy-plaintext read path. Untested crypto centralization on a churn hotspot is the next most likely from-merged-review follow-up.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-qa-track-post-merge-rework-rate",
+      "action": "Track a 'post-merge rework rate' metric in the routine digest = (from-merged-review PRs) / (PRs merged) per window, plus the post-merge-review with_issues/prs_scanned ratio. It moved from 0/52 across 2026-08-06..08-14 to 8/36 over 2026-08-20..08-23 (22%) and 5/13 (38%) this window, and nothing currently surfaces the trend.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-scrum-master-run-deep-coverage-scan",
+      "action": "Run the LOCAL /ppt-project-management scan to rebuild coverage.json. The 49-story map is now 49/49 done (84-1 and 84-2 cleared as stale this run), so the gap-driven ranker has zero story candidates left; meanwhile 8 of the 13 PRs merged this window (AML/compliance, facilities booking, verification badge, voice assistant) map to NO story in the map at all.",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-scrum-master-accounting-trio-26d-starved",
+      "action": "Resolve the UC-ACC-05 accounting trio #2555 / #2558 / #2559 — 26 days open, zero reviewer engagement, untouched since the last run. Either assign a reviewer and merge, or close and re-plan; it has been the named top delivery blocker since 2026-07-30 without movement.",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-scrum-master-draft-2744-decision",
+      "action": "Decide on draft PR #2744 (dispatcher un-wedge fix, 10 days, still DRAFT): the issue it tracked (#2743) is now closed, so either finish and land the PR or close it to stop it counting as human-authored open work.",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-scrum-master-dependabot-batch-triage",
+      "action": "Triage the 13 open dependabot PRs against dev — none touched since the last run. Batch-merge the green ones (auto-approve gate already exists) so open-PR count reflects real human work.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "pm-scrum-master-sprint-status-epic80-header-drift",
+      "action": "Reconcile _bmad-output/implementation-artifacts/sprint-status.yaml: the epics.epic-80 header still reads status=partial / stories_completed=1 while its own development_status lists 80-1, 80-2 and 80-3 all done. Surfaced by this run's epic-80 coverage re-check.",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-analysis 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-33-1",
+      "action": "Link UC-33.1 to a dispute screen-map (docs/screens/ppt/disputes.md | dispute-detail.md | file-dispute.md) — screen_gaps.missing_use_cases from coverage.json.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "gap-scan 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-33-2",
+      "action": "Link UC-33.2 to a dispute screen-map (docs/screens/ppt/disputes.md | dispute-detail.md | file-dispute.md) — screen_gaps.missing_use_cases from coverage.json.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "gap-scan 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
+      }
+    },
+    {
+      "id": "gap-screens-link-uc-33-3",
+      "action": "Link UC-33.3 to a dispute screen-map (docs/screens/ppt/disputes.md | dispute-detail.md | file-dispute.md) — screen_gaps.missing_use_cases from coverage.json.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "gap-scan 2026-08-24",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-24T03:12:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": null
       }
     }
   ],
-  "generated": "2026-08-20T20:28:24Z"
+  "generated": "2026-08-24T03:12:08Z"
 }

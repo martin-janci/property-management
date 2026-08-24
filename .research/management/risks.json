@@ -1,89 +1,78 @@
 {
   "version": 1,
-  "generated": "2026-07-30T03:23:50Z",
+  "generated": "2026-08-24T03:12:08Z",
   "items": [
     {
-      "id": "risk-layout-webhook-replay-2026-07-23",
-      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
-      "owner_role": "pm-security",
-      "source": "post-merge review 2026-07-23"
-    },
-    {
-      "id": "risk-mobile-layout-cache-cross-tenant-2026-07-23",
-      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch",
+      "id": "pm-backend-disputes-kpis-window-validation-gap-2026-07-30",
+      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
       "probability": "medium",
       "impact": "medium",
-      "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
-      "owner_role": "pm-security",
-      "source": "post-merge review 2026-07-23"
-    },
-    {
-      "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
-      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
-      "probability": "low",
-      "impact": "high",
-      "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
-      "owner_role": "pm-security",
-      "source": "post-merge review 2026-07-23 (#2483)"
-    },
-    {
-      "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
-      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
-      "owner_role": "pm-qa",
-      "source": "post-merge review 2026-07-23 (#2484)"
-    },
-    {
-      "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
-      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
-      "probability": "high",
-      "impact": "medium",
-      "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
-      "owner_role": "pm-data",
-      "source": "pm-data 2026-07-23 rotating role"
-    },
-    {
-      "id": "risk-data-retention-policy-missing-2026-07-23",
-      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk",
-      "probability": "medium",
-      "impact": "medium",
-      "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
-      "owner_role": "pm-data",
-      "source": "pm-data 2026-07-23"
-    },
-    {
-      "id": "risk-metric-definition-drift-2026-07-23",
-      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other",
-      "probability": "high",
-      "impact": "medium",
-      "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
-      "owner_role": "pm-data",
-      "source": "pm-data 2026-05-28 (reopened 2026-07-23)"
-    },
-    {
-      "id": "risk-webhook-cross-integration-drift-2026-07-23",
-      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
-      "owner_role": "pm-integration",
-      "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)"
-    },
-    {
-      "id": "pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30",
-      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Land a reference-count guard + integration test before any client wires the endpoint",
+      "mitigation": "Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract",
       "owner_role": "pm-backend",
       "trigger": null,
       "status": "open",
-      "source": "pm-scrum-master 2026-07-30 (#2573 follow-up on PR #2571)"
+      "source": "pm-backend 2026-07-30 (#2575)"
+    },
+    {
+      "id": "pm-qa-compliance-ui-single-test-file-2026-08-24",
+      "risk": "ppt-web features/compliance ships 3 pages and 7 components behind a single test file (AmlDashboardPage.test.tsx). It is simultaneously the window's highest-churn UI area (AmlDashboardPage.tsx and ReviewAssessmentDialog.tsx both in CHURN_FILES) and the most regulated one (AML / EDD / DSA decisions).",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Set a test floor for features/compliance: a test file per dialog and page before further regulated-flow changes land (ReviewAssessmentDialog, InitiateEddDialog, ContentModerationPage first).",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-coverage-map-does-not-cover-changed-code-2026-08-24",
+      "risk": "8 of the 13 PRs merged this window (AML/compliance, facilities booking, verification badge, voice assistant) map to NO story in coverage.json. QA therefore has no acceptance-criteria anchor for the majority of the code actually changing, and the gap-driven ranker cannot see that work at all.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Run the local deep /ppt-project-management scan to re-derive the story set from the current epics catalog; until then treat post-merge review findings as the only AC signal for those areas.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-post-merge-review-became-the-real-gate-2026-08-24",
+      "risk": "Post-merge review has become the de-facto correctness gate rather than a safety net. post-merge-review.json with_issues/prs_scanned went 0/52 across 2026-08-06..08-14 to 8/36 across 2026-08-20..08-23 (22%). Defects now reach `dev` and get fixed on `dev`, so every regression costs a full extra PR cycle and inflates apparent throughput.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Track post-merge rework rate in the digest; move the two enumerable defect classes (DB-concurrency, component-lifecycle) into the pre-merge reviewer's required checks so the ratio is observable and falling.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-premerge-gate-under-catching-2026-08-24",
+      "risk": "The pre-merge review gate is accepting LEVEL-MISMATCHED tests, not missing ones. 5 of 13 PRs merged this window were from-merged-review follow-ups and two files were each patched twice inside 48h. #2826 added migration 00234 + repository changes with 8 pure in-process #[test] and zero #[sqlx::test], and regressed as #2831 (cross-replica double delivery); #2829 added 4 happy-path `it()` cases with no dialog-remount case and regressed as #2832 (stale EDD/Review state). pr-reviewer-prompt.md explicitly tells the reviewer to 'Skim' test files, so both read as well-tested.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add a risk-class -> required-test-level table to pr-reviewer-prompt.md and a mechanical gate: diff touching backend/crates/db/migrations/** must add >=1 #[sqlx::test]; diff touching a *Dialog.tsx holding useState must add a re-open-for-different-subject case.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-untested-crypto-refactor-on-churn-hotspot-2026-08-24",
+      "risk": "PR #2838 centralized voice OAuth token encryption as a single-file change to routes/voice_webhooks.rs with one added test marker — on a file already tracked as a repeated churn hotspot. A crypto-centralization refactor without encrypt/decrypt round-trip, wrong-key and legacy-plaintext-read coverage can fail silently in prod (tokens that decrypt to garbage rather than erroring).",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add the three regression cases before further voice_webhooks.rs churn; treat crypto-touching diffs as a required-test risk class in the reviewer prompt.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
+      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559, UC-ACC-05) is now 26 days open with still zero reviewer engagement and no commits since the last run. The whole accounting/invoice MVP loop is frozen behind it, and it has been the named top delivery blocker since 2026-07-30 without movement.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Assign a named reviewer this run and merge, or close all three and re-plan the accounting slice as fresh dispatcher tasks.",
+      "owner_role": "pm-tech-lead",
+      "trigger": "another routine run with #2555/#2558/#2559 untouched",
+      "status": "open",
+      "source": "pm-scrum-master 2026-07-30"
     },
     {
       "id": "pm-scrum-master-android-sso-csrf-half-wired-2026-07-30",
@@ -97,26 +86,115 @@
       "source": "pm-scrum-master 2026-07-30 (#2574 follow-up on PR #2568)"
     },
     {
-      "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
-      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement — dispatcher stack is starving on reviewer capacity, not implementer capacity",
-      "probability": "medium",
+      "id": "pm-scrum-master-coverage-map-exhausted-2026-08-24",
+      "risk": "coverage.json reached 49/49 done this run (84-1 and 84-2 cleared as stale). Gap-driven planning now yields zero story candidates, and the action-list buffer sits at 20/36 open with the shortfall unfillable from coverage. The dispatcher's claim buffer will starve within a few runs.",
+      "probability": "high",
       "impact": "medium",
-      "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs",
+      "mitigation": "Run the LOCAL /ppt-project-management scan to rebuild coverage.json against the current epics catalog; in the interim let the dispatcher's Tier-1d dev-review generator carry buffer refill.",
       "owner_role": "pm-tech-lead",
       "trigger": null,
-      "status": "open",
-      "source": "pm-scrum-master 2026-07-30"
+      "status": "open"
     },
     {
-      "id": "pm-backend-disputes-kpis-window-validation-gap-2026-07-30",
-      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
+      "id": "pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30",
+      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row",
       "probability": "medium",
-      "impact": "medium",
-      "mitigation": "Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract",
+      "impact": "high",
+      "mitigation": "Land a reference-count guard + integration test before any client wires the endpoint",
       "owner_role": "pm-backend",
       "trigger": null,
       "status": "open",
-      "source": "pm-backend 2026-07-30 (#2575)"
+      "source": "pm-scrum-master 2026-07-30 (#2573 follow-up on PR #2571)"
+    },
+    {
+      "id": "pm-scrum-master-open-pr-signal-drowned-by-dependabot-2026-08-24",
+      "risk": "13 of the 17 open PRs against dev are dependabot and none were touched since the last run. Real human-authored work (#2555, #2558, #2559, draft #2744) is 4 PRs, all stale, and is invisible in the raw open-PR count used for delivery signalling.",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Batch-merge the green dependabot PRs (the auto-approve gate already exists) and report human-authored open-PR count separately in the digest.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
+      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, layout publish)",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Sequence pm-data KPI-definition tasks (7 items just added to action-list); establish minimum-analytics DoD for future stories",
+      "owner_role": "pm-data",
+      "source": "pm-data 2026-07-23 rotating role",
+      "status": "open"
+    },
+    {
+      "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
+      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
+      "owner_role": "pm-qa",
+      "source": "post-merge review 2026-07-23 (#2484)",
+      "status": "open"
+    },
+    {
+      "id": "risk-data-retention-policy-missing-2026-07-23",
+      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
+      "owner_role": "pm-data",
+      "source": "pm-data 2026-07-23",
+      "status": "open"
+    },
+    {
+      "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
+      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
+      "owner_role": "pm-security",
+      "source": "post-merge review 2026-07-23 (#2483)",
+      "status": "open"
+    },
+    {
+      "id": "risk-layout-webhook-replay-2026-07-23",
+      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
+      "owner_role": "pm-security",
+      "source": "post-merge review 2026-07-23",
+      "status": "open"
+    },
+    {
+      "id": "risk-metric-definition-drift-2026-07-23",
+      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
+      "owner_role": "pm-data",
+      "source": "pm-data 2026-05-28 (reopened 2026-07-23)",
+      "status": "open"
+    },
+    {
+      "id": "risk-mobile-layout-cache-cross-tenant-2026-07-23",
+      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
+      "owner_role": "pm-security",
+      "source": "post-merge review 2026-07-23",
+      "status": "open"
+    },
+    {
+      "id": "risk-webhook-cross-integration-drift-2026-07-23",
+      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
+      "owner_role": "pm-integration",
+      "source": "pm-scrum-master 2026-07-23 (extrapolation from #2485)",
+      "status": "open"
     }
   ]
 }

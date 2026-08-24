@@ -1,75 +1,77 @@
 # PPT Project State
 
-_Generated: 2026-08-06 — routine Phase 1.6 lightweight upkeep (pm-frontend rotation slot). Coverage `scan_kind=upkeep`; pm_cursor idx 2 → 3 (pm-frontend → pm-qa next), coverage_cursor idx 4 → 5 (epic-7a re-checked, no material change; advances to epic-80). Sprint window 2026-08-04..08-06 shipped 25 PRs — most of the code-review/security backlog cleared; buffer-low fired from dispatcher for planner refill._
+_Generated: 2026-08-24 — routine Phase 1.6 lightweight upkeep (pm-qa rotation slot). Coverage `scan_kind=upkeep`; `pm_cursor` idx 3 → 4 (pm-qa → pm-devops next), `coverage_cursor` idx 5 → 6 (epic-80 re-checked, no status change; advances to epic-81). Window 2026-08-22T03:03:20Z → 2026-08-24T03:12:08Z: 13 PRs merged, 6 issues opened-and-closed._
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (the 84-1 direct-to-S3 upload wiring and 84-2 sign page). The 2026-07-28→07-30 window shipped **17 PRs** — a mix of dispatcher follow-up work (post-merge-review issues #2560/#2561/#2562/#2563/#2564/#2557 all closed) and security/DX hardening (Android SSO CSRF #2568, scheduler RLS-leak #2567, layout review-hardening #2478, ppt-web AuthContext stale-role #2553).
-- **Layout epic is now fully wired end-to-end:** PR #2549 landed publish/webhook/revalidate event emission + sink (closes #2532); PR #2478 hardened authz + publish TOCTOU + webhook replay; PR #2576 scheduled `layout_change_events` retention prune (closes #2563).
-- **Documents / e-signature side:** PR #2571 added org-scoped DELETE-by-file_key for direct-upload orphan cleanup (closes #2564); PR #2504 mounted signature-request list/create as a document sub-resource (BIT-313). 84-1 (direct-to-S3 frontend wiring) and 84-2 (signer page) remain the last 2 partial stories.
-- **Auto-review loop caught 3 same-window regressions:** #2573 (DELETE-by-file-key can nuke still-referenced same-org object), #2574 (Android SSO CSRF guard is half-wired — mint() has no call site so every callback is rejected), #2575 (/disputes/kpis has no window ordering validation, only test quarantined). All 3 are now queued for pm-backend / pm-mobile fixes.
-- **CI + release tooling fixes:** PR #2566 (version-bump rebase+retry — closes #2561 GH006), PR #2565 (reality-web Docker build fix — closes #2560, unblocks 6-week frontend-image gap), PR #2569 (SDK drift gate runs on client + workflow changes).
-- **Open PRs (3): accounting MVP-loop trio** (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY-by-square QR) — draft-ready since 2026-07-28 with zero reviewer engagement. This is now the top delivery blocker after the auto-fix follow-ups.
+- **Coverage closed: 49/49 stories done, 0 partial, 0 not-started** — the first fully-closed map. Both carried `partial` stories turned out to be **stale, not open**:
+  - **84-1 (S3 presigned URLs)** — `DocumentUpload.tsx` calls `useUploadDocumentDirect()`; `@ppt/api-client documents/api.ts::uploadDocumentDirect` chains `POST /api/v1/documents/upload-url` → S3 `PUT` → register, pinned by `documents/api.test.ts`.
+  - **84-2 (e-signature)** — `DocumentSignPage` routed at `/sign`; `DocumentSignaturePanel` + token-hygiene + i18n-parity tests present; screen-map `ppt/document-sign` `buildStatus: shipped`.
+- **The milestone is hollow, and that is the real finding.** 8 of the 13 PRs merged this window (AML/compliance, facilities booking, verification badge, voice assistant) map to **no coverage story at all**. The 49-story map no longer describes where code is changing, and the gap ranker now has zero story candidates — buffer sits at **20/36 open**.
+- **Delivery pattern of the window: rework.** 5 of 13 merged PRs were `from-merged-review` follow-ups, and **two of them fixed PRs merged in the same window**: #2826 → #2831 → #2834 (held-notification drain) and #2829 → #2832 → #2833 (AML decision dialogs). `quiet_hours_drain.rs` and `AmlDashboardPage.tsx` were each patched **twice inside 48 hours**.
+- **pm-qa root cause: the gate is under-catching by test *level*, not test *count*.** #2826 shipped migration `00234` + repository changes with **8 pure in-process `#[test]` and zero `#[sqlx::test]`** — the multi-replica race it introduced was invisible to every test it added; #2834 then added exactly the two DB-backed cases that catch it. #2829 shipped 4 happy-path `it()` cases with no dialog-remount case; #2833 then added exactly those two. `pr-reviewer-prompt.md` instructs the reviewer to **"Skim"** test files and has no risk-class → required-test-level notion, so both PRs read as well-tested.
+- **Rework rate is trending hard:** post-merge review `with_issues/prs_scanned` went **0/52** (2026-08-06→08-14) → **8/36 = 22 %** (2026-08-20→08-23); this window's `from-merged-review` share is **5/13 = 38 %**. Nothing currently tracks it.
+- **Open PRs (17), and the signal is buried:** 13 are dependabot, none touched since last run. Human work is 4 stale PRs — #2555 / #2558 / #2559 (UC-ACC-05 accounting, **26 days**, zero reviewer engagement) and draft #2744 (dispatcher un-wedge, 10 days).
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run. Extended-scope epics (10B, 80, 81, 82, 83, 84, 85, 79, 8A, 9) folded into `coverage.json` and largely done.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run.
 
-| Epic | Sprint status | Coverage status (13 epics) |
+| Epic | Sprint status | Coverage status (13 epics, 49 stories) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress | 6/6 stories done in coverage |
-| 7A — Basic Document Management | in-progress | 5/5 stories done in coverage (7a-1 evidence refreshed via #2571) |
-| 8A — Basic Notification Preferences | done | 3/3 stories done |
-| 10A — OAuth Provider Foundation | done | 3/3 stories done |
-| 10B — Platform Administration | in-progress | 7/7 stories done |
-| 80 — Dispute Resolution | partial | 3/3 stories done in coverage; sprint-status still says partial (pending reconciliation) |
-| 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1 direct-S3 wiring, 84-2 sign page); 84-1 evidence refreshed via #2571 |
-| 82 / 83 / 85 / 79 / 81 / 8a / 9 | (extended) | all done in coverage; **79 re-checked this run (all 4 stories done, 79-2 evidence refreshed with PR #2553)** |
+| 6 — Announcements & Communication | in-progress | 6/6 done (6-5 evidence refreshed via #2836 mobile ThreadDetail i18n) |
+| 7A — Basic Document Management | in-progress | 5/5 done |
+| 8A — Basic Notification Preferences | done | 3/3 done (8a-2 evidence refreshed via #2826/#2834) |
+| 10A — OAuth Provider Foundation | done | 3/3 done |
+| 10B — Platform Administration | in-progress | 7/7 done (10b-5 evidence refreshed via #2827 CSV sanitizer) |
+| 80 — Dispute Resolution | **partial (STALE)** | **3/3 done — re-checked this run**; sprint-status header contradicts its own `development_status` |
+| 84 — Documents / e-signature | (extended) | **5/5 done — 84-1 and 84-2 cleared as stale-partial this run** |
+| 81 / 82 / 83 / 85 / 79 / 8a / 9 | (extended) | all done (81-2 + 83-2 evidence refreshed via #2827 / #2821) |
 
-## Shipped since last run (17 PRs > #2552)
+## Shipped since last run (13 PRs, all merged into `dev`, all `post-merge-reviewed`)
 
-- **#2576** — gh-issue-2563: schedule layout_change_events retention prune
-- **#2572** — gh-issue-2562: wire get_dispute_kpis into a reporting endpoint (spawned #2575)
-- **#2571** — gh-issue-2564: org-scoped DELETE-by-file_key for direct-upload orphan cleanup (spawned #2573)
-- **#2570** — gh-issue-2557: dedupe seed_org/set_ctx in db test suites
-- **#2569** — dx: run SDK drift gate on client + workflow changes
-- **#2568** — code-review mobile-native-kmp: Android SSO CSRF state verification (spawned #2574)
-- **#2567** — code-review api-core: clear scheduler global-read RLS GUC before pool return (retry1)
-- **#2566** — gh-issue-2561: version-bump rebase+retry to fix GH006 on concurrent dev merges
-- **#2565** — gh-issue-2560: reality-web Docker build fix (unblocks 6-week frontend image gap)
-- **#2554** — chore(research): refill starved dispatcher stack (7 new vectors, 14 promoted)
-- **#2553** — code-review ppt-web-core: AuthContext cold-boot routes through refreshTokenInternal (stale-role fix)
-- **#2549** — gh-issue-2532: layout publish/webhook/revalidate event emission + sink
-- **#2504** — fix(api-server): signature-request list/create — mount as document sub-resource (BIT-313)
-- **#2491** — chore(deps): npm-minor-patch group (5 updates)
-- **#2482** — refactor: reconcile docs/repo-map.md with current tree
-- **#2478** — fix(layout): review-hardening sweep (authz, publish TOCTOU, webhook replay, defensive rendering)
-- **#2433** — feat(mobile-native): iOS listing detail renders through the shared resolved layout
+- **#2838** — churn-hotspot: centralize voice OAuth token encryption (`voice_webhooks.rs`)
+- **#2837** — mobile RN: localize voice-assistant confirmation/error strings
+- **#2836** — mobile RN: localize `ThreadDetailScreen` UI strings
+- **#2835** — mobile RN: run `VoteDetailScreen` hooks before the `voteId` early return
+- **#2834** — gh-issue-2831: atomic claim so the quiet-hours drain delivers held notifications at-most-once across replicas *(fixes #2826)*
+- **#2833** — gh-issue-2832: reset AML EDD/Review dialog state per assessment *(fixes #2829)*
+- **#2830** — i18n facilities booking UI strings
+- **#2829** — replace AML dashboard prompt/alert decision flow with in-app dialogs + i18n *(spawned #2832)*
+- **#2828** — surface ppt-web facilities booking fetch/approve/reject/cancel errors
+- **#2827** — gh-issue-2822: neutralize CR/LF in the CSV export sanitizer
+- **#2826** — gh-issue-2823: per-channel bookkeeping + bounded retry for the held-notification drain *(spawned #2831)*
+- **#2825** — gh-issue-2824: i18n `VerificationBadge` expiry copy + de-duplicate expiry logic
+- **#2821** — gate direct-connect OTA credential writes on manager role (booking connect non-manager hijack)
+
+Issues: 6 opened and **all closed** this window — #2822, #2823, #2824, #2831, #2832 (`follow-up` + `from-merged-review`) and #2743 (`bug,follow-up,infra,dispatcher`).
 
 ## What's next (top 5 actions from ranked backlog)
 
-1. **[high] Fix #2573** — DELETE /documents/by-file-key can delete a still-referenced object within the same org (regression from PR #2571) — **owner: pm-backend**. Adds a reference-check guard before delete; needed before any client wires 84-1.
-2. **[high] Fix #2574** — Android SSO CSRF guard half-wired (SsoStateStore.mint() has no call site so every reality://sso callback is rejected) — **owner: pm-mobile / react-native**.
-3. **[medium] Fix #2575** — /disputes/kpis has no window-ordering validation, only test is quarantined — **owner: pm-backend**.
-4. **[medium] Shepherd accounting MVP-loop trio merge** (#2555, #2558, #2559) — 2-day reviewer starvation blocking the accounting stack — **owner: pm-tech-lead**.
-5. **[high] Finish 84-1** direct-to-S3 wiring in ppt-web (POST /documents/upload-url consumer) — **owner: pm-frontend**. Depends on #2573.
+1. **[high] Run the LOCAL `/ppt-project-management scan`** — coverage is 49/49 done and most merged work falls outside the map; the gap ranker has no candidates and the buffer is 20/36 — **owner: pm-tech-lead**.
+2. **[high] Resolve the UC-ACC-05 accounting trio (#2555 / #2558 / #2559)** — 26 days, zero reviewer engagement; review-and-merge or close-and-re-plan — **owner: pm-tech-lead**.
+3. **[high] Gate migration PRs on a DB-backed test** — any diff touching `backend/crates/db/migrations/**` must add ≥1 `#[sqlx::test]`; re-run against #2826's diff it blocks, against #2834's it passes — **owner: pm-qa**.
+4. **[high] Add a risk-class → required-test-level table to `pr-reviewer-prompt.md`** and carve concurrency / cross-process / component-lifecycle changes out of its "Skim test files" rule — **owner: pm-qa**.
+5. **[medium] Require a dialog-remount ("re-open for a different subject") test** for every ppt-web dialog holding `useState`; backfill `ReviewAssessmentDialog` and `InitiateEddDialog`, which have no test file at all — **owner: pm-qa**.
 
 ## Blockers
 
-- **#2574 Android SSO CSRF half-wired** — the freshly-merged CSRF fix (#2568) has no call site; every reality://sso callback is now rejected until re-wired. Owner: pm-mobile.
-- **#2573 DELETE-by-file-key same-org reference gap** — new endpoint can delete a still-referenced S3 object within the same org (regression from PR #2571). Blocks safe client wiring for 84-1. Owner: pm-backend.
-- **Accounting trio (#2555 / #2558 / #2559)** — no reviewer engagement in 2 days; dispatcher can't advance the MVP-loop. Owner: pm-tech-lead.
+- **UC-ACC-05 accounting trio (#2555 / #2558 / #2559)** — 26 days open, zero reviewer engagement, untouched since the last run. The accounting/invoice MVP loop cannot advance. Owner: pm-tech-lead.
+- **Coverage/planning inputs exhausted** — 49/49 done leaves the gap ranker with no story candidates while 8 of 13 merged PRs fall outside the map; action-list buffer at 20/36 and unfillable from coverage. Owner: pm-tech-lead.
+- **Pre-merge review gate under-catching** — 5 of 13 merged PRs were `from-merged-review` follow-ups; two same-window regressions meant two files were patched twice in 48h. Owner: pm-qa.
 
-## Role focus today: **pm-backend** (rotation idx 1; last 2026-06-06, 54d stale) + pm-scrum-master always-on
+## Role focus today: **pm-qa** (rotation idx 3; last 2026-06-15, 70d stale) + pm-scrum-master always-on
 
-- **pm-scrum-master** (always-on): produced the delivery synthesis above. Headline = the auto-review loop shipped 17 PRs in 2 days and caught 3 of its own regressions inside 24h — the loop is genuinely closing. Reviewer capacity is now the tighter constraint than implementer capacity (accounting trio starving).
-- **pm-backend** (rotation): flagged the 3 fresh regressions (#2573 data-loss, #2575 quarantined-test, #2547 hotfix-no-test carryover) as backend hygiene priorities. Also recommends investigating repeated churn on services/scheduler.rs — extract retention/prune jobs to a dedicated module. Sees the accounting trio as needing pm-tech-lead reviewer attention rather than more backend work.
+- **pm-scrum-master** (always-on): produced the delivery synthesis above. Headline = coverage closed at 49/49, but the milestone is hollow — planning inputs are exhausted and review capacity, not implementer capacity, is the binding constraint (26-day accounting trio, 38 % rework rate).
+- **pm-qa** (rotation): the pre-merge gate is under-catching by **test level**, not test count. Every regressing PR this window *did* ship tests — they were just at the wrong level for the risk introduced (in-process unit where multi-replica DB was needed; happy-path render where remount was needed). Both defect classes are enumerable and mechanically gateable. Also flags `voice_webhooks.rs` crypto centralization (#2838, 1 file, 1 test marker, repeat churn hotspot) as the most likely next link in the chain, and `ppt-web/features/compliance` (3 pages + 7 components behind one test file) as the thinnest test floor on the highest-churn regulated surface. Full analysis in `roles/pm-qa.md`.
 
-## Coverage (upkeep this run — 2026-07-30)
+## Coverage (upkeep this run — 2026-08-24)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped, no re-scan.
-- **Epic re-check: epic-79** — cursor idx 3. All 4 stories still `done`; evidence entry added to 79-2 for PR #2553 (AuthContext cold-boot stale-role fix). `last_checked = 2026-07-30` stamped on all 4 stories.
-- **Merged-PR evidence added:** 84-1 (PR #2571 orphan cleanup), 7a-1 (PR #2571 lifecycle complement). No status flips.
-- **`coverage_cursor` advances 3 → 4** (epic-79 → epic-7a next run).
-- **`pm_cursor` advances 1 → 2** (pm-backend → pm-frontend next run). role_last_run["pm-backend"] = 2026-07-30.
-- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. Same 3 missing UC links (UC-33.x — 2 queued into action-list this run, 1 remaining). Zero orphan screens, zero validation errors.
+- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-08-24T03:12:08Z`, no re-scan.
+- **Epic re-check: epic-80 (Dispute Resolution)** — cursor idx 5. All 3 stories still `done`; `routes/disputes.rs`, four ppt-web dispute pages with tests, and 3 screen-maps present. **Drift recorded:** `sprint-status.yaml` `epics.epic-80` header still says `status: partial / stories_completed: 1` while its own `development_status` lists all three `done`. `last_checked = 2026-08-24` stamped on all 3.
+- **Status flips: 2** — `84-1-s3-presigned-urls` and `84-2-esignature-email`, both `partial → done` (stale, verified shipped). Screen-map `ppt/document-sign` `buildStatus` corrected `planned → shipped` in the coverage snapshot.
+- **Merged-PR evidence added:** 84-4 + 8a-2 (#2826/#2834), 83-2 (#2821), 10b-5 + 81-2 (#2827), 6-5 (#2836). No other status changes.
+- **`coverage_cursor` advances 5 → 6** (epic-80 → epic-81 next run). 13 distinct epics.
+- **`pm_cursor` advances 3 → 4** (pm-qa → pm-devops next run). `role_last_run["pm-qa"] = 2026-08-24`.
+- **Composition: 49 done · 0 partial · 0 not-started** across 13 epics. 3 missing UC links remain (UC-33.1/33.2/33.3 — all 3 queued into `action-list.json` this run). Zero orphan epics, zero orphan screens, zero validation errors.
+- **Buffer: 20/36 open** — the shortfall is map exhaustion, not triage backlog; refill must come from a deep `scan` or the dispatcher's Tier-1d dev-review generator.

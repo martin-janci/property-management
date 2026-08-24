@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-22T03:03:20Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2820,
-  "last_issue_seen": 2816,
-  "last_commit_sha": "e59dca8b157df58eceb9a612c61585efd07216ac",
+  "last_run_iso": "2026-08-24T03:20:00Z",
+  "last_run_ms": 1500000,
+  "last_pr_seen": 2838,
+  "last_issue_seen": 2832,
+  "last_commit_sha": "28937b77e37ffdb8aee1a9f9cd47c1e1a447a780",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -481,6 +481,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-22",
       "recent_churn": 3427
+    },
+    "backend/servers/api-server/src/services/quiet_hours_drain.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-24",
+      "recent_churn": 242
+    },
+    "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-24",
+      "recent_churn": 199
+    },
+    "frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-24",
+      "recent_churn": 153
     }
   },
   "seen_signals": [
@@ -532,6 +547,7 @@
     "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
@@ -571,6 +587,8 @@
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/components/ReviewAssessmentDialog.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
@@ -632,7 +650,10 @@
     "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
+    "code-review-mobile-native-kmp-agency-hub-fabricated-metrics",
+    "code-review-mobile-native-kmp-android-session-not-persisted",
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
+    "code-review-mobile-native-kmp-create-listing-stub-submit",
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
     "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
     "code-review-mobile-native-kmp-httpclient-no-timeout",
@@ -793,6 +814,7 @@
     "lag-warning-2026-08-15",
     "lag-warning-2026-08-19",
     "lag-warning-2026-08-22",
+    "lag-warning-2026-08-24",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
@@ -835,6 +857,7 @@
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
     "stalled-review-pr-2559",
+    "stalled-review-pr-2744",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -913,12 +936,12 @@
     "ppt-web-core": "2026-08-21",
     "reality-web": "2026-08-18",
     "mobile-rn": "2026-08-17",
-    "mobile-native-kmp": "2026-08-16"
+    "mobile-native-kmp": "2026-08-24"
   },
   "stats": {
-    "runs": 69,
-    "vectors_created": 318,
-    "plans_created": 27,
+    "runs": 70,
+    "vectors_created": 322,
+    "plans_created": 28,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
@@ -933,12 +956,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
-      "pm-qa": "2026-06-15",
+      "pm-qa": "2026-08-24",
       "pm-devops": "2026-06-16",
       "pm-security": "2026-07-21",
       "pm-data": "2026-07-23",
@@ -946,6 +969,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 5
+    "next_index": 6
   }
 }
