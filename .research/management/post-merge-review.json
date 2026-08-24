@@ -1,9 +1,17 @@
 {
-  "generated": "2026-08-23T14:30:40Z",
+  "generated": "2026-08-24T16:23:57Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-24T16:23:57Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to the orchestrator's Phase 6. gh CLI proxy-blocked -> GitHub MCP (mcp__github__*) for all GH I/O; static enumeration only. Window merged-to-dev 14d (>=2026-08-10), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run reviewed through #2838 (2026-08-23T14:30Z). Label-based enumeration of closed PRs into dev (sorted updated desc, 40 rows): EVERY in-window merged PR (merged_at present) already carries post-merge-reviewed -- newest merges #2833-#2838 were labeled by the prior run and nothing has merged into dev since. Dependabot #2750/#2751 skipped (closed-unmerged, no merged_at). 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied. No open from-merged-review issues re-touched. Clean no-op pass."
+    },
     {
       "run_at": "2026-08-23T14:30:40Z",
       "prs_scanned": 6,
@@ -543,22 +551,6 @@
         2659,
         2660,
         2661
-      ]
-    },
-    {
-      "run_at": "2026-08-04T14:07:35Z",
-      "prs_scanned": 3,
-      "clean": [
-        2655,
-        2656,
-        2657
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven refill (claim buffer starved: claimable=3 < floor=36). gh CLI unavailable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (no commit/push; dispatcher folds .research delta into Phase 6). Window merged-to-dev >=2026-07-21, max_prs=15. Focus PRs #2656 + #2657 both merged 2026-08-04T12:19Z, AFTER the 08:09Z review that only reached #2653; also caught #2655 (merged 08:28Z, likewise after 08:09Z). All prior in-window PRs (2626-2653) already scanned in earlier runs. 3 never-reviewed PRs scanned, all CLEAN: #2655 (dispatcher infra for issue #2652 -- new .research/mobile-native-gate.sh claim-time KMP gate + test-mobile-native-gate.sh smoke test + dispatcher-self-test T32 + dispatcher-prompt Phase 3 candidate-exclusion / Phase 7 'Mobile-native gated:' surface + CI dispatcher-self-test.yml path+step wiring; id_signal regex '(^|[-_])(mobile-native|kmp)([-_]|$)' correctly gates KMP and excludes mobile-rn/frontend-apps-mobile; files_signal gates pure-mobile-native plan Files scope, spares cross-stack; assignment-form arithmetic safe under set -euo pipefail; empty-section guarded; thorough offline fixture-fed tests incl. batch open-only filter -- correct+complete), #2656 (closes prior-review finding #2654: ThreadDetailScreen send-error banner now t('messages.threadSendError'); key added to ALL 6 mobile locales cs/de/en/hu/pl/sk -- verified on disk, no missing-key gap; test updated to assert the i18n key routes through useTranslation and still asserts raw backend error never leaks -- complete), #2657 (docs-only screen-map reconcile of ppt/rentals-dashboard.md to PR #2648's rentals mutation auth-guard; Notes>Specific + Agent Log only, no frontmatter/outcome change, accurate -- clean). Considered filing on #2655 files_signal treating a docs-companion path as a 'verifiable slice' (would un-gate a still-unverifiable KMP plan) and on the 'don't inflate starvation metric' guidance being prose-only (metric code not in diff) -- both too speculative/low-value to file; false-negatives just fall back to prior claim+blocked behavior (no regression). NET-NEW actionable issues: 0. Labeling: MCP update_pull_request has no labels param and issue_write-update would clobber existing PR labels, so post-merge-reviewed NOT applied via MCP (same precedent as prior runs); this JSON run-history is the dedup record for the next run.",
-      "focus_prs": [
-        2656,
-        2657
       ]
     }
   ]

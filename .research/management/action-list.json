@@ -420,20 +420,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "code-review-api-core-quiet-drain-drops-failed-delivery-retry2",
-      "action": "Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification permanently lost on transient failure [retry 2/2 of failed code-review-api-core-quiet-drain-drops-failed-delivery]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-08-24T14:25:32Z (retry_of=code-review-api-core-quiet-drain-drops-failed-delivery reason=failed-no-pr cooldown_ok newest_failure=2026-08-17T12:36:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-24T14:25:32Z",
-      "retry_of": "code-review-api-core-quiet-drain-drops-failed-delivery",
-      "retry_round": 2
     }
   ],
   "generated": "2026-08-20T20:28:24Z"
