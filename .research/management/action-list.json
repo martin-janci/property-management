@@ -420,20 +420,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs-retry1",
-      "action": "repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2) [retry 1/2 of failed repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-08-24T12:27:01Z (retry_of=repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-17T10:45:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-24T12:27:01Z",
-      "retry_of": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
-      "retry_round": 1
     }
   ],
   "generated": "2026-08-20T20:28:24Z"

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-23T12:25:24Z",
+  "archived_at": "2026-08-24T12:34:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -15761,6 +15761,20 @@
         "vector": "refactor"
       },
       "last_updated": "2026-08-17T10:45:00Z"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs-retry1",
+      "action": "[BAD-RETRY-REMINT-DROP: round-1 retry reproduced original no-op verdict — no actionable stabilization; file clean/deterministic/DRY. Root-cause guard (intrinsic no-PR-needed summary) is unmerged in PR #2744.] repeated-churn: voice_oauth_refresh_auth_tests.rs (runs_seen bumped to 2) [retry 1/2 of failed repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-08-24T12:27:01Z (retry_of=repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-17T10:45:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-24T12:27:01Z",
+      "retry_of": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
+      "retry_round": 1
     },
     {
       "id": "screen-map-drift-pr-1418-ppt",
