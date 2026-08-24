@@ -1,0 +1,29 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-24T21:00:00Z",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (ppt-web-ui saturation-skip: 3 sibling tier1d runs already covered it today with 9 findings; mobile-rn is next-oldest by review_cursor at 2026-08-17 and untouched today)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 1,
+  "note": "mobile-rn is mature/clean: offline terminal-drop IS surfaced (SyncProgressToast failed-count + retry), DocumentUploadScreen checks response.ok, push console.log is __DEV__-gated and never logs the raw token, ReportFaultScreen fully handles submit errors. Only a systemic i18n gap held up under trace.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-list-search-placeholders-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx — screen imports useTranslation (L9) and uses t() for its empty/loading/error states (L137-151), but two user-facing strings are hardcoded English: L114 `<Text style={s.headerTitle}>Messages</Text>` (screen header) and L125 `placeholder=\"Search messages…\"` (search input). On the sk/cs/de/en mobile app these render English for all non-EN users.",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx — same partial-regression pattern (useTranslation imported L13, t() used elsewhere): L188 `${visibleNeighbors.length} residents in your building` and L195 `placeholder=\"Search by name or apartment…\"` are hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 — `placeholder=\"Search announcements...\"` hardcoded English (screen otherwise uses t()). This is a churn hotspot per state.json hotspot_history.",
+        "Systemic across 3 list screens: the search-input placeholder (and a couple of headers/count strings) were missed when the rest of each screen was localized. Low severity (no crash/data loss) but a real i18n-correctness gap on a 4-locale app. Fix: wrap each string in t() and add keys to the mobile locale bundles (messages/neighbors/announcements namespaces). DocumentShareSheet.tsx:265 placeholder=\"7\" is a numeric example, not translatable text — excluded."
+      ]
+    }
+  ]
+}
