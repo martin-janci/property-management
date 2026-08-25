@@ -17,6 +17,10 @@
  *   - Re-rendering from a missing `voteId` to a real one does not throw a
  *     hook-order error.
  *   - The missing-id error state still renders.
+ *   - Snapshots of the two branches that ran a *reduced* hook set on the buggy
+ *     code — the missing-id (empty) branch and the loading branch — so a future
+ *     regression that reintroduces the pre-hook early return fails both the
+ *     render (crash) and the snapshot (structure) here.
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -33,6 +37,7 @@ const mockUseApiQuery = useApiMock.useApiQuery as jest.Mock;
 const mockUseApiMutation = useApiMock.useApiMutation as jest.Mock;
 
 const IDLE_QUERY = { data: undefined, isLoading: false, error: null };
+const LOADING_QUERY = { data: undefined, isLoading: true, error: null };
 const IDLE_MUTATION = { mutate: jest.fn(), isPending: false };
 
 function renderScreen(props: React.ComponentProps<typeof VoteDetailScreen> = {}) {
@@ -89,5 +94,40 @@ describe('VoteDetailScreen — hook ordering', () => {
         </QueryClientProvider>
       )
     ).not.toThrow();
+  });
+});
+
+describe('VoteDetailScreen — branch render snapshots', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseApiMutation.mockReturnValue(IDLE_MUTATION);
+  });
+
+  // The missing-id branch is the exact path whose pre-hook early return caused
+  // the Rules-of-Hooks crash. Snapshotting it pins the "no vote selected"
+  // structure and proves the branch renders without running the full ballot UI.
+  it('renders a stable snapshot for the missing-id (empty) branch', () => {
+    mockUseApiQuery.mockReturnValue(IDLE_QUERY);
+
+    const { toJSON } = renderScreen({ voteId: undefined });
+
+    expect(screen.getByText('voting.missingId')).toBeTruthy();
+    expect(toJSON()).toMatchSnapshot();
+  });
+
+  // The loading branch runs the *full* hook set (voteId present) and then the
+  // spinner render path — the render that the buggy code could never reach
+  // consistently once the missing-id render had skipped hooks. Pinning it
+  // guards the loading UI structure too.
+  it('renders a stable snapshot for the loading branch', () => {
+    mockUseApiQuery.mockReturnValue(LOADING_QUERY);
+
+    const { toJSON } = renderScreen({ voteId: 'vote-1' });
+
+    // All three data queries plus the cast mutation still run — the hook set is
+    // complete even while the screen shows only the spinner.
+    expect(mockUseApiQuery).toHaveBeenCalledTimes(3);
+    expect(mockUseApiMutation).toHaveBeenCalledTimes(1);
+    expect(toJSON()).toMatchSnapshot();
   });
 });

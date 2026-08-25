@@ -1,0 +1,128 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`VoteDetailScreen — branch render snapshots renders a stable snapshot for the loading branch 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#f9fafb",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderBottomColor": "#e5e7eb",
+        "borderBottomWidth": 1,
+        "padding": 20,
+        "paddingTop": 60,
+      }
+    }
+  >
+    <Text
+      numberOfLines={2}
+      style={
+        {
+          "color": "#111827",
+          "fontSize": 24,
+          "fontWeight": "bold",
+        }
+      }
+    >
+      common.loading
+    </Text>
+  </View>
+  <RCTScrollView
+    style={
+      {
+        "flex": 1,
+        "padding": 16,
+      }
+    }
+  >
+    <View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "justifyContent": "center",
+            "paddingVertical": 60,
+          }
+        }
+      >
+        <ActivityIndicator
+          color="#2563eb"
+        />
+      </View>
+    </View>
+  </RCTScrollView>
+</View>
+`;
+
+exports[`VoteDetailScreen — branch render snapshots renders a stable snapshot for the missing-id (empty) branch 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#f9fafb",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderBottomColor": "#e5e7eb",
+        "borderBottomWidth": 1,
+        "padding": 20,
+        "paddingTop": 60,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#111827",
+          "fontSize": 24,
+          "fontWeight": "bold",
+        }
+      }
+    >
+      voting.title
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "justifyContent": "center",
+        "paddingVertical": 60,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "fontSize": 48,
+          "marginBottom": 16,
+        }
+      }
+    >
+      ⚠️
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#111827",
+          "fontSize": 18,
+          "fontWeight": "600",
+          "marginBottom": 8,
+        }
+      }
+    >
+      voting.missingId
+    </Text>
+  </View>
+</View>
+`;
