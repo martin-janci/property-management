@@ -2758,6 +2758,109 @@ fwIDAQAB
         assert_eq!(body.0.code, "ENCRYPTION_REQUIRED");
     }
 
+    #[test]
+    fn encrypt_voice_token_pair_round_trips_and_stores_no_plaintext() {
+        // #2838 centralization: every voice OAuth persistence site (exchange +
+        // refresh, real Alexa/Google upstreams and the simulated fallback alike)
+        // funnels its token pair through `encrypt_voice_token_pair`. This asserts
+        // the shared choke point's round-trip and no-plaintext-at-rest guarantee
+        // across all three provider shapes.
+        //
+        // Env-independent by design: `crypto` is built directly from a fixed key.
+        // The concurrently-running `authenticate_voice_user_*` test toggles the
+        // process-wide INTEGRATION_ENCRYPTION_KEY, so the returned `access_hash`
+        // — which reads that env — is deliberately NOT asserted here; the stored
+        // hash / plaintext lock-step (#2662) is covered end to end by the suite_8
+        // `voice_oauth_token_encryption_roundtrip_tests` integration suite.
+        let crypto = IntegrationCrypto::new(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        )
+        .expect("valid 32-byte key");
+
+        // (label, access_token, refresh_token) — Alexa, Google (with and without
+        // a refresh token), and the dev-only simulated fallback provider
+        // (`voice_access_<platform>_<uuid>`, minted when a platform is
+        // unconfigured in a debug build).
+        let cases: [(&str, &str, Option<&str>); 4] = [
+            (
+                "alexa",
+                "Atza|IQEBLjAsAhRmHjN.alexa-access-token",
+                Some("Atzr|IQEBLzAsAhRmHjN.alexa-refresh-token"),
+            ),
+            (
+                "google",
+                "ya29.a0AfB_byC-google-access-token",
+                Some("1//09-google-refresh-token"),
+            ),
+            // Google may legitimately omit a refresh token on re-consent.
+            (
+                "google_no_refresh",
+                "ya29.a0AfB_byC-google-access-only",
+                None,
+            ),
+            // Fallback / simulated provider (unconfigured platform, debug build).
+            (
+                "fallback_simulated",
+                "voice_access_alexa_2f1c4e8a-0000-4000-8000-000000000001",
+                Some("voice_refresh_alexa_2f1c4e8a-0000-4000-8000-000000000002"),
+            ),
+        ];
+
+        for (label, access, refresh) in cases {
+            let (access_ct, refresh_ct, _access_hash) =
+                encrypt_voice_token_pair(Some(&crypto), access, refresh).unwrap_or_else(
+                    |(s, b)| panic!("[{label}] must encrypt with a key: {s} {}", b.0.code),
+                );
+
+            // Access token: encrypted at rest, plaintext never stored.
+            assert_ne!(
+                access_ct, access,
+                "[{label}] access ciphertext must differ from plaintext"
+            );
+            assert!(
+                access_ct.starts_with("enc:"),
+                "[{label}] stored access token must carry the enc: prefix, got {access_ct}"
+            );
+            assert!(
+                !access_ct.contains(access),
+                "[{label}] plaintext access token must never appear in the stored value"
+            );
+            // Round-trip: the stored ciphertext decrypts back to the original.
+            assert_eq!(
+                integrations::decrypt_if_available(Some(&crypto), &access_ct),
+                access,
+                "[{label}] access token must round-trip through decrypt"
+            );
+
+            // Refresh token: same guarantees when present; `None` passes through.
+            match (refresh, refresh_ct) {
+                (Some(refresh_plain), Some(refresh_ct)) => {
+                    assert_ne!(
+                        refresh_ct, refresh_plain,
+                        "[{label}] refresh ciphertext must differ from plaintext"
+                    );
+                    assert!(
+                        refresh_ct.starts_with("enc:"),
+                        "[{label}] stored refresh token must carry the enc: prefix"
+                    );
+                    assert!(
+                        !refresh_ct.contains(refresh_plain),
+                        "[{label}] plaintext refresh token must never appear in the stored value"
+                    );
+                    assert_eq!(
+                        integrations::decrypt_if_available(Some(&crypto), &refresh_ct),
+                        refresh_plain,
+                        "[{label}] refresh token must round-trip through decrypt"
+                    );
+                }
+                (None, None) => { /* no refresh token to persist — correct */ }
+                (r, c) => {
+                    panic!("[{label}] refresh presence mismatch: input {r:?} -> stored {c:?}")
+                }
+            }
+        }
+    }
+
     // --- extract_alexa_command_text -------------------------------------
 
     fn intent(name: &str, slots: Option<serde_json::Value>) -> AlexaIntent {
