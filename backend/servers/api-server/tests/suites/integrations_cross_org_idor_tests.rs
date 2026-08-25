@@ -414,6 +414,65 @@ async fn connect_booking_manager_gate_rejects_resident(pool: PgPool) {
     );
 }
 
+/// `POST /booking/connect`: EVERY non-manager `role_type` is rejected with
+/// `403`, not merely the low-privilege `resident` covered above (refs #2821).
+///
+/// The manager gate derives its decision from `TenantRole::is_manager()`
+/// (`sync.rs::verify_manager_role_in_org`), whose `false` set is broader than
+/// `resident`: it includes the high-privilege `owner` (hierarchy level 60, well
+/// above `resident`'s 30) and the deceptively-named `property_manager` — a
+/// short-term-rental role whose *name* contains "manager" but which is NOT a
+/// manager tier. This test pins that whole set so a future refactor of the gate
+/// (e.g. a naive substring/`role_type LIKE '%manager%'` check, or one that only
+/// special-cases `resident`) that let any of these hijack the org's OTA
+/// credentials would fail here.
+///
+/// Each caller carries a `manager` JWT role claim (which the pre-#1787 handler
+/// trusted) while its DB membership is the non-manager role under test, so the
+/// gate must read the DB, not the token. The gate fires before any Booking.com
+/// network call, so the rejection is deterministic and hermetic.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn connect_booking_manager_gate_rejects_all_non_manager_roles(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Non-manager `role_type`s (snake_case per `TenantRole`'s serde mapping).
+    // `is_manager()` is `false` for all of these; the gate must 403 each one.
+    let non_manager_roles = [
+        "owner",
+        "owner_delegate",
+        "tenant",
+        "property_manager",
+        "real_estate_agent",
+        "guest",
+    ];
+
+    for role in non_manager_roles {
+        let org_x = seed_org(&pool, &format!("connect-booking-{role}")).await;
+        let user_id = seed_user(&pool, &format!("connect-booking-{role}@test.local")).await;
+        seed_membership(&pool, org_x, user_id, role).await;
+
+        let token = mint_manager_claim_token(user_id, org_x);
+        let uri = format!("/api/v1/integrations/organizations/{org_x}/booking/connect");
+        let body = serde_json::json!({
+            "hotel_id": "ATTACKER-HOTEL",
+            "username": "attacker",
+            "password": "attacker-secret",
+        });
+        let response = app
+            .execute(authed_req(Method::POST, &uri, &token, Some(body)))
+            .await;
+
+        assert_eq!(
+            response.status,
+            StatusCode::FORBIDDEN,
+            "a `{role}` member must be 403 on booking/connect despite a manager \
+             JWT claim (non-manager role must not hijack OTA credentials); got {}: {}",
+            response.status,
+            response.text()
+        );
+    }
+}
+
 /// `DELETE /booking`: a `resident` member is rejected with `403` — they cannot
 /// wipe the org's legitimate Booking.com connection.
 #[sqlx::test(migrator = "db::MIGRATOR")]
