@@ -67,30 +67,6 @@
       }
     },
     {
-      "id": "gh-issue-2743",
-      "action": "dispatcher: two previously-fixed defects have recurred — archives again exceed MCP push ceiling (was #1162), retry-remint ghost retry (was #2460) (Closes #2743)",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-08-13T04:24:01Z (#2743)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-13T04:24:01Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "issue #2743 closed (dispatcher archive+ghost-retry both patched upstream)",
-      "issue_ref": {
-        "number": 2743,
-        "url": "https://github.com/martin-janci/property-management/issues/2743",
-        "labels": [
-          "bug",
-          "follow-up",
-          "infra",
-          "dispatcher"
-        ]
-      }
-    },
-    {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
       "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
@@ -310,134 +286,6 @@
       }
     },
     {
-      "id": "gh-issue-2822",
-      "action": "Follow-up: CSV export sanitizer does not neutralize CR/LF in free-form cells (PR #2731) (Closes #2822)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2822)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T08:25:09Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "PR #2827 (CR/LF neutralization in CSV export sanitizer)",
-      "issue_ref": {
-        "number": 2822,
-        "url": "https://github.com/martin-janci/property-management/issues/2822",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2823",
-      "action": "Follow-up: held-notification drain re-delivers already-sent channels on partial failure + no retry cap (PR #2729) (Closes #2823)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-08-22T08:25:09Z (#2823)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T08:25:09Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "PR #2826 (per-channel bookkeeping + bounded retry for held-notification drain)",
-      "issue_ref": {
-        "number": 2823,
-        "url": "https://github.com/martin-janci/property-management/issues/2823",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-facilities-booking-silent-errors",
-      "action": "ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manager & tenant see no failure feedback",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T10:25:53Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "PR #2828 (surface booking fetch/approve/reject/cancel errors)",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      },
-      "last_updated": "2026-08-22T10:24:03Z"
-    },
-    {
-      "id": "code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow",
-      "action": "ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcoded English strings (TODO Phase-2 unshipped)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-backlog-refill 2026-08-22T10:25:53Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T10:25:53Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "PR #2829 (replaced prompt/alert with in-app dialogs + i18n)",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      },
-      "last_updated": "2026-08-22T10:24:03Z"
-    },
-    {
-      "id": "gh-issue-2831",
-      "action": "Follow-up: quiet-hours drain still double-delivers held notifications under >1 api-server replica (PR #2826) (Closes #2831)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-08-22T18:32:16Z (#2831)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T18:32:16Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "PR #2834 (atomic claim so quiet-hours drain delivers held notifications at-most-once)",
-      "issue_ref": {
-        "number": 2831,
-        "url": "https://github.com/martin-janci/property-management/issues/2831",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2832",
-      "action": "Follow-up: AML EDD / Review dialogs retain stale reason/notes across assessments (PR #2829) (Closes #2832)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-issue-ingest 2026-08-22T18:32:16Z (#2832)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-22T18:32:16Z",
-      "resolved_at": "2026-08-25T04:24:00Z",
-      "resolved_by": "PR #2833 (reset AML EDD/Review dialog state per assessment)",
-      "issue_ref": {
-        "number": 2832,
-        "url": "https://github.com/martin-janci/property-management/issues/2832",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gap-uc-33-3-link-dispute-screen-map",
       "action": "Link UC-33.3 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter (last of the 3 missing UC-33.x links from coverage screen_gaps)",
       "owner_role": "pm-frontend",
@@ -558,6 +406,108 @@
       "status": "open",
       "deadline": null,
       "source": "pm-qa 2026-08-25"
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
+      "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
+      "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing ",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "action": "churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+      "action": "churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "action": "churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
+      "action": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
