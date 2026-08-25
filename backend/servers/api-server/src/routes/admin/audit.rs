@@ -506,7 +506,7 @@ mod tests {
         // The record-separator payloads the ticket calls out explicitly.
         let separators = ["\r", "\n", "\r\n", "\n\r", "\r\r", "\n\n"];
 
-        for (col, base) in columns {
+        for (_col, base) in columns {
             // The base payload alone must round-trip cleanly.
             assert_csv_cell_invariants(base);
 
