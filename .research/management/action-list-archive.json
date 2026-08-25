@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-25T08:27:55Z",
+  "archived_at": "2026-08-25T10:37:41Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1838,6 +1838,30 @@
         "pr": 2735,
         "merged_at": "2026-08-11T14:09:24Z",
         "landed_on": "dev"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "action": "churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-25T10:37:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2848,
+        "merged_at": "2026-08-25T10:33:46Z",
+        "at": "2026-08-25T10:37:41Z"
       }
     },
     {
@@ -4692,6 +4716,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
+      "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing ",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-08-25T10:37:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2849,
+        "merged_at": "2026-08-25T10:33:56Z",
+        "at": "2026-08-25T10:37:41Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
       "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp",
       "owner_role": "pm-backend",
@@ -4732,6 +4780,30 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
+      "action": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-25T10:23:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2847,
+        "merged_at": "2026-08-25T08:41:02Z",
+        "at": "2026-08-25T10:23:31Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
@@ -14786,6 +14858,24 @@
       }
     },
     {
+      "id": "pm-qa-mobile-rn-vote-detail-conditional-hooks-regression-test",
+      "action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T10:23:31Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2845,
+        "merged_at": "2026-08-25T08:43:28Z",
+        "at": "2026-08-25T10:23:31Z"
+      }
+    },
+    {
       "id": "pm-qa-pre-push-fmt-clippy-gate",
       "action": "[CLOSED-already-done-on-dev] Add pre-push cargo fmt + clippy gate (#1375) — prevents unformatted re-lands",
       "owner_role": "pm-qa",
@@ -14795,6 +14885,24 @@
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
       "depends_on": []
+    },
+    {
+      "id": "pm-qa-quiet-hours-drain-atomic-claim-concurrency-test",
+      "action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / #2831) — assert at-most-once delivery under 2 api-server replicas racing on the same held-notification batch",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T10:23:31Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2840,
+        "merged_at": "2026-08-25T08:40:28Z",
+        "at": "2026-08-25T10:23:31Z"
+      }
     },
     {
       "id": "pm-qa-realtime-pref-sync-ci-coverage",
@@ -14910,6 +15018,42 @@
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
       "depends_on": []
+    },
+    {
+      "id": "pm-qa-verification-badge-expiry-i18n-visual-diff",
+      "action": "Add visual-diff / snapshot test for VerificationBadge expiry copy across sk/cs/de/en (#2825) — guard against future English regressions after the de-dupe",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T10:37:41Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2850,
+        "merged_at": "2026-08-25T10:35:43Z",
+        "at": "2026-08-25T10:37:41Z"
+      }
+    },
+    {
+      "id": "pm-qa-voice-oauth-token-encryption-roundtrip-test",
+      "action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T10:37:41Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2851,
+        "merged_at": "2026-08-25T10:35:45Z",
+        "at": "2026-08-25T10:37:41Z"
+      }
     },
     {
       "id": "pm-qa-vote-partial-cmp-nan-fuzz",
@@ -15117,6 +15261,24 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-voice-webhooks-refactor-plan-2026-08-25",
+      "action": "Draft a refactor plan for backend/servers/api-server/src/routes/voice_webhooks.rs — 3 hotspot windows running; PR #2838 chipped at token encryption but scheduler/OAuth/token-refresh paths still cluster",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-25 | gc1-reconcile 2026-08-25T10:23:31Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2844,
+        "merged_at": "2026-08-25T08:43:37Z",
+        "at": "2026-08-25T10:23:31Z"
       }
     },
     {

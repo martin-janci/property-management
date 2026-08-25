@@ -286,39 +286,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-voice-webhooks-refactor-plan-2026-08-25",
-      "action": "Draft a refactor plan for backend/servers/api-server/src/routes/voice_webhooks.rs — 3 hotspot windows running; PR #2838 chipped at token encryption but scheduler/OAuth/token-refresh paths still cluster",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-08-25"
-    },
-    {
-      "id": "pm-qa-mobile-rn-vote-detail-conditional-hooks-regression-test",
-      "action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "pm-qa-quiet-hours-drain-atomic-claim-concurrency-test",
-      "action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / #2831) — assert at-most-once delivery under 2 api-server replicas racing on the same held-notification batch",
-      "owner_role": "pm-qa",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
       "id": "pm-qa-csv-export-crlf-sanitizer-fuzz",
       "action": "Add fuzz/property test for CSV export sanitizer (#2827 / #2822) covering CR, LF, CRLF, and formula-injection prefixes across every export column type",
       "owner_role": "pm-qa",
@@ -330,81 +297,8 @@
       "source": "pm-qa 2026-08-25"
     },
     {
-      "id": "pm-qa-voice-oauth-token-encryption-roundtrip-test",
-      "action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "pm-qa-verification-badge-expiry-i18n-visual-diff",
-      "action": "Add visual-diff / snapshot test for VerificationBadge expiry copy across sk/cs/de/en (#2825) — guard against future English regressions after the de-dupe",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
-      "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing ",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-25T04:23:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
       "action": "churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-25T04:23:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
-      "action": "churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-25T04:23:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
-      "action": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",

@@ -1925,6 +1925,28 @@
       "merge_attempted_at": "2026-08-11T14:08:58Z"
     },
     {
+      "task_id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-a398b777",
+      "status": "merged",
+      "claimed_at": "2026-08-25T08:27:35Z",
+      "last_updated": "2026-08-25T10:36:11Z",
+      "status_changed_at": "2026-08-25T10:36:11Z",
+      "pr_number": 2848,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2848",
+      "merged_at": "2026-08-25T10:33:46Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2848 status=done specialist=react-web scope_drift=true(owner-label-vs-frontend-paths) note=behavior-preserving churn refactor 385->157 lines (3 sections + useAmlDashboard hook); page test 6/6; typecheck+biome green",
+      "reviewer_summary": "verdict=approve note=behavior-preserving-refactor; CI green; scope-drift benign (ppt-web paths vs pm-tech-lead label); approve posted as comment (self-PR blocks formal approve)",
+      "last_reviewed_oid": "72051ae0482014a0d00fd7809ebe681d803942fd",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T10:33:02Z"
+    },
+    {
       "task_id": "churn-hotspot-marketplace-award-quote-idor-tests",
       "branch": "auto-impl/churn-hotspot-marketplace-award-quote-id-480473c7",
       "status": "merged",
@@ -4841,6 +4863,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-03T12:13:50Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-content-mod-overdue-noop",
+      "branch": "auto-impl/code-review-ppt-web-ui-content-mod-overd-df2d14c3",
+      "status": "merged",
+      "claimed_at": "2026-08-25T08:27:35Z",
+      "last_updated": "2026-08-25T10:36:11Z",
+      "status_changed_at": "2026-08-25T10:36:11Z",
+      "pr_number": 2849,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2849",
+      "merged_at": "2026-08-25T10:33:56Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2849 status=done specialist=react-web scope_drift=false note=overdue affordance was no-op; now client-side 24h-SLA filter + clear btn + 6-locale i18n + 2 regression tests; 1 unrelated flake passes in isolation",
+      "reviewer_summary": "verdict=approve note=overdue-noop-fixed-scoped-tested-ci-green; posted as comment (self-approve blocked)",
+      "last_reviewed_oid": "b18b3b702ad2d694343368622acb02ebff146eaf",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T10:33:02Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
@@ -13479,6 +13523,50 @@
       "merge_attempted_at": "2026-08-25T08:39:01Z"
     },
     {
+      "task_id": "pm-qa-verification-badge-expiry-i18n-visual-diff",
+      "branch": "auto-impl/pm-qa-verification-badge-expiry-i18n-vis-8b6fa169",
+      "status": "merged",
+      "claimed_at": "2026-08-25T08:27:35Z",
+      "last_updated": "2026-08-25T10:36:11Z",
+      "status_changed_at": "2026-08-25T10:36:11Z",
+      "pr_number": 2850,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2850",
+      "merged_at": "2026-08-25T10:35:43Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2850 status=done specialist=react-web scope_drift=true(pm-qa-glob-fp) note=per-locale i18n snapshot suite for VerificationBadge expiry copy (sk/cs/de/en); verify gate green 2431 tests",
+      "reviewer_summary": "verdict=approve note=test-only i18n snapshot guard; scope_drift is FP (colocated test); CI green; approve posted as comment (own-PR)",
+      "last_reviewed_oid": "c4f9a11aaad5d0756a0bda255b8abab51b41c8f5",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T10:33:02Z"
+    },
+    {
+      "task_id": "pm-qa-voice-oauth-token-encryption-roundtrip-test",
+      "branch": "auto-impl/pm-qa-voice-oauth-token-encryption-round-c0e53bc1",
+      "status": "merged",
+      "claimed_at": "2026-08-25T08:27:35Z",
+      "last_updated": "2026-08-25T10:36:11Z",
+      "status_changed_at": "2026-08-25T10:36:11Z",
+      "pr_number": 2851,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2851",
+      "merged_at": "2026-08-25T10:35:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2851 status=done specialist=rust-backend scope_drift=true(colocated-unit-test) note=unit+integration voice OAuth encryption round-trip (Alexa/Google/fallback, no-plaintext-at-rest, #2662 hash lock-step); fmt clean; clippy/test authoritative in CI (utoipa-swagger-ui egress)",
+      "reviewer_summary": "verdict=approve note=test-only-roundtrip-verified-ci-green-scope-drift-justified",
+      "last_reviewed_oid": "0ee462b1eae8e84ee030d054303bf3c608b73784",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T10:33:02Z"
+    },
+    {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "branch": "auto-impl/pm-scrum-master-mobile-rn-lint-hooks-i18-9ce28fff",
       "status": "merged",
@@ -15785,5 +15873,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-25T08:45:23Z"
+  "archived_at": "2026-08-25T10:37:21Z"
 }
