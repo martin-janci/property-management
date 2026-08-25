@@ -29,6 +29,10 @@ import { TakeModerationActionDialog } from '../components/TakeModerationActionDi
 type ModerationActionType = TakeModerationActionRequest['action_type'];
 type AppealDecision = DecideAppealRequest['decision'];
 
+// Matches the backend's overdue definition in `get_moderation_queue_stats`
+// (compliance.rs): a pending/under_review case older than the 24h SLA.
+const OVERDUE_THRESHOLD_HOURS = 24;
+
 interface ActionTemplate {
   id: string;
   name: string;
@@ -48,6 +52,10 @@ export const ContentModerationPage: React.FC = () => {
   const [violationTypeFilter, setViolationTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+  // Client-side "show overdue only" narrowing, driven by the overdue alert.
+  // The list API has no overdue param, so we filter the fetched cases by their
+  // derived `age_hours` (see below) instead.
+  const [overdueOnly, setOverdueOnly] = useState(false);
 
   // Decision dialogs: which case (if any) each dialog is acting on.
   const [takeActionCaseId, setTakeActionCaseId] = useState<string | null>(null);
@@ -99,6 +107,17 @@ export const ContentModerationPage: React.FC = () => {
       (new Date().getTime() - new Date(c.reported_at).getTime()) / (1000 * 60 * 60)
     ),
   }));
+
+  // When the overdue affordance is active, narrow to still-open cases past the
+  // SLA. `age_hours` is derived from the API's real `reported_at`, so this
+  // mirrors the backend's overdue count without a dedicated list param.
+  const visibleCases: ModerationCase[] = overdueOnly
+    ? cases.filter(
+        (c) =>
+          c.age_hours >= OVERDUE_THRESHOLD_HOURS &&
+          (c.status === 'pending' || c.status === 'under_review')
+      )
+    : cases;
 
   const stats: ModerationQueueStatsData | null = statsData?.stats
     ? {
@@ -227,9 +246,16 @@ export const ContentModerationPage: React.FC = () => {
   }, []);
 
   const handleShowOverdue = useCallback(() => {
-    // Filter to show overdue cases
+    // Overdue spans both `pending` and `under_review`, so widen the status
+    // filter to fetch all open states, then narrow client-side via `overdueOnly`
+    // (see `visibleCases`). The list API exposes no overdue param.
+    setStatusFilter('');
+    setOverdueOnly(true);
+  }, []);
+
+  const handleClearOverdue = useCallback(() => {
+    setOverdueOnly(false);
     setStatusFilter('pending');
-    // TODO: Add overdue filter parameter when API supports it
   }, []);
 
   // Loading state
@@ -287,13 +313,25 @@ export const ContentModerationPage: React.FC = () => {
       {/* Filters */}
       <div className="moderation-filters-section">
         <h2>{t('moderation.queue.heading')}</h2>
+        {overdueOnly && (
+          <div className="moderation-active-filter" role="status">
+            <span>{t('moderation.queue.overdueActive')}</span>
+            <button type="button" onClick={handleClearOverdue}>
+              {t('moderation.queue.clearOverdue')}
+            </button>
+          </div>
+        )}
         <div className="moderation-filters">
           <div className="moderation-filter">
             <label htmlFor="statusFilter">{t('moderation.filters.status')}</label>
             <select
               id="statusFilter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                // A manual status change supersedes the overdue narrowing.
+                setOverdueOnly(false);
+                setStatusFilter(e.target.value);
+              }}
             >
               <option value="">{t('moderation.filters.allStatuses')}</option>
               <option value="pending">{t('moderation.status.pending')}</option>
@@ -374,9 +412,9 @@ export const ContentModerationPage: React.FC = () => {
       </div>
 
       {/* Cases List */}
-      {cases.length > 0 ? (
+      {visibleCases.length > 0 ? (
         <div className="moderation-cases-list">
-          {cases.map((case_) => (
+          {visibleCases.map((case_) => (
             <ModerationCaseCard
               key={case_.id}
               case_={case_}

@@ -159,7 +159,9 @@
     "queue": {
       "heading": "Fronta moderování",
       "emptyTitle": "Nebyly nalezeny žádné případy moderování odpovídající kritériím.",
-      "emptySubtitle": "Fronta moderování je momentálně prázdná."
+      "emptySubtitle": "Fronta moderování je momentálně prázdná.",
+      "overdueActive": "Zobrazují se pouze případy po termínu",
+      "clearOverdue": "Zrušit filtr po termínu"
     },
     "filters": {
       "status": "Stav",

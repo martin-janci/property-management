@@ -159,7 +159,9 @@
     "queue": {
       "heading": "Moderationswarteschlange",
       "emptyTitle": "Keine Moderationsfälle gefunden, die den Kriterien entsprechen.",
-      "emptySubtitle": "Die Moderationswarteschlange ist derzeit leer."
+      "emptySubtitle": "Die Moderationswarteschlange ist derzeit leer.",
+      "overdueActive": "Nur überfällige Fälle werden angezeigt",
+      "clearOverdue": "Überfällig-Filter zurücksetzen"
     },
     "filters": {
       "status": "Status",
