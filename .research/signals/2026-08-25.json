@@ -1,0 +1,199 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-25",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine has not run in 3d 0h (last_run_iso=2026-08-22T03:03:20Z, now=2026-08-25); over the 36h threshold — cloud scheduler may be paused"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2826, PR #2834",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/services/quiet_hours_drain.rs: 242 lines changed across PRs [2826, 2834]"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2829, PR #2833",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx: 199 lines changed across PRs [2829, 2833]"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2829, PR #2833",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx: 175 lines changed across PRs [2829, 2833]"
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-25",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.prompt free-text is cast via `as 'remove'|'restrict'|'warn'|'approve'` (and `as 'uphold'|'overturn'`) straight into the moderation-action / appeal-decision API — same anti-pattern AmlDashboardPage.test.tsx locks against; a typo like 'aprove' reaches the regulated endpoint",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-25",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing `onShowOverdue` handler only resets status to 'pending' with a TODO admitting the overdue filter isn't wired; the ModerationQueueStats 'Show Overdue' button is a no-op that silently misleads moderators",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-25",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation import; every visible string ('DSA Transparency Reports', 'Generate New Report', 'Loading reports...', error/alert copy, requirements list) is hardcoded English while sibling AmlDashboardPage/ContentModerationPage use t(...) — regulatory-facing page fails i18n bar",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type this run (no screen-map-drift, no orphan, no fixme-in-merged-code, no lockfile-drift, and all 3 human stalled-review PRs are already in state.seen_signals)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && first-line matches",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + 14d decay applied",
+      "observed": "pass (2 decayed, 1 dropped, no score>8)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for adversarial pass on each new plan",
+      "observed": "pass (unsafe-cast plan annotated)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all sections+metadata+mode+files",
+      "observed": "1 new plan, 11 headings + 4 metadata, Mode:cloud-ok, 2 files resolve on disk",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-host grep on staged diff (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regenerated",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phases failed",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans preserved (plans/ or _archive/)",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged (9) >= HEAD (8)",
+      "observed": "9 >= 8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regenerated",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap (0 actions, all <=1)",
+      "observed": "0 actions this run",
+      "expected": "<=1 each type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor in bounds and advanced when pm_cursor advanced",
+      "observed": "pm_cursor 3->4, coverage_cursor 5->6, epics=13, artifacts parse",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

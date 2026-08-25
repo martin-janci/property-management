@@ -1,12 +1,13 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-22 03:03 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-25 03:14 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
-| 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | ready | 2026-08-22 | [plan](plans/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
-| 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | open | 2026-08-16 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
+| 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | ready | 2026-08-25 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
+| 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | ready | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
+| 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/_archive/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
 | 3 | bug | `gh-issue-2699-migration-collision` | dev CI broken: duplicate SQLx migration 00220 — renumber portal_get_listing_view_count to 00227 | done | 2026-08-07 | [plan](plans/_archive/gh-issue-2699-migration-collision.md) |
@@ -35,6 +36,9 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
+| 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | open | 2026-08-25 |  |
+| 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
+| 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-ppt-web-ui-verification-badge-expired-as-soon` | ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal s | done | 2026-08-21 |  |
 | 2 | bug | `code-review-reality-server-inquiry-detail-empty-messages` | reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inqui | done | 2026-08-20 |  |
 | 2 | bug | `code-review-reality-server-list-my-reports-total-page-length` | reality-server list_my_reports returns page length as `total` — pagination broken on non-final pages | done | 2026-08-19 |  |
@@ -50,7 +54,6 @@
 | 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
 | 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
-| 2 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-11 |  |
 | 2 | bug | `code-review-api-core-quiet-drain-drops-failed-delivery` | Quiet-hours drain marks held push released even when delivery failed (sent=0) — held notification pe | dropped | 2026-08-10 |  |
 | 2 | bug | `code-review-api-core-voice-actions-fabricated-empty` | Voice check-announcements & check-meter fabricate success with empty data — residents told 'no new a | dropped | 2026-08-10 |  |
 | 2 | bug | `code-review-api-handlers-reports-csv-injection` | Reports CSV export writes user-authored vote titles unescaped — spreadsheet formula injection (bypas | done | 2026-08-10 |  |
@@ -147,6 +150,15 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs` | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | open | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
+| 1 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-25 |  |
+| 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | open | 2026-08-25 |  |
+| 1 | refactor | `code-review-mobile-rn-thread-detail-hardcoded-en` | ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks) | done | 2026-08-23 |  |
+| 1 | refactor | `code-review-mobile-rn-voice-cmd-hardcoded-en` | Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX) | done | 2026-08-23 |  |
+| 1 | bug | `code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow` | ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcod | done | 2026-08-22 |  |
+| 1 | bug | `code-review-ppt-web-ui-facilities-booking-hardcoded-i18n` | ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslat | done | 2026-08-22 |  |
 | 1 | bug | `code-review-ppt-web-ui-submission-preview-modal-orphan` | ppt-web SubmissionPreviewModal is exported but rendered by no page — orphaned dead component with si | done | 2026-08-21 |  |
 | 1 | i18n | `code-review-ppt-web-ui-vote-detail-hardcoded-en` | ppt-web VoteDetailPage hardcodes English (native window.prompt + toast titles) on i18n voting page | done | 2026-08-21 |  |
 | 1 | bug | `code-review-reality-server-saved-search-watermark-discard` | reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing  | done | 2026-08-20 |  |
@@ -181,7 +193,6 @@
 | 1 | dx | `stalled-review-pr-2555` | stalled review: PR #2555 feat(acc) UC-ACC-05.17 wire sent/cancelled invoice lifecycle (15d open, 13d | needs-human-judgement | 2026-08-12 |  |
 | 1 | dx | `stalled-review-pr-2558` | stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle) | needs-human-judgement | 2026-08-12 |  |
 | 1 | dx | `stalled-review-pr-2559` | stalled review: PR #2559 feat(acc) UC-ACC-05.8 PAY by square QR endpoint (15d open, 13d idle) | needs-human-judgement | 2026-08-12 |  |
-| 1 | test-gap | `code-review-mobile-native-kmp-ssoservice-untested` | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has | open | 2026-08-11 |  |
 | 1 | bug | `code-review-api-core-quiet-schedule-err-failopen` | Notification pipeline swallows quiet-hours schedule DB error and fails open — push delivered during  | done | 2026-08-10 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-ai-llm-rs` | Churn hotspot: backend/servers/api-server/src/routes/ai/llm.rs (fail-closed enhanced_chat #2688 + up | done | 2026-08-07 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-services-workflow_executor-rs` | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 work | done | 2026-08-07 |  |
@@ -315,6 +326,7 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
+| 0 | test-gap | `code-review-mobile-native-kmp-ssoservice-untested` | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has | dropped | 2026-08-25 |  |
 | 0 | dx | `dx-routine-lag-catchup-2026-07` | Cloud routine cadence recovery — reduce 3–4d gaps between runs | dropped | 2026-07-09 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-document-rs` | Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06- | dropped | 2026-07-05 |  |
 | 0 | refactor | `churn-hotspot-backend-crates-db-src-repositories-form-rs` | Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock) | dropped | 2026-07-05 |  |
