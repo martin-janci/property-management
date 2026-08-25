@@ -253,5 +253,8 @@ async fn two_concurrent_replicas_deliver_each_held_row_at_most_once(pool: PgPool
     .fetch_one(&pool)
     .await
     .expect("count released rows");
-    assert_eq!(released, N as i64, "all held rows must be released exactly once");
+    assert_eq!(
+        released, N as i64,
+        "all held rows must be released exactly once"
+    );
 }
