@@ -298,17 +298,6 @@
       "first_open_at": "2026-08-25T04:24:00Z"
     },
     {
-      "id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish",
-      "action": "Shepherd the 2 remaining partial MVP stories (84-1 direct-to-S3 wiring + 84-2 signer page) to done — both frontend-only on shipped APIs; assign an implementer pair next window to close 49/49 delivery",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-08-25"
-    },
-    {
       "id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "action": "Adopt eslint-plugin-react-hooks + no-hardcoded-strings ESLint config in frontend/apps/mobile — 3 mobile-rn PRs in this window (#2835/#2836/#2837) all fixed defects a lint would catch",
       "owner_role": "pm-frontend",

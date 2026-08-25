@@ -13369,6 +13369,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish",
+      "branch": "auto-impl/pm-scrum-master-shepherd-84-1-84-2-front-6942383b",
+      "status": "failed",
+      "claimed_at": "2026-08-25T04:28:46Z",
+      "last_updated": "2026-08-25T05:06:26Z",
+      "status_changed_at": "2026-08-25T05:06:26Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-landed-on-dev: 84-1 (DocumentUpload->useUploadDocumentDirect incl #2366) + 84-2 (DocumentSignPage@/sign + esignature client/hooks/i18n) merged w/ tests; screen-maps shipped; only stale coverage.json marks partial - needs coverage reconcile, no PR to produce",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-signer-doc-sign-page-84-2",
       "branch": "auto-impl/pm-scrum-master-signer-doc-sign-page-84-be4673ab",
       "status": "failed",
@@ -15543,5 +15565,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-24T14:35:25Z"
+  "archived_at": "2026-08-25T05:07:22Z"
 }

@@ -1204,7 +1204,7 @@
       "id": "84-1-s3-presigned-urls",
       "title": "S3 Presigned URL Implementation",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1215,13 +1215,14 @@
         "PR #2309: POST /api/v1/documents/upload-url (SigV4 PUT presigner) wired backend",
         "StorageService::generate_upload_url confirmed",
         "no frontend consumer of the endpoint found in frontend/apps",
-        "PR #2571 (2026-07-29) \u2014 org-scoped DELETE-by-file_key route for direct-upload orphan cleanup (backend supports the wiring; frontend gap unchanged)"
+        "PR #2571 (2026-07-29) \u2014 org-scoped DELETE-by-file_key route for direct-upload orphan cleanup (backend supports the wiring; frontend gap unchanged)",
+        "dispatcher reconcile 2026-08-25: verified fully landed on dev (impl+tests+shipped screen-maps); ghost claim pm-scrum-master-shepherd-84-1-84-2"
       ],
       "gaps": [
         "ppt-web upload flow still server-proxied \u2014 wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-30",
+      "last_checked": "2026-08-25",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -1235,7 +1236,7 @@
       "id": "84-2-esignature-email",
       "title": "E-Signature Email Integration",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -1245,13 +1246,14 @@
       "evidence": [
         "backend signing URL + invitation emails implemented (signatures.rs)",
         "PR #2306: docs/screens/ppt/document-sign.md added \u2014 buildStatus: planned, apiStatus: complete",
-        "no sign-page component in ppt-web"
+        "no sign-page component in ppt-web",
+        "dispatcher reconcile 2026-08-25: verified fully landed on dev (impl+tests+shipped screen-maps); ghost claim pm-scrum-master-shepherd-84-1-84-2"
       ],
       "gaps": [
         "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned\u2192shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR \u2014 fresh attempt, scope to the shipped API)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-25",
       "screen_refs": [
         {
           "screen_id": "ppt/document-sign",

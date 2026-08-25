@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-25T04:29:10Z",
+  "archived_at": "2026-08-25T05:07:22Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -14938,6 +14938,24 @@
       "depends_on": [
         "pm-tech-lead"
       ]
+    },
+    {
+      "id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish",
+      "action": "Shepherd the 2 remaining partial MVP stories (84-1 direct-to-S3 wiring + 84-2 signer page) to done — both frontend-only on shipped APIs; assign an implementer pair next window to close 49/49 delivery",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-25 | gc1-reconcile 2026-08-25T05:07:22Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-25T05:07:22Z"
+      }
     },
     {
       "id": "pm-scrum-master-signer-doc-sign-page-84-2",
