@@ -19,6 +19,7 @@
  * the mutation, a valid submission sends the typed union value, and re-opening a
  * dialog for a different case starts blank (the #2833-style key remount guard).
  */
+import { useModerationCases, useModerationStats } from '@ppt/api-client';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components';
@@ -183,5 +184,118 @@ describe('ContentModerationPage decision flow', () => {
     openTakeActionDialog(1);
     expect((dialog().getByRole('combobox') as HTMLSelectElement).value).toBe('approve');
     expect((dialog().getByLabelText(/rationale/i) as HTMLTextAreaElement).value).toBe('');
+  });
+});
+
+/**
+ * Regression: the overdue affordance used to be a no-op — clicking the overdue
+ * alert only called `setStatusFilter('pending')` (with a "TODO: add overdue
+ * filter" comment) and never narrowed the list to overdue cases. The alert
+ * therefore rendered but did nothing meaningful. It now applies a client-side
+ * filter (age >= 24h SLA, still-open status) derived from the API's real
+ * `reported_at`, matching the backend's overdue-count definition.
+ */
+describe('ContentModerationPage overdue affordance', () => {
+  const now = new Date().toISOString();
+  const long_ago = '2026-01-01T00:00:00Z'; // well past the 24h SLA relative to test date
+
+  const overdueMixCases = [
+    // Old + still open → overdue.
+    {
+      ...baseCase,
+      id: 'overdue-p',
+      content_preview: 'overdue-pending',
+      status: 'pending',
+      reported_at: long_ago,
+    },
+    {
+      ...baseCase,
+      id: 'overdue-r',
+      content_preview: 'overdue-review',
+      status: 'under_review',
+      reported_at: long_ago,
+    },
+    // Fresh + open → NOT overdue (inside SLA).
+    {
+      ...baseCase,
+      id: 'fresh-p',
+      content_preview: 'fresh-pending',
+      status: 'pending',
+      reported_at: now,
+    },
+    // Old but already resolved (appealed) → NOT overdue (closed status).
+    {
+      ...baseCase,
+      id: 'old-appealed',
+      content_preview: 'old-appealed',
+      status: 'appealed',
+      is_appeal: true,
+      reported_at: long_ago,
+    },
+  ];
+
+  beforeEach(() => {
+    vi.mocked(useModerationCases).mockReturnValue({
+      data: { cases: overdueMixCases },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useModerationCases>);
+    vi.mocked(useModerationStats).mockReturnValue({
+      data: {
+        stats: {
+          pending_count: 2,
+          under_review_count: 1,
+          by_priority: [],
+          by_violation_type: [],
+          avg_resolution_time_hours: 0,
+          overdue_count: 2,
+        },
+      },
+    } as unknown as ReturnType<typeof useModerationStats>);
+  });
+
+  afterEach(() => {
+    vi.mocked(useModerationCases).mockReturnValue({
+      data: { cases },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useModerationCases>);
+    vi.mocked(useModerationStats).mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useModerationStats>);
+  });
+
+  it('narrows the list to overdue cases when the overdue alert is clicked', () => {
+    render(
+      <ToastProvider>
+        <ContentModerationPage />
+      </ToastProvider>
+    );
+
+    // Before: every case is visible.
+    expect(screen.getByText('fresh-pending')).toBeInTheDocument();
+    expect(screen.getByText('old-appealed')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /overdue/i }));
+
+    // After: only still-open cases past the 24h SLA remain.
+    expect(screen.getByText('overdue-pending')).toBeInTheDocument();
+    expect(screen.getByText('overdue-review')).toBeInTheDocument();
+    expect(screen.queryByText('fresh-pending')).not.toBeInTheDocument();
+    expect(screen.queryByText('old-appealed')).not.toBeInTheDocument();
+  });
+
+  it('clears the overdue filter and restores the full list', () => {
+    render(
+      <ToastProvider>
+        <ContentModerationPage />
+      </ToastProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /overdue/i }));
+    expect(screen.queryByText('fresh-pending')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /clear overdue filter/i }));
+    expect(screen.getByText('fresh-pending')).toBeInTheDocument();
   });
 });

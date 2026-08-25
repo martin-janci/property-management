@@ -109,7 +109,9 @@
     "queue": {
       "heading": "Front moderovania",
       "emptyTitle": "Nenašli sa žiadne prípady moderovania zodpovedajúce kritériám.",
-      "emptySubtitle": "Front moderovania je momentálne prázdny."
+      "emptySubtitle": "Front moderovania je momentálne prázdny.",
+      "overdueActive": "Zobrazujú sa iba prípady po termíne",
+      "clearOverdue": "Zrušiť filter po termíne"
     },
     "filters": {
       "status": "Stav",

@@ -109,7 +109,9 @@
     "queue": {
       "heading": "Kolejka moderacji",
       "emptyTitle": "Nie znaleziono spraw moderacji spełniających kryteria.",
-      "emptySubtitle": "Kolejka moderacji jest obecnie pusta."
+      "emptySubtitle": "Kolejka moderacji jest obecnie pusta.",
+      "overdueActive": "Wyświetlane tylko sprawy przeterminowane",
+      "clearOverdue": "Wyczyść filtr przeterminowanych"
     },
     "filters": {
       "status": "Status",

@@ -109,7 +109,9 @@
     "queue": {
       "heading": "Moderálási várólista",
       "emptyTitle": "Nem található a feltételeknek megfelelő moderálási eset.",
-      "emptySubtitle": "A moderálási várólista jelenleg üres."
+      "emptySubtitle": "A moderálási várólista jelenleg üres.",
+      "overdueActive": "Csak a lejárt esetek jelennek meg",
+      "clearOverdue": "Lejárt szűrő törlése"
     },
     "filters": {
       "status": "Állapot",

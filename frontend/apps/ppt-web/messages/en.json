@@ -109,7 +109,9 @@
     "queue": {
       "heading": "Moderation Queue",
       "emptyTitle": "No moderation cases found matching the criteria.",
-      "emptySubtitle": "The moderation queue is currently empty."
+      "emptySubtitle": "The moderation queue is currently empty.",
+      "overdueActive": "Showing overdue cases only",
+      "clearOverdue": "Clear overdue filter"
     },
     "filters": {
       "status": "Status",
