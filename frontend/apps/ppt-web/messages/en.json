@@ -98,6 +98,56 @@
       "errorMessage": "Failed to review assessment. Please try again."
     }
   },
+  "dsa": {
+    "title": "DSA Transparency Reports",
+    "subtitle": "Generate and publish transparency reports for Digital Services Act compliance.",
+    "loading": "Loading reports...",
+    "loadError": "Failed to load DSA reports: {{message}}",
+    "retry": "Retry",
+    "metrics": {
+      "title": "Current Period Metrics",
+      "period": "Period: {{start}} - {{end}}",
+      "moderationActions": "Moderation Actions",
+      "pendingCases": "Pending Cases",
+      "avgResolutionTime": "Avg Resolution Time",
+      "slaCompliance": "SLA Compliance"
+    },
+    "generate": {
+      "newButton": "Generate New Report",
+      "formTitle": "Generate Transparency Report",
+      "periodStart": "Period Start",
+      "periodEnd": "Period End",
+      "submit": "Generate Report",
+      "submitting": "Generating...",
+      "dateError": "Please select both start and end dates",
+      "error": "Failed to generate report. Please try again."
+    },
+    "publish": {
+      "success": "Report published successfully.",
+      "error": "Failed to publish report. Please try again."
+    },
+    "download": {
+      "error": "Failed to download report. Please try again."
+    },
+    "list": {
+      "title": "Previous Reports",
+      "emptyTitle": "No transparency reports have been generated yet.",
+      "emptySubtitle": "Generate your first report to comply with DSA requirements."
+    },
+    "requirements": {
+      "title": "DSA Reporting Requirements",
+      "moderationLabel": "Content Moderation Actions:",
+      "moderationText": "Report all content removal, restriction, and warning actions taken.",
+      "userReportsLabel": "User Reports:",
+      "userReportsText": "Track and report on user-submitted content reports and their resolutions.",
+      "automatedLabel": "Automated Decisions:",
+      "automatedText": "Document automated content moderation decisions and human review overturns.",
+      "appealsLabel": "Appeals:",
+      "appealsText": "Report on appeals received and their outcomes.",
+      "timelinessLabel": "Timeliness:",
+      "timelinessText": "Reports should be published at least annually for platforms with significant EU user bases."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Content Moderation Dashboard",

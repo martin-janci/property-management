@@ -98,6 +98,56 @@
       "errorMessage": "Nepodařilo se přezkoumat hodnocení. Zkuste to znovu."
     }
   },
+  "dsa": {
+    "title": "Zprávy o transparentnosti DSA",
+    "subtitle": "Generujte a zveřejňujte zprávy o transparentnosti pro soulad se zákonem o digitálních službách.",
+    "loading": "Načítají se zprávy...",
+    "loadError": "Nepodařilo se načíst zprávy DSA: {{message}}",
+    "retry": "Zkusit znovu",
+    "metrics": {
+      "title": "Metriky aktuálního období",
+      "period": "Období: {{start}} - {{end}}",
+      "moderationActions": "Moderační akce",
+      "pendingCases": "Nevyřešené případy",
+      "avgResolutionTime": "Průměrná doba vyřešení",
+      "slaCompliance": "Dodržování SLA"
+    },
+    "generate": {
+      "newButton": "Generovat novou zprávu",
+      "formTitle": "Generovat zprávu o transparentnosti",
+      "periodStart": "Začátek období",
+      "periodEnd": "Konec období",
+      "submit": "Generovat zprávu",
+      "submitting": "Generuje se...",
+      "dateError": "Vyberte prosím datum začátku i konce",
+      "error": "Nepodařilo se vygenerovat zprávu. Zkuste to znovu."
+    },
+    "publish": {
+      "success": "Zpráva byla úspěšně zveřejněna.",
+      "error": "Nepodařilo se zveřejnit zprávu. Zkuste to znovu."
+    },
+    "download": {
+      "error": "Nepodařilo se stáhnout zprávu. Zkuste to znovu."
+    },
+    "list": {
+      "title": "Předchozí zprávy",
+      "emptyTitle": "Zatím nebyly vygenerovány žádné zprávy o transparentnosti.",
+      "emptySubtitle": "Vygenerujte svou první zprávu, abyste splnili požadavky DSA."
+    },
+    "requirements": {
+      "title": "Požadavky na vykazování DSA",
+      "moderationLabel": "Moderační akce obsahu:",
+      "moderationText": "Vykazujte všechny akce odstranění, omezení a upozornění na obsah.",
+      "userReportsLabel": "Nahlášení uživatelů:",
+      "userReportsText": "Sledujte a vykazujte nahlášení obsahu od uživatelů a jejich vyřešení.",
+      "automatedLabel": "Automatizovaná rozhodnutí:",
+      "automatedText": "Dokumentujte automatizovaná rozhodnutí o moderování obsahu a změny po lidském přezkoumání.",
+      "appealsLabel": "Odvolání:",
+      "appealsText": "Vykazujte přijatá odvolání a jejich výsledky.",
+      "timelinessLabel": "Včasnost:",
+      "timelinessText": "Zprávy by se měly zveřejňovat alespoň jednou ročně pro platformy s významnou uživatelskou základnou v EU."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Nástěnka moderování obsahu",
