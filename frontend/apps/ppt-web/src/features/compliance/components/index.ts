@@ -2,6 +2,11 @@
  * Compliance feature component exports (Epic 67).
  */
 
+export type { AmlCountryRisksTableProps, CountryRiskDisplay } from './AmlCountryRisksTable';
+// Story 67.1: AML dashboard sections (extracted from AmlDashboardPage)
+export { AmlCountryRisksTable } from './AmlCountryRisksTable';
+export type { AmlFiltersPanelProps } from './AmlFiltersPanel';
+export { AmlFiltersPanel } from './AmlFiltersPanel';
 export type {
   AmlAssessmentStatus,
   AmlRiskAssessment,
@@ -11,6 +16,8 @@ export type {
 } from './AmlRiskAssessmentCard';
 // Story 67.1: AML Risk Assessment
 export { AmlRiskAssessmentCard } from './AmlRiskAssessmentCard';
+export type { AmlThresholdsDisplay, AmlThresholdsSectionProps } from './AmlThresholdsSection';
+export { AmlThresholdsSection } from './AmlThresholdsSection';
 // Epic 90: AML EDD / review decision dialogs (replace window.prompt/alert flow)
 export { DecideAppealDialog } from './DecideAppealDialog';
 export type {
