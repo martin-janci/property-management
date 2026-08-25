@@ -431,6 +431,161 @@ mod tests {
         assert_eq!(out, "'=SUM(A1)  row2");
     }
 
+    // -------------------------------------------------------------------
+    // Fuzz / property coverage for `sanitize_csv_cell` (#2827 / #2822).
+    //
+    // The three tests below assert the sanitizer's *invariants* rather than
+    // hand-picked input→output pairs, so any future edit to the guard that
+    // reopens the CR / LF / CRLF record-injection or the spreadsheet
+    // formula-injection vector fails here regardless of the exact payload.
+    // Dependency-free: `proptest` is not a workspace dependency and crates.io
+    // egress is not guaranteed in CI, so we ship a self-contained matrix +
+    // xorshift fuzz loop instead of a `proptest!` macro.
+    // -------------------------------------------------------------------
+
+    /// The formula triggers the guard neutralizes at any position.
+    const FORMULA_TRIGGERS: [char; 4] = ['=', '+', '-', '@'];
+
+    /// Assert every invariant `sanitize_csv_cell` must uphold for `input`.
+    ///
+    /// * P1 record-safety — no raw `\r`/`\n` survives (row-injection closed).
+    /// * P2 formula-safety — the cell never *begins* with a formula trigger.
+    /// * P3 content-preservation — output is exactly the CR/LF-collapsed input,
+    ///   optionally with a single leading `'`; nothing else is added or lost.
+    /// * P4 trigger⇒prefix — a trigger anywhere forces the `'` prefix.
+    fn assert_csv_cell_invariants(input: &str) {
+        let out = sanitize_csv_cell(input);
+        // The reference "collapsed" form: every CR/LF becomes one space.
+        let collapsed = input.replace(['\r', '\n'], " ");
+        let has_trigger = collapsed.chars().any(|c| FORMULA_TRIGGERS.contains(&c));
+
+        // P1 — record-separator safety.
+        assert!(
+            !out.contains('\r') && !out.contains('\n'),
+            "P1 record-safety violated: {input:?} -> {out:?}"
+        );
+        // P2 — never begins with a formula trigger.
+        assert!(
+            out.chars()
+                .next()
+                .map_or(true, |c| !FORMULA_TRIGGERS.contains(&c)),
+            "P2 formula-safety violated: {input:?} -> {out:?}"
+        );
+        // P3 — exact content preservation (collapsed, optional single quote).
+        let expected = if has_trigger {
+            format!("'{collapsed}")
+        } else {
+            collapsed.clone()
+        };
+        assert_eq!(out, expected, "P3 content-preservation violated: {input:?}");
+        // P4 — a trigger anywhere forces exactly one `'` prefix.
+        if has_trigger {
+            assert!(
+                out.starts_with('\'') && out.len() == collapsed.len() + 1,
+                "P4 trigger⇒prefix violated: {input:?} -> {out:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn sanitize_csv_cell_fuzz_column_matrix() {
+        // "Every export column type" that funnels a free-form, attacker-
+        // influenced string through `sanitize_csv_cell`: the audit-log CSV
+        // columns (action / resource_type / ip_address / user_agent / details
+        // JSON blob) and the reports voting-participation `title`. Each is
+        // represented by a plausible base payload so a regression is reported
+        // against a realistic cell shape, not just an abstract fuzz string.
+        let columns: [(&str, &str); 6] = [
+            ("action", "resource_accessed"),
+            ("resource_type", "fault"),
+            ("ip_address", "203.0.113.7"),
+            ("user_agent", "Mozilla/5.0 (X11; Linux x86_64)"),
+            ("details", r#"{"capability":"tenant_purge","actor":"u"}"#),
+            ("voting_title", "Q3 roof-repair assessment vote"),
+        ];
+        // The record-separator payloads the ticket calls out explicitly.
+        let separators = ["\r", "\n", "\r\n", "\n\r", "\r\r", "\n\n"];
+
+        for (col, base) in columns {
+            // The base payload alone must round-trip cleanly.
+            assert_csv_cell_invariants(base);
+
+            for sep in separators {
+                // (a) separator embedded in the middle — a second record must
+                //     not be smuggled in through a hand-rolled exporter.
+                assert_csv_cell_invariants(&format!("{base}{sep}injected,evil,row"));
+                // (b) trailing separator.
+                assert_csv_cell_invariants(&format!("{base}{sep}"));
+                // (c) leading separator (could shift a trigger to the front).
+                assert_csv_cell_invariants(&format!("{sep}{base}"));
+
+                for trig in FORMULA_TRIGGERS {
+                    // (d) classic leading formula trigger + separator payload.
+                    assert_csv_cell_invariants(&format!("{trig}{base}{sep}=1+1"));
+                    // (e) trigger *after* a separator — the collapse must not
+                    //     leave the trigger exposed at a record boundary.
+                    assert_csv_cell_invariants(&format!("{base}{sep}{trig}cmd|'/c calc'!A0"));
+                    // (f) trigger buried mid-cell (the "anywhere" M5 rule).
+                    assert_csv_cell_invariants(&format!("{base}{sep}mid{trig}dle"));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sanitize_csv_cell_fuzz_random_hostile_inputs() {
+        // Deterministic xorshift PRNG — reproducible, no external crate.
+        let mut state: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        // A hostile alphabet weighted toward the dangerous bytes: record
+        // separators, every formula trigger, CSV framing chars, plus a couple
+        // of ordinary/unicode chars so the "safe" path is exercised too.
+        let alphabet: [char; 16] = [
+            '\r', '\n', '=', '+', '-', '@', ',', ';', '"', '\'', '{', '}', ' ', 'a', 'Z', 'ř',
+        ];
+
+        for _ in 0..20_000 {
+            let len = (next() % 12) as usize;
+            let mut s = String::new();
+            for _ in 0..len {
+                let idx = (next() as usize) % alphabet.len();
+                s.push(alphabet[idx]);
+            }
+            assert_csv_cell_invariants(&s);
+        }
+    }
+
+    #[test]
+    fn sanitize_csv_cell_fuzz_every_trigger_and_separator_pairing() {
+        // Exhaustive cross-product of {each formula trigger} × {CR, LF, CRLF}
+        // at the cell boundary — the precise combinations named in the ticket
+        // (#2827 CR/LF/CRLF × formula-injection prefixes). Each pairing must
+        // be neutralized: no raw separator survives, and the leading trigger is
+        // always quoted.
+        for trig in FORMULA_TRIGGERS {
+            for sep in ["\r", "\n", "\r\n"] {
+                let payload = format!("{trig}HYPERLINK(0){sep}2ND ROW");
+                let out = sanitize_csv_cell(&payload);
+                assert!(
+                    !out.contains('\r') && !out.contains('\n'),
+                    "separator {sep:?} survived for trigger {trig:?}: {out:?}"
+                );
+                assert!(
+                    out.starts_with('\''),
+                    "leading trigger {trig:?} not quoted: {out:?}"
+                );
+                // The original trigger char is preserved right after the quote.
+                assert_eq!(out.chars().nth(1), Some(trig));
+                assert_csv_cell_invariants(&payload);
+            }
+        }
+    }
+
     #[test]
     fn parse_duration_overflow_returns_none_does_not_panic() {
         // i64::MAX days would panic the legacy `Duration::days` constructor.
