@@ -14,6 +14,7 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { DsaTransparencyReport } from '../components/DsaTransparencyReportCard';
 import { DsaTransparencyReportCard } from '../components/DsaTransparencyReportCard';
 
@@ -27,6 +28,8 @@ interface DsaMetricsDisplay {
 }
 
 export const DsaReportsPage: React.FC = () => {
+  const { t } = useTranslation();
+
   // Report generation form
   const [showGenerateForm, setShowGenerateForm] = useState(false);
   const [periodStart, setPeriodStart] = useState('');
@@ -77,7 +80,7 @@ export const DsaReportsPage: React.FC = () => {
 
   const handleGenerateReport = useCallback(() => {
     if (!periodStart || !periodEnd) {
-      setFormError('Please select both start and end dates');
+      setFormError(t('dsa.generate.dateError'));
       return;
     }
 
@@ -95,25 +98,25 @@ export const DsaReportsPage: React.FC = () => {
         },
         onError: (err) => {
           console.error('Failed to generate report:', err);
-          setFormError('Failed to generate report. Please try again.');
+          setFormError(t('dsa.generate.error'));
         },
       }
     );
-  }, [periodStart, periodEnd, generateReport]);
+  }, [periodStart, periodEnd, generateReport, t]);
 
   const handlePublish = useCallback(
     (reportId: string) => {
       publishReport.mutate(reportId, {
         onSuccess: () => {
-          alert('Report published successfully.');
+          alert(t('dsa.publish.success'));
         },
         onError: (err) => {
           console.error('Failed to publish report:', err);
-          alert('Failed to publish report. Please try again.');
+          alert(t('dsa.publish.error'));
         },
       });
     },
-    [publishReport]
+    [publishReport, t]
   );
 
   const handleDownload = useCallback(
@@ -121,11 +124,11 @@ export const DsaReportsPage: React.FC = () => {
       downloadPdf.mutate(reportId, {
         onError: (err) => {
           console.error('Failed to download report:', err);
-          alert('Failed to download report. Please try again.');
+          alert(t('dsa.download.error'));
         },
       });
     },
-    [downloadPdf]
+    [downloadPdf, t]
   );
 
   const formatDate = (dateStr: string): string => {
@@ -141,10 +144,10 @@ export const DsaReportsPage: React.FC = () => {
     return (
       <div className="dsa-reports-page">
         <div className="dsa-reports-header">
-          <h1>DSA Transparency Reports</h1>
-          <p>Generate and publish transparency reports for Digital Services Act compliance.</p>
+          <h1>{t('dsa.title')}</h1>
+          <p>{t('dsa.subtitle')}</p>
         </div>
-        <div className="dsa-loading">Loading reports...</div>
+        <div className="dsa-loading">{t('dsa.loading')}</div>
       </div>
     );
   }
@@ -154,17 +157,17 @@ export const DsaReportsPage: React.FC = () => {
     return (
       <div className="dsa-reports-page">
         <div className="dsa-reports-header">
-          <h1>DSA Transparency Reports</h1>
-          <p>Generate and publish transparency reports for Digital Services Act compliance.</p>
+          <h1>{t('dsa.title')}</h1>
+          <p>{t('dsa.subtitle')}</p>
         </div>
         <div className="dsa-reports-error" role="alert">
-          Failed to load DSA reports: {reportsError.message}
+          {t('dsa.loadError', { message: reportsError.message })}
           <button
             type="button"
             onClick={() => window.location.reload()}
             className="dsa-retry-button"
           >
-            Retry
+            {t('dsa.retry')}
           </button>
         </div>
       </div>
@@ -174,36 +177,38 @@ export const DsaReportsPage: React.FC = () => {
   return (
     <div className="dsa-reports-page">
       <div className="dsa-reports-header">
-        <h1>DSA Transparency Reports</h1>
-        <p>Generate and publish transparency reports for Digital Services Act compliance.</p>
+        <h1>{t('dsa.title')}</h1>
+        <p>{t('dsa.subtitle')}</p>
       </div>
 
       {/* Current Metrics */}
       {metrics && (
         <div className="dsa-current-metrics">
-          <h2>Current Period Metrics</h2>
+          <h2>{t('dsa.metrics.title')}</h2>
           <p className="dsa-period-info">
-            Period: {formatDate(metrics.current_period_start)} -{' '}
-            {formatDate(metrics.current_period_end)}
+            {t('dsa.metrics.period', {
+              start: formatDate(metrics.current_period_start),
+              end: formatDate(metrics.current_period_end),
+            })}
           </p>
           <div className="dsa-metrics-grid">
             <div className="dsa-metric-card">
               <div className="dsa-metric-value">{metrics.moderation_actions_this_period}</div>
-              <div className="dsa-metric-label">Moderation Actions</div>
+              <div className="dsa-metric-label">{t('dsa.metrics.moderationActions')}</div>
             </div>
             <div className="dsa-metric-card">
               <div className="dsa-metric-value">{metrics.pending_cases}</div>
-              <div className="dsa-metric-label">Pending Cases</div>
+              <div className="dsa-metric-label">{t('dsa.metrics.pendingCases')}</div>
             </div>
             <div className="dsa-metric-card">
               <div className="dsa-metric-value">
                 {metrics.avg_resolution_time_hours.toFixed(1)}h
               </div>
-              <div className="dsa-metric-label">Avg Resolution Time</div>
+              <div className="dsa-metric-label">{t('dsa.metrics.avgResolutionTime')}</div>
             </div>
             <div className="dsa-metric-card">
               <div className="dsa-metric-value">{metrics.sla_compliance_rate.toFixed(1)}%</div>
-              <div className="dsa-metric-label">SLA Compliance</div>
+              <div className="dsa-metric-label">{t('dsa.metrics.slaCompliance')}</div>
             </div>
           </div>
         </div>
@@ -217,11 +222,11 @@ export const DsaReportsPage: React.FC = () => {
             className="dsa-generate-button"
             onClick={() => setShowGenerateForm(true)}
           >
-            Generate New Report
+            {t('dsa.generate.newButton')}
           </button>
         ) : (
           <div className="dsa-generate-form">
-            <h3>Generate Transparency Report</h3>
+            <h3>{t('dsa.generate.formTitle')}</h3>
             {formError && (
               <div className="dsa-form-error" role="alert">
                 {formError}
@@ -229,7 +234,7 @@ export const DsaReportsPage: React.FC = () => {
             )}
             <div className="dsa-form-row">
               <div className="dsa-form-field">
-                <label htmlFor="periodStart">Period Start</label>
+                <label htmlFor="periodStart">{t('dsa.generate.periodStart')}</label>
                 <input
                   type="date"
                   id="periodStart"
@@ -238,7 +243,7 @@ export const DsaReportsPage: React.FC = () => {
                 />
               </div>
               <div className="dsa-form-field">
-                <label htmlFor="periodEnd">Period End</label>
+                <label htmlFor="periodEnd">{t('dsa.generate.periodEnd')}</label>
                 <input
                   type="date"
                   id="periodEnd"
@@ -254,7 +259,7 @@ export const DsaReportsPage: React.FC = () => {
                 onClick={() => setShowGenerateForm(false)}
                 disabled={generateReport.isPending}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -262,7 +267,7 @@ export const DsaReportsPage: React.FC = () => {
                 onClick={handleGenerateReport}
                 disabled={generateReport.isPending}
               >
-                {generateReport.isPending ? 'Generating...' : 'Generate Report'}
+                {generateReport.isPending ? t('dsa.generate.submitting') : t('dsa.generate.submit')}
               </button>
             </div>
           </div>
@@ -271,7 +276,7 @@ export const DsaReportsPage: React.FC = () => {
 
       {/* Reports List */}
       <div className="dsa-reports-list-section">
-        <h2>Previous Reports</h2>
+        <h2>{t('dsa.list.title')}</h2>
         {reports.length > 0 ? (
           <div className="dsa-reports-list">
             {reports.map((report) => (
@@ -286,34 +291,35 @@ export const DsaReportsPage: React.FC = () => {
           </div>
         ) : (
           <div className="dsa-empty-state">
-            <p>No transparency reports have been generated yet.</p>
-            <p>Generate your first report to comply with DSA requirements.</p>
+            <p>{t('dsa.list.emptyTitle')}</p>
+            <p>{t('dsa.list.emptySubtitle')}</p>
           </div>
         )}
       </div>
 
       {/* DSA Requirements Info */}
       <div className="dsa-requirements-info">
-        <h2>DSA Reporting Requirements</h2>
+        <h2>{t('dsa.requirements.title')}</h2>
         <ul>
           <li>
-            <strong>Content Moderation Actions:</strong> Report all content removal, restriction,
-            and warning actions taken.
+            <strong>{t('dsa.requirements.moderationLabel')}</strong>{' '}
+            {t('dsa.requirements.moderationText')}
           </li>
           <li>
-            <strong>User Reports:</strong> Track and report on user-submitted content reports and
-            their resolutions.
+            <strong>{t('dsa.requirements.userReportsLabel')}</strong>{' '}
+            {t('dsa.requirements.userReportsText')}
           </li>
           <li>
-            <strong>Automated Decisions:</strong> Document automated content moderation decisions
-            and human review overturns.
+            <strong>{t('dsa.requirements.automatedLabel')}</strong>{' '}
+            {t('dsa.requirements.automatedText')}
           </li>
           <li>
-            <strong>Appeals:</strong> Report on appeals received and their outcomes.
+            <strong>{t('dsa.requirements.appealsLabel')}</strong>{' '}
+            {t('dsa.requirements.appealsText')}
           </li>
           <li>
-            <strong>Timeliness:</strong> Reports should be published at least annually for platforms
-            with significant EU user bases.
+            <strong>{t('dsa.requirements.timelinessLabel')}</strong>{' '}
+            {t('dsa.requirements.timelinessText')}
           </li>
         </ul>
       </div>

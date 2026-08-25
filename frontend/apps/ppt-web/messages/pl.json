@@ -98,6 +98,56 @@
       "errorMessage": "Nie udało się przejrzeć oceny. Spróbuj ponownie."
     }
   },
+  "dsa": {
+    "title": "Raporty przejrzystości DSA",
+    "subtitle": "Generuj i publikuj raporty przejrzystości zgodne z aktem o usługach cyfrowych.",
+    "loading": "Ładowanie raportów...",
+    "loadError": "Nie udało się załadować raportów DSA: {{message}}",
+    "retry": "Spróbuj ponownie",
+    "metrics": {
+      "title": "Wskaźniki bieżącego okresu",
+      "period": "Okres: {{start}} - {{end}}",
+      "moderationActions": "Działania moderacyjne",
+      "pendingCases": "Oczekujące sprawy",
+      "avgResolutionTime": "Śr. czas rozwiązania",
+      "slaCompliance": "Zgodność z SLA"
+    },
+    "generate": {
+      "newButton": "Generuj nowy raport",
+      "formTitle": "Generuj raport przejrzystości",
+      "periodStart": "Początek okresu",
+      "periodEnd": "Koniec okresu",
+      "submit": "Generuj raport",
+      "submitting": "Generowanie...",
+      "dateError": "Wybierz datę początkową i końcową",
+      "error": "Nie udało się wygenerować raportu. Spróbuj ponownie."
+    },
+    "publish": {
+      "success": "Raport został pomyślnie opublikowany.",
+      "error": "Nie udało się opublikować raportu. Spróbuj ponownie."
+    },
+    "download": {
+      "error": "Nie udało się pobrać raportu. Spróbuj ponownie."
+    },
+    "list": {
+      "title": "Poprzednie raporty",
+      "emptyTitle": "Nie wygenerowano jeszcze żadnych raportów przejrzystości.",
+      "emptySubtitle": "Wygeneruj swój pierwszy raport, aby spełnić wymagania DSA."
+    },
+    "requirements": {
+      "title": "Wymagania dotyczące raportowania DSA",
+      "moderationLabel": "Działania moderacji treści:",
+      "moderationText": "Raportuj wszystkie działania usuwania, ograniczania i ostrzegania dotyczące treści.",
+      "userReportsLabel": "Zgłoszenia użytkowników:",
+      "userReportsText": "Śledź i raportuj zgłoszenia treści od użytkowników oraz ich rozwiązania.",
+      "automatedLabel": "Decyzje automatyczne:",
+      "automatedText": "Dokumentuj automatyczne decyzje moderacji treści oraz ich uchylenia po weryfikacji przez człowieka.",
+      "appealsLabel": "Odwołania:",
+      "appealsText": "Raportuj otrzymane odwołania i ich wyniki.",
+      "timelinessLabel": "Terminowość:",
+      "timelinessText": "Raporty powinny być publikowane co najmniej raz w roku dla platform ze znaczącą bazą użytkowników w UE."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Panel moderacji treści",

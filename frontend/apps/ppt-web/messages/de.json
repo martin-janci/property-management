@@ -98,6 +98,56 @@
       "errorMessage": "Bewertung konnte nicht geprüft werden. Bitte versuchen Sie es erneut."
     }
   },
+  "dsa": {
+    "title": "DSA-Transparenzberichte",
+    "subtitle": "Erstellen und veröffentlichen Sie Transparenzberichte zur Einhaltung des Gesetzes über digitale Dienste.",
+    "loading": "Berichte werden geladen...",
+    "loadError": "DSA-Berichte konnten nicht geladen werden: {{message}}",
+    "retry": "Erneut versuchen",
+    "metrics": {
+      "title": "Kennzahlen des aktuellen Zeitraums",
+      "period": "Zeitraum: {{start}} - {{end}}",
+      "moderationActions": "Moderationsmaßnahmen",
+      "pendingCases": "Offene Fälle",
+      "avgResolutionTime": "Durchschn. Bearbeitungszeit",
+      "slaCompliance": "SLA-Einhaltung"
+    },
+    "generate": {
+      "newButton": "Neuen Bericht erstellen",
+      "formTitle": "Transparenzbericht erstellen",
+      "periodStart": "Zeitraum Beginn",
+      "periodEnd": "Zeitraum Ende",
+      "submit": "Bericht erstellen",
+      "submitting": "Wird erstellt...",
+      "dateError": "Bitte wählen Sie sowohl Start- als auch Enddatum aus",
+      "error": "Bericht konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+    },
+    "publish": {
+      "success": "Bericht erfolgreich veröffentlicht.",
+      "error": "Bericht konnte nicht veröffentlicht werden. Bitte versuchen Sie es erneut."
+    },
+    "download": {
+      "error": "Bericht konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut."
+    },
+    "list": {
+      "title": "Frühere Berichte",
+      "emptyTitle": "Es wurden noch keine Transparenzberichte erstellt.",
+      "emptySubtitle": "Erstellen Sie Ihren ersten Bericht, um die DSA-Anforderungen zu erfüllen."
+    },
+    "requirements": {
+      "title": "DSA-Berichtsanforderungen",
+      "moderationLabel": "Maßnahmen zur Inhaltsmoderation:",
+      "moderationText": "Melden Sie alle Maßnahmen zur Entfernung, Einschränkung und Verwarnung von Inhalten.",
+      "userReportsLabel": "Nutzermeldungen:",
+      "userReportsText": "Verfolgen und melden Sie von Nutzern gemeldete Inhalte und deren Bearbeitung.",
+      "automatedLabel": "Automatisierte Entscheidungen:",
+      "automatedText": "Dokumentieren Sie automatisierte Entscheidungen zur Inhaltsmoderation und deren Aufhebung durch menschliche Prüfung.",
+      "appealsLabel": "Widersprüche:",
+      "appealsText": "Melden Sie eingegangene Widersprüche und deren Ergebnisse.",
+      "timelinessLabel": "Fristgerechtigkeit:",
+      "timelinessText": "Berichte sollten mindestens jährlich für Plattformen mit erheblicher Nutzerbasis in der EU veröffentlicht werden."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Dashboard zur Inhaltsmoderation",

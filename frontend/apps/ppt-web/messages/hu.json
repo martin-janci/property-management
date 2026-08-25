@@ -98,6 +98,56 @@
       "errorMessage": "Az értékelés felülvizsgálata sikertelen. Kérjük, próbálja újra."
     }
   },
+  "dsa": {
+    "title": "DSA átláthatósági jelentések",
+    "subtitle": "Készítsen és tegyen közzé átláthatósági jelentéseket a digitális szolgáltatásokról szóló rendeletnek való megfeleléshez.",
+    "loading": "Jelentések betöltése...",
+    "loadError": "Nem sikerült betölteni a DSA jelentéseket: {{message}}",
+    "retry": "Újrapróbálkozás",
+    "metrics": {
+      "title": "Aktuális időszak mutatói",
+      "period": "Időszak: {{start}} - {{end}}",
+      "moderationActions": "Moderálási műveletek",
+      "pendingCases": "Függőben lévő ügyek",
+      "avgResolutionTime": "Átlagos megoldási idő",
+      "slaCompliance": "SLA megfelelés"
+    },
+    "generate": {
+      "newButton": "Új jelentés készítése",
+      "formTitle": "Átláthatósági jelentés készítése",
+      "periodStart": "Időszak kezdete",
+      "periodEnd": "Időszak vége",
+      "submit": "Jelentés készítése",
+      "submitting": "Készítés folyamatban...",
+      "dateError": "Kérjük, válassza ki a kezdő és a záró dátumot is",
+      "error": "Nem sikerült létrehozni a jelentést. Kérjük, próbálja újra."
+    },
+    "publish": {
+      "success": "A jelentés sikeresen közzétéve.",
+      "error": "Nem sikerült közzétenni a jelentést. Kérjük, próbálja újra."
+    },
+    "download": {
+      "error": "Nem sikerült letölteni a jelentést. Kérjük, próbálja újra."
+    },
+    "list": {
+      "title": "Korábbi jelentések",
+      "emptyTitle": "Még nem készült átláthatósági jelentés.",
+      "emptySubtitle": "Készítse el első jelentését a DSA követelményeinek teljesítéséhez."
+    },
+    "requirements": {
+      "title": "DSA jelentési követelmények",
+      "moderationLabel": "Tartalommoderálási műveletek:",
+      "moderationText": "Jelentse az összes tartalomeltávolítási, -korlátozási és figyelmeztetési műveletet.",
+      "userReportsLabel": "Felhasználói bejelentések:",
+      "userReportsText": "Kövesse nyomon és jelentse a felhasználók által beküldött tartalombejelentéseket és azok megoldását.",
+      "automatedLabel": "Automatizált döntések:",
+      "automatedText": "Dokumentálja az automatizált tartalommoderálási döntéseket és az emberi felülvizsgálat általi felülbírálásokat.",
+      "appealsLabel": "Fellebbezések:",
+      "appealsText": "Jelentse a beérkezett fellebbezéseket és azok kimenetelét.",
+      "timelinessLabel": "Időszerűség:",
+      "timelinessText": "A jelentéseket legalább évente közzé kell tenni a jelentős uniós felhasználói bázissal rendelkező platformok esetében."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Tartalommoderálási irányítópult",
