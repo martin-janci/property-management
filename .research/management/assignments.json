@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T12:35:55Z",
+  "generated": "2026-08-25T12:43:30Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-1cd45238",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-25T12:29:55Z",
-      "last_updated": "2026-08-25T12:29:55Z",
-      "status_changed_at": "2026-08-25T12:29:55Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-25T12:43:30Z",
+      "status_changed_at": "2026-08-25T12:43:30Z",
+      "pr_number": 2852,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2852",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2852 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=de-duplicated AmlDashboardPage test helpers (field accessors + eddDialogSubmit); coverage unchanged 6/6; verify OK 125 files/2433 tests",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
