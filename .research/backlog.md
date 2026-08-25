@@ -1,12 +1,12 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-25 03:14 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-25 08:53 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | ready | 2026-08-25 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
-| 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | ready | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
+| 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | done | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
 | 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/_archive/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
 | 3 | bug | `code-review-mobile-rn-offline-401-dropped` | mobile-rn: offline sync queue treats ALL 4xx (incl. recoverable 401 expired-token / 429 rate-limit)  | done | 2026-08-12 |  |
 | 3 | bug | `code-review-ppt-web-core-logout-purge-notif-triggers` | ppt-web logout cache purge still misses the 'notification-triggers' query root (PR #2650 fix incompl | done | 2026-08-12 |  |
@@ -150,11 +150,11 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs` | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | open | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs` | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | dropped | 2026-08-25 |  |
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
 | 1 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-25 |  |
-| 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | open | 2026-08-25 |  |
+| 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-mobile-rn-thread-detail-hardcoded-en` | ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks) | done | 2026-08-23 |  |
 | 1 | refactor | `code-review-mobile-rn-voice-cmd-hardcoded-en` | Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX) | done | 2026-08-23 |  |
 | 1 | bug | `code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow` | ppt-web AML dashboard drives regulated EDD/review decisions through window.prompt/alert with hardcod | done | 2026-08-22 |  |

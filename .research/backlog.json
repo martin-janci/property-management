@@ -9212,12 +9212,14 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "ppt-web-ui segment review 2026-08-25"
+        "ppt-web-ui segment review 2026-08-25",
+        "PR #2847"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation import; every visible string ('DSA Transparency Reports', 'Generate New Report', 'Loading reports...', error/alert copy, requirements list) is hardcoded English while sibling AmlDashboardPage/ContentModerationPage use t(...) — regulatory-facing page fails i18n bar"
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation import; every visible string ('DSA Transparency Reports', 'Generate New Report', 'Loading reports...', error/alert copy, requirements list) is hardcoded English while sibling AmlDashboardPage/ContentModerationPage use t(...) — regulatory-facing page fails i18n bar",
+        "resolved: PR #2847 merged 2026-08-25 — code-review-ppt-web-ui-dsa-reports-no-i18n: i18n DsaReportsPage (useTranslation + locales)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-25T03:20:07Z",
+  "last_run_iso": "2026-08-25T08:50:37Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2838,
-  "last_issue_seen": 2832,
-  "last_commit_sha": "118a8c145afd07970e91305149e3ae8980b2738c",
+  "last_pr_seen": 2847,
+  "last_issue_seen": 2847,
+  "last_commit_sha": "142ae17",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -924,7 +924,8 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
     "code-review-ppt-web-ui-content-mod-unsafe-cast",
     "code-review-ppt-web-ui-content-mod-overdue-noop",
-    "code-review-ppt-web-ui-dsa-reports-no-i18n"
+    "code-review-ppt-web-ui-dsa-reports-no-i18n",
+    "refire-buffer-low-2026-08-25-0850"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -938,7 +939,7 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 70,
+    "runs": 71,
     "vectors_created": 324,
     "plans_created": 28,
     "quiet_days": 3,

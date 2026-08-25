@@ -71,6 +71,15 @@
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
       ]
+    },
+    {
+      "id": "refire-buffer-low-2026-08-25-0850",
+      "type": "refire_note",
+      "source": "dispatcher buffer-low",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Dispatcher fired routine with payload buffer-low: claimable=11/72 (only ~5 non-gated; 6 mobile-native parked). Incremental run cursor 2838→2847; PR #2847 resolved code-review-ppt-web-ui-dsa-reports-no-i18n; 0 new plans promoted (no open item meets score>=3 or security fast-track)."
     }
   ],
   "auto_fix_actions": [],
