@@ -11,6 +11,8 @@ export type {
 } from './AmlRiskAssessmentCard';
 // Story 67.1: AML Risk Assessment
 export { AmlRiskAssessmentCard } from './AmlRiskAssessmentCard';
+// Epic 90: AML EDD / review decision dialogs (replace window.prompt/alert flow)
+export { DecideAppealDialog } from './DecideAppealDialog';
 export type {
   ContentTypeCount,
   DsaReportStatus,
@@ -31,7 +33,6 @@ export type {
 } from './EddRecordCard';
 // Story 67.2: Enhanced Due Diligence
 export { EddRecordCard } from './EddRecordCard';
-// Epic 90: AML EDD / review decision dialogs (replace window.prompt/alert flow)
 export { InitiateEddDialog } from './InitiateEddDialog';
 export type {
   ContentOwnerInfo,
@@ -51,3 +52,4 @@ export type {
 } from './ModerationQueueStats';
 export { ModerationQueueStats } from './ModerationQueueStats';
 export { ReviewAssessmentDialog } from './ReviewAssessmentDialog';
+export { TakeModerationActionDialog } from './TakeModerationActionDialog';

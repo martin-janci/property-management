@@ -202,13 +202,42 @@
       "decideAppeal": "Fellebbezésről döntés"
     },
     "prompts": {
-      "actionType": "Adja meg a művelet típusát (remove, restrict, warn, approve):",
-      "actionRationale": "Adja meg a művelet indoklását:",
-      "decision": "Adja meg a döntést (uphold, overturn):",
-      "decisionRationale": "Adja meg a döntés indoklását:",
-      "assignError": "Nem sikerült hozzárendelni az esetet. Kérjük, próbálja újra.",
-      "actionError": "Nem sikerült végrehajtani a műveletet. Kérjük, próbálja újra.",
-      "appealError": "Nem sikerült dönteni a fellebbezésről. Kérjük, próbálja újra."
+      "assignError": "Nem sikerült hozzárendelni az esetet. Kérjük, próbálja újra."
+    },
+    "dialogs": {
+      "takeAction": {
+        "title": "Moderációs intézkedés végrehajtása",
+        "description": "Rögzítsen egy moderációs intézkedést ehhez a tartalmi esethez.",
+        "actionLabel": "Intézkedés",
+        "rationaleLabel": "Indoklás",
+        "rationalePlaceholder": "Adja meg az intézkedés indoklását",
+        "rationaleRequired": "Az indoklás kötelező.",
+        "notifyOwnerLabel": "Tartalom tulajdonosának értesítése",
+        "submit": "Intézkedés elküldése",
+        "submitting": "Küldés...",
+        "successTitle": "Intézkedés rögzítve",
+        "successMessage": "A moderációs intézkedés sikeresen rögzítve.",
+        "errorTitle": "Az intézkedés sikertelen",
+        "errorMessage": "Az intézkedés sikertelen. Kérjük, próbálja újra."
+      },
+      "decideAppeal": {
+        "title": "Fellebbezés elbírálása",
+        "description": "Rögzítsen egy döntést erről a tartalommoderálási fellebbezésről.",
+        "decisionLabel": "Döntés",
+        "decision": {
+          "uphold": "Helybenhagyás",
+          "overturn": "Megváltoztatás"
+        },
+        "rationaleLabel": "Indoklás",
+        "rationalePlaceholder": "Adja meg a döntés indoklását",
+        "rationaleRequired": "Az indoklás kötelező.",
+        "submit": "Döntés elküldése",
+        "submitting": "Küldés...",
+        "successTitle": "Fellebbezés elbírálva",
+        "successMessage": "A fellebbezésről szóló döntés sikeresen rögzítve.",
+        "errorTitle": "A fellebbezés elbírálása sikertelen",
+        "errorMessage": "A fellebbezés elbírálása sikertelen. Kérjük, próbálja újra."
+      }
     }
   },
   "common": {

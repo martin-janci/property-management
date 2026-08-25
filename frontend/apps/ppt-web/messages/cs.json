@@ -202,13 +202,42 @@
       "decideAppeal": "Rozhodnout o odvolání"
     },
     "prompts": {
-      "actionType": "Zadejte typ akce (remove, restrict, warn, approve):",
-      "actionRationale": "Zadejte odůvodnění této akce:",
-      "decision": "Zadejte rozhodnutí (uphold, overturn):",
-      "decisionRationale": "Zadejte odůvodnění tohoto rozhodnutí:",
-      "assignError": "Nepodařilo se přiřadit případ. Zkuste to znovu.",
-      "actionError": "Nepodařilo se provést akci. Zkuste to znovu.",
-      "appealError": "Nepodařilo se rozhodnout o odvolání. Zkuste to znovu."
+      "assignError": "Nepodařilo se přiřadit případ. Zkuste to znovu."
+    },
+    "dialogs": {
+      "takeAction": {
+        "title": "Provést moderační akci",
+        "description": "Zaznamenejte moderační akci pro tento případ obsahu.",
+        "actionLabel": "Akce",
+        "rationaleLabel": "Odůvodnění",
+        "rationalePlaceholder": "Zadejte odůvodnění této akce",
+        "rationaleRequired": "Odůvodnění je povinné.",
+        "notifyOwnerLabel": "Upozornit vlastníka obsahu",
+        "submit": "Odeslat akci",
+        "submitting": "Odesílá se...",
+        "successTitle": "Akce zaznamenána",
+        "successMessage": "Moderační akce byla úspěšně zaznamenána.",
+        "errorTitle": "Akci se nepodařilo provést",
+        "errorMessage": "Akci se nepodařilo provést. Zkuste to znovu."
+      },
+      "decideAppeal": {
+        "title": "Rozhodnout o odvolání",
+        "description": "Zaznamenejte rozhodnutí o tomto odvolání proti moderování obsahu.",
+        "decisionLabel": "Rozhodnutí",
+        "decision": {
+          "uphold": "Potvrdit",
+          "overturn": "Zrušit"
+        },
+        "rationaleLabel": "Odůvodnění",
+        "rationalePlaceholder": "Zadejte odůvodnění tohoto rozhodnutí",
+        "rationaleRequired": "Odůvodnění je povinné.",
+        "submit": "Odeslat rozhodnutí",
+        "submitting": "Odesílá se...",
+        "successTitle": "O odvolání rozhodnuto",
+        "successMessage": "Rozhodnutí o odvolání bylo úspěšně zaznamenáno.",
+        "errorTitle": "O odvolání se nepodařilo rozhodnout",
+        "errorMessage": "O odvolání se nepodařilo rozhodnout. Zkuste to znovu."
+      }
     }
   },
   "common": {

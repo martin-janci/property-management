@@ -202,13 +202,42 @@
       "decideAppeal": "Rozhodnúť o odvolaní"
     },
     "prompts": {
-      "actionType": "Zadajte typ akcie (remove, restrict, warn, approve):",
-      "actionRationale": "Zadajte odôvodnenie tejto akcie:",
-      "decision": "Zadajte rozhodnutie (uphold, overturn):",
-      "decisionRationale": "Zadajte odôvodnenie tohto rozhodnutia:",
-      "assignError": "Nepodarilo sa priradiť prípad. Skúste to znova.",
-      "actionError": "Nepodarilo sa vykonať akciu. Skúste to znova.",
-      "appealError": "Nepodarilo sa rozhodnúť o odvolaní. Skúste to znova."
+      "assignError": "Nepodarilo sa priradiť prípad. Skúste to znova."
+    },
+    "dialogs": {
+      "takeAction": {
+        "title": "Vykonať moderačnú akciu",
+        "description": "Zaznamenajte moderačnú akciu pre tento prípad obsahu.",
+        "actionLabel": "Akcia",
+        "rationaleLabel": "Odôvodnenie",
+        "rationalePlaceholder": "Zadajte odôvodnenie tejto akcie",
+        "rationaleRequired": "Odôvodnenie je povinné.",
+        "notifyOwnerLabel": "Upozorniť vlastníka obsahu",
+        "submit": "Odoslať akciu",
+        "submitting": "Odosiela sa...",
+        "successTitle": "Akcia zaznamenaná",
+        "successMessage": "Moderačná akcia bola úspešne zaznamenaná.",
+        "errorTitle": "Nepodarilo sa vykonať akciu",
+        "errorMessage": "Nepodarilo sa vykonať akciu. Skúste to znova."
+      },
+      "decideAppeal": {
+        "title": "Rozhodnúť o odvolaní",
+        "description": "Zaznamenajte rozhodnutie o tomto odvolaní voči moderovaniu obsahu.",
+        "decisionLabel": "Rozhodnutie",
+        "decision": {
+          "uphold": "Potvrdiť",
+          "overturn": "Zrušiť"
+        },
+        "rationaleLabel": "Odôvodnenie",
+        "rationalePlaceholder": "Zadajte odôvodnenie tohto rozhodnutia",
+        "rationaleRequired": "Odôvodnenie je povinné.",
+        "submit": "Odoslať rozhodnutie",
+        "submitting": "Odosiela sa...",
+        "successTitle": "O odvolaní rozhodnuté",
+        "successMessage": "Rozhodnutie o odvolaní bolo úspešne zaznamenané.",
+        "errorTitle": "Nepodarilo sa rozhodnúť o odvolaní",
+        "errorMessage": "Nepodarilo sa rozhodnúť o odvolaní. Skúste to znova."
+      }
     }
   },
   "common": {

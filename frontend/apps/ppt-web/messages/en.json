@@ -202,13 +202,42 @@
       "decideAppeal": "Decide Appeal"
     },
     "prompts": {
-      "actionType": "Enter action type (remove, restrict, warn, approve):",
-      "actionRationale": "Enter rationale for this action:",
-      "decision": "Enter decision (uphold, overturn):",
-      "decisionRationale": "Enter rationale for this decision:",
-      "assignError": "Failed to assign case. Please try again.",
-      "actionError": "Failed to take action. Please try again.",
-      "appealError": "Failed to decide appeal. Please try again."
+      "assignError": "Failed to assign case. Please try again."
+    },
+    "dialogs": {
+      "takeAction": {
+        "title": "Take Moderation Action",
+        "description": "Record a moderation action for this content case.",
+        "actionLabel": "Action",
+        "rationaleLabel": "Rationale",
+        "rationalePlaceholder": "Enter the rationale for this action",
+        "rationaleRequired": "A rationale is required.",
+        "notifyOwnerLabel": "Notify content owner",
+        "submit": "Submit action",
+        "submitting": "Submitting...",
+        "successTitle": "Action recorded",
+        "successMessage": "Moderation action recorded successfully.",
+        "errorTitle": "Failed to take action",
+        "errorMessage": "Failed to take action. Please try again."
+      },
+      "decideAppeal": {
+        "title": "Decide Appeal",
+        "description": "Record a decision on this content moderation appeal.",
+        "decisionLabel": "Decision",
+        "decision": {
+          "uphold": "Uphold",
+          "overturn": "Overturn"
+        },
+        "rationaleLabel": "Rationale",
+        "rationalePlaceholder": "Enter the rationale for this decision",
+        "rationaleRequired": "A rationale is required.",
+        "submit": "Submit decision",
+        "submitting": "Submitting...",
+        "successTitle": "Appeal decided",
+        "successMessage": "Appeal decision recorded successfully.",
+        "errorTitle": "Failed to decide appeal",
+        "errorMessage": "Failed to decide appeal. Please try again."
+      }
     }
   },
   "common": {
