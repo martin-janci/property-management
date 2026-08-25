@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-25T18:52:00Z",
+  "segment_reviewed": "api-core",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "CHURN_FILES included backend/servers/api-server/src/services/quiet_hours_drain.rs (recent_churn 242, last_seen 2026-08-25) which roots under the api-core segment (src/ excl. routes/). Segment last reviewed 2026-08-21 and has 0 open code-review-finding rows in backlog.json (not saturated). Churn file itself reviewed clean (thorough #2823/#2831 hardening, full test coverage, no panic paths); findings came from the adjacent hot service workflow_executor.rs (recent_churn 457, last_seen 2026-08-07).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-api-core-workflow-regex-recompile",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:659 — the `Matches` comparison operator calls `regex::Regex::new(pattern)` on every single workflow condition evaluation. `pattern` is `compare_value.as_str()`, i.e. an org-authored stored workflow condition. grep of the file finds exactly one `Regex::new` and no `Lazy`/`OnceCell`/cache, so the pattern is recompiled from scratch for every event that reaches the condition.",
+        "Cost/DoS amplification on a hot automation path: a workflow bound to a high-frequency event type (e.g. a per-notification or per-fault trigger) recompiles its regex on each matching event. A workflow author can also store an expensive-to-compile pattern (the crate's default 10MB compiled-size ceiling is large) that is paid on every evaluation rather than once. Fix: compile once and cache (e.g. an LRU/`OnceCell` keyed by pattern) and/or set an explicit `RegexBuilder::size_limit`.",
+        "Confidence medium: static read confirms the recompile-per-eval and absence of any cache; the reachability (event -> evaluate_condition -> Matches) is via the stored-condition path and not runtime-confirmed for frequency."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-notin-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:640-652 — `ComparisonOperator::In` returns `Ok(false)` when `compare_value.as_array()` is `None` (fails closed), but `ComparisonOperator::NotIn` returns `Ok(true)` in the same malformed case (fails open).",
+        "Effect: a workflow condition authored as `NotIn` whose value is mis-typed (object/string/number instead of a JSON array) silently matches every event and fires the workflow's downstream actions, with no error surfaced to the author (contrast `Matches`, which returns a `ConditionError` on a non-string pattern). Recommend returning a `WorkflowError::ConditionError` for a non-array `In`/`NotIn` value so a malformed condition is rejected rather than firing unintentionally.",
+        "Confidence medium: asymmetry is clear from the source; whether a mis-typed `NotIn` config can actually be persisted depends on upstream config validation not traced in this static pass."
+      ]
+    }
+  ]
+}
