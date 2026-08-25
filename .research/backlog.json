@@ -9242,6 +9242,75 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-revoke-silent-fail",
+      "title": "mobile-rn: emergencyRevokeAll swallows server revoke when SecureStore write fails — stolen phone keeps offline credentials",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "mobile-rn segment review 2026-08-25 (Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:298-307 — emergencyRevokeAll awaits storeCredentials() before the server revoke call; if the SecureStore write throws, apiRequest('/access/credentials/revoke-all') is never reached.",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:419-440 — storeCredentials uses setItemAsync per chunk (line 431) and per manifest (line 434); a partial-chunk failure leaves the OLD manifest at CREDENTIALS_KEY intact so loadStoredCredentials at line 342 will reassemble a still-usable credential set on next launch.",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:289-296 — the method's own doc explicitly warns 'A failed (or unreachable) server revoke must never leave credentials usable offline' — the current code fails the reverse invariant (failed local write => no server revoke fired), which is equally bad for a lost/stolen phone.",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts — grep found no setItemAsync mock-reject exercising this failure path."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts"
+      ],
+      "created_at": "2026-08-25",
+      "updated_at": "2026-08-25",
+      "plan": "plans/code-review-mobile-rn-nfc-revoke-silent-fail.md"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-access-no-tests",
+      "title": "mobile-rn: NFCAccessController (grant/deny + wallet-pass creation) has zero test coverage",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-rn segment review 2026-08-25 (Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:1 — security-critical class (access grant/deny, Apple Wallet pass creation ~line 359 addToWallet, credential validation) has no *.test.* file; grep for 'NFCAccessController' returns only the source and its barrel export.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:~376 — console.error path for missing encryptedData is untested; a regression that silently issues an invalid wallet pass or grants access on malformed input would not be caught."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-08-25",
+      "updated_at": "2026-08-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-i18n-gaps",
+      "title": "mobile-rn: 3 screens (WidgetSettings/PersonMonths/AnnouncementDetail) hardcode English UI strings",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-rn segment review 2026-08-25 (Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66 — imports useTranslation but hardcodes 'Widget Added'/'Widgets Updated'/'Widget Settings'/'Back'/'Remove'/'Available Widgets' and Alert.alert copy across lines 66/79/87/89/109/126/131/181/194.",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:93 — no useTranslation import at all; header 'Person-months', Alert 'Invalid value / Enter a whole number between 0 and 20.' (line 78), 'Save'/'Cancel'/'Edit'/'Bulk entry…', 'person(s)' pluralization (line 151) all hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 — status pill uses raw backend string via charAt(0).toUpperCase() + slice(1) instead of t(`announcements.status.${status}`); 'published'/'draft'/'scheduled' never localize."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx"
+      ],
+      "created_at": "2026-08-25",
+      "updated_at": "2026-08-25",
+      "plan": null
     }
   ]
 }

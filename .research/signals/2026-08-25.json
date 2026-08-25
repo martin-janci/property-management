@@ -40,37 +40,40 @@
       "id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
       "type": "code-review-finding",
       "source": "ppt-web-ui segment review 2026-08-25",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.prompt free-text is cast via `as 'remove'|'restrict'|'warn'|'approve'` (and `as 'uphold'|'overturn'`) straight into the moderation-action / appeal-decision API — same anti-pattern AmlDashboardPage.test.tsx locks against; a typo like 'aprove' reaches the regulated endpoint",
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
-      ]
+      ],
+      "re_emit_note": "already scored in earlier fire today; zeroed to satisfy G4"
     },
     {
       "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
       "type": "code-review-finding",
       "source": "ppt-web-ui segment review 2026-08-25",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing `onShowOverdue` handler only resets status to 'pending' with a TODO admitting the overdue filter isn't wired; the ModerationQueueStats 'Show Overdue' button is a no-op that silently misleads moderators",
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
-      ]
+      ],
+      "re_emit_note": "already scored in earlier fire today; zeroed to satisfy G4"
     },
     {
       "id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
       "type": "code-review-finding",
       "source": "ppt-web-ui segment review 2026-08-25",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
       "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation import; every visible string ('DSA Transparency Reports', 'Generate New Report', 'Loading reports...', error/alert copy, requirements list) is hardcoded English while sibling AmlDashboardPage/ContentModerationPage use t(...) — regulatory-facing page fails i18n bar",
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
-      ]
+      ],
+      "re_emit_note": "already scored in earlier fire today; zeroed to satisfy G4"
     },
     {
       "id": "refire-buffer-low-2026-08-25-0850",
@@ -80,6 +83,59 @@
       "confidence": "high",
       "candidate_vector": null,
       "evidence": "Dispatcher fired routine with payload buffer-low: claimable=11/72 (only ~5 non-gated; 6 mobile-native parked). Incremental run cursor 2838→2847; PR #2847 resolved code-review-ppt-web-ui-dsa-reports-no-i18n; 0 new plans promoted (no open item meets score>=3 or security fast-track)."
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-revoke-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-08-25 mobile-rn (Phase 1.5 refire)",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:298-307 — emergencyRevokeAll awaits storeCredentials() before apiRequest('/access/credentials/revoke-all'). storeCredentials at line 419-440 writes SecureStore chunks (setItemAsync line 431) then manifest (line 434). If any setItemAsync throws, the awaited call rejects and the server-revoke line 306 is never reached; on partial-chunk failure the OLD manifest at CREDENTIALS_KEY still points at OLD chunks so loadStoredCredentials() at 342 reassembles a still-usable credential set.",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:289-296 — the method's own doc says: 'A failed (or unreachable) server revoke must never leave credentials usable offline'. The reverse case (failed local write => no server revoke fired) is now also true and equally bad: stolen phone keeps working credentials AND backend still lists them active.",
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.test.ts — no test currently exercises a failing SecureStore write path for emergencyRevokeAll (grep found no setItemAsync mock-reject in that test file)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-access-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-08-25 mobile-rn (Phase 1.5 refire)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:1 — security-critical class handling building access decisions (grant/deny), Apple Wallet pass creation (addToWallet ~line 359), and credential validation has zero test files; grep for 'NFCAccessController' returns only the source and its barrel export.",
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:~376 — console.error path for missing encryptedData is untested; a regression that silently issues an invalid wallet pass or grants access on malformed input would not be caught."
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-rn-i18n-gaps",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-08-25 mobile-rn (Phase 1.5 refire)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66 — imports useTranslation but hardcodes 'Widget Added', 'Widgets Updated', 'Widget Settings', 'Back', 'Remove', 'Available Widgets' and Alert.alert copy (lines 66/79/87/89/109/126/131/181/194); mixed-language UX for sk/cs users.",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:93 — no useTranslation import at all; header 'Person-months', subtitle, Alert 'Invalid value / Enter a whole number between 0 and 20.' (line 78), 'Save', 'Cancel', 'Edit', 'Bulk entry…', pluralization 'person(s)' at line 151 all hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 — status pill uses raw backend string via charAt(0).toUpperCase() + slice(1) instead of t(`announcements.status.${status}`); 'published'/'draft'/'scheduled' never localize."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "refire-buffer-low-2026-08-25-2226",
+      "type": "refire",
+      "source": "routine self-check (payload: buffer-low)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Third fire of the day (after 5f1c042 03:20 UTC and c487a35 08:54 UTC). Dispatcher payload: `buffer-low: claimable=6/72 — all backlog mobile-native gated; need landable backend/frontend vectors`. Advanced last_pr_seen 2847->2852 (5 more merged: #2848/#2849/#2850/#2851/#2852 all resolutions of prior backlog items). Phase 1.5 mobile-rn review produced 3 findings including a high-severity security one (nfc-revoke-silent-fail) that promotes to a landable frontend plan."
     }
   ],
   "auto_fix_actions": [],
@@ -88,119 +144,120 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && first-line matches",
-      "observed": "pass",
-      "expected": "pass"
+      "command": "test -f briefs/2026-08-25.md and head matches # 2026-08-25",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json vs HEAD diff",
+      "command": "jq compare vs HEAD state",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog.json ids unique",
+      "command": "backlog.json id uniqueness",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no non-cumulative signal double-scored",
+      "command": "non-cumulative signal not double-scored",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "3 new code-review-finding signals + 1 refire; none in prior seen_signals"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "score cap + 14d decay applied",
-      "observed": "pass (2 decayed, 1 dropped, no score>8)",
-      "expected": "pass"
+      "command": "score cap + decay",
+      "observed": "cap: 0 items >8; no decay candidates this run (no open item updated <=2026-08-11)",
+      "expected": "cap OK, decay OK"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "grep brief for adversarial pass on each new plan",
-      "observed": "pass (unsafe-cast plan annotated)",
-      "expected": "pass"
+      "command": "grep new plans in brief for adversarial pass:",
+      "observed": "1 plan promoted, adversarial-pass line present",
+      "expected": "line present"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "<=2 new plans, all sections+metadata+mode+files",
-      "observed": "1 new plan, 11 headings + 4 metadata, Mode:cloud-ok, 2 files resolve on disk",
-      "expected": "pass"
+      "command": "plan count <=2, metadata + 11 headings, capability, mode, files exist",
+      "observed": "1 new plan; 4/4 metadata, 11/11 headings, 2 caps ticked, Mode:cloud-ok, both files exist",
+      "expected": "all gates OK"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "command": "git diff --cached --name-only outside .research/",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secrets/private-host grep on staged diff (baseline docs excluded)",
+      "command": "grep secrets/private-hostnames in diff (excl baseline docs)",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md == regenerated",
-      "observed": "byte-identical",
-      "expected": "byte-identical"
+      "command": "diff backlog.md vs re-render",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phase failure honesty",
-      "observed": "no phases failed",
-      "expected": "pass"
+      "command": "phase-failure honesty — no failed phases this run",
+      "observed": "n/a",
+      "expected": "n/a"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plans preserved (plans/ or _archive/)",
-      "observed": "pass",
-      "expected": "pass"
+      "command": "promoted-plans converge (no silent delete)",
+      "observed": "prior plans still present or in _archive; new plan added",
+      "expected": "OK"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count staged (9) >= HEAD (8)",
-      "observed": "9 >= 8",
+      "command": "archive-only-grows",
+      "observed": "9 >= 9",
       "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md == regenerated",
-      "observed": "byte-identical",
-      "expected": "byte-identical"
+      "command": "diff IDEAS_TRIAGE.md vs re-render",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix cap (0 actions, all <=1)",
-      "observed": "0 actions this run",
-      "expected": "<=1 each type"
+      "command": "auto-fix per-run caps + kill-switch respected",
+      "observed": "auto_fix_actions=[] (no candidate this run)",
+      "expected": "caps OK"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid + coverage_cursor in bounds and advanced when pm_cursor advanced",
-      "observed": "pm_cursor 3->4, coverage_cursor 5->6, epics=13, artifacts parse",
-      "expected": "pass"
+      "command": "Phase 1.6 skipped this run — G16 no-op",
+      "observed": "management artifacts unchanged; pm_cursor.next_index=4 unchanged; coverage_cursor.next_index=6 unchanged",
+      "expected": "no-op OK"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "telegram token grep on staged diff",
+      "command": "grep telegram token",
       "observed": "0",
       "expected": "0"
     }
