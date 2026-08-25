@@ -73,6 +73,26 @@ function openEddDialog(cardIndex = 0) {
   fireEvent.click(screen.getAllByRole('button', { name: /initiate edd/i })[cardIndex]);
 }
 
+// Field accessors — the label copy and element casts live here once, so a
+// label change is a single-line edit rather than a scatter across tests.
+const decisionSelect = () => screen.getByLabelText(/decision/i) as HTMLSelectElement;
+const reviewNotesInput = () => screen.getByLabelText(/review notes/i) as HTMLTextAreaElement;
+const reasonInput = () => screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
+
+const setValue = (el: HTMLElement, value: string) => fireEvent.change(el, { target: { value } });
+
+const submitReview = () =>
+  fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+const cancelDialog = () => fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+// Once the EDD dialog is open, two buttons match /initiate edd/i (the card
+// action + the dialog submit); the dialog submit is the last one in the DOM.
+const eddDialogSubmit = () => {
+  const buttons = screen.getAllByRole('button', { name: /initiate edd/i });
+  return buttons[buttons.length - 1];
+};
+
 describe('AmlDashboardPage decision flow', () => {
   const promptSpy = vi.spyOn(window, 'prompt');
   const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
@@ -103,7 +123,7 @@ describe('AmlDashboardPage decision flow', () => {
     openReviewDialog();
 
     // Submit with the default decision but no notes.
-    fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+    submitReview();
 
     expect(reviewMutate).not.toHaveBeenCalled();
     // A localized inline validation message is shown instead of an alert.
@@ -114,13 +134,10 @@ describe('AmlDashboardPage decision flow', () => {
     renderPage();
     openReviewDialog();
 
-    const select = screen.getByLabelText(/decision/i);
-    fireEvent.change(select, { target: { value: 'escalate' } });
+    setValue(decisionSelect(), 'escalate');
+    setValue(reviewNotesInput(), 'needs more docs');
 
-    const notes = screen.getByLabelText(/review notes/i);
-    fireEvent.change(notes, { target: { value: 'needs more docs' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+    submitReview();
 
     expect(reviewMutate).toHaveBeenCalledTimes(1);
     const [payload] = reviewMutate.mock.calls[0];
@@ -134,10 +151,7 @@ describe('AmlDashboardPage decision flow', () => {
     renderPage();
     openEddDialog();
 
-    // Two buttons match /initiate edd/i once the dialog is open (the card action
-    // + the dialog submit); the dialog submit is the last one in the DOM.
-    const submitButtons = screen.getAllByRole('button', { name: /initiate edd/i });
-    const dialogSubmit = submitButtons[submitButtons.length - 1];
+    const dialogSubmit = eddDialogSubmit();
 
     // Empty reason: no mutation, inline validation shown.
     fireEvent.click(dialogSubmit);
@@ -145,9 +159,7 @@ describe('AmlDashboardPage decision flow', () => {
     expect(screen.getByText(/a reason is required/i)).toBeInTheDocument();
 
     // Provide a reason and submit.
-    fireEvent.change(screen.getByLabelText(/reason/i), {
-      target: { value: 'high risk score' },
-    });
+    setValue(reasonInput(), 'high risk score');
     fireEvent.click(dialogSubmit);
 
     expect(eddMutate).toHaveBeenCalledTimes(1);
@@ -167,16 +179,14 @@ describe('AmlDashboardPage decision flow', () => {
     // Open for the first assessment, pick a non-default decision and type notes,
     // then close without submitting.
     openReviewDialog(0);
-    fireEvent.change(screen.getByLabelText(/decision/i), { target: { value: 'escalate' } });
-    fireEvent.change(screen.getByLabelText(/review notes/i), {
-      target: { value: 'stale notes for assess-1' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    setValue(decisionSelect(), 'escalate');
+    setValue(reviewNotesInput(), 'stale notes for assess-1');
+    cancelDialog();
 
     // Open for the second assessment — the form must start blank/default.
     openReviewDialog(1);
-    expect((screen.getByLabelText(/review notes/i) as HTMLTextAreaElement).value).toBe('');
-    expect((screen.getByLabelText(/decision/i) as HTMLSelectElement).value).toBe('approve');
+    expect(reviewNotesInput().value).toBe('');
+    expect(decisionSelect().value).toBe('approve');
   });
 
   // Regression (#2832): the EDD dialog must not carry a reason from a
@@ -185,12 +195,10 @@ describe('AmlDashboardPage decision flow', () => {
     renderPage();
 
     openEddDialog(0);
-    fireEvent.change(screen.getByLabelText(/reason/i), {
-      target: { value: 'stale reason for assess-1' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    setValue(reasonInput(), 'stale reason for assess-1');
+    cancelDialog();
 
     openEddDialog(1);
-    expect((screen.getByLabelText(/reason/i) as HTMLTextAreaElement).value).toBe('');
+    expect(reasonInput().value).toBe('');
   });
 });
