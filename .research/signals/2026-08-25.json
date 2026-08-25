@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-08-25T02:31:27Z",
+  "run_kind": "buffer-starve-triage",
+  "trigger_text": "buffer-low: claimable=6/72 — all open work mobile-native-gated (cloud-unlandable); pipeline wedged on oversize-archive push (PR #2744 human-gated). Need landable non-mobile-native work + operator merge of #2744.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-25",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-08-22T03:03:20Z; now=2026-08-25T02:31:27Z; lag=71h — exceeds 36h threshold",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-08-25",
+      "type": "stale_routine_alert",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": "3+ days since last brief (2026-08-22 → 2026-08-25). Dispatcher signals from 08-23/08-24 present in .research/signals/, so the dispatcher loop is healthy — it's the daily-routine cron specifically that has skipped 3 firings. Not diagnosed here; surfaced to operator via brief.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-starve-2026-08-25",
+      "type": "buffer-starve",
+      "source": "trigger-payload",
+      "score_delta": 0,
+      "evidence": "trigger payload asserts claimable=6/72 with all open work mobile-native-gated. Verified: 5/5 open backlog rows have vector-file paths under mobile-native/shared/src/commonMain/kotlin/**. Cloud sandbox lacks Gradle + Android SDK, so dispatcher cannot claim any of them. Non-cumulative signal — score_delta stays 0 (this is a supply-side observation, not a code vector).",
+      "confidence": "high",
+      "candidate_vector": null,
+      "open_items_all_mobile_native": [
+        "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+        "code-review-mobile-native-kmp-cancellation-swallowed",
+        "code-review-mobile-native-kmp-ssoservice-untested",
+        "code-review-mobile-native-kmp-inquiries-response-contract",
+        "code-review-mobile-native-kmp-httpclient-no-timeout"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 0,
+      "evidence": "PR #2744 (dispatcher un-wedge oversize-archive push + retry-remint ghost fix) is draft with `needs-human-review` label since 2026-08-13. Reviewer approved code + tests, CI green (28 checks, all pass/skip). Dispatcher self-corrected its own hold-comment on 2026-08-13 confirming direct `git push` works in cloud. Requires operator merge — routine cannot self-clear (would be a Phase 5 fix on the routine's own machinery, out of allowlist scope). Not re-scored (deduped against prior seen_signals if present); this row exists to surface the block, not to accrue backlog score.",
+      "confidence": "high",
+      "candidate_vector": null,
+      "pr_number": 2744,
+      "idle_days": 12
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-08-25.md && head -1 == '# 2026-08-25'", "observed": "brief present, first line matches", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json advanced vs HEAD (last_pr_seen 2820→2838, last_run_iso refreshed, seen_signals +3, stats.runs +1)", "observed": "advanced", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "backlog.json ids unique (backlog untouched this run)", "observed": "unchanged", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id from today's set was in prior seen_signals with score_delta != 0", "observed": "all 4 signal_delta values == 0", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "cap+decay — backlog untouched, no rescore this run", "observed": "no violation possible", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "no new plans this run — vacuously true", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "0 new plans <= 2", "observed": "0", "expected": "≤2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached only .research/ paths", "observed": "brief + state + signals only", "expected": "0 non-.research/ paths" },
+    { "goal": "G9", "passed": true,  "command": "no secrets or private hostnames in staged diff", "observed": "clean", "expected": "0 matches" },
+    { "goal": "G10", "passed": null, "command": "backlog.md byte-identical to regen — SKIPPED (backlog.md not staged this run)", "observed": "n/a", "expected": "n/a", "remediation": "next full run will re-render backlog.md from backlog.json with fresh timestamp — this triage run intentionally excludes it from the staged set to avoid regen complexity" },
+    { "goal": "G11", "passed": true,  "command": "phase-failure honesty — brief lists phase-1-full as skipped, no cursor advanced beyond what phase-1 spot-check verified", "observed": "brief-consistent", "expected": "true" },
+    { "goal": "G12", "passed": true,  "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "plans/ untouched this run", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count >= HEAD archive count", "observed": "plans/_archive/ untouched", "expected": "true" },
+    { "goal": "G14", "passed": null, "command": "IDEAS_TRIAGE.md byte-identical to regen — SKIPPED (IDEAS_TRIAGE.md not staged this run)", "observed": "n/a", "expected": "n/a", "remediation": "same as G10 — deferred to next full run" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions[] empty (no candidate)", "observed": "[]", "expected": "empty" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 not run this cycle — gate no-op per scope carve-out", "observed": "no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true,  "command": "no Telegram token literals in staged diff", "observed": "clean", "expected": "0 matches" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — triage run derived no allowlisted signals meeting confidence=high + score>=3"
+}

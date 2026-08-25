@@ -5,9 +5,9 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-22T03:03:20Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2820,
+  "last_run_iso": "2026-08-25T02:31:27Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 2838,
   "last_issue_seen": 2816,
   "last_commit_sha": "e59dca8b157df58eceb9a612c61585efd07216ac",
   "paused": false,
@@ -484,6 +484,7 @@
     }
   },
   "seen_signals": [
+    "buffer-starve-2026-08-25",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -793,6 +794,7 @@
     "lag-warning-2026-08-15",
     "lag-warning-2026-08-19",
     "lag-warning-2026-08-22",
+    "lag-warning-2026-08-25",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
@@ -831,10 +833,12 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale-routine-alert-2026-08-25",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
     "stalled-review-pr-2559",
+    "stalled-review-pr-2744",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -916,7 +920,7 @@
     "mobile-native-kmp": "2026-08-16"
   },
   "stats": {
-    "runs": 69,
+    "runs": 70,
     "vectors_created": 318,
     "plans_created": 27,
     "quiet_days": 3,
