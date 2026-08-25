@@ -202,13 +202,42 @@
       "decideAppeal": "Über Widerspruch entscheiden"
     },
     "prompts": {
-      "actionType": "Aktionstyp eingeben (remove, restrict, warn, approve):",
-      "actionRationale": "Begründung für diese Maßnahme eingeben:",
-      "decision": "Entscheidung eingeben (uphold, overturn):",
-      "decisionRationale": "Begründung für diese Entscheidung eingeben:",
-      "assignError": "Fall konnte nicht zugewiesen werden. Bitte erneut versuchen.",
-      "actionError": "Maßnahme konnte nicht ausgeführt werden. Bitte erneut versuchen.",
-      "appealError": "Über den Widerspruch konnte nicht entschieden werden. Bitte erneut versuchen."
+      "assignError": "Fall konnte nicht zugewiesen werden. Bitte erneut versuchen."
+    },
+    "dialogs": {
+      "takeAction": {
+        "title": "Moderationsmaßnahme ergreifen",
+        "description": "Erfassen Sie eine Moderationsmaßnahme für diesen Inhaltsfall.",
+        "actionLabel": "Maßnahme",
+        "rationaleLabel": "Begründung",
+        "rationalePlaceholder": "Geben Sie die Begründung für diese Maßnahme ein",
+        "rationaleRequired": "Eine Begründung ist erforderlich.",
+        "notifyOwnerLabel": "Inhaltseigentümer benachrichtigen",
+        "submit": "Maßnahme absenden",
+        "submitting": "Wird gesendet...",
+        "successTitle": "Maßnahme erfasst",
+        "successMessage": "Moderationsmaßnahme erfolgreich erfasst.",
+        "errorTitle": "Maßnahme fehlgeschlagen",
+        "errorMessage": "Maßnahme fehlgeschlagen. Bitte versuchen Sie es erneut."
+      },
+      "decideAppeal": {
+        "title": "Über Einspruch entscheiden",
+        "description": "Erfassen Sie eine Entscheidung zu diesem Einspruch gegen die Inhaltsmoderation.",
+        "decisionLabel": "Entscheidung",
+        "decision": {
+          "uphold": "Bestätigen",
+          "overturn": "Aufheben"
+        },
+        "rationaleLabel": "Begründung",
+        "rationalePlaceholder": "Geben Sie die Begründung für diese Entscheidung ein",
+        "rationaleRequired": "Eine Begründung ist erforderlich.",
+        "submit": "Entscheidung absenden",
+        "submitting": "Wird gesendet...",
+        "successTitle": "Einspruch entschieden",
+        "successMessage": "Einspruchsentscheidung erfolgreich erfasst.",
+        "errorTitle": "Entscheidung fehlgeschlagen",
+        "errorMessage": "Entscheidung fehlgeschlagen. Bitte versuchen Sie es erneut."
+      }
     }
   },
   "common": {

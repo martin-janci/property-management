@@ -202,13 +202,42 @@
       "decideAppeal": "Rozstrzygnij odwołanie"
     },
     "prompts": {
-      "actionType": "Wprowadź typ działania (remove, restrict, warn, approve):",
-      "actionRationale": "Wprowadź uzasadnienie tego działania:",
-      "decision": "Wprowadź decyzję (uphold, overturn):",
-      "decisionRationale": "Wprowadź uzasadnienie tej decyzji:",
-      "assignError": "Nie udało się przypisać sprawy. Spróbuj ponownie.",
-      "actionError": "Nie udało się podjąć działania. Spróbuj ponownie.",
-      "appealError": "Nie udało się rozstrzygnąć odwołania. Spróbuj ponownie."
+      "assignError": "Nie udało się przypisać sprawy. Spróbuj ponownie."
+    },
+    "dialogs": {
+      "takeAction": {
+        "title": "Podejmij działanie moderacyjne",
+        "description": "Zarejestruj działanie moderacyjne dla tej sprawy dotyczącej treści.",
+        "actionLabel": "Działanie",
+        "rationaleLabel": "Uzasadnienie",
+        "rationalePlaceholder": "Wprowadź uzasadnienie tego działania",
+        "rationaleRequired": "Uzasadnienie jest wymagane.",
+        "notifyOwnerLabel": "Powiadom właściciela treści",
+        "submit": "Wyślij działanie",
+        "submitting": "Wysyłanie...",
+        "successTitle": "Działanie zarejestrowane",
+        "successMessage": "Działanie moderacyjne zostało pomyślnie zarejestrowane.",
+        "errorTitle": "Nie udało się podjąć działania",
+        "errorMessage": "Nie udało się podjąć działania. Spróbuj ponownie."
+      },
+      "decideAppeal": {
+        "title": "Rozstrzygnij odwołanie",
+        "description": "Zarejestruj decyzję w sprawie tego odwołania od moderacji treści.",
+        "decisionLabel": "Decyzja",
+        "decision": {
+          "uphold": "Podtrzymaj",
+          "overturn": "Uchyl"
+        },
+        "rationaleLabel": "Uzasadnienie",
+        "rationalePlaceholder": "Wprowadź uzasadnienie tej decyzji",
+        "rationaleRequired": "Uzasadnienie jest wymagane.",
+        "submit": "Wyślij decyzję",
+        "submitting": "Wysyłanie...",
+        "successTitle": "Odwołanie rozstrzygnięte",
+        "successMessage": "Decyzja w sprawie odwołania została pomyślnie zarejestrowana.",
+        "errorTitle": "Nie udało się rozstrzygnąć odwołania",
+        "errorMessage": "Nie udało się rozstrzygnąć odwołania. Spróbuj ponownie."
+      }
     }
   },
   "common": {

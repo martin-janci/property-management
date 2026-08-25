@@ -6,6 +6,8 @@
  */
 
 import {
+  type DecideAppealRequest,
+  type TakeModerationActionRequest,
   useAssignModerationCase,
   useDecideModerationAppeal,
   useModerationCases,
@@ -16,10 +18,16 @@ import {
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components';
+import { DecideAppealDialog } from '../components/DecideAppealDialog';
 import type { ModerationCase } from '../components/ModerationCaseCard';
 import { ModerationCaseCard } from '../components/ModerationCaseCard';
 import type { ModerationQueueStatsData } from '../components/ModerationQueueStats';
 import { ModerationQueueStats } from '../components/ModerationQueueStats';
+import { TakeModerationActionDialog } from '../components/TakeModerationActionDialog';
+
+type ModerationActionType = TakeModerationActionRequest['action_type'];
+type AppealDecision = DecideAppealRequest['decision'];
 
 interface ActionTemplate {
   id: string;
@@ -32,6 +40,7 @@ interface ActionTemplate {
 
 export const ContentModerationPage: React.FC = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('pending');
@@ -39,6 +48,10 @@ export const ContentModerationPage: React.FC = () => {
   const [violationTypeFilter, setViolationTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+
+  // Decision dialogs: which case (if any) each dialog is acting on.
+  const [takeActionCaseId, setTakeActionCaseId] = useState<string | null>(null);
+  const [decideAppealCaseId, setDecideAppealCaseId] = useState<string | null>(null);
 
   // Fetch moderation cases from API
   const {
@@ -122,34 +135,43 @@ export const ContentModerationPage: React.FC = () => {
     [assignCase, t]
   );
 
-  const handleTakeAction = useCallback(
-    (caseId: string) => {
-      // TODO(Phase-2): Replace window.prompt with modal form with action templates integration
-      // Phase 1: Basic prompts for action type and rationale
-      const actionType = window.prompt(t('moderation.prompts.actionType'), 'approve');
-      if (!actionType) return;
+  const handleTakeAction = useCallback((caseId: string) => {
+    setTakeActionCaseId(caseId);
+  }, []);
 
-      const rationale = window.prompt(t('moderation.prompts.actionRationale'));
-      if (!rationale) return;
-
+  const submitTakeAction = useCallback(
+    (actionType: ModerationActionType, rationale: string, notifyOwner: boolean) => {
+      if (!takeActionCaseId) return;
       takeAction.mutate(
         {
-          caseId,
+          caseId: takeActionCaseId,
           request: {
-            action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve',
+            action_type: actionType,
             rationale,
-            notify_owner: true,
+            notify_owner: notifyOwner,
           },
         },
         {
+          onSuccess: () => {
+            setTakeActionCaseId(null);
+            showToast({
+              type: 'success',
+              title: t('moderation.dialogs.takeAction.successTitle'),
+              message: t('moderation.dialogs.takeAction.successMessage'),
+            });
+          },
           onError: (err) => {
             console.error('Failed to take action:', err);
-            alert(t('moderation.prompts.actionError'));
+            showToast({
+              type: 'error',
+              title: t('moderation.dialogs.takeAction.errorTitle'),
+              message: t('moderation.dialogs.takeAction.errorMessage'),
+            });
           },
         }
       );
     },
-    [takeAction, t]
+    [takeActionCaseId, takeAction, showToast, t]
   );
 
   const handleViewContent = useCallback((caseId: string) => {
@@ -158,33 +180,42 @@ export const ContentModerationPage: React.FC = () => {
     window.location.href = `/compliance/moderation/cases/${caseId}`;
   }, []);
 
-  const handleDecideAppeal = useCallback(
-    (caseId: string) => {
-      // TODO(Phase-2): Replace window.prompt with modal form with validation
-      // Phase 1: Basic prompts for decision and rationale
-      const decision = window.prompt(t('moderation.prompts.decision'), 'uphold');
-      if (!decision) return;
+  const handleDecideAppeal = useCallback((caseId: string) => {
+    setDecideAppealCaseId(caseId);
+  }, []);
 
-      const rationale = window.prompt(t('moderation.prompts.decisionRationale'));
-      if (!rationale) return;
-
+  const submitDecideAppeal = useCallback(
+    (decision: AppealDecision, rationale: string) => {
+      if (!decideAppealCaseId) return;
       decideAppeal.mutate(
         {
-          caseId,
+          caseId: decideAppealCaseId,
           request: {
-            decision: decision as 'uphold' | 'overturn',
+            decision,
             rationale,
           },
         },
         {
+          onSuccess: () => {
+            setDecideAppealCaseId(null);
+            showToast({
+              type: 'success',
+              title: t('moderation.dialogs.decideAppeal.successTitle'),
+              message: t('moderation.dialogs.decideAppeal.successMessage'),
+            });
+          },
           onError: (err) => {
             console.error('Failed to decide appeal:', err);
-            alert(t('moderation.prompts.appealError'));
+            showToast({
+              type: 'error',
+              title: t('moderation.dialogs.decideAppeal.errorTitle'),
+              message: t('moderation.dialogs.decideAppeal.errorMessage'),
+            });
           },
         }
       );
     },
-    [decideAppeal, t]
+    [decideAppealCaseId, decideAppeal, showToast, t]
   );
 
   const handleFilterByPriority = useCallback((priority: number) => {
@@ -379,6 +410,29 @@ export const ContentModerationPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Moderation decision dialogs (replace the Phase-1 window.prompt/alert flow).
+       *
+       * The `key` binds each dialog's identity to the case it acts on so React
+       * remounts a fresh instance per case (and on close → reopen). Without it the
+       * dialogs stay mounted — they only render `null` while closed — and their
+       * internal action/decision/rationale state would leak from one case into the
+       * next one opened. The `-closed` sentinels force a remount across the closed
+       * state so a same-case reopen also starts blank. */}
+      <TakeModerationActionDialog
+        key={takeActionCaseId ?? 'take-action-closed'}
+        isOpen={takeActionCaseId !== null}
+        isSubmitting={takeAction.isPending}
+        onSubmit={submitTakeAction}
+        onClose={() => setTakeActionCaseId(null)}
+      />
+      <DecideAppealDialog
+        key={decideAppealCaseId ?? 'decide-appeal-closed'}
+        isOpen={decideAppealCaseId !== null}
+        isSubmitting={decideAppeal.isPending}
+        onSubmit={submitDecideAppeal}
+        onClose={() => setDecideAppealCaseId(null)}
+      />
     </div>
   );
 };
