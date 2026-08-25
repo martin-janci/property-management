@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-25T16:31:17Z",
+  "archived_at": "2026-08-25T20:29:26Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1841,6 +1841,28 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+      "action": "churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2852,
+        "merged_at": "2026-08-25T16:27:53Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
       "action": "churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches",
       "owner_role": "pm-tech-lead",
@@ -3082,6 +3104,28 @@
       }
     },
     {
+      "id": "code-review-api-handlers-share-log-proxy-ip",
+      "action": "share access log records proxy IP without CF-Connecting-IP / X-Forwarded-For unwind — misattributes source",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2784,
+        "merged_at": "2026-08-17T12:35:00Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-share-pw-no-throttle",
       "action": "SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockout — brute-force at request speed",
       "owner_role": "pm-backend",
@@ -3926,6 +3970,29 @@
         "vector": "bug"
       },
       "reconciled": "merged via PR #2780 (ada2b186) on dev 2026-08-17T18:29:46Z"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-securestore-2kb-blob",
+      "action": "NFC credentials stored as one SecureStore value can exceed the ~2KB cap, silently dropping fetched credentials",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T06:30:07Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T06:30:07Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-17T10:25:00Z",
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2786,
+        "merged_at": "2026-08-17T12:35:00Z"
+      }
     },
     {
       "id": "code-review-mobile-rn-offline-401-dropped",
@@ -5231,6 +5298,28 @@
       }
     },
     {
+      "id": "code-review-reality-server-inquiry-detail-empty-messages",
+      "action": "reality-server inquiry-detail endpoint hardcodes messages: [] — realtors never see a persisted inquiry conversation thread",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-20T12:28:58Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-20T12:28:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2813,
+        "merged_at": "2026-08-20T14:30:47Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-inquiry-email-stub",
       "action": "reality-server: a shipped-but-non-functional notification path.",
       "owner_role": "pm-backend",
@@ -5463,6 +5552,28 @@
       }
     },
     {
+      "id": "code-review-reality-server-saved-search-watermark-discard",
+      "action": "reality-server saved-search alert loop swallows the watermark-advance error (let _ =), re-enqueuing duplicate alerts on the next due run",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-20T12:28:58Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-20T12:28:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2812,
+        "merged_at": "2026-08-20T14:31:06Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-sso-backslash-redirect",
       "action": "backend/servers/reality-server/src/routes/sso.rs:149 — open-redirect guard check_redirect_uri_allowed treats '/\\evil.com' as a trusted relative path (predicate `raw.starts_with('/') && !raw.starts_with(\"//\")` returns Ok for the backslash fo",
       "owner_role": "pm-security",
@@ -5601,6 +5712,28 @@
       }
     },
     {
+      "id": "code-review-reality-web-agency-errorstate-i18n",
+      "action": "reality-web AgencyErrorState has untranslated English messages on 4-locale portal",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2781,
+        "merged_at": "2026-08-17T12:35:00Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-agency-import-i18n",
       "action": "reality-web: agency/import feature cluster hardcoded English — 65 sibling components use useTranslations",
       "owner_role": "pm-backend",
@@ -5645,6 +5778,29 @@
         "commit": "6a57a186728ad2bf828b112609fa708bf1afcc4c",
         "subject": "code-review-reality-web-comparison-share-all-or-nothing: tolerate bad listing ids in shared comparison URLs (#2701)",
         "at": "2026-08-07T08:10:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-view-i18n",
+      "action": "reality-web ComparisonView.tsx has no i18n — every string renders English on 4-locale portal",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "last_updated": "2026-08-17T10:25:00Z",
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2785,
+        "merged_at": "2026-08-17T12:35:00Z"
       }
     },
     {
@@ -14340,6 +14496,58 @@
       }
     },
     {
+      "id": "gh-issue-2794",
+      "action": "Follow-up: voice device dedup — enforce (org,user,platform) uniqueness at DB level (PR #2793) (Closes #2794)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-18T18:24:35Z (#2794)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-18T18:24:35Z",
+      "issue_ref": {
+        "number": 2794,
+        "url": "https://github.com/martin-janci/property-management/issues/2794",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-08-18T18:26:46Z",
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2796,
+        "merged_at": "2026-08-20T06:33:46Z"
+      }
+    },
+    {
+      "id": "gh-issue-2797",
+      "action": "cargo-deny advisories FAILED on dev: RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) blocks every backend PR (Closes #2797)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-18T22:25:57Z (#2797)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-18T22:25:57Z",
+      "issue_ref": {
+        "number": 2797,
+        "url": "https://github.com/martin-janci/property-management/issues/2797",
+        "labels": [
+          "security",
+          "backend",
+          "follow-up"
+        ]
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2798,
+        "merged_at": "2026-08-19T04:23:58Z"
+      }
+    },
+    {
       "id": "gh-issue-2802",
       "action": "CI: backend test-shard jobs hang ~90m and get cancelled → merge pipeline wedged (dev base + all backend PRs) (Closes #2802)",
       "owner_role": "pm-tech-lead",
@@ -14419,6 +14627,31 @@
         "merged_pr": 2811,
         "merged_at": "2026-08-20T12:35:08Z",
         "at": "2026-08-20T14:23:21Z"
+      }
+    },
+    {
+      "id": "gh-issue-2816",
+      "action": "Follow-up: overflow-hardening left a parallel orphaned `saved_searches` path on int4 (PR #2815) (Closes #2816)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-21T08:24:07Z (#2816)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-21T08:24:07Z",
+      "issue_ref": {
+        "number": 2816,
+        "url": "https://github.com/martin-janci/property-management/issues/2816",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2817,
+        "merged_at": "2026-08-21T10:29:59Z"
       }
     },
     {
@@ -16234,6 +16467,30 @@
         "commit": "13fb2c28b8ec0745cf6910fbb02215308bca1f5d",
         "subject": "repeated-churn-backend-servers-api-server-src-routes-forms-rs: split forms.rs into cohesive submodules (#1700)",
         "at": "2026-06-23T04:25:23Z"
+      }
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "action": "repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 2)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-17T04:24:25Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-17T04:24:25Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "last_updated": "2026-08-25T04:24:00Z",
+      "notes": "PR #2838 centralized voice OAuth token encryption — chips at the churn but scheduler/token-refresh paths still cluster here; keep open pending follow-up.",
+      "inprogress_leak_reconciled": {
+        "at": "2026-08-25T20:29:20Z",
+        "landed_pr": 2787,
+        "merged_at": "2026-08-17T14:46:41Z"
       }
     },
     {
