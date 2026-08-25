@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-25T10:37:41Z",
+  "archived_at": "2026-08-25T16:31:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -14805,6 +14805,24 @@
         "at": "2026-06-18T00:19:59Z",
         "by": "dispatcher-exact-id-reconcile",
         "evidence": "PR #1400 merged 2026-06-15T14:20:37Z"
+      }
+    },
+    {
+      "id": "pm-qa-csv-export-crlf-sanitizer-fuzz",
+      "action": "Add fuzz/property test for CSV export sanitizer (#2827 / #2822) covering CR, LF, CRLF, and formula-injection prefixes across every export column type",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T16:28:24Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2846,
+        "merged_at": "2026-08-25T12:34:00Z",
+        "at": "2026-08-25T16:28:24Z"
       }
     },
     {

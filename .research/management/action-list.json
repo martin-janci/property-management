@@ -286,17 +286,6 @@
       }
     },
     {
-      "id": "pm-qa-csv-export-crlf-sanitizer-fuzz",
-      "action": "Add fuzz/property test for CSV export sanitizer (#2827 / #2822) covering CR, LF, CRLF, and formula-injection prefixes across every export column type",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
       "action": "churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches",
       "owner_role": "pm-tech-lead",

@@ -1,9 +1,30 @@
 {
-  "generated": "2026-08-24T16:23:57Z",
+  "generated": "2026-08-25T16:31:13Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-25T16:31:13Z",
+      "prs_scanned": 14,
+      "clean": [
+        2852,
+        2851,
+        2850,
+        2849,
+        2848,
+        2847,
+        2846,
+        2845,
+        2844,
+        2843,
+        2842,
+        2841,
+        2840,
+        2839
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-08-24T16:23:57Z",
       "prs_scanned": 0,
@@ -527,30 +548,6 @@
         2681,
         2682,
         2683
-      ]
-    },
-    {
-      "run_at": "2026-08-05T16:10:11Z",
-      "prs_scanned": 3,
-      "clean": [
-        2659,
-        2661
-      ],
-      "with_issues": [
-        {
-          "pr": 2660,
-          "issue": 2662,
-          "findings": 2,
-          "specialist": "pm-rust",
-          "note": "Voice-webhook auth fix (closes #2658) is correct+well-tested at the pure-fn level (voice_device_token_matches, ct_eq_str, fail-closed HMAC), but two shape follow-ups: (1) performance/med -- authenticate_voice_user does an unbounded fetch_all of every active token-bearing device for the platform (cross-org) then AES-GCM-decrypts+ct-compares each in a linear scan -> O(N) decrypts/request, grows with adoption, amplification vector on well-formed-but-nonmatching requests; proposed indexed keyed-HMAC access_token_hash column to select the candidate in SQL then verify the single decrypt. (2) test-coverage/med -- the actual priv-escalation regression lives at the fetch_all+find route/DB level but only the extracted pure predicate is tested; #[sqlx::test] DB suite doesn't run in cloud runner so the route selection path (seed 2 devices, present A's token -> must return A not B; nonmatch->401; expired->reject) is uncovered (same net class as #2357/#2359). -> NET-NEW #2662."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5, buffer-starved pipeline drained (0 active). gh CLI proxy-unreliable -> GitHub MCP for all network I/O; DISPATCHER_OWNED_COMMIT=1 (wrote artifacts only, no commit/push -- dispatcher Phase 6 folds the .research delta). Window merged-to-dev 14d (>=2026-07-22), base=dev, max_prs=15. Prior run (2026-08-04T14:07Z) reached #2657/#2656/#2655; this run scanned the 3 never-reviewed PRs merged after it: #2659 (mobile-rn ThreadDetailScreen malformed-createdAt guard: new formatMessageTime returns '' not 'Invalid Date', sentAtSortKey NaN-safe sinks anomalous rows to +Inf with ka===kb?0 guard against Infinity-Infinity=NaN, 6 new tests -- CLEAN), #2660 (Rust voice-webhook broken-auth fix -> 1 issue #2662, see with_issues), #2661 (docs-only screen-map reconcile of ppt/financial-payments.md to PR #2649 onError toasts; correctly declined to touch rentals-dashboard since #2649's merged diff only hit financial.tsx; /screens validate clean -- CLEAN). Dedup: 4 pre-existing open follow-ups (#2643 OAuth token-usage hot path, #2612 notification fire-once transient drop, #2575 disputes kpis window-ordering, #2366 S3 building_id) checked -- #2662 is distinct (different route + concerns). Labeling: MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP -- this JSON run-history is the dedup record for the next run (same precedent as prior runs). Breadcrumb comment left on #2660. NET-NEW actionable issues: 1 (#2662).",
-      "focus_prs": [
-        2659,
-        2660,
-        2661
       ]
     }
   ]
