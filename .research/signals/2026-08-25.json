@@ -204,5 +204,23 @@
       "observed": "0",
       "expected": "0"
     }
+  ],
+  "refires": [
+    {
+      "at": "2026-08-25T12:33:00Z",
+      "trigger": "buffer-low: claimable=7/72 — refill planner",
+      "outcome": "no candidate — backlog-refill avail=0; 3 items resolved by PRs #2848/#2849",
+      "prs_resolved": [
+        "#2848",
+        "#2849"
+      ],
+      "items_marked_done": [
+        "code-review-ppt-web-ui-content-mod-overdue-noop",
+        "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+        "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx"
+      ],
+      "remaining_open_or_ready": 4,
+      "remaining_non_mobile_native": 0
+    }
   ]
 }

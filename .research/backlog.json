@@ -9131,12 +9131,14 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2829, PR #2833"
+        "PR #2829, PR #2833",
+        "PR #2848"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx: 199 lines changed across PRs [2829, 2833]"
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx: 199 lines changed across PRs [2829, 2833]",
+        "resolved: PR #2848 merged 2026-08-25 — extracted AmlDashboardPage 385→157 lines into 3 sub-components + useAmlDashboard hook; churn surface materially reduced"
       ],
       "files": [],
       "created_at": "2026-08-25",
@@ -9149,12 +9151,14 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2829, PR #2833"
+        "PR #2829, PR #2833",
+        "PR #2848"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx: 175 lines changed across PRs [2829, 2833]"
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx: 175 lines changed across PRs [2829, 2833]",
+        "resolved: PR #2848 merged 2026-08-25 — page extraction indirectly stabilizes the test file (companion churn signal); no further test-file churn expected without behavior changes"
       ],
       "files": [],
       "created_at": "2026-08-25",
@@ -9192,12 +9196,14 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2849",
         "ppt-web-ui segment review 2026-08-25"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing `onShowOverdue` handler only resets status to 'pending' with a TODO admitting the overdue filter isn't wired; the ModerationQueueStats 'Show Overdue' button is a no-op that silently misleads moderators"
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing `onShowOverdue` handler only resets status to 'pending' with a TODO admitting the overdue filter isn't wired; the ModerationQueueStats 'Show Overdue' button is a no-op that silently misleads moderators",
+        "resolved: PR #2849 merged 2026-08-25 — make moderation overdue affordance filter the queue (age_hours>=24 client-side filter with clear button + 6 locales + 2 regression tests)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
