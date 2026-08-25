@@ -15,6 +15,7 @@ sharedComponents: []
 diagrams: []
 useCases:
   - UC-33
+  - UC-33.3
 epics:
   - Epic-19
 designSources: []
@@ -36,15 +37,23 @@ already built but unrouted; this screen is now reachable on web.
 ## Notes
 
 ### Specific (recent)
+- 2026-08-25 — Linked UC-33.3 (Check Tenant References) to useCases frontmatter.
+  Reference-checking is a per-applicant screening action and belongs on this
+  detail screen alongside the other screening sub-UCs. Closes the last of the
+  coverage `missing_use_cases` (UC-33.1/33.2/33.3) — NB: the routed task named
+  a disputes screen-map, but UC-33 is Tenant Screening (disputes are Epic-77 /
+  UC-38); linking here rather than to disputes keeps the map semantically correct.
 - 2026-07-09 — Linked UC-33 (Tenant Screening). This detail screen is the
   screening workspace for a single application: request background check
-  (UC-33.1), verify income (UC-33.2), view credit score (UC-33.4), generate
-  the screening report (UC-33.6), and approve/reject the application
-  (UC-33.7/33.8) with GDPR-compliant consent handling (UC-33.11/33.12).
+  (UC-33.1), verify income (UC-33.2), check tenant references (UC-33.3), view
+  credit score (UC-33.4), generate the screening report (UC-33.6), and
+  approve/reject the application (UC-33.7/33.8) with GDPR-compliant consent
+  handling (UC-33.11/33.12).
 - 2026-06-08 — PAP-20: mounted route group; renders against the dev stack with
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-08-25 — agent: linked UC-33.3 (Check Tenant References) to useCases frontmatter — per-applicant screening action belongs on application-detail, not the disputes screen-map the task named (UC-33 = Tenant Screening; disputes = Epic-77/UC-38). Resolves coverage missing_use_cases UC-33.3.
 - 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: the shared `LeaseLoadingNotice` rendered by `ApplicationDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/leases.tsx` now renders its missing-entity fallback via `t('errors.entityNotFound', { entity: 'Application', defaultValue: '{{entity}} not found' })` (was a hardcoded English template literal); `errors.entityNotFound` key added to all locale bundles. No route or component change.
 - 2026-07-09 — agent: linked UC-33 (Tenant Screening) to useCases frontmatter — screening actions live on the application-detail screen.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
