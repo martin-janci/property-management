@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-25T05:07:22Z",
+  "archived_at": "2026-08-25T08:27:55Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1538,6 +1538,30 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-16T22:12:34Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "action": "churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-25T08:23:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-25T08:23:13Z"
       }
     },
     {
@@ -4665,6 +4689,30 @@
         "merged_pr": 2635,
         "merged_at": "2026-08-03T12:13:22Z",
         "at": "2026-08-03T12:14:09Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
+      "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=3 conf=high vector=bug) | gc1-reconcile 2026-08-25T08:23:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:23:20Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2841,
+        "merged_at": "2026-08-25T06:38:31Z",
+        "at": "2026-08-25T08:23:13Z"
       }
     },
     {
@@ -8831,6 +8879,25 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-13T20:25:32Z"
+      }
+    },
+    {
+      "id": "gap-uc-33-3-link-dispute-screen-map",
+      "action": "Link UC-33.3 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter (last of the 3 missing UC-33.x links from coverage screen_gaps)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "gap-scan 2026-08-25 (coverage.screen_gaps.missing_use_cases residual) | gc1-reconcile 2026-08-25T08:23:13Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-25T04:24:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2839,
+        "merged_at": "2026-08-25T06:38:36Z",
+        "at": "2026-08-25T08:23:13Z"
       }
     },
     {
@@ -14573,6 +14640,42 @@
       "depends_on": []
     },
     {
+      "id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test",
+      "action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T08:23:13Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-08-25T08:23:13Z"
+      }
+    },
+    {
+      "id": "pm-qa-booking-connect-non-manager-hijack-regression-test",
+      "action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-qa 2026-08-25 | gc1-reconcile 2026-08-25T08:23:13Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2843,
+        "merged_at": "2026-08-25T06:38:14Z",
+        "at": "2026-08-25T08:23:13Z"
+      }
+    },
+    {
       "id": "pm-qa-booking-oauth-csrf-coverage",
       "action": "Add Booking.com OAuth handler / CSRF / secure-credential-replacement coverage (#1362, #1374)",
       "owner_role": "pm-qa",
@@ -14836,6 +14939,24 @@
       "source": "pm-analysis 2026-05-23",
       "resolved": "2026-05-25 — voice device IDOR fix PR #461 merged",
       "depends_on": []
+    },
+    {
+      "id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
+      "action": "Adopt eslint-plugin-react-hooks + no-hardcoded-strings ESLint config in frontend/apps/mobile — 3 mobile-rn PRs in this window (#2835/#2836/#2837) all fixed defects a lint would catch",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-25 | gc1-reconcile 2026-08-25T08:23:13Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2842,
+        "merged_at": "2026-08-25T06:38:41Z",
+        "at": "2026-08-25T08:23:13Z"
+      }
     },
     {
       "id": "pm-scrum-master-review-accounting-mvp-trio",

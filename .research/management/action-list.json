@@ -286,29 +286,6 @@
       }
     },
     {
-      "id": "gap-uc-33-3-link-dispute-screen-map",
-      "action": "Link UC-33.3 to a dispute screen-map — add to docs/screens/ppt/disputes*.md use-cases frontmatter (last of the 3 missing UC-33.x links from coverage screen_gaps)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "gap-scan 2026-08-25 (coverage.screen_gaps.missing_use_cases residual)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-08-25T04:24:00Z"
-    },
-    {
-      "id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
-      "action": "Adopt eslint-plugin-react-hooks + no-hardcoded-strings ESLint config in frontend/apps/mobile — 3 mobile-rn PRs in this window (#2835/#2836/#2837) all fixed defects a lint would catch",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-08-25"
-    },
-    {
       "id": "pm-scrum-master-voice-webhooks-refactor-plan-2026-08-25",
       "action": "Draft a refactor plan for backend/servers/api-server/src/routes/voice_webhooks.rs — 3 hotspot windows running; PR #2838 chipped at token encryption but scheduler/OAuth/token-refresh paths still cluster",
       "owner_role": "pm-tech-lead",
@@ -364,28 +341,6 @@
       "source": "pm-qa 2026-08-25"
     },
     {
-      "id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test",
-      "action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared",
-      "owner_role": "pm-qa",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "pm-qa-booking-connect-non-manager-hijack-regression-test",
-      "action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable)",
-      "owner_role": "pm-qa",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-qa 2026-08-25"
-    },
-    {
       "id": "pm-qa-verification-badge-expiry-i18n-visual-diff",
       "action": "Add visual-diff / snapshot test for VerificationBadge expiry copy across sk/cs/de/en (#2825) — guard against future English regressions after the de-dupe",
       "owner_role": "pm-qa",
@@ -395,23 +350,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-qa 2026-08-25"
-    },
-    {
-      "id": "code-review-ppt-web-ui-content-mod-unsafe-cast",
-      "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-25T04:23:20Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
-        "score": 3,
-        "vector": "bug"
-      }
     },
     {
       "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
@@ -428,23 +366,6 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
-      "action": "churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-25T04:23:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
       }
     },
     {

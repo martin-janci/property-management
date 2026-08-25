@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-25T09:00:00Z",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin", "tester"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-account-screen-dead-rows",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/account/AccountScreen.kt:449,465,474 — three chevron-decorated SectionRow items ('Compare', 'Privacy', 'About') render with SectionTrailing.Chevron (implying navigation) but their onClick is an empty comment stub: `onClick = { /* nav to compare */ }`, `{ /* nav to privacy */ }`, `{ /* nav to about */ }`. Tapping them silently does nothing.",
+        "AccountScreen.kt:652,659,666,673 — the AppSettingsCard's four SettingsRow items (Language, Currency, Units, Theme) each display a static hardcoded value ('English'/'EUR'/'Metric'/'System') and are wired to `onClick = { /* picker */ }` — no picker opens, and the displayed value never reflects real state, so all four app-settings controls are cosmetic no-ops.",
+        "AccountScreen is the live Account tab, reachable in production (Navigation.kt:255 `AccountScreen(...)`). Net: 7 user-facing tappable rows on the primary account surface are dead controls; users tapping Compare/Privacy/About/Language/Currency/Units/Theme get no response and no feedback."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-twofactor-orphan-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:113,349-354 — Screen.TwoFactor ('auth/two-factor') is declared and registered as a composable, but `grep -n 'navigate(Screen.TwoFactor'` over Navigation.kt returns ZERO hits: nothing in the login/SSO flow ever navigates to the 2FA challenge. The route is an orphan.",
+        "Navigation.kt:350-353 — the TwoFactorScreen is wired with only `onBackClick`/`onDone`, and `onDone = { navController.popBackStack() }` just pops the back stack; no ssoService/verify callback is passed, so even if reached the screen cannot actually verify a code against the backend.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt:164 — the 'Use backup code' TextButton is a dead handler `onClick = { /* backup code */ }`, and the 'resend' affordance (line 158) is a plain non-clickable Text. The 2FA UI is fully built but disconnected from auth: no entry path, no verification wiring, and its recovery controls are no-ops."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profile-edit-drops-fields",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/profile/ProfileEditScreen.kt:68-69,261-292 — the screen exposes editable OutlinedTextFields for `phone` and `aboutMe` (with a 280-char counter), so a user can type into and edit both.",
+        "ProfileEditScreen.kt:59,117 — the `onSubmit` callback signature is `suspend (displayName: String) -> Result<Unit>` and the save button calls `onSubmit(displayName.trim())` only; phone and About-me values are never passed. Confirmed by the wiring in Navigation.kt:358 `onSubmit = { displayName -> ssoService.updateProfile(displayName).map {} }`.",
+        "The doc comment at ProfileEditScreen.kt:47-49 acknowledges 'phone, language, and About me don't have backing endpoints yet'. Net: two editable form fields silently discard user input on save with no disabled state or warning — the form gives a false illusion of persistence (silent data loss on a user-facing profile edit)."
+      ]
+    }
+  ]
+}

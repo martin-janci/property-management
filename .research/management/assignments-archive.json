@@ -4887,6 +4887,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-dsa-reports-no-i1-2f373394",
+      "status": "merged",
+      "claimed_at": "2026-08-25T06:37:21Z",
+      "last_updated": "2026-08-25T08:44:29Z",
+      "status_changed_at": "2026-08-25T08:44:29Z",
+      "pr_number": 2847,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2847",
+      "merged_at": "2026-08-25T08:41:02Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2847 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=i18n DsaReportsPage (useTranslation + dsa namespace across 6 locales); biome clean; typecheck/vitest deferred to CI (verify hung); pushed from recovered worktree commit",
+      "reviewer_summary": "verdict=approve note=self-pr-comment-approve-ci-green-i18n-verified-all-6-locales",
+      "last_reviewed_oid": "50815bc7fbe2817b862f9f8db5f034ab9554feb8",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T08:39:01Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-facilities-bookin-a0428081",
       "status": "merged",
@@ -13413,6 +13435,50 @@
       "merge_attempted_at": "2026-08-25T06:33:42Z"
     },
     {
+      "task_id": "pm-qa-mobile-rn-vote-detail-conditional-hooks-regression-test",
+      "branch": "auto-impl/pm-qa-mobile-rn-vote-detail-conditional-a63d8a7d",
+      "status": "merged",
+      "claimed_at": "2026-08-25T06:37:21Z",
+      "last_updated": "2026-08-25T08:44:29Z",
+      "status_changed_at": "2026-08-25T08:44:29Z",
+      "pr_number": 2845,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2845",
+      "merged_at": "2026-08-25T08:43:28Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=2845 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=snapshot regression for VoteDetailScreen empty/loading branches; mobile suite 679 tests + 2 snapshots green",
+      "reviewer_summary": "verdict=approve note=test-only-snapshot-regression-clean-ci-green",
+      "last_reviewed_oid": "a7e1d7634847b3aee473861a89b8e09190abec8f",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T08:39:01Z"
+    },
+    {
+      "task_id": "pm-qa-quiet-hours-drain-atomic-claim-concurrency-test",
+      "branch": "auto-impl/pm-qa-quiet-hours-drain-atomic-claim-con-2295c4ed",
+      "status": "merged",
+      "claimed_at": "2026-08-25T04:28:46Z",
+      "last_updated": "2026-08-25T08:44:29Z",
+      "status_changed_at": "2026-08-25T08:44:29Z",
+      "pr_number": 2840,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2840",
+      "merged_at": "2026-08-25T08:40:28Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2840 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added concurrent 2-replica racing test for held-notification atomic claim; clippy -p db --tests -Dwarnings green; sqlx::test runs in CI",
+      "reviewer_summary": "verdict=approve note=rustfmt-fixed-ci-green-logic-sound",
+      "last_reviewed_oid": "315f79df85719c36c009c3f3fe700e2e5c7aaa4d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-25T08:39:01Z"
+    },
+    {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "branch": "auto-impl/pm-scrum-master-mobile-rn-lint-hooks-i18-9ce28fff",
       "status": "merged",
@@ -13567,6 +13633,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-voice-webhooks-refactor-plan-2026-08-25",
+      "branch": "auto-impl/pm-scrum-master-voice-webhooks-refactor-e22de4d3",
+      "status": "merged",
+      "claimed_at": "2026-08-25T06:37:21Z",
+      "last_updated": "2026-08-25T08:44:29Z",
+      "status_changed_at": "2026-08-25T08:44:29Z",
+      "pr_number": 2844,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2844",
+      "merged_at": "2026-08-25T08:43:37Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2844 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=docs-only refactor PLAN for voice_webhooks.rs; VERIFY OK; draft PR opened",
+      "reviewer_summary": "verdict=approve note=plan-grounded-decomposition-call-site-invisible-risks-flagged",
+      "last_reviewed_oid": "44b5a65d3c0df5ba8e06308bc1482eb21b673dcf",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-25T08:39:01Z"
     },
     {
       "task_id": "pm-scrum-master-wire-ppt-web-direct-s3-84-1",
@@ -15697,5 +15785,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-25T06:47:26Z"
+  "archived_at": "2026-08-25T08:45:23Z"
 }
