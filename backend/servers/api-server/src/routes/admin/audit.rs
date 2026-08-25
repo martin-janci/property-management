@@ -468,7 +468,7 @@ mod tests {
         assert!(
             out.chars()
                 .next()
-                .map_or(true, |c| !FORMULA_TRIGGERS.contains(&c)),
+                .is_none_or(|c| !FORMULA_TRIGGERS.contains(&c)),
             "P2 formula-safety violated: {input:?} -> {out:?}"
         );
         // P3 — exact content preservation (collapsed, optional single quote).
