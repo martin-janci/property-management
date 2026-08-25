@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T10:37:56Z",
+  "generated": "2026-08-25T12:35:55Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -21,28 +21,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "pm-qa-csv-export-crlf-sanitizer-fuzz",
-      "branch": "auto-impl/pm-qa-csv-export-crlf-sanitizer-fuzz-483cfd55",
-      "status": "review",
-      "claimed_at": "2026-08-25T06:37:21Z",
-      "last_updated": "2026-08-25T10:35:03Z",
-      "status_changed_at": "2026-08-25T09:03:53Z",
-      "pr_number": 2846,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2846",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2846 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=dependency-free invariant fuzz for sanitize_csv_cell (CR/LF/CRLF+formula prefixes); fmt clean; salvaged from main-tree isolation leak; full compile deferred to CI",
-      "reviewer_summary": "verdict=changes note=prior-unused-col-fixed-but-new-clippy-unnecessary_map_or-Dwarnings-fails-check+fmt-clippy-cascading-test-gate",
-      "last_reviewed_oid": "9a73f4986265432f5d7263c36df122a93b26807a",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {

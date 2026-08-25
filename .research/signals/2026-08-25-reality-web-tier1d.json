@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-25",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (honest_claimable=7 < floor=36, real landable claimable ~1). CHURN_FILES not supplied (hotspot_history is stale May churn on api-server) so oldest-unreviewed rule among cloud-landable NON-mobile-native segments: review_cursor => reality-web=2026-08-18 is the oldest of {api-handlers 08-22, api-core 08-21, reality-server 08-19, ppt-web-ui 08-25, ppt-web-core 08-21, reality-web 08-18}; mobile-rn=08-17 is older but excluded per dispatcher steer (mobile not landable in cloud runner). reality-web has 0 open code-review-finding rows in backlog.json (the 3 open rows are all mobile-native-kmp) so not saturated. Prior reality-web findings covered inquiries + saved-searches i18n; this pass targets the un-reviewed realtor/* and account/* authenticated sections.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-section-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/** — the entire realtor workspace section (7 page files) has ZERO next-intl usage (grep useTranslations|getTranslations|next-intl over app/[locale]/realtor = 0 hits) despite living under app/[locale] on a sk/cs/de/en portal, so every string renders raw English in Slovak/Czech/German locales.",
+        "realtor/page.tsx — hardcoded 'Realtor workspace' hero + SECTIONS titles/descriptions ('Profile','My listings','Create listing','Analytics' and their subtitles).",
+        "realtor/analytics/page.tsx:74-95 — hardcoded 'Analytics','Performance of your listings over time.', PERIODS labels ('Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year'), StatCard labels ('Total listings','Active listings','Total views','Inquiries','Conversion rate'), 'Loading metrics…', and the error fallback 'Could not load analytics.' (line ~55).",
+        "realtor/listings/new/page.tsx:27,37-44 — hardcoded 'Create listing','Publish a new property to Reality Portal.', the error fallback 'Could not create listing. Please try again.' AND submitLabel=\"Publish listing\" is passed as an English string LITERAL into ListingForm — which is otherwise fully internationalized via t() — so even the localized form gets an un-localized submit button.",
+        "realtor/listings/page.tsx:80-90 — hardcoded '+ New listing','Loading…','Failed to load listings.',\"You haven't published any listings yet.\",'Create your first listing'. Fix: introduce a realtor namespace in messages/{en,sk,cs,de}.json and wrap these with useTranslations, matching the pattern the agency/* components already use (agency has 4 next-intl call sites)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-account-edit-wrong-locale-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 and :213 — the listing edit page hardcodes SLOVAK error strings: loadError fallback 'Načítanie inzerátu zlyhalo.' (166) and save fallback 'Uloženie zlyhalo, skúste znova.' (213). Because the page has no next-intl usage, an en/de/cs user editing a listing under e.g. /de/account/listings/<id>/edit is shown Slovak error copy — an actively WRONG-language string for 3 of the 4 supported locales, not merely an untranslated default.",
+        "This compounds a section-wide inconsistency: the sibling realtor listing flow (realtor/listings/new/page.tsx, realtor/listings/[id]/edit) hardcodes ENGLISH fallbacks for the same create/edit journey, so the two halves of the listing-management flow ship strings in two different hardcoded languages, neither locale-aware.",
+        "The whole app/[locale]/account/** section (4 page files: account/page.tsx, account/profile/page.tsx, account/password/page.tsx, account/listings/[id]/edit/page.tsx) has 0 next-intl usage (grep useTranslations|getTranslations over app/[locale]/account = 0 hits). Fix: route both realtor and account listing flows through a shared messages namespace so error/label copy follows the URL locale."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-dashboard-total-mislabel",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx:40-47 — RealtorContent does `const { data: listings } = useMyListings({ limit: 1 });` and renders `You have {listings?.total ?? 0} active listings.`. `total` from useMyListings is the count of ALL owned listings (the realtor/listings page consumes the same useMyListings() and renders draft/paused/sold status cards, confirming the collection is not active-only), so the copy overstates the active count whenever the realtor has any draft/paused/sold/archived listing — the number labeled 'active' is really 'total'.",
+        "Same line ignores the hook's error/loading state — it destructures only `data` (unlike realtor/listings/page.tsx which reads {data,isLoading,error}), so a failed /api/v1/my/listings load silently renders 'You have 0 active listings.' with no error indication. Fix: either query an active-status count for the headline or relabel to 'listings', and surface the hook error state."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

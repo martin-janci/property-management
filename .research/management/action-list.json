@@ -301,7 +301,7 @@
       "action": "churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-backlog-refill 2026-08-25T04:23:20Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,

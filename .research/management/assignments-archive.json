@@ -13479,6 +13479,28 @@
       "merge_attempted_at": "2026-08-25T06:33:42Z"
     },
     {
+      "task_id": "pm-qa-csv-export-crlf-sanitizer-fuzz",
+      "branch": "auto-impl/pm-qa-csv-export-crlf-sanitizer-fuzz-483cfd55",
+      "status": "merged",
+      "claimed_at": "2026-08-25T06:37:21Z",
+      "last_updated": "2026-08-25T12:35:44Z",
+      "status_changed_at": "2026-08-25T12:35:44Z",
+      "pr_number": 2846,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2846",
+      "merged_at": "2026-08-25T12:34:00Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2846 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=dependency-free invariant fuzz for sanitize_csv_cell (CR/LF/CRLF+formula prefixes); fmt clean; salvaged from main-tree isolation leak; full compile deferred to CI",
+      "reviewer_summary": "verdict=approve note=prior-clippy-map_or-blocker-fixed-via-is_none_or; fmt-clippy+check+all-shards green; test-only invariant fuzz faithful to sanitizer; self-approve blocked by GH; squash-merged da79e1a",
+      "last_reviewed_oid": "deeb0c319f07528e7e0fe398a08250ad62e2575f",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 2,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-qa-mobile-rn-vote-detail-conditional-hooks-regression-test",
       "branch": "auto-impl/pm-qa-mobile-rn-vote-detail-conditional-a63d8a7d",
       "status": "merged",
@@ -15873,5 +15895,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-25T10:37:21Z"
+  "archived_at": "2026-08-25T12:35:44Z"
 }
