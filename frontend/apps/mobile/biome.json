@@ -1,0 +1,14 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "root": false,
+  "extends": "//",
+  "plugins": ["./biome-plugins/no-hardcoded-strings.grit"],
+  "linter": {
+    "rules": {
+      "correctness": {
+        "useHookAtTopLevel": "error",
+        "useExhaustiveDependencies": "error"
+      }
+    }
+  }
+}
