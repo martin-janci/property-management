@@ -7,7 +7,7 @@
       "score_delta": 0,
       "confidence": "high",
       "candidate_vector": null,
-      "evidence": "routine has not run in 3d 0h (last_run_iso=2026-08-22T03:03:20Z, now=2026-08-25); over the 36h threshold — cloud scheduler may be paused"
+      "evidence": "routine has not run in 3d 0h (last_run_iso=2026-08-22T03:03:20Z, now=2026-08-25); over the 36h threshold \u2014 cloud scheduler may be paused"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
@@ -43,7 +43,7 @@
       "score_delta": 3,
       "confidence": "high",
       "candidate_vector": "bug",
-      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.prompt free-text is cast via `as 'remove'|'restrict'|'warn'|'approve'` (and `as 'uphold'|'overturn'`) straight into the moderation-action / appeal-decision API — same anti-pattern AmlDashboardPage.test.tsx locks against; a typo like 'aprove' reaches the regulated endpoint",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 \u2014 window.prompt free-text is cast via `as 'remove'|'restrict'|'warn'|'approve'` (and `as 'uphold'|'overturn'`) straight into the moderation-action / appeal-decision API \u2014 same anti-pattern AmlDashboardPage.test.tsx locks against; a typo like 'aprove' reaches the regulated endpoint",
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
       ]
@@ -55,7 +55,7 @@
       "score_delta": 2,
       "confidence": "high",
       "candidate_vector": "bug",
-      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing `onShowOverdue` handler only resets status to 'pending' with a TODO admitting the overdue filter isn't wired; the ModerationQueueStats 'Show Overdue' button is a no-op that silently misleads moderators",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 \u2014 user-facing `onShowOverdue` handler only resets status to 'pending' with a TODO admitting the overdue filter isn't wired; the ModerationQueueStats 'Show Overdue' button is a no-op that silently misleads moderators",
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
       ]
@@ -67,7 +67,7 @@
       "score_delta": 1,
       "confidence": "high",
       "candidate_vector": "refactor",
-      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation import; every visible string ('DSA Transparency Reports', 'Generate New Report', 'Loading reports...', error/alert copy, requirements list) is hardcoded English while sibling AmlDashboardPage/ContentModerationPage use t(...) — regulatory-facing page fails i18n bar",
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 \u2014 no useTranslation import; every visible string ('DSA Transparency Reports', 'Generate New Report', 'Loading reports...', error/alert copy, requirements list) is hardcoded English while sibling AmlDashboardPage/ContentModerationPage use t(...) \u2014 regulatory-facing page fails i18n bar",
       "files": [
         "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx"
       ]
@@ -79,11 +79,20 @@
       "score_delta": 0,
       "confidence": "high",
       "candidate_vector": null,
-      "evidence": "Dispatcher fired routine with payload buffer-low: claimable=11/72 (only ~5 non-gated; 6 mobile-native parked). Incremental run cursor 2838→2847; PR #2847 resolved code-review-ppt-web-ui-dsa-reports-no-i18n; 0 new plans promoted (no open item meets score>=3 or security fast-track)."
+      "evidence": "Dispatcher fired routine with payload buffer-low: claimable=11/72 (only ~5 non-gated; 6 mobile-native parked). Incremental run cursor 2838\u21922847; PR #2847 resolved code-review-ppt-web-ui-dsa-reports-no-i18n; 0 new plans promoted (no open item meets score>=3 or security fast-track)."
+    },
+    {
+      "id": "refire-buffer-low-2026-08-25-1829",
+      "type": "refire",
+      "source": "dispatcher refire payload \u2014 buffer-low: claimable=0/72",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "18:29 UTC dispatcher refire: consumed 27 unclaimed dispatcher tier1d signals from .research/signals/2026-08-24-*.json + 2026-08-25-*-tier1d.json (none previously in state.seen_signals or backlog.json); observed 6 merged PRs #2848/#2849/#2850/#2851/#2846/#2852 since 08:50 UTC; promoted 1 plan (code-review-mobile-native-kmp-create-listing-not-implemented, score=3, high confidence)"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type this run (no screen-map-drift, no orphan, no fixme-in-merged-code, no lockfile-drift, and all 3 human stalled-review PRs are already in state.seen_signals)",
+  "auto_fix_skipped_reason": "no candidate \u2014 no allowlisted signal type this run (no screen-map-drift, no orphan, no fixme-in-merged-code, no lockfile-drift, and all 3 human stalled-review PRs are already in state.seen_signals)",
   "goal_checks": [
     {
       "goal": "G1",
@@ -203,6 +212,42 @@
       "command": "telegram token grep on staged diff",
       "observed": "0",
       "expected": "0"
+    },
+    {
+      "goal": "REFIRE-1829",
+      "passed": true,
+      "command": "consume unclaimed dispatcher tier1d signals",
+      "observed": "27 signals consumed, 1 plan promoted (score=3), backlog: 5 open\u219231 open + 1 ready",
+      "expected": "buffer refilled with medium-severity landable bug/i18n items"
     }
+  ],
+  "consumed_tier1d_signals": [
+    "code-review-mobile-native-kmp-create-listing-not-implemented",
+    "code-review-mobile-native-kmp-compose-notnull-assertions",
+    "code-review-mobile-rn-list-search-placeholders-i18n",
+    "code-review-ppt-web-ui-invoice-empty-items",
+    "code-review-ppt-web-ui-invoice-vat-table-drift",
+    "code-review-ppt-web-ui-native-confirm-dialogs",
+    "code-review-ppt-web-ui-mediation-sessions-swallowed-error",
+    "code-review-ppt-web-ui-date-number-formatters-no-locale",
+    "code-review-ppt-web-ui-document-hooks-hardcoded-sk",
+    "code-review-ppt-web-ui-bookfacility-silent-availability",
+    "code-review-ppt-web-ui-facilities-silent-load-errors",
+    "code-review-ppt-web-ui-facilities-hardcoded-i18n",
+    "code-review-reality-server-sso-http-no-timeout",
+    "code-review-reality-web-agency-slug-i18n",
+    "code-review-reality-web-checksession-5xx-logout",
+    "code-review-reality-web-inquiry-cancel-no-error",
+    "code-review-mobile-native-kmp-account-screen-dead-rows",
+    "code-review-mobile-native-kmp-twofactor-orphan-unwired",
+    "code-review-mobile-native-kmp-profile-edit-drops-fields",
+    "code-review-mobile-rn-faults-screen-no-i18n",
+    "code-review-mobile-rn-widget-settings-alerts-i18n",
+    "code-review-mobile-rn-person-months-hardcoded-i18n",
+    "code-review-search-drainer-stub-marks-delivered",
+    "code-review-search-drainer-alert-copy-no-i18n",
+    "code-review-reality-web-realtor-section-no-i18n",
+    "code-review-reality-web-account-edit-wrong-locale-strings",
+    "code-review-reality-web-realtor-dashboard-total-mislabel"
   ]
 }
