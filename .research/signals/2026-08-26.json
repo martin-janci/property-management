@@ -1,0 +1,231 @@
+{
+  "generated_at": "2026-08-26T09:00:00Z",
+  "run_type": "buffer-low-refire",
+  "trigger_payload": "buffer-low: claimable=6/72 — refill planner (all open items mobile-native-gated, unlandable in cloud)",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:226 verify_hellosign_signature() MACs only `event_time + event_type` (`mac.update(format!(\"{}{}\", event_time, event_type))`, L235) — the envelope_id is NOT part of the signed data.",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:848-861 the HELLOSIGN branch validates that tuple, then esignature_webhook acts on the UNSIGNED `payload.envelope_id` (L882-884) to resolve the owning org and mark that workflow completed/voided/declined (L906-967).",
+        "Consequence: an attacker who obtains ONE valid HelloSign notification (e.g. `signature_request_all_signed`) can replay it with an arbitrary substituted `envelope_id` in the JSON body — the event_hash still verifies (it only covers time+type) and the org is resolved FROM the attacker-chosen envelope_id, so an arbitrary, cross-tenant e-signature workflow is forged into a terminal signed/voided state. The DocuSign and Adobe branches are NOT affected: they verify_slice over the full raw `&body` (sync.rs:199/211), which binds envelope_id.",
+        "The idempotency guard in backend/crates/db/src/repositories/integration.rs:964-987 (`WHERE external_envelope_id = $1 AND status <> ALL($terminal)`) does NOT mitigate this: it only blocks re-transitioning an already-terminal workflow; a substituted, not-yet-terminal envelope_id passes the guard and is updated.",
+        "Fix: bind envelope_id into the authenticated set for HelloSign — either verify the full raw request body like the DocuSign/Adobe paths, or refuse to act on any payload field not covered by the provider signature; reject when the resolved workflow's provider != the verified provider.",
+        "verified 2026-08-26: read backend/servers/api-server/src/routes/integrations/sync.rs:226-240 in-tree — verify_hellosign_signature signs only event_time+event_type; envelope_id absent from MAC input."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "api-handlers",
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:747-972 esignature_webhook has NO timestamp/freshness (replay) check for ANY provider — grep for timestamp/freshness/tolerance/stale across the handler body returns nothing.",
+        "This is inconsistent with every sibling receiver in the same file, which all close the replay window per gap 83-3 / issue #2330: verify_portal_webhook (L1281-1323) and handle_portal_webhook fold a signed X-Webhook-Timestamp into the HMAC with a ±tolerance window; the Booking.com (L1110+) and Airbnb (verify_airbnb_delivery L1491) receivers do the same; reality-portal family documented in backend/CLAUDE.md.",
+        "For DocuSign/Adobe (full-body HMAC) a captured valid webhook can be replayed indefinitely to re-drive workflow state. For HelloSign, `event_time` IS signed but is never compared against server time (L848), so it provides no freshness. Combined with the envelope_id-binding gap above, replay is trivial.",
+        "Fix: reject deliveries whose provider-supplied timestamp is outside a tolerance window (HelloSign: validate `event_time`; DocuSign: `x-docusign-signature-1` carries a signed timestamp header set to verify; Adobe: enforce a received-at dedupe/nonce), matching the sibling receivers' pattern; persist a processed-delivery id for at-most-once handling."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "api-handlers",
+      "expert": "security"
+    },
+    {
+      "id": "code-review-mobile-rn-raw-status-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:218 — the status badge renders the raw api-server enum via `{fault.status.replace('_', ' ')}`, so sk/cs/de users see English 'open' / 'in progress' / 'resolved'. The rest of this screen is fully translated (useTranslation at :133, t('faults.loadError') etc.), so this is a localized-screen gap, not an un-i18n'd screen.",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 — same pattern: `{outage.status.replace('_', ' ')}` prints the raw enum ('scheduled' / 'in_progress' -> 'in progress') untranslated in the outage status badge.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 — `{announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}` capitalizes the raw enum instead of translating it. Contrast VotingScreen.tsx:233 which does it correctly with `t(`voting.filter.${option}`)` and translates status via t(), confirming these three are deviations from the established pattern. App ships sk/cs/de/en per CLAUDE.md (Reality i18n), so non-en locales see English status text."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-faultslist-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:160 — the report-fault CTA renders a hardcoded English literal `<Text style={styles.addButtonText}>+ Report</Text>` instead of a t() key, in a file that otherwise uses useTranslation (imported :2, `const { t } = useTranslation()` :133).",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:172 — the filter tab labels are produced by capitalizing the raw option key: `{option.charAt(0).toUpperCase() + option.slice(1)}` over `['all','open','resolved']`, so the tabs read 'All' / 'Open' / 'Resolved' in every locale. VotingScreen.tsx:233 shows the intended pattern for the identical filter-tab UI: `{t(`voting.filter.${option}`)}`.",
+        "Impact: a fully-Slovak build still shows an English primary action button and English filter tabs on the faults list — a visible localization regression on a core resident screen."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-button-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:184 — hardcoded English `<Text style={s.primaryButtonText}>+ New message</Text>` on the compose CTA, in a screen that otherwise uses t() 7 times (useTranslation at :86).",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:142 and :145 — the save/cancel edit buttons render hardcoded `<Text ...>Save</Text>` and `<Text ...>Cancel</Text>` literals rather than t('common.save') / t('common.cancel').",
+        "Same i18n-gap class as the FaultsListScreen finding but distinct files/screens; grouped as one signal so the fix can add the missing keys (messages.compose.cta, common.save, common.cancel) in one pass. All are user-facing button labels that stay English under sk/cs/de."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn",
+      "expert": "frontend"
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2744 (fix(dispatcher): un-wedge oversize-archive push + close retry-remint cross-id ghost) has been open in DRAFT since 2026-08-13 (13d) with needs-human-review label; blocks the archive-push wedge fix for #1162/#2743 and freezes the dispatcher."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-compliance-pages-AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2848",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2848 refactored AmlDashboardPage.tsx (385→157 lines, extracted 3 subcomponents + useAmlDashboard hook)",
+        "PR #2852 followed with AmlDashboardPage.test.tsx dedup — pair of PRs on the same file family in one day"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced since HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "all scores <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plan annotated in brief (passed)",
+      "observed": "annotated",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, 15 sections + mode + files exist",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research files staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed check — none failed",
+      "observed": "no failures",
+      "expected": "no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present or archived",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "9>=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "0 auto-fix actions (no eligible allowlist match)",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run (mid-day refire) — gate is no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
