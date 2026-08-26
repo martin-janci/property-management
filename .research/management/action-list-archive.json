@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-26T16:26:14Z",
+  "archived_at": "2026-08-26T20:30:58Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -14812,6 +14812,34 @@
         "commit": "f1774db0c3fc778db45ff96311b0d23e7a4cc43e",
         "subject": "gh-issue-2854: replace DsaReportsPage window.alert with localized toast feedback (#2855)",
         "at": "2026-08-26T16:24:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-2857",
+      "action": "Fail-open non-deterministic email-verification gate in AuthPolicyEnforcer::check_capability_grant_for_user (Closes #2857)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-26T16:24:25Z (#2857) | gc1-reconcile 2026-08-26T20:30:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-26T16:24:25Z",
+      "issue_ref": {
+        "number": 2857,
+        "url": "https://github.com/martin-janci/property-management/issues/2857",
+        "labels": [
+          "security",
+          "backend",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2858,
+        "merged_at": "2026-08-26T20:29:05Z",
+        "at": "2026-08-26T20:30:13Z"
       }
     },
     {

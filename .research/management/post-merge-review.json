@@ -1,9 +1,60 @@
 {
-  "generated": "2026-08-25T16:31:13Z",
+  "generated": "2026-08-26T15:00:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-26T15:00:00Z",
+      "prs_scanned": 2,
+      "clean": [
+        2855
+      ],
+      "with_issues": [
+        {
+          "pr": 2856,
+          "issue": 2859,
+          "findings": 2,
+          "specialist": "pm-rust-backend",
+          "note": "server-side overdue moderation filter: (1) medium test-gap -- new overdue_only SQL predicate in list_moderation_cases has no #[sqlx::test]; FE test mocks the hook, only backend test change is a call-signature bump in aml_dsa_cross_org_idor_tests.rs; no list<->overdue_count invariant test. (2) low correctness -- overdue view hard-caps at limit=200 (=MAX_PAGE_LIMIT) with no pagination, so orgs with >200 breaches re-exhibit the badge-vs-list mismatch #2853 fixed; suggest an explicit 'showing first 200' affordance."
+        }
+      ],
+      "skipped_already_reviewed": [
+        2856,
+        2854,
+        2853,
+        2852,
+        2851,
+        2850,
+        2849,
+        2848,
+        2847,
+        2846,
+        2845,
+        2844,
+        2843,
+        2842,
+        2841,
+        2840,
+        2839,
+        2838,
+        2837,
+        2836,
+        2835,
+        2834,
+        2833,
+        2830,
+        2829,
+        2828,
+        2827,
+        2826,
+        2825,
+        2821,
+        2818,
+        2817
+      ],
+      "note": "Tier-1d demand-driven post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no compile: api-server build pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, and no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-12), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Enumerated 40 closed-into-dev PRs (updated desc): only #2855 and #2856 lacked post-merge-reviewed; both merged 2026-08-26, both landable FE/BE TS+Rust (preferred over mobile-native). Reviewed both; labeled both post-merge-reviewed. #2855 (DsaReportsPage window.alert->localized toast) CLEAN: 3 regression tests, i18n across 6 locales, DsaTransparencyReportCard hardcoded labels explicitly out-of-scope. #2856 -> opened follow-up #2859 (2 findings). Verified in-tree that #2856's react-query key includes params (toggle refetches) and MAX_PAGE_LIMIT=200 matches FE OVERDUE_PAGE_LIMIT=200 -- those are correct; findings are the untested predicate + the 200-cap truncation. Deduped: no open from-merged-review issue for #2856 (#2853 closed source issue; #2857 unrelated security follow-up)."
+    },
     {
       "run_at": "2026-08-25T16:31:13Z",
       "prs_scanned": 14,
@@ -507,47 +558,6 @@
         2709,
         2711,
         2712
-      ]
-    },
-    {
-      "run_at": "2026-08-06T18:19:51Z",
-      "prs_scanned": 15,
-      "clean": [
-        2666,
-        2667,
-        2668,
-        2669,
-        2670,
-        2671,
-        2672,
-        2676,
-        2677,
-        2678,
-        2679,
-        2680,
-        2681,
-        2682,
-        2683
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed in this runner -> GitHub MCP (mcp__github__*) for every network call. Window merged-to-dev 14d (>=2026-07-23), base=dev, max_prs=15. Prior run (2026-08-05T16:10Z) reached #2659/#2660/#2661; this run scanned the 15 newest never-reviewed merged PRs after it: #2666-#2683 (exactly the max_prs cap). #2663/#2664/#2665 (merged 2026-08-05 20:09 .. 2026-08-06 08:08) just miss the 15-cap and will be picked up next run. ALL 15 CLEAN, 0 net-new issues. This was an unusually strong batch -- every PR is an auto-impl code-review security/correctness fix shipped WITH a targeted regression test. Highlights: #2672 (Alexa voice-webhook: real RSA-SHA1 PKCS#1v1.5 body-signature verification replacing the old 'validate URL+timestamp then Ok()' no-op that accepted any forged request -- pure verify_alexa_cert_and_signature unit-tested vs a locally-generated cert for forged/tampered/expired/unparseable; leaf validity+SAN echo-api.amazon.com checked). #2677 (api_call SSRF: new common::url_validation::validate_resolved_host w/ injectable resolver, fail-closed on resolution-error/empty/any-private-in-answer, wired pre-request). #2668 (reality-server SSRF: unmap IPv4-mapped/compatible IPv6 via ip.to_ipv4() before range check -- closes ::ffff:169.254.169.254 bypass). #2682 (agency accept_invitation: recipient-email gate before membership, case-insensitive, freshness predicate mirrors repo -> 400 unknown/expired, 403 wrong-email). #2669 (agency create_invitation: membership gate via shared check_agency_membership -- closes self-service escalation). #2676 (OCR correction IDOR: derive org from meter_reading's meter, reject client-org mismatch). #2680 (removed 6 unscoped LlmDocumentRepository IDOR-footgun methods, all had 0 prod callers). #2681 (idempotency lock now pg_advisory_xact_lock in a tx -> cancellation-safe release on client-disconnect mid-handler; hermetic no-idle-reap regression test probes lock from an independent session). #2666 (voice report-fault now actually persisted via fault_repo.create_rls anchored to device unit's building, UTF-8-safe title truncation; was fabricating a throwaway UUID). #2679 (voice check-balance stops fabricating success:true 'balance is zero' -> fails honestly, no fabricated data). #2670 (Slovak zapisnica / Czech usneseni legal minutes now derived from persisted Vote counts/quorum/end_at + real building/SVJ/org identity, replacing hardcoded 2024-01-15 / 100-75 / 60-10-5 / always-approved mocks). #2678 (scheduler announcement target-resolution error now propagates as Err instead of coercing to empty Vec -- observability win). #2683 (infra_ops authz backfill tests strengthened: exact 401 unauth / 403 non-admin for bodyless, is_client_error!=401 for body-bearing where Json extraction precedes the admin check). #2667 (voice-webhook absent/whitespace token regression test). #2671 (behavior-preserving split of auth.rs 1015-line file into auth/{mod,registration,password_reset,sessions}.rs -- router() wiring preserved, +36 net wiring lines, gated by clippy -D warnings + auth test suite; not read line-by-line, low-yield on a pure move). Dedup / considered-but-not-filed: (a) #2678 now aborts the whole publish_scheduled_announcements batch on the first target-resolution error (early return) -- enlarges blast radius vs the old skip-one-continue, so healthy sibling announcements in the same tick also go un-notified; BUT they are already status='published' so un-retriable either way -- this is the SAME fire-once durability root-cause already tracked by open #2612 (notified_at column + separate dispatch pass), whose fix subsumes it. Not filing a near-dup. (b) #2672 validates the leaf cert (validity window + SAN) but NOT the full X.509 chain-of-trust to an Amazon root CA; mitigated because the cert URL is TLS-pinned to https://s3.amazonaws.com/echo.api/ (only Amazon can host there) and the tradeoff is documented in-code -- defensible scope decision, not filed. (c) #2670 top-line for/against mirrors only the first question and option-text classification is a fixed sk/cs/en keyword set (unknown option-text -> abstain) -- reasonable heuristic, far better than the removed mocks, too weak to file. Labeling: MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history is the dedup record for the next run (same precedent as prior runs). NET-NEW actionable issues: 0.",
-      "focus_prs": [
-        2666,
-        2667,
-        2668,
-        2669,
-        2670,
-        2671,
-        2672,
-        2676,
-        2677,
-        2678,
-        2679,
-        2680,
-        2681,
-        2682,
-        2683
       ]
     }
   ]

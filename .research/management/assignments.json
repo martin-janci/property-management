@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-26T18:31:48Z",
+  "generated": "2026-08-26T20:30:04Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-26T18:31:48Z",
+      "last_updated": "2026-08-26T20:30:04Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -21,28 +21,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2857",
-      "branch": "auto-impl/gh-issue-2857-2fae7502",
-      "status": "review",
-      "claimed_at": "2026-08-26T16:26:25Z",
-      "last_updated": "2026-08-26T18:31:48Z",
-      "status_changed_at": "2026-08-26T16:47:54Z",
-      "pr_number": 2858,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2858",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2858 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fix+2 sqlx tests; api-server fmt+clippy green (swagger fetch worked around via local zip), sqlx::test deferred to CI backend.yml [ci-fix round1: seed_user test helper passed &format!(..) (a &String) to sqlx 0.9 query_scalar, which requires &static str (SqlSafeStr, E0277); replaced with a static SQL literal binding verified as a bool (CASE WHEN cast-bool THEN NOW() ELSE NULL END); rustfmt clean; pushed head 507b065; CI re-running]",
-      "reviewer_summary": "verdict=approve note=strictest-across-orgs fix correct; org-less fallback safe (default verify=false); two real-SQL regression tests cover multi-org strict + lax-only control; good reuse of strictest_policy_across; CI pending",
-      "last_reviewed_oid": "1cfc397a5162539b297271cd3bc17187fef9eb47",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]

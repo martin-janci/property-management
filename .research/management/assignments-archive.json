@@ -13457,6 +13457,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2857",
+      "branch": "auto-impl/gh-issue-2857-2fae7502",
+      "status": "merged",
+      "claimed_at": "2026-08-26T16:26:25Z",
+      "last_updated": "2026-08-26T20:30:04Z",
+      "status_changed_at": "2026-08-26T20:30:04Z",
+      "pr_number": 2858,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2858",
+      "merged_at": "2026-08-26T20:29:05Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2858 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=fix+2 sqlx tests; api-server fmt+clippy green (swagger fetch worked around via local zip), sqlx::test deferred to CI backend.yml [ci-fix round1: seed_user test helper passed &format!(..) (a &String) to sqlx 0.9 query_scalar, which requires &static str (SqlSafeStr, E0277); replaced with a static SQL literal binding verified as a bool (CASE WHEN cast-bool THEN NOW() ELSE NULL END); rustfmt clean; pushed head 507b065; CI re-running]",
+      "reviewer_summary": "verdict=approve note=ci-fix-delta-sound-tests-not-weakened-core-fix-correct (re-review at 507b065; formal APPROVE blocked as same-account PR, posted as comment); merged via squash a3634a52",
+      "last_reviewed_oid": "507b065059618733c2a846083d015b674558ac9a",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-08-26T20:30:04Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -15961,5 +15983,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-26T16:26:14Z"
+  "archived_at": "2026-08-26T20:30:13Z"
 }
