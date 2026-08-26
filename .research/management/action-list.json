@@ -99,6 +99,46 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-2853",
+      "action": "Follow-up: moderation \"overdue only\" affordance filters a truncated client page, under-reporting SLA breaches (PR #2849) (Closes #2853)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-08-26T12:27:10Z (#2853)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-26T12:27:10Z",
+      "issue_ref": {
+        "number": 2853,
+        "url": "https://github.com/martin-janci/property-management/issues/2853",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-2854",
+      "action": "Follow-up: DsaReportsPage still uses window.alert for publish/download feedback after i18n pass (PR #2847) (Closes #2854)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-08-26T12:27:10Z (#2854)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-26T12:27:10Z",
+      "issue_ref": {
+        "number": 2854,
+        "url": "https://github.com/martin-janci/property-management/issues/2854",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
