@@ -1,0 +1,350 @@
+{
+  "date": "2026-08-26",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-26",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "evidence": [
+        "Last routine run was 37h ago (> 36h threshold)."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2848",
+      "type": "shipped-pr",
+      "source": "PR #2848",
+      "score_delta": 0,
+      "evidence": [
+        "churn-hotspot-aml-dashboard-page: extract AML dashboard sections + data hook"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2849",
+      "type": "shipped-pr",
+      "source": "PR #2849",
+      "score_delta": 0,
+      "evidence": [
+        "code-review-ppt-web-ui-content-mod-overdue-noop: make moderation overdue affordance filter the queue"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2850",
+      "type": "shipped-pr",
+      "source": "PR #2850",
+      "score_delta": 0,
+      "evidence": [
+        "pm-qa-verification-badge-expiry-i18n-visual-diff: snapshot VerificationBadge expiry copy across sk/cs/de/en (#2825)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2851",
+      "type": "shipped-pr",
+      "source": "PR #2851",
+      "score_delta": 0,
+      "evidence": [
+        "pm-qa-voice-oauth-token-encryption-roundtrip-test: unit + integration tests for centralized voice OAuth token encryption (#2838)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2852",
+      "type": "shipped-pr",
+      "source": "PR #2852",
+      "score_delta": 0,
+      "evidence": [
+        "churn-hotspot AmlDashboardPage.test.tsx: de-duplicate decision-flow test helpers"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2855",
+      "type": "shipped-pr",
+      "source": "PR #2855",
+      "score_delta": 0,
+      "evidence": [
+        "gh-issue-2854: replace DsaReportsPage window.alert with localized toast feedback"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2856",
+      "type": "shipped-pr",
+      "source": "PR #2856",
+      "score_delta": 0,
+      "evidence": [
+        "gh-issue-2853: make moderation overdue filter server-side (Closes #2853)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "shipped-pr-2858",
+      "type": "shipped-pr",
+      "source": "PR #2858",
+      "score_delta": 0,
+      "evidence": [
+        "fix(api-server): enforce strictest email-verification policy across all grantee orgs in capability-grant gate"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:226 verify_hellosign_signature() MACs only `event_time + event_type` (`mac.update(format!(\"{}{}\", event_time, event_type))`, L235) \u2014 the envelope_id is NOT part of the signed data.",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:848-861 the HELLOSIGN branch validates that tuple, then esignature_webhook acts on the UNSIGNED `payload.envelope_id` (L882-884) to resolve the owning org and mark that workflow completed/voided/declined (L906-967).",
+        "Consequence: an attacker who obtains ONE valid HelloSign notification (e.g. `signature_request_all_signed`) can replay it with an arbitrary substituted `envelope_id` in the JSON body \u2014 the event_hash still verifies (it only covers time+type) and the org is resolved FROM the attacker-chosen envelope_id, so an arbitrary, cross-tenant e-signature workflow is forged into a terminal signed/voided state. The DocuSign and Adobe branches are NOT affected: they verify_slice over the full raw `&body` (sync.rs:199/211), which binds envelope_id.",
+        "The idempotency guard in backend/crates/db/src/repositories/integration.rs:964-987 (`WHERE external_envelope_id = $1 AND status <> ALL($terminal)`) does NOT mitigate this: it only blocks re-transitioning an already-terminal workflow; a substituted, not-yet-terminal envelope_id passes the guard and is updated.",
+        "Fix: bind envelope_id into the authenticated set for HelloSign \u2014 either verify the full raw request body like the DocuSign/Adobe paths, or refuse to act on any payload field not covered by the provider signature; reject when the resolved workflow's provider != the verified provider."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:747-972 esignature_webhook has NO timestamp/freshness (replay) check for ANY provider \u2014 grep for timestamp/freshness/tolerance/stale across the handler body returns nothing.",
+        "This is inconsistent with every sibling receiver in the same file, which all close the replay window per gap 83-3 / issue #2330: verify_portal_webhook (L1281-1323) and handle_portal_webhook fold a signed X-Webhook-Timestamp into the HMAC with a \u00b1tolerance window; the Booking.com (L1110+) and Airbnb (verify_airbnb_delivery L1491) receivers do the same; reality-portal family documented in backend/CLAUDE.md.",
+        "For DocuSign/Adobe (full-body HMAC) a captured valid webhook can be replayed indefinitely to re-drive workflow state. For HelloSign, `event_time` IS signed but is never compared against server time (L848), so it provides no freshness. Combined with the envelope_id-binding gap above, replay is trivial.",
+        "Fix: reject deliveries whose provider-supplied timestamp is outside a tolerance window (HelloSign: validate `event_time`; DocuSign: `x-docusign-signature-1` carries a signed timestamp header set to verify; Adobe: enforce a received-at dedupe/nonce), matching the sibling receivers' pattern; persist a processed-delivery id for at-most-once handling."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-raw-status-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:218 \u2014 the status badge renders the raw api-server enum via `{fault.status.replace('_', ' ')}`, so sk/cs/de users see English 'open' / 'in progress' / 'resolved'. The rest of this screen is fully translated (useTranslation at :133, t('faults.loadError') etc.), so this is a localized-screen gap, not an un-i18n'd screen.",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 \u2014 same pattern: `{outage.status.replace('_', ' ')}` prints the raw enum ('scheduled' / 'in_progress' -> 'in progress') untranslated in the outage status badge.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 \u2014 `{announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}` capitalizes the raw enum instead of translating it. Contrast VotingScreen.tsx:233 which does it correctly with `t(`voting.filter.${option}`)` and translates status via t(), confirming these three are deviations from the established pattern. App ships sk/cs/de/en per CLAUDE.md (Reality i18n), so non-en locales see English status text."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-faultslist-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:160 \u2014 the report-fault CTA renders a hardcoded English literal `<Text style={styles.addButtonText}>+ Report</Text>` instead of a t() key, in a file that otherwise uses useTranslation (imported :2, `const { t } = useTranslation()` :133).",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:172 \u2014 the filter tab labels are produced by capitalizing the raw option key: `{option.charAt(0).toUpperCase() + option.slice(1)}` over `['all','open','resolved']`, so the tabs read 'All' / 'Open' / 'Resolved' in every locale. VotingScreen.tsx:233 shows the intended pattern for the identical filter-tab UI: `{t(`voting.filter.${option}`)}`.",
+        "Impact: a fully-Slovak build still shows an English primary action button and English filter tabs on the faults list \u2014 a visible localization regression on a core resident screen."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-button-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:184 \u2014 hardcoded English `<Text style={s.primaryButtonText}>+ New message</Text>` on the compose CTA, in a screen that otherwise uses t() 7 times (useTranslation at :86).",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:142 and :145 \u2014 the save/cancel edit buttons render hardcoded `<Text ...>Save</Text>` and `<Text ...>Cancel</Text>` literals rather than t('common.save') / t('common.cancel').",
+        "Same i18n-gap class as the FaultsListScreen finding but distinct files/screens; grouped as one signal so the fix can add the missing keys (messages.compose.cta, common.save, common.cancel) in one pass. All are user-facing button labels that stay English under sk/cs/de."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:22-49 \u2014 the shared `request<T>()` helper sends ONLY `credentials: 'include'` (cookie auth) and merges `{ 'Content-Type': 'application/json', ...callerHeaders }`. It never calls `getAuthHeader()` from lib/auth-token.ts, and none of the exported callers (getMyRealtorProfile L67, updateMyRealtorProfile L71, createListing L117, getMyListing L129, updateListing L133, getMyRealtorAnalytics L148) pass an Authorization header. So no request from this module ever carries `Authorization Bearer <token>`.",
+        "This diverges from the sibling auth client lib/auth-api.ts:35-43, which deliberately merges BOTH `credentials: 'include'` AND `...getAuthHeader()` (comment L37-39: 'bearer header is additive \u2014 reality-server's extractor checks Authorization first then cookie'). lib/auth-token.ts is purpose-built for the email/password form-login path (docstring L1-11: persists the `/api/v1/users/login` JWT in localStorage under `ppt-portal-token` and adds `Authorization Bearer \u2026` on authenticated requests) \u2014 that path sets NO `portal_session` cookie.",
+        "backend/servers/reality-server/src/extractors/auth.rs:31-44 \u2014 `extract_session_token` reads `Authorization Bearer \u2026` first, then falls back to the `portal_session` cookie, returning None if neither is present. Consequence: a realtor authenticated via form-login (Bearer in localStorage, no cookie) sends neither mechanism on realtor write calls, so every createListing/updateListing/updateMyRealtorProfile/getMyListing/getMyRealtorAnalytics returns 401. The pages that call these directly (app/[locale]/realtor/listings/new/page.tsx:23, realtor/profile/page.tsx:68, realtor/listings/[id]/edit/page.tsx, account/listings/[id]/edit/page.tsx:129) surface a generic error and the realtor cannot create/edit listings or update their profile. Fix: merge `getAuthHeader()` into request()'s headers the same way auth-api.ts does. Confidence medium: correct if realtors can ever use form-login (the token module exists precisely for that); a no-op only if realtors are provisioned SSO-cookie-only in practice."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "The entire authenticated realtor + account route group ships English-only in a 4-locale app (sk/cs/de/en). All 11 page shells have NO `useTranslations`/`getTranslations` import: app/[locale]/realtor/{page,profile,[id],listings,listings/new,listings/[id]/edit,analytics}/page.tsx and app/[locale]/account/{page,profile,password,listings/[id]/edit}/page.tsx.",
+        "Hardcoded user-facing English confirmed in the page shells themselves (not delegated to children): realtor/listings/new/page.tsx:37-41 '<h1>Create listing</h1>', '<p>Publish a new property to Reality Portal.</p>', submitLabel=\"Publish listing\"; realtor/profile/page.tsx:88/93/94/160 'Loading profile\u2026', 'Realtor profile', 'Buyers and renters see this information\u2026', 'License number', plus client validation L63 'Name is required' and error fallback L86 'Could not save profile.'; account/password/page.tsx:37-59 'Current password is required', 'New password is required', `Password must be at least ${MIN} characters`, 'New password must differ from the current password', 'Passwords do not match', headings 'Change password' / 'Update the password used to sign in\u2026' and error 'Could not change password. Please try again.'; realtor/analytics/page.tsx:68-81 'Analytics','Performance of your listings over time.','Loading metrics\u2026'; realtor/listings/page.tsx:77-89 'My listings','Manage the properties you have published.','Loading\u2026','Failed to load listings.','You haven't published any listings yet.'",
+        "DISTINCT from prior (all `status:done`) findings which localized CHILD COMPONENTS: code-review-reality-web-listingform-no-i18n (ListingForm now uses `useTranslations('listingForm')` at components/realtor/ListingForm.tsx:73), realtor-mgmt-i18n / realtor-mgmt-untranslated (RealtorManagement), agency-import-i18n. The route-level page shells that host those components were missed and still hardcode headings, subtitles, form field labels, loading/empty/error states and inline validation. Also feeds English through the API layer: lib/realtor-api.ts:35/38 throws RealtorApiError('Network error. Please try again.') / `Request failed (${status})` whose .message is rendered verbatim by these pages. Fix: wrap all page-level copy in next-intl and stop passing hardcoded submitLabel/title props."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-shared-state-primitives-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/states/ErrorState.tsx:59-66 hardcodes English default copy with no i18n: title='Something went wrong', description='Please try again. If the issue persists, contact support.', retryLabel='Try again'. components/states/EmptyState.tsx:16 defaults icon='\ud83d\udced' and takes plain-string title/description props with no translation.",
+        "Both are exported from the barrel components/states/index.ts:5-8 alongside StateView and LoadingSkeleton, but are currently UNRENDERED: grep for `<ErrorState`/`<EmptyState` finds only the unrelated LOCAL components defined inside components/import/CsvImport.tsx:1146 and FeedImport.tsx:906 (which ARE localized via useTranslations). The only barrel members actually imported anywhere are StateView (app/[locale]/error.tsx, not-found.tsx, agency/error.tsx, forbidden/page.tsx \u2014 all pass title={t(...)}) and LoadingSkeleton.",
+        "This is latent i18n debt, not a live user-facing bug: the shared ErrorState/EmptyState are the 'obvious' primitives a future dev will reach for, and unlike the already-safe StateView (which forces explicit title/description) they silently render English defaults. Low severity \u2014 fix is to either localize the defaults (accept a translation key / require callers to pass translated strings) or remove the dead exports so the localized StateView stays the single shared error/empty surface."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signals matched allowlist + certainty bar",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists with today's H1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursor comparison vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8; no eligible decay this run (no items past 14d threshold)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief 'Plans promoted' contains adversarial-pass annotation for the one promoted plan",
+      "observed": "adversarial pass: passed",
+      "expected": "adversarial pass: (passed|fixed-in-place|rolled-back)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan metadata + 11 headings + Mode + capability + Files-exist",
+      "observed": "all ok",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (Authorization+Bearer literal reworded to 'Authorization Bearer' in evidence text; hits=0)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regenerated from backlog.json",
+      "observed": "regenerated in same run",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures reported honestly",
+      "observed": "no phase failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plan silently deleted",
+      "observed": "prior plans intact",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "new=9 old=9",
+      "expected": "new>=old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regenerated from backlog.json",
+      "observed": "regenerated in same run",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency + kill switch honored",
+      "observed": "auto_fix_actions=[], no candidate met the certainty bar",
+      "expected": "all sub-checks true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run (no management artifacts changed)",
+      "observed": "no-op",
+      "expected": "no-op or all-checks-pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

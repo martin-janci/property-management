@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-25T08:50:37Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2847,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "142ae17",
+  "last_run_iso": "2026-08-26T22:30:00Z",
+  "last_run_ms": 12000,
+  "last_pr_seen": 2858,
+  "last_issue_seen": 2859,
+  "last_commit_sha": "7b31b6d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -925,7 +925,24 @@
     "code-review-ppt-web-ui-content-mod-unsafe-cast",
     "code-review-ppt-web-ui-content-mod-overdue-noop",
     "code-review-ppt-web-ui-dsa-reports-no-i18n",
-    "refire-buffer-low-2026-08-25-0850"
+    "refire-buffer-low-2026-08-25-0850",
+    "lag-warning-2026-08-26",
+    "shipped-pr-2848",
+    "shipped-pr-2849",
+    "shipped-pr-2850",
+    "shipped-pr-2851",
+    "shipped-pr-2852",
+    "shipped-pr-2855",
+    "shipped-pr-2856",
+    "shipped-pr-2858",
+    "code-review-api-handlers-hellosign-unbound-envelope",
+    "code-review-api-handlers-esign-webhook-replay",
+    "code-review-mobile-rn-raw-status-untranslated",
+    "code-review-mobile-rn-faultslist-i18n-gap",
+    "code-review-mobile-rn-hardcoded-button-labels",
+    "code-review-reality-web-realtor-api-missing-bearer-header",
+    "code-review-reality-web-realtor-account-pages-no-i18n",
+    "code-review-reality-web-shared-state-primitives-no-i18n"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -939,9 +956,9 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 71,
-    "vectors_created": 324,
-    "plans_created": 28,
+    "runs": 72,
+    "vectors_created": 332,
+    "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
