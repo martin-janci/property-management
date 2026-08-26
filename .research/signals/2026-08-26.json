@@ -1,0 +1,208 @@
+{
+  "date": "2026-08-26",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-26.md && head -1 matches '# 2026-08-26'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev \u2026 state changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique length equal",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0",
+      "observed": "no offenders",
+      "expected": "no offenders"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no items with score > 8; decay N/A (no items > 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 vacuous pass",
+      "observed": "0 new plans",
+      "expected": "\u22642 new plans each with adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached -diff-filter=A .research/plans/ | count",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "diff scan for secrets/hostnames (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "match",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed vs cursor advancement",
+      "observed": "no phase failed; all cursors advanced",
+      "expected": "cursors match observed phase outcomes"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in tree or archive",
+      "observed": "0 missing",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged >= HEAD",
+      "observed": "9 >= 9",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "match",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency + kill switch",
+      "observed": "0 actions this run (no eligible signals)",
+      "expected": "\u22641/type; no re-processing"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor bounds + GC7 coverage_cursor advance",
+      "observed": "action-list/risks parseable; project-state non-empty; pm 4\u21925; cc 6\u21927 (13 epics)",
+      "expected": "all valid + advance when pm advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "diff scan for literal Telegram token values",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-08-25T08:50Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 raw churn this run: 326 lines (49 add + 277 del) in PR #2848 refactor extract",
+      "cumulative_reemit": true
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history bump (runs_seen 1 \u2192 2)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen bumped to 2 \u2014 touched by PR #2848 (refactor extract just landed; expected to stabilize)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-08-25T08:50Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 raw churn this run: 114 lines in PR #2849 overdue-affordance regression tests"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-08-25T08:50Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 raw churn this run: 103 lines in PR #2851 (encrypt_voice_token_pair unit test)",
+      "cumulative_reemit": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history bump (runs_seen 3 \u2192 4)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen bumped to 4 \u2014 planning PR #2844 landed but decomposition still pending; #2851 tightened one choke-point (encrypt_voice_token_pair)",
+      "cumulative_reemit": true
+    },
+    {
+      "id": "code-review-api-handlers-voice-refresh-silent-noop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/voice_webhooks.rs:884 \u2014 oauth_token_refresh awaits llm_document_repo.update_voice_device_tokens (WHERE id=$1 AND is_active=TRUE, fetch_optional) but only handles the Err arm via map_err; an Ok(None) (device deactivated between find and update) is discarded, then the handler logs 'Successfully refreshed OAuth tokens' and returns VoiceTokenRefreshResult { success: true }. Meanwhile oauth_manager.refresh_token already rotated the upstream token at line 808, so the new access/refresh pair is never persisted \u2014 the caller believes rotation succeeded while the device row still holds the pre-rotation refresh token (which Amazon/Google may treat as revoked). Handle Ok(None) explicitly: 404 or fail-loud 500 so the false-success + stale-token state is caught.",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-audit-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/government_portal.rs:549,623,699 \u2014 validate_submission, submit_submission, and cancel_submission each end with `let _ = state.government_portal_repo.create_audit(CreateSubmissionAudit { ... }).await;` with no tracing::warn on error. These are regulatory-submission audit-trail writes (SubmissionStatus::Validated / Submitted / Cancelled) for a government portal integration. On any transient DB failure the audit row is silently missing \u2014 no operator signal, no retry, no fallback log \u2014 leaving compliance gaps invisible. Log the error at minimum; ideally make audit persistence transactional with the status change.",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-booking-sync-bookkeeping-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/integrations/booking_channel.rs:426-445 \u2014 the SyncPersistence match repeats update_connection_last_sync / mark_booking_sync_error across three arms with the same 'best-effort let _ =' idiom; backend/servers/api-server/src/routes/integrations/install.rs:1211 mirrors update_connection_last_sync with the same swallow. A persist_booking_sync_outcome(rental_repo, connection.id, &result) helper would collapse the four call sites, make the swallow (or tracing::warn on error) uniform, and prevent silent drift between the push and pull flows.",
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": []
+}

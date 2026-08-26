@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-25T04:24:00Z",
+  "generated": "2026-08-26T04:00:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -199,6 +199,106 @@
       "trigger": null,
       "status": "open",
       "source": "pm-qa 2026-08-25"
+    },
+    {
+      "id": "pm-devops-mobile-native-egress-403",
+      "risk": "Cloud runner cannot resolve AGP/Google Maven dependencies (egress-403), so all mobile-native/KMP work is fully blocked in cloud CI/dispatch — an entire platform's delivery pipeline is stalled with no landing path",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Provision a self-hosted runner or proxy allow-list for Google Maven/AGP artifact hosts; document the exception in the mobile-native.yml header",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-pr-2744-human-gated-stale",
+      "risk": "PR #2744 (dispatcher fix for oversize-archive push, #1162/#2743) is approved but stuck 12 days in human-gated review — this is the fix for a dispatcher wedge, so its own delay is itself blocking dispatcher throughput",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Prioritize human merge/reject decision this week; treat as a devops-critical-path item",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-dependabot-backlog-drift",
+      "risk": "Dependabot backlog (12+ PRs) stalled increases lockfile drift and delays security/soundness patches (precedent: the merged #2473 batch carried real soundness fixes in futures-util)",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Batch-review and merge dependabot PRs on a regular cadence per the existing runbook pattern",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-rotation-stale-71d",
+      "risk": "pm-devops rotation slot was over 2 months stale (last run 2026-06-16) before this routine — infra/CI drift during that gap was unobserved by this role",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Restore the devops rotation cadence so CI/deploy risk is reviewed at least monthly",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-stale-pr-guard-flag-only",
+      "risk": "stale-pr-guard.yml is explicitly flag-only (never merges, closes, rebases, or escalates outside the Actions run summary) — a human must actively check Actions logs to notice stalled PRs like #2744, which is exactly what happened here",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Add an active notification channel to the guard so stale/blocked PRs surface without manual log-checking",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-sprint-status-stale-rollups",
+      "risk": "Stale epic-level status rollups in sprint-status.yaml misrepresent sprint completion, which could distort next-sprint planning or executive reporting",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "reconcile epics: block against development_status as a routine data-hygiene action",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-kmp-invisible-debt-pile",
+      "risk": "Mobile-native/KMP backlog (6 items, 0 claimed across 3+ runs) keeps growing because it's structurally cloud-unlandable, creating an invisible debt pile",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "stand up a periodic local-toolchain landing slot or explicitly move items to a deferred/human-only queue",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-stalled-acc-prs-rot",
+      "risk": "3 stalled accounting PRs (#2555/#2558/#2559) risk rot/merge-conflict as they age untouched (already ~4 weeks) outside dispatcher scope",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "human maintainer triage this run; close or actively review",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-repeated-hotspot-instability",
+      "risk": "Repeated churn (2nd run) on AmlDashboardPage.tsx and (4th run) voice_webhooks.rs signals unstable hotspots that could be masking a design/test-flakiness problem rather than genuine incremental improvement",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "tech-lead review to decide refactor vs. continued patchwork",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-empty-sprint-idle-dispatcher",
+      "risk": "No open PRs or new issues this run plus a fully-done sprint spine means the routine may be running low on genuinely new sprint work, risking idle dispatcher cycles unless the backlog/coverage gap-driven track is fed",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "trigger the full coverage scan (next_action above) and prioritize the backlog's remaining open/ready items",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
     }
   ]
 }

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-25T08:50:37Z",
+  "last_run_iso": "2026-08-26T04:00:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2847,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "142ae17",
+  "last_pr_seen": 2852,
+  "last_issue_seen": 2852,
+  "last_commit_sha": "21108240313166b1e88c274314898408dd8c6e7a",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -468,9 +468,9 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-08-22",
-      "recent_churn": 2871
+      "runs_seen": 4,
+      "last_seen": "2026-08-26",
+      "recent_churn": 103
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
@@ -488,14 +488,19 @@
       "recent_churn": 242
     },
     "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-25",
-      "recent_churn": 199
+      "runs_seen": 2,
+      "last_seen": "2026-08-26",
+      "recent_churn": 326
     },
     "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx": {
+      "runs_seen": 2,
+      "last_seen": "2026-08-26",
+      "recent_churn": 60
+    },
+    "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx": {
       "runs_seen": 1,
-      "last_seen": "2026-08-25",
-      "recent_churn": 175
+      "last_seen": "2026-08-26",
+      "recent_churn": 114
     }
   },
   "seen_signals": [
@@ -925,11 +930,16 @@
     "code-review-ppt-web-ui-content-mod-unsafe-cast",
     "code-review-ppt-web-ui-content-mod-overdue-noop",
     "code-review-ppt-web-ui-dsa-reports-no-i18n",
-    "refire-buffer-low-2026-08-25-0850"
+    "refire-buffer-low-2026-08-25-0850",
+    "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+    "code-review-api-handlers-voice-refresh-silent-noop",
+    "code-review-api-handlers-audit-swallowed",
+    "code-review-api-handlers-booking-sync-bookkeeping-dup"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-22",
+    "api-handlers": "2026-08-26",
     "api-core": "2026-08-21",
     "reality-server": "2026-08-19",
     "ppt-web-ui": "2026-08-25",
@@ -939,8 +949,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 71,
-    "vectors_created": 324,
+    "runs": 72,
+    "vectors_created": 329,
     "plans_created": 28,
     "quiet_days": 3,
     "auto_fix_count": 0
@@ -956,19 +966,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 4,
+    "next_index": 5,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
-      "pm-devops": "2026-06-16",
+      "pm-devops": "2026-08-26",
       "pm-security": "2026-07-21",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 6
+    "next_index": 7
   }
 }

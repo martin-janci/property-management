@@ -1,75 +1,43 @@
-# PPT Project State
-
-_Generated: 2026-08-25 — routine Phase 1.6 lightweight upkeep (pm-qa rotation slot; 71-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 3 → 4 (pm-qa → pm-devops next), coverage_cursor idx 5 → 6 (epic-80 re-checked, no material change; advances to epic-81). Sprint window 2026-08-20..08-25 shipped 13 PRs — the auto-review loop closed 7 previously-open action-list items in the same window (perfect same-window close rate)._
+# PPT project state — 2026-08-26
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring and 84-2 sign page). No status flips this window. The last window's 13 PRs were all follow-up hardening / auto-fix, dominated by:
-  - Notifications reliability — PR #2826 (per-channel bookkeeping + bounded retry) + PR #2834 (atomic claim so quiet-hours drain delivers at-most-once under >1 replica).
-  - AML dashboard UX + i18n — PR #2829 (replace window.prompt/alert with in-app dialogs) + PR #2833 (reset dialog state per assessment).
-  - Facilities booking UX — PR #2828 (surface fetch/approve/reject/cancel errors) + PR #2830 (i18n the UI strings).
-  - Mobile-RN correctness + localization — PR #2835 (VoteDetailScreen conditional-hooks fix) + PR #2836 (ThreadDetailScreen i18n) + PR #2837 (voice-assistant confirmation i18n).
-  - Security / integrations — PR #2821 (gate direct-connect OTA credential writes to manager) + PR #2827 (neutralize CR/LF in CSV export sanitizer) + PR #2838 (centralize voice OAuth token encryption).
-  - Verification-badge — PR #2825 (i18n expiry copy + de-dup the expiry-logic).
-- **Auto-review loop closed 7 items in-window:** all 4 follow-up issues opened by the last post-merge review (#2822 CSV / #2823 held-notifications / #2831 quiet-hours-drain / #2832 AML-dialog) were resolved by PRs merged the same window; plus dispatcher meta #2743 (archive push ceiling + ghost retry-remint) closed upstream and 2 code-review items (facilities booking silent errors, AML prompt/alert flow). Same-window close rate: 7/7.
-- **Zero new open PRs** — dispatcher stack is drained. Buffer sits at 17/36 open, below-half not because the queue is stale but because coverage is 47/49; the ranker has only 5 gap candidates left in the ranked pool.
-- **No new blockers** — sprint continues in-progress with no red flags. Main aging risk is the 2 partial 84-x frontend stories (unchanged for 3 windows).
+Sprint **Epic 6, 7A, 8A & 10A** (Announcements, Documents, Notifications, OAuth) reads 100% done at the story level, but the epic-level rollups in `sprint-status.yaml` (epic-6, epic-7a, epic-10b, epic-80) still show partial/in-progress with old `stories_completed` counts — a data-hygiene gap that misrepresents completion. This run's five merged PRs (#2848–#2852) are quality/hardening work layered on top of that finished sprint (AML dashboard extract, moderation overdue affordance, i18n snapshot regression, voice OAuth encryption round-trip suite, test dedup), not new sprint stories. Real open work sits in the 6 mobile-native/KMP action-list items (structurally cloud-unlandable) plus three human-authored accounting PRs stalled since 2026-07-30.
 
-## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
+## Sprint progress
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run. Extended-scope epics (10B, 80, 81, 82, 83, 84, 85, 79, 8A, 9) folded into `coverage.json` and largely done.
+- Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth**
+- Epics done (rollup, stale): **2 / 6**  · story-level detail: all tracked epics fully closed — reconciliation required.
 
-| Epic | Sprint status | Coverage status (13 epics) |
-|---|---|---|
-| 6 — Announcements & Communication | in-progress | 6/6 stories done in coverage |
-| 7A — Basic Document Management | in-progress | 5/5 stories done in coverage |
-| 8A — Basic Notification Preferences | done | 3/3 stories done (reliability re-hardened this window via #2826 + #2834) |
-| 10A — OAuth Provider Foundation | done | 3/3 stories done |
-| 10B — Platform Administration | in-progress | 7/7 stories done (AML dialog UX re-hardened via #2829 + #2833) |
-| 80 — Dispute Resolution | partial | 3/3 stories done in coverage; **re-checked this run (idx 5), no material change, last_checked=2026-08-25** |
-| 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1, 84-2) — unchanged |
-| 82 / 83 / 85 / 79 / 81 / 8a / 9 | (extended) | all done in coverage |
+## Shipped since last run
 
-## Shipped since last run (13 PRs merged 2026-08-20..08-25)
+- **#2848** — churn-hotspot AML dashboard extract (frontend/apps/ppt-web compliance)
+- **#2849** — moderation overdue affordance (ContentModerationPage)
+- **#2850** — verification-badge i18n snapshot
+- **#2851** — voice OAuth token encryption round-trip tests (voice_webhooks.rs)
+- **#2852** — AML dashboard test dedup
 
-- **#2821** — code-review api-handlers booking-connect: gate direct-connect OTA credential writes to manager role (non-manager hijack fix)
-- **#2825** — gh-issue-2824: i18n VerificationBadge expiry copy + de-duplicate expiry logic
-- **#2826** — gh-issue-2823: per-channel bookkeeping + bounded retry for held-notification drain
-- **#2827** — gh-issue-2822: neutralize CR/LF in CSV export sanitizer
-- **#2828** — code-review ppt-web-ui facilities-booking silent-errors: surface booking fetch/approve/reject/cancel errors
-- **#2829** — code-review ppt-web-ui AML-dashboard: replace window.prompt/alert decision flow with in-app dialogs + i18n
-- **#2830** — code-review ppt-web-ui facilities-booking hardcoded-i18n: i18n facilities booking UI strings
-- **#2833** — gh-issue-2832: reset AML EDD/Review dialog state per assessment
-- **#2834** — gh-issue-2831: atomic claim so quiet-hours drain delivers held notifications at-most-once
-- **#2835** — code-review mobile-rn VoteDetailScreen conditional-hooks: run hooks before returns
-- **#2836** — code-review mobile-rn ThreadDetailScreen hardcoded-en: localize UI
-- **#2837** — code-review mobile-rn voice-cmd hardcoded-en: localize voice-assistant confirmations
-- **#2838** — churn-hotspot voice_webhooks.rs (retry1): centralize voice OAuth token encryption
+## What's next (top 5)
 
-## What's next (top 5 actions from ranked backlog)
-
-1. **[high] Wire ppt-web direct-to-S3 upload (84-1 partial)** — POST /api/v1/documents/upload-url consumer + regression test — **owner: pm-frontend**. Backend has been shipped since 2026-07-30; this is the highest-leverage single move (drops the partial count 2 → 1).
-2. **[high] Build signer-facing document-sign page (84-2 partial)** — flip screen-map ppt/document-sign buildStatus planned → shipped — **owner: pm-frontend**. Closes 49/49 MVP delivery when paired with #1.
-3. **[high] Resolve gh-issue-2797** — cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) blocks every backend PR — **owner: pm-security**. Standing since 2026-08-18; still in-progress.
-4. **[high] Add >1-replica concurrency integration test for quiet-hours drain atomic claim** (#2834 → #2831 closure gap) — assert at-most-once under 2 racing api-server replicas — **owner: pm-qa**.
-5. **[high] Add authz regression test for direct-connect OTA credential writes** (#2821) — assert non-manager is rejected at the booking-connect endpoint (was hijackable) — **owner: pm-qa**.
+1. **[high]** Reconcile epic-level status/`stories_completed` in `sprint-status.yaml` — owner: pm-scrum-master.
+2. **[high]** Triage the 3 stalled accounting review PRs (#2555/#2558/#2559) — owner: human maintainer / pm-tech-lead.
+3. **[high]** Get a human reviewer to merge or reject PR #2744 (dispatcher un-wedge, approved, 12 days stale) — owner: repo-owner / pm-devops.
+4. **[high]** Stand up self-hosted / egress-allow-listed runner for mobile-native AGP builds (all KMP work blocked) — owner: pm-devops / platform.
+5. **[medium]** Escalate 6 mobile-native/KMP action-list items to a local-toolchain landing path — owner: pm-backend (local toolchain).
 
 ## Blockers
 
-- **None new this run.** Sprint continues with no red flags; auto-review loop is closing all in-window follow-ups.
-- **Standing:** gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) blocks every backend PR until landed. Owner: pm-security.
-- **Aging:** 84-1 + 84-2 partial stories unchanged for 3 upkeep windows — no new dispatcher attempts this window. Owner: pm-frontend.
+- **PR #2555 / #2558 / #2559 (UC-ACC-05.17/05.9/05.8)** — accounting review queue, open since 2026-07-28, idle since 2026-07-30, outside dispatcher scope.
+- **PR #2744 (dispatcher un-wedge, #1162/#2743)** — approved 12 days ago, `needs-human-review` label, still not merged; its own delay is blocking dispatcher throughput.
+- **6 mobile-native/KMP action-list items** — cloud runner cannot resolve AGP/Google Maven (egress-403); 0 claimed across 3+ dispatcher runs.
+- **Stale epic rollups in `sprint-status.yaml`** — epic-6/7a/10b/80 rollup fields contradict their own story lines.
 
-## Role focus today: **pm-qa** (rotation idx 3; last 2026-06-15, 71d stale) + pm-scrum-master always-on
+## Role focus today
 
-- **pm-scrum-master** (always-on): produced the delivery synthesis above. Headline = the auto-review loop closed 7 previously-open items in the same 5-day window it opened them — the loop's compensating-transaction property is holding. Reviewer capacity is comfortable (0 new open PRs). Aging 84-x partials are now the top delivery lever.
-- **pm-qa** (rotation): flagged 7 regression / concurrency / authz tests that would guard the fixes shipped this window from re-regressing — the atomic-claim concurrency test (#2834) and the booking-connect authz test (#2821) are `high` priority; the mobile-rn conditional-hooks / CSV fuzz / voice-OAuth round-trip / AML dialog-state / VerificationBadge i18n snapshot tests are `medium`/`low`. Also flagged the mobile-rn lint-config gap that would have caught 3 of this window's PRs statically (proposed as a pm-frontend action).
+- **pm-scrum-master** (always-on): sprint reconciliation + stalled-PR + KMP-debt synthesis.
+- **pm-devops** (rotating, last run 2026-06-16 → 71 days stale): mobile-native runner, PR #2744 escalation, stale-pr-guard, dependabot backlog.
 
-## Coverage (upkeep this run — 2026-08-25)
+## Per-role summaries
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped to 2026-08-25T04:24:00Z, no re-scan.
-- **Epic re-check: epic-80** — cursor idx 5. All 3 stories still `done`. No PR in the 2026-08-20..08-25 window touched dispute routes/handlers/screens; evidence entry appended to 80-1 noting the negative check. `last_checked = 2026-08-25` stamped on all 3 stories.
-- **Merged-PR evidence:** none of the 13 merged PRs match a coverage story by keyword — all were code-review / follow-up hardening. No status flips.
-- **`coverage_cursor` advances 5 → 6** (epic-80 → epic-81 next run).
-- **`pm_cursor` advances 3 → 4** (pm-qa → pm-devops next run). role_last_run["pm-qa"] = 2026-08-25.
-- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. **Missing UC links: 1** (UC-33.3 queued this run; UC-33.1/33.2 already queued). Zero orphan screens, zero validation errors.
+- **pm-scrum-master:** Sprint spine reads 100% done at story level; epic rollups stale. Real open work is KMP backlog + 3 stalled accounting PRs. Ask: define next sprint or continue on gap-driven backlog?
+- **pm-devops:** Structural cloud-runner gap for mobile-native (AGP egress-403) is the top infra risk. PR #2744 stalled 12 days despite approval — `stale-pr-guard` is flag-only. Dependabot backlog (12+ PRs) needs periodic batch review.

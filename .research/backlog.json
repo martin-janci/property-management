@@ -8428,7 +8428,7 @@
       "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
       "title": "repeated-churn: backend/servers/api-server/src/routes/voice_webhooks.rs (runs_seen bumped to 2)",
       "vector": "refactor",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 1,
       "status": "done",
       "sources": [
@@ -8436,17 +8436,19 @@
         "top-3-churn-2026-08-16",
         "PR #2762",
         "PR #2765",
-        "PR #2766"
+        "PR #2766",
+        "hotspot_history bump"
       ],
       "evidence": [
         "hotspot_history.runs_seen bumped to 2 (last=2026-08-16→2026-08-17); parent churn-hotspot-voice-webhooks-rs already dropped as 'no in-scope hardening' — this signal is instability tracking only.",
-        "14-day window: 3 commits, ~2897 line adds+dels (all voice-webhook OAuth / Alexa security hardening merged 2026-08-15)."
+        "14-day window: 3 commits, ~2897 line adds+dels (all voice-webhook OAuth / Alexa security hardening merged 2026-08-15).",
+        "2026-08-26: runs_seen bumped to 4 — planning PR #2844 (refactor plan) landed but decomposition still pending"
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
       ],
       "created_at": "2026-08-17",
-      "updated_at": "2026-08-17",
+      "updated_at": "2026-08-26",
       "plan": null,
       "reconciled": {
         "at": "2026-08-17T16:26:01Z",
@@ -9133,14 +9135,16 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "PR #2829, PR #2833"
+        "PR #2829, PR #2833",
+        "commits since 2026-08-25T08:50Z"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx: 199 lines changed across PRs [2829, 2833]"
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx: 199 lines changed across PRs [2829, 2833]",
+        "2026-08-26: top-3 raw churn this run: 326 lines (49 add + 277 del) in PR #2848 refactor extract"
       ],
       "files": [],
       "created_at": "2026-08-25",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-08-26",
       "plan": null,
       "reconciled": {
         "at": "2026-08-25T12:25:43Z",
@@ -9241,6 +9245,103 @@
       ],
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "title": "runs_seen bumped to 2 (touched by PR #2848 refactor extract — should stabilize n",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history bump"
+      ],
+      "evidence": [
+        "runs_seen bumped to 2 (touched by PR #2848 refactor extract — should stabilize now that extraction landed)"
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "title": "top-3 raw churn this run: 114 lines in PR #2849 (overdue-affordance regression t",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits since 2026-08-25T08:50Z"
+      ],
+      "evidence": [
+        "top-3 raw churn this run: 114 lines in PR #2849 (overdue-affordance regression tests)"
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-refresh-silent-noop",
+      "title": "backend/servers/api-server/src/routes/voice_webhooks.rs:884 — oauth_token_refres",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:884 — oauth_token_refresh awaits update_voice_device_tokens (WHERE id=$1 AND is_active=TRUE, fetch_optional) but only handles Err via map_err; Ok(None) (device deactivated between find and update) is discarded, then handler logs 'Successfully refreshed OAuth tokens' and returns success:true while the row still holds the pre-rotation refresh token (which upstream may treat as revoked)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-audit-swallowed",
+      "title": "backend/servers/api-server/src/routes/government_portal.rs:549,623,699 — validat",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/government_portal.rs:549,623,699 — validate_submission, submit_submission, cancel_submission each end with `let _ = state.government_portal_repo.create_audit(...).await;` with no tracing::warn on error. These are regulatory-submission audit-trail writes; on any transient DB failure the audit row is silently missing — no operator signal, no retry, no fallback log — leaving compliance gaps invisible."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/government_portal.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-booking-sync-bookkeeping-dup",
+      "title": "backend/servers/api-server/src/routes/integrations/booking_channel.rs:426-445 — ",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/booking_channel.rs:426-445 — the SyncPersistence match repeats update_connection_last_sync / mark_booking_sync_error across three arms with the same 'best-effort let _ =' idiom; backend/servers/api-server/src/routes/integrations/install.rs:1211 mirrors update_connection_last_sync with the same swallow. A persist_booking_sync_outcome(...) helper would collapse the four call sites and make the swallow (or tracing::warn on error) uniform."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/booking_channel.rs",
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
       "plan": null
     }
   ]

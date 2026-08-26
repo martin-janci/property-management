@@ -99,7 +99,139 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-devops-merge-pr-2744",
+      "action": "Get a human reviewer to merge or explicitly reject PR #2744 (dispatcher un-wedge for oversize-archive push, approved, 12 days stale, needs-human-review)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-devops-mobile-runner-egress",
+      "action": "Stand up or designate a self-hosted/allow-listed runner (or proxy egress rule) for mobile-native Gradle/AGP dependency fetches so Android builds stop failing in cloud CI",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-devops-stale-pr-guard-notify",
+      "action": "Escalate stale-pr-guard beyond the run-summary — add a notification/issue-comment step (or Slack/webhook) when a flagged PR crosses stale_days, since the current job is flag-only and never surfaces findings outside Actions logs",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-devops-dependabot-backlog-clear",
+      "action": "Audit and clear the dependabot PR backlog (reported 12+ stalled) using the same review pattern as the closed #2473 batch (docs/runbooks/dependabot-cargo-minor-batch-pr2473.md) so lockfile drift risk doesn't compound",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-devops-dispatcher-backlog-triage",
+      "action": "Re-baseline the dispatcher action-list backlog composition: confirm all 6 open items are genuinely KMP/cloud-unlandable (not misclassified) and route any non-KMP items back into the landable queue",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-devops-voice-webhooks-churn-watch",
+      "action": "Watch repeat churn on backend/servers/api-server voice_webhooks.rs (2nd hotspot appearance) for a stability/observability gap (e.g., missing test coverage or retry/logging issue) rather than pure feature churn",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-sprint-status-reconcile",
+      "action": "Reconcile epic-level status/stories_completed fields in sprint-status.yaml (epic-6, epic-7a, epic-10b, epic-80) against the story-level development_status lines, which already show all stories done",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-triage-stalled-acc-prs",
+      "action": "Triage the 3 stalled accounting review PRs (#2555, #2558, #2559 — UC-ACC-05.17/05.9/05.8), open since 2026-07-28 with no activity since 2026-07-30 and outside dispatcher-owned scope",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-kmp-local-landing-track",
+      "action": "Escalate the 6 open mobile-native/KMP action-list items (unclaimed for 3+ runs, cloud-unlandable) to a human/local-toolchain landing path instead of leaving them in the cloud dispatcher queue",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-full-coverage-scan",
+      "action": "Request a full coverage.json scan (current one is scan_kind=upkeep, not a full scan) now that the tracked sprint reads 100% done, to confirm no new gaps before next-sprint planning",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-aml-dashboard-refactor-decision",
+      "action": "Have pm-tech-lead/pm-security review AmlDashboardPage.tsx, now flagged as a churn hotspot for a 2nd consecutive run (326 churn), to decide if it needs a decomposition pass rather than continued patch PRs",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-analysis 2026-08-26",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-26T04:00:00Z"
     }
   ],
-  "generated": "2026-08-25T04:24:00Z"
+  "generated": "2026-08-26T04:00:00Z"
 }

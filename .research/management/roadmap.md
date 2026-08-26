@@ -1,6 +1,6 @@
-# PPT Roadmap — upkeep 2026-08-25
+# PPT Roadmap — upkeep 2026-08-26
 
-⚠ Buffer below half — consider running `/ppt-project-management scan` to refresh coverage (only 5 gap candidates remain in the ranked pool because 47/49 stories are already `done`; the queue is genuinely draining, not stale).
+⚠ Buffer below half — consider running `/ppt-project-management scan` to refresh coverage (only 5 gap candidates remain in the ranked pool because 47/49 stories are already `done`; the queue is genuinely draining, not stale). This run: coverage upkeep touched epic-8a rotation slot (all 3 stories still `done`); no new merged PR mapped to a coverage story (5 merged PRs #2848–#2852 were AML/moderation/verification/voice-OAuth hardening — all Phase 2+, outside tracked epics).
 
 ## State of the project
 
