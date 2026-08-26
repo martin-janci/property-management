@@ -123,11 +123,14 @@
       "error": "Nepodarilo sa vygenerovať správu. Skúste to znova."
     },
     "publish": {
-      "success": "Správa bola úspešne zverejnená.",
-      "error": "Nepodarilo sa zverejniť správu. Skúste to znova."
+      "successTitle": "Správa zverejnená",
+      "successMessage": "Správa bola úspešne zverejnená.",
+      "errorTitle": "Nepodarilo sa zverejniť správu",
+      "errorMessage": "Nepodarilo sa zverejniť správu. Skúste to znova."
     },
     "download": {
-      "error": "Nepodarilo sa stiahnuť správu. Skúste to znova."
+      "errorTitle": "Nepodarilo sa stiahnuť správu",
+      "errorMessage": "Nepodarilo sa stiahnuť správu. Skúste to znova."
     },
     "list": {
       "title": "Predchádzajúce správy",

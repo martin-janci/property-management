@@ -123,11 +123,14 @@
       "error": "Nie udało się wygenerować raportu. Spróbuj ponownie."
     },
     "publish": {
-      "success": "Raport został pomyślnie opublikowany.",
-      "error": "Nie udało się opublikować raportu. Spróbuj ponownie."
+      "successTitle": "Raport opublikowany",
+      "successMessage": "Raport został pomyślnie opublikowany.",
+      "errorTitle": "Nie udało się opublikować raportu",
+      "errorMessage": "Nie udało się opublikować raportu. Spróbuj ponownie."
     },
     "download": {
-      "error": "Nie udało się pobrać raportu. Spróbuj ponownie."
+      "errorTitle": "Nie udało się pobrać raportu",
+      "errorMessage": "Nie udało się pobrać raportu. Spróbuj ponownie."
     },
     "list": {
       "title": "Poprzednie raporty",
