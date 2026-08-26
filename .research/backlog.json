@@ -9242,6 +9242,507 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-implemented",
+      "title": "mobile-native-kmp-create-listing-not-implemented: the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:490-495 — the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every tap of the Publish button in CreateListingScreen unconditionally returns a NotImplementedError; the screen then shows either the 'network' or 'publish failed' banner via CreateListingScreen.kt:120-125. UC-51.4 (Realtor: publish a new listing) is not functionally deliverable in the Android app.",
+        "The entry point is reachable in production: MyListingsScreen exposes a 'Create' button wired to `navController.navigate(Screen.CreateListing.route)` (Navigation.kt:484), and the CreateListingScreen scaffold + form fields + Publish CTA are all rendered without any feature-gate or 'coming soon' state. A signed-in realtor can navigate to it directly from the realtor dashboard.",
+        "The KMP shared surface has no matching backend call: `grep -rn 'createListing\\|CreateListing' mobile-native/shared` returns zero hits, and PortalListingsRepository.kt exposes only listMyListings + getListingAnalytics + getPortfolioAnalytics — there is no POST /api/v1/listings method to wire the callback to. Fix requires (a) adding `suspend fun createListing(input: CreateListingRequest): Result<PortalListing>` to PortalListingsRepository against the reality-server `POST` route, (b) mapping the composable's CreateListingInput to the wire request, and (c) replacing the NotImplementedError lambda with a real dispatch. Until then the CreateListing route should be feature-flagged off or the button hidden."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": "plans/code-review-mobile-native-kmp-create-listing-not-implemented.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-compose-notnull-assertions",
+      "title": "mobile-native-kmp-compose-notnull-assertions: Systemic `!!` non-null assertions on nullable UI-state properties across the Compose androidApp: ListingDetailScreen.kt:121,125,132,149,160 (`state.errorM",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "Systemic `!!` non-null assertions on nullable UI-state properties across the Compose androidApp: ListingDetailScreen.kt:121,125,132,149,160 (`state.errorMessage!!`, `state.listing!!` from `viewModel.state.collectAsState()`); InquiriesScreen.kt:169 (`errorMessage!!` from a local `var by remember { mutableStateOf<String?>(null) }`); FavoritesScreen.kt:164 (same pattern); AccountScreen.kt:174 (`notificationPrefs!!` inside `if (notificationsExpanded && notificationPrefs != null)`). Kotlin cannot smart-cast a property getter on `state` nor a delegated `var`, so the branch guard does not imply non-null at the use site.",
+        "The pattern is a latent crash class: while Compose's snapshot system usually keeps reads within one composition consistent, any state update between the null-check condition evaluation and the argument-list evaluation (e.g. the ViewModel's StateFlow emitting from a coroutine mid-composition, or a `LaunchedEffect` in a sibling branch mutating the local `errorMessage` state) will throw KotlinNullPointerException. This is the exact category of bug that killed VoteDetailScreen (see the neighbour segment's 2026-08-23 finding on Rules of Hooks) — silent-until-it-crashes state-management fragility.",
+        "Idiomatic fix mirrors how the same file already gates other branches: capture the value into a local val at the top of the `when` branch, e.g. `state.listing != null -> { val listing = state.listing; ... ListingContent(listing = listing, ...) }` or use `state.listing?.let { listing -> ... } ?: return`. The FavoritesScreen retry lambda demonstrates the safer style with `.fold(onSuccess = { ... })`. Applying the fix removes the `!!` and lets the compiler enforce the invariant."
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-list-search-placeholders-i18n",
+      "title": "mobile-rn-list-search-placeholders-i18n: frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx — screen imports useTranslation (L9) and uses t() for its empty/loading/error states (L137-151), b",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx — screen imports useTranslation (L9) and uses t() for its empty/loading/error states (L137-151), but two user-facing strings are hardcoded English: L114 `<Text style={s.headerTitle}>Messages</Text>` (screen header) and L125 `placeholder=\"Search messages…\"` (search input). On the sk/cs/de/en mobile app these render English for all non-EN users.",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx — same partial-regression pattern (useTranslation imported L13, t() used elsewhere): L188 `${visibleNeighbors.length} residents in your building` and L195 `placeholder=\"Search by name or apartment…\"` are hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 — `placeholder=\"Search announcements...\"` hardcoded English (screen otherwise uses t()). This is a churn hotspot per state.json hotspot_history.",
+        "Systemic across 3 list screens: the search-input placeholder (and a couple of headers/count strings) were missed when the rest of each screen was localized. Low severity (no crash/data loss) but a real i18n-correctness gap on a 4-locale app. Fix: wrap each string in t() and add keys to the mobile locale bundles (messages/neighbors/announcements namespaces). DocumentShareSheet.tsx:265 placeholder=\"7\" is a numeric example, not translatable text — excluded."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-bookfacility-silent-availability",
+      "title": "ppt-web-ui-bookfacility-silent-availability: the checkAvailability fetch effect swallows failures with only console.error('Failed to fetch availability', err)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-56 — the checkAvailability fetch effect swallows failures with only console.error('Failed to fetch availability', err); no error state is set and no user-facing message is shown. On an availability API/network failure the booking form renders an empty slot list, indistinguishable from a facility that genuinely has no free slots (silent failure on a user-facing path, Epic 56).",
+        "Same effect (BookFacilityPage.tsx:52) never resets availableSlots before/on the failed fetch: setAvailableSlots(slots) is only reached on success. When the user changes selectedDate (dependency at :59) and the new date's checkAvailability call throws, the previously loaded slots for the OLD date remain in state and stay rendered and bookable — a stale-data correctness bug that can let a resident submit a booking against a slot that does not apply to the selected date.",
+        "Contrast BookFacilityPage.tsx:70-71 (submit path) and :91-105 (facility-load path) which DO surface an error via setError(...)/error UI — only the availability branch is silent, so this is an inconsistency within the same file rather than an app-wide pattern.",
+        "BookFacilityPage.tsx is a current churn hotspot (2 touches since 2026-08-15); no useQuery/useMutation here — the feature hand-rolls fetch + useState, so there is no TanStack Query isError fallback to catch this."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-silent-load-errors",
+      "title": "ppt-web-ui-facilities-silent-load-errors: the listFacilities fetch catch block only calls console.error('Failed to fetch facilities', error) and then setIsLoading(false)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-71 — the listFacilities fetch catch block only calls console.error('Failed to fetch facilities', error) and then setIsLoading(false); it sets no error state and does not clear facilities. On a list-load failure the page transitions loading->empty and shows its normal empty/list UI, so an API/network error is presented to the manager as 'this building has no facilities'.",
+        "Recurring silent-load-error pattern in the same feature: BookFacilityPage.tsx:53-55 (checkAvailability) has the identical console.error-only branch. Both are user-facing GET paths in Epic 56 that hand-roll fetch+useState without TanStack Query, so there is no shared isError boundary — each page must surface its own error and none of these does.",
+        "Sibling pages that DO surface load errors (PendingBookingsPage.tsx:43-48, MyBookingsPage.tsx:42-47 both showToast on catch) show the correct pattern already exists in the feature; FacilitiesPage and BookFacilityPage's availability branch are the outliers.",
+        "FacilitiesPage.tsx is a current churn hotspot (list route /buildings/:id/facilities)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-hardcoded-i18n",
+      "title": "ppt-web-ui-facilities-hardcoded-i18n: ,101,112,118 — user-facing fallback strings 'Facility not found', 'Go back' (x2), and 'This facility is not available for booking' are hardcoded English JSX, whil",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:95,101,112,118 — user-facing fallback strings 'Facility not found', 'Go back' (x2), and 'This facility is not available for booking' are hardcoded English JSX, while the rest of the same file uses t('facilities.bookings.*'). The app ships 6 locales (en/de/cs/sk/pl/hu — see frontend/apps/ppt-web/messages/*.json), so these render English regardless of the active locale.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx:74,80 — same hardcoded 'Facility not found' / 'Go back' fallback UI, same gap.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx:46,71,97 and MyBookingsPage.tsx:45,71,87 — error toast titles ('Failed to load pending bookings', 'Failed to approve booking', 'Failed to reject booking', 'Failed to load bookings', 'Failed to cancel booking') and the generic message 'An unexpected error occurred.' are hardcoded English even though these pages already import and use useTranslation for their list titles.",
+        "Low severity (no functional break) but a consistent localization gap concentrated in the facilities feature; batchable into one i18n key sweep."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-http-no-timeout",
+      "title": "reality-server-sso-http-no-timeout: , :711, :748 — the three PM-OAuth helper fns exchange_pm_token (687), get_user_info (711) and introspect_pm_token (748) each build a fresh `reqwest::Client::new()` ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687, :711, :748 — the three PM-OAuth helper fns exchange_pm_token (687), get_user_info (711) and introspect_pm_token (748) each build a fresh `reqwest::Client::new()` with NO `.timeout(...)`. reqwest's default client has no request timeout, so a slow/hung PM OAuth server leaves the awaiting reality-server task blocked indefinitely — tasks and their held DB/socket resources pile up → resource-exhaustion / cascading unavailability on the reality-server process.",
+        "This path is reachable from PUBLIC/unauthenticated SSO entry points: introspect_pm_token is invoked at sso.rs:417 (POST /api/v1/sso/exchange), :899 and :1073 (session-sync), and get_user_info at :270/:434/:917/:1109 on the OAuth callback path. A browser/attacker can drive these endpoints, so a degraded PM API turns into a reality-server outage with no upper bound on wait time.",
+        "The codebase already knows to bound these calls: state.rs:754-762 (PmApiClient::new, Story 104.1) builds its reqwest client via `Client::builder().timeout(Duration::from_secs(timeout_seconds)).build()`. The SSO OAuth helpers bypass that shared, timeout-configured client and construct raw per-call clients instead — which additionally defeats connection pooling / keep-alive to the PM API on the per-request introspection hot path (only 60s-cached via token_cache). Fix: route these calls through a shared `reqwest::Client` built with an explicit timeout (mirror PmApiClient), or add `.timeout(...)` + reuse one client stored on AppState."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-i18n",
+      "title": "reality-web-agency-slug-i18n: frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the PUBLIC, SEO-indexed agency profile page imports NO next-intl (no useTranslations/getTranslations, ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — the PUBLIC, SEO-indexed agency profile page imports NO next-intl (no useTranslations/getTranslations, grep count 0); its own header comment even claims strings are 'via next-intl' but nothing is wrapped. Every visible string is hardcoded Slovak on the 4-locale portal (sk/cs/de/en), so cs/de/en visitors and crawlers see Slovak-only content.",
+        "Hardcoded Slovak literals: L36 'Načítavam…' (loading state), L46 'Kancelária sa nenašla.' (not-found state), L223 'Žiadne aktívne ponuky.' (empty-listings state), L279 heading 'Kontakt', L302 link label '🌐 Navštíviť web'.",
+        "Higher impact than the prior (done) reality-web component i18n findings: this is a full public route (not a widget), SEO-relevant, and hardcoded in Slovak rather than English — so 3 of the 4 supported locales render the wrong language on a page indexed by search engines. Distinct file from ComparisonView/RealtorManagement/AgencyErrorStates already covered."
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-checksession-5xx-logout",
+      "title": "reality-web-checksession-5xx-logout: checkSession() (runs on every mount) treats ANY non-ok /api/v1/users/me response as a definitive auth failure: `if (meResp.ok) {...return} clearStoredSession()`",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:142-149 — checkSession() (runs on every mount) treats ANY non-ok /api/v1/users/me response as a definitive auth failure: `if (meResp.ok) {...return} clearStoredSession()`. A transient 5xx (500/502/503 backend blip, gateway restart) therefore wipes the stored bearer session and logs the user out.",
+        "The sibling refreshSession() at L221-237 handles the exact same call correctly: it only calls clearStoredSession()/setUser(null) on `meResp.status === 401 || 403` and explicitly leaves 5xx as transient ('Any other status (5xx, etc.) is treated as transient'). checkSession lacks that status discrimination, so the two entry points disagree on the same server response.",
+        "Effect: a momentary reality-server hiccup at page load silently signs valid users out (and drops them to the cookie/SSO path which, per the login() comment, isn't fully shipped). Fix: gate the clearStoredSession() in checkSession on 401/403 like refreshSession does."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-cancel-no-error",
+      "title": "reality-web-inquiry-cancel-no-error: frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel() fires `cancelInquiry.mutate(inquiry.id)` and immediately `setShowCancelConfirm",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-24 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:47-50 — handleCancel() fires `cancelInquiry.mutate(inquiry.id)` and immediately `setShowCancelConfirm(false)` with no error handling: the useCancelInquiry mutation has no onError, and the component renders no isError branch for it. A failed cancel (network error / 4xx-5xx) is swallowed — the confirm dialog closes, no toast/alert is shown, and the inquiry silently stays active while the user believes it was cancelled.",
+        "Contrast with the page's query error handling (L332 'Failed to load inquiries. Please try again.'), which does surface load failures — only the mutation path lacks equivalent feedback.",
+        "Low severity (no crash/data loss) but a real UX-correctness gap on an authenticated action. Fix: pass onError to mutate() (or read cancelInquiry.isError) and surface a retry/error message; keep the confirm open or re-open on failure."
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-regex-recompile",
+      "title": "api-core-workflow-regex-recompile: the `Matches` comparison operator calls `regex::Regex::new(pattern)` on every single workflow condition evaluation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:659 — the `Matches` comparison operator calls `regex::Regex::new(pattern)` on every single workflow condition evaluation. `pattern` is `compare_value.as_str()`, i.e. an org-authored stored workflow condition. grep of the file finds exactly one `Regex::new` and no `Lazy`/`OnceCell`/cache, so the pattern is recompiled from scratch for every event that reaches the condition.",
+        "Cost/DoS amplification on a hot automation path: a workflow bound to a high-frequency event type (e.g. a per-notification or per-fault trigger) recompiles its regex on each matching event. A workflow author can also store an expensive-to-compile pattern (the crate's default 10MB compiled-size ceiling is large) that is paid on every evaluation rather than once. Fix: compile once and cache (e.g. an LRU/`OnceCell` keyed by pattern) and/or set an explicit `RegexBuilder::size_limit`.",
+        "Confidence medium: static read confirms the recompile-per-eval and absence of any cache; the reachability (event -> evaluate_condition -> Matches) is via the stored-condition path and not runtime-confirmed for frequency."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-notin-fail-open",
+      "title": "api-core-workflow-notin-fail-open: `ComparisonOperator::In` returns `Ok(false)` when `compare_value.as_array()` is `None` (fails closed), but `ComparisonOperator::NotIn` returns `Ok(true)` in the same",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:640-652 — `ComparisonOperator::In` returns `Ok(false)` when `compare_value.as_array()` is `None` (fails closed), but `ComparisonOperator::NotIn` returns `Ok(true)` in the same malformed case (fails open).",
+        "Effect: a workflow condition authored as `NotIn` whose value is mis-typed (object/string/number instead of a JSON array) silently matches every event and fires the workflow's downstream actions, with no error surfaced to the author (contrast `Matches`, which returns a `ConditionError` on a non-string pattern). Recommend returning a `WorkflowError::ConditionError` for a non-array `In`/`NotIn` value so a malformed condition is rejected rather than firing unintentionally.",
+        "Confidence medium: asymmetry is clear from the source; whether a mis-typed `NotIn` config can actually be persisted depends on upstream config validation not traced in this static pass."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-account-screen-dead-rows",
+      "title": "mobile-native-kmp-account-screen-dead-rows: ,465,474 — three chevron-decorated SectionRow items ('Compare', 'Privacy', 'About') render with SectionTrailing.Chevron (implying navigation) but their onCl",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/account/AccountScreen.kt:449,465,474 — three chevron-decorated SectionRow items ('Compare', 'Privacy', 'About') render with SectionTrailing.Chevron (implying navigation) but their onClick is an empty comment stub: `onClick = { /* nav to compare */ }`, `{ /* nav to privacy */ }`, `{ /* nav to about */ }`. Tapping them silently does nothing.",
+        "AccountScreen.kt:652,659,666,673 — the AppSettingsCard's four SettingsRow items (Language, Currency, Units, Theme) each display a static hardcoded value ('English'/'EUR'/'Metric'/'System') and are wired to `onClick = { /* picker */ }` — no picker opens, and the displayed value never reflects real state, so all four app-settings controls are cosmetic no-ops.",
+        "AccountScreen is the live Account tab, reachable in production (Navigation.kt:255 `AccountScreen(...)`). Net: 7 user-facing tappable rows on the primary account surface are dead controls; users tapping Compare/Privacy/About/Language/Currency/Units/Theme get no response and no feedback."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/account/AccountScreen.kt"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-twofactor-orphan-unwired",
+      "title": "mobile-native-kmp-twofactor-orphan-unwired: ,349-354 — Screen.TwoFactor ('auth/two-factor') is declared and registered as a composable, but `grep -n 'navigate(Screen.TwoFactor'` over Navigation.kt ret",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:113,349-354 — Screen.TwoFactor ('auth/two-factor') is declared and registered as a composable, but `grep -n 'navigate(Screen.TwoFactor'` over Navigation.kt returns ZERO hits: nothing in the login/SSO flow ever navigates to the 2FA challenge. The route is an orphan.",
+        "Navigation.kt:350-353 — the TwoFactorScreen is wired with only `onBackClick`/`onDone`, and `onDone = { navController.popBackStack() }` just pops the back stack; no ssoService/verify callback is passed, so even if reached the screen cannot actually verify a code against the backend.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt:164 — the 'Use backup code' TextButton is a dead handler `onClick = { /* backup code */ }`, and the 'resend' affordance (line 158) is a plain non-clickable Text. The 2FA UI is fully built but disconnected from auth: no entry path, no verification wiring, and its recovery controls are no-ops."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profile-edit-drops-fields",
+      "title": "mobile-native-kmp-profile-edit-drops-fields: ,261-292 — the screen exposes editable OutlinedTextFields for `phone` and `aboutMe` (with a 280-char counter), so a user can type into and edit both.",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/profile/ProfileEditScreen.kt:68-69,261-292 — the screen exposes editable OutlinedTextFields for `phone` and `aboutMe` (with a 280-char counter), so a user can type into and edit both.",
+        "ProfileEditScreen.kt:59,117 — the `onSubmit` callback signature is `suspend (displayName: String) -> Result<Unit>` and the save button calls `onSubmit(displayName.trim())` only; phone and About-me values are never passed. Confirmed by the wiring in Navigation.kt:358 `onSubmit = { displayName -> ssoService.updateProfile(displayName).map {} }`.",
+        "The doc comment at ProfileEditScreen.kt:47-49 acknowledges 'phone, language, and About me don't have backing endpoints yet'. Net: two editable form fields silently discard user input on save with no disabled state or warning — the form gives a false illusion of persistence (silent data loss on a user-facing profile edit)."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/profile/ProfileEditScreen.kt"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-faults-screen-no-i18n",
+      "title": "mobile-rn-faults-screen-no-i18n: active screen (Epic 4: Fault Reporting & Resolution, UC-03) has NO `useTranslation`/`t()` anywhere (0 hits) while sibling faults screens use it (e.g",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx:1-63 — active screen (Epic 4: Fault Reporting & Resolution, UC-03) has NO `useTranslation`/`t()` anywhere (0 hits) while sibling faults screens use it (e.g. screens/faults/FaultsListScreen.tsx, screens/documents/DocumentsScreen.tsx=17 t() hits).",
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx:52 — the `ListEmptyComponent` renders a hardcoded English string `<Text style={styles.emptyText}>No faults reported yet.</Text>`; the empty-state copy never reaches the sk/cs/de locales. Fix: import useTranslation, add a `faults.empty` key to the locale bundles, and wrap the string in t()."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-alerts-i18n",
+      "title": "mobile-rn-widget-settings-alerts-i18n: frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — partial-i18n regression: the file DOES use t() (13 hits) but several user-facing strings are",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — partial-i18n regression: the file DOES use t() (13 hits) but several user-facing strings are hardcoded English.",
+        "WidgetSettingsScreen.tsx:66 `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)`; :79 `Alert.alert('Widgets Updated', 'All widgets have been refreshed.')`; :194 section title `<Text ...>How to Add Widgets</Text>`. These Alert titles/bodies and the instructions heading bypass i18n while the rest of the screen is localized. Fix: move the four strings to locale keys and wrap in t()."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-person-months-hardcoded-i18n",
+      "title": "mobile-rn-person-months-hardcoded-i18n: frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — partial-i18n regression (file uses t() = 5 hits, but header, primary action, and validat",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — partial-i18n regression (file uses t() = 5 hits, but header, primary action, and validation Alert are hardcoded English).",
+        "PersonMonthsScreen.tsx:78 `Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.')` (validation feedback); :165 `<Text style={s.primaryButtonText}>Bulk entry…</Text>` (primary CTA); header `<Text style={s.headerTitle}>Person-months</Text>` (~L92) and subtitle `Declare how many people lived in your unit each month for cost allocation.` (~L94). All are user-facing and untranslated. Fix: add person-months locale keys and wrap in t()."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "title": "search-drainer-stub-marks-delivered: production wiring constructs the saved-search alert drainer via `SearchAlertDrainerWorker::new(db, SearchAlertDrainerConfig::from_env())`, which (search_alert_drai",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:453 — production wiring constructs the saved-search alert drainer via `SearchAlertDrainerWorker::new(db, SearchAlertDrainerConfig::from_env())`, which (search_alert_drainer.rs:188-195) hard-codes the logging stubs `LogEmailTransport` / `LogPushTransport` as the email + push transports. There is no `with_transports(...)` call with a real SMTP/FCM/APNs adapter anywhere outside tests (only ref besides the def is main.rs:453).",
+        "Both stub transports unconditionally return `Ok(())` (search_alert_drainer.rs:81-94 send_email, :100-119 send_push — they only `tracing::info!` what *would* be sent). In `run_once()` (search_alert_drainer.rs:280-325) an alert is treated as delivered when `any_ok` is true, and the email stub alone always sets `any_ok = true`, so EVERY drained alert reaches `self.repo.mark_search_alert_notified(alert.id)` (:318) and its `notified_at` watermark is set.",
+        "Net effect in production: saved-search alert emails and push notifications are silently NEVER sent, yet the drainer marks each queue row delivered (notified_at set, independent of the in-app read `status`). Because the row is stamped delivered, it is filtered out by `list_undelivered_search_alerts` on the next poll — the miss is undetectable from the queue and users who configured saved-search alerts (a shipped Epic 16 feature) receive nothing. Documented as an intended 'first cut' (module doc lines 16-22) but the stub is wired into `main.rs` and drains+consumes real queue rows in prod, so the feature is effectively dead while reporting success. Fix: guard the drainer behind real transports (or keep SEARCH_ALERT_DRAINER_ENABLED=false in prod until an adapter exists) so it does not consume/mark-delivered rows it cannot actually deliver."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/main.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-search-drainer-alert-copy-no-i18n",
+      "title": "search-drainer-alert-copy-no-i18n: the alert `subject` and `body` are built from hard-coded English `format!` templates ('N new listings match your saved search ...', 'Open the app to view them.') wit",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:259-276 — the alert `subject` and `body` are built from hard-coded English `format!` templates ('N new listings match your saved search ...', 'Open the app to view them.') with English-only pluralization ('listing'/'listings', 'it'/'them'). The 4-locale reality portal (sk/cs/de/en) therefore sends every saved-search alert email + push in English regardless of recipient locale.",
+        "The `AlertNotification.locale` field (search_alert_drainer.rs:45-47) is explicitly resolved from `alert.recipient_locale` (:272-275, defaulting to 'en') and threaded to the transport traits, but is never used to localize the composed copy — the copy is built in English BEFORE the transport is called, so even a future locale-aware transport cannot fix it (localization seam is on the wrong side of the composition).",
+        "The same crate already has the correct pattern: services/email.rs:102-111 localizes the password-reset email via `reset_subject(locale)` / `reset_body(name, url, locale)` with a `match locale { sk|cs|de|en }`. The saved-search alert drainer bypasses this established per-`Locale` pattern. Fix: compose subject/body per `notification.locale` (mirror email.rs reset_subject/reset_body), or move localization into the transport and pass structured data instead of pre-rendered English."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-section-no-i18n",
+      "title": "reality-web-realtor-section-no-i18n: frontend/apps/reality-web/src/app/[locale]/realtor/** — the entire realtor workspace section (7 page files) has ZERO next-intl usage (grep useTranslations|getTrans",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/** — the entire realtor workspace section (7 page files) has ZERO next-intl usage (grep useTranslations|getTranslations|next-intl over app/[locale]/realtor = 0 hits) despite living under app/[locale] on a sk/cs/de/en portal, so every string renders raw English in Slovak/Czech/German locales.",
+        "realtor/page.tsx — hardcoded 'Realtor workspace' hero + SECTIONS titles/descriptions ('Profile','My listings','Create listing','Analytics' and their subtitles).",
+        "realtor/analytics/page.tsx:74-95 — hardcoded 'Analytics','Performance of your listings over time.', PERIODS labels ('Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year'), StatCard labels ('Total listings','Active listings','Total views','Inquiries','Conversion rate'), 'Loading metrics…', and the error fallback 'Could not load analytics.' (line ~55).",
+        "realtor/listings/new/page.tsx:27,37-44 — hardcoded 'Create listing','Publish a new property to Reality Portal.', the error fallback 'Could not create listing. Please try again.' AND submitLabel=\"Publish listing\" is passed as an English string LITERAL into ListingForm — which is otherwise fully internationalized via t() — so even the localized form gets an un-localized submit button.",
+        "realtor/listings/page.tsx:80-90 — hardcoded '+ New listing','Loading…','Failed to load listings.',\"You haven't published any listings yet.\",'Create your first listing'. Fix: introduce a realtor namespace in messages/{en,sk,cs,de}.json and wrap these with useTranslations, matching the pattern the agency/* components already use (agency has 4 next-intl call sites)."
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-account-edit-wrong-locale-strings",
+      "title": "reality-web-account-edit-wrong-locale-strings: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 and :213 — the listing edit page hardcodes SLOVAK error strings: loadE",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 and :213 — the listing edit page hardcodes SLOVAK error strings: loadError fallback 'Načítanie inzerátu zlyhalo.' (166) and save fallback 'Uloženie zlyhalo, skúste znova.' (213). Because the page has no next-intl usage, an en/de/cs user editing a listing under e.g. /de/account/listings/<id>/edit is shown Slovak error copy — an actively WRONG-language string for 3 of the 4 supported locales, not merely an untranslated default.",
+        "This compounds a section-wide inconsistency: the sibling realtor listing flow (realtor/listings/new/page.tsx, realtor/listings/[id]/edit) hardcodes ENGLISH fallbacks for the same create/edit journey, so the two halves of the listing-management flow ship strings in two different hardcoded languages, neither locale-aware.",
+        "The whole app/[locale]/account/** section (4 page files: account/page.tsx, account/profile/page.tsx, account/password/page.tsx, account/listings/[id]/edit/page.tsx) has 0 next-intl usage (grep useTranslations|getTranslations over app/[locale]/account = 0 hits). Fix: route both realtor and account listing flows through a shared messages namespace so error/label copy follows the URL locale."
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-dashboard-total-mislabel",
+      "title": "reality-web-realtor-dashboard-total-mislabel: frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx:40-47 — RealtorContent does `const { data: listings } = useMyListings({ limit: 1 });` and rend",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-25 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx:40-47 — RealtorContent does `const { data: listings } = useMyListings({ limit: 1 });` and renders `You have {listings?.total ?? 0} active listings.`. `total` from useMyListings is the count of ALL owned listings (the realtor/listings page consumes the same useMyListings() and renders draft/paused/sold status cards, confirming the collection is not active-only), so the copy overstates the active count whenever the realtor has any draft/paused/sold/archived listing — the number labeled 'active' is really 'total'.",
+        "Same line ignores the hook's error/loading state — it destructures only `data` (unlike realtor/listings/page.tsx which reads {data,isLoading,error}), so a failed /api/v1/my/listings load silently renders 'You have 0 active listings.' with no error indication. Fix: either query an active-status count for the headline or relabel to 'listings', and surface the hook error state."
+      ],
+      "files": [],
+      "created_at": "2026-08-26",
+      "updated_at": "2026-08-26",
+      "plan": null
     }
   ]
 }
