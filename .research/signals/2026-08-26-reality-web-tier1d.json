@@ -1,0 +1,56 @@
+{
+  "generator": "dispatcher-tier1d",
+  "generated_at": "2026-08-26T18:36:06Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-web=2026-08-18, oldest of all 8 segments; landable Next.js frontend. gh unavailable in cloud runner so churn-alignment degraded to oldest-unreviewed per skill fallback. Today's other tier1d runs already covered api-handlers + mobile-rn; reality-web not yet reviewed today. Not saturated: 0 open code-review-finding rows for this segment in backlog.json).",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "note": "reality-web is a very mature, heavily-reviewed segment (listing-detail SSR, auth-token, env base-resolution, comparison share-URL all carry prior-fix comments and are clean). Deliberately targeted the authenticated realtor/account write surface (UC-51), which is newer and less mined. Finding #1 is a real cross-layer auth bug (Bearer header never sent on realtor write APIs); #2 is a whole-route-group i18n gap across 11 authenticated pages (DISTINCT from the prior component-level fixes realtor-mgmt-i18n / listingform-no-i18n / agency-import-i18n which are all `done` — those localized the child components, but the route-level page shells that host them still hardcode English headings/labels/validation/error copy); #3 is latent i18n debt in the two unused shared state primitives. All findings are landable in the cloud runner (frontend-only).",
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:22-49 — the shared `request<T>()` helper sends ONLY `credentials: 'include'` (cookie auth) and merges `{ 'Content-Type': 'application/json', ...callerHeaders }`. It never calls `getAuthHeader()` from lib/auth-token.ts, and none of the exported callers (getMyRealtorProfile L67, updateMyRealtorProfile L71, createListing L117, getMyListing L129, updateListing L133, getMyRealtorAnalytics L148) pass an Authorization header. So no request from this module ever carries `Authorization: Bearer <token>`.",
+        "This diverges from the sibling auth client lib/auth-api.ts:35-43, which deliberately merges BOTH `credentials: 'include'` AND `...getAuthHeader()` (comment L37-39: 'bearer header is additive — reality-server's extractor checks Authorization first then cookie'). lib/auth-token.ts is purpose-built for the email/password form-login path (docstring L1-11: persists the `/api/v1/users/login` JWT in localStorage under `ppt-portal-token` and adds `Authorization: Bearer …` on authenticated requests) — that path sets NO `portal_session` cookie.",
+        "backend/servers/reality-server/src/extractors/auth.rs:31-44 — `extract_session_token` reads `Authorization: Bearer …` first, then falls back to the `portal_session` cookie, returning None if neither is present. Consequence: a realtor authenticated via form-login (Bearer in localStorage, no cookie) sends neither mechanism on realtor write calls, so every createListing/updateListing/updateMyRealtorProfile/getMyListing/getMyRealtorAnalytics returns 401. The pages that call these directly (app/[locale]/realtor/listings/new/page.tsx:23, realtor/profile/page.tsx:68, realtor/listings/[id]/edit/page.tsx, account/listings/[id]/edit/page.tsx:129) surface a generic error and the realtor cannot create/edit listings or update their profile. Fix: merge `getAuthHeader()` into request()'s headers the same way auth-api.ts does. Confidence medium: correct if realtors can ever use form-login (the token module exists precisely for that); a no-op only if realtors are provisioned SSO-cookie-only in practice."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "The entire authenticated realtor + account route group ships English-only in a 4-locale app (sk/cs/de/en). All 11 page shells have NO `useTranslations`/`getTranslations` import: app/[locale]/realtor/{page,profile,[id],listings,listings/new,listings/[id]/edit,analytics}/page.tsx and app/[locale]/account/{page,profile,password,listings/[id]/edit}/page.tsx.",
+        "Hardcoded user-facing English confirmed in the page shells themselves (not delegated to children): realtor/listings/new/page.tsx:37-41 '<h1>Create listing</h1>', '<p>Publish a new property to Reality Portal.</p>', submitLabel=\"Publish listing\"; realtor/profile/page.tsx:88/93/94/160 'Loading profile…', 'Realtor profile', 'Buyers and renters see this information…', 'License number', plus client validation L63 'Name is required' and error fallback L86 'Could not save profile.'; account/password/page.tsx:37-59 'Current password is required', 'New password is required', `Password must be at least ${MIN} characters`, 'New password must differ from the current password', 'Passwords do not match', headings 'Change password' / 'Update the password used to sign in…' and error 'Could not change password. Please try again.'; realtor/analytics/page.tsx:68-81 'Analytics','Performance of your listings over time.','Loading metrics…'; realtor/listings/page.tsx:77-89 'My listings','Manage the properties you have published.','Loading…','Failed to load listings.','You haven't published any listings yet.'",
+        "DISTINCT from prior (all `status:done`) findings which localized CHILD COMPONENTS: code-review-reality-web-listingform-no-i18n (ListingForm now uses `useTranslations('listingForm')` at components/realtor/ListingForm.tsx:73), realtor-mgmt-i18n / realtor-mgmt-untranslated (RealtorManagement), agency-import-i18n. The route-level page shells that host those components were missed and still hardcode headings, subtitles, form field labels, loading/empty/error states and inline validation. Also feeds English through the API layer: lib/realtor-api.ts:35/38 throws RealtorApiError('Network error. Please try again.') / `Request failed (${status})` whose .message is rendered verbatim by these pages. Fix: wrap all page-level copy in next-intl and stop passing hardcoded submitLabel/title props."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-shared-state-primitives-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/states/ErrorState.tsx:59-66 hardcodes English default copy with no i18n: title='Something went wrong', description='Please try again. If the issue persists, contact support.', retryLabel='Try again'. components/states/EmptyState.tsx:16 defaults icon='📭' and takes plain-string title/description props with no translation.",
+        "Both are exported from the barrel components/states/index.ts:5-8 alongside StateView and LoadingSkeleton, but are currently UNRENDERED: grep for `<ErrorState`/`<EmptyState` finds only the unrelated LOCAL components defined inside components/import/CsvImport.tsx:1146 and FeedImport.tsx:906 (which ARE localized via useTranslations). The only barrel members actually imported anywhere are StateView (app/[locale]/error.tsx, not-found.tsx, agency/error.tsx, forbidden/page.tsx — all pass title={t(...)}) and LoadingSkeleton.",
+        "This is latent i18n debt, not a live user-facing bug: the shared ErrorState/EmptyState are the 'obvious' primitives a future dev will reach for, and unlike the already-safe StateView (which forces explicit title/description) they silently render English defaults. Low severity — fix is to either localize the defaults (accept a translation key / require callers to pass translated strings) or remove the dead exports so the localized StateView stays the single shared error/empty surface."
+      ]
+    }
+  ]
+}
