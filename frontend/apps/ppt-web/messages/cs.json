@@ -123,11 +123,14 @@
       "error": "Nepodařilo se vygenerovat zprávu. Zkuste to znovu."
     },
     "publish": {
-      "success": "Zpráva byla úspěšně zveřejněna.",
-      "error": "Nepodařilo se zveřejnit zprávu. Zkuste to znovu."
+      "successTitle": "Zpráva zveřejněna",
+      "successMessage": "Zpráva byla úspěšně zveřejněna.",
+      "errorTitle": "Nepodařilo se zveřejnit zprávu",
+      "errorMessage": "Nepodařilo se zveřejnit zprávu. Zkuste to znovu."
     },
     "download": {
-      "error": "Nepodařilo se stáhnout zprávu. Zkuste to znovu."
+      "errorTitle": "Nepodařilo se stáhnout zprávu",
+      "errorMessage": "Nepodařilo se stáhnout zprávu. Zkuste to znovu."
     },
     "list": {
       "title": "Předchozí zprávy",

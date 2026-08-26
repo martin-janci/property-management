@@ -123,11 +123,14 @@
       "error": "Bericht konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
     },
     "publish": {
-      "success": "Bericht erfolgreich veröffentlicht.",
-      "error": "Bericht konnte nicht veröffentlicht werden. Bitte versuchen Sie es erneut."
+      "successTitle": "Bericht veröffentlicht",
+      "successMessage": "Bericht erfolgreich veröffentlicht.",
+      "errorTitle": "Veröffentlichung fehlgeschlagen",
+      "errorMessage": "Bericht konnte nicht veröffentlicht werden. Bitte versuchen Sie es erneut."
     },
     "download": {
-      "error": "Bericht konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut."
+      "errorTitle": "Download fehlgeschlagen",
+      "errorMessage": "Bericht konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut."
     },
     "list": {
       "title": "Frühere Berichte",

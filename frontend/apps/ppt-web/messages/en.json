@@ -123,11 +123,14 @@
       "error": "Failed to generate report. Please try again."
     },
     "publish": {
-      "success": "Report published successfully.",
-      "error": "Failed to publish report. Please try again."
+      "successTitle": "Report published",
+      "successMessage": "Report published successfully.",
+      "errorTitle": "Failed to publish report",
+      "errorMessage": "Failed to publish report. Please try again."
     },
     "download": {
-      "error": "Failed to download report. Please try again."
+      "errorTitle": "Failed to download report",
+      "errorMessage": "Failed to download report. Please try again."
     },
     "list": {
       "title": "Previous Reports",

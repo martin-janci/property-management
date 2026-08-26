@@ -123,11 +123,14 @@
       "error": "Nem sikerült létrehozni a jelentést. Kérjük, próbálja újra."
     },
     "publish": {
-      "success": "A jelentés sikeresen közzétéve.",
-      "error": "Nem sikerült közzétenni a jelentést. Kérjük, próbálja újra."
+      "successTitle": "Jelentés közzétéve",
+      "successMessage": "A jelentés sikeresen közzétéve.",
+      "errorTitle": "A közzététel sikertelen",
+      "errorMessage": "Nem sikerült közzétenni a jelentést. Kérjük, próbálja újra."
     },
     "download": {
-      "error": "Nem sikerült letölteni a jelentést. Kérjük, próbálja újra."
+      "errorTitle": "A letöltés sikertelen",
+      "errorMessage": "Nem sikerült letölteni a jelentést. Kérjük, próbálja újra."
     },
     "list": {
       "title": "Korábbi jelentések",

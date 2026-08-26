@@ -15,6 +15,7 @@ import {
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components';
 import type { DsaTransparencyReport } from '../components/DsaTransparencyReportCard';
 import { DsaTransparencyReportCard } from '../components/DsaTransparencyReportCard';
 
@@ -29,6 +30,7 @@ interface DsaMetricsDisplay {
 
 export const DsaReportsPage: React.FC = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // Report generation form
   const [showGenerateForm, setShowGenerateForm] = useState(false);
@@ -108,15 +110,23 @@ export const DsaReportsPage: React.FC = () => {
     (reportId: string) => {
       publishReport.mutate(reportId, {
         onSuccess: () => {
-          alert(t('dsa.publish.success'));
+          showToast({
+            type: 'success',
+            title: t('dsa.publish.successTitle'),
+            message: t('dsa.publish.successMessage'),
+          });
         },
         onError: (err) => {
           console.error('Failed to publish report:', err);
-          alert(t('dsa.publish.error'));
+          showToast({
+            type: 'error',
+            title: t('dsa.publish.errorTitle'),
+            message: t('dsa.publish.errorMessage'),
+          });
         },
       });
     },
-    [publishReport, t]
+    [publishReport, showToast, t]
   );
 
   const handleDownload = useCallback(
@@ -124,11 +134,15 @@ export const DsaReportsPage: React.FC = () => {
       downloadPdf.mutate(reportId, {
         onError: (err) => {
           console.error('Failed to download report:', err);
-          alert(t('dsa.download.error'));
+          showToast({
+            type: 'error',
+            title: t('dsa.download.errorTitle'),
+            message: t('dsa.download.errorMessage'),
+          });
         },
       });
     },
-    [downloadPdf, t]
+    [downloadPdf, showToast, t]
   );
 
   const formatDate = (dateStr: string): string => {
