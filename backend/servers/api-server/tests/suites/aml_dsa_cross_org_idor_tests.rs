@@ -312,7 +312,7 @@ async fn list_moderation_cases_returns_only_own_org(pool: PgPool) {
 
     let (a_cases, a_total) = repo
         .list_moderation_cases(
-            org_a, None, None, None, None, None, false, None, None, 50, 0,
+            org_a, None, None, None, None, None, false, false, None, None, 50, 0,
         )
         .await
         .expect("query ok");
@@ -324,7 +324,7 @@ async fn list_moderation_cases_returns_only_own_org(pool: PgPool) {
 
     let (b_cases, b_total) = repo
         .list_moderation_cases(
-            org_b, None, None, None, None, None, false, None, None, 50, 0,
+            org_b, None, None, None, None, None, false, false, None, None, 50, 0,
         )
         .await
         .expect("query ok");

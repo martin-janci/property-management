@@ -58,6 +58,11 @@ pub struct ModerationQueueQuery {
     pub priority: Option<i32>,
     pub assigned_to: Option<Uuid>,
     pub unassigned_only: Option<bool>,
+    /// When true, restrict to still-open cases that have breached the 24h SLA
+    /// (`status IN (pending, under_review) AND created_at < NOW() - 24h`).
+    /// Applied server-side so the result matches `overdue_count` in
+    /// `get_moderation_queue_stats` instead of narrowing a truncated page.
+    pub overdue: Option<bool>,
     pub sort_by: Option<String>,
     pub sort_order: Option<String>,
     pub limit: Option<i64>,
@@ -80,6 +85,7 @@ pub(super) async fn get_moderation_queue(
     let limit = clamp_limit(params.limit);
     let offset = sanitize_offset(params.offset);
     let unassigned_only = params.unassigned_only.unwrap_or(false);
+    let overdue_only = params.overdue.unwrap_or(false);
 
     let (cases, total) = state
         .compliance_repo
@@ -91,6 +97,7 @@ pub(super) async fn get_moderation_queue(
             params.priority,
             params.assigned_to,
             unassigned_only,
+            overdue_only,
             params.sort_by.as_deref(),
             params.sort_order.as_deref(),
             limit,
