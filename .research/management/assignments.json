@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-26T22:29:22Z",
+  "generated": "2026-08-26T23:08:38Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -26,18 +26,18 @@
     {
       "task_id": "gh-issue-2859",
       "branch": "auto-impl/gh-issue-2859-7b9508c9",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-26T22:26:41Z",
-      "last_updated": "2026-08-26T22:26:41Z",
-      "status_changed_at": "2026-08-26T22:26:41Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-26T23:08:38Z",
+      "status_changed_at": "2026-08-26T23:08:38Z",
+      "pr_number": 2860,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2860",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2860 done: added IG3 #[sqlx::test] locking overdue_only list<->stat parity (aml_dsa_cross_org_idor_tests.rs) + explicit \"first 200 of N\" truncation notice in ContentModerationPage.tsx (6 locales + vitest); cargo fmt/clippy clean, new DB test pass, ppt-web 2437/2437; only red is pre-existing env-only SSRF unit test in untouched api_call.rs; draft, CI authoritative",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
