@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-26T00:00:00Z",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-raw-status-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:218 — the status badge renders the raw api-server enum via `{fault.status.replace('_', ' ')}`, so sk/cs/de users see English 'open' / 'in progress' / 'resolved'. The rest of this screen is fully translated (useTranslation at :133, t('faults.loadError') etc.), so this is a localized-screen gap, not an un-i18n'd screen.",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 — same pattern: `{outage.status.replace('_', ' ')}` prints the raw enum ('scheduled' / 'in_progress' -> 'in progress') untranslated in the outage status badge.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 — `{announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}` capitalizes the raw enum instead of translating it. Contrast VotingScreen.tsx:233 which does it correctly with `t(`voting.filter.${option}`)` and translates status via t(), confirming these three are deviations from the established pattern. App ships sk/cs/de/en per CLAUDE.md (Reality i18n), so non-en locales see English status text."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-faultslist-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:160 — the report-fault CTA renders a hardcoded English literal `<Text style={styles.addButtonText}>+ Report</Text>` instead of a t() key, in a file that otherwise uses useTranslation (imported :2, `const { t } = useTranslation()` :133).",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:172 — the filter tab labels are produced by capitalizing the raw option key: `{option.charAt(0).toUpperCase() + option.slice(1)}` over `['all','open','resolved']`, so the tabs read 'All' / 'Open' / 'Resolved' in every locale. VotingScreen.tsx:233 shows the intended pattern for the identical filter-tab UI: `{t(`voting.filter.${option}`)}`.",
+        "Impact: a fully-Slovak build still shows an English primary action button and English filter tabs on the faults list — a visible localization regression on a core resident screen."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-button-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:184 — hardcoded English `<Text style={s.primaryButtonText}>+ New message</Text>` on the compose CTA, in a screen that otherwise uses t() 7 times (useTranslation at :86).",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:142 and :145 — the save/cancel edit buttons render hardcoded `<Text ...>Save</Text>` and `<Text ...>Cancel</Text>` literals rather than t('common.save') / t('common.cancel').",
+        "Same i18n-gap class as the FaultsListScreen finding but distinct files/screens; grouped as one signal so the fix can add the missing keys (messages.compose.cta, common.save, common.cancel) in one pass. All are user-facing button labels that stay English under sk/cs/de."
+      ]
+    }
+  ]
+}
