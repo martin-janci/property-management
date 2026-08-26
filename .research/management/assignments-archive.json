@@ -13413,6 +13413,50 @@
       "merge_attempted_at": "2026-08-22T22:34:33Z"
     },
     {
+      "task_id": "gh-issue-2853",
+      "branch": "auto-impl/gh-issue-2853-b42d18dc",
+      "status": "merged",
+      "claimed_at": "2026-08-26T12:29:23Z",
+      "last_updated": "2026-08-26T16:23:56Z",
+      "status_changed_at": "2026-08-26T16:23:56Z",
+      "pr_number": 2856,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2856",
+      "merged_at": "2026-08-26T14:28:44Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2856 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=server-side overdue filter (db+api-server+api-client+ppt-web); db clippy+FE gate green; api-server clippy & sqlx tests CI-deferred (github egress 403 on swagger build-dep + no postgres)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2854",
+      "branch": "auto-impl/gh-issue-2854-a54e98ac",
+      "status": "merged",
+      "claimed_at": "2026-08-26T12:29:23Z",
+      "last_updated": "2026-08-26T16:23:56Z",
+      "status_changed_at": "2026-08-26T16:23:56Z",
+      "pr_number": 2855,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2855",
+      "merged_at": "2026-08-26T14:28:56Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2855 status=done specialist=react-web scope_drift=true code_reuse_warn=useA@reality-api-fp note=DsaReportsPage alert->toast + 6-locale keys + regression test; verify green (2436 tests); rebased onto current origin/dev past PR#2847",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": true,
+      "code_reuse_warn": "useA@reality-api-fp",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -15917,5 +15961,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-25T16:31:17Z"
+  "archived_at": "2026-08-26T16:26:14Z"
 }
