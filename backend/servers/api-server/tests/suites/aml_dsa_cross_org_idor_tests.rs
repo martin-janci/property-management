@@ -336,6 +336,98 @@ async fn list_moderation_cases_returns_only_own_org(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
+// (5b) overdue_only filter matches the queue-stats badge (issue #2859, PR #2856
+//      follow-up). The `overdue_only` predicate in `list_moderation_cases` must
+//      select *exactly* the rows the `overdue_count` predicate in
+//      `get_moderation_queue_stats` counts — both are
+//      `status IN ('pending','under_review') AND created_at < NOW() - 24h`.
+//      This is the IG3 failing-on-main test that locks the list<->stat
+//      invariant #2853 fixed, so a future edit to either predicate that drifts
+//      them apart (re-introducing the badge-vs-list mismatch) fails here.
+//
+//      Seeds within ONE org: an old+open case (overdue), a fresh+open case
+//      (not overdue — too young), and an old+closed(appealed) case (not
+//      overdue — wrong status). Asserts the filtered list returns only the
+//      overdue row AND that its `total` equals the org's `overdue_count`.
+// ---------------------------------------------------------------------------
+
+async fn seed_moderation_case_aged(
+    pool: &PgPool,
+    org_id: Uuid,
+    content_owner_id: Uuid,
+    status: &str,
+    age_hours: i64,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO moderation_cases
+            (content_type, content_id, content_owner_id, organization_id,
+             report_source, status, created_at)
+        VALUES ('listing', $1, $2, $3, 'user', $4::moderation_status,
+                NOW() - (INTERVAL '1 hour' * $5))
+        RETURNING id
+        "#,
+    )
+    .bind(Uuid::new_v4())
+    .bind(content_owner_id)
+    .bind(org_id)
+    .bind(status)
+    .bind(age_hours)
+    .fetch_one(pool)
+    .await
+    .expect("seed aged moderation case")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_moderation_cases_overdue_only_matches_queue_stats(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+
+    let org = seed_org(&pool, "overdue").await;
+    let owner = seed_user(&pool, "overdue-owner@aml-idor.test").await;
+
+    // (a) old + open  -> OVERDUE  (pending, 48h old — past the 24h SLA).
+    let overdue = seed_moderation_case_aged(&pool, org, owner, "pending", 48).await;
+    // (b) fresh + open -> NOT overdue (pending, 1h old — inside the SLA window).
+    seed_moderation_case_aged(&pool, org, owner, "pending", 1).await;
+    // (c) old + closed -> NOT overdue (appealed, 72h old — status is not one of
+    //     pending/under_review, so it is excluded regardless of age).
+    seed_moderation_case_aged(&pool, org, owner, "appealed", 72).await;
+
+    // The overdue-only list must return exactly the one old+open row.
+    let (cases, total) = repo
+        .list_moderation_cases(
+            org, None, None, None, None, None, false, /* overdue_only */ true, None, None, 50,
+            0,
+        )
+        .await
+        .expect("query ok");
+
+    assert_eq!(total, 1, "exactly one case is overdue for this org");
+    assert_eq!(cases.len(), 1, "only the overdue row is returned");
+    assert_eq!(
+        cases[0].id, overdue,
+        "the returned row must be the old+open (overdue) case"
+    );
+
+    // Invariant: list(overdue_only=true).total == queue-stats overdue_count.
+    // The badge (`overdue_count`) is org-wide and unbounded; if the two
+    // predicates ever drift, the list truncates below the badge (#2853) and
+    // this assertion catches it.
+    let stats = repo
+        .get_moderation_queue_stats(org)
+        .await
+        .expect("queue stats ok");
+    assert_eq!(
+        total, stats.overdue_count,
+        "list(overdue_only=true).total must equal get_moderation_queue_stats.overdue_count"
+    );
+    assert_eq!(
+        stats.overdue_count, 1,
+        "queue stats must count exactly the one overdue case"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // (6) assign_moderation_case is org-scoped — org B cannot assign org A's case.
 // ---------------------------------------------------------------------------
 
