@@ -1,0 +1,296 @@
+{
+  "generated_at": "2026-08-26T08:26:20Z",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-26-api-handlers-tier1d.json (rotating-expert-review, security lens)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "sync.rs:226 verify_hellosign_signature() macs only event_time+event_type; envelope_id is NOT bound.",
+        "webhook.rs:848 HELLOSIGN branch resolves owning org via payload.envelope_id from unsigned JSON body and drives esignature workflow terminal state (webhook.rs:906-967).",
+        "Confirmed by direct code read this run — evidence upgraded from medium (dispatcher tier1d) to high (routine independently walked sync.rs verify path + webhook.rs receiver)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-26-api-handlers-tier1d.json (rotating-expert-review, security lens)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "webhook.rs:747-972 esignature_webhook has NO timestamp/freshness check for DocuSign, Adobe, or HelloSign.",
+        "Sibling receivers (portal L1281-1323, Booking L1110+, Airbnb L1491) enforce ±tolerance windows per gap 83-3 / issue #2330."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-raw-status-untranslated",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-26-mobile-rn-tier1d.json (rotating-expert-review, frontend lens)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "FaultsListScreen.tsx:218, OutagesScreen.tsx:209, AnnouncementDetailScreen.tsx:176 render raw enum status; contrast VotingScreen.tsx:233."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-faultslist-i18n-gap",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-26-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "FaultsListScreen.tsx:160 '+ Report' hardcoded; :172 filter tabs use capitalize on raw option keys."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-button-labels",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-26-mobile-rn-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "MessagesScreen.tsx:184 '+ New message' hardcoded; PersonMonthsScreen.tsx:142/145 hardcoded 'Save'/'Cancel'."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-account-screen-dead-rows",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-mobile-native-kmp-tier1d.json (rotating-expert-review, kotlin lens)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "AccountScreen dead rows — see mobile-native-kmp tier1d generator (2026-08-25T09:00:00Z)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-twofactor-orphan-unwired",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-mobile-native-kmp-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Two-factor screens present but state machine unwired to sign-in flow."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profile-edit-drops-fields",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-mobile-native-kmp-tier1d.json",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Profile edit save path drops fields (partial-write regression)."
+      ]
+    },
+    {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-reality-server-tier1d.json (rotating-expert-review, rust lens)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "reality-server main.rs:453 drainer wired with logging-stub transports — deliveries marked as sent without going out."
+      ]
+    },
+    {
+      "id": "code-review-search-drainer-alert-copy-no-i18n",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-reality-server-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Drainer alert copy hardcoded English; ignores AlertNotification.locale."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-regex-recompile",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-api-core-tier1d.json (rotating-expert-review, rust lens)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "perf",
+      "evidence": [
+        "workflow_executor.rs recompiles regex per evaluation — DoS amplification from attacker-controlled pattern."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-notin-fail-open",
+      "type": "code-review-finding",
+      "source": "signals/2026-08-25-api-core-tier1d.json",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "workflow_executor.rs In/NotIn asymmetry — NotIn returns true on missing value → fails open."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "326 lines this run — 2nd repeat touch (runs_seen would become 2). Explained by PR #2848 (churn-hotspot-aml-dashboard-page: extract AML dashboard sections + data hook), the intentional refactor completing the previous run's churn-hotspot signal.",
+        "score_delta=0 — cumulative signal re-emitted per Phase 1 dedup rule; no scoring bump."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.i18n.snapshot.test.tsx",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "251 lines this run — test file added by PR #2850 (pm-qa i18n visual diff for VerificationBadge). New file, not instability; score_delta=0."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "240 lines this run — new hook file extracted from AmlDashboardPage.tsx by PR #2848 (intentional refactor). Not instability; score_delta=0."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev … change probe on state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length==(unique|length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq — non-cumulative dup with score_delta!=0 count == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 && no open items updated_at≤14d without decay",
+      "observed": "cap ok; 0 items due for decay",
+      "expected": "cap ok; decay applied to any due items"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan appears in brief with 'adversarial pass:' annotation",
+      "observed": "1/1",
+      "expected": "1/1"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans ≤2, all 15 sections present, ≥1 capability tick, Mode declared, all Files exist",
+      "observed": "1 plan, all checks pass",
+      "expected": "≤2 plans, all gates pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan on staged diff (excluding baseline docs)",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical (frozen ts)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' is 'none'; no cursor rollback needed",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present as active or archived",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decrease",
+      "observed": "9>=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical (frozen ts)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps: pr/issue/comment each ≤1; idempotency vs history",
+      "observed": "auto_fix_actions=[]",
+      "expected": "all caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor liveness (skipped: Phase 1.6 not run this run)",
+      "observed": "no-op (skipped)",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram token in staged added lines",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
+  ]
+}
