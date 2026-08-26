@@ -1,0 +1,47 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-26T00:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned (recent 30d churn concentrated in backend/servers/api-server/src/routes/: voice_webhooks.rs, integrations/webhook.rs, financial.rs, buildings.rs — all under the api-handlers root; segment has 0 open code-review-finding items so no saturation-skip)",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 2,
+  "note": "api-handlers is largely mature/hardened: voice_webhooks.rs uses constant-time compare (issue #2658) and fails closed; portal/airbnb/booking receivers all verify HMAC + signed-timestamp freshness (gap 83-3 / issue #2330) BEFORE parsing; financial.rs consistently gates on verify_org_access/is_member_or_not_found; buildings.rs is RLS-scoped via rls.tenant_id(); all esignature HMAC compares use hmac verify_slice (constant-time); non-test unwrap/expect are all on infallible ops (static ErrorResponse serialize, OS RNG, startup-validated secrets). Two real gaps surfaced in the e-signature webhook receiver, both landable Rust fixes in api-server.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:226 verify_hellosign_signature() MACs only `event_time + event_type` (`mac.update(format!(\"{}{}\", event_time, event_type))`, L235) — the envelope_id is NOT part of the signed data.",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:848-861 the HELLOSIGN branch validates that tuple, then esignature_webhook acts on the UNSIGNED `payload.envelope_id` (L882-884) to resolve the owning org and mark that workflow completed/voided/declined (L906-967).",
+        "Consequence: an attacker who obtains ONE valid HelloSign notification (e.g. `signature_request_all_signed`) can replay it with an arbitrary substituted `envelope_id` in the JSON body — the event_hash still verifies (it only covers time+type) and the org is resolved FROM the attacker-chosen envelope_id, so an arbitrary, cross-tenant e-signature workflow is forged into a terminal signed/voided state. The DocuSign and Adobe branches are NOT affected: they verify_slice over the full raw `&body` (sync.rs:199/211), which binds envelope_id.",
+        "The idempotency guard in backend/crates/db/src/repositories/integration.rs:964-987 (`WHERE external_envelope_id = $1 AND status <> ALL($terminal)`) does NOT mitigate this: it only blocks re-transitioning an already-terminal workflow; a substituted, not-yet-terminal envelope_id passes the guard and is updated.",
+        "Fix: bind envelope_id into the authenticated set for HelloSign — either verify the full raw request body like the DocuSign/Adobe paths, or refuse to act on any payload field not covered by the provider signature; reject when the resolved workflow's provider != the verified provider."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:747-972 esignature_webhook has NO timestamp/freshness (replay) check for ANY provider — grep for timestamp/freshness/tolerance/stale across the handler body returns nothing.",
+        "This is inconsistent with every sibling receiver in the same file, which all close the replay window per gap 83-3 / issue #2330: verify_portal_webhook (L1281-1323) and handle_portal_webhook fold a signed X-Webhook-Timestamp into the HMAC with a ±tolerance window; the Booking.com (L1110+) and Airbnb (verify_airbnb_delivery L1491) receivers do the same; reality-portal family documented in backend/CLAUDE.md.",
+        "For DocuSign/Adobe (full-body HMAC) a captured valid webhook can be replayed indefinitely to re-drive workflow state. For HelloSign, `event_time` IS signed but is never compared against server time (L848), so it provides no freshness. Combined with the envelope_id-binding gap above, replay is trivial.",
+        "Fix: reject deliveries whose provider-supplied timestamp is outside a tolerance window (HelloSign: validate `event_time`; DocuSign: `x-docusign-signature-1` carries a signed timestamp header set to verify; Adobe: enforce a received-at dedupe/nonce), matching the sibling receivers' pattern; persist a processed-delivery id for at-most-once handling."
+      ]
+    }
+  ]
+}
