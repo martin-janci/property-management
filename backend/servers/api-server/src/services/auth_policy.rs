@@ -415,12 +415,17 @@ mod tests {
 
     /// Seed a user; `verified` controls whether `email_verified_at` is set.
     async fn seed_user(conn: &mut sqlx::PgConnection, email: &str, verified: bool) -> Uuid {
-        let verified_at = if verified { "NOW()" } else { "NULL" };
-        sqlx::query_scalar::<_, Uuid>(&format!(
+        // Bind `verified` as a bool and branch in SQL rather than interpolating
+        // into the query string: sqlx 0.9's `query_scalar` only accepts a
+        // `&'static str` (the `SqlSafeStr` bound), so a `&format!(…)` argument
+        // fails to compile. `CASE WHEN $2 …` keeps the statement a static literal.
+        sqlx::query_scalar::<_, Uuid>(
             "INSERT INTO users (email, password_hash, name, status, email_verified_at) \
-             VALUES ($1, 'test_hash', 'Grantee', 'active', {verified_at}) RETURNING id",
-        ))
+             VALUES ($1, 'test_hash', 'Grantee', 'active', \
+             CASE WHEN $2::boolean THEN NOW() ELSE NULL END) RETURNING id",
+        )
         .bind(email)
+        .bind(verified)
         .fetch_one(conn)
         .await
         .expect("seed user")
