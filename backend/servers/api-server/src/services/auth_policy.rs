@@ -225,22 +225,40 @@ impl AuthPolicyEnforcer {
 
     /// Capability grants are platform-scoped (no org_id on the grant row),
     /// but the grantee belongs to one or more orgs whose policies we still
-    /// want to honor. This convenience picks the grantee's first active
-    /// membership and runs `check_capability_grant` against it. Returns
+    /// want to honor. This convenience resolves the **strictest** policy
+    /// across ALL of the grantee's active memberships and enforces the
+    /// email-verification gate if ANY of those orgs requires it — mirroring
+    /// `check_password_change` / `strictest_policy_across`'s "any org demands
+    /// it → it is demanded (tighten, never loosen)" invariant. Returns
     /// `Ok(())` immediately if the grantee has no memberships (platform-only
-    /// principal — the grant is governed by the platform default).
+    /// principal — the grant is governed by the platform default, which does
+    /// not require verification).
+    ///
+    /// This deliberately does NOT gate on `memberships.first()`: that row is
+    /// non-deterministic (`list_for_user` has no `ORDER BY`), so a grantee in
+    /// both a strict (`require_email_verification=true`) and a lax org could
+    /// otherwise fail open depending on Postgres row order (issue #2857).
     pub async fn check_capability_grant_for_user(
         &self,
         target_user_id: Uuid,
     ) -> Result<(), AuthPolicyError> {
         let mem_repo = MembershipRepository::new(self.pool.clone());
         let memberships = mem_repo.list_for_user(target_user_id).await?;
-        if let Some(m) = memberships.first() {
-            self.check_capability_grant(m.organization_id, target_user_id)
-                .await
-        } else {
-            Ok(())
+        let org_ids: Vec<Uuid> = memberships.iter().map(|m| m.organization_id).collect();
+        let policy = self.strictest_policy_across(&org_ids).await?;
+
+        if policy.require_email_verification {
+            let user_repo = UserRepository::new(self.pool.clone());
+            let user = user_repo
+                .find_by_id(target_user_id)
+                .await?
+                .ok_or(AuthPolicyError::UserNotFound(target_user_id))?;
+            if user.email_verified_at.is_none() {
+                return Err(AuthPolicyError::EmailNotVerified);
+            }
         }
+
+        Ok(())
     }
 
     /// Re-evaluate before a `principal_kind` transition. The target's
@@ -359,5 +377,134 @@ mod tests {
         let s = format!("{e}");
         assert!(s.contains("digit"));
         assert!(s.contains("at least 12"));
+    }
+
+    // ─── #2857: capability-grant email-verification gate is strictest-across-orgs ──
+    //
+    // Real-SQL regression test. The grantee is a member of TWO orgs — a LAX org
+    // (`require_email_verification=false`) and a STRICT org
+    // (`require_email_verification=true`) — and has NOT verified their email.
+    // `list_for_user` has no `ORDER BY`, so the pre-#2857 code that gated on
+    // `memberships.first()` fails OPEN whenever the lax membership is returned
+    // first (Postgres row order is arbitrary). The fix resolves the strictest
+    // policy across ALL memberships, so the gate fires if ANY org demands it —
+    // independent of row order.
+
+    async fn set_super_admin(conn: &mut sqlx::PgConnection) {
+        sqlx::query("SELECT set_request_context($1, $2, $3)")
+            .bind(Option::<Uuid>::None)
+            .bind(Option::<Uuid>::None)
+            .bind(true)
+            .execute(conn)
+            .await
+            .expect("set super-admin context");
+    }
+
+    async fn seed_org(conn: &mut sqlx::PgConnection, slug: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            "INSERT INTO organizations (name, slug, contact_email, status) \
+             VALUES ($1, $2, $3, 'active') RETURNING id",
+        )
+        .bind(format!("Cap Grant {slug}"))
+        .bind(slug)
+        .bind(format!("{slug}@cap-grant-2857.test"))
+        .fetch_one(conn)
+        .await
+        .expect("seed org")
+    }
+
+    /// Seed a user; `verified` controls whether `email_verified_at` is set.
+    async fn seed_user(conn: &mut sqlx::PgConnection, email: &str, verified: bool) -> Uuid {
+        let verified_at = if verified { "NOW()" } else { "NULL" };
+        sqlx::query_scalar::<_, Uuid>(&format!(
+            "INSERT INTO users (email, password_hash, name, status, email_verified_at) \
+             VALUES ($1, 'test_hash', 'Grantee', 'active', {verified_at}) RETURNING id",
+        ))
+        .bind(email)
+        .fetch_one(conn)
+        .await
+        .expect("seed user")
+    }
+
+    async fn seed_membership(conn: &mut sqlx::PgConnection, user: Uuid, org: Uuid) {
+        sqlx::query("INSERT INTO user_memberships (user_id, organization_id, role) VALUES ($1, $2, 'manager')")
+            .bind(user)
+            .bind(org)
+            .execute(conn)
+            .await
+            .expect("seed membership");
+    }
+
+    /// Set `require_email_verification` on an org's auth policy.
+    async fn seed_email_verification_policy(
+        conn: &mut sqlx::PgConnection,
+        org: Uuid,
+        require: bool,
+    ) {
+        sqlx::query(
+            "INSERT INTO org_auth_policies (organization_id, policy) \
+             VALUES ($1, jsonb_build_object('require_email_verification', $2::bool))",
+        )
+        .bind(org)
+        .bind(require)
+        .execute(conn)
+        .await
+        .expect("seed org auth policy");
+    }
+
+    /// The fail-open regression: an unverified grantee in BOTH a lax and a strict
+    /// org must be REJECTED. The lax membership is inserted first so that on the
+    /// old `.first()`-only gate the arbitrary row order tends to surface the lax
+    /// policy and returns `Ok(())` (the bug). The strictest-across-orgs fix
+    /// rejects regardless of which membership row Postgres returns first.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn capability_grant_rejected_when_any_org_requires_verification(pool: sqlx::PgPool) {
+        let mut sa = pool.acquire().await.expect("acquire");
+        set_super_admin(&mut sa).await;
+
+        let lax_org = seed_org(&mut sa, "cap-2857-lax").await;
+        let strict_org = seed_org(&mut sa, "cap-2857-strict").await;
+        let grantee = seed_user(&mut sa, "unverified@cap-grant-2857.test", false).await;
+
+        // Lax membership FIRST, strict SECOND — exercises the non-deterministic
+        // ordering the old gate depended on.
+        seed_membership(&mut sa, grantee, lax_org).await;
+        seed_membership(&mut sa, grantee, strict_org).await;
+
+        seed_email_verification_policy(&mut sa, lax_org, false).await;
+        seed_email_verification_policy(&mut sa, strict_org, true).await;
+        drop(sa);
+
+        let enforcer = AuthPolicyEnforcer::new(pool.clone());
+        let result = enforcer.check_capability_grant_for_user(grantee).await;
+
+        assert!(
+            matches!(result, Err(AuthPolicyError::EmailNotVerified)),
+            "unverified grantee in a strict org must be rejected regardless of \
+             membership row order (fail-open #2857), got {result:?}"
+        );
+    }
+
+    /// Control: an unverified grantee whose ONLY org is lax
+    /// (`require_email_verification=false`) is still allowed — the fix tightens
+    /// (rejects when any org is strict) without over-tightening the lax-only case.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn capability_grant_allowed_for_lax_only_unverified_user(pool: sqlx::PgPool) {
+        let mut sa = pool.acquire().await.expect("acquire");
+        set_super_admin(&mut sa).await;
+
+        let lax_org = seed_org(&mut sa, "cap-2857-laxonly").await;
+        let grantee = seed_user(&mut sa, "unverified-lax@cap-grant-2857.test", false).await;
+        seed_membership(&mut sa, grantee, lax_org).await;
+        seed_email_verification_policy(&mut sa, lax_org, false).await;
+        drop(sa);
+
+        let enforcer = AuthPolicyEnforcer::new(pool.clone());
+        let result = enforcer.check_capability_grant_for_user(grantee).await;
+
+        assert!(
+            result.is_ok(),
+            "unverified grantee in a lax-only org must be allowed, got {result:?}"
+        );
     }
 }
