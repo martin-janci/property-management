@@ -29,9 +29,11 @@ import { TakeModerationActionDialog } from '../components/TakeModerationActionDi
 type ModerationActionType = TakeModerationActionRequest['action_type'];
 type AppealDecision = DecideAppealRequest['decision'];
 
-// Matches the backend's overdue definition in `get_moderation_queue_stats`
-// (compliance.rs): a pending/under_review case older than the 24h SLA.
-const OVERDUE_THRESHOLD_HOURS = 24;
+// When "overdue only" is active we ask the server for the full breached set
+// (see `overdue` param). Request up to the backend's max page size so the
+// visible list matches the org-wide `overdue_count` badge instead of whatever
+// overdue rows happened to fall in the first default page.
+const OVERDUE_PAGE_LIMIT = 200;
 
 interface ActionTemplate {
   id: string;
@@ -52,9 +54,9 @@ export const ContentModerationPage: React.FC = () => {
   const [violationTypeFilter, setViolationTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
-  // Client-side "show overdue only" narrowing, driven by the overdue alert.
-  // The list API has no overdue param, so we filter the fetched cases by their
-  // derived `age_hours` (see below) instead.
+  // "Show overdue only", driven by the overdue alert. Applied server-side via
+  // the list API's `overdue` param so the result reflects the true org-wide
+  // breached set, not just the overdue rows in one fetched page.
   const [overdueOnly, setOverdueOnly] = useState(false);
 
   // Decision dialogs: which case (if any) each dialog is acting on.
@@ -72,6 +74,8 @@ export const ContentModerationPage: React.FC = () => {
     violation_type: violationTypeFilter || undefined,
     priority: priorityFilter ? Number.parseInt(priorityFilter, 10) : undefined,
     unassigned_only: unassignedOnly || undefined,
+    overdue: overdueOnly || undefined,
+    limit: overdueOnly ? OVERDUE_PAGE_LIMIT : undefined,
   });
 
   // Fetch stats from API
@@ -107,17 +111,6 @@ export const ContentModerationPage: React.FC = () => {
       (new Date().getTime() - new Date(c.reported_at).getTime()) / (1000 * 60 * 60)
     ),
   }));
-
-  // When the overdue affordance is active, narrow to still-open cases past the
-  // SLA. `age_hours` is derived from the API's real `reported_at`, so this
-  // mirrors the backend's overdue count without a dedicated list param.
-  const visibleCases: ModerationCase[] = overdueOnly
-    ? cases.filter(
-        (c) =>
-          c.age_hours >= OVERDUE_THRESHOLD_HOURS &&
-          (c.status === 'pending' || c.status === 'under_review')
-      )
-    : cases;
 
   const stats: ModerationQueueStatsData | null = statsData?.stats
     ? {
@@ -246,9 +239,9 @@ export const ContentModerationPage: React.FC = () => {
   }, []);
 
   const handleShowOverdue = useCallback(() => {
-    // Overdue spans both `pending` and `under_review`, so widen the status
-    // filter to fetch all open states, then narrow client-side via `overdueOnly`
-    // (see `visibleCases`). The list API exposes no overdue param.
+    // The `overdue` list param already restricts to open (pending/under_review)
+    // cases past the SLA, so clear the status filter to avoid narrowing it
+    // further, then activate the server-side overdue query via `overdueOnly`.
     setStatusFilter('');
     setOverdueOnly(true);
   }, []);
@@ -412,9 +405,9 @@ export const ContentModerationPage: React.FC = () => {
       </div>
 
       {/* Cases List */}
-      {visibleCases.length > 0 ? (
+      {cases.length > 0 ? (
         <div className="moderation-cases-list">
-          {visibleCases.map((case_) => (
+          {cases.map((case_) => (
             <ModerationCaseCard
               key={case_.id}
               case_={case_}

@@ -495,6 +495,11 @@ impl ComplianceRepository {
         priority: Option<i32>,
         assigned_to: Option<Uuid>,
         unassigned_only: bool,
+        // When true, restrict to still-open cases past the 24h SLA. This mirrors
+        // the `overdue_count` predicate in `get_moderation_queue_stats` exactly,
+        // so a client filtering by "overdue only" gets the true org-wide set
+        // rather than the overdue rows that happen to fall in one fetched page.
+        overdue_only: bool,
         sort_by: Option<&str>,
         sort_order: Option<&str>,
         limit: i64,
@@ -511,6 +516,7 @@ impl ComplianceRepository {
                 AND ($5::integer IS NULL OR priority = $5)
                 AND ($6::uuid IS NULL OR assigned_to = $6)
                 AND ($7 = FALSE OR assigned_to IS NULL)
+                AND ($8 = FALSE OR (status IN ('pending', 'under_review') AND created_at < NOW() - INTERVAL '24 hours'))
             "#,
         )
         .bind(org_id)
@@ -520,6 +526,7 @@ impl ComplianceRepository {
         .bind(priority)
         .bind(assigned_to)
         .bind(unassigned_only)
+        .bind(overdue_only)
         .fetch_one(&self.pool)
         .await?;
 
@@ -542,8 +549,9 @@ impl ComplianceRepository {
                 AND ($5::integer IS NULL OR priority = $5)
                 AND ($6::uuid IS NULL OR assigned_to = $6)
                 AND ($7 = FALSE OR assigned_to IS NULL)
+                AND ($8 = FALSE OR (status IN ('pending', 'under_review') AND created_at < NOW() - INTERVAL '24 hours'))
             {}
-            LIMIT $8 OFFSET $9
+            LIMIT $9 OFFSET $10
             "#,
             order_clause
         );
@@ -556,6 +564,7 @@ impl ComplianceRepository {
             .bind(priority)
             .bind(assigned_to)
             .bind(unassigned_only)
+            .bind(overdue_only)
             .bind(limit)
             .bind(offset)
             .fetch_all(&self.pool)

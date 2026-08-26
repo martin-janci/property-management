@@ -188,58 +188,49 @@ describe('ContentModerationPage decision flow', () => {
 });
 
 /**
- * Regression: the overdue affordance used to be a no-op — clicking the overdue
- * alert only called `setStatusFilter('pending')` (with a "TODO: add overdue
- * filter" comment) and never narrowed the list to overdue cases. The alert
- * therefore rendered but did nothing meaningful. It now applies a client-side
- * filter (age >= 24h SLA, still-open status) derived from the API's real
- * `reported_at`, matching the backend's overdue-count definition.
+ * Regression (#2853, follow-up to #2849): the overdue affordance must reflect
+ * the true org-wide breached set, not a client-side narrowing of one fetched
+ * page. #2849 filtered `visibleCases` over the already-fetched list, but that
+ * list is capped server-side (`clamp_limit`, default 50). On an org with more
+ * open cases than one page, the overdue rows can fall beyond the fetched page,
+ * so the filtered view under-reported SLA breaches — showing far fewer (or
+ * zero) overdue cases than the `overdue_count` badge the moderator clicked.
+ *
+ * The fix moves the predicate server-side: clicking the alert re-queries the
+ * list API with `overdue: true`, and the page renders the server response
+ * directly (no client narrowing). These tests model a truncated first page
+ * that contains NO overdue rows, and assert the overdue view still shows the
+ * full server-side breached set, matching `overdue_count`.
  */
 describe('ContentModerationPage overdue affordance', () => {
-  const now = new Date().toISOString();
-  const long_ago = '2026-01-01T00:00:00Z'; // well past the 24h SLA relative to test date
+  // The default (non-overdue) page the API returns: all still-open but FRESH
+  // cases. Crucially, none of them are overdue — they stand in for a truncated
+  // first page where the overdue rows live beyond the fetched window. Under the
+  // old client-side filter this would have yielded zero overdue cases.
+  const firstPageNoOverdue = [
+    { ...baseCase, id: 'fresh-1', content_preview: 'fresh-one', status: 'pending' },
+    { ...baseCase, id: 'fresh-2', content_preview: 'fresh-two', status: 'pending' },
+  ];
 
-  const overdueMixCases = [
-    // Old + still open → overdue.
-    {
-      ...baseCase,
-      id: 'overdue-p',
-      content_preview: 'overdue-pending',
-      status: 'pending',
-      reported_at: long_ago,
-    },
-    {
-      ...baseCase,
-      id: 'overdue-r',
-      content_preview: 'overdue-review',
-      status: 'under_review',
-      reported_at: long_ago,
-    },
-    // Fresh + open → NOT overdue (inside SLA).
-    {
-      ...baseCase,
-      id: 'fresh-p',
-      content_preview: 'fresh-pending',
-      status: 'pending',
-      reported_at: now,
-    },
-    // Old but already resolved (appealed) → NOT overdue (closed status).
-    {
-      ...baseCase,
-      id: 'old-appealed',
-      content_preview: 'old-appealed',
-      status: 'appealed',
-      is_appeal: true,
-      reported_at: long_ago,
-    },
+  // The true org-wide overdue set the server returns for `overdue: true`. Its
+  // size matches the stats `overdue_count` badge (2) even though NONE of these
+  // rows appear on the default first page above.
+  const serverOverdueSet = [
+    { ...baseCase, id: 'overdue-p', content_preview: 'overdue-pending', status: 'pending' },
+    { ...baseCase, id: 'overdue-r', content_preview: 'overdue-review', status: 'under_review' },
   ];
 
   beforeEach(() => {
-    vi.mocked(useModerationCases).mockReturnValue({
-      data: { cases: overdueMixCases },
-      isLoading: false,
-      error: null,
-    } as unknown as ReturnType<typeof useModerationCases>);
+    // Param-aware mock: the `overdue` query flag selects which server page the
+    // client receives, exactly as the real endpoint would.
+    vi.mocked(useModerationCases).mockImplementation(
+      (params?: { overdue?: boolean }) =>
+        ({
+          data: { cases: params?.overdue ? serverOverdueSet : firstPageNoOverdue },
+          isLoading: false,
+          error: null,
+        }) as unknown as ReturnType<typeof useModerationCases>
+    );
     vi.mocked(useModerationStats).mockReturnValue({
       data: {
         stats: {
@@ -265,24 +256,27 @@ describe('ContentModerationPage overdue affordance', () => {
     } as unknown as ReturnType<typeof useModerationStats>);
   });
 
-  it('narrows the list to overdue cases when the overdue alert is clicked', () => {
+  it('fetches the server-side overdue set (not a truncated client page) when clicked', () => {
     render(
       <ToastProvider>
         <ContentModerationPage />
       </ToastProvider>
     );
 
-    // Before: every case is visible.
-    expect(screen.getByText('fresh-pending')).toBeInTheDocument();
-    expect(screen.getByText('old-appealed')).toBeInTheDocument();
+    // Before: only the fresh first page is shown; no overdue rows are present.
+    expect(screen.getByText('fresh-one')).toBeInTheDocument();
+    expect(screen.queryByText('overdue-pending')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /overdue/i }));
 
-    // After: only still-open cases past the 24h SLA remain.
+    // The list re-queries with the server-side overdue flag...
+    expect(useModerationCases).toHaveBeenCalledWith(expect.objectContaining({ overdue: true }));
+    // ...and shows the full breached set (count == overdue_count = 2), even
+    // though NONE of these rows were on the fetched first page. The old
+    // client-side filter would have shown zero here.
     expect(screen.getByText('overdue-pending')).toBeInTheDocument();
     expect(screen.getByText('overdue-review')).toBeInTheDocument();
-    expect(screen.queryByText('fresh-pending')).not.toBeInTheDocument();
-    expect(screen.queryByText('old-appealed')).not.toBeInTheDocument();
+    expect(screen.queryByText('fresh-one')).not.toBeInTheDocument();
   });
 
   it('clears the overdue filter and restores the full list', () => {
@@ -293,9 +287,15 @@ describe('ContentModerationPage overdue affordance', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /overdue/i }));
-    expect(screen.queryByText('fresh-pending')).not.toBeInTheDocument();
+    expect(screen.getByText('overdue-pending')).toBeInTheDocument();
+    expect(screen.queryByText('fresh-one')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /clear overdue filter/i }));
-    expect(screen.getByText('fresh-pending')).toBeInTheDocument();
+
+    // Back to the default (non-overdue) query and its first page.
+    expect(useModerationCases).toHaveBeenLastCalledWith(
+      expect.objectContaining({ overdue: undefined })
+    );
+    expect(screen.getByText('fresh-one')).toBeInTheDocument();
   });
 });

@@ -58,6 +58,7 @@ export async function listModerationCases(params?: {
   violation_type?: string;
   priority?: number;
   unassigned_only?: boolean;
+  overdue?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<ModerationCasesResponse> {
@@ -67,6 +68,7 @@ export async function listModerationCases(params?: {
   if (params?.violation_type) searchParams.set('violation_type', params.violation_type);
   if (params?.priority) searchParams.set('priority', params.priority.toString());
   if (params?.unassigned_only) searchParams.set('unassigned_only', 'true');
+  if (params?.overdue) searchParams.set('overdue', 'true');
   if (params?.limit) searchParams.set('limit', params.limit.toString());
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
