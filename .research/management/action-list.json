@@ -99,6 +99,26 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-2859",
+      "action": "Follow-up: server-side moderation overdue filter lacks a DB test and still caps at 200 (PR #2856) (Closes #2859)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-08-26T22:24:24Z (#2859)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-26T22:24:24Z",
+      "issue_ref": {
+        "number": 2859,
+        "url": "https://github.com/martin-janci/property-management/issues/2859",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
