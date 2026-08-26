@@ -404,6 +404,20 @@ export const ContentModerationPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Overdue truncation notice: the overdue view fetches a single capped
+          page (OVERDUE_PAGE_LIMIT). If the org has more overdue cases than the
+          cap, the list silently truncates below the (unbounded) `overdue_count`
+          badge, re-introducing the badge-vs-list mismatch #2853 fixed. Make the
+          truncation explicit instead of hiding it (#2859). */}
+      {overdueOnly && cases.length === OVERDUE_PAGE_LIMIT && (
+        <div className="moderation-truncation-notice" role="status">
+          {t('moderation.queue.overdueTruncated', {
+            limit: OVERDUE_PAGE_LIMIT,
+            count: stats?.overdue_count ?? cases.length,
+          })}
+        </div>
+      )}
+
       {/* Cases List */}
       {cases.length > 0 ? (
         <div className="moderation-cases-list">

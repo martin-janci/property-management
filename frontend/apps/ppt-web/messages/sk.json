@@ -164,7 +164,8 @@
       "emptyTitle": "Nenašli sa žiadne prípady moderovania zodpovedajúce kritériám.",
       "emptySubtitle": "Front moderovania je momentálne prázdny.",
       "overdueActive": "Zobrazujú sa iba prípady po termíne",
-      "clearOverdue": "Zrušiť filter po termíne"
+      "clearOverdue": "Zrušiť filter po termíne",
+      "overdueTruncated": "Zobrazuje sa prvých {{limit}} z {{count}} po termíne — spresnite filtre na zúženie zoznamu."
     },
     "filters": {
       "status": "Stav",

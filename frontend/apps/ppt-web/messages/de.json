@@ -164,7 +164,8 @@
       "emptyTitle": "Keine Moderationsfälle gefunden, die den Kriterien entsprechen.",
       "emptySubtitle": "Die Moderationswarteschlange ist derzeit leer.",
       "overdueActive": "Nur überfällige Fälle werden angezeigt",
-      "clearOverdue": "Überfällig-Filter zurücksetzen"
+      "clearOverdue": "Überfällig-Filter zurücksetzen",
+      "overdueTruncated": "Es werden die ersten {{limit}} von {{count}} überfälligen Fällen angezeigt — verfeinern Sie die Filter, um die Liste einzugrenzen."
     },
     "filters": {
       "status": "Status",

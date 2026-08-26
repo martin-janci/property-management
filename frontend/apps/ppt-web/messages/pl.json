@@ -164,7 +164,8 @@
       "emptyTitle": "Nie znaleziono spraw moderacji spełniających kryteria.",
       "emptySubtitle": "Kolejka moderacji jest obecnie pusta.",
       "overdueActive": "Wyświetlane tylko sprawy przeterminowane",
-      "clearOverdue": "Wyczyść filtr przeterminowanych"
+      "clearOverdue": "Wyczyść filtr przeterminowanych",
+      "overdueTruncated": "Wyświetlane pierwsze {{limit}} z {{count}} przeterminowanych spraw — zawęź filtry, aby ograniczyć listę."
     },
     "filters": {
       "status": "Status",
