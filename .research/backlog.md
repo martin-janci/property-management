@@ -1,10 +1,11 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-25 08:53 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-27 06:38 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
 | 5 | security | `security-voice-webhook-alexa-signature-not-verified` | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the sign | dropped | 2026-07-28 |  |
+| 3 | security | `code-review-api-handlers-hellosign-unbound-envelope` | api-server: HelloSign webhook signature omits envelope_id — attacker can swap envelope | ready | 2026-08-27 | [plan](plans/code-review-api-handlers-hellosign-unbound-envelope.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | ready | 2026-08-25 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | done | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
 | 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/_archive/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
@@ -36,7 +37,18 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | open | 2026-08-25 |  |
+| 2 | security | `code-review-api-core-fault-report-csv-injection` | api-server fault-report CSV export: cell values not sanitized — stored CSV formula-injection | open | 2026-08-27 |  |
+| 2 | bug | `code-review-api-core-workflow-regex-recompile` | api-server workflow_executor: cache regex compiles for Matches op to prevent per-event DoS | open | 2026-08-27 |  |
+| 2 | security | `code-review-api-handlers-esign-webhook-replay` | api-server esignature webhook: no timestamp/freshness check — replayable across all providers | open | 2026-08-27 |  |
+| 2 | bug | `code-review-mobile-native-kmp-account-screen-dead-rows` | mobile-native AccountScreen: three chevron rows (Compare/Privacy/About) have empty onClick | open | 2026-08-27 |  |
+| 2 | bug | `code-review-mobile-native-kmp-profile-edit-drops-fields` | mobile-native ProfileEditScreen: edited phone/aboutMe fields never sent to backend | open | 2026-08-27 |  |
+| 2 | bug | `code-review-mobile-native-kmp-twofactor-orphan-unwired` | mobile-native TwoFactor route registered but never navigated to from login/SSO flow | open | 2026-08-27 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-query-invalidation-dead` | ppt-web WebSocketWrapper missing onEntityEvent — query invalidation on push is unwired | open | 2026-08-27 |  |
+| 2 | bug | `code-review-reality-web-account-edit-wrong-locale-strings` | reality-web listing edit: hardcodes Slovak fallback error copy shown to en/cs/de users | open | 2026-08-27 |  |
+| 2 | bug | `code-review-reality-web-realtor-account-pages-no-i18n` | reality-web: 11 authenticated realtor/account page shells lack useTranslations | open | 2026-08-27 |  |
+| 2 | bug | `code-review-reality-web-realtor-api-missing-bearer-header` | reality-web realtor-api.ts: request() never sends Authorization + Bearer — form-login writes 401 | open | 2026-08-27 |  |
+| 2 | bug | `code-review-search-drainer-stub-marks-delivered` | reality-server: SearchAlertDrainerWorker uses logging stubs — alerts marked delivered without send | open | 2026-08-27 |  |
+| 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | done | 2026-08-25 |  |
 | 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
 | 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-ppt-web-ui-verification-badge-expired-as-soon` | ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal s | done | 2026-08-21 |  |
@@ -150,9 +162,23 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | bug | `code-review-api-core-market-pricing-db-error-swallow` | api-server market_pricing: unwrap_or_default swallows DB errors into empty regions/comparables | open | 2026-08-27 |  |
+| 1 | bug | `code-review-api-core-workflow-notin-fail-open` | api-server workflow_executor: NotIn fails open on malformed compare_value — match In semantics | open | 2026-08-27 |  |
+| 1 | refactor | `code-review-mobile-rn-faults-screen-no-i18n` | mobile-rn FaultsScreen: entire Epic-4 report screen has zero t()/useTranslation | open | 2026-08-27 |  |
+| 1 | bug | `code-review-mobile-rn-faultslist-i18n-gap` | mobile-rn FaultsListScreen: '+ Report' CTA hardcoded English | open | 2026-08-27 |  |
+| 1 | bug | `code-review-mobile-rn-hardcoded-button-labels` | mobile-rn MessagesScreen: '+ New message' CTA hardcoded English | open | 2026-08-27 |  |
+| 1 | refactor | `code-review-mobile-rn-person-months-hardcoded-i18n` | mobile-rn PersonMonthsScreen: header, primary action, validation Alert hardcoded English | open | 2026-08-27 |  |
+| 1 | bug | `code-review-mobile-rn-raw-status-untranslated` | mobile-rn FaultsListScreen: raw api-server status enum rendered untranslated | open | 2026-08-27 |  |
+| 1 | refactor | `code-review-mobile-rn-widget-settings-alerts-i18n` | mobile-rn WidgetSettingsScreen: alerts + labels partially hardcoded English | open | 2026-08-27 |  |
+| 1 | bug | `code-review-reality-web-account-routes-i18n` | reality-web signed-in account/realtor route cluster systemically lacks useTranslations | open | 2026-08-27 |  |
+| 1 | bug | `code-review-reality-web-listing-edit-slovak-i18n` | reality-web account/listings/edit page (930 lines) has no useTranslations — hardcoded English | open | 2026-08-27 |  |
+| 1 | bug | `code-review-reality-web-realtor-dashboard-total-mislabel` | reality-web realtor dashboard: labels total listings as 'active' — overstates count | open | 2026-08-27 |  |
+| 1 | refactor | `code-review-reality-web-realtor-section-no-i18n` | reality-web realtor section: entire workspace ships English-only under [locale] route | open | 2026-08-27 |  |
+| 1 | bug | `code-review-reality-web-shared-state-primitives-no-i18n` | reality-web ErrorState/EmptyState: default title/desc/retry hardcoded English | open | 2026-08-27 |  |
+| 1 | bug | `code-review-search-drainer-alert-copy-no-i18n` | reality-server saved-search alerts: subject/body hardcoded English, ignore recipient locale | open | 2026-08-27 |  |
 | 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs` | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | dropped | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-25 |  |
 | 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-mobile-rn-thread-detail-hardcoded-en` | ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks) | done | 2026-08-23 |  |

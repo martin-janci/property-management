@@ -1,0 +1,528 @@
+{
+  "date": "2026-08-27",
+  "run": {
+    "last_run_iso": "2026-08-25T08:50:37Z",
+    "this_run_iso": "2026-08-27T06:38:00Z",
+    "lag_hours": 45,
+    "trigger_text": "buffer-low"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "routine-timing",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-08-25 08:50:37Z; lag=45h > 36h threshold"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "refire-buffer-low-2026-08-27",
+      "type": "refire-buffer-low",
+      "source": "planner-payload",
+      "score_delta": 0,
+      "evidence": [
+        "planner reported: claimable=6/72 landable=0 (all open backlog is mobile-native/KMP gated; coverage.json missing) \u2014 refill planner with landable backend/frontend work",
+        "coverage.json actually present on disk; mobile-native/KMP gate confirmed (AGP egress-403 in cloud)",
+        "26 tier-1d code-review-finding signals ingested this run to seed landable backend/frontend work"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-api-core-workflow-regex-recompile",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:659 \u2014 the `Matches` comparison operator calls `regex::Regex::new(pattern)` on every single workflow condition evaluation. `pattern` is `compare_value.as_str()`, i.e. an org-authored stored workflow condition. grep of the file finds exactly one `Regex::new` and no `Lazy`/`OnceCell`/cache, so the pattern is recompiled from scratch for every event that reaches the condition.",
+        "Cost/DoS amplification on a hot automation path: a workflow bound to a high-frequency event type (e.g. a per-notification or per-fault trigger) recompiles its regex on each matching event. A workflow author can also store an expensive-to-compile pattern (the crate's default 10MB compiled-size ceiling is large) that is paid on every evaluation rather than once. Fix: compile once and cache (e.g. an LRU/`OnceCell` keyed by pattern) and/or set an explicit `RegexBuilder::size_limit`.",
+        "Confidence medium: static read confirms the recompile-per-eval and absence of any cache; the reachability (event -> evaluate_condition -> Matches) is via the stored-condition path and not runtime-confirmed for frequency."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-workflow-notin-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:640-652 \u2014 `ComparisonOperator::In` returns `Ok(false)` when `compare_value.as_array()` is `None` (fails closed), but `ComparisonOperator::NotIn` returns `Ok(true)` in the same malformed case (fails open).",
+        "Effect: a workflow condition authored as `NotIn` whose value is mis-typed (object/string/number instead of a JSON array) silently matches every event and fires the workflow's downstream actions, with no error surfaced to the author (contrast `Matches`, which returns a `ConditionError` on a non-string pattern). Recommend returning a `WorkflowError::ConditionError` for a non-array `In`/`NotIn` value so a malformed condition is rejected rather than firing unintentionally.",
+        "Confidence medium: asymmetry is clear from the source; whether a mis-typed `NotIn` config can actually be persisted depends on upstream config validation not traced in this static pass."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-account-screen-dead-rows",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/account/AccountScreen.kt:449,465,474 \u2014 three chevron-decorated SectionRow items ('Compare', 'Privacy', 'About') render with SectionTrailing.Chevron (implying navigation) but their onClick is an empty comment stub: `onClick = { /* nav to compare */ }`, `{ /* nav to privacy */ }`, `{ /* nav to about */ }`. Tapping them silently does nothing.",
+        "AccountScreen.kt:652,659,666,673 \u2014 the AppSettingsCard's four SettingsRow items (Language, Currency, Units, Theme) each display a static hardcoded value ('English'/'EUR'/'Metric'/'System') and are wired to `onClick = { /* picker */ }` \u2014 no picker opens, and the displayed value never reflects real state, so all four app-settings controls are cosmetic no-ops.",
+        "AccountScreen is the live Account tab, reachable in production (Navigation.kt:255 `AccountScreen(...)`). Net: 7 user-facing tappable rows on the primary account surface are dead controls; users tapping Compare/Privacy/About/Language/Currency/Units/Theme get no response and no feedback."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-twofactor-orphan-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:113,349-354 \u2014 Screen.TwoFactor ('auth/two-factor') is declared and registered as a composable, but `grep -n 'navigate(Screen.TwoFactor'` over Navigation.kt returns ZERO hits: nothing in the login/SSO flow ever navigates to the 2FA challenge. The route is an orphan.",
+        "Navigation.kt:350-353 \u2014 the TwoFactorScreen is wired with only `onBackClick`/`onDone`, and `onDone = { navController.popBackStack() }` just pops the back stack; no ssoService/verify callback is passed, so even if reached the screen cannot actually verify a code against the backend.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt:164 \u2014 the 'Use backup code' TextButton is a dead handler `onClick = { /* backup code */ }`, and the 'resend' affordance (line 158) is a plain non-clickable Text. The 2FA UI is fully built but disconnected from auth: no entry path, no verification wiring, and its recovery controls are no-ops."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-profile-edit-drops-fields",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/profile/ProfileEditScreen.kt:68-69,261-292 \u2014 the screen exposes editable OutlinedTextFields for `phone` and `aboutMe` (with a 280-char counter), so a user can type into and edit both.",
+        "ProfileEditScreen.kt:59,117 \u2014 the `onSubmit` callback signature is `suspend (displayName: String) -> Result<Unit>` and the save button calls `onSubmit(displayName.trim())` only; phone and About-me values are never passed. Confirmed by the wiring in Navigation.kt:358 `onSubmit = { displayName -> ssoService.updateProfile(displayName).map {} }`.",
+        "The doc comment at ProfileEditScreen.kt:47-49 acknowledges 'phone, language, and About me don't have backing endpoints yet'. Net: two editable form fields silently discard user input on save with no disabled state or warning \u2014 the form gives a false illusion of persistence (silent data loss on a user-facing profile edit)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-faults-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx:1-63 \u2014 active screen (Epic 4: Fault Reporting & Resolution, UC-03) has NO `useTranslation`/`t()` anywhere (0 hits) while sibling faults screens use it (e.g. screens/faults/FaultsListScreen.tsx, screens/documents/DocumentsScreen.tsx=17 t() hits).",
+        "frontend/apps/mobile/src/features/faults/screens/FaultsScreen.tsx:52 \u2014 the `ListEmptyComponent` renders a hardcoded English string `<Text style={styles.emptyText}>No faults reported yet.</Text>`; the empty-state copy never reaches the sk/cs/de locales. Fix: import useTranslation, add a `faults.empty` key to the locale bundles, and wrap the string in t()."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-alerts-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx \u2014 partial-i18n regression: the file DOES use t() (13 hits) but several user-facing strings are hardcoded English.",
+        "WidgetSettingsScreen.tsx:66 `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)`; :79 `Alert.alert('Widgets Updated', 'All widgets have been refreshed.')`; :194 section title `<Text ...>How to Add Widgets</Text>`. These Alert titles/bodies and the instructions heading bypass i18n while the rest of the screen is localized. Fix: move the four strings to locale keys and wrap in t()."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-person-months-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx \u2014 partial-i18n regression (file uses t() = 5 hits, but header, primary action, and validation Alert are hardcoded English).",
+        "PersonMonthsScreen.tsx:78 `Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.')` (validation feedback); :165 `<Text style={s.primaryButtonText}>Bulk entry\u2026</Text>` (primary CTA); header `<Text style={s.headerTitle}>Person-months</Text>` (~L92) and subtitle `Declare how many people lived in your unit each month for cost allocation.` (~L94). All are user-facing and untranslated. Fix: add person-months locale keys and wrap in t()."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:453 \u2014 production wiring constructs the saved-search alert drainer via `SearchAlertDrainerWorker::new(db, SearchAlertDrainerConfig::from_env())`, which (search_alert_drainer.rs:188-195) hard-codes the logging stubs `LogEmailTransport` / `LogPushTransport` as the email + push transports. There is no `with_transports(...)` call with a real SMTP/FCM/APNs adapter anywhere outside tests (only ref besides the def is main.rs:453).",
+        "Both stub transports unconditionally return `Ok(())` (search_alert_drainer.rs:81-94 send_email, :100-119 send_push \u2014 they only `tracing::info!` what *would* be sent). In `run_once()` (search_alert_drainer.rs:280-325) an alert is treated as delivered when `any_ok` is true, and the email stub alone always sets `any_ok = true`, so EVERY drained alert reaches `self.repo.mark_search_alert_notified(alert.id)` (:318) and its `notified_at` watermark is set.",
+        "Net effect in production: saved-search alert emails and push notifications are silently NEVER sent, yet the drainer marks each queue row delivered (notified_at set, independent of the in-app read `status`). Because the row is stamped delivered, it is filtered out by `list_undelivered_search_alerts` on the next poll \u2014 the miss is undetectable from the queue and users who configured saved-search alerts (a shipped Epic 16 feature) receive nothing. Documented as an intended 'first cut' (module doc lines 16-22) but the stub is wired into `main.rs` and drains+consumes real queue rows in prod, so the feature is effectively dead while reporting success. Fix: guard the drainer behind real transports (or keep SEARCH_ALERT_DRAINER_ENABLED=false in prod until an adapter exists) so it does not consume/mark-delivered rows it cannot actually deliver."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-search-drainer-alert-copy-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:259-276 \u2014 the alert `subject` and `body` are built from hard-coded English `format!` templates ('N new listings match your saved search ...', 'Open the app to view them.') with English-only pluralization ('listing'/'listings', 'it'/'them'). The 4-locale reality portal (sk/cs/de/en) therefore sends every saved-search alert email + push in English regardless of recipient locale.",
+        "The `AlertNotification.locale` field (search_alert_drainer.rs:45-47) is explicitly resolved from `alert.recipient_locale` (:272-275, defaulting to 'en') and threaded to the transport traits, but is never used to localize the composed copy \u2014 the copy is built in English BEFORE the transport is called, so even a future locale-aware transport cannot fix it (localization seam is on the wrong side of the composition).",
+        "The same crate already has the correct pattern: services/email.rs:102-111 localizes the password-reset email via `reset_subject(locale)` / `reset_body(name, url, locale)` with a `match locale { sk|cs|de|en }`. The saved-search alert drainer bypasses this established per-`Locale` pattern. Fix: compose subject/body per `notification.locale` (mirror email.rs reset_subject/reset_body), or move localization into the transport and pass structured data instead of pre-rendered English."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-section-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/** \u2014 the entire realtor workspace section (7 page files) has ZERO next-intl usage (grep useTranslations|getTranslations|next-intl over app/[locale]/realtor = 0 hits) despite living under app/[locale] on a sk/cs/de/en portal, so every string renders raw English in Slovak/Czech/German locales.",
+        "realtor/page.tsx \u2014 hardcoded 'Realtor workspace' hero + SECTIONS titles/descriptions ('Profile','My listings','Create listing','Analytics' and their subtitles).",
+        "realtor/analytics/page.tsx:74-95 \u2014 hardcoded 'Analytics','Performance of your listings over time.', PERIODS labels ('Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year'), StatCard labels ('Total listings','Active listings','Total views','Inquiries','Conversion rate'), 'Loading metrics\u2026', and the error fallback 'Could not load analytics.' (line ~55).",
+        "realtor/listings/new/page.tsx:27,37-44 \u2014 hardcoded 'Create listing','Publish a new property to Reality Portal.', the error fallback 'Could not create listing. Please try again.' AND submitLabel=\"Publish listing\" is passed as an English string LITERAL into ListingForm \u2014 which is otherwise fully internationalized via t() \u2014 so even the localized form gets an un-localized submit button.",
+        "realtor/listings/page.tsx:80-90 \u2014 hardcoded '+ New listing','Loading\u2026','Failed to load listings.',\"You haven't published any listings yet.\",'Create your first listing'. Fix: introduce a realtor namespace in messages/{en,sk,cs,de}.json and wrap these with useTranslations, matching the pattern the agency/* components already use (agency has 4 next-intl call sites)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-web-account-edit-wrong-locale-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 and :213 \u2014 the listing edit page hardcodes SLOVAK error strings: loadError fallback 'Na\u010d\u00edtanie inzer\u00e1tu zlyhalo.' (166) and save fallback 'Ulo\u017eenie zlyhalo, sk\u00faste znova.' (213). Because the page has no next-intl usage, an en/de/cs user editing a listing under e.g. /de/account/listings/<id>/edit is shown Slovak error copy \u2014 an actively WRONG-language string for 3 of the 4 supported locales, not merely an untranslated default.",
+        "This compounds a section-wide inconsistency: the sibling realtor listing flow (realtor/listings/new/page.tsx, realtor/listings/[id]/edit) hardcodes ENGLISH fallbacks for the same create/edit journey, so the two halves of the listing-management flow ship strings in two different hardcoded languages, neither locale-aware.",
+        "The whole app/[locale]/account/** section (4 page files: account/page.tsx, account/profile/page.tsx, account/password/page.tsx, account/listings/[id]/edit/page.tsx) has 0 next-intl usage (grep useTranslations|getTranslations over app/[locale]/account = 0 hits). Fix: route both realtor and account listing flows through a shared messages namespace so error/label copy follows the URL locale."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-dashboard-total-mislabel",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx:40-47 \u2014 RealtorContent does `const { data: listings } = useMyListings({ limit: 1 });` and renders `You have {listings?.total ?? 0} active listings.`. `total` from useMyListings is the count of ALL owned listings (the realtor/listings page consumes the same useMyListings() and renders draft/paused/sold status cards, confirming the collection is not active-only), so the copy overstates the active count whenever the realtor has any draft/paused/sold/archived listing \u2014 the number labeled 'active' is really 'total'.",
+        "Same line ignores the hook's error/loading state \u2014 it destructures only `data` (unlike realtor/listings/page.tsx which reads {data,isLoading,error}), so a failed /api/v1/my/listings load silently renders 'You have 0 active listings.' with no error indication. Fix: either query an active-status count for the headline or relabel to 'listings', and surface the hook error state."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:226 verify_hellosign_signature() MACs only `event_time + event_type` (`mac.update(format!(\"{}{}\", event_time, event_type))`, L235) \u2014 the envelope_id is NOT part of the signed data.",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:848-861 the HELLOSIGN branch validates that tuple, then esignature_webhook acts on the UNSIGNED `payload.envelope_id` (L882-884) to resolve the owning org and mark that workflow completed/voided/declined (L906-967).",
+        "Consequence: an attacker who obtains ONE valid HelloSign notification (e.g. `signature_request_all_signed`) can replay it with an arbitrary substituted `envelope_id` in the JSON body \u2014 the event_hash still verifies (it only covers time+type) and the org is resolved FROM the attacker-chosen envelope_id, so an arbitrary, cross-tenant e-signature workflow is forged into a terminal signed/voided state. The DocuSign and Adobe branches are NOT affected: they verify_slice over the full raw `&body` (sync.rs:199/211), which binds envelope_id.",
+        "The idempotency guard in backend/crates/db/src/repositories/integration.rs:964-987 (`WHERE external_envelope_id = $1 AND status <> ALL($terminal)`) does NOT mitigate this: it only blocks re-transitioning an already-terminal workflow; a substituted, not-yet-terminal envelope_id passes the guard and is updated.",
+        "Fix: bind envelope_id into the authenticated set for HelloSign \u2014 either verify the full raw request body like the DocuSign/Adobe paths, or refuse to act on any payload field not covered by the provider signature; reject when the resolved workflow's provider != the verified provider."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:747-972 esignature_webhook has NO timestamp/freshness (replay) check for ANY provider \u2014 grep for timestamp/freshness/tolerance/stale across the handler body returns nothing.",
+        "This is inconsistent with every sibling receiver in the same file, which all close the replay window per gap 83-3 / issue #2330: verify_portal_webhook (L1281-1323) and handle_portal_webhook fold a signed X-Webhook-Timestamp into the HMAC with a \u00b1tolerance window; the Booking.com (L1110+) and Airbnb (verify_airbnb_delivery L1491) receivers do the same; reality-portal family documented in backend/CLAUDE.md.",
+        "For DocuSign/Adobe (full-body HMAC) a captured valid webhook can be replayed indefinitely to re-drive workflow state. For HelloSign, `event_time` IS signed but is never compared against server time (L848), so it provides no freshness. Combined with the envelope_id-binding gap above, replay is trivial.",
+        "Fix: reject deliveries whose provider-supplied timestamp is outside a tolerance window (HelloSign: validate `event_time`; DocuSign: `x-docusign-signature-1` carries a signed timestamp header set to verify; Adobe: enforce a received-at dedupe/nonce), matching the sibling receivers' pattern; persist a processed-delivery id for at-most-once handling."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-raw-status-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:218 \u2014 the status badge renders the raw api-server enum via `{fault.status.replace('_', ' ')}`, so sk/cs/de users see English 'open' / 'in progress' / 'resolved'. The rest of this screen is fully translated (useTranslation at :133, t('faults.loadError') etc.), so this is a localized-screen gap, not an un-i18n'd screen.",
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 \u2014 same pattern: `{outage.status.replace('_', ' ')}` prints the raw enum ('scheduled' / 'in_progress' -> 'in progress') untranslated in the outage status badge.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 \u2014 `{announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}` capitalizes the raw enum instead of translating it. Contrast VotingScreen.tsx:233 which does it correctly with `t(`voting.filter.${option}`)` and translates status via t(), confirming these three are deviations from the established pattern. App ships sk/cs/de/en per CLAUDE.md (Reality i18n), so non-en locales see English status text."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-faultslist-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:160 \u2014 the report-fault CTA renders a hardcoded English literal `<Text style={styles.addButtonText}>+ Report</Text>` instead of a t() key, in a file that otherwise uses useTranslation (imported :2, `const { t } = useTranslation()` :133).",
+        "frontend/apps/mobile/src/screens/faults/FaultsListScreen.tsx:172 \u2014 the filter tab labels are produced by capitalizing the raw option key: `{option.charAt(0).toUpperCase() + option.slice(1)}` over `['all','open','resolved']`, so the tabs read 'All' / 'Open' / 'Resolved' in every locale. VotingScreen.tsx:233 shows the intended pattern for the identical filter-tab UI: `{t(`voting.filter.${option}`)}`.",
+        "Impact: a fully-Slovak build still shows an English primary action button and English filter tabs on the faults list \u2014 a visible localization regression on a core resident screen."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-button-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:184 \u2014 hardcoded English `<Text style={s.primaryButtonText}>+ New message</Text>` on the compose CTA, in a screen that otherwise uses t() 7 times (useTranslation at :86).",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:142 and :145 \u2014 the save/cancel edit buttons render hardcoded `<Text ...>Save</Text>` and `<Text ...>Cancel</Text>` literals rather than t('common.save') / t('common.cancel').",
+        "Same i18n-gap class as the FaultsListScreen finding but distinct files/screens; grouped as one signal so the fix can add the missing keys (messages.compose.cta, common.save, common.cancel) in one pass. All are user-facing button labels that stay English under sk/cs/de."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-query-invalidation-dead",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:94-99 \u2014 WebSocketWrapper renders <WebSocketProvider> with only the `auth` prop; it passes NO `onEntityEvent`. In frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:298-300 the entity-event subscription effect begins `if (!service || !onEntityEvent) return;` \u2014 so with onEntityEvent undefined it never subscribes to any entity event and never invalidates a TanStack Query cache. The file header advertises 'Query invalidation on server push' as the provider's purpose; in production that purpose is unwired.",
+        "Independent second defect on the same path \u2014 event-name mismatch: WebSocketContext.tsx:33-40 (`eventToQueryKeys`) keys on colon-namespaced names ('entity:announcement','entity:fault','entity:vote','entity:document','entity:message','entity:neighbor') and lines 313 subscribe to 'entity:updated'/'entity:created'/'entity:deleted'. But the api-server only ever emits DOTTED event names: backend/servers/api-server/src/routes/ws_notifications.rs:300-301 emits event='notification.created', line 219-220 passes msg.event_type through verbatim (e.g. 'announcements.notification'), and a repo-wide grep for a colon-style 'entity:' event in api-server/src finds none. parseServerMessage (websocket.ts:65-82) maps server `event` -> `type` verbatim with no colon conversion, and handleMessage dispatches on that raw type \u2014 so even if onEntityEvent WERE wired, no 'entity:*' subscription could ever match a real server frame.",
+        "Not a key-shape problem: the eventToQueryKeys VALUES (['announcements'],['faults'],['documents'],['messages'],['neighbors'],['votes']) do match the query-key roots in lib/queryKeys.ts (announcements.all=['announcements'], faults.all=['faults'], etc.), so a prefix invalidateQueries would work \u2014 the break is purely the missing prop + the event-name namespace mismatch.",
+        "User-facing effect (medium): the socket itself connects fine (ConnectionStatus shows 'live'), but a server push for a new announcement / fault / message / vote never refreshes any cached list \u2014 the user must manually refetch/navigate to see live data, silently defeating the realtime UX. Fix options: (a) wire onEntityEvent in App.tsx to queryClient.invalidateQueries, and (b) reconcile the event-name contract \u2014 either have the server emit the 'entity:*' names the client subscribes to, or remap eventToQueryKeys / the subscription keys onto the server's dotted 'notification.created'/'<domain>.notification' vocabulary. The JSDoc examples in useWebSocket.ts (message:new, notification:announcement, entity:updated) are also written against the non-existent colon vocabulary and should be corrected in the same pass.",
+        "Confidence high: fully traced from a production entry point (App.tsx WebSocketWrapper sits in the authenticated app shell) to the early-return, and the server-vs-client event-name mismatch is confirmed by direct read of ws_notifications.rs plus a negative grep for 'entity:' events across api-server/src."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:22-49 \u2014 the shared `request<T>()` helper sends ONLY `credentials: 'include'` (cookie auth) and merges `{ 'Content-Type': 'application/json', ...callerHeaders }`. It never calls `getAuthHeader()` from lib/auth-token.ts, and none of the exported callers (getMyRealtorProfile L67, updateMyRealtorProfile L71, createListing L117, getMyListing L129, updateListing L133, getMyRealtorAnalytics L148) pass an Authorization header. So no request from this module ever carries `Authorization + Bearer <token>`.",
+        "This diverges from the sibling auth client lib/auth-api.ts:35-43, which deliberately merges BOTH `credentials: 'include'` AND `...getAuthHeader()` (comment L37-39: 'bearer header is additive \u2014 reality-server's extractor checks Authorization first then cookie'). lib/auth-token.ts is purpose-built for the email/password form-login path (docstring L1-11: persists the `/api/v1/users/login` JWT in localStorage under `ppt-portal-token` and adds `Authorization + Bearer \u2026` on authenticated requests) \u2014 that path sets NO `portal_session` cookie.",
+        "backend/servers/reality-server/src/extractors/auth.rs:31-44 \u2014 `extract_session_token` reads `Authorization + Bearer \u2026` first, then falls back to the `portal_session` cookie, returning None if neither is present. Consequence: a realtor authenticated via form-login (Bearer in localStorage, no cookie) sends neither mechanism on realtor write calls, so every createListing/updateListing/updateMyRealtorProfile/getMyListing/getMyRealtorAnalytics returns 401. The pages that call these directly (app/[locale]/realtor/listings/new/page.tsx:23, realtor/profile/page.tsx:68, realtor/listings/[id]/edit/page.tsx, account/listings/[id]/edit/page.tsx:129) surface a generic error and the realtor cannot create/edit listings or update their profile. Fix: merge `getAuthHeader()` into request()'s headers the same way auth-api.ts does. Confidence medium: correct if realtors can ever use form-login (the token module exists precisely for that); a no-op only if realtors are provisioned SSO-cookie-only in practice."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "The entire authenticated realtor + account route group ships English-only in a 4-locale app (sk/cs/de/en). All 11 page shells have NO `useTranslations`/`getTranslations` import: app/[locale]/realtor/{page,profile,[id],listings,listings/new,listings/[id]/edit,analytics}/page.tsx and app/[locale]/account/{page,profile,password,listings/[id]/edit}/page.tsx.",
+        "Hardcoded user-facing English confirmed in the page shells themselves (not delegated to children): realtor/listings/new/page.tsx:37-41 '<h1>Create listing</h1>', '<p>Publish a new property to Reality Portal.</p>', submitLabel=\"Publish listing\"; realtor/profile/page.tsx:88/93/94/160 'Loading profile\u2026', 'Realtor profile', 'Buyers and renters see this information\u2026', 'License number', plus client validation L63 'Name is required' and error fallback L86 'Could not save profile.'; account/password/page.tsx:37-59 'Current password is required', 'New password is required', `Password must be at least ${MIN} characters`, 'New password must differ from the current password', 'Passwords do not match', headings 'Change password' / 'Update the password used to sign in\u2026' and error 'Could not change password. Please try again.'; realtor/analytics/page.tsx:68-81 'Analytics','Performance of your listings over time.','Loading metrics\u2026'; realtor/listings/page.tsx:77-89 'My listings','Manage the properties you have published.','Loading\u2026','Failed to load listings.','You haven't published any listings yet.'",
+        "DISTINCT from prior (all `status:done`) findings which localized CHILD COMPONENTS: code-review-reality-web-listingform-no-i18n (ListingForm now uses `useTranslations('listingForm')` at components/realtor/ListingForm.tsx:73), realtor-mgmt-i18n / realtor-mgmt-untranslated (RealtorManagement), agency-import-i18n. The route-level page shells that host those components were missed and still hardcode headings, subtitles, form field labels, loading/empty/error states and inline validation. Also feeds English through the API layer: lib/realtor-api.ts:35/38 throws RealtorApiError('Network error. Please try again.') / `Request failed (${status})` whose .message is rendered verbatim by these pages. Fix: wrap all page-level copy in next-intl and stop passing hardcoded submitLabel/title props."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-shared-state-primitives-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/states/ErrorState.tsx:59-66 hardcodes English default copy with no i18n: title='Something went wrong', description='Please try again. If the issue persists, contact support.', retryLabel='Try again'. components/states/EmptyState.tsx:16 defaults icon='\ud83d\udced' and takes plain-string title/description props with no translation.",
+        "Both are exported from the barrel components/states/index.ts:5-8 alongside StateView and LoadingSkeleton, but are currently UNRENDERED: grep for `<ErrorState`/`<EmptyState` finds only the unrelated LOCAL components defined inside components/import/CsvImport.tsx:1146 and FeedImport.tsx:906 (which ARE localized via useTranslations). The only barrel members actually imported anywhere are StateView (app/[locale]/error.tsx, not-found.tsx, agency/error.tsx, forbidden/page.tsx \u2014 all pass title={t(...)}) and LoadingSkeleton.",
+        "This is latent i18n debt, not a live user-facing bug: the shared ErrorState/EmptyState are the 'obvious' primitives a future dev will reach for, and unlike the already-safe StateView (which forces explicit title/description) they silently render English defaults. Low severity \u2014 fix is to either localize the defaults (accept a translation key / require callers to pass translated strings) or remove the dead exports so the localized StateView stays the single shared error/empty surface."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-fault-report-csv-injection",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/helpers.rs:188 \u2014 the fault-report CSV branch of generate_sync_csv_report embeds `cat.category` (and the neighbouring `status.status` / `priority.priority`) straight into the CSV via format! with no escaping: `csv.push_str(&format!(\"By Category,All,{},{},N/A,N/A\\n\", cat.category, cat.count))`.",
+        "backend/servers/api-server/src/routes/reports/helpers.rs:113 \u2014 the sibling voting export in the SAME file routes user text through `sanitize_csv_cell(&v.title)` (imported line 15) to neutralize CSV formula-injection and CR/LF row-spill (regression #2822); the fault branch never calls it, so the two export paths are inconsistent and the fault path is unguarded.",
+        "backend/servers/api-server/src/routes/faults.rs:466 \u2014 `category: req.category` is copied from the create-fault request into CreateFault with no enum/allowlist validation, so a tenant can persist an arbitrary category string (e.g. `=cmd|'/c calc'!A1`, or one containing `,` / CRLF). That string flows through the by_category GROUP BY aggregate (crates/db fault repo) into the unescaped CSV cell above, giving a stored CSV formula-injection / column-spill vector when a manager opens the exported report in Excel/LibreOffice."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-market-pricing-db-error-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/market_pricing.rs:459 \u2014 `list_regions(org_id).await.unwrap_or_default()` swallows any DB error into an empty region list, so a transient DB failure is indistinguishable from 'no regions configured'.",
+        "backend/servers/api-server/src/routes/market_pricing.rs:471 \u2014 `get_market_comparables(...).await.unwrap_or_default()` similarly turns a DB error into zero comparables; the downstream generate_statistical_pricing then silently falls back to the size-based estimate (market_pricing.rs:744) and returns a fabricated confidence, so a money-relevant pricing recommendation can be computed on empty data caused by an error while presenting as authoritative \u2014 the failure is neither surfaced to the caller nor logged as an error."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (930 lines) is a [locale]-scoped route in a 4-locale portal (sk, cs, de, en) but imports NO next-intl helper and has no `useTranslations` binding anywhere (grep for `= useTranslations` returns nothing; the `t` at L384/L725 is a local `.map((t) => ...)` variable, not the translation function).",
+        "Every user-facing string in the edit wizard is hardcoded Slovak: form field labels ('Typ nehnute\u013enosti' L399, 'Po\u010det izieb' L466, 'Celkov\u00fd po\u010det poschod\u00ed' L468, 'Rok v\u00fdstavby' L469, 'Adresa' L429), buttons/links ('\u2190 Sp\u00e4\u0165 na \u00fa\u010det' L233, 'Zobrazi\u0165 inzer\u00e1t' L268, '\u010eal\u0161ie \u00fapravy' L285), status labels ('Akt\u00edvny'/'Neakt\u00edvny' L665-666), the loading text ('Na\u010d\u00edtavam inzer\u00e1t\u2026' L223), the success panel ('Inzer\u00e1t bol ulo\u017een\u00fd!' L251) and the summary ('S\u00fahrn zmien' L710).",
+        "Both error fallbacks are hardcoded Slovak too: L166 `setLoadError(err instanceof RealtorApiError ? err.message : 'Na\u010d\u00edtanie inzer\u00e1tu zlyhalo.')` and L213 `'Ulo\u017eenie zlyhalo, sk\u00faste znova.'`.",
+        "Consequence: a de/en/cs user reaching /en/account/listings/{id}/edit (or /de/..., /cs/...) sees the entire listing-edit flow \u2014 field labels, statuses, validation errors \u2014 rendered in Slovak, an effectively unusable form for a non-Slovak owner. The locale in the URL is silently ignored for this screen.",
+        "Fix: add `const t = useTranslations('...')` (or getTranslations for any server portion) and move all copy into the reality-web messages/ catalogs (en/sk/cs/de), matching the pattern already used by app/[locale]/sell/page.tsx (which correctly calls useTranslations twice)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-account-routes-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "Systemic i18n gap across the signed-in account/realtor route cluster: multiple [locale]-scoped pages hardcode English user-facing copy with no `useTranslations` (grep `useTranslations` returns 0 in each), so the URL locale segment is ignored and sk/cs/de users see English.",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx: hardcoded 'My Inquiries' (L541), 'Track your property inquiries and viewing requests.' (L542), 'No inquiries yet' (L387), 'Failed to load inquiries. Please try again.' (L332), 'Cancel this inquiry?' (L116). (Error + empty states themselves are present and correct \u2014 the gap is only i18n.)",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx: hardcoded 'My listings' (L77), 'Manage the properties you have published.' (L78), 'Failed to load listings.' (L86), \"You haven't published any listings yet.\" (L89).",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx: hardcoded 'Account' (L52) with no useTranslations.",
+        "Fix: wire each page through next-intl `useTranslations` and add the corresponding keys to messages/{en,sk,cs,de}.json, matching app/[locale]/sell/page.tsx. Treat as one cleanup sweep across the account/realtor/inquiries screens (the listing-edit wizard, tracked as a separate finding, is the most severe instance and can share the sweep)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate meets certainty bar (all tier-1d findings are confidence=medium)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/2026-08-27.md",
+      "observed": "# 2026-08-27",
+      "expected": "# 2026-08-27"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state vs HEAD",
+      "observed": "True",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "total=389 unique=389",
+      "expected": "equal"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative dup",
+      "observed": "offenders=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "score<=8",
+      "observed": "all pass",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief adversarial pass line",
+      "observed": "found=1",
+      "expected": ">=1"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths",
+      "observed": "outside=[]",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans converge",
+      "observed": "missing=[]",
+      "expected": "empty"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive size",
+      "observed": "now=9 prev=9",
+      "expected": "now>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap",
+      "observed": "len=0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
