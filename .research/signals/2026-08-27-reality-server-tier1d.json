@@ -1,0 +1,24 @@
+{
+  "generated": "2026-08-27",
+  "segment": "reality-server",
+  "source": "dispatcher-tier1d",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-rs-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687 — exchange_code_for_tokens() builds `reqwest::Client::new()` with no .timeout(); the SSO callback awaits the PM OAuth token endpoint with no upper bound",
+        "backend/servers/reality-server/src/routes/sso.rs:711 — get_user_info() same pattern: `reqwest::Client::new()`, unbounded .get(pm_userinfo_url) on the login/exchange/sync paths",
+        "backend/servers/reality-server/src/routes/sso.rs:748 — introspect_pm_token() same pattern: `reqwest::Client::new()`, unbounded .post(pm_introspect_url); reached by sso_callback, exchange_pm_token, create_mobile_sso_token, sync_session",
+        "Contrast: state.rs:757 PmApiClient correctly uses reqwest::Client::builder().timeout(Duration::from_secs(..)); the SSO path is the only outbound HTTP without a deadline. A slow/hung PM server stalls SSO request tasks indefinitely (reqwest default = no timeout), a resource-exhaustion vector on the auth-critical path. Each call also allocates a fresh Client per request, defeating connection/TLS pooling",
+        "Fix: add .timeout(...)/.connect_timeout(...) (or reuse a single pooled client stored on AppState) for the three SSO reqwest clients"
+      ],
+      "expert": "rust"
+    }
+  ]
+}
