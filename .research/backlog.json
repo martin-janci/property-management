@@ -9242,6 +9242,95 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "title": "churn hotspot: ContentModerationPage.tsx — 3 PR touches this window (overdue affordance server-side move + truncation notice)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2849",
+        "PR #2856",
+        "PR #2860"
+      ],
+      "evidence": [
+        "ContentModerationPage.tsx touched by 3 merged PRs in the 2d window: #2849 wired the overdue affordance to filter cases (client-side), #2856 moved the overdue filter server-side (list API `overdue` param), #2860 added the truncation notice for the OVERDUE_PAGE_LIMIT cap. Same feature iterated three times as the moderation-overdue contract stabilized.",
+        "Instability proxy: the page's overdue rendering path changed twice in 2 days before landing an invariant DB test (#2860). Watch next window; if churn continues, consider extracting the overdue-list hook."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "title": "churn hotspot: ContentModerationPage.test.tsx — 3 PR touches this window tracking the moderation-overdue behavioral drift",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2849",
+        "PR #2856",
+        "PR #2860"
+      ],
+      "evidence": [
+        "ContentModerationPage.test.tsx touched by 3 merged PRs matching #2849/#2856/#2860 — every product change required a test rewrite (client-narrowing → server-side → truncation-notice), suggesting the test surface is still coupled to implementation shape.",
+        "Companion signal to churn-hotspot on ContentModerationPage.tsx. No action required this run; monitor for continued churn."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "title": "repeated-churn: AmlDashboardPage.tsx — hotspot again after 2026-08-25 (runs_seen advancing to 2); PR #2848 extracted sections + data hook",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2848"
+      ],
+      "evidence": [
+        "hotspot_history for AmlDashboardPage.tsx already marked runs_seen=1 in 2026-08-25 (churn-hotspot fired from PRs #2829/#2833). This run PR #2848 landed a planned extraction refactor — 240 lines moved out to useAmlDashboard() hook, 3 sub-components (AmlThresholdsSection / AmlCountryRisksTable / AmlFiltersPanel). Signal fires per routine rules but reads as expected refactor churn rather than instability.",
+        "Watch: if the page churns AGAIN in a subsequent window after this extraction, consider it real instability rather than planned refactor tail."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+      "title": "repeated-churn: AmlDashboardPage.test.tsx — hotspot again after 2026-08-25 (runs_seen advancing to 2); PRs #2848 + #2852 refactored test helpers",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2848",
+        "PR #2852"
+      ],
+      "evidence": [
+        "hotspot_history for AmlDashboardPage.test.tsx already marked runs_seen=1 in 2026-08-25. This run: PR #2848 restructured tests around the extracted sections, PR #2852 de-duplicated decision-flow test helpers (`decisionSelect() / reviewNotesInput() / reasonInput() / submitReview() / cancelDialog() / eddDialogSubmit()`). Both are cleanup, not defect-driven — expected tail of the extraction refactor.",
+        "Companion to repeated-churn on AmlDashboardPage.tsx. Decays away in 14d absent new signals."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
     }
   ]
 }

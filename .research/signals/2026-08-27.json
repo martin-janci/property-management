@@ -1,0 +1,72 @@
+{
+  "run_iso": "2026-08-27T03:15:00Z",
+  "trigger": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "routine cadence check",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "routine last_run_iso=2026-08-25T08:50:37Z; now=2026-08-27T03:15:00Z → 42h since last run (>36h threshold); cloud routine slipped one daily beat (not yet stale-alert territory at <72h)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR file-list intersection (#2849, #2856, #2860)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": "ContentModerationPage.tsx touched by 3 merged PRs in the 2d window: #2849 wired the overdue affordance to filter cases (client-side), #2856 moved the overdue filter server-side (list API `overdue` param), #2860 added the truncation notice for the OVERDUE_PAGE_LIMIT cap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR file-list intersection (#2849, #2856, #2860)",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "confidence": "high",
+      "evidence": "ContentModerationPage.test.tsx touched by the same 3 PRs — test surface still coupled to implementation shape; each product change forced a test rewrite (client-narrowing → server-side → truncation-notice)"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history[AmlDashboardPage.tsx].runs_seen=1 (2026-08-25) + PR #2848",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": "AmlDashboardPage.tsx re-touched in this window by PR #2848 (planned extraction refactor: 240 lines moved to useAmlDashboard() hook + 3 sub-components). runs_seen advances 1→2. Reads as expected refactor churn rather than instability — flagged per routine rules; watch next window."
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history[AmlDashboardPage.test.tsx].runs_seen=1 (2026-08-25) + PRs #2848, #2852",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "confidence": "medium",
+      "evidence": "AmlDashboardPage.test.tsx re-touched by PR #2848 (restructured tests around extracted sections) + PR #2852 (de-duplicated decision-flow test helpers). runs_seen advances 1→2. Companion to AmlDashboardPage.tsx repeated-churn."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type met confidence=high × score>=3 × per-run cap this run (churn-hotspot / repeated-churn are analytical only; not in the auto-fix allowlist; no screen-map-drift / orphan / fixme-in-merged-code / lockfile-drift dep-update signal fired; stalled-review one-shots for the 3 accounting PRs already recorded in state.seen_signals)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-08-27.md && head -1 grep",   "observed": "brief exists with # 2026-08-27 header", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq compare state.json vs HEAD",                            "observed": "last_pr_seen 2847→2860; last_issue_seen 2847→2862; last_commit_sha 142ae17→6d05222; seen_signals length +5; hotspot_history +2 keys; stats.runs 71→72", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq unique-id check on backlog.json",                       "observed": "367 items, 367 unique ids", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no prev-run signal id re-emitted with score_delta != 0 outside cumulative allowlist", "observed": "5 signals this run, all IDs absent from prior seen_signals", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "jq score-cap and decay checks",                            "observed": "no score > 8; all 3 open items have updated_at within 14d of 2026-08-27 so no decay owed", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "no new plans this run — vacuously true",                    "observed": "0 new plans/*.md added", "expected": "true (vacuous)" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans, template gates",                              "observed": "0 new plans → vacuous", "expected": "≤2 & metadata" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "grep for secrets/private hostnames in staged diff (excluding baseline docs)", "observed": "no matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md against regenerated view",                  "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — Phase 1.5 + Phase 1.6 skipped this run, listed in brief, respective cursors unchanged", "observed": "review_cursor + pm_cursor + coverage_cursor unchanged vs HEAD", "expected": "cursor unchanged on failed/skipped phase" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs present in plans/ or plans/_archive/", "observed": "no plan removals this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count ≥ HEAD count",                                "observed": "archive unchanged (8 files)", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md against regenerated view",             "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions.length <= 3 with sub-caps",                "observed": "auto_fix_actions=[]", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts (Phase 1.6 was skipped → no-op)",       "observed": "Phase 1.6 skipped this run; pm_cursor unchanged so GC7 clause does not trigger",           "expected": "no-op when Phase 1.6 skipped" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram token in staged diff",                  "observed": "no matches", "expected": "0" }
+  ]
+}
