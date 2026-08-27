@@ -1,9 +1,61 @@
 {
-  "generated": "2026-08-26T15:00:00Z",
+  "generated": "2026-08-27T02:00:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-27T02:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2858,
+          "issue": 2861,
+          "findings": 3,
+          "specialist": "pm-rust-backend",
+          "note": "capability-grant email-verification fix (#2857): core fix correct+order-independent (strictest_policy_across all memberships, equivalent-or-stricter than old first()-org path; no-membership platform case still Ok) with 2 IG3 sqlx tests. 3 residual follow-ups: (1) medium correctness/robustness -- ROOT CAUSE MembershipRepository::list_for_user (membership.rs:130-142) still has NO ORDER BY; fix only made ONE caller order-independent. check_principal_kind_change (auth_policy.rs:270-284) still gates on memberships.first(); liveness-only so not fail-open, but non-deterministic (flaky if exactly one org policy row corrupt). Proposed: add ORDER BY created_at,organization_id at the repo source -> fixes the whole .first() class. (2) low dead-code -- single-org check_capability_grant (auth_policy.rs:207-224) now has ZERO production callers (grep confirms only its own def); superseded, remove or cover+annotate. (3) low docs -- capabilities.rs:292-297 doc still says the helper 'picks the grantee's first active membership', the exact behavior #2858 removed (adjacent-file drift)."
+        }
+      ],
+      "skipped_already_reviewed": [
+        2856,
+        2855,
+        2854,
+        2853,
+        2852,
+        2851,
+        2850,
+        2849,
+        2848,
+        2847,
+        2846,
+        2845,
+        2844,
+        2843,
+        2842,
+        2841,
+        2840,
+        2839,
+        2838,
+        2837,
+        2836,
+        2835,
+        2834,
+        2833,
+        2830,
+        2829,
+        2828,
+        2827,
+        2826,
+        2825,
+        2821
+      ],
+      "note": "Tier-1d demand-driven post-merge review (claim buffer starved). DISPATCHER_OWNED_COMMIT semantics -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI proxy-403'd -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 2 PR diffs reviewed inline + in-tree source verification (static/diff review only, no compile: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run (2026-08-26T15:00Z) reviewed through #2856. Label-based enumeration of merged-into-dev PRs: exactly TWO lacked post-merge-reviewed -- #2858 (merged 2026-08-26T20:29Z) and #2860 (merged 2026-08-27T00:32Z); BOTH merged AFTER the prior cursor (the dispatcher note said only #2860 was new, but #2858 was also net-new & unlabeled -- reviewed both). #2858 -> opened #2861 (3 findings, above). #2860 (follow-up implementing #2859: backend overdue_only IG3 sqlx test locking list<->overdue_count invariant [solid] + FE 200-cap truncation notice) -> opened #2862: 1 low correctness edge -- ContentModerationPage.tsx:412 guards the truncation notice on `cases.length === OVERDUE_PAGE_LIMIT` WITHOUT checking overdue_count > 200, so an org with EXACTLY 200 overdue cases shows a false-positive 'first 200 of 200 -- refine filters' though nothing is truncated; new Vitest only covers the 350>200 true-positive, boundary untested. Proposed: guard on (stats?.overdue_count ?? 0) > OVERDUE_PAGE_LIMIT + drop the ?? cases.length fallback + add exactly-200 no-notice regression test. Verified in-tree: no upstream guard prevents the boundary. Both PRs labeled post-merge-reviewed + breadcrumb comments (#2858->#2861, #2860->#2862). Deduped: searched from-merged-review issues, none pre-existing for #2858/#2860.",
+      "focus_prs": [
+        2858,
+        2860
+      ]
+    },
     {
       "run_at": "2026-08-26T15:00:00Z",
       "prs_scanned": 2,
@@ -517,47 +569,6 @@
         2715,
         2710,
         2696
-      ]
-    },
-    {
-      "run_at": "2026-08-08T02:22:56Z",
-      "prs_scanned": 15,
-      "clean": [
-        2688,
-        2690,
-        2691,
-        2692,
-        2697,
-        2698,
-        2700,
-        2701,
-        2702,
-        2706,
-        2707,
-        2708,
-        2709,
-        2711,
-        2712
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed in this runner -> GitHub MCP (mcp__github__*) for every network call. Window merged-to-dev 14d (>=2026-07-25), base=dev, max_prs=15. Prior run (2026-08-06T18:19Z) scanned #2666-#2683; this run scanned the 15 NEWEST never-reviewed merged-to-dev PRs after it (by merged_at desc): #2688,#2690,#2691,#2692,#2697,#2698,#2700,#2701,#2702,#2706,#2707,#2708,#2709,#2711,#2712 (exactly the max_prs cap). Two closed-unmerged dependabot PRs (#2587,#2582) excluded (merged_at null). The still-unreviewed older stragglers #2663/#2664/#2665 and the #2685/#2686/#2687/#2689/#2693/#2694/#2695 mid-tier (all merged 2026-08-06T23:22..2026-08-07T00:08) fall just outside the newest-15 and roll to the next run. ALL 15 CLEAN, 0 net-new issues -- another unusually strong batch: every PR is an auto-impl code-review security/correctness/i18n fix shipped WITH a targeted regression test. Highlights: #2698 (reality-server anonymous-inquiry throttle: new TenantRateLimiterSet::with_default_bounded w/ inline LRU+TTL eviction so a rotating-IP flood can't balloon the map; spoof-resistant client key reads X-Forwarded-For counting trusted_hops FROM THE RIGHT, fail-safe to a shared 'unknown' bucket on underlength/absent header -- never fail-open; wired FIRST on send_contact_message + request_viewing before any DB work; exhaustive route+key unit tests). #2707 (workflow api_call memory-DoS: read_capped_body caps response buffering at 8 MiB via Content-Length pre-check + bounded streaming read, closes the unbounded response.text() amplification; truncation-marked + warn-logged; hermetic synth-response tests). #2706 (RAG index_document fails closed 502 on embedding-count!=chunk-count instead of silently zip-truncating to a partial index). #2708 (workflow condition compare: coerce_finite_f64 rejects stringified NaN/inf/infinity that Rust's f64 parser otherwise accepts -> routed to uncomparable, not a non-antisymmetric ordering). #2688 (ai/llm enhanced_chat now fails closed 501 instead of returning a fabricated confidence:0.85/tokens_used:150/escalated payload built from no real RAG/LLM call; OpenAPI 200->501; test asserts 501 + absence of fabricated fields). #2692 (public listing view_count: SECURITY DEFINER portal_get_listing_view_count bypasses org-only FORCE-RLS on listing_analytics for portal listings org_id=NULL -> real total instead of hardcoded 0; NOBYPASSRLS-role FORCE-RLS regression test proves direct SUM reads 0 while definer reads the real total). #2712 (dispute add_evidence emits a resource_created/dispute_evidence access-audit row on audit_logs, mirroring membership.rs pattern; test asserts actor/org/dispute_id). #2711 (behavior-preserving layout tenant.rs dedupe: extracted require_org_admin + load_screen_config, nil-org 400 / non-admin 403 semantics preserved, connection still released on reject). #2690 (mobile-rn cold-start & biometric-unlock now refresh an expired stored access token via isJwtExpired(skew=30s) before trusting the restored session -- #2399 no-refetch intent preserved; malformed/missing-exp defers to server 401, never fail-open; broad integration + util tests). #2691 (ppt-web WS resume-after-give-up: connect() resets the reconnect budget via resetReconnectAttempts while the internal backoff loop calls openConnection() directly so the cap can still be reached; network-status effect re-arms on regained connectivity while authenticated; maxRetriesExceeded surfaced for a reconnect affordance; fake-WebSocket fake-timer tests cover both halves). #2709 (reality-web ListingForm i18n via next-intl across all 6 catalogs sk/cs/de/en/hu/pl, precursor #2702 added NaN/negative area/rooms guards + tests). #2701 (shared-comparison URL: Promise.all->allSettled so one bad listing id is dropped and the good ones still load; error state only when nothing loads). #2697 (removed orphaned reality-server ListingHandler stub module + its geo helpers -- dead code, no live callers). #2700 (pure migration-file renumber 00220->00227 resolving a version collision introduced by #2692's new migration; the function is referenced by NAME not number and CREATE OR REPLACE is idempotent, so the rename is safe). Dedup / considered-but-not-filed: (a) #2690's initialize() useEffect now depends on the memoized refreshToken callback -- if its deps ever churn the effect could re-run and re-read SecureStore; refreshToken is a stable useCallback so this is not a live bug, not filed. (b) #2698's InquiriesHandler::create_inquiry remains uncalled by live routes (throttle+repo path bypass it) but that pre-dates this PR and is explicitly documented; not a net-new gap. (c) #2700 renumber COULD checksum-conflict a DB that already applied the old 00220, but #2692/#2700 merged the same day well before any release and the function body is idempotent -- process nit, not code-shape actionable. Labeling: GitHub MCP has no clean PR-label add (update clobbers existing labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history is the dedup record for the next run (same precedent as every prior run). NET-NEW actionable issues: 0.",
-      "focus_prs": [
-        2688,
-        2690,
-        2691,
-        2692,
-        2697,
-        2698,
-        2700,
-        2701,
-        2702,
-        2706,
-        2707,
-        2708,
-        2709,
-        2711,
-        2712
       ]
     }
   ]
