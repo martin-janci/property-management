@@ -1,9 +1,53 @@
 {
-  "generated": "2026-08-27T02:00:00Z",
+  "generated": "2026-08-27T20:27:31Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-27T20:27:31Z",
+      "prs_scanned": 2,
+      "clean": [
+        2864,
+        2863
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [
+        2860,
+        2858,
+        2856,
+        2855,
+        2852,
+        2851,
+        2850,
+        2849,
+        2848,
+        2847,
+        2846,
+        2845,
+        2844,
+        2843,
+        2842,
+        2841,
+        2840,
+        2839,
+        2838,
+        2837,
+        2836,
+        2835,
+        2834,
+        2833,
+        2829,
+        2826,
+        2825,
+        2821
+      ],
+      "note": "Tier-1d demand-driven post-merge review (claim buffer starved: honest claimable=6, all mobile-native/KMP-gated & unlandable in cloud runner). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6 (did NOT touch assignments.json/action-list.json, no git add/commit/push). gh CLI proxy-403'd -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 2 PR diffs reviewed inline + in-tree source verification (static/diff review only: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run (2026-08-27T02:00Z) reviewed #2858+#2860 and opened #2861+#2862. Label-based enumeration of merged-into-dev PRs: exactly TWO lacked post-merge-reviewed -- #2864 (merged 2026-08-27T08:30Z) and #2863 (merged 2026-08-27T06:25Z). NOTE: these two PRs ARE the auto-impl fixes for the follow-up issues the prior run filed (#2864 Closes #2861, #2863 Closes #2862) -- i.e. this is a follow-up-of-follow-up loop closure. BOTH CLEAN: verified the fixes fully & correctly address the filed findings. #2864 (rust-backend, db+api-server): adds `ORDER BY granted_at ASC, organization_id ASC, role ASC` to MembershipRepository::list_for_user -- a TOTAL order over the (user_id,organization_id,role) PK (used granted_at not the issue-proposed created_at because user_memberships has no created_at col; correct), fixing the ROOT-CAUSE non-determinism finding #1 at source so every .first() caller is deterministic; removes the now-dead single-org check_capability_grant (finding #2, grep-confirmed zero callers); refreshes the stale grant_capability doc-comment to the strictest-across-all-orgs semantics (finding #3). All 3 residual findings from #2861 resolved. 2 IG3 #[sqlx::test]s in new membership_test.rs (orders_by_granted_at inserts later row first + asserts earlier sorts first [fails on pre-fix no-ORDER-BY]; tiebreaks_deterministically same granted_at two roles + repeatability). Verified in-tree: check_principal_kind_change (auth_policy.rs:247-261) loads the .first() membership's policy into `let _policy` and DISCARDS it -- a documented best-effort liveness probe, not a security decision, so the .first() pick was never fail-open; determinism fix is a robustness nicety, no latent semantic bug to file. mod.rs `pub mod membership_test;` matches existing convention (accounting_test, granular_notification_test also unconditional; inner content #[cfg(test)]-gated) -- not a finding. #2863 (react-web, ppt-web/compliance): guards the overdue-truncation notice on `(stats?.overdue_count ?? 0) > OVERDUE_PAGE_LIMIT && cases.length === OVERDUE_PAGE_LIMIT` -- the exact fix proposed in #2862, suppressing the false-positive 'first 200 of 200 -- refine filters' at the exact-200 boundary where nothing is truncated; the `?? cases.length` count fallback is now unreachable (retained dead-safe). Boundary Vitest added (overdue_count===200 + 200 rows => queryByText(/first 200 of/i) not present) -- fails on old guard, passes with fix; existing 350>200 true-positive test untouched. NET-NEW actionable issues: 0. Both PRs labeled post-merge-reviewed via issue_write.update (both carried no pre-existing labels, no clobber) so they will not resurface; no breadcrumb comment needed (no issue opened). Deduped: no open from-merged-review issue for #2863/#2864.",
+      "focus_prs": [
+        2863,
+        2864
+      ]
+    },
     {
       "run_at": "2026-08-27T02:00:00Z",
       "prs_scanned": 2,
@@ -528,47 +572,6 @@
         2665,
         2664,
         2663
-      ]
-    },
-    {
-      "run_at": "2026-08-09T16:10:13Z",
-      "prs_scanned": 15,
-      "clean": [
-        2727,
-        2726,
-        2725,
-        2724,
-        2723,
-        2722,
-        2716,
-        2720,
-        2721,
-        2719,
-        2718,
-        2717,
-        2715,
-        2710,
-        2696
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; no commit/push, orchestrator Phase 6 folds the .research delta). gh CLI NOT installed -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-26), base=dev, max_prs=15. Reviewed-set max before this run was #2712; scanned the NEWEST-15 never-reviewed merged-to-dev PRs by merged_at desc: #2727,#2726,#2725,#2724,#2723,#2722,#2716,#2720,#2721,#2719,#2718,#2717,#2715,#2710,#2696 (exactly the max_prs cap). Rolled to next run (outside newest-15): #2714,#2713 and the older mid-tier stragglers #2685/#2686/#2687/#2689/#2693/#2694/#2695 (same roll-over precedent as prior runs). #2705 excluded (closed-not-merged, merged_at null). ALL 15 CLEAN, 0 net-new issues -- another strong auto-impl batch: every PR is a code-review security/correctness/refactor fix shipped WITH a targeted regression test. Security highlights: #2727 (reality-server list_members IDOR: was unauthenticated + ungated, leaked agency-internal member PII to the internet; now RequestPrincipal + shared check_agency_membership gate -> 401 anon / 403 non-member / 404 unknown; 401+403+200 regression tests). #2726 (SSO sync_session no longer swallows portal-session invalidation failure: extracted inactive_pm_token_response returns 500 on Err so a failed teardown can't masquerade as a successful 401 'invalidated'; 3 unit tests). #2725 (password-reset email transport UC-44.3: real SMTP mailer + log fallback behind PasswordResetMailer seam; delivery_decision guard returns 503 in release when no transport instead of falsely claiming a link was sent; locale-prefixed token-encoded reset URL; truth-table + url-encode tests). #2724 (reality-server DB-error leak: routes raw sqlx/serde errors through util::errors::db_error -> generic 500, scrubbing constraint/column/host/dbname/sslmode detail across agencies/imports/layout/listings/price_map/realtors; leak-scrub unit tests). #2722 (api-server community get_group/list_posts/get_item were unauthenticated cross-tenant reads: add RequestPrincipal + verify_group_access/verify_item_access -> 401 anon / 404 cross-tenant; full anon+x-tenant+same-tenant suite). #2710 (SSRF DNS-rebinding TOCTOU #2703: connect-time SsrfGuardResolver wired into the workflow reqwest client validates every connect+redirect hop via validate_resolved_addrs so the client connects only to validated IPs; hermetic stateful-rebind regression test asserts reject + >=2 resolver calls). Feature/refactor highlights: #2723 (announcement fan-out delivered/read/ack metrics scoped by target_type via real cross-tenant-safe targeting SQL; RLS test proves org-B ids in target_ids contribute nobody). #2716 (platform_settings singleton PATCH/GET + migration 00229, capability-gated, partial-update + persist tests). #2717 (mobile_config singleton PATCH/GET + migration 00230, FOR UPDATE merge, flags-merge PATCH semantics, route-exists/authz tests). #2719 (route anonymous inquiry POSTs through InquiriesHandler so the realtor notification fires; shared inquiry_result_to_id mapping with DB-error->generic-500 + 404/400/429 tests). #2696 (injectable InquiryNotifier seam + LogInquiryNotifier default; best-effort delivery swallows transport failure). #2718 (reality-web layout-revalidate HMAC-binds-body parity test, test-only). #2721 (behavior-preserving layout tenant acquire_public_conn extraction). #2720 (behavior-preserving reports helpers.rs extraction). #2715 (auth handler AuthError alias + err_response helper, byte-for-byte identical status/body, validation .with_details sites left inline). Migration-numbering watch (process nit, not filed): #2716 adds 00229, #2717 adds 00230 -- sequential, distinct, both merged same day pre-release; consistent with #2700's prior 00227 renumber. No collision observed between them. NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels), so post-merge-reviewed NOT applied via MCP; this JSON run-history remains the dedup record for the next run (same precedent as every prior run).",
-      "focus_prs": [
-        2727,
-        2726,
-        2725,
-        2724,
-        2723,
-        2722,
-        2716,
-        2720,
-        2721,
-        2719,
-        2718,
-        2717,
-        2715,
-        2710,
-        2696
       ]
     }
   ]
