@@ -1,0 +1,345 @@
+{
+  "run_date": "2026-08-27",
+  "signals": [
+    {
+      "id": "code-review-api-core-fault-report-csv-injection",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/helpers.rs:188 \u2014 the fault-report CSV branch of generate_sync_csv_report embeds `cat.category` (and the neighbouring `status.status` / `priority.priority`) straight into the CSV via format! with no escaping: `csv.push_str(&format!(\"By Category,All,{},{},N/A,N/A\\n\", cat.category, cat.count))`.",
+        "backend/servers/api-server/src/routes/reports/helpers.rs:113 \u2014 the sibling voting export in the SAME file routes user text through `sanitize_csv_cell(&v.title)` (imported line 15) to neutralize CSV formula-injection and CR/LF row-spill (regression #2822); the fault branch never calls it, so the two export paths are inconsistent and the fault path is unguarded.",
+        "backend/servers/api-server/src/routes/faults.rs:466 \u2014 `category: req.category` is copied from the create-fault request into CreateFault with no enum/allowlist validation, so a tenant can persist an arbitrary category string (e.g. `=cmd|'/c calc'!A1`, or one containing `,` / CRLF). That string flows through the by_category GROUP BY aggregate (crates/db fault repo) into the unescaped CSV cell above, giving a stored CSV formula-injection / column-spill vector when a manager opens the exported report in Excel/LibreOffice."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-market-pricing-db-error-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/market_pricing.rs:459 \u2014 `list_regions(org_id).await.unwrap_or_default()` swallows any DB error into an empty region list, so a transient DB failure is indistinguishable from 'no regions configured'.",
+        "backend/servers/api-server/src/routes/market_pricing.rs:471 \u2014 `get_market_comparables(...).await.unwrap_or_default()` similarly turns a DB error into zero comparables; the downstream generate_statistical_pricing then silently falls back to the size-based estimate (market_pricing.rs:744) and returns a fabricated confidence, so a money-relevant pricing recommendation can be computed on empty data caused by an error while presenting as authoritative \u2014 the failure is neither surfaced to the caller nor logged as an error."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-core-personmonths-raw-fetch-noauth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:75-91 \u2014 useBuildingUnits() calls a hand-rolled `fetch(\\`/api/v1/units?buildingId=${buildingId}&limit=500\\`, { headers: { 'Content-Type': 'application/json' } })` with NO Authorization header and NO X-Tenant-ID header. This is the ONLY raw fetch() in the entire ppt-web-core scope (routes/, lib/, hooks/, contexts/) \u2014 a repo grep confirms every other data path goes through the generated @ppt/api-client hooks or lib/api.ts's axios instance, both of which inject the bearer token (contexts/AuthContext.tsx:325-344 wires setTokenProvider + configureApiClient) and X-Tenant-ID (setOrgProvider, #1522).",
+        "ppt-web authenticates with a localStorage bearer token, not cookies: AuthContext stores ppt_access_token in localStorage and the api-client interceptor sets `Authorization/Bearer <token>`; there is no `credentials: 'include'` cookie session anywhere. So this bare fetch reaches the authenticated GET /api/v1/units endpoint with no credentials and is rejected (401). The error is swallowed: `if (!res.ok) throw new Error(...)` -> TanStack Query catches it -> `data` is undefined -> the hook returns `units: []`.",
+        "User-facing effect (high): every person-months surface that lists units is driven by useBuildingUnits \u2014 PersonMonthsPageRoute (building summary), BulkEntryPageRoute (bulk grid), UnitPersonMonthsPageRoute (unit designation lookup). With units=[] the building summary shows ZERO units, bulk entry shows an empty grid, and unit designations render blank \u2014 the feature (Epic 3 Story 3.5) is effectively non-functional in an authenticated production session even though the page renders without an error.",
+        "Second defect on the same fetch: the response is hand-typed inline as `{ data: Array<{ id: string; unitNumber: string }> }`, bypassing the generated Unit type. If the /units envelope or field casing changes, this silently breaks with no compile-time signal \u2014 the whole reason the rest of the app uses @ppt/api-client. The query key `['person-months','building-units', ...]` also namespaces a units resource under person-months, so a units-scoped cache invalidation won't reach it.",
+        "Fix: replace the raw fetch with the generated units hook/list function from @ppt/api-client (the same module person-months already imports useBuilding/useBuildingPersonMonths from), so the request carries the bearer token + X-Tenant-ID and is typed. Confidence medium: the missing-auth-header and swallow-to-empty path are traced statically; not runtime-confirmed against a live server, but ppt-web's bearer-token contract is explicit in AuthContext."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-86 \u2014 FinancialDashboardPageRoute runs three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) and destructures ONLY `isLoading` from each; no `isError`/`error` is read. Line 132 passes just `isLoading={isLoading}` to <FinancialDashboardPage>; no error prop is passed and the page has no error branch.",
+        "On any of the three queries failing, the defaults kick in silently: `totals` falls back to all-zeros (lines 88-94), `invoices` to [] (95), `overdueInvoices` to [] (96). The dashboard then renders a fully 'healthy' financial picture \u2014 total balance 0, outstanding 0, overdue 0, empty invoice counts \u2014 with no indication the data failed to load. On a money-facing manager dashboard that is actively misleading (a failed AR-aging load looks identical to a genuinely clean ledger).",
+        "The correct pattern already exists a few routes down in the same file: financial.tsx:457-458 passes `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}` to its page. The dashboard route should surface `isError`/`error` (aggregated across the three queries) the same way. Score 2 (unhandled error on a user-facing, financially sensitive path). New finding \u2014 distinct from the mutation onError handlers already present at lines 179/204/306/319, which cover writes, not these reads."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized-value",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 \u2014 the context value is built as a fresh object literal on every render (`const value = user?.organizationId ? { organizationId, organizationName } : null`) and passed straight to <OrganizationContext.Provider value={value}>. Because a new reference is produced each render, every consumer of OrganizationContext re-renders whenever OrganizationProvider re-renders, even when organizationId/organizationName are unchanged.",
+        "OrganizationProvider sits high in the tree (fed by useAuth()), so it re-renders on any AuthContext value change (isLoading toggles, token refresh re-deriving user, etc.), fanning unnecessary re-renders to all org-context consumers. Fix: wrap `value` in useMemo keyed on [user?.organizationId, user?.organizationName] \u2014 matching the useMemo pattern AuthContext itself uses for its own context value (AuthContext.tsx:591). Low severity (perf/refactor smell), but a clean, landable, zero-risk fix."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-rs-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687 \u2014 exchange_code_for_tokens() builds `reqwest::Client::new()` with no .timeout(); the SSO callback awaits the PM OAuth token endpoint with no upper bound",
+        "backend/servers/reality-server/src/routes/sso.rs:711 \u2014 get_user_info() same pattern: `reqwest::Client::new()`, unbounded .get(pm_userinfo_url) on the login/exchange/sync paths",
+        "backend/servers/reality-server/src/routes/sso.rs:748 \u2014 introspect_pm_token() same pattern: `reqwest::Client::new()`, unbounded .post(pm_introspect_url); reached by sso_callback, exchange_pm_token, create_mobile_sso_token, sync_session",
+        "Contrast: state.rs:757 PmApiClient correctly uses reqwest::Client::builder().timeout(Duration::from_secs(..)); the SSO path is the only outbound HTTP without a deadline. A slow/hung PM server stalls SSO request tasks indefinitely (reqwest default = no timeout), a resource-exhaustion vector on the auth-critical path. Each call also allocates a fresh Client per request, defeating connection/TLS pooling",
+        "Fix: add .timeout(...)/.connect_timeout(...) (or reuse a single pooled client stored on AppState) for the three SSO reqwest clients"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-feedimport-create-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:480-489 handleCreate() does `await createMutation.mutateAsync({...}); onClose();` with NO try/catch.",
+        "createMutation (useCreateFeedSource, FeedImport.tsx:466) is referenced only for `.isPending` (button label at L659/661); `createMutation.error` is NEVER rendered anywhere in the file. On a failed feed-source creation the modal stays open (onClose never runs) and the user sees no error message.",
+        "The backing hook packages/reality-api-client/src/import/hooks.ts:280 useCreateFeedSource defines onSuccess (invalidateQueries) but NO onError, so error surfacing is the caller's job -- and mutateAsync (not mutate) rejects on failure, making the unguarded call an unhandled promise rejection.",
+        "Inconsistent with the sibling CsvImport.tsx:174 which correctly renders `{importMutation.error && <ErrorState message={t('csv.importFailed')} .../>}`. Fix: wrap mutateAsync in try/catch (only call onClose() on success) and/or render `createMutation.error` as an inline error state, mirroring CsvImport."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-crmconn-create-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:389-404 handleCreate() does `await createMutation.mutateAsync({ provider, name, credentials: { apiKey, instanceUrl }, ... }); onClose();` with NO try/catch.",
+        "createMutation (useCreateCrmConnection, CrmConnection.tsx:367) is used only for `.isPending` (button at L557/559); `createMutation.error` is never rendered. A failed connection persist (e.g. credentials rejected server-side) gives the user zero feedback -- the earlier `testMutation` result is shown, but the actual create failure is silent -- plus an unhandled promise rejection.",
+        "Backing hook packages/reality-api-client/src/import/hooks.ts:144 useCreateCrmConnection has onSuccess only, no onError.",
+        "This is the credential-carrying write path (apiKey typed at CrmConnection.tsx:361/483), so a silent create failure is the worst UX case -- the realtor believes the CRM is connected. Fix: try/catch around mutateAsync (onClose only on success) and render createMutation.error inline, matching CsvImport.tsx:174."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-import-delete-toggle-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:154-158 handleTogglePause() and :160-165 handleDelete() both `await updateMutation/deleteMutation.mutateAsync(...)` with no try/catch and no error surface.",
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:168-172 handleDelete() `await deleteMutation.mutateAsync(connection.id)` with no try/catch and no error surface.",
+        "These hooks (useUpdateFeedSource/useDeleteFeedSource/useDeleteCrmConnection in packages/reality-api-client/src/import/hooks.ts) have no onError, so a failed pause/remove rejects mutateAsync (unhandled promise rejection) and, from the user's view, the row silently fails to change state with no toast/error. Fix: add try/catch with a user-visible error (toast or inline) on these destructive/state-changing actions."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-url-nan-query",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:112-124 \u2014 getFiltersFromUrl parses five range params directly with bare Number(): `if (priceMin) filters.priceMin = Number(priceMin)` (L112), priceMax (L115), areaMin (L118), areaMax (L121), roomsMin (L124). searchParams values are attacker/user-controllable via the URL; `/en/listings?priceMin=abc` yields filters.priceMin = NaN with no Number.isFinite guard.",
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:144 \u2014 `const currentPage = Number(searchParams.get('page') || 1)`. `?page=abc` -> NaN; `?page=0` -> 0; `?page=-5` -> -5; `?page=1.5` -> 1.5. No clamp to a positive integer.",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:22-44 (buildQueryString) \u2014 NaN is not undefined, so `if (filters.priceMin !== undefined) params.set('priceMin', String(filters.priceMin))` (L31) emits the literal string `priceMin=NaN`; likewise `params.set('page', String(page))` (L23) emits `page=NaN`. Full traced path: URL -> getFiltersFromUrl -> useListings(filters, currentPage) (page.tsx:145) -> buildQueryString -> `fetch(${getApiBase()}/api/v1/listings?...&priceMin=NaN&page=NaN)` (hooks.ts:51-53). The malformed query string is certain; the backend's 400/degrade response is the only unconfirmed part (static analysis).",
+        "The correct guard already exists in the same app: frontend/apps/reality-web/src/components/realtor/ListingForm.tsx:54-63 (parseOptionalNonNegative) trims, rejects `!Number.isFinite(num)` and `num < 0`, and price validation at L97-98 uses `!Number.isFinite(priceNum) || priceNum <= 0`. The public search parser simply doesn't apply the same discipline.",
+        "Fix: in getFiltersFromUrl, coerce each range param through a helper that drops the key when `!Number.isFinite(n)` (and optionally when negative); clamp currentPage to `Math.max(1, Math.trunc(n))` with a NaN fallback of 1. Keeps a stale/hand-edited/bookmarked URL from firing a malformed request."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listings-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 \u2014 `const { data, isLoading } = useListings(filters, currentPage);` destructures only data + isLoading. There is NO `isError`/`error` destructure and no error branch anywhere in the component's render (grep for isError/onError/ErrorState in the file returns nothing).",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:53-54 \u2014 useListings' queryFn does `if (!response.ok) throw new Error('Failed to fetch listings')`, so ANY non-OK response (network failure, 5xx, or the malformed-query 400 produced by the sibling finding) rejects the query.",
+        "On rejection the render silently degrades: data is undefined, so `listings={data?.data ?? []}` (page.tsx:338) hands ListingGrid an empty array and `isLoading={isLoading}` (L341) is false \u2014 the page shows the normal zero-results empty state, indistinguishable from a legitimate 'no matches' search, with no error message and no retry affordance. `data && ...` guards at L243/L345 also just render nothing on error.",
+        "This is the primary public property-search page (Epic 44, Story 44.2) \u2014 the highest-traffic screen in the portal \u2014 so a transient backend blip presents to every visitor as 'no properties found'.",
+        "Fix: destructure `isError`/`refetch` from useListings and render an error state (with a retry button) when `isError` is true, before the empty-grid fallback. Error-state primitives already exist under frontend/apps/reality-web/src/components/states/ and are used by sibling routes (e.g. inquiries/realtor pages)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (930 lines) is a [locale]-scoped route in a 4-locale portal (sk, cs, de, en) but imports NO next-intl helper and has no `useTranslations` binding anywhere (grep for `= useTranslations` returns nothing; the `t` at L384/L725 is a local `.map((t) => ...)` variable, not the translation function).",
+        "Every user-facing string in the edit wizard is hardcoded Slovak: form field labels ('Typ nehnute\u013enosti' L399, 'Po\u010det izieb' L466, 'Celkov\u00fd po\u010det poschod\u00ed' L468, 'Rok v\u00fdstavby' L469, 'Adresa' L429), buttons/links ('\u2190 Sp\u00e4\u0165 na \u00fa\u010det' L233, 'Zobrazi\u0165 inzer\u00e1t' L268, '\u010eal\u0161ie \u00fapravy' L285), status labels ('Akt\u00edvny'/'Neakt\u00edvny' L665-666), the loading text ('Na\u010d\u00edtavam inzer\u00e1t\u2026' L223), the success panel ('Inzer\u00e1t bol ulo\u017een\u00fd!' L251) and the summary ('S\u00fahrn zmien' L710).",
+        "Both error fallbacks are hardcoded Slovak too: L166 `setLoadError(err instanceof RealtorApiError ? err.message : 'Na\u010d\u00edtanie inzer\u00e1tu zlyhalo.')` and L213 `'Ulo\u017eenie zlyhalo, sk\u00faste znova.'`.",
+        "Consequence: a de/en/cs user reaching /en/account/listings/{id}/edit (or /de/..., /cs/...) sees the entire listing-edit flow \u2014 field labels, statuses, validation errors \u2014 rendered in Slovak, an effectively unusable form for a non-Slovak owner. The locale in the URL is silently ignored for this screen.",
+        "Fix: add `const t = useTranslations('...')` (or getTranslations for any server portion) and move all copy into the reality-web messages/ catalogs (en/sk/cs/de), matching the pattern already used by app/[locale]/sell/page.tsx (which correctly calls useTranslations twice)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-routes-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "Systemic i18n gap across the signed-in account/realtor route cluster: multiple [locale]-scoped pages hardcode English user-facing copy with no `useTranslations` (grep `useTranslations` returns 0 in each), so the URL locale segment is ignored and sk/cs/de users see English.",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx: hardcoded 'My Inquiries' (L541), 'Track your property inquiries and viewing requests.' (L542), 'No inquiries yet' (L387), 'Failed to load inquiries. Please try again.' (L332), 'Cancel this inquiry?' (L116). (Error + empty states themselves are present and correct \u2014 the gap is only i18n.)",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx: hardcoded 'My listings' (L77), 'Manage the properties you have published.' (L78), 'Failed to load listings.' (L86), \"You haven't published any listings yet.\" (L89).",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx: hardcoded 'Account' (L52) with no useTranslations.",
+        "Fix: wire each page through next-intl `useTranslations` and add the corresponding keys to messages/{en,sk,cs,de}.json, matching app/[locale]/sell/page.tsx. Treat as one cleanup sweep across the account/realtor/inquiries screens (the listing-edit wizard, tracked as a separate finding, is the most severe instance and can share the sweep)."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "routine-phase-1",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "meta",
+      "evidence": [
+        "routine last ran 2026-08-25T08:50:37Z; today is 2026-08-27; lag \u2248 60h (> 36h threshold)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && header matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD (jq slurpfile compare)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8; no open item >14d without decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has 'adversarial pass:' line in brief",
+      "observed": "1 plan, 1 line matched",
+      "expected": "match"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans; all metadata/headings present; files exist",
+      "observed": "1 new plan, all 4 metadata + 11 headings + files-on-disk OK",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths only in .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret/private-host patterns in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed (all cursors advanced where phase ran)",
+      "observed": "all cursors advanced consistently; Phase 1.6 skipped so pm_cursor stays",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD count",
+      "observed": "now=9 head=9",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps (\u22641 pr + \u22641 issue + \u22641 comment; kill switch honored)",
+      "observed": "0 actions this run \u2014 no allowlisted signal met certainty bar",
+      "expected": "\u22643 total"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (no-op since Phase 1.6 skipped this run)",
+      "observed": "pm_cursor unchanged; skipped-1.6 no-op path",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token literal in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
