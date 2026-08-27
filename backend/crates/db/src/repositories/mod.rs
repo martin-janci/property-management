@@ -33,6 +33,7 @@ pub mod health_monitoring;
 pub mod help;
 pub mod layout;
 pub mod membership;
+pub mod membership_test;
 pub mod messaging;
 pub mod meter;
 pub mod mobile_config;
