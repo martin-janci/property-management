@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-27T06:33:35Z",
+  "archived_at": "2026-08-27T08:34:01Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -14867,6 +14867,33 @@
         "merged_pr": 2860,
         "merged_at": "2026-08-27T00:32:20Z",
         "at": "2026-08-27T02:23:20Z"
+      }
+    },
+    {
+      "id": "gh-issue-2861",
+      "action": "Follow-up: capability-grant fix leaves root-cause membership non-determinism + dead code + stale doc (PR #2858) (Closes #2861)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-27T04:22:36Z (#2861) | gc1-reconcile 2026-08-27T08:34:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-27T04:22:36Z",
+      "issue_ref": {
+        "number": 2861,
+        "url": "https://github.com/martin-janci/property-management/issues/2861",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2864,
+        "merged_at": "2026-08-27T08:30:03Z",
+        "at": "2026-08-27T08:34:01Z"
       }
     },
     {

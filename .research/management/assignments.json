@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-27T06:32:59Z",
+  "generated": "2026-08-27T08:34:00Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-27T06:32:59Z",
+      "last_updated": "2026-08-27T08:28:28Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -21,28 +21,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-2861",
-      "branch": "auto-impl/gh-issue-2861-f571ad98",
-      "status": "review",
-      "claimed_at": "2026-08-27T04:24:28Z",
-      "last_updated": "2026-08-27T06:35:16Z",
-      "status_changed_at": "2026-08-27T06:35:16Z",
-      "pr_number": 2864,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2864",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2864 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=list_for_user ORDER BY (granted_at,org,role; issue said created_at which does not exist) + removed dead check_capability_grant + doc + 2 sqlx tests; fmt/clippy green, sqlx tests run in CI (no PG); drift=pm-tech-lead owner-hint maps to docs not backend [Phase5.5 ci-fail: test-shard 3&4 FAILED on run 33041252205; routed to round-1 CI-fix followup (background) per Phase 5.7] -> round1 followup FIXED (synchronous): membership_test make_org INSERT missing NOT NULL contact_email (PG 23502); pushed ab96477 (7023457..ab96477); CI re-running, re-review next cycle",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]
