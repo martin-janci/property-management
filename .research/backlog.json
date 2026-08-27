@@ -9242,6 +9242,115 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-compliance-pages-content-moderation-page-tsx",
+      "title": "churn-hotspot: ContentModerationPage.tsx — 4 PRs in one routine window (#2849/#2856/#2860/#2863) chasing the overdue-filter shape",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2849",
+        "PR #2856",
+        "PR #2860",
+        "PR #2863"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx touched 4× in one routine window (2026-08-25 → 08-27): overdue affordance introduced (#2849, +43/-5), pushed server-side (#2856, +15/-22), truncation notice added (#2860, +14), boundary fix (#2863, +13/-9). Each fix drew the next follow-up (#2853→#2859→#2862). Instability proxy — the overdue flow is still not settled."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-compliance-pages-content-moderation-page-test-tsx",
+      "title": "churn-hotspot: ContentModerationPage.test.tsx — 4 PRs, ~332 lines of test churn on the overdue affordance",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2849",
+        "PR #2856",
+        "PR #2860",
+        "PR #2863"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx: +114 (#2849 client-side overdue tests), +56/-56 (#2856 server-side overdue re-write), +54 (#2860 truncation), +52 (#2863 boundary). Test suite is rewriting itself run-after-run — signals the SUT contract keeps moving; likely one final consolidation pass would settle it."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-auth-policy-rs",
+      "title": "churn-hotspot: auth_policy.rs — 2 PRs in 24h touching the capability-grant strictest-across-orgs gate",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2858",
+        "PR #2864"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth_policy.rs: +160/-8 (#2858 strictest-across-orgs email-verification gate; fixes gh-issue-2857 fail-open), then -23 (#2864 remove now-dead single-org check_capability_grant). ~191 lines across 24 hours. The auth surface is being reshaped; worth watching for a follow-up 'remove the transitional dead code' pass."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-imports-total-page-length",
+      "title": "reality-server imports.rs: list_import_jobs + list_feeds report `total = page.len()` — pagination lies on every non-final page",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-27"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:131 — `let total = jobs.len() as i64;` after LIMIT/OFFSET was applied — total reports current page size, not the real row count",
+        "backend/servers/reality-server/src/routes/imports.rs:322 — same page-length-as-total pattern in `list_feeds` (`RealityFeedSubscription` list)",
+        "backend/servers/reality-server/src/routes/inquiries.rs:207 — comment references the identical, already-fixed bug in `list_realtor_inquiries` (PR #919 / #774 finding-3), so the fix shape is established (page + count in `tokio::try_join!`)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-agency-import-history-no-pagination",
+      "title": "reality-server agency_imports.rs list_import_history: hard-coded LIMIT 100, no pagination params, `total` clamped to page length",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-27"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:165-183 — SQL hard-codes `LIMIT 100` with no OFFSET, then `total = rows.len() as i64` — an agency with >100 import jobs never sees the older ones and `total` is silently clamped to 100"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
     }
   ]
 }

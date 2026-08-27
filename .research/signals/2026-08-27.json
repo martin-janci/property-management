@@ -1,0 +1,212 @@
+{
+  "date": "2026-08-27",
+  "generated": "2026-08-27T10:37:00Z",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no signal matched allowlist + confidence=high + score>=3)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-08-25 08:50 UTC — ~49h gap, exceeds the 36h lag threshold. Missed the 2026-08-26 daily slot."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2849, PR #2856, PR #2860, PR #2863",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "4 merged PRs (#2849/#2856/#2860/#2863) reshaped the overdue affordance in 48h: client-only → server-side → truncation notice → boundary fix. Each fix drew the next follow-up issue (#2853→#2859→#2862)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2849, PR #2856, PR #2860, PR #2863",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Test suite rewritten across 4 PRs (+114 / +56/-56 / +54 / +52 = ~332 lines) chasing the moving overdue-affordance contract."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2858, PR #2864",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2 merged PRs in 24h: #2858 (+160/-8) added the strictest-across-orgs email-verification gate for gh-issue-2857, then #2864 (-23) removed the now-dead single-org check_capability_grant. auth surface reshaped rapidly."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "PR #2851 (churn recurrence — runs_seen was 3 at 2026-08-22)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "voice_webhooks.rs touched again in PR #2851 (+103 test-side coverage for encrypt_voice_token_pair round-trip). hotspot_history.runs_seen was 3 (last_seen 2026-08-22); score_delta=0 per cumulative-type re-emit rule."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-imports-total-page-length",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-08-27",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:131 — `let total = jobs.len() as i64;` after LIMIT/OFFSET was applied — total reports current page size, not the real row count",
+        "backend/servers/reality-server/src/routes/imports.rs:322 — same page-length-as-total pattern in `list_feeds` (`RealityFeedSubscription` list)",
+        "backend/servers/reality-server/src/routes/inquiries.rs:207 — comment references the identical, already-fixed bug in `list_realtor_inquiries` (PR #919 / #774 finding-3), so the fix shape is established (page + count in `tokio::try_join!`)"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-agency-import-history-no-pagination",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-08-27",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:165-183 — SQL hard-codes `LIMIT 100` with no OFFSET, then `total = rows.len() as i64` — an agency with >100 import jobs never sees the older ones and `total` is silently clamped to 100"
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/2026-08-27.md",
+      "observed": "# 2026-08-27",
+      "expected": "# 2026-08-27"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] uniq",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[]|select(score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuous",
+      "observed": "0 new plans",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/ *.md count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases — vacuous",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prev plans still present",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "8 >= 8",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor sanity",
+      "observed": "pass (Phase 1.6 skipped this run — pm_cursor unchanged, gate is a no-op for the advance clause)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
