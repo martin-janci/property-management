@@ -352,4 +352,56 @@ describe('ContentModerationPage overdue affordance', () => {
     // surface the truncation explicitly rather than silently dropping rows.
     expect(screen.getByText(/first 200 of 350/i)).toBeInTheDocument();
   });
+
+  /**
+   * Boundary regression (#2862): the truncation notice keys off the badge
+   * count strictly exceeding the cap, NOT merely the page filling to the cap.
+   * When an org has *exactly* OVERDUE_PAGE_LIMIT (200) overdue cases, the page
+   * fetches 200, `cases.length === 200`, but nothing is truncated — the list is
+   * complete. The notice must NOT fire (it previously did, telling the user to
+   * "refine the filters" for no reason — a false positive at the boundary).
+   */
+  it('does not flag truncation when overdue_count equals the cap exactly', () => {
+    const OVERDUE_PAGE_LIMIT = 200;
+    const exactCapOverdueSet = Array.from({ length: OVERDUE_PAGE_LIMIT }, (_, i) => ({
+      ...baseCase,
+      id: `overdue-${i}`,
+      content_preview: `overdue-${i}`,
+      status: 'pending',
+    }));
+
+    vi.mocked(useModerationCases).mockImplementation(
+      (params?: { overdue?: boolean }) =>
+        ({
+          data: { cases: params?.overdue ? exactCapOverdueSet : firstPageNoOverdue },
+          isLoading: false,
+          error: null,
+        }) as unknown as ReturnType<typeof useModerationCases>
+    );
+    vi.mocked(useModerationStats).mockReturnValue({
+      data: {
+        stats: {
+          pending_count: 200,
+          under_review_count: 0,
+          by_priority: [],
+          by_violation_type: [],
+          avg_resolution_time_hours: 0,
+          overdue_count: 200,
+        },
+      },
+    } as unknown as ReturnType<typeof useModerationStats>);
+
+    render(
+      <ToastProvider>
+        <ContentModerationPage />
+      </ToastProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /overdue/i }));
+
+    // 200 fetched, 200 total overdue — the list is complete, so no truncation
+    // notice regardless of the page filling exactly to the cap.
+    expect(screen.queryByText(/first 200 of 200/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/first 200 of/i)).not.toBeInTheDocument();
+  });
 });
