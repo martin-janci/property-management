@@ -164,7 +164,8 @@
       "emptyTitle": "No moderation cases found matching the criteria.",
       "emptySubtitle": "The moderation queue is currently empty.",
       "overdueActive": "Showing overdue cases only",
-      "clearOverdue": "Clear overdue filter"
+      "clearOverdue": "Clear overdue filter",
+      "overdueTruncated": "Showing the first {{limit}} of {{count}} overdue cases — refine the filters to narrow the list."
     },
     "filters": {
       "status": "Status",

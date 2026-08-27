@@ -298,4 +298,58 @@ describe('ContentModerationPage overdue affordance', () => {
     );
     expect(screen.getByText('fresh-one')).toBeInTheDocument();
   });
+
+  /**
+   * Regression (#2859): the overdue view requests a single capped page
+   * (OVERDUE_PAGE_LIMIT = 200). If an org has more overdue cases than the cap,
+   * the list silently truncates below the unbounded `overdue_count` badge —
+   * re-introducing the badge-vs-list mismatch #2853 fixed. When the returned
+   * overdue page is exactly the cap and the badge is larger, the page must
+   * surface the truncation explicitly instead of hiding it.
+   */
+  it('flags truncation when the overdue page is capped below overdue_count', () => {
+    const OVERDUE_PAGE_LIMIT = 200;
+    const cappedOverdueSet = Array.from({ length: OVERDUE_PAGE_LIMIT }, (_, i) => ({
+      ...baseCase,
+      id: `overdue-${i}`,
+      content_preview: `overdue-${i}`,
+      status: 'pending',
+    }));
+
+    vi.mocked(useModerationCases).mockImplementation(
+      (params?: { overdue?: boolean }) =>
+        ({
+          data: { cases: params?.overdue ? cappedOverdueSet : firstPageNoOverdue },
+          isLoading: false,
+          error: null,
+        }) as unknown as ReturnType<typeof useModerationCases>
+    );
+    vi.mocked(useModerationStats).mockReturnValue({
+      data: {
+        stats: {
+          pending_count: 350,
+          under_review_count: 0,
+          by_priority: [],
+          by_violation_type: [],
+          avg_resolution_time_hours: 0,
+          overdue_count: 350,
+        },
+      },
+    } as unknown as ReturnType<typeof useModerationStats>);
+
+    render(
+      <ToastProvider>
+        <ContentModerationPage />
+      </ToastProvider>
+    );
+
+    // No truncation notice on the default (non-overdue) page.
+    expect(screen.queryByText(/first 200 of 350/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /overdue/i }));
+
+    // The capped page (length === limit) with an unbounded badge of 350 must
+    // surface the truncation explicitly rather than silently dropping rows.
+    expect(screen.getByText(/first 200 of 350/i)).toBeInTheDocument();
+  });
 });

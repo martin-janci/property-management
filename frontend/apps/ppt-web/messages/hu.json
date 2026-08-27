@@ -164,7 +164,8 @@
       "emptyTitle": "Nem található a feltételeknek megfelelő moderálási eset.",
       "emptySubtitle": "A moderálási várólista jelenleg üres.",
       "overdueActive": "Csak a lejárt esetek jelennek meg",
-      "clearOverdue": "Lejárt szűrő törlése"
+      "clearOverdue": "Lejárt szűrő törlése",
+      "overdueTruncated": "Az első {{limit}} / {{count}} lejárt eset látható — szűkítse a szűrőket a lista szűkítéséhez."
     },
     "filters": {
       "status": "Állapot",
