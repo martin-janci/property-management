@@ -119,26 +119,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "gh-issue-2862",
-      "action": "Follow-up: overdue truncation notice fires a false-positive at the exact 200 boundary (PR #2860) (Closes #2862)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-27T04:22:36Z (#2862)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-27T04:22:36Z",
-      "issue_ref": {
-        "number": 2862,
-        "url": "https://github.com/martin-janci/property-management/issues/2862",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"

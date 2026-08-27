@@ -13501,6 +13501,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2862",
+      "branch": "auto-impl/gh-issue-2862-4c575f24",
+      "status": "merged",
+      "claimed_at": "2026-08-27T04:24:28Z",
+      "last_updated": "2026-08-27T06:32:59Z",
+      "status_changed_at": "2026-08-27T06:32:59Z",
+      "pr_number": 2863,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2863",
+      "merged_at": "2026-08-27T06:25:08Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2863 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=guard truncation notice on overdue_count>200; boundary test at exactly 200 added; verify green 2438/2438",
+      "reviewer_summary": "verdict=approve note=boundary-guard-correct+regression-test; scope_drift benign (owner-map artifact, both files ppt-web); posted as COMMENT (self-PR blocks formal APPROVE)",
+      "last_reviewed_oid": "a4ccdd7bf0f2f668a1df01cc4d15c0be4e2c4da1",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-27T06:32:59Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -16005,5 +16027,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-27T00:34:02Z"
+  "archived_at": "2026-08-27T06:33:35Z"
 }
