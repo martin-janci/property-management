@@ -1,0 +1,55 @@
+{
+  "generated": "2026-08-27",
+  "segment": "api-handlers",
+  "source": "dispatcher-tier1d",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-tenant-config-rls-context-bleed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/tenant_config.rs:237 — fetch_organization_name() does `let _ = db::tenant_context::clear_request_context(&mut *conn).await;`, silently discarding the result of clearing the RLS/tenant context",
+        "backend/servers/api-server/src/routes/tenant_config.rs:224-225 — the connection is acquired raw from the pool (`pool.acquire()`, no transaction) and set to a SYSTEM / RLS-BYPASS context via set_request_context(&mut *conn, None, None, /*is_super_admin=*/true). set_request_context runs `SELECT set_request_context(...)` (backend/crates/db/src/tenant_context.rs:27) which is session-scoped and persists on the pooled connection until explicitly cleared — there is no SET LOCAL / transaction to auto-reset it",
+        "backend/crates/db/src/tenant_context.rs:58-67 — the crate's own spawn_clear_context() Drop-cleanup path logs a failed clear as `tracing::error!(... \"SECURITY: Failed to clear RLS context in Drop cleanup task - context may bleed\")`, i.e. the maintainers already classify a failed clear as a SECURITY event that must be surfaced. tenant_config.rs:237 swallows that exact failure with no log",
+        "Impact: if clear_request_context() errors (DB hiccup, cancelled future), the connection returns to the pool still in super-admin / RLS-bypass mode. A subsequent request that reuses this pooled connection and relies on RLS for tenant isolation could read cross-tenant data with RLS bypassed, with zero log trail. Contrast the correctly-handled set at line 225-228 which returns None on error",
+        "Fix: replace `let _ =` with the spawn_clear_context error-logging pattern (log at error!/warn! on failure), or acquire via the RLS guard type that guarantees clear-on-release; never discard a clear-of-a-bypass-context Result"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-auth-refresh-revoke-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:1001 — in the refresh handler's inactive-account branch, `let _ = state.session_repo.revoke_token(stored_token.id).await;` silently discards the revoke result before returning 401 ACCOUNT_INACTIVE",
+        "backend/servers/api-server/src/routes/auth/mod.rs:1010-1013 — the IDENTICAL revoke_token(stored_token.id) call 9 lines below (routine token rotation) IS error-handled: `if let Err(e) ... tracing::error!(error = %e, \"Failed to revoke old refresh token\")`. The security-relevant branch (revoking a deactivated account's refresh token) is the one that swallows the error",
+        "Impact: if the revoke DB call fails for a now-inactive account, the refresh token stays valid in the DB with no log trail; the deactivation is not fully enforced at the token layer and the gap is invisible to operators. Low severity (the request itself is rejected 401) but a security-hygiene + observability gap on the auth path",
+        "Fix: mirror the line-1010 pattern — log the revoke error (at least warn!) instead of `let _ =`"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-resend-verif-invalidate-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/registration.rs:368 — resend-verification handler does `let _ = state.user_repo.invalidate_user_tokens(user.id).await;` before generating and storing a fresh verification token, silently discarding whether the old tokens were actually invalidated",
+        "Impact: if invalidate_user_tokens fails but create_verification_token (line 375-378) succeeds, the account ends up with multiple simultaneously-valid verification tokens; an old/leaked verification link stays usable. The endpoint always returns the anti-enumeration success response, so the failure is completely silent. Low severity but a token-hygiene gap on an unauthenticated, rate-limited-but-public endpoint",
+        "Fix: log the invalidate failure (warn!) or fail the token rotation if invalidation errored, rather than `let _ =`"
+      ],
+      "expert": "rust"
+    }
+  ]
+}
