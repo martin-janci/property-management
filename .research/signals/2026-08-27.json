@@ -1,0 +1,259 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2849/#2856/#2863",
+      "score_delta": 1,
+      "evidence": "218 lines add/del across 3 PRs since 2026-08-25T08:50Z window (all moderation-flow work).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2858/#2864",
+      "score_delta": 1,
+      "evidence": "191 lines add/del across 2 security-fix PRs (email-verification consistency + membership ordering non-determinism).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2855",
+      "score_delta": 1,
+      "evidence": "133 lines add/del in a single PR (replace window.alert with localized toast); single-PR spike so far.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-check-principal-kind-change-nondeterministic",
+      "type": "code-review-finding",
+      "source": "api-core segment review 2026-08-27 (auth_policy.rs:256-259)",
+      "score_delta": 2,
+      "evidence": "check_principal_kind_change uses non-deterministic memberships.first() — the exact anti-pattern PR #2864 fixed in check_capability_grant_for_user. Same fail-open-by-row-order class as security issue #2857.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-check-login-no-platform-default",
+      "type": "code-review-finding",
+      "source": "api-core segment review 2026-08-27 (auth_policy.rs:277-298)",
+      "score_delta": 2,
+      "evidence": "check_login iterates memberships but never falls back to platform_default_policy() when the list is empty — contradicts own docstring. Latent super-admin MFA fail-open once platform default gets DB backing.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-api-core-check-password-change-strictest-untested",
+      "type": "code-review-finding",
+      "source": "api-core segment review 2026-08-27 (auth_policy.rs:147-160, 442-491)",
+      "score_delta": 2,
+      "evidence": "check_password_change uses strictest_policy_across but has no regression test for ordering-independence — a silent revert to memberships.first() would fail-open on weak passwords for every multi-tenant user.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "evidence": "2d 14h since last routine run (>36h threshold). Under the 3d stale_routine_alert cutoff; dispatcher-side chore commits kept ticking so the outage is scoped to the daily routine.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865",
+      "score_delta": 0,
+      "evidence": "cargo-minor-patch group (10 updates) — dependabot, opened 2026-08-27T10:17Z.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "evidence": "actions/setup-java 5→6 — dependabot, opened 2026-08-27T10:18Z.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867",
+      "score_delta": 0,
+      "evidence": "npm-minor-patch group (39 updates) — dependabot, opened 2026-08-27T10:26Z.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-27.md && head -1 = # 2026-08-27",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursor advance vs HEAD",
+      "observed": "last_pr_seen 2847->2864 + last_run_iso advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id]|length==unique|length' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "prior-seen non-cumulative IDs with score_delta!=0",
+      "observed": "0 offenders (all 10 new IDs)",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[]|select(.score>8)]|length==0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "for each open item updated_at<=2026-08-13: score decreased or dropped",
+      "observed": "0 items qualified (all open items updated within 14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan referenced in brief with adversarial pass annotation",
+      "observed": "1 new plan, annotated 'passed'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans this run <=2",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields present on new plan",
+      "observed": "Vector/Score/Source/Confidence all present",
+      "expected": "4/4"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 required ## headings on new plan",
+      "observed": "11/11 present + optional Dependencies",
+      "expected": ">=11/11"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "at least one -[x] capability ticked",
+      "observed": "C1 + C6 ticked",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "grep '^Mode: (local-only|cloud-ok)$'",
+      "observed": "Mode: cloud-ok",
+      "expected": "match"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "each ## Files bullet resolves on disk",
+      "observed": "3/3 files exist",
+      "expected": "all"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0 (checked at commit time)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "identical (checked at commit time)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phase failures this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs preserved",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "8 == 8",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "identical (checked at commit time)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions this run (killswitch respected — no candidate met bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (when Phase 1.6 ran)",
+      "observed": "no-op — Phase 1.6 skipped this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "0 matches (checked at commit time)",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlist × confidence=high × score>=3 signal this run"
+}

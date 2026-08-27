@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-25T08:50:37Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2847,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "142ae17",
+  "last_run_iso": "2026-08-27T22:40:00Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 2864,
+  "last_issue_seen": 2862,
+  "last_commit_sha": "5fc7173",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -496,6 +496,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-25",
       "recent_churn": 175
+    },
+    "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-27",
+      "recent_churn": 218
+    },
+    "backend/servers/api-server/src/services/auth_policy.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-27",
+      "recent_churn": 191
+    },
+    "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-27",
+      "recent_churn": 133
     }
   },
   "seen_signals": [
@@ -545,8 +560,10 @@
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "churn-hotspot-backend/servers/api-server/src/services/actions/api_call.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
     "churn-hotspot-backend/servers/api-server/src/services/workflow_executor.rs",
     "churn-hotspot-backend/servers/api-server/tests/auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
@@ -586,6 +603,10 @@
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
@@ -616,6 +637,9 @@
     "closed-not-merged-pr-671",
     "closed-not-merged-pr-908",
     "code-review-api-core-admin-rs-swallowed-serialize",
+    "code-review-api-core-check-login-no-platform-default",
+    "code-review-api-core-check-password-change-strictest-untested",
+    "code-review-api-core-check-principal-kind-change-nondeterministic",
     "code-review-api-core-dispute-fsm-no-tests",
     "code-review-api-core-equipment-idor",
     "code-review-api-core-idempotency-client-tenant",
@@ -688,7 +712,10 @@
     "code-review-ppt-web-ui-actionqueue-mock-shipped",
     "code-review-ppt-web-ui-announcer-stale-msg",
     "code-review-ppt-web-ui-aria-label-i18n",
+    "code-review-ppt-web-ui-content-mod-overdue-noop",
+    "code-review-ppt-web-ui-content-mod-unsafe-cast",
     "code-review-ppt-web-ui-createfault-mock-ai",
+    "code-review-ppt-web-ui-dsa-reports-no-i18n",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
     "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
@@ -760,6 +787,9 @@
     "dep-update-noise-pr-2749",
     "dep-update-noise-pr-2750",
     "dep-update-noise-pr-2751",
+    "dep-update-noise-pr-2865",
+    "dep-update-noise-pr-2866",
+    "dep-update-noise-pr-2867",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -808,9 +838,12 @@
     "lag-warning-2026-08-15",
     "lag-warning-2026-08-19",
     "lag-warning-2026-08-22",
+    "lag-warning-2026-08-25",
+    "lag-warning-2026-08-27",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
+    "refire-buffer-low-2026-08-25-0850",
     "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
     "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
@@ -917,20 +950,12 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "lag-warning-2026-08-25",
-    "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
-    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
-    "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
-    "code-review-ppt-web-ui-content-mod-unsafe-cast",
-    "code-review-ppt-web-ui-content-mod-overdue-noop",
-    "code-review-ppt-web-ui-dsa-reports-no-i18n",
-    "refire-buffer-low-2026-08-25-0850"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-22",
-    "api-core": "2026-08-21",
+    "api-core": "2026-08-27",
     "reality-server": "2026-08-19",
     "ppt-web-ui": "2026-08-25",
     "ppt-web-core": "2026-08-21",
@@ -939,9 +964,9 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 71,
-    "vectors_created": 324,
-    "plans_created": 28,
+    "runs": 72,
+    "vectors_created": 330,
+    "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

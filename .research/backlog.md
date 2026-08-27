@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-25 08:53 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-27 22:43 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -36,7 +36,10 @@
 | 3 | security | `security-equipment-idor` | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org s | done | 2026-05-25 | [plan](plans/_archive/security-equipment-idor.md) |
 | 3 | security | `security-ssrf-outbound-url-validation` | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controll | done | 2026-05-25 | [plan](plans/_archive/security-ssrf-outbound-url-validation.md) |
 | 3 | security | `security-voice-device-idor` | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | done | 2026-05-25 | [plan](plans/_archive/security-voice-device-idor.md) |
-| 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | open | 2026-08-25 |  |
+| 2 | bug | `code-review-api-core-check-login-no-platform-default` | check_login skips platform-default policy for users with zero memberships, contradicting its own doc | open | 2026-08-27 |  |
+| 2 | test-gap | `code-review-api-core-check-password-change-strictest-untested` | test-gap: check_password_change strictest-across-orgs invariant has no regression test — future reve | open | 2026-08-27 |  |
+| 2 | security | `code-review-api-core-check-principal-kind-change-nondeterministic` | SECURITY: check_principal_kind_change still uses non-deterministic memberships.first() — same fail-o | ready | 2026-08-27 | [plan](plans/code-review-api-core-check-principal-kind-change-nondeterministic.md) |
+| 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | done | 2026-08-25 |  |
 | 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
 | 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-ppt-web-ui-verification-badge-expired-as-soon` | ppt-web VerificationBadge marks already-expired badges as '(Expiring soon)' — expired trust signal s | done | 2026-08-21 |  |
@@ -150,9 +153,12 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | churn hotspot: auth_policy.rs — 191 lines across 2 security fix PRs (#2858, #2864) | open | 2026-08-27 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx` | churn hotspot: ContentModerationPage.test.tsx — 218 lines across 3 merged PRs (#2849, #2856, #2863) | open | 2026-08-27 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx` | churn hotspot: DsaReportsPage.test.tsx — 133 lines from #2855 (window.alert → localized toast) | open | 2026-08-27 |  |
 | 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs` | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | dropped | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | open | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | bug | `code-review-mobile-native-kmp-cancellation-swallowed` | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breakin | open | 2026-08-25 |  |
 | 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-mobile-rn-thread-detail-hardcoded-en` | ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks) | done | 2026-08-23 |  |

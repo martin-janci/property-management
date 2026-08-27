@@ -9242,6 +9242,140 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "title": "churn hotspot: ContentModerationPage.test.tsx — 218 lines across 3 merged PRs (#2849, #2856, #2863)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2849",
+        "PR #2856",
+        "PR #2863"
+      ],
+      "evidence": [
+        "218 lines added/deleted in frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx across 3 PRs since 2026-08-25T08:50Z window (overdue affordance path + boundary-regression test grew alongside the two fix PRs it accompanies).",
+        "test file itself is the churn locus — the moderation-overdue behaviour is still stabilising (5 fix cycles across #2853/#2856/#2859/#2860/#2862 in the last 5 days). Consider a table-driven refactor once the behaviour settles."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "title": "churn hotspot: auth_policy.rs — 191 lines across 2 security fix PRs (#2858, #2864)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2858",
+        "PR #2864"
+      ],
+      "evidence": [
+        "191 lines added/deleted in backend/servers/api-server/src/services/auth_policy.rs across 2 PRs since 2026-08-25T08:50Z window — both were auth-policy fixes (issue #2857 email-verification consistency; issue #2861 membership-ordering non-determinism).",
+        "The file is being reshaped under active security patching — sibling api-core signals from this run's review (check_principal_kind_change, check_login, check_password_change) note the same anti-pattern surviving in adjacent methods that PR #2864 fixed for check_capability_grant_for_user."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx",
+      "title": "churn hotspot: DsaReportsPage.test.tsx — 133 lines from #2855 (window.alert → localized toast)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2855"
+      ],
+      "evidence": [
+        "133 lines added/deleted in frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx in PR #2855 (replace window.alert with localized toast) — single-PR spike, watch next window for repeated-churn to decide if a helper extraction is warranted."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-check-principal-kind-change-nondeterministic",
+      "title": "SECURITY: check_principal_kind_change still uses non-deterministic memberships.first() — same fail-open anti-pattern PR #2864 fixed for check_capability_grant_for_user",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "api-core segment review 2026-08-27",
+        "PR #2864 sibling fix",
+        "GH issue #2861"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth_policy.rs:256-259 — `let memberships = mem_repo.list_for_user(target_user_id).await?; if let Some(m) = memberships.first() { let _policy = self.policy_for(m.organization_id).await? }` — the exact anti-pattern PR #2864 eradicated from check_capability_grant_for_user; the file's own docstring at lines 213-217 already warns that list_for_user has no ORDER BY.",
+        "Failure mode mirrors #2857 (fixed by #2864): if a subset of the grantee's orgs has a corrupt/unloadable org_auth_policies row, this check succeeds when Postgres surfaces a healthy org first and fails otherwise — non-deterministic auth-policy liveness check.",
+        "No regression test in the file's #[cfg(test)] block covers check_principal_kind_change's cross-org behaviour."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": "plans/code-review-api-core-check-principal-kind-change-nondeterministic.md"
+    },
+    {
+      "id": "code-review-api-core-check-login-no-platform-default",
+      "title": "check_login skips platform-default policy for users with zero memberships, contradicting its own docstring (latent super-admin MFA fail-open)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-core segment review 2026-08-27"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth_policy.rs:277-298 — docstring promises 'For users with no active memberships (platform-only / fresh signups), the platform default policy applies' but the loop is a bare `for m in &memberships { … }` that returns Ok(()) when the list is empty — platform_default_policy() is never consulted.",
+        "The sibling strictest_policy_across (auth_policy.rs:107) explicitly seeds `effective = self.platform_default_policy()` before unioning per-org policies — the correct pattern is right there in the same file.",
+        "Currently latent: AuthPolicy::default() carries no MFA roles, so the fail-open is invisible. Once platform_default_policy() gets a DB backing (foreshadowed by check_platform_action's docstring at lines 329-332), every platform-only principal — super-admins, fresh signups — silently bypasses MFA at login."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-check-password-change-strictest-untested",
+      "title": "test-gap: check_password_change strictest-across-orgs invariant has no regression test — future revert to memberships.first() would go unnoticed",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-core segment review 2026-08-27",
+        "PR #2864 sibling coverage"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth_policy.rs:147-160 — check_password_change enforces min_password_length / require_uppercase / require_digit / require_symbol via strictest_policy_across; a silent regression to policy_for(memberships.first().organization_id) would fail-open on weak passwords for every multi-tenant user.",
+        "The two new sqlx tests added by PR #2864 (capability_grant_rejected_when_any_org_requires_verification, capability_grant_allowed_for_lax_only_unverified_user — auth_policy.rs:442-491) cover check_capability_grant_for_user only; the identical ordering-independent invariant in check_password_change is entirely uncovered.",
+        "Concrete test: user in one lax org (min_password_length=6) + one strict org (min_password_length=16); assert the strict rule wins regardless of the seed order of the two user_memberships rows."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
     }
   ]
 }
