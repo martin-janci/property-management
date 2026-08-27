@@ -200,29 +200,6 @@ impl AuthPolicyEnforcer {
         Ok(())
     }
 
-    /// Re-evaluate before a capability grant proceeds. Same gate as
-    /// `check_membership_grant` — the grantee must have a verified email if
-    /// the org demands one. The capability gate itself (Phase 5) handles the
-    /// no-self-grant + escalation rules.
-    pub async fn check_capability_grant(
-        &self,
-        org_id: Uuid,
-        target_user_id: Uuid,
-    ) -> Result<(), AuthPolicyError> {
-        let policy = self.policy_for(org_id).await?;
-        if policy.require_email_verification {
-            let user_repo = UserRepository::new(self.pool.clone());
-            let user = user_repo
-                .find_by_id(target_user_id)
-                .await?
-                .ok_or(AuthPolicyError::UserNotFound(target_user_id))?;
-            if user.email_verified_at.is_none() {
-                return Err(AuthPolicyError::EmailNotVerified);
-            }
-        }
-        Ok(())
-    }
-
     /// Capability grants are platform-scoped (no org_id on the grant row),
     /// but the grantee belongs to one or more orgs whose policies we still
     /// want to honor. This convenience resolves the **strictest** policy

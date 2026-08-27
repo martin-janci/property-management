@@ -291,10 +291,12 @@ fn default_true() -> bool {
 ///     `PrincipalKindEscalate` — leak #12.
 ///   * N2 (leak #13): the grantee's effective per-org auth policy is
 ///     re-evaluated before any grant row is written. The
-///     `check_capability_grant_for_user` helper picks the grantee's first
-///     active membership and applies that org's `require_email_verification`
-///     gate; platform-only principals fall through (governed by platform
-///     defaults).
+///     `check_capability_grant_for_user` helper resolves the strictest
+///     policy across ALL of the grantee's active memberships and rejects
+///     the grant if ANY org requires `require_email_verification` (tighten,
+///     never loosen — independent of row order); platform-only principals
+///     fall through (governed by platform defaults, which do not require
+///     verification).
 async fn grant_capability(
     _cap: RequireCapability,
     auth: AuthUser,
