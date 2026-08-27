@@ -13479,6 +13479,28 @@
       "merge_attempted_at": "2026-08-26T20:30:04Z"
     },
     {
+      "task_id": "gh-issue-2859",
+      "branch": "auto-impl/gh-issue-2859-7b9508c9",
+      "status": "merged",
+      "claimed_at": "2026-08-26T22:26:41Z",
+      "last_updated": "2026-08-27T00:33:58Z",
+      "status_changed_at": "2026-08-27T00:33:58Z",
+      "pr_number": 2860,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2860",
+      "merged_at": "2026-08-27T00:32:20Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2860 done: added IG3 #[sqlx::test] locking overdue_only list<->stat parity (aml_dsa_cross_org_idor_tests.rs) + explicit \"first 200 of N\" truncation notice in ContentModerationPage.tsx (6 locales + vitest); cargo fmt/clippy clean, new DB test pass, ppt-web 2437/2437; only red is pre-existing env-only SSRF unit test in untouched api_call.rs; draft, CI authoritative",
+      "reviewer_summary": "verdict=approve head_oid=9cb858321d348f495fb3600f47138e3ea5773604 note=test-only+fe-affordance; scope-drift-justified; CI green",
+      "last_reviewed_oid": "9cb858321d348f495fb3600f47138e3ea5773604",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -15983,5 +16005,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-26T20:30:13Z"
+  "archived_at": "2026-08-27T00:34:02Z"
 }
