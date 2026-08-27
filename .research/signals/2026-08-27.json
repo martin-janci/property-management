@@ -1,0 +1,394 @@
+{
+  "generated_at": "2026-08-27T02:35:00Z",
+  "generator": "research-routine",
+  "since_iso": "2026-08-25T08:50:37Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Last run 2026-08-25T08:50:37Z (41h ago) — >36h threshold breached; routine skipped its expected mid-day slot on 2026-08-26."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-08-25..2026-08-27",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched this file since 2026-08-25 (PRs #2849 overdue affordance, #2856 server-side overdue filter, #2860 truncation notice)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-08-25..2026-08-27",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits touched this test since 2026-08-25 (mirroring the overdue-filter iteration)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-08-25..2026-08-27",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Cumulative re-emit — 3 commits touched en.json this run (PRs #2849/#2855/#2856 i18n key adds); previously seen 2026-07-16, score_delta suppressed per cumulative-signal rule."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2744 has been open 14 days (created 2026-08-13), draft=true, label=needs-human-review — dispatcher hang-alert has been firing for 313h. Blocks the archive-push wedge fix (#1162)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: compose-bom 2026.06.01 → 2026.08.00 (mobile-native compose group), open 7d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: cargo-minor-patch group (9 updates), open 7d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: npm-minor-patch group (32 updates), open 7d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: sentry 0.48.5 → 0.49.0 (backend), open 28d — long stall."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: base64 0.22.1 → 0.23.0 (backend), open 28d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: validator 0.20.0 → 0.21.0 (backend), open 28d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: rust_xlsxwriter 0.96.0 → 0.97.0 (backend), open 28d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: expo-secure-store 56.0.4 → 57.0.1 (frontend), open 28d — part of expo 57 group."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: expo-device 56.0.4 → 57.0.1 (frontend), open 28d — part of expo 57 group."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: @testing-library/react-native 13.3.3 → 14.0.1 (frontend), open 28d."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: expo-status-bar 56.0.4 → 57.0.1 (frontend), open 28d — part of expo 57 group."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "type": "code-review-finding",
+      "source": "Tier-1d api-handlers review 2026-08-26 (rotating-expert dev-review, security lens)",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "verify_hellosign_signature (sync.rs:226) MACs only event_time+event_type — envelope_id is not in the signed set.",
+        "esignature_webhook (webhook.rs:848-861 → 882-884 → 906-967) resolves the org and drives the workflow terminal state from the UNSIGNED payload.envelope_id.",
+        "Replay with a substituted envelope_id passes the MAC verification and forges cross-tenant e-signature completion. DocuSign/Adobe verify_slice the full raw body and are not affected.",
+        "Confidence upgraded low→high after direct code read of sync.rs L226-240 and webhook.rs L845-870 during 2026-08-27 routine."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "type": "code-review-finding",
+      "source": "Tier-1d api-handlers review 2026-08-26 (rotating-expert dev-review, security lens)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "esignature_webhook (webhook.rs:747-972) has no timestamp/freshness/nonce check for any provider — captured webhooks replayable indefinitely.",
+        "Sibling receivers (portal, Booking.com, Airbnb) all close the replay window via signed X-Webhook-Timestamp + tolerance; e-signature receiver is the outlier."
+      ]
+    },
+    {
+      "id": "code-review-api-core-fault-report-csv-injection",
+      "type": "code-review-finding",
+      "source": "Tier-1d api-core review 2026-08-27 (rotating-expert dev-review)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "reports/helpers.rs:188 fault-report CSV branch embeds cat.category / status.status / priority.priority via format! with no escaping (misses the sanitize_csv_cell regression #2822 fix that the sibling voting export at L113 uses).",
+        "faults.rs:466 stores req.category with no enum/allowlist validation — tenant can persist arbitrary formula-injection string that flows into the unescaped CSV cell."
+      ]
+    },
+    {
+      "id": "code-review-api-core-market-pricing-db-error-swallow",
+      "type": "code-review-finding",
+      "source": "Tier-1d api-core review 2026-08-27 (rotating-expert dev-review)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "market_pricing.rs:459 list_regions(...).await.unwrap_or_default() and :471 get_market_comparables(...).await.unwrap_or_default() swallow DB errors into empty results — downstream generate_statistical_pricing (L744) then returns a money-relevant recommendation with fabricated confidence on empty-because-error data with no log/metric."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-query-invalidation-dead",
+      "type": "code-review-finding",
+      "source": "Tier-1d ppt-web-core review 2026-08-26 (rotating-expert dev-review)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "App.tsx:94-99 WebSocketWrapper renders <WebSocketProvider> with only the auth prop — no queryClient is threaded through, so incoming WS events never invalidate TanStack Query caches; UI shows stale data until hard refresh."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "type": "code-review-finding",
+      "source": "Tier-1d reality-web review 2026-08-26 (rotating-expert dev-review)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "reality-web/src/lib/realtor-api.ts:22-49 request<T> helper sends only credentials:'include' — form-login realtors (bearer-token flow) get 401 on all writes because their token is never attached to subsequent requests."
+      ]
+    },
+    {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "type": "code-review-finding",
+      "source": "Tier-1d reality-server review 2026-08-25 (rotating-expert dev-review)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "reality-server/src/main.rs:453 wires SearchAlertDrainer with LoggingEmailTransport / LoggingPushTransport in prod — the drainer marks alerts delivered but nothing actually leaves the server; users with saved-search alerts silently receive zero notifications."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/2026-08-27.md",
+      "observed": "# 2026-08-27",
+      "expected": "# 2026-08-27"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal id / cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no >8, all open items <=11d so no decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "brief: adversarial pass: passed",
+      "expected": "present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan metadata + 11 headings + mode + capability + files",
+      "observed": "1 plan; all 15 sections present; Mode: cloud-ok; 2 capabilities ticked; all 3 files resolve",
+      "expected": "≤2, all sections present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phases failed; cursors all advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "unchanged",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap + idempotency",
+      "observed": "no auto-fix actions this run",
+      "expected": "≤3 total ≤1 per type; no seen id re-processed"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + coverage_cursor",
+      "observed": "Phase 1.6 skipped this run — no-op gate",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

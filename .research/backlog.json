@@ -2,6 +2,165 @@
   "version": 1,
   "items": [
     {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "title": "SECURITY: HelloSign webhook MAC covers only event_time+event_type — attacker-swapped envelope_id forges cross-tenant e-sign completion",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Tier-1d api-handlers review 2026-08-26"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs:226 verify_hellosign_signature MACs only event_time+event_type (mac.update(format!(\"{}{}\", event_time, event_type)))",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:848-861 HELLOSIGN branch validates that tuple then esignature_webhook acts on the UNSIGNED payload.envelope_id (L882-884) to resolve the owning org and mark that workflow completed/voided/declined",
+        "Consequence: attacker with ONE valid HelloSign notification replays it with a substituted envelope_id — event_hash still verifies (only covers time+type) and the org is resolved from the attacker-chosen envelope_id, forging cross-tenant workflow terminal state (DocuSign/Adobe branches verify_slice full raw &body so they're safe)",
+        "Idempotency guard in integration.rs:964-987 (WHERE external_envelope_id=$1 AND status <> ALL($terminal)) only blocks re-transitioning already-terminal workflows; a substituted not-yet-terminal envelope_id passes",
+        "Confidence upgraded high after direct code read of sync.rs L226-240 and webhook.rs L845-870 during 2026-08-27 routine"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs",
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "backend/crates/db/src/repositories/integration.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": "plans/code-review-api-handlers-hellosign-unbound-envelope.md"
+    },
+    {
+      "id": "code-review-api-handlers-esign-webhook-replay",
+      "title": "e-signature webhook has no freshness/nonce check — captured deliveries replayable indefinitely (all providers)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d api-handlers review 2026-08-26"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:747-972 esignature_webhook has NO timestamp/freshness (replay) check for ANY provider — grep for timestamp/freshness/tolerance/stale across handler body returns nothing",
+        "Sibling receivers in the same file all close the replay window per gap 83-3 / issue #2330: verify_portal_webhook (L1281-1323) folds signed X-Webhook-Timestamp into HMAC with tolerance; Booking.com (L1110+) and Airbnb verify_airbnb_delivery (L1491) do the same",
+        "For DocuSign/Adobe (full-body HMAC) a captured valid webhook can be replayed indefinitely to re-drive workflow state; for HelloSign event_time IS signed but never compared to server time (L848) so provides no freshness"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-fault-report-csv-injection",
+      "title": "api-server fault-report CSV export bypasses sanitize_csv_cell — stored formula-injection when manager opens export in Excel",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d api-core review 2026-08-27"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/helpers.rs:188 fault-report CSV branch of generate_sync_csv_report embeds cat.category / status.status / priority.priority straight into CSV via format! with no escaping (regression relative to #2822 sanitize_csv_cell)",
+        "backend/servers/api-server/src/routes/reports/helpers.rs:113 sibling voting export in same file routes user text through sanitize_csv_cell(&v.title) (imported line 15) — the fault branch never calls it",
+        "backend/servers/api-server/src/routes/faults.rs:466 category: req.category copied from create-fault request into CreateFault with no enum/allowlist validation — a tenant can persist arbitrary category string incl. =cmd|... or CRLF; flows through by_category GROUP BY into unescaped CSV cell"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/helpers.rs",
+        "backend/servers/api-server/src/routes/faults.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-market-pricing-db-error-swallow",
+      "title": "market_pricing.rs .unwrap_or_default() on DB queries silently produces empty regions/comparables — pricing recommendation looks authoritative on error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier-1d api-core review 2026-08-27"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/market_pricing.rs:459 list_regions(org_id).await.unwrap_or_default() swallows any DB error into empty region list — transient DB failure indistinguishable from 'no regions configured'",
+        "backend/servers/api-server/src/routes/market_pricing.rs:471 get_market_comparables(...).await.unwrap_or_default() turns DB error into zero comparables; downstream generate_statistical_pricing (L744) silently falls back to size-based estimate and returns fabricated confidence, presenting money-relevant recommendation as authoritative on empty-because-error data — failure not surfaced to caller nor logged as error"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/market_pricing.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-query-invalidation-dead",
+      "title": "ppt-web WebSocketWrapper renders <WebSocketProvider> without queryClient prop — realtime cache invalidation is dead",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d ppt-web-core review 2026-08-26"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:94-99 WebSocketWrapper renders <WebSocketProvider> with only the auth prop; it passes no queryClient — the provider's invalidateQueries handler therefore never fires",
+        "Result: incoming WebSocket events (fault updates, new announcements, chat messages) don't invalidate the corresponding TanStack Query caches — the UI shows stale data until the user hard-refreshes or navigates away",
+        "This is a regression against the intent of the realtime feature — the plumbing exists but is not wired at the top-level provider"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "title": "reality-web realtor request<T> uses only credentials:'include' — form-login realtors get 401 on all writes",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d reality-web review 2026-08-26"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:22-49 the shared request<T> helper sends ONLY credentials:'include' — form-login flow that returns a bearer token in the response body never attaches that token to subsequent writes; realtor API calls 401 for form-authenticated realtors",
+        "SSO flow works because it sets an httpOnly cookie the credentials:'include' path picks up; the two auth paths diverge on the very first write after login for form realtors"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "title": "reality-server: saved-search alert drainer wired with logging-stub transports — alerts marked delivered without being sent in prod",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d reality-server review 2026-08-25"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:453 production wiring constructs the saved-search alert drainer via SearchAlertDrainer::new with logging-stub email and push transports (LoggingEmailTransport / LoggingPushTransport) — the drainer marks the AlertNotification as delivered but nothing actually leaves the server",
+        "Result: users with saved-search alerts silently get zero notifications while the DB record shows delivered=true; observability is via log lines only",
+        "The transport implementations exist (Sendgrid/FCM adapters) but are not wired in the main-startup path"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/main.rs",
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": null
+    },
+    {
       "id": "test-gap-inquiry-idor-regression",
       "title": "Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497)",
       "vector": "test-gap",
