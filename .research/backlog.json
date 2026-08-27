@@ -9242,6 +9242,36 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-content-moderation-page-extract",
+      "title": "ContentModerationPage.tsx (489 lines) — 4 PR touches this run; extract useContentModeration hook + presentational sub-components (mirror #2848 AmlDashboardPage pattern)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "PR #2860",
+        "PR #2856",
+        "PR #2849",
+        "PR #2863",
+        "signal: churn-hotspot-ContentModerationPage.tsx",
+        "signal: code-review-ppt-web-ui-content-moderation-page-extract"
+      ],
+      "evidence": [
+        "PR #2860 (2026-08-27 00:32) added overdue-truncation notice + DB test — touched ContentModerationPage.tsx",
+        "PR #2856 (2026-08-26 14:28) made overdue filter server-side — touched ContentModerationPage.tsx",
+        "PR #2849 (2026-08-25 10:33) added client-side overdue affordance — touched ContentModerationPage.tsx",
+        "PR #2863 (2026-08-27 06:25) suppressed 200-boundary false-positive — touched ContentModerationPage.tsx",
+        "Page holds 6 filter useStates + 2 dialog useStates + 3 query hooks + 3 mutations + 2 transforms + 6 useCallbacks; PR #2848 landed the exact target shape for AmlDashboardPage (385 -> 157 lines)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-27",
+      "updated_at": "2026-08-27",
+      "plan": "plans/churn-hotspot-content-moderation-page-extract.md"
     }
   ]
 }

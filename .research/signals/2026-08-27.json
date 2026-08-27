@@ -1,0 +1,163 @@
+{
+  "date": "2026-08-27",
+  "run_iso": "2026-08-27T12:35:00Z",
+  "since_iso": "2026-08-25T08:50:37Z",
+  "trigger_payload": "buffer-low: claimable=6/72 — all remaining backlog is mobile-native/KMP (cloud-unbuildable); coverage exhausted (49/49 done). Refill planner with landable backend/frontend work.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-27",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-08-25T08:50:37Z (51h ago, >36h threshold)",
+      "score_delta": 0,
+      "evidence": ["routine hasn't run in 2d 3h — over 36h threshold"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2849 #2856 #2860 #2863 (4 merged touches this run)",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2849 add client-side overdue affordance (+43/-5)",
+        "PR #2856 move overdue filter server-side (+15/-22)",
+        "PR #2860 add explicit truncation notice (+14 in tsx)",
+        "PR #2863 suppress 200-boundary false-positive (+13/-9)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2849 #2856 #2860 #2863 (4 merged touches this run)",
+      "score_delta": 1,
+      "evidence": [
+        "test file rewritten twice (PR #2856 +56/-56, PR #2849 +114) and extended twice (PR #2860 +54, PR #2863 +52) — test-suite churn tracking the page churn"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2858 #2864 (2 merged touches this run)",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2858 strictest-across-orgs refactor + 2 sqlx::test regressions (+160/-8)",
+        "PR #2864 delete dead check_capability_grant path + refresh doc (-23)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2848 #2852 (2 merged touches this run)",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2848 extract sections + useAmlDashboard hook (page 385 → 157 lines)",
+        "PR #2852 test dedupe (test file only, +34/-26)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-moderation-page-extract",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review (churn-aligned selection)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:1-489 mixes 6 filter useStates + 2 dialog useStates + 3 query hooks + 3 mutations + inline API→UI transform + overdue-truncation guard in one component",
+        "PR #2848 landed the exact target shape for AmlDashboardPage (385 → 157 lines) with its test suite unchanged — pattern already validated in the same folder"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "severity": "medium"
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865 (dependabot cargo-minor-patch × 10)",
+      "score_delta": 0,
+      "evidence": ["open, no reviewDecision yet"],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866 (dependabot actions/setup-java 5→6)",
+      "score_delta": 0,
+      "evidence": ["open, no reviewDecision yet"],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867 (dependabot npm-minor-patch × 39)",
+      "score_delta": 0,
+      "evidence": ["open, no reviewDecision yet"],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744 (dispatcher un-wedge)",
+      "score_delta": 1,
+      "evidence": ["draft, needs-human-review label, last updated 2026-08-13 (14d idle)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559 (feat(acc) UC-ACC-05.8 pay-by-square QR)",
+      "score_delta": 1,
+      "evidence": ["open 30d, no reviewDecision, last updated 2026-07-30"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2558",
+      "type": "stalled-review",
+      "source": "PR #2558 (feat(acc) UC-ACC-05.9 invoice-PDF)",
+      "score_delta": 1,
+      "evidence": ["open 30d, no reviewDecision, last updated 2026-07-30"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555 (feat(acc) UC-ACC-05.17 sent/cancelled invoice lifecycle)",
+      "score_delta": 1,
+      "evidence": ["open 30d, no reviewDecision, last updated 2026-07-30"],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the one score-3 high-confidence vector (churn-hotspot-content-moderation-page-extract) is a multi-file JSX+hook extraction, well outside the auto-fix allowlist shapes (screen-map drift/orphan, fixme-in-merged-code, dep-update lockfile-drift, stalled-review comment)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-08-27.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.last_pr_seen 2847 → 2867; last_issue_seen → 2867; last_commit_sha → 89d75a30c2; seen_signals grew by 12", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id in this run's signals was in prior seen_signals with score_delta != 0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap: max(score) <= 8; decay: no open item older than 14d needed decay this run (only 4 open, oldest 11d)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "plans/churn-hotspot-content-moderation-page-extract.md brief annotation 'adversarial pass: passed'", "observed": "present", "expected": "present" },
+    { "goal": "G7", "passed": true, "command": "1 new plan ≤2; 4 metadata + 11 headings present; C6 ticked; Mode: cloud-ok declared; all 4 Files paths resolve on disk", "observed": "all pass", "expected": "all pass" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only outside .research/ == 0", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames on staged diff (excluding baseline docs)", "observed": "0 hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "exit 0 (regen script is the only writer)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phase; all cursors advanced as expected", "observed": "true", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present (in plans/ or plans/_archive/)", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive file count this run >= HEAD", "observed": "unchanged (no new archives)", "expected": ">=HEAD" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty (no candidate); kill switch not set", "observed": "true", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run (coverage exhausted 49/49, pm_cursor unchanged) → gate is a no-op", "observed": "no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram token value in staged diff", "observed": "0 hits", "expected": "0" }
+  ]
+}
