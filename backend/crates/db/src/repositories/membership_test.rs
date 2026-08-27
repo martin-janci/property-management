@@ -28,13 +28,18 @@ mod tests {
     }
 
     async fn make_org(pool: &sqlx::PgPool, slug: &str) -> Uuid {
-        sqlx::query("INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id")
-            .bind(slug)
-            .bind(slug)
-            .fetch_one(pool)
-            .await
-            .unwrap()
-            .get("id")
+        // `contact_email` is NOT NULL on `organizations`; derive one from the slug.
+        sqlx::query(
+            "INSERT INTO organizations (name, slug, contact_email) \
+             VALUES ($1, $2, $3) RETURNING id",
+        )
+        .bind(slug)
+        .bind(slug)
+        .bind(format!("{slug}@example.com"))
+        .fetch_one(pool)
+        .await
+        .unwrap()
+        .get("id")
     }
 
     async fn add_membership(
