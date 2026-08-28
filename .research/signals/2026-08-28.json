@@ -1,0 +1,280 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-28",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso=2026-08-25T08:50:37Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "routine last ran 65h ago (2d 17h) \u2014 exceeds 36h threshold; below 72h so no stale_routine_alert"
+    },
+    {
+      "id": "hotfix-no-test-pr-2858",
+      "type": "hotfix-no-test",
+      "source": "PR #2858",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #2858 fix(api-server) 'strictest email-verify policy in cap-grant gate' \u2014 1 file (auth_policy.rs), no test in diff; follow-up test landed via PR #2860 2d later \u2014 item marked done in Phase 2 resolution check"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2849, #2856, #2860, #2863",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-1 churn this window: 332 lines add+del across 4 PRs on the same test file (2026-08-25\u21922026-08-28)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2848",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "cumulative re-emit (already scored 2026-08-25); still top-2 churn this run (326 add+del) \u2014 PR #2848 extract sections + data hook"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/marketplace/components/VerificationBadge.i18n.snapshot.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2850",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "top-3 churn this window: 251 lines from PR #2850 initial regression snapshot suite \u2014 flag once, escalates on repeated-hit"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
+      "type": "repeated-churn",
+      "source": "PR #2848 + prior #2829/#2833",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen advances 1\u21922; AML dashboard has been repeatedly refactored/extract-sectioned across 2 consecutive routine runs \u2014 instability proxy"
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot npm-minor-patch group x39 \u2014 awaiting review"
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot actions/setup-java 5\u21926"
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot cargo-minor-patch group x10"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot gradle-minor-patch group x5 refreshed"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot ktor group x7 refreshed"
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot compose-bom 2026.06.01\u21922026.08.00 refreshed"
+    },
+    {
+      "id": "dep-update-noise-pr-2810-superseded",
+      "type": "dep-update-noise",
+      "source": "PR #2810 (closed unmerged)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "closed unmerged: superseded by #2867 regroup"
+    },
+    {
+      "id": "dep-update-noise-pr-2809-superseded",
+      "type": "dep-update-noise",
+      "source": "PR #2809 (closed unmerged)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "closed unmerged: superseded by #2865 regroup"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-window-confirm-hardcoded-copy",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-28",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "RegistryPage.tsx:100,114,157,171 \u2014 4\u00d7 window.confirm with hardcoded English on pet/vehicle delete+approve; anti-pattern already removed from compliance surface (PRs #2829/#2855/#2849). Promoted to plans/ this run."
+    },
+    {
+      "id": "code-review-ppt-web-ui-privacy-deletion-window-prompt-gdpr",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-28",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "PrivacySettingsPage.tsx:120 \u2014 window.prompt gates GDPR account-deletion with hardcoded English; Firefox/Safari dialog-suppression silently drops the right-to-erasure request. Promoted to plans/ this run."
+    },
+    {
+      "id": "code-review-ppt-web-ui-compliance-console-error-in-onerror-handlers",
+      "type": "code-review-finding",
+      "source": "ppt-web-ui segment review 2026-08-28",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "DsaReportsPage / ContentModerationPage / useAmlDashboard onError handlers ship raw console.error alongside localized toasts (8 sites). Low-effort sweep; sits at score=1 until it stacks."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists + H1 matches today",
+      "observed": "pending Phase 6",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors advanced",
+      "observed": "last_pr_seen 2847\u21922867, last_run_iso advanced, +new signal ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "pending Phase 6",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-count",
+      "observed": "AmlDashboardPage.tsx re-emit as churn-hotspot has score_delta=0 (cumulative carve-out)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + decay applied",
+      "observed": "no items >8; no open items with updated_at older than 14d this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans/ has adversarial-pass line in brief",
+      "observed": "pending Phase 6",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + all sections + files exist",
+      "observed": "2 new plans; both pass metadata+heading+mode+file-existence checks",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached only .research/",
+      "observed": "pending Phase 6 stage",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "pending Phase 6 grep",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen from backlog.json",
+      "observed": "renderer is idempotent + used to produce staged view",
+      "expected": "diff -q \u2192 exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans persist",
+      "observed": "no plans deleted this run; 2 added",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "_archive/ untouched this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "renderer idempotent for triage view too",
+      "expected": "diff -q \u2192 exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "Phase 5: no candidate met the certainty bar (allowlist + confidence=high + score\u22653); auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "Phase 1.6 ran; action-list.json/risks.json valid JSON; project-state.md non-empty; pm_cursor 4\u21925; coverage_cursor 6\u21927 (both advanced)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "pending Phase 6 grep",
+      "expected": "0 matches"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met allowlist + confidence=high + score>=3 bar this run"
+}

@@ -1,7 +1,29 @@
 {
   "version": 1,
-  "generated": "2026-08-25T04:24:00Z",
+  "generated": "2026-08-28T02:35Z",
   "items": [
+    {
+      "id": "pm-devops-dispatcher-goes-quiet-on-kmp-buffer-2026-08-28",
+      "risk": "Dispatcher goes silent every day the buffer is KMP-only — hides genuine backlog exhaustion signals under a false 'quiet' outcome, delaying decisions",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Add runner_requires plan-frontmatter filter + surface `all-remaining-unclaimable=<n>` in the daily digest so a human decides whether to spawn a runner or defer",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-devops 2026-08-28"
+    },
+    {
+      "id": "pm-devops-self-hosted-runner-unowned-2026-08-28",
+      "risk": "Self-hosted KMP runner adds a maintenance surface (SDK licensing, Android emulator, disk pressure, macOS-runner for iOS) with no team owning it",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Define ownership + runbook before provisioning; prefer ephemeral runners over always-on; document rotation duty",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-devops 2026-08-28"
+    },
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
       "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",

@@ -1,40 +1,34 @@
-# pm-devops — DevOps / Infrastructure
+# pm-devops — 2026-08-28
 
-_Ran: 2026-06-16 (PM rotation, idx 4 → 5; previous run 2026-05-27, 20 days stale)_
+**Rotating role slot:** pm-devops (last-run 2026-06-16, 2+ months overdue).
+**Trigger context:** buffer-low — `claimable=6/72`, all mobile-native/KMP, unlandable in the cloud runner (no Gradle/JDK/Android SDK). Dispatcher can't work through the queue because KMP plans need a build toolchain the cloud runner lacks.
 
 ## Summary
 
-`dev` backend is currently RED — PR #1426 merged despite breaking compile (issue #1437), blocking ALL backend CI gates until #1435/#1436 lands. This is the second dev-red incident in 14 days (cf. #1332 unblocked 2026-06-14 via #1379) and indicates a missing `dev`-push smoke gate: `backend.yml` runs on PR but not on push, so a merge that conflicts with main can break compile silently. On the mobile front, `eas-build-android.yml` and `eas-build-ios.yml` are now both present in `.github/workflows/` (cleared since 2026-05-27 from draft PRs) — green-status verification still pending. `app-tsx-merge-queue.yml` is present (carry-over action delivered). Pre-push fmt/clippy gate (#1431) merged but is local-hook-only and would not have caught #1426.
+Cloud runner cannot build `mobile-native/` (KMP: Kotlin 2.3.21 + AGP 8.7.3 + KSP 2.1.0 + Android SDK 34 + iOS via macOS runner), so all 6 remaining backlog items are stuck and the dispatcher is silently going quiet. The fix requires either a KMP-capable runner joined to the pool, a formal local-only lane the user consumes manually, or an explicit defer-to-infra-sprint decision. Doing nothing keeps repeating the buffer-low signal every day while hiding whether the backlog is genuinely exhausted or just infra-blocked.
 
 ## Next actions
 
-| Priority | Action | Dependency | Definition of done |
-|---|---|---|---|
-| high | URGENT: Land #1435 or #1436 to restore `dev` backend compile (issue #1437) — until this lands every backend PR's CI is red regardless of its own quality | pm-backend | `dev` HEAD `cargo check --workspace --tests` passes; backend.yml green on a fresh dev push |
-| high | Add `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) — backend.yml is currently PR-only. Would have caught #1426 → #1437 before propagation | pm-backend | backend.yml's `on:` includes `push: branches: [dev]`; smoke job runs first and is fail-fast |
-| medium | Confirm `eas-build-android.yml` + `eas-build-ios.yml` green on a workflow_dispatch run — both workflow files now exist (cleared from 2026-05-27 backlog) but action pins / eas-cli install / EXPO_TOKEN secret presence not verified post-merge | pm-frontend | both workflows pass a no-op build job; release secrets confirmed in repo/org settings |
-| medium | Decide pre-push fmt/clippy gate (#1431) scope: local hook only, mirror as CI status check, or both. Local-only does not catch contributors with hooks disabled (and would NOT have caught #1426) | pm-tech-lead | DEC entry in decisions.md; if "both" — CI job added gated on dev-push |
-| medium | Confirm `security-test-gate.yml` is a REQUIRED status check on `dev` branch protection (carry-over from 2026-05-27) — `gh api repos/.../branches/dev/protection` | pm-qa | gate appears in required_status_checks.contexts; security-labelled PR with no test file is blocked |
-| low | Confirm `app-tsx-merge-queue.yml` (carry-over delivered) is actively serializing App.tsx-touching PRs — verify wired to the PR ruleset | none | workflow has triggered at least once on a real App.tsx PR; merge-queue path confirmed |
+| # | Action | Priority | Dependency | Definition of done |
+|---|--------|----------|------------|--------------------|
+| 1 | Add a self-hosted Kotlin/Gradle/Android-SDK runner to the dispatcher's runner pool (label `kmp-cloud`) so mobile-native/KMP plans can be claimed in cloud mode. | high | none | Runner registered with label `kmp-cloud`; one KMP plan lands end-to-end through dispatcher without human intervention; runner health surfaced in `stack status`. |
+| 2 | Add a `runner_requires` field to plan frontmatter so the dispatcher can pre-filter unclaimable-in-cloud plans (`runner_requires: kmp-cloud`) instead of exhausting the queue and going quiet on buffer-low days. | medium | none | Field parsed by `next-plan` and `dispatcher/claim`; a KMP-only backlog surfaces as `all-remaining-unclaimable` in the digest, not `quiet=true`. |
+| 3 | Split the mobile-native/KMP backlog into a local-only lane surfaced via `/next-plan --local` so the user can consume it manually from a workstation with a mobile-native toolchain ready. | medium | pm-scrum-master | `/next-plan --local` returns the highest-score KMP-tagged plan; documented in `docs/git-workflow.md` under a "local-only lane" heading. |
+| 4 | Document a mobile-native/KMP deferral policy — if no KMP runner is provisioned within the agreed window (e.g. 4 weeks), all KMP-only plans are formally deferred to an infra sprint and the backlog board is annotated so stakeholders see the paused state. | low | pm-scrum-master | Policy checked in under `docs/`; existing 6 KMP plans get a `status: deferred` annotation if the window lapses. |
 
 ## Risks
 
-| Risk | Prob | Impact | Mitigation |
-|---|---|---|---|
-| `dev` backend RED via PR #1426 / issue #1437 — ALL backend CI gates broken until fix lands; second dev-red incident in 14 days | high | high | Land #1435/#1436 immediately; add `dev`-push smoke gate; audit PR #1426 merge log for missing required check |
-| Mobile EAS pipeline green-status unverified — workflows exist but pins/secrets/cli not confirmed post-merge | medium | medium | Trigger no-op workflow_dispatch; audit EXPO_TOKEN / EXPO_PROJECT_ID / Android keystore / iOS provisioning secrets |
-| `security-test-gate.yml` still possibly advisory-only on `dev` (unconfirmed since 2026-05-27) — security-labelled PRs may merge without tests | medium | high | Verify branch-protection required-check listing; promote to required if advisory |
-| Pre-push fmt/clippy gate (#1431) is local hook only — cannot stop a #1426-class compile break from a hook-disabled contributor | medium | medium | Mirror as fast CI status check (`cargo fmt --check && cargo clippy -q && cargo check`) on `dev`-push |
-
-## Open questions
-
-- Was `backend.yml` configured as a REQUIRED check on `dev` at the time PR #1426 merged, and did it actually pass? (Audit via `gh pr view 1426 --json statusCheckRollup` and branch-protection state.)
-- Are EAS build secrets (EXPO_TOKEN, EXPO_PROJECT_ID, Android keystore, iOS provisioning) provisioned in repo/org secrets, or will the workflows fail at the credentials step even with pins fixed?
-- Is `security-test-gate.yml` currently a required status check on `dev` branch protection, or only advisory? (Requires `gh api` — out of static scope.)
-- What fraction of contributors have the local pre-push fmt/clippy hook (#1431) installed? Is install enforced by `setup.sh` or opt-in?
+| # | Risk | Probability | Impact | Mitigation |
+|---|------|-------------|--------|------------|
+| 1 | Dispatcher goes silent every day the buffer is KMP-only — hides genuine backlog exhaustion signals under a false "quiet" outcome, delaying decisions. | high | medium | Add `runner_requires` filter (action #2) and surface `all-remaining-unclaimable=<n>` in the daily digest so a human decides whether to spawn a runner or defer. |
+| 2 | Self-hosted runner adds a maintenance surface (SDK licensing, Android emulator, disk pressure, iOS macOS runner) with no team owning it. | medium | medium | Define ownership + runbook before provisioning; prefer ephemeral runners over always-on; document rotation duty. |
 
 ## Decisions needed
 
-- **Scope of pre-push fmt/clippy gate (#1431):** local hook only / CI status check / both — owner: pm-tech-lead.
-- **`dev`-push smoke gate enforcement model:** fail-fast (block the push) vs warn-only (notify but allow) — owner: pm-tech-lead + pm-devops.
-- **CI bisect protocol for `dev` red:** who owns + escalates when `dev` breaks (PR #1426 → #1437 took >1 day to surface) — owner: pm-scrum-master.
+1. Self-hosted KMP runner vs local-only lane vs defer-to-infra-sprint — owner: pm-tech-lead + pm-devops.
+2. If self-hosted: who owns the runner (SDK updates, disk pressure, cost) — owner: pm-tech-lead.
+
+## Open questions
+
+- Is an iOS/macOS runner in scope, or is a Kotlin+Android-only KMP runner enough to unblock the current 6 plans? (KMP shared module compiles Android-side; iOS-only work would still block.)
+- Do any of the 6 backlog items have a Ktor/kotlin-native-only path that could be exercised without an Android SDK, shrinking the runner scope?

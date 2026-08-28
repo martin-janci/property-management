@@ -99,7 +99,55 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-devops-add-kmp-runner",
+      "action": "Add a self-hosted Kotlin/Gradle/Android-SDK runner to the dispatcher's runner pool (label kmp-cloud) so mobile-native/KMP plans can be claimed in cloud mode — unblocks the 6 stuck backlog items and prevents future KMP-only buffer starvation",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-devops 2026-08-28 (buffer-low: claimable=6/72 all mobile-native/KMP)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-28T02:35Z"
+    },
+    {
+      "id": "pm-devops-runner-requires-plan-frontmatter",
+      "action": "Add a `runner_requires` field to plan frontmatter so the dispatcher can pre-filter unclaimable-in-cloud plans (e.g. `runner_requires: kmp-cloud`) instead of exhausting the queue and going quiet on buffer-low days",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-devops 2026-08-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-08-28T02:35Z"
+    },
+    {
+      "id": "pm-devops-local-only-lane-for-mobile-native",
+      "action": "Split the mobile-native/KMP backlog into a local-only lane surfaced via `/next-plan --local` so the user can consume it manually from a workstation that has Gradle/JDK/Android SDK — no cloud-runner dependency",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-devops 2026-08-28",
+      "deadline": null,
+      "dependency": "pm-scrum-master",
+      "depends_on": [],
+      "first_open_at": "2026-08-28T02:35Z"
+    },
+    {
+      "id": "pm-devops-mobile-native-deferral-policy",
+      "action": "Document a mobile-native/KMP deferral policy — if no KMP runner is provisioned within an agreed window (e.g. 4 weeks), all KMP-only plans are formally deferred to an infra sprint and the backlog board is annotated so stakeholders see the paused state",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-devops 2026-08-28",
+      "deadline": null,
+      "dependency": "pm-scrum-master",
+      "depends_on": [],
+      "first_open_at": "2026-08-28T02:35Z"
     }
   ],
-  "generated": "2026-08-25T04:24:00Z"
+  "generated": "2026-08-28T02:35Z"
 }

@@ -112,3 +112,10 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-08-25, pm-qa):** Dispatcher-spawned fix PRs should require a failing-on-main regression test file in the same PR before entering the merge queue (enforced via CI diff-guard). The auto-review loop closed 7/7 in-window this run, but 5 of the 7 shipped without a regression test — the loop's compensating-transaction property masks a growing test-shadow debt. Owner: pm-tech-lead + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Adopt eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — 3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects a static lint would catch. Blocking-on-first-adoption vs warn-only-for-one-sprint is the open question. Owner: pm-frontend + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Shared proptest fuzz-corpus discipline for sanitizers (CSV, XSS, HTML, JSON) — PR #2827 closed one CSV bypass but the sanitizer test suite is per-input, not corpus-driven; a shared corpus crate under `backend/crates/` would prevent the next class-of-bug from being fixed one-input-at-a-time. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-08-28 (Phase 1.6 — pm-devops + pm-scrum-master)
+
+- **NEW (2026-08-28, pm-devops):** Self-hosted KMP runner vs local-only lane vs defer-to-infra-sprint — buffer-low signal is now recurring (`claimable=6/72` all mobile-native/KMP) and the dispatcher can't consume its own queue in cloud mode because the cloud runner has no Gradle/JDK/Android SDK. Three-way choice: (a) provision a self-hosted `kmp-cloud` runner and join it to the pool, (b) split the KMP backlog into a `--local` lane the user consumes manually from a workstation, (c) formally defer KMP work to a dedicated infra sprint. Owner: pm-tech-lead + pm-devops.
+- **NEW (2026-08-28, pm-devops):** If option (a) is chosen — who owns the self-hosted runner (SDK updates, disk pressure, cost line item, on-call for its health checks)? An unowned runner will degrade silently and reproduce the same buffer-low pattern with a longer feedback loop. Owner: pm-tech-lead.

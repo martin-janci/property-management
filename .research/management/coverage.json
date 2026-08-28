@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T04:24:00Z",
+  "generated": "2026-08-28T02:35Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -1082,11 +1082,12 @@
         "PR #2292: Create-new-schedule flow wired",
         "PR #2295: next_run_at recomputed on cron edit",
         "PR #2313: report_schedules due-work scheduler consumer wired",
-        "screen-map ppt/reports.md apiStatus=partial is stale (queued reconcile)"
+        "screen-map ppt/reports.md apiStatus=partial is stale (queued reconcile)",
+        "Upkeep re-check 2026-08-28: no PR in 2026-08-25..08-28 window touches report_schedules routes/handlers; status unchanged."
       ],
       "gaps": [],
       "epic": "epic-81",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-28",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
@@ -1110,11 +1111,12 @@
       "evidence": [
         "all three execution routes registered",
         "ExecutionHistory UI wired, 70 tests",
-        "screen-map shipped"
+        "screen-map shipped",
+        "Upkeep re-check 2026-08-28: no PR in 2026-08-25..08-28 window touches report execution history; status unchanged."
       ],
       "gaps": [],
       "epic": "epic-81",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-28",
       "screen_refs": [
         {
           "screen_id": "ppt/reports",
