@@ -101,23 +101,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-capabilities-list-cross-org",
-      "action": "SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant scoping — cross-tenant read if AuditRead is org-scoped",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-28T04:24:22Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
-    },
-    {
       "id": "code-review-api-handlers-decide-appeal-unvalidated",
       "action": "api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/casing; req.rationale not length-validated",
       "owner_role": "pm-backend",
