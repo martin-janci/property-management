@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-28T08:30:44Z",
+  "generated": "2026-08-28T08:39:31Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -114,18 +114,18 @@
     {
       "task_id": "gh-issue-2873",
       "branch": "auto-impl/gh-issue-2873-e8d2e66f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-28T08:25:39Z",
-      "last_updated": "2026-08-28T08:25:39Z",
-      "status_changed_at": "2026-08-28T08:25:39Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-28T08:39:31Z",
+      "status_changed_at": "2026-08-28T08:39:31Z",
+      "pr_number": 2874,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2874",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2874 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=chacha20 0.10.0->0.10.2 lockfile bump; cargo deny check green; workspace clippy/test blocked only by sandbox-gated swagger-ui download (env, CI covers)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
