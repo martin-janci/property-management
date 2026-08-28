@@ -3227,6 +3227,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-report-content-unbounded",
+      "branch": "auto-impl/code-review-api-handlers-report-content-5c9750b9",
+      "status": "merged",
+      "claimed_at": "2026-08-28T04:28:52Z",
+      "last_updated": "2026-08-28T20:32:02Z",
+      "status_changed_at": "2026-08-28T20:32:02Z",
+      "pr_number": 2870,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2870",
+      "merged_at": "2026-08-28T20:30:29Z",
+      "specialist": null,
+      "implementer_summary": " [merge-conflict vs merged #2869 in aml_dsa/shared.rs helper block; needs rebase/re-apply — non-mechanical] [rebased onto dev 2026-08-28: additive shared.rs conflict resolved (kept both #2869 + #2870 additions), fmt-clean, force-pushed e7a3034; CI re-running — re-review next cycle]",
+      "reviewer_summary": "verdict=approve note=rebase-clean-union-resolution-verified (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "e7a30340384d018d50ca0eaa4037af2c9ae0bfcc",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 2,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-28T20:32:02Z"
+    },
+    {
       "task_id": "code-review-api-handlers-reports-csv-injection",
       "branch": "auto-impl/code-review-api-handlers-reports-csv-inj-cedaf54e",
       "status": "merged",
@@ -16203,5 +16225,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-28T18:35:41Z"
+  "archived_at": "2026-08-28T20:32:09Z"
 }

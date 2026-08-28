@@ -99,23 +99,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "code-review-api-handlers-report-content-unbounded",
-      "action": "api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open to all authenticated users; MB-scale rows persistable",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-28T04:24:22Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
