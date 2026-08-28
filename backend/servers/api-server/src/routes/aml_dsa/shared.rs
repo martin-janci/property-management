@@ -137,6 +137,7 @@ pub(super) const MAX_DSA_REPORT_RANGE_DAYS: i64 = 732;
 pub(super) const MAX_NOTE_LEN: usize = 10_000;
 pub(super) const MAX_RATIONALE_LEN: usize = 10_000;
 pub(super) const MAX_APPEAL_REASON_LEN: usize = 5_000;
+pub(super) const MAX_REPORT_REASON_LEN: usize = 5_000;
 pub(super) const MAX_FILENAME_LEN: usize = 255;
 pub(super) const MAX_FILE_PATH_LEN: usize = 1024;
 
@@ -265,6 +266,26 @@ pub(super) fn validate_appeal_decision(decision: &str) -> Result<(), String> {
             APPEAL_DECISIONS.join(", ")
         ))
     }
+}
+
+/// Validate an *optional* free-text field: absent/empty is allowed, but when
+/// a value is supplied it must be within `max` chars. Unlike
+/// [`validate_text_field`], this does not require the field to be non-empty —
+/// it exists to bound optional user input (e.g. a report reason) so that an
+/// endpoint open to all authenticated users cannot persist MB-scale rows.
+pub(super) fn validate_optional_text_field(
+    value: Option<&str>,
+    max: usize,
+    field: &str,
+) -> Result<(), String> {
+    if let Some(v) = value {
+        if v.chars().count() > max {
+            return Err(format!(
+                "{field} exceeds the maximum length of {max} characters"
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Build a scoped, opaque download reference for a DSA report that never
@@ -467,6 +488,35 @@ mod tests {
         assert!(validate_appeal_decision("uphel").is_err());
         assert!(validate_appeal_decision("approve").is_err());
         assert!(validate_appeal_decision("").is_err());
+    }
+
+    // ----- optional free-text caps -----
+
+    #[test]
+    fn optional_text_field_rejects_over_max() {
+        // report_content's `reason` is open to all authenticated users; an
+        // unbounded value could persist MB-scale rows. Over-limit must fail.
+        let too_long = "a".repeat(MAX_REPORT_REASON_LEN + 1);
+        assert!(
+            validate_optional_text_field(Some(&too_long), MAX_REPORT_REASON_LEN, "reason").is_err()
+        );
+    }
+
+    #[test]
+    fn optional_text_field_allows_absent_or_within_bounds() {
+        assert!(validate_optional_text_field(None, MAX_REPORT_REASON_LEN, "reason").is_ok());
+        assert!(validate_optional_text_field(Some(""), MAX_REPORT_REASON_LEN, "reason").is_ok());
+        assert!(validate_optional_text_field(
+            Some("spam listing"),
+            MAX_REPORT_REASON_LEN,
+            "reason"
+        )
+        .is_ok());
+        // Boundary: exactly at the cap is accepted.
+        let at_cap = "a".repeat(MAX_REPORT_REASON_LEN);
+        assert!(
+            validate_optional_text_field(Some(&at_cap), MAX_REPORT_REASON_LEN, "reason").is_ok()
+        );
     }
 
     // ----- scoped download reference -----
