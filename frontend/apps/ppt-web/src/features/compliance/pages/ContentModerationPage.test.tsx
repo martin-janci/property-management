@@ -20,7 +20,7 @@
  * dialog for a different case starts blank (the #2833-style key remount guard).
  */
 import { useModerationCases, useModerationStats } from '@ppt/api-client';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components';
 import { ContentModerationPage } from './ContentModerationPage';
@@ -184,6 +184,98 @@ describe('ContentModerationPage decision flow', () => {
     openTakeActionDialog(1);
     expect((dialog().getByRole('combobox') as HTMLSelectElement).value).toBe('approve');
     expect((dialog().getByLabelText(/rationale/i) as HTMLTextAreaElement).value).toBe('');
+  });
+});
+
+/**
+ * Toast feedback + dialog-reset behavior shared by BOTH decision mutations
+ * (take-action and decide-appeal). The two submit handlers were refactored to
+ * share one `decisionMutationCallbacks` helper (dedupe of the #2856 Toast
+ * wiring); these tests drive the mutation's onSuccess/onError callbacks through
+ * the mocked `mutate` and lock in that each still shows the correct localized
+ * Toast and closes its dialog only on success.
+ */
+describe('ContentModerationPage decision toast feedback', () => {
+  // The mutate mocks are captured but don't auto-invoke callbacks; grab the
+  // options object the handler passed and drive onSuccess/onError explicitly,
+  // exactly as TanStack Query would.
+  function optionsFrom(mutateSpy: ReturnType<typeof vi.fn>) {
+    const call = mutateSpy.mock.calls[0];
+    return call[1] as { onSuccess: () => void; onError: (err: unknown) => void };
+  }
+
+  beforeEach(() => {
+    takeActionMutate.mockClear();
+    decideAppealMutate.mockClear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('shows the success toast and closes the dialog when take-action succeeds', () => {
+    renderPage();
+    openTakeActionDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'remove' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'violates policy' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit action/i }));
+
+    expect(screen.queryByText('Action recorded')).not.toBeInTheDocument();
+    act(() => optionsFrom(takeActionMutate).onSuccess());
+
+    expect(screen.getByText('Action recorded')).toBeInTheDocument();
+    // Dialog closed on success.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows the error toast and keeps the dialog open when take-action fails', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderPage();
+    openTakeActionDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'remove' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'violates policy' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit action/i }));
+
+    act(() => optionsFrom(takeActionMutate).onError(new Error('boom')));
+
+    expect(screen.getByText('Failed to take action. Please try again.')).toBeInTheDocument();
+    // Dialog stays open so the moderator can retry.
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('shows the success toast and closes the dialog when appeal decision succeeds', () => {
+    renderPage();
+    openDecideAppealDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'overturn' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'appeal is valid' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+    act(() => optionsFrom(decideAppealMutate).onSuccess());
+
+    expect(screen.getByText('Appeal decided')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows the error toast when appeal decision fails', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderPage();
+    openDecideAppealDialog();
+    fireEvent.change(dialog().getByRole('combobox'), { target: { value: 'overturn' } });
+    fireEvent.change(dialog().getByLabelText(/rationale/i), {
+      target: { value: 'appeal is valid' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+    act(() => optionsFrom(decideAppealMutate).onError(new Error('boom')));
+
+    expect(screen.getByText('Failed to decide appeal. Please try again.')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });
 
