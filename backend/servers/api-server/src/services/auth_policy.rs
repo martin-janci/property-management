@@ -158,6 +158,32 @@ impl AuthPolicyEnforcer {
             .map_err(AuthPolicyError::PasswordPolicy)
     }
 
+    /// Enforce a policy's `require_email_verification` clause against a target
+    /// user. A no-op when the resolved `policy` does not require verification.
+    /// Otherwise the target must exist and carry a non-null `email_verified_at`.
+    ///
+    /// Single seam shared by every surface that gates a privilege grant on the
+    /// grantee's email being verified (`check_membership_grant`,
+    /// `check_capability_grant_for_user`) — keep the gate here so the two paths
+    /// can never drift.
+    async fn enforce_email_verification(
+        &self,
+        policy: &AuthPolicy,
+        target_user_id: Uuid,
+    ) -> Result<(), AuthPolicyError> {
+        if policy.require_email_verification {
+            let user_repo = UserRepository::new(self.pool.clone());
+            let user = user_repo
+                .find_by_id(target_user_id)
+                .await?
+                .ok_or(AuthPolicyError::UserNotFound(target_user_id))?;
+            if user.email_verified_at.is_none() {
+                return Err(AuthPolicyError::EmailNotVerified);
+            }
+        }
+        Ok(())
+    }
+
     /// Re-evaluate before a membership grant proceeds. The org's effective
     /// policy is loaded fresh on every call (no caching) so a policy edit in
     /// the same transaction window is honored on the next grant.
@@ -172,19 +198,8 @@ impl AuthPolicyEnforcer {
         target_user_id: Uuid,
     ) -> Result<(), AuthPolicyError> {
         let policy = self.policy_for(org_id).await?;
-
-        if policy.require_email_verification {
-            let user_repo = UserRepository::new(self.pool.clone());
-            let user = user_repo
-                .find_by_id(target_user_id)
-                .await?
-                .ok_or(AuthPolicyError::UserNotFound(target_user_id))?;
-            if user.email_verified_at.is_none() {
-                return Err(AuthPolicyError::EmailNotVerified);
-            }
-        }
-
-        Ok(())
+        self.enforce_email_verification(&policy, target_user_id)
+            .await
     }
 
     /// Re-evaluate before a membership revoke proceeds. The current policy
@@ -223,19 +238,8 @@ impl AuthPolicyEnforcer {
         let memberships = mem_repo.list_for_user(target_user_id).await?;
         let org_ids: Vec<Uuid> = memberships.iter().map(|m| m.organization_id).collect();
         let policy = self.strictest_policy_across(&org_ids).await?;
-
-        if policy.require_email_verification {
-            let user_repo = UserRepository::new(self.pool.clone());
-            let user = user_repo
-                .find_by_id(target_user_id)
-                .await?
-                .ok_or(AuthPolicyError::UserNotFound(target_user_id))?;
-            if user.email_verified_at.is_none() {
-                return Err(AuthPolicyError::EmailNotVerified);
-            }
-        }
-
-        Ok(())
+        self.enforce_email_verification(&policy, target_user_id)
+            .await
     }
 
     /// Re-evaluate before a `principal_kind` transition. The target's
@@ -487,6 +491,54 @@ mod tests {
         assert!(
             result.is_ok(),
             "unverified grantee in a lax-only org must be allowed, got {result:?}"
+        );
+    }
+
+    // ─── shared email-verification seam (check_membership_grant) ──────────────
+    //
+    // `check_membership_grant` and `check_capability_grant_for_user` share the
+    // private `enforce_email_verification` seam. The cases above lock the
+    // capability path; these lock the membership path so the two can never
+    // silently diverge if the seam is edited.
+
+    /// A strict org (`require_email_verification=true`) must reject an
+    /// unverified target on membership grant.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn membership_grant_rejected_when_org_requires_verification(pool: sqlx::PgPool) {
+        let mut sa = pool.acquire().await.expect("acquire");
+        set_super_admin(&mut sa).await;
+
+        let strict_org = seed_org(&mut sa, "mem-2861-strict").await;
+        let target = seed_user(&mut sa, "unverified@mem-grant-2861.test", false).await;
+        seed_email_verification_policy(&mut sa, strict_org, true).await;
+        drop(sa);
+
+        let enforcer = AuthPolicyEnforcer::new(pool.clone());
+        let result = enforcer.check_membership_grant(strict_org, target).await;
+
+        assert!(
+            matches!(result, Err(AuthPolicyError::EmailNotVerified)),
+            "unverified target in a strict org must be rejected on membership grant, got {result:?}"
+        );
+    }
+
+    /// A verified target passes the same strict org's membership-grant gate.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn membership_grant_allowed_for_verified_user_in_strict_org(pool: sqlx::PgPool) {
+        let mut sa = pool.acquire().await.expect("acquire");
+        set_super_admin(&mut sa).await;
+
+        let strict_org = seed_org(&mut sa, "mem-2861-verified").await;
+        let target = seed_user(&mut sa, "verified@mem-grant-2861.test", true).await;
+        seed_email_verification_policy(&mut sa, strict_org, true).await;
+        drop(sa);
+
+        let enforcer = AuthPolicyEnforcer::new(pool.clone());
+        let result = enforcer.check_membership_grant(strict_org, target).await;
+
+        assert!(
+            result.is_ok(),
+            "verified target in a strict org must be allowed on membership grant, got {result:?}"
         );
     }
 }
