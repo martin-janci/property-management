@@ -1661,6 +1661,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-124a37e8",
+      "status": "merged",
+      "claimed_at": "2026-08-28T04:28:52Z",
+      "last_updated": "2026-08-28T10:34:45Z",
+      "status_changed_at": "2026-08-28T10:34:45Z",
+      "pr_number": 2872,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2872",
+      "merged_at": "2026-08-28T10:34:45Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=behavior-preserving-authz-refactor-seam-byte-identical-+2-tests-cargo-deny-unrelated",
+      "last_reviewed_oid": "3d87a6c1683a1cfa1176741e425bf8cf2b1cf0b9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-f9113a08",
       "status": "failed",
@@ -3065,6 +3087,28 @@
       "reviewer_summary": "verdict=approve note=security-fix-correct-complete-ci-green-approve-posted-as-comment-self-pr",
       "last_reviewed_oid": "5cc9d14928dfcf1d823ce76390db1683a010c8b5",
       "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-api-handlers-decide-appeal-unvalidated",
+      "branch": "auto-impl/code-review-api-handlers-decide-appeal-u-35ccbbfc",
+      "status": "merged",
+      "claimed_at": "2026-08-28T04:28:52Z",
+      "last_updated": "2026-08-28T10:34:45Z",
+      "status_changed_at": "2026-08-28T10:34:45Z",
+      "pr_number": 2869,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2869",
+      "merged_at": "2026-08-28T10:34:45Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=validates-decision-enum+caps-rationale-reuses-existing-helpers-tests-green-cargo-deny-fail-unrelated",
+      "last_reviewed_oid": "91050650fe94b3dfadc1563d8bf07bf23cdf94e7",
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -13589,6 +13633,28 @@
       "merge_attempted_at": "2026-08-27T06:32:59Z"
     },
     {
+      "task_id": "gh-issue-2873",
+      "branch": "auto-impl/gh-issue-2873-e8d2e66f",
+      "status": "merged",
+      "claimed_at": "2026-08-28T08:25:39Z",
+      "last_updated": "2026-08-28T10:34:45Z",
+      "status_changed_at": "2026-08-28T10:34:45Z",
+      "pr_number": 2874,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2874",
+      "merged_at": "2026-08-28T10:34:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2874 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=chacha20 0.10.0->0.10.2 lockfile bump; cargo deny check green; workspace clippy/test blocked only by sandbox-gated swagger-ui download (env, CI covers)",
+      "reviewer_summary": "verdict=approve note=chacha20-lockfile-bump-clean-ci-green",
+      "last_reviewed_oid": "cf49a9cdbcdd0dd6a9b556aefeabe1559e3743f6",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -16093,5 +16159,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-28T08:31:03Z"
+  "archived_at": "2026-08-28T10:34:51Z"
 }

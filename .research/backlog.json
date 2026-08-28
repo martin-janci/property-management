@@ -9323,7 +9323,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commits 142ae17..origin/dev"
       ],
@@ -9335,7 +9335,12 @@
       ],
       "created_at": "2026-08-28",
       "updated_at": "2026-08-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-28T10:34:25Z",
+        "assignment_status": "merged",
+        "pr_number": 2868
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
