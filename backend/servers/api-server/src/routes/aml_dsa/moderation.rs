@@ -572,6 +572,12 @@ pub(super) async fn report_content(
     user: AuthUser,
     Json(req): Json<ReportContentRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
+    // This endpoint is open to every authenticated user, so an unbounded
+    // `reason` lets any caller persist MB-scale rows. Cap the free-text length
+    // before touching the database (fail fast on oversized input).
+    validate_optional_text_field(req.reason.as_deref(), MAX_REPORT_REASON_LEN, "reason")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+
     // Any authenticated user can report content, but the case must be stored
     // against the *real* content owner — a random placeholder corrupts
     // violation-history and owner-notification downstream (PAP-60/PAP-43 — F7).
