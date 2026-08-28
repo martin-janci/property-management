@@ -147,6 +147,34 @@ export const ContentModerationPage: React.FC = () => {
     [assignCase, t]
   );
 
+  // Both moderation-decision mutations (take-action, decide-appeal) share the
+  // same success/failure UX: on success close the originating dialog and show a
+  // localized success Toast; on failure log the error and show a localized error
+  // Toast. Only the dialog i18n namespace, the case-id reset, and the log label
+  // differ. Factor the shared shape out so the two handlers can't drift — the
+  // Toast wiring has been an active churn site (#2856).
+  const decisionMutationCallbacks = useCallback(
+    (dialog: 'takeAction' | 'decideAppeal', reset: () => void, logLabel: string) => ({
+      onSuccess: () => {
+        reset();
+        showToast({
+          type: 'success',
+          title: t(`moderation.dialogs.${dialog}.successTitle`),
+          message: t(`moderation.dialogs.${dialog}.successMessage`),
+        });
+      },
+      onError: (err: unknown) => {
+        console.error(logLabel, err);
+        showToast({
+          type: 'error',
+          title: t(`moderation.dialogs.${dialog}.errorTitle`),
+          message: t(`moderation.dialogs.${dialog}.errorMessage`),
+        });
+      },
+    }),
+    [showToast, t]
+  );
+
   const handleTakeAction = useCallback((caseId: string) => {
     setTakeActionCaseId(caseId);
   }, []);
@@ -163,27 +191,14 @@ export const ContentModerationPage: React.FC = () => {
             notify_owner: notifyOwner,
           },
         },
-        {
-          onSuccess: () => {
-            setTakeActionCaseId(null);
-            showToast({
-              type: 'success',
-              title: t('moderation.dialogs.takeAction.successTitle'),
-              message: t('moderation.dialogs.takeAction.successMessage'),
-            });
-          },
-          onError: (err) => {
-            console.error('Failed to take action:', err);
-            showToast({
-              type: 'error',
-              title: t('moderation.dialogs.takeAction.errorTitle'),
-              message: t('moderation.dialogs.takeAction.errorMessage'),
-            });
-          },
-        }
+        decisionMutationCallbacks(
+          'takeAction',
+          () => setTakeActionCaseId(null),
+          'Failed to take action:'
+        )
       );
     },
-    [takeActionCaseId, takeAction, showToast, t]
+    [takeActionCaseId, takeAction, decisionMutationCallbacks]
   );
 
   const handleViewContent = useCallback((caseId: string) => {
@@ -207,27 +222,14 @@ export const ContentModerationPage: React.FC = () => {
             rationale,
           },
         },
-        {
-          onSuccess: () => {
-            setDecideAppealCaseId(null);
-            showToast({
-              type: 'success',
-              title: t('moderation.dialogs.decideAppeal.successTitle'),
-              message: t('moderation.dialogs.decideAppeal.successMessage'),
-            });
-          },
-          onError: (err) => {
-            console.error('Failed to decide appeal:', err);
-            showToast({
-              type: 'error',
-              title: t('moderation.dialogs.decideAppeal.errorTitle'),
-              message: t('moderation.dialogs.decideAppeal.errorMessage'),
-            });
-          },
-        }
+        decisionMutationCallbacks(
+          'decideAppeal',
+          () => setDecideAppealCaseId(null),
+          'Failed to decide appeal:'
+        )
       );
     },
-    [decideAppealCaseId, decideAppeal, showToast, t]
+    [decideAppealCaseId, decideAppeal, decisionMutationCallbacks]
   );
 
   const handleFilterByPriority = useCallback((priority: number) => {
