@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-28T02:27:20Z",
+  "generated": "2026-08-28T04:32:37Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -16,28 +16,6 @@
       "reviewer_summary": "verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
       "last_reviewed_oid": "e3a6f01a38dba4a6f31f3235923067aff29004ca",
       "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-api-handlers-capabilities-list-cross-org",
-      "branch": "auto-impl/code-review-api-handlers-capabilities-li-978c2898",
-      "status": "in-progress",
-      "claimed_at": "2026-08-28T04:28:52Z",
-      "last_updated": "2026-08-28T04:28:52Z",
-      "status_changed_at": "2026-08-28T04:28:52Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,

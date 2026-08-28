@@ -99,6 +99,108 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-api-handlers-capabilities-list-cross-org",
+      "action": "SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant scoping — cross-tenant read if AuditRead is org-scoped",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-decide-appeal-unvalidated",
+      "action": "api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/casing; req.rationale not length-validated",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-report-content-unbounded",
+      "action": "api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open to all authenticated users; MB-scale rows persistable",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "action": "Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation notice) — same file surfaced 2 unvalidated-input findings in Tier-1d",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "action": "Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead capability-grant path #2864) — auth layer being iterated",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "action": "Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice, boundary fix) across #2855/#2856/#2860/#2863",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
