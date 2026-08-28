@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-28T06:36:13Z",
+  "generated": "2026-08-28T08:30:44Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -112,19 +112,19 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
-      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-7708122e",
-      "status": "review",
-      "claimed_at": "2026-08-28T04:28:52Z",
-      "last_updated": "2026-08-28T06:27:39Z",
-      "status_changed_at": "2026-08-28T06:23:28Z",
-      "pr_number": 2868,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2868",
+      "task_id": "gh-issue-2873",
+      "branch": "auto-impl/gh-issue-2873-e8d2e66f",
+      "status": "in-progress",
+      "claimed_at": "2026-08-28T08:25:39Z",
+      "last_updated": "2026-08-28T08:25:39Z",
+      "status_changed_at": "2026-08-28T08:25:39Z",
+      "pr_number": null,
+      "pr_url": null,
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=clean-behavior-preserving-refactor-ci-green-approved-as-comment-self-pr",
-      "last_reviewed_oid": "3b3583734e9dabff88bb628008a162f84c9a12b5",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
