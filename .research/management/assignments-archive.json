@@ -13677,6 +13677,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2875",
+      "branch": "auto-impl/gh-issue-2875-913f4b0a",
+      "status": "failed",
+      "claimed_at": "2026-08-28T18:25:55Z",
+      "last_updated": "2026-08-28T18:34:23Z",
+      "status_changed_at": "2026-08-28T18:34:23Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already fixed on dev by merged #2874 (chacha20 0.10.2, not yanked); #2875 duplicate, empty diff, no PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -16181,5 +16203,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-28T12:29:19Z"
+  "archived_at": "2026-08-28T18:35:41Z"
 }

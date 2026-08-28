@@ -116,26 +116,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "gh-issue-2875",
-      "action": "cargo-deny advisories FAILED: yanked chacha20 0.10.0 in backend/Cargo.lock blocks all backend PR merges (Closes #2875)",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-28T18:24:09Z (#2875)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-28T18:24:09Z",
-      "issue_ref": {
-        "number": 2875,
-        "url": "https://github.com/martin-janci/property-management/issues/2875",
-        "labels": [
-          "bug",
-          "rust"
-        ]
-      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"

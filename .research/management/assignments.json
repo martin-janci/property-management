@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-28T14:31:07Z",
+  "generated": "2026-08-28T18:35:41Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -44,28 +44,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-28T10:34:45Z"
-    },
-    {
-      "task_id": "gh-issue-2875",
-      "branch": "auto-impl/gh-issue-2875-913f4b0a",
-      "status": "in-progress",
-      "claimed_at": "2026-08-28T18:25:55Z",
-      "last_updated": "2026-08-28T18:25:55Z",
-      "status_changed_at": "2026-08-28T18:25:55Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ]
 }
