@@ -9249,7 +9249,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-handlers)"
       ],
@@ -9264,7 +9264,12 @@
       ],
       "created_at": "2026-08-28",
       "updated_at": "2026-08-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-28T12:23:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2869
+      }
     },
     {
       "id": "code-review-api-handlers-report-content-unbounded",
@@ -9348,7 +9353,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commits 142ae17..origin/dev"
       ],
@@ -9360,7 +9365,12 @@
       ],
       "created_at": "2026-08-28",
       "updated_at": "2026-08-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-28T12:23:53Z",
+        "assignment_status": "merged",
+        "pr_number": 2872
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",

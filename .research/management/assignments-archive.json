@@ -1661,6 +1661,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-7a278b66",
+      "status": "merged",
+      "claimed_at": "2026-08-28T04:28:52Z",
+      "last_updated": "2026-08-28T12:29:07Z",
+      "status_changed_at": "2026-08-28T12:29:07Z",
+      "pr_number": 2871,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2871",
+      "merged_at": "2026-08-28T12:29:07Z",
+      "specialist": null,
+      "implementer_summary": " [branch updated with dev 2026-08-28; new head 71428a14, CI re-running; re-review pending next run]",
+      "reviewer_summary": "verdict=approve note=base-merge-only-no-code-change-earlier-approve-stands",
+      "last_reviewed_oid": "71428a149e29d9e4791587175c60efb39717792c",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-124a37e8",
       "status": "merged",
@@ -16159,5 +16181,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-28T10:34:51Z"
+  "archived_at": "2026-08-28T12:29:19Z"
 }

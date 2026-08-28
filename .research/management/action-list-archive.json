@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-28T10:35:18Z",
+  "archived_at": "2026-08-28T12:29:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1539,6 +1539,24 @@
         "merged_at": null,
         "at": "2026-07-16T22:12:34Z"
       }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "action": "Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation notice) — same file surfaced 2 unvalidated-input findings in Tier-1d",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-28T04:24:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": "merged via PR #2871 (squash f21aaebc) 2026-08-28T12:29:07Z"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",

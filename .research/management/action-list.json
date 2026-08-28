@@ -116,23 +116,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
-      "action": "Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation notice) — same file surfaced 2 unvalidated-input findings in Tier-1d",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-28T04:24:22Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-28T04:24:22Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
