@@ -9242,6 +9242,158 @@
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "title": "churn hotspot: frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx — 218 lines this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PRs",
+        "#2849",
+        "#2855",
+        "#2856",
+        "#2860",
+        "#2863",
+        "(test",
+        "churn)"
+      ],
+      "evidence": [
+        "218 lines / 3 touches across merged PRs since 2026-08-25 (moderation queue tests reworked with each server-side filter iteration)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-28",
+      "updated_at": "2026-08-28",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "title": "churn hotspot: backend/servers/api-server/src/services/auth_policy.rs — 191 lines this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PRs",
+        "#2858",
+        "#2864",
+        "(capability-grant",
+        "enforcement)"
+      ],
+      "evidence": [
+        "191 lines / 2 touches — capability-grant email-verification enforcement rewritten + root-cause membership ordering fix"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-28",
+      "updated_at": "2026-08-28",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx",
+      "title": "churn hotspot: frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx — 133 lines this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR",
+        "#2855",
+        "(DsaReportsPage",
+        "toast",
+        "migration",
+        "test)"
+      ],
+      "evidence": [
+        "133 lines / 1 touch — full test rewrite when window.alert became toast"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx"
+      ],
+      "created_at": "2026-08-28",
+      "updated_at": "2026-08-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-missing-timeout",
+      "title": "reality-server SSO OAuth reqwest clients have no timeout — indefinite hang risk on unresponsive PM server",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "segment=reality-server",
+        "(oldest-unreviewed",
+        "2026-08-19)"
+      ],
+      "evidence": [
+        "`backend/servers/reality-server/src/routes/sso.rs:687,711,748` — exchange_code_for_tokens / get_user_info / introspect_pm_token each build `reqwest::Client::new()` with no `.timeout(...)`",
+        "Reached from public `GET /api/v1/sso/callback` and other SSO handlers",
+        "Failure: PM OAuth server drops packets → axum task awaits `send()` indefinitely, socket pool exhaustion + DoS",
+        "Fix pattern already exists: `PmApiClient` in `state.rs:757` uses a timeout-configured shared client"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-28",
+      "updated_at": "2026-08-28",
+      "plan": "plans/code-review-reality-server-sso-reqwest-missing-timeout.md"
+    },
+    {
+      "id": "code-review-reality-server-sso-pending-sessions-unbounded",
+      "title": "reality-server sso_sessions HashMap grows unbounded — public sso_login lets any client fill heap + serialize SSO under mutex",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "segment=reality-server",
+        "(oldest-unreviewed",
+        "2026-08-19)"
+      ],
+      "evidence": [
+        "`backend/servers/reality-server/src/routes/sso.rs:94` inserts PendingSsoSession per unauth `sso_login`; entries removed only on successful callback",
+        "10-min expiry checked lazily on read, never swept; no background evictor (unlike `MobileTokenStore` amortized sweep at `state.rs:689`)",
+        "Failure: attacker loops `GET /api/v1/sso/login` → millions of entries accumulate behind the async Mutex, heap growth + lock contention serializing every SSO request"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-28",
+      "updated_at": "2026-08-28",
+      "plan": "plans/code-review-reality-server-sso-pending-sessions-unbounded.md"
+    },
+    {
+      "id": "code-review-reality-server-favorite-ids-fetches-full-listing-payload",
+      "title": "reality-server list_favorite_ids hydrates full listings + photo subquery just to return ids — SSR hot-path over-fetches",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "segment=reality-server",
+        "(oldest-unreviewed",
+        "2026-08-19)"
+      ],
+      "evidence": [
+        "`backend/servers/reality-server/src/routes/favorites.rs:397-418` calls `get_favorites_with_listings` (JOIN listings + per-row `listing_photos` subquery) then discards all fields except `listing_id`",
+        "Anonymous SSR hot path; cheap-per-request but O(favorites) DB work every page render",
+        "Fix: add `list_favorite_listing_ids(user_id) -> Vec<Uuid>` at `backend/crates/db/src/repositories/reality_portal/searches.rs:406` doing `SELECT listing_id FROM portal_favorites WHERE user_id = $1`"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/favorites.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "created_at": "2026-08-28",
+      "updated_at": "2026-08-28",
+      "plan": null
     }
   ]
 }

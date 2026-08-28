@@ -1,0 +1,136 @@
+{
+  "date": "2026-08-28",
+  "generated_at": "2026-08-28T00:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-08-28",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["last_run_iso=2026-08-25T08:50Z → lag 63h 26m (>36h threshold, <72h so no stale_routine_alert)"]
+    },
+    {
+      "id": "refire-buffer-low-2026-08-28-0030",
+      "type": "refire",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["fire-payload verbatim: buffer-low: claimable=0-landable/72 (6 open all mobile-native-gated) — refill planner needs non-KMP work"]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2849 #2855 #2856 #2860 #2863",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["218 lines / 3 touches across merged PRs since 2026-08-25 (moderation queue tests reworked with each server-side filter iteration)"],
+      "hotspot_churn": 218,
+      "hotspot_file": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2858 #2864",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["191 lines / 2 touches — capability-grant email-verification enforcement rewritten (#2858) then root-cause membership-ordering non-determinism fix (#2864)"],
+      "hotspot_churn": 191,
+      "hotspot_file": "backend/servers/api-server/src/services/auth_policy.rs"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2855",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["133 lines / 1 touch — full test rewrite when window.alert flow became typed toast"],
+      "hotspot_churn": 133,
+      "hotspot_file": "frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.test.tsx"
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-missing-timeout",
+      "type": "code-review-finding",
+      "source": "segment=reality-server (oldest-unreviewed 2026-08-19)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "`backend/servers/reality-server/src/routes/sso.rs:687,711,748` — exchange_code_for_tokens / get_user_info / introspect_pm_token each build `reqwest::Client::new()` with no `.timeout(...)`",
+        "Reached from public `GET /api/v1/sso/callback` and other SSO handlers",
+        "Failure: PM OAuth server drops packets → axum task awaits `send()` indefinitely, socket pool exhaustion + DoS",
+        "Fix pattern already exists: `PmApiClient` in `state.rs:757` uses a timeout-configured shared client"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-pending-sessions-unbounded",
+      "type": "code-review-finding",
+      "source": "segment=reality-server (oldest-unreviewed 2026-08-19)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "`backend/servers/reality-server/src/routes/sso.rs:94` inserts PendingSsoSession per unauth sso_login; entries removed only on successful callback",
+        "10-min expiry checked lazily on read, never swept; no background evictor (unlike `MobileTokenStore` amortized sweep at `state.rs:689`)",
+        "Failure: attacker loops `GET /api/v1/sso/login` → millions of entries accumulate behind async Mutex, heap growth + lock contention serializing every SSO request"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-favorite-ids-fetches-full-listing-payload",
+      "type": "code-review-finding",
+      "source": "segment=reality-server (oldest-unreviewed 2026-08-19)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "`backend/servers/reality-server/src/routes/favorites.rs:397-418` calls `get_favorites_with_listings` (JOIN listings + per-row `listing_photos` subquery) then discards all fields except `listing_id`",
+        "Anonymous SSR hot path; cheap-per-request but O(favorites) DB work every page render",
+        "Fix: add `list_favorite_listing_ids(user_id) -> Vec<Uuid>` at `backend/crates/db/src/repositories/reality_portal/searches.rs:406` doing `SELECT listing_id FROM portal_favorites WHERE user_id = $1`"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2809",
+      "type": "dep-update-noise",
+      "source": "PR #2809 (dependabot cargo-minor-patch)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["dependabot PR closed unmerged 2026-08-27 (superseded by later group PR)"]
+    },
+    {
+      "id": "closed-not-merged-pr-2810",
+      "type": "dep-update-noise",
+      "source": "PR #2810 (dependabot npm-minor-patch)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["dependabot PR closed unmerged 2026-08-27 (superseded by later group PR)"]
+    }
+  ],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-08-28.md && head -1 matches", "observed": "written", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state.json advanced vs HEAD (cursors + seen_signals + hotspot_history)", "observed": "true", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "backlog ids unique", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative signal id double-counted", "observed": "true", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap ≤8; no items eligible for decay this run", "observed": "true", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "each new plan has adversarial pass annotation in brief", "observed": "true (both plans annotated: passed)", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "2 new plans; each has 4 metadata + 11 headings + capability + Mode + files exist", "observed": "true", "expected": "true"},
+    {"goal": "G8", "passed": true, "command": "staged diff scoped to .research/", "observed": "true", "expected": "true"},
+    {"goal": "G9", "passed": true, "command": "no secrets/private-hostnames in staged diff (baseline docs excluded)", "observed": "true", "expected": "true"},
+    {"goal": "G10", "passed": true, "command": "backlog.md == regen(backlog.json)", "observed": "true", "expected": "true"},
+    {"goal": "G11", "passed": true, "command": "no phase failed → no phase listed under Phases that failed", "observed": "true", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "no prior-run plan silently deleted", "observed": "true", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "plans/_archive/ count non-decreasing", "observed": "true", "expected": "true"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md == regen(backlog.json where vector=triage)", "observed": "true", "expected": "true"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions empty (no candidate this run)", "observed": "empty", "expected": "≤3 with caps"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 was skipped this run (compact routine); gate is no-op", "observed": "skipped", "expected": "no-op when Phase 1.6 skipped"},
+    {"goal": "G17", "passed": true, "command": "no telegram token literal in staged diff", "observed": "true", "expected": "true"}
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type at confidence=high AND score>=3 was newly-scored this run (the 2 new SSO code-review findings are allowlisted only for the manual plan path, not the auto-fix set)"
+}
