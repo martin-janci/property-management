@@ -244,6 +244,29 @@ pub(super) fn validate_text_field(value: &str, max: usize, field: &str) -> Resul
     Ok(())
 }
 
+/// Accepted appeal decision tokens (DSA Art. 17 appeal outcome). These map
+/// directly to the exact string the repository layer matches on, so they are
+/// case-sensitive: `"upheld"` approves the appeal, `"rejected"` rejects it.
+pub(super) const APPEAL_DECISIONS: [&str; 2] = ["upheld", "rejected"];
+
+/// Validate an appeal decision against the accepted enum.
+///
+/// The repository maps `"upheld"` to an approval and treats *everything else*
+/// as a rejection, so an unrecognised value (a typo or wrong casing such as
+/// `"Upheld"`) would otherwise silently reject the appeal. Reject unknown
+/// values here so the caller gets a `400` instead of a wrong, irreversible
+/// outcome.
+pub(super) fn validate_appeal_decision(decision: &str) -> Result<(), String> {
+    if APPEAL_DECISIONS.contains(&decision) {
+        Ok(())
+    } else {
+        Err(format!(
+            "decision must be one of: {}",
+            APPEAL_DECISIONS.join(", ")
+        ))
+    }
+}
+
 /// Build a scoped, opaque download reference for a DSA report that never
 /// discloses the internal filesystem path. Returns `None` when no file exists.
 pub(super) fn dsa_report_download_ref(
@@ -424,6 +447,26 @@ mod tests {
     #[test]
     fn text_field_accepts_within_bounds() {
         assert!(validate_text_field("a reasonable note", MAX_NOTE_LEN, "content").is_ok());
+    }
+
+    // ----- appeal decision enum -----
+
+    #[test]
+    fn appeal_decision_accepts_known_tokens() {
+        assert!(validate_appeal_decision("upheld").is_ok());
+        assert!(validate_appeal_decision("rejected").is_ok());
+    }
+
+    #[test]
+    fn appeal_decision_rejects_typo_and_casing() {
+        // Regression: the repo treats anything but exactly "upheld" as a
+        // rejection, so a typo/wrong-casing value must be a 400, not a silent
+        // (and irreversible) appeal rejection.
+        assert!(validate_appeal_decision("Upheld").is_err());
+        assert!(validate_appeal_decision("REJECTED").is_err());
+        assert!(validate_appeal_decision("uphel").is_err());
+        assert!(validate_appeal_decision("approve").is_err());
+        assert!(validate_appeal_decision("").is_err());
     }
 
     // ----- scoped download reference -----

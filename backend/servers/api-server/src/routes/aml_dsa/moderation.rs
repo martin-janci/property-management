@@ -566,6 +566,13 @@ pub(super) async fn decide_appeal(
         "Organization context required".to_string(),
     ))?;
 
+    // Reject unknown decisions (typo/casing) up front: the repo maps anything
+    // other than "upheld" to a rejection, so validation here prevents a silent,
+    // wrong appeal outcome. Also cap the rationale free-text length.
+    validate_appeal_decision(&req.decision).map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    validate_text_field(&req.rationale, MAX_RATIONALE_LEN, "rationale")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+
     let case = state
         .compliance_repo
         .decide_appeal(id, org_id, &req.decision, &req.rationale, user.user_id)
