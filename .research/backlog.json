@@ -9401,6 +9401,160 @@
         "assignment_status": "merged",
         "pr_number": 2871
       }
+    },
+    {
+      "id": "refactor-churn-hotspot-aml-dsa-shared-rs",
+      "title": "Churn hotspot: aml_dsa/shared.rs — 93 lines across 2 PRs (#2869 decide_appeal validate seam + #2870 report_content length cap seam)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2869",
+        "PR #2870"
+      ],
+      "evidence": [
+        "93 lines this run across 2 PRs — the aml_dsa/shared helpers module absorbed a validate-decision seam (#2869 +43) and a report-content-length seam (#2870 +50) back-to-back, both being the extraction sites for the two api-handlers findings closed in the same window; it is now the natural chokepoint for AML/DSA request-body validation and worth watching for further consolidation."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/shared.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-aml-dsa-moderation-rs-2026-08-29",
+      "title": "Repeated churn: aml_dsa/moderation.rs — runs_seen=2 (400 lines this run across 3 PRs: fix #2869, dedupe refactor #2871, bound-reason #2870)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2869",
+        "PR #2870",
+        "PR #2871"
+      ],
+      "evidence": [
+        "hotspot 2 runs in a row (previous run runs_seen=1 → this run runs_seen=2); 400 lines total this window with the dedupe refactor #2871 (extract ModerationCaseResponse::from_case) accounting for 387 lines. The dedupe is exactly the intervention that should reduce future churn — but instability persists because #2869 fix + #2870 validation both continued to land in the same window. Next-run signal will tell whether the dedupe held.",
+        "adjacent to the two closed api-handlers findings (decide_appeal, report_content); the module remains the AML/DSA request surface most in flux."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-auth-policy-rs-2026-08-29",
+      "title": "Repeated churn: services/auth_policy.rs — runs_seen=2 (102 lines this run via #2872 email-verification seam extraction)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2872"
+      ],
+      "evidence": [
+        "hotspot 2 runs in a row (previous run runs_seen=1 → this run runs_seen=2); 102 lines this window entirely from #2872 — a DRY extraction of the byte-identical require_email_verification block that had been present in both check_membership_grant and check_capability_grant_for_user (previous churn from #2858 + #2864). Two sqlx tests lock the shared seam. This should stabilize the file; watch next run to confirm."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-2869-moderation-rs",
+      "title": "Risky churn: PR #2869 (fix) modified moderation.rs — a top-churn file — with no dedicated test file in the diff (inline #[cfg(test)] tests exist)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2869"
+      ],
+      "evidence": [
+        "PR #2869 title starts with `fix(api-server):` — captured by the risky-churn PR-shape filter; only 2 files changed (moderation.rs +7, shared.rs +43). Neither path matches `*test*/spec*/__tests__*/_test.rs/_spec.*` on the mechanical check.",
+        "Caveat noted for the reviewer: inline #[cfg(test)] mod tests exist in the shared.rs diff (validate_decision + validate_optional_text_field regression tests). The path-based check fires because no test *file* was added; the instability signal still stands — moderation.rs is a top-3 hotspot AND received a security-adjacent fix without an external regression suite complement."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-2869-shared-rs",
+      "title": "Risky churn: PR #2869 (fix) modified aml_dsa/shared.rs — a hotspot this run — with no dedicated test file in the diff (inline tests exist)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2869"
+      ],
+      "evidence": [
+        "Same PR #2869 as above; shared.rs is itself a top-3 hotspot this run (93 lines across 2 PRs). Mechanical risky-churn check fires: fix PR + no `*test*` path.",
+        "Same caveat: inline unit tests exist in the shared.rs diff. Kept as a low-priority instability signal — the pair (moderation.rs + shared.rs) together represent the AML/DSA validation seam and warrant future external-test coverage rather than only inline units."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/shared.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "title": "api-core workflow_executor.rs: Eq/Ne/In/NotIn use strict serde_json equality — 100 != \"100\" so string-serialized UI condition values silently never (or always) match numeric trigger fields",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-08-29 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:611-652 — Eq/Ne/In/NotIn use serde_json::Value strict structural equality (no coercion), while Gt/Gte/Lt/Lte on the SAME field route through coerce_finite_f64 and Contains/StartsWith/EndsWith stringify both sides. Impact: `priority == 3` with stored value \"3\" (string, from a form input) NEVER matches a numeric trigger field; symmetric Ne/NotIn become always-true.",
+        "Distinct from prior workflow findings (workflow-notin-fail-open covered the NotIn non-array branch; this is the strict-type happy path).",
+        "Fix: coerce Eq/Ne/In/NotIn via coerce_finite_f64 first, fall back to case-consistent string compare; or normalize condition values to typed JSON at store time. Add unit test asserting `{field: number 100, op: Eq, value: \"100\"}` evaluates true (fails on current code).",
+        "Confidence medium: strict serde_json equality and coercing compare_numeric/to_string paths confirmed by static read; whether a live workflow trips it depends on how the condition-builder UI serializes scalar values (frontend fact not verified in this static Rust-only pass)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "title": "api-core document_generation.rs summarize_document: byte-index String slice can panic on multi-byte UTF-8 (sk/cs/de chars) at either 200_000-byte cut point",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-08-29 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:496-502 — summarize_document's long-doc branch slices `request.content` by BYTE offset (half_limit = char_limit/2 = 200_000) with .min(len()) / saturating_sub for range but NO char-boundary alignment. `&s[..n]` on a byte index that doesn't fall on a char boundary panics.",
+        "Product is sk/cs/de/en first — real long documents (lease agreements, contracts) are full of multi-byte UTF-8 (á č ď é í ľ ň ó š ť ž ä ö ü ß). Any doc large enough to enter the branch (~400_000 chars) that contains a multi-byte char adjacent to either cut point panics — the common case for the target locales, not an edge case.",
+        "Axum isolates handler-task panics to a 500 for that one request (not a server crash), but the specific document can never be summarized (every retry re-panics) and surfaces as an opaque 500 with a panic in logs. Bounded blast radius = request-scoped, hence score_delta 2 (not 3).",
+        "Distinct from prior docgen findings (empty-llm-ok / empty-llm-blank-doc concern the unwrap_or_default at :536-540, a different location and defect class).",
+        "Fix: cut on char boundaries — `str::floor_char_boundary`, `char_indices().nth(n)`, or operate on `char` counts via `content.chars().take(n)` for head and matching tail. Regression test summarizes a >400k-char string with multi-byte chars straddling both cut points and asserts no panic. Self-contained, no mobile/AGP dependency.",
+        "Confidence medium: byte-offset slicing and lack of alignment confirmed by static read; triggering requires input exceeding threshold AND containing a multi-byte char at a cut point — realistic for locale but not confirmed at runtime in this static-only pass."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
     }
   ]
 }

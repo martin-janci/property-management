@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-28 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-29 03:13 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -150,9 +150,13 @@
 | 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
 | 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | done | 2026-08-25 |  |
-| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | open | 2026-08-28 |  |
-| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | open | 2026-08-28 |  |
-| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | open | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | done | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | done | 2026-08-28 |  |
+| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | dropped | 2026-08-28 |  |
+| 2 | bug | `bug-risky-churn-pr-2869-moderation-rs` | Risky churn: PR #2869 (fix) modified moderation.rs — a top-churn file — with no dedicated test file  | open | 2026-08-29 |  |
+| 2 | bug | `bug-risky-churn-pr-2869-shared-rs` | Risky churn: PR #2869 (fix) modified aml_dsa/shared.rs — a hotspot this run — with no dedicated test | open | 2026-08-29 |  |
+| 2 | bug | `code-review-api-core-workflow-eq-type-strict-no-coercion` | api-core workflow_executor.rs: Eq/Ne/In/NotIn use strict serde_json equality — 100 != "100" so strin | open | 2026-08-29 |  |
+| 2 | bug | `code-review-api-core-docgen-summarize-char-boundary-panic` | api-core document_generation.rs summarize_document: byte-index String slice can panic on multi-byte  | open | 2026-08-29 |  |
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
@@ -329,9 +333,12 @@
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | open | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | done | 2026-08-28 |  |
+| 1 | refactor | `refactor-churn-hotspot-aml-dsa-shared-rs` | Churn hotspot: aml_dsa/shared.rs — 93 lines across 2 PRs (#2869 decide_appeal validate seam + #2870  | open | 2026-08-29 |  |
+| 1 | refactor | `refactor-repeated-churn-aml-dsa-moderation-rs-2026-08-29` | Repeated churn: aml_dsa/moderation.rs — runs_seen=2 (400 lines this run across 3 PRs: fix #2869, ded | open | 2026-08-29 |  |
+| 1 | refactor | `refactor-repeated-churn-auth-policy-rs-2026-08-29` | Repeated churn: services/auth_policy.rs — runs_seen=2 (102 lines this run via #2872 email-verificati | open | 2026-08-29 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |

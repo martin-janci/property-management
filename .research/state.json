@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-28T03:12:18Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2864,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "b67552b",
+  "last_run_iso": "2026-08-29T03:13:00Z",
+  "last_run_ms": 3000,
+  "last_pr_seen": 2874,
+  "last_issue_seen": 2875,
+  "last_commit_sha": "c5673cc234d7d56c1ac47e5c4905da5ff3a1836f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -498,19 +498,24 @@
       "recent_churn": 175
     },
     "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-28",
-      "recent_churn": 4
+      "runs_seen": 2,
+      "last_seen": "2026-08-29",
+      "recent_churn": 78
     },
     "backend/servers/api-server/src/services/auth_policy.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-28",
-      "recent_churn": 3
+      "runs_seen": 2,
+      "last_seen": "2026-08-29",
+      "recent_churn": 102
     },
     "backend/servers/api-server/src/routes/aml_dsa/moderation.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-08-29",
+      "recent_churn": 400
+    },
+    "backend/servers/api-server/src/routes/aml_dsa/shared.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-08-28",
-      "recent_churn": 2
+      "last_seen": "2026-08-29",
+      "recent_churn": 93
     }
   },
   "seen_signals": [
@@ -947,12 +952,23 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/shared.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+    "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+    "risky-churn-pr-2869-moderation-rs",
+    "risky-churn-pr-2869-shared-rs",
+    "stalled-review-pr-2744",
+    "dep-update-pr-2865",
+    "dep-update-pr-2866",
+    "dep-update-pr-2867",
+    "code-review-api-core-workflow-eq-type-strict-no-coercion",
+    "code-review-api-core-docgen-summarize-char-boundary-panic"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-28",
-    "api-core": "2026-08-21",
+    "api-core": "2026-08-29",
     "reality-server": "2026-08-28",
     "ppt-web-ui": "2026-08-25",
     "ppt-web-core": "2026-08-21",
@@ -961,8 +977,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 72,
-    "vectors_created": 330,
+    "runs": 73,
+    "vectors_created": 337,
     "plans_created": 28,
     "quiet_days": 3,
     "auto_fix_count": 0

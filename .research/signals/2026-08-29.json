@@ -1,0 +1,309 @@
+{
+  "date": "2026-08-29",
+  "run_iso": "2026-08-29T03:13:00Z",
+  "since_iso": "2026-08-28T03:12:18Z",
+  "phase_1_status": "ok",
+  "phase_1_5_status": "delegated-to-dispatcher-tier-1d",
+  "phase_1_6_status": "skipped-light-day",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "churn-hotspot",
+      "source": "3 merged PRs this run touched moderation.rs (#2869 fix + #2871 dedupe + #2870 validation)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit (already in seen_signals from 2026-08-28); score_delta suppressed per Phase 1 dedup rule for cumulative types",
+        "400 lines touched this run — dominated by #2871 dedupe (extract ModerationCaseResponse::from_case, 387 lines) plus #2869 (+7) + #2870 (+6)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2872 (email-verification seam extraction)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit (already in seen_signals from 2026-08-28); score_delta suppressed per Phase 1 dedup rule",
+        "102 lines this run entirely from #2872 (DRY extract of require_email_verification block previously shared by check_membership_grant + check_capability_grant_for_user)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/shared.rs",
+      "type": "churn-hotspot",
+      "source": "2 merged PRs touched shared.rs (#2869 validate seam +43, #2870 report-length seam +50)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 raw-churn hotspot this run; 93 lines across 2 PRs; new to hotspot_history (runs_seen=1 after this run's bump)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/shared.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "repeated-churn",
+      "source": "hotspot 2 runs in a row (2026-08-28 + 2026-08-29)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen goes 1 → 2 this run; #2871 dedupe landed but instability continued via #2869 fix + #2870 in the same window — next-run signal will tell whether the dedupe held"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "repeated-churn",
+      "source": "hotspot 2 runs in a row (2026-08-28 + 2026-08-29)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "hotspot_history.runs_seen goes 1 → 2 this run; #2872 email-verification DRY extract landed with 2 sqlx tests locking the shared seam — expected to stabilize"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-2869-moderation-rs",
+      "type": "risky-churn",
+      "source": "PR #2869 (fix(api-server): validate decide_appeal decision enum and cap rationale)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "PR #2869 title starts with `fix(api-server):` — matches risky-churn fix/hotfix/revert filter. Only 2 files changed (moderation.rs +7, shared.rs +43); neither matches the mechanical `*test*`/`*spec*`/`__tests__` path filter.",
+        "moderation.rs is a top-3 raw-churn hotspot this run (400 lines across 3 PRs).",
+        "Caveat: inline #[cfg(test)] mod tests exist in the shared.rs diff (validate_decision + validate_optional_text_field); path-based check still fires because no dedicated test file was added."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-2869-shared-rs",
+      "type": "risky-churn",
+      "source": "PR #2869",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Same PR #2869; shared.rs is itself a top-3 hotspot this run (93 lines across 2 PRs). Mechanical check fires.",
+        "Same inline-tests caveat as above."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/shared.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744 (fix(dispatcher): un-wedge oversize-archive push + close retry-remint cross-id ghost)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Draft, labeled `needs-human-review`, last updated 2026-08-13 06:50 UTC → 16 days idle at this run.",
+        "Self-PR (dispatcher fix); already parked upstream as `needs-human-judgement`. Process signal only — score_delta=0 to avoid piling up score on a human-gated PR; no backlog row created (matches pattern for stalled-review-pr-1179/988/2555/2558/2559)."
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865 (chore(deps): bump cargo-minor-patch group across 1 directory with 10 updates)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot batch; logged for audit — not scored; not promoted to backlog row (dep-update-noise convention)."
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866 (chore(deps): bump actions/setup-java from 5 to 6)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot GHA bump; logged for audit."
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867 (chore(deps): bump npm-minor-patch group across 1 directory with 39 updates)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot batch; logged for audit."
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 api-core (rust expert)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:611-652 — Eq/Ne/In/NotIn use serde_json::Value strict structural equality (no coercion); Gt/Gte/Lt/Lte and Contains/StartsWith/EndsWith on the same field DO coerce via coerce_finite_f64 / to_string.",
+        "Impact: `priority == 3` with stored value \"3\" (string, from form) NEVER matches a numeric trigger field — Eq-guarded automation silently never fires; symmetric Ne/NotIn become always-true.",
+        "Distinct from prior workflow findings; fix by coercing Eq/Ne/In/NotIn via coerce_finite_f64 first, then case-consistent string compare — or normalize condition values to typed JSON at store time.",
+        "Ingested from .research/signals/2026-08-29-api-core-tier1d-workflow-docgen.json (dispatcher Tier-1d generator, run parity even)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 api-core (rust expert)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:496-502 — summarize_document long-doc branch slices `request.content` by byte offset without char-boundary alignment. Panics on `&s[..n]` when n lands mid-char.",
+        "Product is sk/cs/de/en; ~400k+-char lease agreements often have multi-byte UTF-8 near either 200_000-byte cut point. Axum contains panic to the one request (500 + panic log) — bounded blast radius = request-scoped, hence score 2 not 3.",
+        "Fix: cut on char boundaries (str::floor_char_boundary, char_indices, content.chars().take(n)); regression test with >400k-char string containing multi-byte chars at both cut points.",
+        "Ingested from .research/signals/2026-08-29-api-core-tier1d-workflow-docgen.json."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "observed": "0 items eligible",
+      "expected": "all eligible items decayed or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "skipped-no-new-plans",
+      "expected": "no-op when no promotion"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0 secret matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no phase failures",
+      "expected": "cursors advanced where phase succeeded"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "no prior-run plans changed",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "cur=9 head=9",
+      "expected": "cur>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "kill switch unset; 0 auto_fix_actions",
+      "expected": "caps + certainty bar held (no candidate)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped this run (light-day) — pm_cursor + coverage_cursor unchanged; existing artifacts still valid",
+      "expected": "gate is a no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
