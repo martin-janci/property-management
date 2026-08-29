@@ -1,0 +1,270 @@
+{
+  "run_id": "routine-2026-08-29-01",
+  "generated_at": "2026-08-29T02:37:39Z",
+  "phases": {
+    "phase_1_observe": "ok",
+    "phase_1_5_dev_review": "ok — reality-web (frontend expert)",
+    "phase_1_6_pm": "ok — pm-devops rotated (Scrum Master + coverage upkeep)",
+    "phase_2_backlog": "ok",
+    "phase_3_promote": "ok — 1 plan (code-review-api-core-fcm-oauth-token-stale) promoted from corrective revival",
+    "phase_3_5_adversarial": "ok — passed",
+    "phase_5_autofix": "no candidate"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "churn-hotspot",
+      "source": "commits f79dd1e..b67552b (dev window since 2026-08-28T03:12:18Z)",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "3 touches this window: PR #2871 (+387 lines dedupe), PR #2870 (+6), PR #2869 (+7); cumulative re-emit — score_delta=0 (already in seen_signals; new churn appended to hotspot_history recent_churn=400)"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 as of 2026-08-29",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "moderation.rs hit top-3 churn 2 runs in a row (2026-08-28 runs_seen=1, 2026-08-29 runs_seen=2) — instability proxy; the file already went through a large dedupe (#2871) so this is refactor-shape, not bug-shape"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "commits f79dd1e..b67552b (dev window since 2026-08-28T03:12:18Z)",
+      "score_delta": 0,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "1 touch this window: PR #2872 (+102 lines email-verification seam extract); cumulative re-emit — score_delta=0"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 as of 2026-08-29",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "auth_policy.rs hit top-3 churn 2 runs in a row (2026-08-28 runs_seen=1, 2026-08-29 runs_seen=2) — legitimate refactoring cadence (grant enforcement + email-verification seams), not defect churn"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "commit e2c48d4 (PR #2868)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "PR #2868 added +93 lines locking in the extracted decisionMutationCallbacks helper's toast + dialog-reset behavior; first appearance in hotspot_history"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "confidence": "medium",
+      "evidence": [
+        "PR #2744 (draft, `needs-human-review`, `fix(dispatcher): un-wedge oversize-archive push` + `retry-remint cross-id ghost`) opened 2026-08-13, last update 2026-08-13 06:50 UTC — 16d idle. Self-PR from operator (martin-janci); routine surfaces the process signal but marks status=needs-human-judgement — operator decides whether to un-draft/merge or close."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "evidence": [
+        "src/app/[locale]/realtor/analytics/page.tsx:14-19,68-91 — 'Last 7 days'/'Analytics'/'Total listings'/'Conversion rate' hardcoded English; page never imports useTranslations though sk/cs/de/en are supported locales.",
+        "src/app/[locale]/realtor/profile/page.tsx:63,88,93-183 — 'Loading profile…','Realtor profile','Name is required','Could not load profile.','Profile updated.' all hardcoded English, no useTranslations import.",
+        "src/app/[locale]/realtor/listings/[id]/edit/page.tsx:42,61,68,74-85 — 'Missing listing id.','Edit listing','Could not save listing.','Back to listings' hardcoded English.",
+        "src/app/[locale]/account/profile/page.tsx:31,40,48,58,86 — 'Display name is required','Could not save profile.','Edit profile','Profile updated.','Back to account' hardcoded English.",
+        "src/app/[locale]/auth/callback/page.tsx:66,106,131,133,144 — 'Loading...','Invalid state token. Please try logging in again.','Login Failed','Return Home','Completing login...' hardcoded English on the public SSO callback that non-English users hit after redirect."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-unsafe-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "evidence": [
+        "src/components/comparison/ComparisonUrlHandler.tsx:43-47 — `fetch('/api/v1/listings/${id}').json() as Promise<ListingSummary>` casts the raw response across the API boundary with no runtime shape check; the endpoint actually returns ListingDetail (see app/[locale]/listings/[slug]/page.tsx:88 which pipes the same URL through parseListingDetail) — the summary component happens to be a subtype today, but any drift in the summary shape or a malformed body slips straight into addToComparison() and downstream ComparisonView renders without any validation."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot: bump the cargo-minor-patch group across 1 directory with 10 updates (opened 2026-08-27, still open — awaiting CI + merge)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot: bump actions/setup-java from 5 to 6 (opened 2026-08-27, still open)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot: bump the npm-minor-patch group across 1 directory with 39 updates (opened 2026-08-27, still open)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist (stalled-review-pr-2744 fires the allowlist but the author is the operator/self, and the standing rule is to leave self-PR pings for the operator's own workflow, not auto-comment)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md + H1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids on backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit gate (non-cumulative)",
+      "observed": "no re-scored duplicates emitted (churn-hotspot re-emits carry score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + 4 metadata + 11 headings + capability + mode + files-on-disk",
+      "observed": "1 plan, all checks pass",
+      "expected": "≤2, all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret regex on staged diff (excl. baseline)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "placeholder rot grep on plan + brief",
+      "observed": "0 hits each",
+      "expected": "0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs preserved in plans/ or _archive/",
+      "observed": "no plans removed silently this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive_count staged >= HEAD",
+      "observed": "9 >= 9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency + verify-all-gated + kill switch",
+      "observed": "no actions this run (no candidate)",
+      "expected": "≤3 actions, ≤1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list.json + risks.json parse + project-state.md nonempty + pm_cursor in range + coverage_cursor advanced with pm_cursor",
+      "observed": "all ok, pm 4→5, coverage 6→7 advanced together",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram bot-token pattern on staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

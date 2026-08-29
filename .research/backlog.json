@@ -9401,6 +9401,157 @@
         "assignment_status": "merged",
         "pr_number": 2871
       }
+    },
+    {
+      "id": "code-review-api-core-fcm-oauth-token-stale",
+      "title": "FcmHttpAdapter captures FCM_OAUTH_TOKEN once at startup; ~1h TTL then silent Android push outage — no credential-level detection",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "dispatcher Tier-1d 2026-08-28 api-core services (.research/signals/2026-08-28-api-core-tier1d-services.json)",
+        "routine 2026-08-29 corrective revival"
+      ],
+      "evidence": [
+        "push_fanout.rs:229-236 — FcmConfig::from_env captures FCM_OAUTH_TOKEN once via std::env::var; module doc :36 labels this '(read once at startup)'.",
+        "push_fanout.rs:330-341 — bearer cloned from static oauth_token on every send_fcm_v1 call; no refresh path.",
+        "push_fanout.rs:362-376 — error classifier only sets token_expired=true for NOT_REGISTERED/UNREGISTERED/INVALID_REGISTRATION; UNAUTHENTICATED / HTTP 401/403 fall through to (false,false) with only a per-message tracing::warn — indistinguishable from device-side rejections.",
+        "FCM v1 OAuth2 access tokens are ~1h TTL — after ~1h uptime, every send returns 401 UNAUTHENTICATED with no distinct alert or refresh.",
+        "Revived from dispatcher-generated Tier-1d signal that was never actualized into backlog (in state.seen_signals but no matching row)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": "plans/code-review-api-core-fcm-oauth-token-stale.md"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "title": "churn-hotspot: ContentModerationPage.test.tsx (+93 lines PR #2868 dedupe test lockdown)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit e2c48d4 (PR #2868)"
+      ],
+      "evidence": [
+        "PR #2868 added +93 lines locking in the extracted decisionMutationCallbacks helper's toast + dialog-reset behavior; first appearance in hotspot_history"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "title": "repeated-churn: aml_dsa/moderation.rs hit top-3 churn 2 runs in a row (400 lines this window)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history.runs_seen=2 as of 2026-08-29"
+      ],
+      "evidence": [
+        "moderation.rs hit top-3 churn 2 runs in a row (2026-08-28 runs_seen=1, 2026-08-29 runs_seen=2, 400 raw lines this window across PRs #2871/#2870/#2869). The file just went through a large dedupe (#2871 -184/+203) so this is legitimate refactor cadence, not defect churn — but worth tracking for a third repeat."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+      "title": "repeated-churn: services/auth_policy.rs hit top-3 churn 2 runs in a row (102 lines this window)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history.runs_seen=2 as of 2026-08-29"
+      ],
+      "evidence": [
+        "auth_policy.rs hit top-3 churn 2 runs in a row (2026-08-28 runs_seen=1, 2026-08-29 runs_seen=2, 102 raw lines this window from PR #2872 email-verification seam extract). Iterative refactor cadence around grant enforcement — watch for a third."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "title": "stalled review: PR #2744 fix(dispatcher) un-wedge oversize-archive push + retry-remint cross-id ghost (16d idle, needs-human-review)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 (draft, `needs-human-review` label) opened 2026-08-13 by martin-janci; last update 2026-08-13 06:50 UTC → 16d idle. Self-PR from the operator — routine surfaces the process signal but marks needs-human-judgement since only the operator can un-draft or close it."
+      ],
+      "files": [],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-i18n",
+      "title": "reality-web realtor & account pages ship raw English on sk/cs/de/en — profile / analytics / listing-edit / SSO callback all bypass useTranslations",
+      "vector": "i18n",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-08-29"
+      ],
+      "evidence": [
+        "src/app/[locale]/realtor/analytics/page.tsx:14-19,68-91 — 'Last 7 days'/'Analytics'/'Total listings'/'Conversion rate' hardcoded English; no useTranslations import.",
+        "src/app/[locale]/realtor/profile/page.tsx:63,88,93-183 — 'Loading profile…'/'Realtor profile'/'Name is required'/'Could not load profile.'/'Profile updated.' hardcoded English.",
+        "src/app/[locale]/realtor/listings/[id]/edit/page.tsx:42,61,68,74-85 — 'Missing listing id.'/'Edit listing'/'Could not save listing.'/'Back to listings' hardcoded English.",
+        "src/app/[locale]/account/profile/page.tsx:31,40,48,58,86 — 'Display name is required'/'Could not save profile.'/'Edit profile'/'Profile updated.'/'Back to account' hardcoded English.",
+        "src/app/[locale]/auth/callback/page.tsx:66,106,131,133,144 — 'Loading...'/'Invalid state token…'/'Login Failed'/'Return Home'/'Completing login...' hardcoded on the public SSO callback that non-English users hit after redirect."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-unsafe-cast",
+      "title": "reality-web ComparisonUrlHandler casts /api/v1/listings/{id} response as ListingSummary with no runtime shape check — endpoint returns ListingDetail",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-08-29"
+      ],
+      "evidence": [
+        "src/components/comparison/ComparisonUrlHandler.tsx:43-47 — `fetch('/api/v1/listings/${id}').json() as Promise<ListingSummary>` casts raw response across API boundary; endpoint actually returns ListingDetail (see app/[locale]/listings/[slug]/page.tsx:88 which pipes the same URL through parseListingDetail). Summary is a subtype today, but drift or a malformed body slips straight into addToComparison() with no validation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
     }
   ]
 }

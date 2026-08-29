@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-28 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-29 02:41 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -36,6 +36,7 @@
 | 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/_archive/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | ready | 2026-08-25 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | done | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
+| 3 | bug | `code-review-api-core-fcm-oauth-token-stale` | FcmHttpAdapter captures FCM_OAUTH_TOKEN once at startup; ~1h TTL then silent Android push outage — n | ready | 2026-08-29 | [plan](plans/code-review-api-core-fcm-oauth-token-stale.md) |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | refactor | `refactor-documents-rs-hot` | documents.rs churn-hot — 10,659 lines over 14d | done | 2026-05-25 |  |
@@ -150,9 +151,10 @@
 | 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
 | 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | done | 2026-08-25 |  |
-| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | open | 2026-08-28 |  |
-| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | open | 2026-08-28 |  |
-| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | open | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | done | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | done | 2026-08-28 |  |
+| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | dropped | 2026-08-28 |  |
+| 2 | i18n | `code-review-reality-web-realtor-account-i18n` | reality-web realtor & account pages ship raw English on sk/cs/de/en — profile / analytics / listing- | open | 2026-08-29 |  |
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
@@ -329,9 +331,14 @@
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | open | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx` | churn-hotspot: ContentModerationPage.test.tsx (+93 lines PR #2868 dedupe test lockdown) | open | 2026-08-29 |  |
+| 1 | refactor | `repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | repeated-churn: aml_dsa/moderation.rs hit top-3 churn 2 runs in a row (400 lines this window) | open | 2026-08-29 |  |
+| 1 | refactor | `repeated-churn-backend/servers/api-server/src/services/auth_policy.rs` | repeated-churn: services/auth_policy.rs hit top-3 churn 2 runs in a row (102 lines this window) | open | 2026-08-29 |  |
+| 1 | dx | `stalled-review-pr-2744` | stalled review: PR #2744 fix(dispatcher) un-wedge oversize-archive push + retry-remint cross-id ghos | needs-human-judgement | 2026-08-29 |  |
+| 1 | refactor | `code-review-reality-web-comparison-unsafe-cast` | reality-web ComparisonUrlHandler casts /api/v1/listings/{id} response as ListingSummary with no runt | open | 2026-08-29 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |

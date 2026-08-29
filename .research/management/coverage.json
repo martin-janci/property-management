@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T04:24:00Z",
+  "generated": "2026-08-29T04:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -733,11 +733,12 @@
         "RFC-6238 TOTP crypto in accounting-core/src/crypto.rs (HMAC-SHA1, \u00b11 window)",
         "/api/v1/platform/2fa/enroll + /confirm wired (PR #1946 merged 2026-06-29)",
         "MfaChallengeModal + MfaEnrollmentScreen + TwoFactorAuthPage wired to all hooks",
-        "Screen-map ppt/settings-two-factor buildStatus=shipped + apiStatus=complete; recovery codes SHA-256-hashed"
+        "Screen-map ppt/settings-two-factor buildStatus=shipped + apiStatus=complete; recovery codes SHA-256-hashed",
+        "2026-08-29 upkeep re-check: no PR in 2026-08-25..08-29 window touched TOTP/2FA routes/handlers/screens; status remains done."
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-08-29",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",

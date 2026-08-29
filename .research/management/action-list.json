@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings \u2014 dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -20,7 +20,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit \u2014 up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -68,7 +68,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -85,7 +85,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout \u2014 every suspend API call can hang indefinitely on Android + iOS",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -99,7 +99,97 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-shepherd-84-1-frontend-window-2026-08-29",
+      "action": "Explicitly promote 84-1 direct-to-S3 upload wiring (ppt-web POST /documents/upload-url consumer + regression) from ranked backlog to an implementer window this sprint \u2014 4th consecutive upkeep run with no progress; dispatcher is not picking it up on its own",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-scrum-master-clear-accounting-trio-2026-08-29",
+      "action": "Break the 30-day-idle log-jam on accounting trio #2555/#2558/#2559 \u2014 either land a reviewer decision or explicitly close-with-rationale; needs-human-judgement label has not attracted action for a month",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-scrum-master-triage-self-pr-2744-2026-08-29",
+      "action": "Triage stalled draft PR #2744 (16 days idle, needs-human-review, self-PR from operator) \u2014 either mark ready, close, or add a definitive next-step note",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-devops-cargo-deny-rustsec-2026-0258-h2-dos-2026-08-29",
+      "action": "Close RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS, gh-issue-2797) \u2014 bump h2 workspace-wide to the fixed release; every backend PR is auth-gated on cargo-deny passing",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-devops-dependabot-batch-review-2026-08-29",
+      "action": "Land or bulk-close the 3 dependabot batches #2865/#2866/#2867 (2 days idle) \u2014 CI unblocked today by #2874 (chacha20 lockfile bump); trigger the auto-approve gate now that the 2-minute buffer has elapsed",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-devops-auto-rustsec-alerting-2026-08-29",
+      "action": "Add a scheduled workflow that opens a GitHub issue the moment cargo-deny fails on dev (not just PR) \u2014 chacha20 RUSTSEC advisory this cycle was surfaced by a red PR check, one dispatcher run late; a scheduled 6-hourly cargo-deny --lockfile-only on dev would surface yanks/advisories immediately",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-devops-workflow-audit-trail-aml-hotspot-2026-08-29",
+      "action": "Establish an AML/moderation hotspot follow-up plan: 5 of 6 PRs today touched aml_dsa moderation surfaces (backend + frontend) \u2014 schedule a scoped E2E CI job that exercises moderation flows end-to-end (report \u2192 moderate \u2192 appeal \u2192 decide) so per-PR regressions surface pre-merge instead of via follow-up code-review",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
+    },
+    {
+      "id": "pm-devops-observability-quiet-hours-drain-metrics-2026-08-29",
+      "action": "Emit Prometheus counters for quiet_hours_drain claim/deliver/skip (atomic-claim path from PR #2834) \u2014 without them the >1-replica atomic-claim invariant is invisible in prod; pairs with the pm-qa concurrency test action",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "pm-qa-atomic-claim-concurrency-test-2026-08-25"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-29"
     }
   ],
-  "generated": "2026-08-25T04:24:00Z"
+  "generated": "2026-08-29T04:00:00Z"
 }
