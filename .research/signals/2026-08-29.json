@@ -1,0 +1,625 @@
+{
+  "date": "2026-08-29",
+  "generated": "2026-08-29T18:32:00Z",
+  "notes": "Backlog refill run \u2014 folded 26 pending tier-1d dispatcher code-review signals into backlog; Phases 1.5 and 1.6 skipped (see brief). Also see per-segment tier-1d files under .research/signals/2026-08-28-*-tier1d*.json and 2026-08-29-*.json for full signal text.",
+  "signals": [
+    {
+      "id": "code-review-api-core-rental-dead-unscoped-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core repositories)",
+      "score_delta": 2,
+      "evidence": [
+        "The #804/#887 cross-org IDOR remediation added org-scoped `*_for_org` variants across the rental repository cluster (delete_connection_for_org, update_connection_for_org, delete_ical_feed_for_org, update_ical_feed_for_org, delete_guest_for_org, update_guest_for_org, register_guest_for_org, delete_calendar_block_for_org, update_booking_for_org, submit_report_for_org, get_booking_with_guests_for_org) and rewired every rental route handler to the scoped variants (rentals.rs calls `_for_org` 20x; delete handlers at rentals.rs:385 delete_connection_for_org, :1037 delete_guest_for_org, :1841 delete_ical_feed_for_org). Each scoped method carries an explicit SECURITY (#804/#887) comment stating the `AND organization_id = $2` guard is what prevents a tenant from mutating another org's row.",
+        "BUT the original UNSCOPED pool-based siblings were never removed and remain pub on the repository API surface: rental/connections.rs:227 `DELETE FROM rental_platform_connections WHERE id = $1` (delete_connection) and update_connection; rental/ical.rs:171 `DELETE FROM rental_ical_feeds WHERE id = $1` (delete_ical_feed) and update_ical_feed (ical.rs UPDATE ... WHERE id = $1); rental/guests.rs:336 `DELETE FROM rental_guests WHERE id = $1` (delete_guest), plus update_guest / register_guest / get_booking_with_guests; rental/calendar.rs delete_calendar_block; rental/bookings.rs update_booking; rental/reports.rs submit_report.",
+        "Critically, these unscoped methods execute against `&self.pool` (NOT an RLS-scoped Executor), so unlike the outage.rs `delete_rls`/sensor `_rls` methods they get NO row-level-security protection \u2014 that absence is exactly why the remediation had to add a manual `AND organization_id = $2`. A caller of the shorter unscoped name deletes/updates ANY tenant's row by guessing a UUID.",
+        "Reachability: confirmed DEAD as of HEAD (origin/dev) \u2014 a repo-wide grep for callers of each unscoped rental method (excluding the definition and the `_for_org` name) finds no production route caller (delete_connection/update_connection callers resolve to the government_portal repo's 2-arg method; update_booking to the facilities repo; submit_report to the esg_reporting repo with an rls executor; the rental-specific delete_calendar_block / delete_ical_feed / delete_guest / update_ical_feed / register_guest / update_guest / get_booking_with_guests have ZERO callers). So there is no live IDOR today \u2014 this is a latent footgun, not an active vuln.",
+        "Risk = reintroduction: a fixed IDOR-class bug is one autocomplete away from returning. A future handler that calls `delete_guest(id)` instead of `delete_guest_for_org(org, id)` silently reopens the #804/#887 vulnerability with no compiler or reviewer signal, because both methods compile and the unsafe one has the shorter, more obvious name. Fix: delete the unscoped pool-based mutation siblings outright (nothing calls them), OR if any must stay for an internal/admin path, make them private + rename to an explicit `*_unscoped_admin` and add a doc comment stating the RLS/org-guard requirement. Landable as a single self-contained cleanup PR touching only the rental repo files (+ any now-unused imports); IG3 can assert via `grep` that no production route references an unscoped rental mutation.",
+        "Confidence medium: the scoped/unscoped sibling pairs, the `&self.pool` (non-RLS) execution, the id-only WHERE clauses, and the absence of production callers are all confirmed by static read + repo-wide grep; 'medium' rather than 'high' only because dead-code reachability is a point-in-time fact and the severity is latent-reintroduction rather than live-exploit."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental/connections.rs",
+        "backend/crates/db/src/repositories/rental/ical.rs",
+        "backend/crates/db/src/repositories/rental/guests.rs",
+        "backend/crates/db/src/repositories/rental/calendar.rs",
+        "backend/crates/db/src/repositories/rental/bookings.rs",
+        "backend/crates/db/src/repositories/rental/reports.rs"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-rental-idor-test-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core repositories)",
+      "score_delta": 1,
+      "evidence": [
+        "The #804/#887 rental IDOR fix added org-scoped `delete_connection_for_org`, `delete_ical_feed_for_org`, `delete_guest_for_org`, `update_connection_for_org`, `update_guest_for_org`, `delete_calendar_block_for_org`, `update_booking_for_org`, and `submit_report_for_org`, but there is NO cross-org regression test asserting that these scoped mutations refuse to touch another org's row (i.e. that calling `delete_*_for_org(org_B, id_owned_by_org_A)` returns rows_affected==0 / false and leaves the row intact).",
+        "Evidence of the gap: the db test suite HAS dedicated cross-org IDOR suites for adjacent domains \u2014 government_portal_connection_cross_org_idor_tests.rs, portal_imports_cross_org_idor_tests.rs, violations_cross_org_idor_tests.rs, inquiry_mark_read_idor_tests.rs, document_template_cross_tenant_tests.rs, esg_force_rls_cross_tenant_tests.rs \u2014 and the rental area has cross-tenant coverage for a DIFFERENT operation (rental_cross_tenant_upsert_tests.rs) and enum-decode coverage that happens to call update_guest_for_org (rental_guest_ical_enum_decode_tests.rs:227, asserting decode not scoping). But a grep across crates/db/tests + servers/api-server/tests for `delete_connection_for_org` / `delete_ical_feed_for_org` / `delete_guest_for_org` returns NO hit \u2014 the security-critical org guard on the rental DELETE/UPDATE paths is unverified.",
+        "This is the exact class of gap that the repo already treats as a first-class backlog item (see prior test-gap-inquiry-idor-regression: 'PR #497 fixed inquiry mark_as_read IDOR but shipped with NO test file'). The rental #804/#887 fix has the same shape: security guard shipped, regression test not.",
+        "Fix: add a `rental_mutation_cross_org_idor_tests.rs` suite that seeds org A + org B, creates a connection / ical feed / guest under org A, then asserts each `*_for_org(org_B, a_id)` mutation returns false/0-rows and the row still exists, and each `*_for_org(org_A, a_id)` succeeds. Pairs naturally with the dead-code removal in the sibling finding (the same PR that deletes the unscoped methods should lock in the scoped guard with a test). Landable in the cloud runner (db integration test, no mobile/AGP dependency); satisfies IG3 by failing on any branch where the `AND organization_id` guard is dropped.",
+        "Confidence medium: the absence of a rental delete/update cross-org test is confirmed by grep over the two test directories; 'medium' because a scoping assertion could in principle be buried inside a broader rental suite under a non-obvious name, though the naming convention (every other domain uses an explicit *_cross_org_idor / *_cross_tenant file) makes that unlikely."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/src/repositories/rental/connections.rs",
+        "backend/crates/db/src/repositories/rental/ical.rs",
+        "backend/crates/db/src/repositories/rental/guests.rs",
+        "backend/crates/db/tests/suites/"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-fcm-oauth-token-stale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core services)",
+      "score_delta": 3,
+      "evidence": [
+        "push_fanout.rs:233 \u2014 FcmConfig.oauth_token is populated once with std::env::var(\"FCM_OAUTH_TOKEN\").ok() at construction, and the module doc table at :36 states outright '(read once at startup)'. This value is used verbatim as the FCM HTTP v1 Bearer token at :330-334 (`bearer_auth(&bearer)`) for every send, for the entire process lifetime.",
+        "FCM HTTP v1 OAuth2 access tokens minted from a Google service account are short-lived (~1 hour TTL). Because the token is captured at startup and never refreshed (no refresh timer, no re-read, no google-cloud-auth token source \u2014 the comment at :324-328 acknowledges 'In production this would come from a service-account key file via google-cloud-auth' but the code just reuses a static env var), a long-running api-server will begin receiving 401 UNAUTHENTICATED from FCM roughly one hour after boot and for the rest of its uptime.",
+        "The 401 path is silently mis-classified as a non-recoverable non-expiry failure: the error branch at :355-388 only sets token_expired=true for err_status in {NOT_REGISTERED, UNREGISTERED, INVALID_REGISTRATION} (:363-367). An auth failure yields err_status like 'UNAUTHENTICATED' -> expired=false -> the function returns (false, false), so the DEVICE token is (correctly) not pruned, but nothing detects that the SERVER credential is the problem: no re-auth, no distinct alert, only a per-message `tracing::warn!(\"[8A-3] FCM rejected message\")`. Net effect: a complete, silent, indefinite outage of Android push delivery after ~1h, indistinguishable in metrics from ordinary per-message rejections.",
+        "Fix: obtain the FCM v1 bearer from a refreshing token source (mint from the service-account JSON with a cached access token that is re-minted before its exp), OR at minimum detect HTTP 401/403 / err_status UNAUTHENTICATED as a credential-expiry signal that triggers re-acquisition and an operational alert rather than being swallowed as a per-message warn. The legacy send_fcm_legacy path (:393+) uses a long-lived server key and is not affected \u2014 the bug is specific to the HTTP v1 oauth_token branch that is preferred when FCM_OAUTH_TOKEN is set (:330).",
+        "Confidence medium: the read-once lifecycle (env var at :233, static reuse at :330), the missing refresh, and the 401 mis-classification (:363-367) are all confirmed by static read; the ~1h TTL and resulting outage are inferred from the FCM v1 OAuth model and depend on the deployment actually setting FCM_OAUTH_TOKEN (vs the legacy server-key path)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-isolation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-core services)",
+      "score_delta": 2,
+      "evidence": [
+        "scheduler/mod.rs:262-282 \u2014 the entire background scheduler is a single tokio::spawn (:264) running `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` (:278-281). run_scheduled_tasks (:290+) carefully isolates each job's *Result* (every job is `if let Err(e) = self.<job>().await { tracing::error!(...); self.increment_errors(); }`), so a returned Err in one job does not stop the others \u2014 good. But there is NO isolation against a PANIC: run_scheduled_tasks is awaited directly in the loop body, not inside a spawned child task or a catch_unwind boundary.",
+        "Consequence: if ANY scheduled job method panics (an unexpected index-out-of-bounds, an .unwrap()/.expect() on unexpected DB shape, an arithmetic overflow under overflow-checks, a poisoned Mutex \u2014 note the metrics mutex is explicitly poisonable, see the intentional-poison test at :2357), the panic unwinds out of run_scheduled_tasks, out of the `loop`, and terminates the single spawned scheduler task. The JoinHandle returned by start() (:262) is not awaited or supervised anywhere with a restart, so the whole background subsystem \u2014 scheduled announcement publish/dispatch, vote activation/close/reminders, session cleanup, retention pruning, quiet-hours drain \u2014 stops permanently for the remaining process lifetime, silently (a dropped JoinHandle does not propagate the panic to the parent).",
+        "This undercuts the per-job error isolation the code deliberately builds: the Result-level isolation is defeated the moment any job panics instead of returning Err. Fix: wrap each job invocation (or run_scheduled_tasks as a whole) so a panic is contained \u2014 e.g. run each tick's work in a `tokio::spawn(...)` whose JoinHandle is awaited and whose JoinError::is_panic is logged + counted, or use FuturesUnordered per-job tasks, so one panicking job is logged and the ticker keeps ticking. At minimum, supervise the top-level spawned task and restart it on JoinError.",
+        "Confidence medium: the single-spawn structure (:264), the direct un-isolated await of run_scheduled_tasks in the loop (:280), and the Result-only (not panic) isolation inside run_scheduled_tasks (:290+) are confirmed by static read; the permanent-outage impact depends on a job actually panicking, which the current Result-returning jobs make uncommon but not impossible (the poisonable metrics mutex and any future unwrap are live vectors)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-idempotency-commit-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/crates/api-core/src/middleware/idempotency.rs:177 \u2014 the terminal `let _ = tx.commit().await;` discards the commit result on the store path. By line 177 the wrapped handler has ALREADY run (next.run at :148) and produced its side effect, and store_response has written the captured response + advisory-lock row into `tx` (:152-169). If the commit then fails (connection drop, serialization failure, statement timeout), the transaction rolls back \u2014 the idempotency record is NOT persisted \u2014 yet the middleware still returns the successful `response` to the client (:178). The client sees 2xx and believes the operation is now recorded as idempotent; a retry with the same Idempotency-Key finds no cached row (load_cached_response returns None at :122/:134) and re-runs next.run, double-executing the non-idempotent operation. This silently defeats the exact guarantee the middleware exists to provide.",
+        "Contrast with the store failure itself, which IS handled: store_response errors return 500 at :164. Only the commit that durably persists that store is swallowed. Fix: check the commit result \u2014 on Err, log and return a 5xx (e.g. INTERNAL_ERROR) so the client retries knowing the prior attempt was not durably recorded, rather than returning a success the server cannot back with a persisted idempotency row. The read-only commits at :136 and :144 (key-reuse and cache-hit branches) are lower stakes since they persist no new side-effect record, but the same `let _ =` there also hides lock-release/commit failures and is worth tightening.",
+        "Confidence medium: the swallowed commit and the pre-commit execution of next.run + store_response are confirmed by static read of idempotency.rs:110-179; the double-execution user impact is inferred from the load/store/commit ordering, not runtime-confirmed."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:232 and :248 \u2014 require_rls_context (and its sibling rls_context_middleware) call db::tenant_context::set_request_context(pool.as_ref(), ...) and clear_request_context(pool.as_ref()) passing the CONNECTION POOL, not a pinned connection. set/clear each acquire an arbitrary connection from the pool, while the wrapped handler (next.run at :245) acquires its own separate connection(s) in between. Postgres session/GUC state set by set_request_context does not travel across pool connections, so the RLS tenant context would apply to the throwaway connection that set it \u2014 not to the connection the handler actually queries on. If this middleware were relied on to scope handler queries, it would silently fail to enforce tenant isolation. Every OTHER call site in the tree does this correctly by threading a pinned `&mut *conn` / `&mut *tx` (routes/admin/users.rs:211/255, routes/signatures.rs:979/1145, routes/agency_provisioning.rs:197/282, scheduler/mod.rs:1396), and most of those also CHECK the clear error (`if let Err(e) = clear_request_context(...)`), whereas rls_context.rs:248 swallows it with `let _ =`.",
+        "Reachability: neither `require_rls_context` nor `rls_context_middleware` is referenced anywhere outside its own definition (no .layer(from_fn(...)) wiring in any router) \u2014 grep across backend/servers + backend/crates finds zero call sites. So this is currently dead code, which is why the severity is low rather than high. The risk is latent: a future developer wiring this middleware in to enforce per-request RLS would get a false sense of isolation because set/clear target the pool, not the request's connection. Fix: either delete the unused module, or rewrite it to pin one connection for the request (acquire \u2192 set_request_context(&mut conn) \u2192 run handler against that same conn via an extension/extractor \u2192 clear with error checked), matching the working route-level pattern; the pooled-clear on :248 should at minimum stop swallowing its error.",
+        "Confidence medium: the pool-vs-pinned-connection mismatch and the swallowed clear are confirmed by static read; that no router wires these fns is confirmed by a repo-wide grep, making this a latent-trap finding rather than a live isolation break."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-no-runtime-token-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core auth-refresh)",
+      "score_delta": 2,
+      "evidence": [
+        "There is NO runtime silent-refresh: once the short-lived access token expires mid-session, every subsequent request 401s indefinitely with no recovery and no redirect to login. Three facts combine to produce this. (1) contexts/AuthContext.tsx:337 wires the hand-rolled axios client with `configureApiClient({ getToken: getAccessToken })` \u2014 passing getToken ONLY, and NO `onUnauthorized` callback.",
+        "(2) lib/api.ts:211-214 the response interceptor's 401 branch is `if (error.response?.status === 401 && onUnauthorizedCallback) { onUnauthorizedCallback(); }` \u2014 but onUnauthorizedCallback is undefined (never configured), so the 401 branch is a no-op. Nothing triggers a refresh, and nothing redirects the user to login.",
+        "(3) lib/api.ts:75 `RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504]` does NOT include 401, and the interceptor has no 401->refresh->replay logic, so an expired-token 401 is transformed and rejected straight to the caller.",
+        "The refresh machinery exists but is effectively dead at runtime: AuthContext.tsx exposes `refreshToken()` (context value, line 82 / ~455) with a proper concurrent-refresh queue (isRefreshing/refreshPromise), yet a repo-wide grep for a runtime caller of `refreshToken()` finds only the interface declaration and a comment \u2014 no component, hook, or interceptor invokes it. `refreshTokenInternal` only runs from the cold-boot initializeAuth() effect. So the queued-refresh path never fires during a live session.",
+        "Impact: any authenticated session that outlives the access-token TTL breaks \u2014 WebSocketContext (getToken via authRef.current.accessToken) also re-auths with the stale token and burns its reconnect budget to max-retries-exceeded. The user is neither silently refreshed nor bounced to login; they just see requests fail. Fix: either pass an `onUnauthorized` to configureApiClient that runs refreshTokenInternal() and replays the original request on success (falling back to logout+redirect on failure), or add a 401 branch in the response interceptor that awaits a single queued refresh then retries once. Landable as a self-contained change to lib/api.ts + the configureApiClient call site; IG3 can assert via a test that a 401 followed by a successful refresh replays the request with the rotated token.",
+        "Confidence medium: the missing onUnauthorized wiring, the no-op 401 branch, 401 absent from the retryable set, and the absence of any runtime refreshToken() caller are all confirmed by static read + repo-wide grep of the ppt-web-core segment; 'medium' not 'high' because the generated @ppt/api-client (outside this segment, wired via setTokenProvider) was not inspected for its own 401 interceptor \u2014 the hand-rolled axios instance used directly by feature hooks (sentiment, predictive-maintenance, ...) definitely has this gap."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-init-no-exp-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core auth-refresh)",
+      "score_delta": 2,
+      "evidence": [
+        "contexts/AuthContext.tsx:412-421 cold-boot init trusts a stored access token with NO expiry validation, despite a comment that claims otherwise. The branch reads `if (storedUser && accessToken) { // Validate the token is not expired (basic check) ... setUser(storedUser); }` \u2014 the comment promises an expiry check but the code performs none; it simply re-authenticates from the stored user.",
+        "Because `storedUser && accessToken` is truthy whenever a (possibly expired) token is present, control never falls through to the `else if (refreshTokenValue)` cold-boot-refresh branch (line 416) that would have rotated the token via refreshTokenInternal(). So on any cold boot after the access-token TTL has elapsed, the app comes up 'authenticated' on a dead token.",
+        "The helper to fix this already exists in the same file: `decodeJwtPayload` (line 221) best-effort decodes the unverified JWT payload; checking `claims.exp * 1000 < Date.now()` (with a small skew) is enough to route an expired-but-refreshable session through the refresh branch instead of trusting the stale token.",
+        "Impact compounds with the no-runtime-refresh finding: the stale token from init is used on the first authenticated request, 401s, and (per that finding) is neither refreshed nor redirected \u2014 the user lands on a broken authenticated shell after every cold boot where the access token expired while the refresh token is still valid. Fix: in the `storedUser && accessToken` branch, decode exp; if expired (or within a skew window) and a refresh token exists, fall through to refreshTokenInternal() rather than setUser(storedUser). Self-contained to AuthContext.tsx; IG3 can assert init with an expired stored access token + valid refresh token ends up calling the refresh path.",
+        "Confidence medium: the comment/behavior mismatch, the truthy-guard that skips the refresh branch, and the availability of decodeJwtPayload are confirmed by static read; 'medium' because exact production token TTLs (docs/api/README.md) were not cross-checked, though the gap is TTL-independent."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core auth-refresh)",
+      "score_delta": 1,
+      "evidence": [
+        "lib/api.ts auto-retries 429 (and 503) but ignores the server's Retry-After header. The retry loop (lib/api.ts:216-243) computes its wait purely from `calculateRetryDelay(retryCount)` (INITIAL_RETRY_DELAY * 2**retryCount + jitter) and never reads `error.response.headers['retry-after']`. For a 429 rate-limit response this replays before the server-specified window, which prolongs / worsens the rate-limiting rather than backing off as instructed.",
+        "The parser already exists and is used elsewhere: lib/errorHandler.ts:335 `parseRetryAfter(value)` fully handles both the delta-seconds and the HTTP-date forms of Retry-After, and errorHandler.ts:148-160 already surfaces `retryAfterSeconds` on the mapped error. So the retry loop in api.ts is the only place that drops this signal \u2014 an inconsistency within the same lib/ directory.",
+        "Fix: in the api.ts retry branch, when a Retry-After header is present prefer it over exponential backoff, i.e. `const delay = parseRetryAfter(error.response?.headers?.['retry-after']) ?? calculateRetryDelay(retryCount)` (clamped to a sane max). Landable as a few lines in lib/api.ts reusing the existing parseRetryAfter (export it from errorHandler.ts); IG3 can assert a 429 with `Retry-After: 5` waits ~5s rather than the ~1s exponential first step.",
+        "Confidence medium: the absence of any Retry-After read in the api.ts retry loop and the presence of a complete parseRetryAfter in errorHandler.ts are confirmed by static read + grep; low severity because it only degrades behavior under active rate-limiting, not on the common path."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-token-localstorage",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:116,136-150 \u2014 the auth REFRESH token (and access token) is persisted in localStorage via tokenStorage.setRefreshToken/setAccessToken (REFRESH_TOKEN_KEY / ACCESS_TOKEN_KEY). localStorage is readable by any JavaScript running on the origin, so a single XSS foothold (a compromised dependency, an unescaped injection anywhere in the SPA) can exfiltrate the refresh token \u2014 a long-lived credential that grants persistent re-authentication and silent access-token minting even after the session tab closes. This is materially worse than access-token exposure because the refresh token outlives the page and cannot be invalidated by simply expiring the short-lived access token.",
+        "The code's own comment on line 116 (`// Token Storage (localStorage for MVP, httpOnly cookies later)`) marks this as acknowledged interim debt rather than a settled design \u2014 i.e. it is planned, actionable work, not a documented accepted tradeoff. Fix direction: move the refresh token to a Secure, HttpOnly, SameSite cookie issued by api-server (so JS cannot read it), keeping only the short-lived access token in memory (not localStorage); the api.ts getToken hook (lib/api.ts:291) and the refresh flow would read the access token from an in-memory holder and rely on the cookie for refresh. At minimum, isolate the refresh token from access to scripts.",
+        "Confidence medium: the localStorage persistence of the refresh token is confirmed by static read of AuthContext.tsx:136-150; the XSS-exfiltration impact is the well-established consequence of the storage choice, not a runtime-confirmed exploit in this app."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-100 \u2014 buildWebSocketUrl appends the JWT as a URL query parameter (`url.searchParams.set('token', token)`) because the api-server reads WS auth from `?token=<jwt>` (comment at :86-92). JWTs in URLs are a recognized exposure: the full ws(s):// URL with the token can land in server/proxy access logs, browser history, and any diagnostics that capture request lines \u2014 leaking a bearer credential to systems that should never see it. Unlike an Authorization header, a query-string token is logged by default in most infrastructure.",
+        "This is a known browser constraint (the WebSocket handshake cannot carry custom headers), so query-param auth is a common compromise \u2014 hence low severity \u2014 but the safer, actionable pattern is a short-lived single-use connection ticket: the client fetches a one-time ticket over normal HTTPS (Authorization header), passes THAT (not the durable JWT) as `?ticket=`, and the server redeems+invalidates it on connect. Alternatively pass the JWT via the Sec-WebSocket-Protocol subprotocol header, which is not written to the URL. Either bounds the blast radius if a URL leaks.",
+        "Confidence medium: the token-in-URL construction is confirmed by static read of websocket.ts:94-100; the leakage channels (logs/history) are the standard consequence, and browsers do log request URLs, but no concrete leak was observed at runtime in this review."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-ui-errorboundary-raw-message-prod",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ErrorBoundary.tsx:167-168 \u2014 the global error boundary renders the raw caught error message to end users unconditionally in every build: `{error && (<p className=\"error-boundary-details\"><code>{error.message}</code></p>)}`. There is NO `import.meta.env.DEV` (or NODE_ENV) guard around it \u2014 a grep of the file confirms zero env checks \u2014 even though this ErrorBoundary wraps the whole App (see App.route-error-boundary.test.tsx) and is the production crash fallback.",
+        "Effect: on any uncaught render/lifecycle error in production, the user is shown the internal JavaScript error string verbatim (e.g. a serialized API error, a `Cannot read properties of undefined (reading 'x')`, or a thrown backend detail bubbled through a hook). React escapes the text so this is not XSS, but surfacing raw internal error text to end users is an information-disclosure / UX smell \u2014 it leaks implementation detail and is meaningless-to-alarming for a non-technical property manager. The neighbouring translated copy (`translations.message`, ErrorBoundary.tsx:164) already provides the user-facing message; the raw `<code>{error.message}</code>` is developer detail that belongs behind a DEV gate (the same `import.meta.env.DEV` convention lib/websocket.ts and lib/api.ts use for their diagnostics) or inside the existing 'Copy error details' affordance (handleCopyError, lines 107-129) which already captures message+stack+URL+UA for support.",
+        "Fix: wrap the details `<p>` in `import.meta.env.DEV && error && (...)` so Vite dead-code-eliminates it from production, keeping the translated message + retry/reload/copy actions for end users. Score 1 (info-disclosure / UX; not a crash or auth issue). Confidence medium: statically traced, not runtime-confirmed against a production build."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:93,99-100 \u2014 the SSO callback reads `error_description` straight from the URL query (`searchParams.get('error_description')`) and, in the provider-error branch, renders it via `decodeURIComponent(errorDescription)` with no try/catch. `decodeURIComponent` throws a `URIError` on any malformed percent-encoding (e.g. a lone `%`, `%zz`, or a truncated `%E0`). The call sits directly in the effect body (inside `useEffect`, not wrapped), so a throw is an uncaught synchronous exception during the callback handler.",
+        "Reachability: `error_description` is fully attacker-/provider-controllable \u2014 it is whatever the identity provider (or anyone who can craft the redirect URL) puts in the query string. A user landing on `/auth/callback?error=access_denied&error_description=denied%` (note the trailing `%`) triggers the throw. Instead of the intended friendly SSO-error screen (status='error' + provider message + 'Back to login'), the exception propagates up and is swallowed by the global ErrorBoundary, replacing the actionable SSO error UI with the generic app-crash fallback \u2014 a strictly worse outcome on an auth failure path where the user most needs a clear 'try signing in again' route.",
+        "Note the same effect already handles the happy 'no error_description' case gracefully (falls back to the i18n `auth.ssoProviderError`), so the crash only manifests on the malformed-encoding edge \u2014 easy to miss and untested (AuthCallbackPage has no test exercising a malformed error_description). Fix: guard the decode, e.g. `let desc = errorDescription; try { desc = decodeURIComponent(errorDescription); } catch { /* leave raw or use fallback copy */ }`, mirroring the defensive decode pattern used elsewhere. Score 1 (edge-case crash on an auth path, degraded error UX; not a security bypass \u2014 React still escapes the rendered text so there is no injection). Confidence medium: decodeURIComponent's throw-on-malformed behaviour is well-defined and the call is statically confirmed unguarded; not runtime-reproduced."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 \u2014 `sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` is an in-memory map of pending SSO login flows, initialized empty at state.rs:991 with no bound and no eviction task",
+        "backend/servers/reality-server/src/routes/sso.rs:94 \u2014 the unauthenticated `/api/v1/sso/login` handler inserts one entry (keyed by a fresh session_id) on EVERY call; entries are only ever removed at the callback (routes/sso.rs:243 `.remove(&session_id)`) when a user actually completes the round trip",
+        "backend/servers/reality-server/src/routes/sso.rs:252 \u2014 there is a 10-minute expiry CHECK, but it only runs when a matching callback arrives; an abandoned or spoofed login init (no callback) leaves its entry in the map permanently. No background reaper / retain() prunes stale entries anywhere (grep for sso_sessions shows only insert at :94 and remove at :243)",
+        "Contrast: the sibling OAuthTokens cache IS pruned \u2014 state.rs:461 `tokens.retain(|_, t| t.expires_at >= now)` \u2014 and price_map.rs:229 does `cache.retain(...)`, so the codebase already uses the eviction pattern everywhere except this map. This is an inconsistency/oversight, not a deliberate design",
+        "Impact: an unauthenticated attacker can spam `/api/v1/sso/login` (or ordinary users who bounce off the PM OAuth screen) to grow the map without bound \u2192 gradual memory exhaustion / OOM DoS on reality-server, with no operator signal",
+        "Fix: prune `sso_sessions` on insert (drop entries older than the 10-min TTL) or add a periodic reaper task mirroring the OAuthTokens `retain` at state.rs:461; optionally cap the map size"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687 \u2014 `exchange_code_for_tokens()` does `let client = reqwest::Client::new();` to POST the PM OAuth token endpoint",
+        "backend/servers/reality-server/src/routes/sso.rs:711 \u2014 `get_user_info()` does the same `reqwest::Client::new()` to GET the PM userinfo endpoint",
+        "backend/servers/reality-server/src/routes/sso.rs:748 \u2014 `introspect_pm_token()` does the same `reqwest::Client::new()` to POST the PM introspection endpoint",
+        "`reqwest::Client::new()` has NO default request timeout. All three call sites sit on the SSO login / token-validation critical path and call the external PM OAuth server; if that upstream hangs, the awaiting reality-server task blocks indefinitely \u2014 an unauthenticated caller driving the SSO callback can pin server tasks (resource exhaustion) with no upper bound",
+        "The codebase already knows the correct pattern: PmApiClient at state.rs:757 builds its client with `.timeout(Duration::from_secs(timeout_seconds))`. The SSO paths bypass it",
+        "Secondary: constructing a fresh Client per request also creates a new connection pool each call, defeating TLS keep-alive/connection reuse to the PM OAuth host on the hot path",
+        "Fix: build one shared `reqwest::Client` with an explicit `.timeout(...)` (and connect timeout) once \u2014 e.g. store it on AppState alongside the existing PmApiClient \u2014 and reuse it across all three SSO calls instead of `Client::new()`"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-client-ip-cf-spoof",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core client-ip resolver)",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/client_ip.rs:236-252 \u2014 resolve_client_ip trusts CF-Connecting-IP whenever the socket peer is in the trusted set, but the default trusted set (private_defaults at client_ip.rs:167-173: loopback + RFC1918/RFC4193) is the exact nginx/container-ingress deployment the module docs call the common case. A plain reverse proxy does NOT strip an inbound CF-Connecting-IP header, so any client can send `CF-Connecting-IP: <forged>`; the peer (nginx, private range) is trusted, so the forged value is returned as the client IP \u2014 reintroducing the #2789 spoof (audit-log poisoning + per-request throttle-bucket rotation) that the rightmost-untrusted-XFF logic (client_ip.rs:212-223) otherwise closes.",
+        "cf_connecting_ip (client_ip.rs:199-201) is preferred over XFF with no left/right disambiguation and no Cloudflare-specific gate: the header is consulted purely on socket-peer trust, not on any assertion that the trusted edge is actually Cloudflare.",
+        "Fix: only consult CF-Connecting-IP when the trusted edge is explicitly Cloudflare \u2014 gate it behind a dedicated flag / CF-ranges config, not on the generic private-range default set. When the edge is a generic reverse proxy, fall through to the existing rightmost-untrusted-XFF resolution. Add a unit test asserting that a forged CF-Connecting-IP from a private-range peer with no Cloudflare gate is NOT returned as the client IP. Landable as a self-contained change to resolve_client_ip + config plumbing + a test; no schema/migration, no mobile dependency.",
+        "Confidence medium: the trust-on-peer path and the private-range default set are confirmed by static read; 'medium' rather than 'high' because whether a live deployment is exploitable depends on whether the operator's real ingress is Cloudflare (safe) or a generic private-range reverse proxy (exploitable), a deployment fact not verifiable in this static Rust-only pass."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/client_ip.rs"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core workflow engine)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:611-652 \u2014 the workflow condition comparators are inconsistent about JSON type coercion. Eq (:612 `Ok(field_value == *compare_value)`), Ne (:613), In (:639-645 `arr.contains(&field_value)`) and NotIn (:646-652) use serde_json::Value's STRICT structural equality, where `json!(100) != json!(\"100\")` and `json!(true) != json!(\"true\")` \u2014 no string<->number/bool coercion.",
+        "But the ordering comparators on the SAME field DO coerce: Gt/Gte/Lt/Lte (:614-617) route through compare_numeric -> coerce_finite_f64 (:727-731), which parses numeric strings, and Contains/StartsWith/EndsWith (:618-638) stringify both sides via to_string()/as_str(). So `amount >= 100` matches whether the trigger field or the stored condition value is the number 100 or the string \"100\", while `amount == 100` matches ONLY when both sides are the exact same JSON type.",
+        "Impact: workflow conditions are authored in a UI form and stored as JSON in workflow.conditions; form inputs commonly serialize scalar values as STRINGS (e.g. condition value \"3\", \"true\", \"100\"), whereas trigger_event fields (get_field_value at :671-694, traverse_json :697-715) carry the natively-typed JSON emitted by the event producer (a numeric amount/priority/count is a JSON number). An equality guard such as priority == 3 (stored value \"3\") then NEVER matches the numeric trigger field, so an Eq-guarded automation silently never fires; symmetrically a Ne / NotIn guard is always-true and lets actions run unguarded. A `>=`/`contains` guard on the very same field behaves correctly, which makes the failure look non-deterministic to an operator and hard to diagnose.",
+        "Distinct from the prior workflow findings: code-review-api-core-workflow-notin-fail-open covered NotIn returning true when compare_value is NOT an array (a different branch \u2014 the `else` arm at :649-651); this finding is about the strict-vs-coercing TYPE mismatch inside the happy path of Eq/Ne/In/NotIn. Both can bite the same condition.",
+        "Fix: make Eq/Ne/In/NotIn coerce consistently with the ordering/string operators \u2014 e.g. attempt numeric equality via coerce_finite_f64 first (so 100 == \"100\"), fall back to case-consistent string comparison, and for In/NotIn apply the same element-wise coercion \u2014 OR normalize condition values to their typed JSON at store time and document that conditions are type-strict. Add a unit test asserting `{field: \"trigger.amount\" (number 100), op: Eq, value: \"100\"}` evaluates true (fails on current code). Landable as a self-contained change to evaluate_single_condition + a test; no schema/migration, no mobile dependency.",
+        "Confidence medium: the operator asymmetry, the strict serde_json::Value equality, and the coercing compare_numeric/to_string paths are all confirmed by static read; 'medium' rather than 'high' because whether a live workflow trips it depends on how the condition-builder UI serializes scalar values (string vs typed), which is a frontend-side fact not verified in this static Rust-only pass."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core document-generation)",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:496-502 \u2014 in summarize_document's very-long-document branch, request.content (a String) is sliced by BYTE offset with no UTF-8 char-boundary check: `let half_limit = char_limit / 2;` then `let start = &request.content[..half_limit.min(request.content.len())];`, `let end_start = request.content.len().saturating_sub(half_limit);`, `let end = &request.content[end_start..];`. Indexing a str/String by a byte range that does not fall on a char boundary PANICS ('byte index N is not a char boundary').",
+        "The `.min(len())` / saturating_sub only guard the RANGE bounds (out-of-range), not char-boundary ALIGNMENT. half_limit is char_limit/2 = (max_context*4)/2 = 200_000 bytes; byte offsets 200_000 (from the front) and len-200_000 (from the back) are arbitrary positions that in practice land mid-character.",
+        "This product is Slovak/Czech/German-first (i18n sk, cs, de, en per the repo architecture). Real lease agreements, contracts, and long documents fed to summarize_document are full of multi-byte UTF-8 (\u00e1 \u010d \u010f \u00e9 \u00ed \u013e \u0148 \u00f3 \u0161 \u0165 \u017e \u00e4 \u00f6 \u00fc \u00df \u2026). Any document large enough to enter this branch (content_tokens > max_context = 100_000 tokens, ~400_000 chars at the code's own ~4-chars/token estimate) that contains a multi-byte char adjacent to either 200_000-byte cut point panics \u2014 which for non-ASCII long documents is the common case, not an edge case.",
+        "Reachability/severity: this is on a user-facing feature (document summarization) reachable from an api-server request handler. Axum isolates a handler-task panic into a 500 for that one request rather than crashing the process, so it is not a server-wide DoS \u2014 but the specific document can NEVER be summarized (every retry re-panics), and it surfaces as an opaque 500 with a panic in the logs rather than a handled error. Bounded blast radius = request-scoped, hence score_delta 2 (not 3).",
+        "Distinct from the prior document_generation findings code-review-api-core-docgen-empty-llm-ok / docgen-empty-llm-blank-doc, which both concern the `unwrap_or_default()` collapse of a missing LLM completion at :536-540 \u2014 a different location and defect class from this input-side slicing panic at :496-502.",
+        "Fix: cut on char boundaries instead of raw byte offsets \u2014 e.g. use `str::char_indices()` / `floor_char_boundary` (or take/rev-take over `.chars()`) to pick the nearest boundary <= half_limit, or operate on `char` counts (`content.chars().take(n)` for the head and a matching tail). Add a regression test that summarizes a >400k-char string containing multi-byte chars straddling both cut points and asserts no panic. Self-contained Rust change + test; no mobile/AGP dependency.",
+        "Confidence medium: the byte-offset String slicing and the absence of any char-boundary alignment are confirmed by static read; 'medium' rather than 'high' only because triggering requires an input that both exceeds the ~400k-char truncation threshold AND has a multi-byte char at a cut point \u2014 realistic for this locale but not confirmed at runtime in this static-only pass."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-url-listener-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:215-217 \u2014 DeepLinkManager.initialize() calls `Linking.addEventListener('url', (event) => this.handleUrl(event.url))` but discards the returned subscription. On React Native 0.85 (this repo's version) addEventListener returns an EmitterSubscription that must be removed via `subscription.remove()`; the class captures nothing and exposes no teardown/dispose method (grep for remove/teardown/dispose/subscription in the file returns none), so the runtime 'url' listener leaks for the process lifetime.",
+        "The listener is also non-idempotent across re-initialisation: any second call to initialize() registers a SECOND 'url' listener while the first is never removed, so every runtime deep link then invokes handleUrl -> dispatchLink N times (N = number of initialize() calls), double-firing the registered handler and causing duplicate navigation/side-effects per link.",
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts:36-48 \u2014 the wiring effect returns `unsubscribe` (from deepLinkManager.addHandler) as its cleanup, which removes only the HANDLER, not the Linking 'url' listener created inside initialize(). So on unmount the Linking listener is orphaned, and on remount initialize() runs again and stacks another one. The hook's own JSDoc asserts it 'avoids duplicate handlers / re-initialisation' \u2014 true for the handler and for onNavigate-identity churn (fixed via onNavigateRef + [] deps), but NOT for the Linking subscription, which has no teardown counterpart. React Fast Refresh re-runs the effect in dev (guaranteed duplication there); a production remount of the hook's host (e.g. an auth-driven navigator swap) would do the same.",
+        "Distinct from the dropped item code-review-mobile-rn-deeplink-init-unhandled (that flagged initialize() re-running on onNavigate identity + a `void ... ` with no .catch \u2014 both since remediated in current code via the ref pattern and an explicit `.catch` at useDeepLinkRouting.ts:44). This finding is the uncaptured Linking subscription / missing DeepLinkManager teardown, which no filed item covers.",
+        "Fix: capture the subscription in initialize() (e.g. `this.urlSub = Linking.addEventListener('url', ...)`), guard against double-init (return early or remove the prior sub if already initialised), add a `teardown()`/`dispose()` that calls `this.urlSub?.remove()`, and have useDeepLinkRouting's effect cleanup call it alongside `unsubscribe`. Severity low: deepLinkManager is a singleton typically mounted once at the app root, so prod impact is a single leaked listener rather than unbounded duplication \u2014 but the leak is real and the duplicate-dispatch is a live hazard under Fast Refresh and any host remount. Confidence medium: the missing capture/teardown is confirmed by static read; the duplication's production reachability depends on the hook-host lifecycle (traced, not runtime-confirmed)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-core routes)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:77-91 \u2014 `useBuildingUnits` runs `await fetch(`/api/v1/units?buildingId=${buildingId}&limit=500`, { headers: { 'Content-Type': 'application/json' } })` inside a TanStack `useQuery` queryFn. This is a RAW browser `fetch`, not the shared axios instance.",
+        "The app injects the JWT ONLY via the axios request interceptor in frontend/apps/ppt-web/src/lib/api.ts:198-204 (`requestConfig.headers.Authorization = `Bearer ${token}`` from the token provider registered in contexts/AuthContext.tsx:327 `setTokenProvider(getAccessToken)`). A raw `fetch()` does not pass through axios, and the call sets no `Authorization` header and no `credentials: 'include'`. There is NO global fetch override, service worker, or cookie-based session in the app (grep for `globalThis.fetch =`/`window.fetch =`/`credentials: 'include'`/`serviceWorker` returns nothing outside tests). So this request to the authenticated management endpoint `/api/v1/units` goes out with no bearer token \u2014 it will 401 for a real logged-in session, and the building-units dropdown that feeds the person-months screen silently fails to populate.",
+        "Systemic, not a one-off: the same header-less raw-fetch-to-`/api/v1/*` pattern recurs across the news feature \u2014 features/news/pages/EditArticlePage.tsx:115 (PUT), CreateArticlePage.tsx:55 (POST), ArticleDetailPage.tsx:43-45,112,135 \u2014 all hitting authenticated endpoints with only a `Content-Type` header and no Authorization. (Those live in the ppt-web-ui segment; person-months.tsx in routes/ is the in-segment instance and the anchor for this finding.) App.tsx:71 `/api/v1/auth/mfa/verify` is the ONE legitimate raw fetch \u2014 it runs pre-auth before a token exists.",
+        "Secondary defects in the same block: (a) the response is hand-typed with an `as { data: Array<{ id: string; unitNumber: string }> }` cast that bypasses the generated `@ppt/api-client` types, so it will drift silently from the OpenAPI contract; (b) `limit=500` is hard-coded with no follow-up pagination, so a building with >500 units silently drops the overflow from the dropdown.",
+        "Fix: route this through the shared axios `api` instance (or the generated `@ppt/api-client` units call) so the JWT interceptor attaches the bearer token and the response is typed from the OpenAPI schema; drop the hand-written `as` cast; and either page through all units or document/raise the 500 cap. Self-contained TS change in routes/groups/person-months.tsx (+ optionally sweep the news pages); no backend/migration/mobile dependency \u2014 fully landable in the cloud runner.",
+        "Confidence medium: the axios-only token injection (lib/api.ts:198-204), the raw fetch, and the absence of any global fetch/cookie fallback are all confirmed by static read; 'medium' rather than 'high' because an actual 401 was not reproduced at runtime in this static-only pass (a dev proxy or an as-yet-unseen mitigation could in principle mask it)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-core routes)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:180-184 \u2014 the sensor-delete confirmation is a HARDCODED English literal: `window.confirm(`Delete sensor \"${sensor.name}\"? This removes its readings and alerts and cannot be undone.`)` \u2014 not wrapped in `t(...)`. Slovak/Czech/German users (the product's primary locales, i18n sk/cs/de/en) see raw English on a destructive-action prompt.",
+        "This is a local inconsistency, not a codebase-wide convention: the SAME file's threshold-delete confirm at iot.tsx:545-549 correctly uses `t('iot.thresholdDeleteConfirm', { defaultValue: 'Delete this threshold? This cannot be undone.' })`, and routes/groups/faults.tsx:262-266 uses `t('faults.confirmDelete', { defaultValue: 'Delete this fault? This action cannot be undone.' })`. The sensor-delete path was simply missed.",
+        "Fix: wrap the sensor-delete message in `t('iot.sensorDeleteConfirm', { defaultValue: 'Delete sensor \"{{name}}\"? This removes its readings and alerts and cannot be undone.', name: sensor.name })` and add the key to the sk/cs/de/en resource bundles, mirroring the existing `iot.thresholdDeleteConfirm` entry. Trivially self-contained TS/i18n change; no backend/mobile dependency \u2014 fully landable.",
+        "Confidence high: the hardcoded literal and the two sibling `t()`-wrapped confirms in the same/adjacent files are directly visible; this is an unambiguous i18n gap on a user-facing string."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 \u2014 handleSubmit collects a complete CreateDisputeRequest form (respondentId, title, category, description, desiredResolution) but its ENTIRE side-effect is `await new Promise((resolve) => setTimeout(resolve, 1000))` then `navigate('/disputes')`. There is NO API call \u2014 no useMutation, no api/axios call, no fetch, no @ppt/api-client import anywhere in the file. The 1-second timer is a fake-latency stub. All form data (formData state) is silently discarded; the user sees 'Submitting...' then a redirect to the disputes list and reasonably believes a dispute was filed, when nothing was persisted. The try/catch is dead (a resolving setTimeout cannot throw), so the error branch/`setError` is unreachable.",
+        "This is an orphaned stub, not the live path: the disputes route group wires `/disputes/new` to FileDisputePageRoute (frontend/apps/ppt-web/src/routes/groups/disputes.tsx:482 `<Route path=\"/disputes/new\" element={<FileDisputePageRoute />} />`), which is the REAL implementation (FileDisputePageRoute.tsx imports FileDisputePage and performs the actual API side-effect at its own layer). CreateDisputePage is NOT referenced by any route file (grep for CreateDisputePage across the app returns only its own definition and the barrel re-export). However it IS publicly re-exported from features/disputes/pages/index.ts:6 (`export { CreateDisputePage } from './CreateDisputePage'`), so it is a live trap: a future author can import it from the feature barrel and mount it, shipping a form that loses every submission with no error.",
+        "Fix (pick one): (a) delete CreateDisputePage.tsx and its index.ts:6 barrel export as dead code superseded by FileDisputePage/FileDisputePageRoute; or (b) if it is meant to be a distinct entry, wire handleSubmit to the real dispute-create mutation (mirror FileDisputePageRoute's side-effect) instead of the setTimeout stub. Either way self-contained TS in the disputes feature \u2014 no backend/migration/mobile dependency, fully landable in the cloud runner.",
+        "Confidence medium (not high): the stub handler and discarded form data are directly visible, but the component is currently unrouted, so this is a latent data-loss trap / dead code rather than a confirmed live production data-loss path. Severity kept at medium rather than low because the failure mode is silent data loss on a destructive user action and the component is exported (one import away from going live)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx has ZERO useTranslation usage (grep -c useTranslation = 0; no react-i18next import) yet renders a full UI of hardcoded English: h1 'Disputes' (:84), search placeholder 'Search disputes...' (:101), the three filter defaults 'All Statuses'/'All Priorities'/'All Categories' (:120,:134,:148), and the empty-state 'No disputes found.' (:165), plus action buttons. In a product whose primary locales are sk/cs/de/en (react-i18next), Slovak/Czech/German users see the entire disputes list screen in raw English.",
+        "This component is reachable in production, not dead: it is rendered by DisputesPage (features/disputes/pages/DisputesPage.tsx), which is the lazy-loaded element for the routed `/disputes` path (routes/groups/disputes.tsx:481 `<Route path=\"/disputes\" element={<DisputesPageRoute />} />` -> DisputesPage). This is a high-traffic top-level list screen, so the untranslated strings are broadly visible.",
+        "Convention exists and is followed elsewhere in the same feature \u2014 MediationChatThread.tsx and FileDisputeDialog.tsx both use `useTranslation`/`t(...)` throughout \u2014 so DisputeList was simply never localized. Fix: add `const { t } = useTranslation()` and wrap each user-facing literal in `t('disputes.list.*', { defaultValue: ... })`, adding the keys to the sk/cs/de/en bundles. Self-contained TS/i18n change; no backend/mobile dependency \u2014 fully landable.",
+        "Confidence high: the absence of any useTranslation and the concrete hardcoded literals at the cited lines are directly visible; unambiguous i18n gap on a reachable screen."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx imports and uses useTranslation (partial coverage) but leaves user-facing strings hardcoded in English: the page heading `<h1>File a Dispute</h1>` (:193), textarea placeholder 'Brief summary of the dispute' (:351), and textarea placeholder 'Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).' (:375). Because the file already localizes other strings via t(), these are inconsistency misses, not an un-started file.",
+        "This is the LIVE, routed dispute-creation screen: FileDisputePage is rendered by FileDisputePageRoute (pages/FileDisputePageRoute.tsx:11 `import { FileDisputePage } ...`), which is mounted at `/disputes/new` (routes/groups/disputes.tsx:482). So sk/cs/de/en users filing a dispute see the English heading and English form placeholders on the primary create flow.",
+        "Fix: wrap the h1 and the two placeholders in `t('disputes.file.*', { defaultValue: ... })` and add the keys to the sk/cs/de/en resource bundles, matching the t() calls already present in the file. Trivial self-contained TS/i18n change; no backend/mobile dependency \u2014 fully landable.",
+        "Confidence high: the hardcoded literals at the cited lines coexisting with existing t() usage in the same file are directly visible; unambiguous partial-i18n gap on a reachable screen. Kept low severity (+1) as a cosmetic/localization defect, not a correctness or data bug."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-reality-web-i18n-error-state-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 reality-web)",
+      "score_delta": 1,
+      "evidence": [
+        "reality-web is a PUBLIC, SEO-indexed portal that serves four locales (sk/cs/de/en via next-intl, messages/{sk,cs,de,en}.json), yet several user-facing empty/error states are hardcoded in English and never routed through a translation catalog. These render verbatim for a Slovak/Czech/German visitor.",
+        "app/[locale]/inquiries/page.tsx:332 \u2014 <p>Failed to load inquiries. Please try again.</p> in the error-state branch; the file imports NO useTranslations (grep -c useTranslations => 0), so the string is unconditionally English.",
+        "app/[locale]/saved-searches/page.tsx:314 \u2014 <p>Failed to load saved searches. Please try again.</p>; likewise no useTranslations import.",
+        "app/[locale]/favorites/page.tsx:62 \u2014 <p>Failed to load favorites. Please try again.</p>; this file DOES use useTranslations (3 call sites elsewhere) but the API-failure error branch was left hardcoded \u2014 a clear localized-happy-path / unlocalized-error-path split.",
+        "app/[locale]/realtor/listings/page.tsx:89 \u2014 <p>You haven't published any listings yet.</p> (empty state); auth/callback/page.tsx:144 \u2014 <p>Completing login...</p> (transient auth status). Both user-visible, both English-only.",
+        "Reachability: every one of these is on a live route under app/[locale]/** and fires on the ordinary API-error / empty / auth-callback path a real non-English user hits (a reality-server 5xx or an empty result set). Impact is low severity (no crash, no data issue) but directly visible to the majority-non-English audience of a portal whose whole reason for the [locale] segment + 4 message catalogs is full localization.",
+        "Fix: extract each string to the relevant messages/*.json namespace and read via useTranslations()/getTranslations() (the pattern the same files already use for their happy-path copy). Landable as a frontend-only PR (messages catalogs + ~5 component edits); IG3 can assert via a test/grep that no user-facing <p>/<h_> literal survives in these error/empty branches. Confidence medium: the hardcoded literals and the missing/partial useTranslations wiring are confirmed by static read + grep, but exact per-key catalog placement is an implementation choice."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 reality-web)",
+      "score_delta": 1,
+      "evidence": [
+        "components/states/EmptyState.tsx is the repo's shared, prop-driven empty-placeholder component (EmptyStateProps { icon?, title, description?, children }) \u2014 localization is the caller's responsibility, so passing t('...') at the call site yields a fully translated empty state. It is already the convention: FeedImport.tsx, CrmConnection.tsx, AgencyListings.tsx, and RealtorManagement.tsx all render <EmptyState title={t(...)} .../>.",
+        "components/listings/ListingGrid.tsx:61-99 instead hand-rolls its OWN inline empty state \u2014 a bespoke <div className=\"empty-state\"> with an inline SVG, its own <style jsx> block duplicating the shared component's layout, AND two hardcoded English strings: ListingGrid.tsx:76 <h3 className=\"empty-title\">No listings found</h3> and :77-79 <p className=\"empty-text\">Try adjusting your filters or search criteria to find more properties.</p>.",
+        "This is the primary listings-grid empty state on the most-trafficked search surface of the portal, so the untranslated copy is high-visibility for non-English users, and the duplicated markup/style is a maintenance divergence from the shared component (icon, spacing, roles, and theming already drift \u2014 EmptyState uses role=\"status\" and --ppt-fg-* tokens; the inline copy re-derives them).",
+        "Fix (single self-contained refactor, pairs naturally with the sibling i18n finding): replace the inline block in ListingGrid.tsx with <EmptyState title={t('empty.title')} description={t('empty.description')} /> (reusing next-intl the way the agency/import components do), deleting the duplicated <style jsx> and SVG. This removes the DRY violation and the i18n gap in one edit. Landable as a frontend-only change; IG3 can assert ListingGrid renders the shared EmptyState (or that the literals are gone). Confidence medium: the duplicated empty-state, the two English literals, and the existence + usage pattern of the shared EmptyState are all confirmed by static read + grep."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx",
+        "frontend/apps/reality-web/src/components/states/EmptyState.tsx"
+      ],
+      "title": ""
+    },
+    {
+      "id": "lag-warning-2026-08-29",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-08-28T03:12:18Z; lag=39h > 36h threshold. Cloud cron paused or dispatcher-side."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-29.md && H1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [ids] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-count (cumulative carve-out)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans <=2",
+      "observed": "2",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans preserved",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows (9>=9)",
+      "observed": "9>=9",
+      "expected": "non-decreasing"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap",
+      "observed": "0 actions",
+      "expected": "<=1 pr / <=1 issue / <=1 comment",
+      "remediation": "Phase 5 skipped: no candidate"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "n/a \u2014 Phase 1.6 skipped this run",
+      "observed": "skipped",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass line in brief",
+      "observed": "both plans annotated 'adversarial pass: passed'",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases (1.5/1.6 intentionally skipped, cursors not advanced)",
+      "observed": "skipped-not-failed",
+      "expected": "honest"
+    }
+  ],
+  "auto_fix_actions": []
+}
