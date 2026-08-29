@@ -1,0 +1,31 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Dispatcher Tier-1d demand-driven run (buffer starved); no fresh CHURN_FILES passed and state.json hotspot_history is stale (May). REVIEW_CURSOR co-oldest entries are api-core (2026-08-21) and ppt-web-core (2026-08-21); backlog saturation rule (>=3 open code-review-finding) skips only mobile-native-kmp (3 open) — neither tie-partner is backlog-saturated. However BOTH tie-partners were (a) already swept today by sibling Tier-1d runs (signals/2026-08-29-api-core-* and 2026-08-29-ppt-web-core-* exist) and (b) statically re-reviewed here and found EXHAUSTED of net-new findings: every candidate traced was already filed — api-core's only production smell (totp.rs:153 `.expect(\"OS rng failed\")` in encrypt_secret) is backlog item code-review-api-core-osrng-expect (status=done); ppt-web-core's WS entity-event invalidation gap (App.tsx missing onEntityEvent prop) is code-review-ppt-web-core-ws-query-invalidation-dead (filed 08-26/08-27, high confidence); the api-core surface (stripe constant-time verify, client_ip trusted-proxy resolution, jwt token_type gating, workflow_executor fail-closed conditions) and ppt-web-core core libs (api.ts, websocket.ts, useOfflineSupport parse guards, useNetworkStatus timeout cleanup) are hardened. Pivoted to the next-oldest LANDABLE segment not yet reviewed today: mobile-rn (cursor 2026-08-26, React-Native TypeScript under frontend/apps/mobile/src — cloud-landable, unlike mobile-native-kmp which the dispatcher directive avoids). mobile-rn's mainstream veins (i18n gaps: code-review-mobile-rn-hardcoded-i18n-screens 08-01, list-search-placeholders-i18n 08-24; mock-data screens: code-review-mobile-rn-screens-mock-data done; offline-sync: hardened) were verified already-harvested — NotificationsScreen/BuildingsScreen i18n gaps fall under the existing broad findings and were NOT re-filed. The one NET-NEW defect is in the less-trodden deep-link module below.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 1,
+  "note": "mobile-rn (React Native / TS) — the single finding lands in frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts, fully landable in the cloud runner (no mobile-native/KMP content). Static-analysis only; no build/test executed. One net-new finding after confirming the two co-oldest segments (api-core, ppt-web-core) are exhausted of un-filed issues.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-deeplink-url-listener-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:215-217 — DeepLinkManager.initialize() calls `Linking.addEventListener('url', (event) => this.handleUrl(event.url))` but discards the returned subscription. On React Native 0.85 (this repo's version) addEventListener returns an EmitterSubscription that must be removed via `subscription.remove()`; the class captures nothing and exposes no teardown/dispose method (grep for remove/teardown/dispose/subscription in the file returns none), so the runtime 'url' listener leaks for the process lifetime.",
+        "The listener is also non-idempotent across re-initialisation: any second call to initialize() registers a SECOND 'url' listener while the first is never removed, so every runtime deep link then invokes handleUrl -> dispatchLink N times (N = number of initialize() calls), double-firing the registered handler and causing duplicate navigation/side-effects per link.",
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts:36-48 — the wiring effect returns `unsubscribe` (from deepLinkManager.addHandler) as its cleanup, which removes only the HANDLER, not the Linking 'url' listener created inside initialize(). So on unmount the Linking listener is orphaned, and on remount initialize() runs again and stacks another one. The hook's own JSDoc asserts it 'avoids duplicate handlers / re-initialisation' — true for the handler and for onNavigate-identity churn (fixed via onNavigateRef + [] deps), but NOT for the Linking subscription, which has no teardown counterpart. React Fast Refresh re-runs the effect in dev (guaranteed duplication there); a production remount of the hook's host (e.g. an auth-driven navigator swap) would do the same.",
+        "Distinct from the dropped item code-review-mobile-rn-deeplink-init-unhandled (that flagged initialize() re-running on onNavigate identity + a `void ... ` with no .catch — both since remediated in current code via the ref pattern and an explicit `.catch` at useDeepLinkRouting.ts:44). This finding is the uncaptured Linking subscription / missing DeepLinkManager teardown, which no filed item covers.",
+        "Fix: capture the subscription in initialize() (e.g. `this.urlSub = Linking.addEventListener('url', ...)`), guard against double-init (return early or remove the prior sub if already initialised), add a `teardown()`/`dispose()` that calls `this.urlSub?.remove()`, and have useDeepLinkRouting's effect cleanup call it alongside `unsubscribe`. Severity low: deepLinkManager is a singleton typically mounted once at the app root, so prod impact is a single leaked listener rather than unbounded duplication — but the leak is real and the duplicate-dispatch is a live hazard under Fast Refresh and any host remount. Confidence medium: the missing capture/teardown is confirmed by static read; the duplication's production reachability depends on the hook-host lifecycle (traced, not runtime-confirmed)."
+      ]
+    }
+  ]
+}
