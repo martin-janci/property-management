@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29T00:00:00Z",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (buffer starved: claimable=6 < floor=36, every open backlog item mobile-native/KMP and structurally unlandable in the cloud runner, so a NON-mobile-native / CLOUD-LANDABLE segment was required). No CHURN_FILES passed. REVIEW_CURSOR nominal oldest entries are api-core (2026-08-21) and ppt-web-core (2026-08-21), but BOTH are already saturated with same-day coverage that would make a third pass duplicative: signals/ already holds 2026-08-28 api-core-tier1d (+services +repositories), 2026-08-28 ppt-web-core-tier1d (+auth-refresh), AND fresh 2026-08-29 files for api-core (client-ip, workflow-docgen) and ppt-web-core (routes-fetch-i18n). api-core services/core were re-swept here anyway and are exceptionally hardened (startup-only unwraps; poison-safe .lock().unwrap_or_else(|e| e.into_inner()) across scheduler; TOCTOU-aware connect-time SSRF resolver + redirect re-validation + same-origin pinning in services/actions/api_call.rs; constant-time Stripe HMAC with overflow-proof replay window; 'tighten never loosen' auth-policy merge) — nothing net-new to add there, and services/workflow_executor.rs is already covered by today's api-core-tier1d-workflow-docgen. Therefore selected reality-web: the OLDEST cursor date (2026-08-27) among cloud-landable segments with ZERO same-day (2026-08-29) coverage — the only non-mobile segments with a 2026-08-29 file are api-core, ppt-web-core, ppt-web-ui; reality-web, reality-server, api-handlers have none. reality-web additionally beats reality-server (2026-08-28) and api-handlers (2026-08-28) on cursor age. Saturation check passed: zero open code-review-sourced backlog items in the reality-web segment (only 3 open CRFs exist, all mobile-native-kmp). Static-only Frontend review: grep sweep for console.* (only legitimate error-boundary/error-handler uses), `as any`/`as unknown as` (none), raw fetch response.ok handling (all SSR + client fetchers check .ok and null-normalize — listings/[slug]/page.tsx parseListingDetail + notFound() is exemplary), useMutation error handling (n/a — app uses raw fetch, not TanStack Query), and the layout-revalidate API route (robust HMAC + timingSafeEqual + replay + size cap + cardinality-injection defense). The only real gap class is i18n: a public portal that ships sk/cs/de/en still hardcodes English in several empty/error states.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "note": "reality-web (Next.js SSR, TS) — both findings are hardcoded-English user-facing strings in a 4-locale public portal (i18n gap + a shared-component reuse miss). Fully cloud-landable frontend-only changes (messages/*.json + component edits), no backend/mobile/AGP dependency. Distinct segment and ids from all 2026-08-28/2026-08-29 signal files.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-i18n-error-state-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "evidence": [
+        "reality-web is a PUBLIC, SEO-indexed portal that serves four locales (sk/cs/de/en via next-intl, messages/{sk,cs,de,en}.json), yet several user-facing empty/error states are hardcoded in English and never routed through a translation catalog. These render verbatim for a Slovak/Czech/German visitor.",
+        "app/[locale]/inquiries/page.tsx:332 — <p>Failed to load inquiries. Please try again.</p> in the error-state branch; the file imports NO useTranslations (grep -c useTranslations => 0), so the string is unconditionally English.",
+        "app/[locale]/saved-searches/page.tsx:314 — <p>Failed to load saved searches. Please try again.</p>; likewise no useTranslations import.",
+        "app/[locale]/favorites/page.tsx:62 — <p>Failed to load favorites. Please try again.</p>; this file DOES use useTranslations (3 call sites elsewhere) but the API-failure error branch was left hardcoded — a clear localized-happy-path / unlocalized-error-path split.",
+        "app/[locale]/realtor/listings/page.tsx:89 — <p>You haven't published any listings yet.</p> (empty state); auth/callback/page.tsx:144 — <p>Completing login...</p> (transient auth status). Both user-visible, both English-only.",
+        "Reachability: every one of these is on a live route under app/[locale]/** and fires on the ordinary API-error / empty / auth-callback path a real non-English user hits (a reality-server 5xx or an empty result set). Impact is low severity (no crash, no data issue) but directly visible to the majority-non-English audience of a portal whose whole reason for the [locale] segment + 4 message catalogs is full localization.",
+        "Fix: extract each string to the relevant messages/*.json namespace and read via useTranslations()/getTranslations() (the pattern the same files already use for their happy-path copy). Landable as a frontend-only PR (messages catalogs + ~5 component edits); IG3 can assert via a test/grep that no user-facing <p>/<h_> literal survives in these error/empty branches. Confidence medium: the hardcoded literals and the missing/partial useTranslations wiring are confirmed by static read + grep, but exact per-key catalog placement is an implementation choice."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx",
+        "frontend/apps/reality-web/src/components/states/EmptyState.tsx"
+      ],
+      "evidence": [
+        "components/states/EmptyState.tsx is the repo's shared, prop-driven empty-placeholder component (EmptyStateProps { icon?, title, description?, children }) — localization is the caller's responsibility, so passing t('...') at the call site yields a fully translated empty state. It is already the convention: FeedImport.tsx, CrmConnection.tsx, AgencyListings.tsx, and RealtorManagement.tsx all render <EmptyState title={t(...)} .../>.",
+        "components/listings/ListingGrid.tsx:61-99 instead hand-rolls its OWN inline empty state — a bespoke <div className=\"empty-state\"> with an inline SVG, its own <style jsx> block duplicating the shared component's layout, AND two hardcoded English strings: ListingGrid.tsx:76 <h3 className=\"empty-title\">No listings found</h3> and :77-79 <p className=\"empty-text\">Try adjusting your filters or search criteria to find more properties.</p>.",
+        "This is the primary listings-grid empty state on the most-trafficked search surface of the portal, so the untranslated copy is high-visibility for non-English users, and the duplicated markup/style is a maintenance divergence from the shared component (icon, spacing, roles, and theming already drift — EmptyState uses role=\"status\" and --ppt-fg-* tokens; the inline copy re-derives them).",
+        "Fix (single self-contained refactor, pairs naturally with the sibling i18n finding): replace the inline block in ListingGrid.tsx with <EmptyState title={t('empty.title')} description={t('empty.description')} /> (reusing next-intl the way the agency/import components do), deleting the duplicated <style jsx> and SVG. This removes the DRY violation and the i18n gap in one edit. Landable as a frontend-only change; IG3 can assert ListingGrid renders the shared EmptyState (or that the literals are gone). Confidence medium: the duplicated empty-state, the two English literals, and the existence + usage pattern of the shared EmptyState are all confirmed by static read + grep."
+      ]
+    }
+  ]
+}
