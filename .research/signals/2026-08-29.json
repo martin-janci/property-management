@@ -1,0 +1,401 @@
+{
+  "generated": "2026-08-29T22:36:00Z",
+  "routine_lag_hours": 43,
+  "signals": [
+    {
+      "id": "code-review-api-core-client-ip-cf-spoof",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core client-ip resolver)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/client_ip.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/client_ip.rs:236-252 — resolve_client_ip trusts CF-Connecting-IP whenever the socket peer is in the trusted set, but the default trusted set (private_defaults at client_ip.rs:167-173: loopback + RFC1918/RFC4193) is the exact nginx/container-ingress deployment the module docs call the common case. A plain reverse proxy does NOT strip an inbound CF-Connecting-IP header, so any client can send `CF-Connecting-IP: <forged>`; the peer (nginx, private range) is trusted, so the forged value is returned as the client IP — reintroducing the #2789 spoof (audit-log poisoning + per-request throttle-bucket rotation) that the rightmost-untrusted-XFF logic (client_ip.rs:212-223) otherwise closes.",
+        "cf_connecting_ip (client_ip.rs:199-201) is preferred over XFF with no left/right disambiguation and no Cloudflare-specific gate: the header is consulted purely on socket-peer trust, not on any assertion that the trusted edge is actually Cloudflare.",
+        "Fix: only consult CF-Connecting-IP when the trusted edge is explicitly Cloudflare — gate it behind a dedicated flag / CF-ranges config, not on the generic private-range default set. When the edge is a generic reverse proxy, fall through to the existing rightmost-untrusted-XFF resolution. Add a unit test asserting that a forged CF-Connecting-IP from a private-range peer with no Cloudflare gate is NOT returned as the client IP. Landable as a self-contained change to resolve_client_ip + config plumbing + a test; no schema/migration, no mobile dependency.",
+        "Confidence medium: the trust-on-peer path and the private-range default set are confirmed by static read; 'medium' rather than 'high' because whether a live deployment is exploitable depends on whether the operator's real ingress is Cloudflare (safe) or a generic private-range reverse proxy (exploitable), a deployment fact not verifiable in this static Rust-only pass."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core workflow engine)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:611-652 — the workflow condition comparators are inconsistent about JSON type coercion. Eq (:612 `Ok(field_value == *compare_value)`), Ne (:613), In (:639-645 `arr.contains(&field_value)`) and NotIn (:646-652) use serde_json::Value's STRICT structural equality, where `json!(100) != json!(\"100\")` and `json!(true) != json!(\"true\")` — no string<->number/bool coercion.",
+        "But the ordering comparators on the SAME field DO coerce: Gt/Gte/Lt/Lte (:614-617) route through compare_numeric -> coerce_finite_f64 (:727-731), which parses numeric strings, and Contains/StartsWith/EndsWith (:618-638) stringify both sides via to_string()/as_str(). So `amount >= 100` matches whether the trigger field or the stored condition value is the number 100 or the string \"100\", while `amount == 100` matches ONLY when both sides are the exact same JSON type.",
+        "Impact: workflow conditions are authored in a UI form and stored as JSON in workflow.conditions; form inputs commonly serialize scalar values as STRINGS (e.g. condition value \"3\", \"true\", \"100\"), whereas trigger_event fields (get_field_value at :671-694, traverse_json :697-715) carry the natively-typed JSON emitted by the event producer (a numeric amount/priority/count is a JSON number). An equality guard such as priority == 3 (stored value \"3\") then NEVER matches the numeric trigger field, so an Eq-guarded automation silently never fires; symmetrically a Ne / NotIn guard is always-true and lets actions run unguarded. A `>=`/`contains` guard on the very same field behaves correctly, which makes the failure look non-deterministic to an operator and hard to diagnose.",
+        "Distinct from the prior workflow findings: code-review-api-core-workflow-notin-fail-open covered NotIn returning true when compare_value is NOT an array (a different branch — the `else` arm at :649-651); this finding is about the strict-vs-coercing TYPE mismatch inside the happy path of Eq/Ne/In/NotIn. Both can bite the same condition.",
+        "Fix: make Eq/Ne/In/NotIn coerce consistently with the ordering/string operators — e.g. attempt numeric equality via coerce_finite_f64 first (so 100 == \"100\"), fall back to case-consistent string comparison, and for In/NotIn apply the same element-wise coercion — OR normalize condition values to their typed JSON at store time and document that conditions are type-strict. Add a unit test asserting `{field: \"trigger.amount\" (number 100), op: Eq, value: \"100\"}` evaluates true (fails on current code). Landable as a self-contained change to evaluate_single_condition + a test; no schema/migration, no mobile dependency.",
+        "Confidence medium: the operator asymmetry, the strict serde_json::Value equality, and the coercing compare_numeric/to_string paths are all confirmed by static read; 'medium' rather than 'high' because whether a live workflow trips it depends on how the condition-builder UI serializes scalar values (string vs typed), which is a frontend-side fact not verified in this static Rust-only pass."
+      ]
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-core document-generation)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/document_generation.rs:496-502 — in summarize_document's very-long-document branch, request.content (a String) is sliced by BYTE offset with no UTF-8 char-boundary check: `let half_limit = char_limit / 2;` then `let start = &request.content[..half_limit.min(request.content.len())];`, `let end_start = request.content.len().saturating_sub(half_limit);`, `let end = &request.content[end_start..];`. Indexing a str/String by a byte range that does not fall on a char boundary PANICS ('byte index N is not a char boundary').",
+        "The `.min(len())` / saturating_sub only guard the RANGE bounds (out-of-range), not char-boundary ALIGNMENT. half_limit is char_limit/2 = (max_context*4)/2 = 200_000 bytes; byte offsets 200_000 (from the front) and len-200_000 (from the back) are arbitrary positions that in practice land mid-character.",
+        "This product is Slovak/Czech/German-first (i18n sk, cs, de, en per the repo architecture). Real lease agreements, contracts, and long documents fed to summarize_document are full of multi-byte UTF-8 (á č ď é í ľ ň ó š ť ž ä ö ü ß …). Any document large enough to enter this branch (content_tokens > max_context = 100_000 tokens, ~400_000 chars at the code's own ~4-chars/token estimate) that contains a multi-byte char adjacent to either 200_000-byte cut point panics — which for non-ASCII long documents is the common case, not an edge case.",
+        "Reachability/severity: this is on a user-facing feature (document summarization) reachable from an api-server request handler. Axum isolates a handler-task panic into a 500 for that one request rather than crashing the process, so it is not a server-wide DoS — but the specific document can NEVER be summarized (every retry re-panics), and it surfaces as an opaque 500 with a panic in the logs rather than a handled error. Bounded blast radius = request-scoped, hence score_delta 2 (not 3).",
+        "Distinct from the prior document_generation findings code-review-api-core-docgen-empty-llm-ok / docgen-empty-llm-blank-doc, which both concern the `unwrap_or_default()` collapse of a missing LLM completion at :536-540 — a different location and defect class from this input-side slicing panic at :496-502.",
+        "Fix: cut on char boundaries instead of raw byte offsets — e.g. use `str::char_indices()` / `floor_char_boundary` (or take/rev-take over `.chars()`) to pick the nearest boundary <= half_limit, or operate on `char` counts (`content.chars().take(n)` for the head and a matching tail). Add a regression test that summarizes a >400k-char string containing multi-byte chars straddling both cut points and asserts no panic. Self-contained Rust change + test; no mobile/AGP dependency.",
+        "Confidence medium: the byte-offset String slicing and the absence of any char-boundary alignment are confirmed by static read; 'medium' rather than 'high' only because triggering requires an input that both exceeds the ~400k-char truncation threshold AND has a multi-byte char at a cut point — realistic for this locale but not confirmed at runtime in this static-only pass."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-unbounded-pagination-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/ai/sessions.rs",
+        "backend/servers/api-server/src/routes/ai/equipment.rs",
+        "backend/servers/api-server/src/routes/ai/voice.rs",
+        "backend/servers/api-server/src/routes/ai/workflows.rs",
+        "backend/servers/api-server/src/routes/ai/llm.rs",
+        "backend/servers/api-server/src/routes/vendors/contacts.rs",
+        "backend/servers/api-server/src/routes/compliance.rs",
+        "backend/servers/api-server/src/routes/predictive_maintenance.rs",
+        "backend/crates/db/src/repositories/ai_chat.rs"
+      ],
+      "evidence": [
+        "Many list endpoints resolve the client-supplied page size as `query.limit.unwrap_or(N)` with NO upper-bound clamp, then pass that value straight into the repository as the SQL `LIMIT`. A client can therefore send `?limit=100000000` and force the database to plan/materialize an unbounded result set — a cheap unauthenticated-shaped resource-exhaustion / DoS on any org member's endpoint. Unclamped sites include ai/sessions.rs:101 (unwrap_or 50), :205 (unwrap_or 100), :924, :997; ai/equipment.rs:203/:297/:379; ai/voice.rs:317; ai/workflows.rs:546 (`query.limit.unwrap_or(50) as usize` — the cast also silently wraps a hostile i64); ai/llm.rs:1448; vendors/contacts.rs:130; compliance.rs:167/:240/:268 (unwrap_or 100); predictive_maintenance.rs:316/:503/:536.",
+        "CONFIRMED end-to-end for the ai_chat path: routes/ai/sessions.rs:205 passes `query.limit.unwrap_or(100)` into `ai_chat_repo.list_session_messages(..., limit, offset)`, and crates/db/src/repositories/ai_chat.rs:229-247 binds that `limit: i64` directly into `... LIMIT $4 OFFSET $5` (`.bind(limit)` at line 247) with no `.min()`/`clamp` anywhere in the repo. So the user value reaches Postgres LIMIT unmodified. The same repo file repeats the pattern at :137/:156/:160 and :365/:377/:381.",
+        "The intended pattern already exists in the hardened admin handlers, which makes the omission a clear inconsistency rather than a debatable design choice: admin/users.rs:58 `q.limit.unwrap_or(20).min(100)` and admin/audit.rs:261 `q.limit.unwrap_or(100).min(500)` / :280 `.unwrap_or(10_000).min(50_000)` all clamp. market_pricing.rs:1665 `.unwrap_or(10).min(50)` clamps too. The list endpoints above simply never got the `.min(cap)`.",
+        "Fix: clamp every user-supplied limit at the handler boundary with a per-endpoint `.min(MAX_PAGE_SIZE)` (or a shared `Pagination::clamped()` helper), mirroring the admin handlers; belt-and-suspenders, add a defensive clamp in the repository methods that take a raw `limit: i64`. Landable as a single backend-only PR (routes + ai_chat repo), no mobile/AGP dependency. IG3: a handler/integration test asserting `?limit=1000000` returns at most MAX rows fails on any branch missing the clamp.",
+        "Confidence medium: the unclamped flow to SQL LIMIT is statically confirmed for the ai_chat path (route -> repo -> `.bind(limit)`), and the missing `.min()` is visible at each listed call site; 'medium' not 'high' because a subset of the listed endpoints route through repos that could re-clamp internally (not individually traced for all 18 sites) and because the practical blast radius depends on row width and DB timeouts."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/ai/ocr.rs"
+      ],
+      "evidence": [
+        "routes/ai/ocr.rs:197-208 — when the image bytes are present but `state.storage_service` is None (storage unavailable), the handler does not fail or defer; it persists the meter reading with a FABRICATED `photo_url = format!(\"pending-upload/{}/{}\", meter_id, Uuid::new_v4())` (line 207) that points at no stored object, then returns `StatusCode::CREATED` (line 228) as if the photo-backed reading succeeded.",
+        "There is no reconciliation path: the `pending-upload/...` sentinel is written into the meter_readings row via `meter_repo.submit_photo_reading(..., photo_url, ...)` (line 210-223) and nothing ever revisits it to actually upload the image (the raw bytes are dropped when the request ends) or to correct the URL. Any later consumer that renders `photo_url` gets a dead reference, and the audit/evidence value of the photo reading is silently lost while the API reported 201 success.",
+        "This is a data-integrity / completeness gap, not a crash: the org-membership authorization above it (ai/ocr.rs:188-195 `is_member` check) is correct, and the `pending-upload` placeholder is a documented deliberate branch — but 'documented' only explains the sentinel, it does not make silently-succeeding-then-losing-the-photo correct behavior. Preferable: return 503/422 when storage is required but unavailable, OR enqueue the bytes for a real deferred upload and mark the row as pending with a reconciler, instead of writing a permanent dead URL under a 201.",
+        "Fix: gate the photo branch on storage availability — reject with a retryable error when `storage_service` is None and image bytes were supplied, or persist to an outbox/pending table that a background job drains (the codebase already has quiet_hours_drain / push_fanout style drainers to model this on). Landable as a small backend-only change in ai/ocr.rs (+ optionally a pending-upload table/migration). IG3: a handler test with storage disabled asserts the endpoint does NOT return 201 with a `pending-upload/` photo_url.",
+        "Confidence medium: the fabricated-URL-under-201 flow is confirmed by direct read of ai/ocr.rs:197-239; 'medium' because whether storage_service is ever actually None in the deployed config (vs always wired) is environment-dependent, so the severity is 'latent under degraded storage' rather than always-on."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-url-listener-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts:215-217 — DeepLinkManager.initialize() calls `Linking.addEventListener('url', (event) => this.handleUrl(event.url))` but discards the returned subscription. On React Native 0.85 (this repo's version) addEventListener returns an EmitterSubscription that must be removed via `subscription.remove()`; the class captures nothing and exposes no teardown/dispose method (grep for remove/teardown/dispose/subscription in the file returns none), so the runtime 'url' listener leaks for the process lifetime.",
+        "The listener is also non-idempotent across re-initialisation: any second call to initialize() registers a SECOND 'url' listener while the first is never removed, so every runtime deep link then invokes handleUrl -> dispatchLink N times (N = number of initialize() calls), double-firing the registered handler and causing duplicate navigation/side-effects per link.",
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts:36-48 — the wiring effect returns `unsubscribe` (from deepLinkManager.addHandler) as its cleanup, which removes only the HANDLER, not the Linking 'url' listener created inside initialize(). So on unmount the Linking listener is orphaned, and on remount initialize() runs again and stacks another one. The hook's own JSDoc asserts it 'avoids duplicate handlers / re-initialisation' — true for the handler and for onNavigate-identity churn (fixed via onNavigateRef + [] deps), but NOT for the Linking subscription, which has no teardown counterpart. React Fast Refresh re-runs the effect in dev (guaranteed duplication there); a production remount of the hook's host (e.g. an auth-driven navigator swap) would do the same.",
+        "Distinct from the dropped item code-review-mobile-rn-deeplink-init-unhandled (that flagged initialize() re-running on onNavigate identity + a `void ... ` with no .catch — both since remediated in current code via the ref pattern and an explicit `.catch` at useDeepLinkRouting.ts:44). This finding is the uncaptured Linking subscription / missing DeepLinkManager teardown, which no filed item covers.",
+        "Fix: capture the subscription in initialize() (e.g. `this.urlSub = Linking.addEventListener('url', ...)`), guard against double-init (return early or remove the prior sub if already initialised), add a `teardown()`/`dispose()` that calls `this.urlSub?.remove()`, and have useDeepLinkRouting's effect cleanup call it alongside `unsubscribe`. Severity low: deepLinkManager is a singleton typically mounted once at the app root, so prod impact is a single leaked listener rather than unbounded duplication — but the leak is real and the duplicate-dispatch is a live hazard under Fast Refresh and any host remount. Confidence medium: the missing capture/teardown is confirmed by static read; the duplication's production reachability depends on the hook-host lifecycle (traced, not runtime-confirmed)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-core routes)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:77-91 — `useBuildingUnits` runs `await fetch(`/api/v1/units?buildingId=${buildingId}&limit=500`, { headers: { 'Content-Type': 'application/json' } })` inside a TanStack `useQuery` queryFn. This is a RAW browser `fetch`, not the shared axios instance.",
+        "The app injects the JWT ONLY via the axios request interceptor in frontend/apps/ppt-web/src/lib/api.ts:198-204 (`requestConfig.headers.Authorization = `Bearer ${token}`` from the token provider registered in contexts/AuthContext.tsx:327 `setTokenProvider(getAccessToken)`). A raw `fetch()` does not pass through axios, and the call sets no `Authorization` header and no `credentials: 'include'`. There is NO global fetch override, service worker, or cookie-based session in the app (grep for `globalThis.fetch =`/`window.fetch =`/`credentials: 'include'`/`serviceWorker` returns nothing outside tests). So this request to the authenticated management endpoint `/api/v1/units` goes out with no bearer token — it will 401 for a real logged-in session, and the building-units dropdown that feeds the person-months screen silently fails to populate.",
+        "Systemic, not a one-off: the same header-less raw-fetch-to-`/api/v1/*` pattern recurs across the news feature — features/news/pages/EditArticlePage.tsx:115 (PUT), CreateArticlePage.tsx:55 (POST), ArticleDetailPage.tsx:43-45,112,135 — all hitting authenticated endpoints with only a `Content-Type` header and no Authorization. (Those live in the ppt-web-ui segment; person-months.tsx in routes/ is the in-segment instance and the anchor for this finding.) App.tsx:71 `/api/v1/auth/mfa/verify` is the ONE legitimate raw fetch — it runs pre-auth before a token exists.",
+        "Secondary defects in the same block: (a) the response is hand-typed with an `as { data: Array<{ id: string; unitNumber: string }> }` cast that bypasses the generated `@ppt/api-client` types, so it will drift silently from the OpenAPI contract; (b) `limit=500` is hard-coded with no follow-up pagination, so a building with >500 units silently drops the overflow from the dropdown.",
+        "Fix: route this through the shared axios `api` instance (or the generated `@ppt/api-client` units call) so the JWT interceptor attaches the bearer token and the response is typed from the OpenAPI schema; drop the hand-written `as` cast; and either page through all units or document/raise the 500 cap. Self-contained TS change in routes/groups/person-months.tsx (+ optionally sweep the news pages); no backend/migration/mobile dependency — fully landable in the cloud runner.",
+        "Confidence medium: the axios-only token injection (lib/api.ts:198-204), the raw fetch, and the absence of any global fetch/cookie fallback are all confirmed by static read; 'medium' rather than 'high' because an actual 401 was not reproduced at runtime in this static-only pass (a dev proxy or an as-yet-unseen mitigation could in principle mask it)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-core routes)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:180-184 — the sensor-delete confirmation is a HARDCODED English literal: `window.confirm(`Delete sensor \"${sensor.name}\"? This removes its readings and alerts and cannot be undone.`)` — not wrapped in `t(...)`. Slovak/Czech/German users (the product's primary locales, i18n sk/cs/de/en) see raw English on a destructive-action prompt.",
+        "This is a local inconsistency, not a codebase-wide convention: the SAME file's threshold-delete confirm at iot.tsx:545-549 correctly uses `t('iot.thresholdDeleteConfirm', { defaultValue: 'Delete this threshold? This cannot be undone.' })`, and routes/groups/faults.tsx:262-266 uses `t('faults.confirmDelete', { defaultValue: 'Delete this fault? This action cannot be undone.' })`. The sensor-delete path was simply missed.",
+        "Fix: wrap the sensor-delete message in `t('iot.sensorDeleteConfirm', { defaultValue: 'Delete sensor \"{{name}}\"? This removes its readings and alerts and cannot be undone.', name: sensor.name })` and add the key to the sk/cs/de/en resource bundles, mirroring the existing `iot.thresholdDeleteConfirm` entry. Trivially self-contained TS/i18n change; no backend/mobile dependency — fully landable.",
+        "Confidence high: the hardcoded literal and the two sibling `t()`-wrapped confirms in the same/adjacent files are directly visible; this is an unambiguous i18n gap on a user-facing string."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit collects a complete CreateDisputeRequest form (respondentId, title, category, description, desiredResolution) but its ENTIRE side-effect is `await new Promise((resolve) => setTimeout(resolve, 1000))` then `navigate('/disputes')`. There is NO API call — no useMutation, no api/axios call, no fetch, no @ppt/api-client import anywhere in the file. The 1-second timer is a fake-latency stub. All form data (formData state) is silently discarded; the user sees 'Submitting...' then a redirect to the disputes list and reasonably believes a dispute was filed, when nothing was persisted. The try/catch is dead (a resolving setTimeout cannot throw), so the error branch/`setError` is unreachable.",
+        "This is an orphaned stub, not the live path: the disputes route group wires `/disputes/new` to FileDisputePageRoute (frontend/apps/ppt-web/src/routes/groups/disputes.tsx:482 `<Route path=\"/disputes/new\" element={<FileDisputePageRoute />} />`), which is the REAL implementation (FileDisputePageRoute.tsx imports FileDisputePage and performs the actual API side-effect at its own layer). CreateDisputePage is NOT referenced by any route file (grep for CreateDisputePage across the app returns only its own definition and the barrel re-export). However it IS publicly re-exported from features/disputes/pages/index.ts:6 (`export { CreateDisputePage } from './CreateDisputePage'`), so it is a live trap: a future author can import it from the feature barrel and mount it, shipping a form that loses every submission with no error.",
+        "Fix (pick one): (a) delete CreateDisputePage.tsx and its index.ts:6 barrel export as dead code superseded by FileDisputePage/FileDisputePageRoute; or (b) if it is meant to be a distinct entry, wire handleSubmit to the real dispute-create mutation (mirror FileDisputePageRoute's side-effect) instead of the setTimeout stub. Either way self-contained TS in the disputes feature — no backend/migration/mobile dependency, fully landable in the cloud runner.",
+        "Confidence medium (not high): the stub handler and discarded form data are directly visible, but the component is currently unrouted, so this is a latent data-loss trap / dead code rather than a confirmed live production data-loss path. Severity kept at medium rather than low because the failure mode is silent data loss on a destructive user action and the component is exported (one import away from going live)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx has ZERO useTranslation usage (grep -c useTranslation = 0; no react-i18next import) yet renders a full UI of hardcoded English: h1 'Disputes' (:84), search placeholder 'Search disputes...' (:101), the three filter defaults 'All Statuses'/'All Priorities'/'All Categories' (:120,:134,:148), and the empty-state 'No disputes found.' (:165), plus action buttons. In a product whose primary locales are sk/cs/de/en (react-i18next), Slovak/Czech/German users see the entire disputes list screen in raw English.",
+        "This component is reachable in production, not dead: it is rendered by DisputesPage (features/disputes/pages/DisputesPage.tsx), which is the lazy-loaded element for the routed `/disputes` path (routes/groups/disputes.tsx:481 `<Route path=\"/disputes\" element={<DisputesPageRoute />} />` -> DisputesPage). This is a high-traffic top-level list screen, so the untranslated strings are broadly visible.",
+        "Convention exists and is followed elsewhere in the same feature — MediationChatThread.tsx and FileDisputeDialog.tsx both use `useTranslation`/`t(...)` throughout — so DisputeList was simply never localized. Fix: add `const { t } = useTranslation()` and wrap each user-facing literal in `t('disputes.list.*', { defaultValue: ... })`, adding the keys to the sk/cs/de/en bundles. Self-contained TS/i18n change; no backend/mobile dependency — fully landable.",
+        "Confidence high: the absence of any useTranslation and the concrete hardcoded literals at the cited lines are directly visible; unambiguous i18n gap on a reachable screen."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx imports and uses useTranslation (partial coverage) but leaves user-facing strings hardcoded in English: the page heading `<h1>File a Dispute</h1>` (:193), textarea placeholder 'Brief summary of the dispute' (:351), and textarea placeholder 'Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).' (:375). Because the file already localizes other strings via t(), these are inconsistency misses, not an un-started file.",
+        "This is the LIVE, routed dispute-creation screen: FileDisputePage is rendered by FileDisputePageRoute (pages/FileDisputePageRoute.tsx:11 `import { FileDisputePage } ...`), which is mounted at `/disputes/new` (routes/groups/disputes.tsx:482). So sk/cs/de/en users filing a dispute see the English heading and English form placeholders on the primary create flow.",
+        "Fix: wrap the h1 and the two placeholders in `t('disputes.file.*', { defaultValue: ... })` and add the keys to the sk/cs/de/en resource bundles, matching the t() calls already present in the file. Trivial self-contained TS/i18n change; no backend/mobile dependency — fully landable.",
+        "Confidence high: the hardcoded literals at the cited lines coexisting with existing t() usage in the same file are directly visible; unambiguous partial-i18n gap on a reachable screen. Kept low severity (+1) as a cosmetic/localization defect, not a correctness or data bug."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-i18n-error-state-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "evidence": [
+        "reality-web is a PUBLIC, SEO-indexed portal that serves four locales (sk/cs/de/en via next-intl, messages/{sk,cs,de,en}.json), yet several user-facing empty/error states are hardcoded in English and never routed through a translation catalog. These render verbatim for a Slovak/Czech/German visitor.",
+        "app/[locale]/inquiries/page.tsx:332 — <p>Failed to load inquiries. Please try again.</p> in the error-state branch; the file imports NO useTranslations (grep -c useTranslations => 0), so the string is unconditionally English.",
+        "app/[locale]/saved-searches/page.tsx:314 — <p>Failed to load saved searches. Please try again.</p>; likewise no useTranslations import.",
+        "app/[locale]/favorites/page.tsx:62 — <p>Failed to load favorites. Please try again.</p>; this file DOES use useTranslations (3 call sites elsewhere) but the API-failure error branch was left hardcoded — a clear localized-happy-path / unlocalized-error-path split.",
+        "app/[locale]/realtor/listings/page.tsx:89 — <p>You haven't published any listings yet.</p> (empty state); auth/callback/page.tsx:144 — <p>Completing login...</p> (transient auth status). Both user-visible, both English-only.",
+        "Reachability: every one of these is on a live route under app/[locale]/** and fires on the ordinary API-error / empty / auth-callback path a real non-English user hits (a reality-server 5xx or an empty result set). Impact is low severity (no crash, no data issue) but directly visible to the majority-non-English audience of a portal whose whole reason for the [locale] segment + 4 message catalogs is full localization.",
+        "Fix: extract each string to the relevant messages/*.json namespace and read via useTranslations()/getTranslations() (the pattern the same files already use for their happy-path copy). Landable as a frontend-only PR (messages catalogs + ~5 component edits); IG3 can assert via a test/grep that no user-facing <p>/<h_> literal survives in these error/empty branches. Confidence medium: the hardcoded literals and the missing/partial useTranslations wiring are confirmed by static read + grep, but exact per-key catalog placement is an implementation choice."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx",
+        "frontend/apps/reality-web/src/components/states/EmptyState.tsx"
+      ],
+      "evidence": [
+        "components/states/EmptyState.tsx is the repo's shared, prop-driven empty-placeholder component (EmptyStateProps { icon?, title, description?, children }) — localization is the caller's responsibility, so passing t('...') at the call site yields a fully translated empty state. It is already the convention: FeedImport.tsx, CrmConnection.tsx, AgencyListings.tsx, and RealtorManagement.tsx all render <EmptyState title={t(...)} .../>.",
+        "components/listings/ListingGrid.tsx:61-99 instead hand-rolls its OWN inline empty state — a bespoke <div className=\"empty-state\"> with an inline SVG, its own <style jsx> block duplicating the shared component's layout, AND two hardcoded English strings: ListingGrid.tsx:76 <h3 className=\"empty-title\">No listings found</h3> and :77-79 <p className=\"empty-text\">Try adjusting your filters or search criteria to find more properties.</p>.",
+        "This is the primary listings-grid empty state on the most-trafficked search surface of the portal, so the untranslated copy is high-visibility for non-English users, and the duplicated markup/style is a maintenance divergence from the shared component (icon, spacing, roles, and theming already drift — EmptyState uses role=\"status\" and --ppt-fg-* tokens; the inline copy re-derives them).",
+        "Fix (single self-contained refactor, pairs naturally with the sibling i18n finding): replace the inline block in ListingGrid.tsx with <EmptyState title={t('empty.title')} description={t('empty.description')} /> (reusing next-intl the way the agency/import components do), deleting the duplicated <style jsx> and SVG. This removes the DRY violation and the i18n gap in one edit. Landable as a frontend-only change; IG3 can assert ListingGrid renders the shared EmptyState (or that the literals are gone). Confidence medium: the duplicated empty-state, the two English literals, and the existence + usage pattern of the shared EmptyState are all confirmed by static read + grep."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — allowlist empty (screen-map-drift/orphan, fixme-in-merged-code, lockfile-drift, stalled-review); all 13 signals this run are code-review-finding, not on the auto-fix allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-29.md && head -1 == \"# 2026-08-29\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD (last_pr_seen 2864→2874, last_commit_sha b67552b→9ba2f31c, seen_signals +13, review_cursor 6 segments advanced, stats.runs 72→73)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique length on backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored non-cumulative signal ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no item.score > 8; no open item ≥14d old (decay N/A)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans/code-review-api-core-client-ip-cf-spoof.md annotated in brief with adversarial pass: passed",
+      "observed": "grep hit",
+      "expected": "present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count=1 (≤2); 15 required sections + Mode:cloud-ok + capability ticked; Files paths resolve on disk",
+      "observed": "1",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hosts grep on staged diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md == staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed; brief lists none",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "23 prior plans, 0 missing from plans/ or _archive/",
+      "observed": "23/23 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 9 >= HEAD 9",
+      "observed": "9≥9",
+      "expected": "grew or equal"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md == staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 no-op — auto_fix_actions=[] (no allowlist match)",
+      "observed": "0 actions",
+      "expected": "≤3 actions, ≤1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → gate is a no-op per routine spec",
+      "observed": "skipped",
+      "expected": "no-op OR pm-cursor advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token pattern scan on staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
