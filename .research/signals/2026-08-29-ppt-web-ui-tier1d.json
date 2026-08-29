@@ -1,0 +1,70 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-29T00:00:00Z",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (claim buffer starved of LANDABLE items; the actionable backlog is mobile-native/KMP-gated and cannot land in the cloud runner, so a backend/frontend segment was required). No fresh Phase-1 CHURN_FILES were passed. state.review_cursor oldest entries were api-core (2026-08-21) TIED with ppt-web-core (2026-08-21) — but BOTH were already reviewed earlier today (2026-08-29-api-core-tier1d-workflow-docgen.json and 2026-08-29-ppt-web-core-tier1d-routes-fetch-i18n.json each emitted fresh signals today), so re-reviewing either would duplicate. Advanced to the next-oldest cursor entries: ppt-web-ui (2026-08-25) TIED with mobile-native-kmp (2026-08-25). Chose ppt-web-ui because it is LANDABLE (React/TS, no AGP/ADB/cloud-gate) whereas mobile-native-kmp findings are cloud-ungated per the dispatcher's landable-preference. Saturation check: backlog.json has ZERO items with type=code-review-finding+status=open (findings are stored under vector/status keys, none open from code review), so no segment is saturated. Segment root is frontend/apps/ppt-web/src/pages/ + components/ (both clean on the grep sweep: only ErrorBoundary.tsx has console.error, which is legitimate; no `as any`/`as unknown as` boundary casts outside *.test files; no TODO/FIXME). Extended the pass into the churn-hotspot UI feature (features/disputes/**, present in state.json hotspot_history: MediationWorkspacePage/MediationResolutionForm/MediationChatThread/FileDisputePage) which is the substantive UI surface of this segment. MediationChatThread.tsx reviewed and found CLEAN (fully i18n'd, onError handled, empty-state present). Three net-new landable frontend findings below. Static-only: grep sweep + targeted reads, no build/test.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "note": "ppt-web-ui (React/TS, disputes UI feature). Highest-severity finding is a stub/dead-code submit handler on CreateDisputePage that silently discards form data (medium); two lower-severity i18n gaps on reachable disputes screens (FileDisputePage partial coverage, DisputeList zero coverage). All fully landable in the cloud runner — self-contained TS/i18n changes, no backend/migration/mobile dependency.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit collects a complete CreateDisputeRequest form (respondentId, title, category, description, desiredResolution) but its ENTIRE side-effect is `await new Promise((resolve) => setTimeout(resolve, 1000))` then `navigate('/disputes')`. There is NO API call — no useMutation, no api/axios call, no fetch, no @ppt/api-client import anywhere in the file. The 1-second timer is a fake-latency stub. All form data (formData state) is silently discarded; the user sees 'Submitting...' then a redirect to the disputes list and reasonably believes a dispute was filed, when nothing was persisted. The try/catch is dead (a resolving setTimeout cannot throw), so the error branch/`setError` is unreachable.",
+        "This is an orphaned stub, not the live path: the disputes route group wires `/disputes/new` to FileDisputePageRoute (frontend/apps/ppt-web/src/routes/groups/disputes.tsx:482 `<Route path=\"/disputes/new\" element={<FileDisputePageRoute />} />`), which is the REAL implementation (FileDisputePageRoute.tsx imports FileDisputePage and performs the actual API side-effect at its own layer). CreateDisputePage is NOT referenced by any route file (grep for CreateDisputePage across the app returns only its own definition and the barrel re-export). However it IS publicly re-exported from features/disputes/pages/index.ts:6 (`export { CreateDisputePage } from './CreateDisputePage'`), so it is a live trap: a future author can import it from the feature barrel and mount it, shipping a form that loses every submission with no error.",
+        "Fix (pick one): (a) delete CreateDisputePage.tsx and its index.ts:6 barrel export as dead code superseded by FileDisputePage/FileDisputePageRoute; or (b) if it is meant to be a distinct entry, wire handleSubmit to the real dispute-create mutation (mirror FileDisputePageRoute's side-effect) instead of the setTimeout stub. Either way self-contained TS in the disputes feature — no backend/migration/mobile dependency, fully landable in the cloud runner.",
+        "Confidence medium (not high): the stub handler and discarded form data are directly visible, but the component is currently unrouted, so this is a latent data-loss trap / dead code rather than a confirmed live production data-loss path. Severity kept at medium rather than low because the failure mode is silent data loss on a destructive user action and the component is exported (one import away from going live)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx has ZERO useTranslation usage (grep -c useTranslation = 0; no react-i18next import) yet renders a full UI of hardcoded English: h1 'Disputes' (:84), search placeholder 'Search disputes...' (:101), the three filter defaults 'All Statuses'/'All Priorities'/'All Categories' (:120,:134,:148), and the empty-state 'No disputes found.' (:165), plus action buttons. In a product whose primary locales are sk/cs/de/en (react-i18next), Slovak/Czech/German users see the entire disputes list screen in raw English.",
+        "This component is reachable in production, not dead: it is rendered by DisputesPage (features/disputes/pages/DisputesPage.tsx), which is the lazy-loaded element for the routed `/disputes` path (routes/groups/disputes.tsx:481 `<Route path=\"/disputes\" element={<DisputesPageRoute />} />` -> DisputesPage). This is a high-traffic top-level list screen, so the untranslated strings are broadly visible.",
+        "Convention exists and is followed elsewhere in the same feature — MediationChatThread.tsx and FileDisputeDialog.tsx both use `useTranslation`/`t(...)` throughout — so DisputeList was simply never localized. Fix: add `const { t } = useTranslation()` and wrap each user-facing literal in `t('disputes.list.*', { defaultValue: ... })`, adding the keys to the sk/cs/de/en bundles. Self-contained TS/i18n change; no backend/mobile dependency — fully landable.",
+        "Confidence high: the absence of any useTranslation and the concrete hardcoded literals at the cited lines are directly visible; unambiguous i18n gap on a reachable screen."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx imports and uses useTranslation (partial coverage) but leaves user-facing strings hardcoded in English: the page heading `<h1>File a Dispute</h1>` (:193), textarea placeholder 'Brief summary of the dispute' (:351), and textarea placeholder 'Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).' (:375). Because the file already localizes other strings via t(), these are inconsistency misses, not an un-started file.",
+        "This is the LIVE, routed dispute-creation screen: FileDisputePage is rendered by FileDisputePageRoute (pages/FileDisputePageRoute.tsx:11 `import { FileDisputePage } ...`), which is mounted at `/disputes/new` (routes/groups/disputes.tsx:482). So sk/cs/de/en users filing a dispute see the English heading and English form placeholders on the primary create flow.",
+        "Fix: wrap the h1 and the two placeholders in `t('disputes.file.*', { defaultValue: ... })` and add the keys to the sk/cs/de/en resource bundles, matching the t() calls already present in the file. Trivial self-contained TS/i18n change; no backend/mobile dependency — fully landable.",
+        "Confidence high: the hardcoded literals at the cited lines coexisting with existing t() usage in the same file are directly visible; unambiguous partial-i18n gap on a reachable screen. Kept low severity (+1) as a cosmetic/localization defect, not a correctness or data bug."
+      ]
+    }
+  ]
+}
