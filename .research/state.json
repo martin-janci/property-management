@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-28T03:12:18Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2864,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "b67552b",
+  "last_run_iso": "2026-08-29T12:48:11Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 2874,
+  "last_issue_seen": 2875,
+  "last_commit_sha": "5d72c99c2f3cfb49dbebf8a1785ce789bca50fe8",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -947,23 +947,33 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-api-core-client-ip-cf-spoof",
+    "code-review-api-core-workflow-eq-type-strict-no-coercion",
+    "code-review-api-core-docgen-summarize-char-boundary-panic",
+    "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+    "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+    "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+    "code-review-ppt-web-ui-dispute-list-no-i18n",
+    "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+    "code-review-reality-web-i18n-error-state-gap",
+    "code-review-reality-web-listing-grid-empty-dup"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-28",
-    "api-core": "2026-08-21",
+    "api-core": "2026-08-29",
     "reality-server": "2026-08-28",
-    "ppt-web-ui": "2026-08-25",
-    "ppt-web-core": "2026-08-21",
-    "reality-web": "2026-08-27",
+    "ppt-web-ui": "2026-08-29",
+    "ppt-web-core": "2026-08-29",
+    "reality-web": "2026-08-29",
     "mobile-rn": "2026-08-26",
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 72,
-    "vectors_created": 330,
-    "plans_created": 28,
+    "runs": 73,
+    "vectors_created": 340,
+    "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

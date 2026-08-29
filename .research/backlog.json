@@ -9401,6 +9401,246 @@
         "assignment_status": "merged",
         "pr_number": 2871
       }
+    },
+    {
+      "id": "code-review-api-core-client-ip-cf-spoof",
+      "title": "api-core client_ip: CF-Connecting-IP trusted on private-range peer reintroduces #2789 spoof class",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-api-core-tier1d-client-ip.json)"
+      ],
+      "evidence": [
+        "client_ip.rs:236-252 — resolve_client_ip consults cf_connecting_ip(headers) whenever peer_in_trusted_set is true, with no Cloudflare-specific gate.",
+        "client_ip.rs:167-173 — private_defaults() (loopback + RFC1918/RFC4193) is the deployment the module doc calls the common nginx/container-ingress case; a plain reverse proxy does not strip an inbound CF-Connecting-IP header.",
+        "Impact: any client can send CF-Connecting-IP: <forged>; the peer (nginx, private range) is trusted, so the forged value is returned as the client IP — reintroducing the #2789 spoof (audit-log poisoning + per-request throttle-bucket rotation).",
+        "Fix: gate CF-Connecting-IP consult behind an explicit Cloudflare edge signal (dedicated config flag or CF ranges), not the generic private-range default set."
+      ],
+      "files": [
+        "backend/servers/api-server/src/client_ip.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": "plans/code-review-api-core-client-ip-cf-spoof.md"
+    },
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "title": "api-core workflow_executor: Eq/Ne/In/NotIn use strict serde_json equality while ordering/string ops coerce — silent no-match on type-mixed conditions",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-api-core-tier1d-workflow-docgen.json)"
+      ],
+      "evidence": [
+        "services/workflow_executor.rs:611-652 — Eq/Ne (strict `field_value == *compare_value`) and In/NotIn (arr.contains(&field_value)) use serde_json::Value structural equality: json!(100) != json!(\"100\"), json!(true) != json!(\"true\").",
+        "Gt/Gte/Lt/Lte (:614-617) coerce numerically via compare_numeric -> coerce_finite_f64; Contains/StartsWith/EndsWith (:618-638) stringify — so `amount >= 100` matches whether either side is number or string, while `amount == 100` requires exact JSON-type match.",
+        "Impact: form-authored condition values commonly serialize as strings (\"3\", \"true\", \"100\") whereas trigger fields carry native JSON — an Eq guard silently never fires; a Ne / NotIn guard is always-true and lets guarded actions run unguarded. Non-deterministic-looking to operators.",
+        "Fix: make Eq/Ne/In/NotIn coerce consistently with the ordering/string operators (numeric coerce first, else case-consistent string equality), or normalize condition values at store time and document type-strictness.",
+        "Distinct from prior workflow-notin-fail-open (which covered the else-arm at :649-651)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "title": "api-core document_generation summarize_document panics on byte-boundary slice of multi-byte content (UTF-8)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-api-core-tier1d-workflow-docgen.json)"
+      ],
+      "evidence": [
+        "services/document_generation.rs:496-502 — very-long-document branch slices request.content by BYTE offset (half_limit = char_limit/2, `&request.content[..half_limit.min(len)]` and `&request.content[end_start..]`) with no UTF-8 char-boundary alignment. Indexing str by a non-char-boundary byte range panics.",
+        "half_limit ≈ 200_000 bytes; arbitrary offsets on real Slovak/Czech/German content (á č ď é í ľ ň ó š ť ž ä ö ü ß …) commonly land mid-character.",
+        "Reachability: reachable from a document-summarization api-server request handler. Axum contains the panic to one request (500) but the specific document can never be summarized (every retry re-panics) and it surfaces as opaque 500 + panic in logs, not a handled error.",
+        "Fix: cut on char boundaries — str::char_indices / floor_char_boundary, or take/rev-take on .chars(). Add a regression test that summarizes a >400k-char string with multi-byte chars straddling both cut points and asserts no panic.",
+        "Distinct from prior docgen-empty-llm-ok / -blank-doc findings (which concerned unwrap_or_default at :536-540)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/document_generation.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "title": "ppt-web-core person-months (+ news feature) use raw fetch() for /api/v1/* — bypasses axios JWT interceptor, 401 in real sessions",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-ppt-web-core-tier1d-routes-fetch-i18n.json)"
+      ],
+      "evidence": [
+        "routes/groups/person-months.tsx:77-91 — useBuildingUnits queryFn `await fetch('/api/v1/units?...', { headers: { 'Content-Type': 'application/json' } })` — raw browser fetch, not the shared axios instance.",
+        "lib/api.ts:198-204 — JWT is attached ONLY by the axios request interceptor from the token provider (contexts/AuthContext.tsx:327 setTokenProvider). No global fetch override / service worker / cookie-based session anywhere in the app (grep confirms).",
+        "Impact: request to /api/v1/units goes without Authorization header — 401 in a real logged-in session; the building-units dropdown silently fails to populate.",
+        "Systemic: same header-less raw-fetch-to-/api/v1/* recurs in features/news pages: EditArticlePage.tsx:115 (PUT), CreateArticlePage.tsx:55 (POST), ArticleDetailPage.tsx:43-45,112,135. App.tsx:71 mfa/verify is the ONE legit raw fetch (pre-auth).",
+        "Secondary: response hand-typed with `as { data: Array<...> }` (bypasses generated @ppt/api-client types); limit=500 hard-coded with no pagination.",
+        "Fix: route through the shared axios `api` instance or the generated @ppt/api-client units call; drop the hand-written cast; paginate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+      "title": "ppt-web-core routes/groups/iot.tsx sensor-delete confirm() hardcoded English — misses i18n on destructive prompt",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-ppt-web-core-tier1d-routes-fetch-i18n.json)"
+      ],
+      "evidence": [
+        "routes/groups/iot.tsx:180-184 — window.confirm(`Delete sensor \"${sensor.name}\"? This removes its readings and alerts and cannot be undone.`) — hardcoded English literal, not wrapped in t(...).",
+        "Local inconsistency: same file's threshold-delete confirm at iot.tsx:545-549 uses t('iot.thresholdDeleteConfirm', ...) and routes/groups/faults.tsx:262-266 uses t('faults.confirmDelete', ...). The sensor-delete path was simply missed.",
+        "Fix: wrap in t('iot.sensorDeleteConfirm', { defaultValue: '...', name: sensor.name }) and add key to sk/cs/de/en bundles, mirroring the existing iot.thresholdDeleteConfirm entry."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "title": "ppt-web-ui CreateDisputePage handleSubmit is a setTimeout stub — dead-code trap that silently discards form data if mounted",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-ppt-web-ui-tier1d.json)"
+      ],
+      "evidence": [
+        "features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit collects a full CreateDisputeRequest form but its ENTIRE side-effect is `await new Promise((resolve) => setTimeout(resolve, 1000))` then `navigate('/disputes')`. No API call, no useMutation, no fetch, no @ppt/api-client import. try/catch is dead (setTimeout can't throw).",
+        "Component is NOT routed today — routes/groups/disputes.tsx:482 wires /disputes/new to FileDisputePageRoute (the real implementation). But CreateDisputePage IS publicly re-exported from features/disputes/pages/index.ts:6, so it's a live trap one import away from shipping.",
+        "Fix (pick one): (a) delete CreateDisputePage.tsx + its index.ts:6 barrel export as dead code superseded by FileDisputePage; or (b) wire handleSubmit to the real dispute-create mutation mirroring FileDisputePageRoute's side-effect."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
+      "title": "ppt-web-ui DisputeList.tsx has zero useTranslation — routed /disputes screen renders English-only to sk/cs/de users",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-ppt-web-ui-tier1d.json)"
+      ],
+      "evidence": [
+        "features/disputes/components/DisputeList.tsx — grep -c useTranslation = 0; no react-i18next import. Hardcoded English at :84 h1 'Disputes', :101 'Search disputes...', :120,:134,:148 'All Statuses/Priorities/Categories', :165 'No disputes found.', plus action buttons.",
+        "Reachable in production: rendered by DisputesPage (features/disputes/pages/DisputesPage.tsx) mounted at /disputes (routes/groups/disputes.tsx:481). Slovak/Czech/German users see the entire disputes list in raw English.",
+        "Convention exists in same feature: MediationChatThread.tsx and FileDisputeDialog.tsx both use useTranslation/t(...). This one was missed.",
+        "Fix: add useTranslation and wrap each user-facing literal in t('disputes.list.*', { defaultValue: ... }); add keys to sk/cs/de/en bundles."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+      "title": "ppt-web-ui FileDisputePage.tsx partial i18n — heading + 2 textarea placeholders hardcoded English on live /disputes/new screen",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-ppt-web-ui-tier1d.json)"
+      ],
+      "evidence": [
+        "features/disputes/pages/FileDisputePage.tsx — imports and uses useTranslation but leaves: :193 <h1>File a Dispute</h1>, :351 textarea placeholder 'Brief summary of the dispute', :375 textarea placeholder 'Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).'",
+        "Live routed screen: FileDisputePage rendered by FileDisputePageRoute (pages/FileDisputePageRoute.tsx:11) mounted at /disputes/new (routes/groups/disputes.tsx:482).",
+        "Fix: wrap in t('disputes.file.*', { defaultValue: ... }) and add keys to sk/cs/de/en bundles, matching existing t() usage in the file."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-i18n-error-state-gap",
+      "title": "reality-web hardcoded English on error/empty/auth-callback states on live /[locale] routes — 4-locale portal renders raw English",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-reality-web-tier1d.json)"
+      ],
+      "evidence": [
+        "reality-web is a PUBLIC, SEO-indexed portal that serves sk/cs/de/en via next-intl, yet several user-facing empty/error states are hardcoded English and never routed through a translation catalog.",
+        "app/[locale]/inquiries/page.tsx:332 — <p>Failed to load inquiries. Please try again.</p>; no useTranslations import (grep -c = 0).",
+        "app/[locale]/saved-searches/page.tsx:314 — <p>Failed to load saved searches. Please try again.</p>; likewise no useTranslations.",
+        "app/[locale]/favorites/page.tsx:62 — same error string, but this file DOES use useTranslations for happy-path copy — localized-happy-path / unlocalized-error split.",
+        "app/[locale]/realtor/listings/page.tsx:89 — <p>You haven't published any listings yet.</p> (empty); auth/callback/page.tsx:144 — <p>Completing login...</p> (transient auth status).",
+        "Fix: extract each string to messages/*.json and read via useTranslations/getTranslations (the pattern happy-path copy in these files already uses)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "title": "reality-web ListingGrid rolls its own inline empty state + English literals — duplicates shared EmptyState convention on primary search surface",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d review 2026-08-29 (signals/2026-08-29-reality-web-tier1d.json)"
+      ],
+      "evidence": [
+        "components/states/EmptyState.tsx is the repo's shared, prop-driven placeholder (EmptyStateProps { icon?, title, description?, children }); i18n is caller-side via t('...'). Already used by FeedImport.tsx, CrmConnection.tsx, AgencyListings.tsx, RealtorManagement.tsx.",
+        "components/listings/ListingGrid.tsx:61-99 hand-rolls its OWN inline empty state — bespoke <div class=\"empty-state\"> with inline SVG, <style jsx> duplicating shared component layout, AND two hardcoded English strings: :76 <h3>No listings found</h3>, :77-79 <p>Try adjusting your filters or search criteria to find more properties.</p>.",
+        "This is the primary listings-grid on the most-trafficked search surface — untranslated + duplicated markup drifts from the shared component (role/tokens differ).",
+        "Fix: replace inline block with <EmptyState title={t('empty.title')} description={t('empty.description')} />, delete duplicated <style jsx> and SVG."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx",
+        "frontend/apps/reality-web/src/components/states/EmptyState.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
     }
   ]
 }

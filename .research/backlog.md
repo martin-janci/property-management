@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-28 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-29 12:50 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -36,6 +36,7 @@
 | 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/_archive/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | ready | 2026-08-25 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | done | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
+| 3 | bug | `code-review-api-core-client-ip-cf-spoof` | api-core client_ip: CF-Connecting-IP trusted on private-range peer reintroduces #2789 spoof class | ready | 2026-08-29 | [plan](plans/code-review-api-core-client-ip-cf-spoof.md) |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | refactor | `refactor-documents-rs-hot` | documents.rs churn-hot — 10,659 lines over 14d | done | 2026-05-25 |  |
@@ -150,9 +151,13 @@
 | 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
 | 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | done | 2026-08-25 |  |
-| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | open | 2026-08-28 |  |
-| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | open | 2026-08-28 |  |
-| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | open | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | done | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | done | 2026-08-28 |  |
+| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | dropped | 2026-08-28 |  |
+| 2 | bug | `code-review-api-core-workflow-eq-type-strict-no-coercion` | api-core workflow_executor: Eq/Ne/In/NotIn use strict serde_json equality while ordering/string ops  | open | 2026-08-29 |  |
+| 2 | bug | `code-review-api-core-docgen-summarize-char-boundary-panic` | api-core document_generation summarize_document panics on byte-boundary slice of multi-byte content  | open | 2026-08-29 |  |
+| 2 | bug | `code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor` | ppt-web-core person-months (+ news feature) use raw fetch() for /api/v1/* — bypasses axios JWT inter | open | 2026-08-29 |  |
+| 2 | bug | `code-review-ppt-web-ui-create-dispute-page-stub-submit` | ppt-web-ui CreateDisputePage handleSubmit is a setTimeout stub — dead-code trap that silently discar | open | 2026-08-29 |  |
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
@@ -329,9 +334,14 @@
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | open | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | done | 2026-08-28 |  |
+| 1 | bug | `code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded` | ppt-web-core routes/groups/iot.tsx sensor-delete confirm() hardcoded English — misses i18n on destru | open | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-ui-dispute-list-no-i18n` | ppt-web-ui DisputeList.tsx has zero useTranslation — routed /disputes screen renders English-only to | open | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-ui-file-dispute-page-partial-i18n` | ppt-web-ui FileDisputePage.tsx partial i18n — heading + 2 textarea placeholders hardcoded English on | open | 2026-08-29 |  |
+| 1 | bug | `code-review-reality-web-i18n-error-state-gap` | reality-web hardcoded English on error/empty/auth-callback states on live /[locale] routes — 4-local | open | 2026-08-29 |  |
+| 1 | refactor | `code-review-reality-web-listing-grid-empty-dup` | reality-web ListingGrid rolls its own inline empty state + English literals — duplicates shared Empt | open | 2026-08-29 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |

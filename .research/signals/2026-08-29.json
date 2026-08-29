@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-08-29T12:47:00Z",
+  "trigger": "buffer-low (payload: claimable=6/72, all open backlog mobile-native-gated; needs cloud-landable vectors)",
+  "phase_notes": {
+    "phase-1": "PR/commit/issue sweep since 2026-08-28T03:12:18Z (~33h; on schedule). Merged PRs #2868-2874 (6 landed). No new labeled issues since last cursor; open non-dependabot issues nil. Ten fresh Tier-1d dev-review signals already emitted today by dispatcher across api-core, ppt-web-core, ppt-web-ui, reality-web — all cloud-landable. Routine imports them into backlog rather than re-running the skill.",
+    "phase-1.5": "SKIPPED — dispatcher's ppt-dev-review skill already ran 5x today (2026-08-29-api-core-tier1d-client-ip, -workflow-docgen, -ppt-web-core-routes-fetch-i18n, -ppt-web-ui-tier1d, -reality-web-tier1d). Re-running would be duplicative; the routine folds the emitted signals into its own aggregated file below. review_cursor advance: api-handlers→2026-08-28, api-core→2026-08-29, reality-web→2026-08-29 (via dispatcher runs today).",
+    "phase-1.6": "SKIPPED this run — buffer-refill emergency; PM cursor stays at pm-devops (next_index=4). Delivery digest not sent (Phase 6 quiet=1 override).",
+    "phase-2": "Signals folded into 10 new backlog rows (backlog.json). client-ip-cf-spoof promoted (score=3, only candidate hitting the ≥3 gate); other 9 rows kept status=open for future dispatcher Tier-1b/1c refill.",
+    "phase-3": "1 plan promoted: plans/code-review-api-core-client-ip-cf-spoof.md. Adversarial pass: passed (chain source→hypothesis→approach→test plan intact; #2789 root-cause anchor concrete; test verified triggerable pre-fix at client_ip.rs:245-248).",
+    "phase-5": "auto-fix SKIPPED — no signal matched the allowlist certainty bar (all 10 dispatcher findings are confidence=medium/high but none map to auto-fix action shapes: no screen-map drift/orphan, no fixme-in-merged-code, no dep-update-noise lockfile-drift, no stalled-review comment). No candidate.",
+    "phase-6": "Telegram digest quiet-day: NO — 1 plan promoted, 10 new vectors added; PM_DIGEST_QUIET=1 override applied anyway because Phase 1.6 was skipped (no digest object built)."
+  },
+  "signals": [
+    {
+      "id": "code-review-api-core-client-ip-cf-spoof",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 api-core client-ip review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/api-server/src/client_ip.rs"],
+      "evidence": ["Imported from signals/2026-08-29-api-core-tier1d-client-ip.json — CF-Connecting-IP consulted on private-range peer without CF gate reintroduces the #2789 spoof class (audit-log poisoning + throttle-bucket rotation)."]
+    },
+    {
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 api-core workflow engine",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/api-server/src/services/workflow_executor.rs"],
+      "evidence": ["Imported from signals/2026-08-29-api-core-tier1d-workflow-docgen.json — Eq/Ne/In/NotIn use strict serde_json equality while ordering/string ops coerce; type-mixed conditions silently no-match."]
+    },
+    {
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 api-core document-generation",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/api-server/src/services/document_generation.rs"],
+      "evidence": ["Imported from signals/2026-08-29-api-core-tier1d-workflow-docgen.json — summarize_document byte-offset slice at :496-502 panics on UTF-8 char boundary; common on sk/cs/de content."]
+    },
+    {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 ppt-web-core routes",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/routes/groups/person-months.tsx", "frontend/apps/ppt-web/src/lib/api.ts"],
+      "evidence": ["Imported from signals/2026-08-29-ppt-web-core-tier1d-routes-fetch-i18n.json — person-months + news feature use raw fetch() for /api/v1/*; bypasses axios JWT interceptor at lib/api.ts:198-204."]
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 ppt-web-core routes",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/routes/groups/iot.tsx"],
+      "evidence": ["Imported from signals/2026-08-29-ppt-web-core-tier1d-routes-fetch-i18n.json — routes/groups/iot.tsx:180-184 sensor-delete confirm() hardcoded English; sibling threshold-delete already uses t()."]
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": ["frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx", "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"],
+      "evidence": ["Imported from signals/2026-08-29-ppt-web-ui-tier1d.json — CreateDisputePage handleSubmit is a setTimeout stub; dead-code trap that silently discards form data if mounted (currently unrouted but exported)."]
+    },
+    {
+      "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/disputes/components/DisputeList.tsx"],
+      "evidence": ["Imported from signals/2026-08-29-ppt-web-ui-tier1d.json — DisputeList.tsx has zero useTranslation; routed /disputes screen renders English-only to sk/cs/de users."]
+    },
+    {
+      "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 ppt-web-ui disputes",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx"],
+      "evidence": ["Imported from signals/2026-08-29-ppt-web-ui-tier1d.json — FileDisputePage.tsx partial i18n; h1 + 2 textarea placeholders hardcoded English on live /disputes/new screen."]
+    },
+    {
+      "id": "code-review-reality-web-i18n-error-state-gap",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "evidence": ["Imported from signals/2026-08-29-reality-web-tier1d.json — hardcoded English on error/empty/auth-callback states on live /[locale] routes; 4-locale SEO portal renders raw English."]
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-08-29 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx",
+        "frontend/apps/reality-web/src/components/states/EmptyState.tsx"
+      ],
+      "evidence": ["Imported from signals/2026-08-29-reality-web-tier1d.json — ListingGrid rolls its own inline empty state + English literals; duplicates shared EmptyState convention on primary search surface."]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal matched Phase 5 allowlist (screen-map-drift/orphan, fixme-in-merged-code, lockfile-drift dep-update, stalled-review); all findings are code-review-finding type which is not auto-fixable",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/2026-08-29.md && head -1 matches", "observed": "match", "expected": "match" },
+    { "goal": "G2",  "passed": true,  "command": "state.json cursors + seen_signals + review_cursor advanced", "observed": "last_pr_seen 2864→2874, seen_signals 434→444, review_cursor 4 entries → 2026-08-29", "expected": "any advance" },
+    { "goal": "G3",  "passed": true,  "command": "jq unique-ids", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "no double-scored non-cumulative signal ids", "observed": "true (all 10 new ids fresh)", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "no score>8; no open item >14d without decay", "observed": "cap ok; no items required decay this run", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "brief lists plan + adversarial-pass line", "observed": "one line matches", "expected": "one line per new plan" },
+    { "goal": "G7",  "passed": true,  "command": "1 new plan, 4 metadata + 11 required headings, C6+C1 ticked, Mode: cloud-ok, all Files paths exist", "observed": "1 new; 4 md; 12 headings (all 11 required present); Mode: cloud-ok; client_ip.rs exists", "expected": "≤2, all gates" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "secrets/hostname scan on staged non-baseline files", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "backlog.md byte-identical to regen", "observed": "diff -q clean", "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "no failed phase in brief", "observed": "Phases that failed: none", "expected": "consistent" },
+    { "goal": "G12", "passed": true,  "command": "no silent plan deletion", "observed": "prior plans intact", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count non-shrinking", "observed": "unchanged", "expected": ">=" },
+    { "goal": "G14", "passed": true,  "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "diff -q clean", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions cap", "observed": "empty (no-candidate)", "expected": "≤1 each" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 skipped this run — gate is no-op", "observed": "pm_cursor unchanged", "expected": "no-op" },
+    { "goal": "G17", "passed": true,  "command": "no Telegram token literal in added lines", "observed": "0", "expected": "0" }
+  ]
+}
