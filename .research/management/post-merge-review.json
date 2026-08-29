@@ -1,9 +1,18 @@
 {
-  "generated": "2026-08-29T10:26:25Z",
+  "generated": "2026-08-29T18:26:08Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-08-29T18:26:08Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Tier-1d demand-driven post-merge review (claim buffer starved, backlog+retry-remint dry). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6 (NO git add/commit/push; did NOT touch assignments.json/action-list.json or any archive/ledger). gh CLI proxy-403 -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (api-server build pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-15), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. NO-OP PASS: label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-15 -label:post-merge-reviewed -label:no-review-needed) returned ZERO rows -- all 86 merged-into-dev PRs in the window already carry post-merge-reviewed. Newest merge is #2874 (merged 2026-08-28); the last three runs THIS SAME DAY (00:30Z reviewed #2868-#2874 all CLEAN + labeled; 10:26Z no-op) already drained every net-new never-reviewed PR, and nothing has merged into dev since. 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied, 0 breadcrumb comments. No open from-merged-review issue re-touched. Buffer stays starved of landable post-merge vectors: the only unreviewed work would be future merges, so no actionable follow-up exists this pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-08-29T10:26:25Z",
       "prs_scanned": 0,
@@ -584,52 +593,6 @@
         2737,
         2739,
         2740
-      ]
-    },
-    {
-      "run_at": "2026-08-12T20:25:05Z",
-      "prs_scanned": 7,
-      "clean": [
-        2742,
-        2741,
-        2740,
-        2739,
-        2738,
-        2737,
-        2736
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit/push). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so the 7 PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-29), base=dev, max_prs=15. Prior run (2026-08-11T20:06Z) reviewed through #2735; this run scanned exactly the NEW never-reviewed in-window set = 7 PRs merged 2026-08-12 (#2742,#2741,#2740,#2739,#2738,#2737,#2736) -- well under the cap. #2705 stays excluded (closed-not-merged, no merged_at). Note: list_pull_requests returns merged:false spuriously for confirmed-merged PRs, so merged_at (non-null) is the merge discriminator. ALL 7 CLEAN, 0 net-new issues -- another strong auto-impl batch, each PR a code-review correctness/perf/i18n fix shipped WITH a targeted regression test. Details: #2742 (ppt-web usePerformanceMetrics event-listener leak + stale-closure: onReport was an effect dep, so an inline callback tore down+re-added the PerformanceObserver + visibilitychange/load listeners every render; fix stores onReport in a ref (effect now deps only [reportOnUnload]), names the visibilitychange handler + tracks loadListenerAdded so cleanup removes EXACTLY what it added; 6 vitest cases incl. no-re-subscribe-on-inline-callback and latest-not-stale-onReport-on-hidden). #2741 (ppt-web logout cache purge: adds 'notification-triggers' to AUTHED_QUERY_KEY_ROOTS -- the PR #2650 purge-root sweep missed the granular-notification per-user preference cache, so it leaked into the next session on a shared workstation; queryKeys.ts doc updated + AuthContext regression test seeds ['notification-triggers','events'] and asserts it's purged on logout). #2740 (mobile-rn date locale: new src/i18n/format.ts resolveLocale() derives the Intl locale from the ACTIVE i18next language (strips region subtag, falls back to 'en' for unsupported), replacing hardcoded 'en-US' across ~10 screens (announcements/documents/faults/leases/messages x2/notifications/outages/person-months); dates now localise for sk/cs/de/pl/hu; format.test.ts proves non-en differs from en + region-strip + unsupported-fallback. Minor non-filed nit: the exported formatDate/formatTime/formatDateTime helpers are tested but the screens call resolveLocale() directly with toLocale*; harmless dead-ish convenience wrappers). #2739 (mobile-rn MeterDetailScreen i18n: 6 hardcoded English literals (backToMeters/latestReading/usedSincePrevious/readingHistory/submitNewReading + 'Meter' fallback) moved to meters.* keys across all 6 locale bundles with {{amount}}/{{unit}} interpolation; i18n test asserts KEYS render + old literals gone + every locale defines the keys, is locale-distinct, and preserves placeholders. Minor non-filed nit: the 'Latest reading' date still uses toLocaleDateString() with no locale arg -- unrelated to this i18n-of-literals PR, and picks up device locale). #2738 (mobile-rn offline sync queue: RETRYABLE_HTTP_STATUSES={401,408,429} now RETAINED not dropped -- old code treated EVERY 4xx as permanent and silently discarded offline-created content when the access token expired between enqueue and replay (401); recoverable 4xx now flow the same carry-forward path as 5xx/network (re-attempted, 401 replays after AuthContext refreshes the token), while genuinely-permanent 4xx (400/403/404/409/422) still drop so the queue never blocks forever; 4 new regression cases (h)401-retained (i)429-retained (j)400-dropped (k)400-ahead-of-valid-doesn't-block. Considered-but-not-filed: a 401 that never refreshes (truly logged-out) stays queued -- but it flows the bounded carry-forward retry path, matches offline-resilience intent). #2737 (ppt-web ProtectedRoute i18n: loading spinner aria-label + 'Loading...' + 'Access Denied'/unauthorized copy now via t(); reuses existing common.loading/errors.unauthorized keys and defaultValue-guards two accessibility/errors keys. Considered-but-not-filed: no test added and errors.unauthorized/common.loading passed WITHOUT defaultValue -- but these are core pre-existing keys and the change is a trivial 2-string swap; risk speculative). #2736 (ppt-web OfflineIndicator i18n: the role=alert offline/reconnected banner shipped 2 hardcoded English literals; moved to offlineIndicator.* namespace added to all 6 catalogs cs/de/en/hu/pl/sk + a leaf-key-lockstep vitest that fails on main (namespace absent) and asserts every locale defines non-empty offline/reconnected). NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels and is issue-only), so post-merge-reviewed is NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
-      "focus_prs": [
-        2736,
-        2737,
-        2738,
-        2739,
-        2740,
-        2741,
-        2742
-      ]
-    },
-    {
-      "run_at": "2026-08-11T20:06:55Z",
-      "prs_scanned": 5,
-      "clean": [
-        2735,
-        2734,
-        2733,
-        2732,
-        2731
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 (DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; orchestrator Phase 6 folds the .research delta; no self-commit/push). gh CLI NOT installed and direct git write is HTTP-403'd -> GitHub MCP (mcp__github__*) for every network call; Task tool unavailable in this runner, so the 5 PR diffs were reviewed inline rather than via spawned per-PR subagents. Window merged-to-dev 14d (>=2026-07-28), base=dev, max_prs=15. Prior run (2026-08-10T18:08Z) drained the roll-over queue through #2730; this run scanned exactly the NEW never-reviewed in-window set = 5 PRs merged 2026-08-11 (#2735,#2734,#2733,#2732,#2731) -- well under the cap. #2705 stays excluded (closed-not-merged, no merged_at). Note: list_pull_requests returns merged:false spuriously for confirmed-merged PRs, so merged_at (non-null) is the merge discriminator. ALL 5 CLEAN, 0 net-new issues -- another strong auto-impl batch, each PR a code-review correctness/security/refactor fix or test-coverage add shipped WITH a targeted regression test. Details: #2731 (reports CSV formula-injection: the votes CSV export wrote vote `title` verbatim, bypassing the audit exporter's sanitize_csv_cell -- a title leading with =/+/-/@ was a live Excel/Sheets formula-injection vector; fix promotes sanitize_csv_cell to pub(crate) and REUSES the single shared guard (no re-derived copy), extracts voting_csv_row for DB-free unit testing, + 3 unit tests incl. the classic =cmd|'/c calc'!A1 payload and comma-spill escaping). #2732 (gh-issue-2643: OAuth token-usage analytics INSERT moved OFF the hot token path -- record_token_event now returns Option<JoinHandle> and dispatches the write via detached tokio::spawn instead of awaiting inline, so issuance/refresh/revocation return their TokenResponse without the DB round-trip; prod drops the handle fire-and-forget, tests .await it; log-and-ignore best-effort contract preserved; new #[sqlx::test] asserts !is_finished() right after the sync call (off-hot-path) AND exactly-one persisted row after driving the handle; integration tests switched to a bounded ~2s poll helper await_token_event_count to remove the now-async race. Acceptable residual: a detached best-effort write can be lost on abrupt shutdown -- explicitly analytics-only, matches the documented contract, not filed). #2733 (screen-map reconcile only, docs/screens/ppt/error-handling-toasts.md: documents the two-tier error boundary from PR #2646 -- global main.tsx boundary + new pathname-keyed RouteErrorBoundary at the route outlet; buildStatus stays shipped; follows the screen-map self-management protocol incl. Agent Log entry; no code). #2734 (mobile useOfflineSupport: remapActionIds now applied to CARRIED-FORWARD actions before persisting the offline queue -- a cycle that halts on a head-of-line transient failure breaks the loop before reaching dependent UPDATE/DELETEs queued after the halt, and tempIdToServerId is in-memory-per-cycle only, so a CREATE that resolved its temp id this cycle would lose the mapping and orphan the dependent edit onto a dead temp id -- a silent loss of an offline edit; remap is a no-op for actions with no live temp id so re-applying to already-remapped items is safe; strong regression test (g) proves temp->srv id linkage survives a mid-cycle 503 halt and drains cleanly next cycle). #2735 (ppt-web rentals: TEST-ONLY coverage for the API<->UI mappers on a churn-hotspot file -- pins the lossy folds (vrbo->other for BookingSource, non-booking->airbnb for PlatformType, inactive->disconnected, submittedToAuthorities-> registration status, missing reservationId->empty bookingId); only production change is exporting the 6 mapper fns for import -- no behavior change). Process nits considered-but-not-filed: (a) #2732 spawns one detached task per token op -- cheap single INSERT, no unbounded-concurrency concern. (b) #2731 sanitize runs before the comma->';' replace, ordering correct. NET-NEW actionable issues: 0. Labeling: GitHub MCP has no clean additive PR-label op (issue_write.update clobbers labels and is issue-only), so post-merge-reviewed is NOT applied via MCP; this JSON run-history remains the dedup record for the next run.",
-      "focus_prs": [
-        2731,
-        2732,
-        2733,
-        2734,
-        2735
       ]
     }
   ]
