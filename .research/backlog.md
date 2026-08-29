@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-28 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-29 00:35 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -150,9 +150,14 @@
 | 2 | bug | `code-review-ppt-web-ui-facilities-booking-silent-errors` | ppt-web facilities booking pages swallow fetch/approve/reject/cancel errors to console only — manage | done | 2026-08-22 |  |
 | 2 | bug | `code-review-mobile-rn-votedetail-conditional-hooks` | VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash) | done | 2026-08-23 |  |
 | 2 | bug | `code-review-ppt-web-ui-content-mod-overdue-noop` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing  | done | 2026-08-25 |  |
-| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | open | 2026-08-28 |  |
-| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | open | 2026-08-28 |  |
-| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | open | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | done | 2026-08-28 |  |
+| 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | dropped | 2026-08-28 |  |
+| 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | done | 2026-08-29 |  |
+| 2 | security | `code-review-ppt-web-core-refresh-token-localstorage` | ppt-web-core: auth REFRESH token persisted in localStorage — any XSS foothold exfiltrates a long-liv | open | 2026-08-29 |  |
+| 2 | security | `code-review-ppt-web-core-init-no-exp-check` | ppt-web-core: AuthContext cold-boot trusts stored access token with NO expiry check despite in-sourc | ready | 2026-08-29 | [plan](plans/security-authcontext-stored-token-no-expiry-check.md) |
+| 2 | bug | `code-review-ppt-web-core-no-runtime-token-refresh` | ppt-web-core: axios client wired with getToken only (no onUnauthorized) — after token expiry, every  | open | 2026-08-29 |  |
+| 2 | security | `code-review-reality-server-sso-sessions-unbounded` | reality-server: sso_sessions HashMap has no bound and no eviction task — abandoned SSO flows leak Pe | ready | 2026-08-29 | [plan](plans/security-reality-server-sso-sessions-unbounded.md) |
+| 2 | bug | `code-review-reality-server-sso-reqwest-no-timeout` | reality-server: exchange_code_for_tokens builds a bare reqwest::Client per call with NO timeout — PM | open | 2026-08-29 |  |
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
@@ -329,9 +334,16 @@
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx` | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx` | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | done | 2026-08-25 |  |
 | 1 | refactor | `code-review-ppt-web-ui-dsa-reports-no-i18n` | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | done | 2026-08-25 |  |
-| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | open | 2026-08-28 |  |
-| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | open | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | done | 2026-08-28 |  |
+| 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | done | 2026-08-28 |  |
+| 1 | bug | `code-review-ppt-web-core-retry-ignores-retry-after` | ppt-web-core: lib/api.ts 429/503 retry loop ignores Retry-After header — exponential backoff replays | open | 2026-08-29 |  |
+| 1 | security | `code-review-ppt-web-core-ws-jwt-in-url` | ppt-web-core: WebSocket URL puts JWT in ?token= query param — token lands in server/proxy access log | open | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-ui-errorboundary-raw-message-prod` | ppt-web-ui: global ErrorBoundary renders raw error.message to end users in every build (no DEV/prod  | open | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-ui-authcallback-decodeuri-throw` | ppt-web-ui: AuthCallbackPage decodeURIComponent on error_description query param — malformed % throw | open | 2026-08-29 |  |
+| 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx` | Churn hotspot: ContentModerationPage.test.tsx — 94 lines this window (dedupe #2868, truncation-bound | open | 2026-08-29 |  |
+| 1 | refactor | `repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | aml_dsa/moderation.rs repeated-churn — runs_seen=2 (400 lines this run via #2871 dedup refactor + pr | open | 2026-08-29 |  |
+| 1 | refactor | `repeated-churn-backend/servers/api-server/src/services/auth_policy.rs` | auth_policy.rs repeated-churn — runs_seen=2 (102 lines this run via #2872 email-verification seam ex | open | 2026-08-29 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |

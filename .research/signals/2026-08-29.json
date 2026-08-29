@@ -1,0 +1,199 @@
+{
+  "generated_at": "2026-08-29T00:35:00Z",
+  "since": "2026-08-28T03:12:18Z",
+  "signals": [
+    {
+      "id": "resolution-pr-2870-report-content-unbounded",
+      "type": "resolution",
+      "source": "PR #2870",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #2870 title contains 'code-review-api-handlers-report-content-unbounded' (verbatim ID match).",
+        "commit 0dda1d2a adds MAX_REPORT_REASON_LEN (5000) + validate_optional_text_field helper in aml_dsa/shared.rs (grep confirmed) — evidence-gone check passes.",
+        "Backlog item flipped open→done this run."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-token-localstorage",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "AuthContext.tsx:116,136-150 — refresh token in localStorage; XSS foothold exfiltrates a long-lived credential.",
+        "Routine upgraded confidence medium→high (evidence is fact-grade: file + line + code inspection) and reclassified vector bug→security (credential exposure)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-init-no-exp-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "AuthContext.tsx:412-415 — trusts stored access token with no exp check; comment lies about validating it.",
+        "Routine upgraded confidence medium→high and reclassified vector bug→security (authn weakness — accepts expired credential)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-no-runtime-token-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "AuthContext.tsx:337 — configureApiClient omits onUnauthorized; refreshTokenInternal never runtime-invoked.",
+        "Routine upgraded confidence medium→high (fact-grade)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "lib/api.ts:216-243 — 429/503 retry ignores Retry-After header."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "websocket.ts:94-100 — JWT appended as ?token= URL query param; logged by proxies/history.",
+        "Routine upgraded confidence medium→high (fact-grade) and reclassified vector bug→security (credential exposure)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-errorboundary-raw-message-prod",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-ui)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "components/ErrorBoundary.tsx:167-168 — renders raw error.message in production without DEV guard."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-ui)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "pages/AuthCallbackPage.tsx:93,99-100 — decodeURIComponent unwrapped; throws URIError on malformed % in error_description."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 reality-server)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "state.rs:855 + 991 — Arc<Mutex<HashMap>> with no bound, no sweeper task; monotonic-grow SSO state.",
+        "Routine upgraded confidence medium→high (line-cited fact-grade) — memory-exhaustion DoS surface justifies security vector."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-28 reality-server)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "routes/sso.rs:687 — reqwest::Client::new() with no timeout; PM OAuth exchange can hang forever."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-analysis 2026-08-29",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "94 add+del lines this run; new to hotspot_history (runs_seen=1). Test file co-motion with PR #2868/#2863."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "churn-hotspot",
+      "source": "churn-analysis 2026-08-29",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Re-emit (cumulative signal type): 400 lines this run via PR #2871 dedup refactor. runs_seen 1→2. score_delta NOT re-applied per Phase 1 dedup rule."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "churn-analysis 2026-08-29",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Re-emit (cumulative signal type): 102 lines this run via PR #2872 seam extraction. runs_seen 1→2. score_delta NOT re-applied per Phase 1 dedup rule."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history 2026-08-29",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen 1→2. Bookkeeping trace; churn is intentional dispatcher-driven dedup, not accidental instability."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history 2026-08-29",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen 1→2. Bookkeeping trace; dispatcher-driven DRY seam extraction."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review) met confidence=high + score>=3 gate this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-08-29.md && H1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "cursors advanced vs HEAD", "observed": "last_pr_seen 2864→2874, last_issue_seen 2847→2875, last_commit_sha b67552b→72b82bb, seen_signals +15", "expected": "at least one advance" },
+    { "goal": "G3", "passed": true, "command": "jq unique ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative id in seen_signals with score_delta>0", "observed": "true (all re-emits are cumulative types)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score>8; decay check", "observed": "no items >8; no open items >14d stale (all recent)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "adversarial pass annotated for new plans", "observed": "both plans annotated in brief with adversarial pass: passed", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "2 new plans; each has 4 metadata + 11 headings + capability tick + Mode + files-exist", "observed": "2 new; both plans complete; all cited paths exist on disk", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "no non-.research paths staged", "observed": "only .research/ paths staged", "expected": "true" },
+    { "goal": "G9", "passed": true, "command": "no secrets in staged diff (excl. baseline docs)", "observed": "0 matches", "expected": "true" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen", "observed": "diff exit 0", "expected": "true" },
+    { "goal": "G11", "passed": true, "command": "phase failures declared, cursors not advanced for failed phases", "observed": "no phase failures this run", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still present or in _archive", "observed": "no prior-run plan disappeared", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count monotonic-nondecreasing vs HEAD", "observed": "same count as HEAD (no archive ops this run)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "diff exit 0", "expected": "true" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (kill-switch off; no actions this run)", "observed": "0 auto_fix_actions; no branch pushed", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — management artifacts still valid (action-list 6, risks 18, project-state.md 8515 bytes)", "observed": "no-op path; pm_cursor and coverage_cursor unchanged; artifacts parse", "expected": "true (no-op path allowed)" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot token literal", "observed": "0 matches", "expected": "true" }
+  ]
+}

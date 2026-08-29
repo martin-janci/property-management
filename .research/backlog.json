@@ -9277,21 +9277,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-handlers)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 api-handlers)",
+        "PR #2870"
       ],
       "evidence": [
         "moderation.rs:634 report_content is intentionally open to any authenticated user (no require_moderator_role guard) yet req.reason:Option<String> is stored via create_moderation_case (:660-669) with NO length validation.",
         "Every other user-writable text field in this file uses validate_text_field (rationale MAX=10_000, appeal reason MAX=5_000 per routes/aml_dsa/shared.rs:137-139).",
         "Low-effort storage-abuse / DoS amplification: any caller can persist MB-scale strings into moderation_cases rows that are then loaded and serialised on every get_moderation_queue / get_moderation_case call.",
-        "Fix: add validate_text_field(reason, MAX_REPORT_REASON_LEN, 'reason') before building CreateModerationCase."
+        "Fix: add validate_text_field(reason, MAX_REPORT_REASON_LEN, 'reason') before building CreateModerationCase.",
+        "resolved: PR #2870 merged 2026-08-28 — commit 0dda1d2a adds MAX_REPORT_REASON_LEN (5000) + validate_optional_text_field helper in aml_dsa/shared.rs; regression tests included"
       ],
       "files": [
         "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
       ],
       "created_at": "2026-08-28",
-      "updated_at": "2026-08-28",
+      "updated_at": "2026-08-29",
       "plan": null
     },
     {
@@ -9396,6 +9398,264 @@
         "assignment_status": "merged",
         "pr_number": 2871
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-token-localstorage",
+      "title": "ppt-web-core: auth REFRESH token persisted in localStorage — any XSS foothold exfiltrates a long-lived credential (surviving tab close)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:116,136-150 — tokenStorage.setRefreshToken / setAccessToken persist to localStorage via ACCESS_TOKEN_KEY / REFRESH_TOKEN_KEY.",
+        "The refresh token is long-lived and mints access tokens — losing it to an XSS foothold gives persistent re-authentication even after the session tab closes; access-token expiry does not mitigate this.",
+        "The MVP comment (`localStorage for MVP, httpOnly cookies later`) documents the intended migration path but has not landed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-init-no-exp-check",
+      "title": "ppt-web-core: AuthContext cold-boot trusts stored access token with NO expiry check despite in-source comment claiming otherwise",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:412-415 — `if (storedUser && accessToken) { // Validate the token is not expired (basic check) ... setUser(storedUser); }`; grep of the file confirms zero exp-decode or jwt-decode call.",
+        "Sibling finding no-runtime-token-refresh compounds: no axios onUnauthorized either, so once an expired token is accepted, the very next 401 is not recovered.",
+        "Impact: session survives token lifetime, defeating short-lived-access-token design; auth state becomes silently invalid until user reloads or logs in again."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": "plans/security-authcontext-stored-token-no-expiry-check.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-no-runtime-token-refresh",
+      "title": "ppt-web-core: axios client wired with getToken only (no onUnauthorized) — after token expiry, every request 401s indefinitely with no recovery",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:337 — configureApiClient({ getToken: getAccessToken }) is called WITHOUT an onUnauthorized callback; refreshTokenInternal exists but nothing runtime-invokes it.",
+        "frontend/apps/ppt-web/src/lib/api.ts — the interceptor has no 401-handling branch that awaits a refresh + retry.",
+        "Symptom: after an access token expires mid-session, the user hits a wall of 401s with no visible cause and no auto-recovery — cold-boot init is the only path that ever calls refreshTokenInternal today."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "title": "ppt-web-core: lib/api.ts 429/503 retry loop ignores Retry-After header — exponential backoff replays inside server-specified window",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:216-243 — retry delay is `calculateRetryDelay(retryCount)` (INITIAL_RETRY_DELAY * 2**retryCount + jitter); `retry-after` header is never read.",
+        "For 429 responses this may retry *before* the server's window closes — worsening rate-limiting rather than backing off."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "title": "ppt-web-core: WebSocket URL puts JWT in ?token= query param — token lands in server/proxy access logs and browser history",
+      "vector": "security",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-100 — buildWebSocketUrl calls url.searchParams.set('token', token); comment at :86-92 confirms api-server reads WS auth from ?token=<jwt>.",
+        "JWTs in URLs are logged by proxies, CDNs, and browsers by default — a well-known exposure pattern (OWASP A02:2021)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-errorboundary-raw-message-prod",
+      "title": "ppt-web-ui: global ErrorBoundary renders raw error.message to end users in every build (no DEV/prod guard) — potential info-disclosure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ErrorBoundary.tsx:167-168 — `{error && (<p ...><code>{error.message}</code></p>)}` with no import.meta.env.DEV check.",
+        "Wraps the whole App (see App.route-error-boundary.test.tsx); the production crash fallback leaks stack-derived messages to end users, including potentially sensitive detail from thrown Error objects."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ErrorBoundary.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
+      "title": "ppt-web-ui: AuthCallbackPage decodeURIComponent on error_description query param — malformed % throws unhandled URIError in effect",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx:93,99-100 — searchParams.get('error_description') + decodeURIComponent(errorDescription) with no try/catch; a lone % or truncated %E0 throws URIError.",
+        "Throw sits directly in the useEffect body (not wrapped), so the SSO callback error path crashes the callback handler for a class of malformed inputs."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-sso-sessions-unbounded",
+      "title": "reality-server: sso_sessions HashMap has no bound and no eviction task — abandoned SSO flows leak PendingSsoSession forever",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 — `pub sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` — raw HashMap type.",
+        "backend/servers/reality-server/src/state.rs:991 — startup init `HashMap::new()` with no companion tokio::spawn sweeper.",
+        "grep across reality-server for `sso_sessions.lock` shows insert/get sites only — no `retain`, no `remove_expired`; map grows monotonically until process restart."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs",
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": "plans/security-reality-server-sso-sessions-unbounded.md"
+    },
+    {
+      "id": "code-review-reality-server-sso-reqwest-no-timeout",
+      "title": "reality-server: exchange_code_for_tokens builds a bare reqwest::Client per call with NO timeout — PM OAuth exchange can hang forever",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-28 reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:687 — `let client = reqwest::Client::new();` used to POST the PM OAuth token endpoint; the default reqwest client has NO timeout.",
+        "A slow/unresponsive PM endpoint keeps the SSO exchange task alive indefinitely, tying up server resources; combines with the sso_sessions-unbounded finding to compound the DoS surface."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx",
+      "title": "Churn hotspot: ContentModerationPage.test.tsx — 94 lines this window (dedupe #2868, truncation-boundary test #2863)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-analysis 2026-08-29 (routine daily)"
+      ],
+      "evidence": [
+        "backend commits since routine last run: 94 add+del lines across test file; new to hotspot_history (runs_seen=1).",
+        "This is TEST churn matching the source file's dedupe refactor (PR #2868) — expected co-motion, not necessarily an instability signal."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.test.tsx"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "title": "aml_dsa/moderation.rs repeated-churn — runs_seen=2 (400 lines this run via #2871 dedup refactor + prior server-side-filter + truncation-notice churn)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot-history 2026-08-29 (routine daily)"
+      ],
+      "evidence": [
+        "hotspot_history bumps: runs_seen 1→2; recent churn 400 lines from PR #2871 (ModerationCaseResponse::from_case extraction) — intentional dedup refactor, not accidental instability.",
+        "File is under active dispatcher-driven cleanup; repeated-churn signal here is a bookkeeping trace, not an action item."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+      "title": "auth_policy.rs repeated-churn — runs_seen=2 (102 lines this run via #2872 email-verification seam extraction)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot-history 2026-08-29 (routine daily)"
+      ],
+      "evidence": [
+        "hotspot_history bumps: runs_seen 1→2; recent churn 102 lines from PR #2872 (enforce_email_verification helper extraction) — intentional DRY consolidation.",
+        "Dispatcher-driven cleanup; bookkeeping trace, no action needed."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth_policy.rs"
+      ],
+      "created_at": "2026-08-29",
+      "updated_at": "2026-08-29",
+      "plan": null
     }
   ]
 }
