@@ -9765,6 +9765,69 @@
         "assignment_status": "merged",
         "pr_number": 2879
       }
+    },
+    {
+      "id": "code-review-reality-web-mutation-no-onerror",
+      "title": "Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surfacing)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx:24-30 — handleRemoveFavorite/handleToggleWatch call removeFavorite.mutate/updateFavorite.mutate with no onError; a failed remove or price-alert toggle leaves the UI unchanged and gives the user no feedback",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:26-33 — handleToggleAlert/handleDelete call toggleAlert.mutate/deleteSearch.mutate with no onError; delete/alert-toggle failures are invisible (query error branch only covers the initial load, not mutations)",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:48-51 — handleCancel calls cancelInquiry.mutate with no onError and closes the confirm dialog immediately, so a failed cancel looks like success"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-web-saved-searches-i18n",
+      "title": "Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:21-118 — SavedSearchCard never calls useTranslations; View (74), Alerts on/Alerts off (87), Delete?/Yes/No (100-108), N new (96), and the getFilterSummary labels For Sale/For Rent (39) and All listings (56) are hardcoded English",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:408-411 — page-level h1 Saved Searches and the subtitle are hardcoded despite the content component using t(); sk/cs/de users see English"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-web-inquiries-i18n",
+      "title": "Inquiries page renders hardcoded English status labels and chrome in a 4-language app",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:17-38 — statusConfig label strings (Pending/Responded/Scheduled/Completed/Cancelled) are hardcoded English and rendered in the status badge (71-73) and filter buttons (370)",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:541-542 — page h1 My Inquiries and subtitle hardcoded despite content using t(); also Agent response: (104), Viewing scheduled: (96), Cancel this inquiry?/Yes, cancel/No (117-126), All (358), Previous/Next (409/421), Page X of Y (414)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
     }
   ]
 }
