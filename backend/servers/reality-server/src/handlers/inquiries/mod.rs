@@ -168,12 +168,12 @@ impl InquiriesHandler {
                 field: "name".to_string(),
                 message: "Name is required".to_string(),
             });
-        } else if name.len() < 2 {
+        } else if name.chars().count() < 2 {
             errors.push(ValidationError {
                 field: "name".to_string(),
                 message: "Name must be at least 2 characters".to_string(),
             });
-        } else if name.len() > 100 {
+        } else if name.chars().count() > 100 {
             errors.push(ValidationError {
                 field: "name".to_string(),
                 message: "Name must be less than 100 characters".to_string(),
@@ -212,12 +212,12 @@ impl InquiriesHandler {
                 field: "message".to_string(),
                 message: "Message is required".to_string(),
             });
-        } else if message.len() < 10 {
+        } else if message.chars().count() < 10 {
             errors.push(ValidationError {
                 field: "message".to_string(),
                 message: "Message must be at least 10 characters".to_string(),
             });
-        } else if message.len() > 2000 {
+        } else if message.chars().count() > 2000 {
             errors.push(ValidationError {
                 field: "message".to_string(),
                 message: "Message must be less than 2000 characters".to_string(),
@@ -381,7 +381,7 @@ impl InquiriesHandler {
         if message.is_empty() {
             return Err("Message is required".to_string());
         }
-        if message.len() > 5000 {
+        if message.chars().count() > 5000 {
             return Err("Message must be less than 5000 characters".to_string());
         }
 
