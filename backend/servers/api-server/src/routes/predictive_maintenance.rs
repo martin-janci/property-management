@@ -32,6 +32,7 @@ use uuid::Uuid;
 
 use api_core::extractors::RlsConnection;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 use db::models::predictive_maintenance::{
@@ -313,7 +314,7 @@ async fn list_equipment_maintenance_logs(
     Query(query): Query<PaginationQuery>,
 ) -> Response {
     let org_id = rls.tenant_id();
-    let limit = query.limit.unwrap_or(50);
+    let limit = clamp_limit(query.limit, 50);
     let offset = query.offset.unwrap_or(0);
 
     let resp = match s
@@ -500,7 +501,7 @@ async fn get_equipment_predictions(
     Query(query): Query<PredictionHistoryQuery>,
 ) -> Response {
     let org_id = rls.tenant_id();
-    let limit = query.limit.unwrap_or(20);
+    let limit = clamp_limit(query.limit, 20);
 
     let resp = match s
         .predictive_maintenance_repo
@@ -533,7 +534,7 @@ async fn list_alerts(
     Query(query): Query<AlertQuery>,
 ) -> Response {
     let org_id = rls.tenant_id();
-    let limit = query.limit.unwrap_or(50);
+    let limit = clamp_limit(query.limit, 50);
     let offset = query.offset.unwrap_or(0);
 
     let resp = match s

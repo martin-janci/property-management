@@ -6,6 +6,7 @@
 //! and are exposed `pub(crate)` so the router constructor can reference them.
 
 use crate::routes::ai::PaginationQuery;
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -314,7 +315,7 @@ pub(crate) async fn list_voice_commands(
                 &mut **rls.conn(),
                 device_id,
                 user_id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit, 50),
                 query.offset.unwrap_or(0),
             )
             .await?;

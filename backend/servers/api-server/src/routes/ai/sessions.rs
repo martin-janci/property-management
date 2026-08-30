@@ -1,6 +1,7 @@
 //! AI chat sessions (Story 13.1) and sentiment analysis (Story 13.2).
 
 use crate::routes::ai::{AlertsQuery, PaginationQuery};
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -98,7 +99,7 @@ async fn list_sessions(
         .list_user_sessions(
             &mut **rls.conn(),
             user_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -202,7 +203,7 @@ async fn list_messages(
             session_id,
             org_id,
             user_id,
-            query.limit.unwrap_or(100),
+            clamp_limit(query.limit, 100),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -921,7 +922,7 @@ async fn list_escalated(
         .list_escalated_messages(
             &mut **rls.conn(),
             tenant_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;
@@ -994,7 +995,7 @@ async fn list_alerts(
             &mut **rls.conn(),
             tenant_id,
             query.acknowledged,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;

@@ -13,6 +13,7 @@ use db::models::{CreateVendorContact, CreateVendorRating, VendorContact, VendorR
 use uuid::Uuid;
 
 use super::shared::{db_error, load_vendor_for_user, not_found, PaginationQuery};
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 // ==================== Vendor Contacts ====================
@@ -127,7 +128,7 @@ pub(super) async fn list_ratings(
             .list_ratings(
                 &mut **rls.conn(),
                 id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await

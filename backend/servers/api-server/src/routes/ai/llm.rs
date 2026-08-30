@@ -9,6 +9,7 @@
 use crate::routes::ai::voice::{
     link_voice_device, list_voice_commands, list_voice_devices, unlink_voice_device,
 };
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -1445,7 +1446,7 @@ async fn list_generation_requests(
             tenant_id,
             query.request_type.as_deref(),
             query.status.as_deref(),
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await;

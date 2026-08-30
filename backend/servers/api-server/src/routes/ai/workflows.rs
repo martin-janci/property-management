@@ -22,6 +22,7 @@
 //! templates keep the lighter `RequestPrincipal` auth gate.
 
 use crate::routes::ai::not_found;
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
@@ -542,9 +543,10 @@ async fn list_workflow_templates(
         })
         .collect();
 
-    // Apply pagination
-    let limit = query.limit.unwrap_or(50) as usize;
-    let offset = query.offset.unwrap_or(0) as usize;
+    // Apply pagination (clamp before the `as usize` cast so a hostile
+    // negative/huge limit can't wrap into an unbounded `take`).
+    let limit = clamp_limit(query.limit, 50) as usize;
+    let offset = query.offset.unwrap_or(0).max(0) as usize;
     let paginated: Vec<_> = templates.into_iter().skip(offset).take(limit).collect();
 
     Ok(Json(serde_json::json!({
