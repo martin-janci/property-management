@@ -26,7 +26,7 @@ use uuid::Uuid;
 const MAX_URL_LEN: usize = 2048;
 
 fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.len() > MAX_URL_LEN {
+    if s.chars().count() > MAX_URL_LEN {
         return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
     }
     let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;

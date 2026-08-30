@@ -137,7 +137,7 @@ impl UserHandler {
     pub fn validate_password(password: &str) -> Result<(), Vec<String>> {
         let mut issues = Vec::new();
 
-        if password.len() < 8 {
+        if password.chars().count() < 8 {
             issues.push("Password must be at least 8 characters".to_string());
         }
         if !password.chars().any(|c| c.is_uppercase()) {
@@ -644,4 +644,35 @@ fn sha256_hex(input: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(input.as_bytes());
     hex::encode(hasher.finalize())
+}
+
+#[cfg(test)]
+mod password_length_tests {
+    //! Password minimum length is counted in Unicode scalars, not UTF-8 bytes,
+    //! so an all-accented password of 8 characters is accepted and a 7-char one
+    //! is rejected — matching the "at least 8 characters" message. Byte counting
+    //! previously let a short accented password slip past the minimum.
+    use super::UserHandler;
+
+    /// 8 accented lowercase chars + an uppercase + a digit satisfies every rule;
+    /// its byte length is far above 8 but its character count is what matters.
+    #[test]
+    fn accented_password_counts_characters_not_bytes() {
+        // 8 chars: ' á' x6 then 'A1' → 8 scalars, >8 bytes.
+        let pw = "ááááááA1";
+        assert_eq!(pw.chars().count(), 8);
+        assert!(pw.len() > 8, "precondition: byte length exceeds char count");
+        assert!(UserHandler::validate_password(pw).is_ok());
+    }
+
+    /// 7 characters must still fail the minimum even though the byte length
+    /// exceeds 8 (the old byte check wrongly accepted this).
+    #[test]
+    fn short_accented_password_is_rejected() {
+        let pw = "áááááA1"; // 7 scalars, >8 bytes
+        assert_eq!(pw.chars().count(), 7);
+        assert!(pw.len() > 8);
+        let issues = UserHandler::validate_password(pw).unwrap_err();
+        assert!(issues.iter().any(|m| m.contains("at least 8 characters")));
+    }
 }

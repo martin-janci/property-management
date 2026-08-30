@@ -19,4 +19,9 @@ export type {
   WebSocketContextValue,
   WebSocketProviderProps,
 } from './WebSocketContext';
-export { eventToQueryKeys, useWebSocketContext, WebSocketProvider } from './WebSocketContext';
+export {
+  categoryToQueryKeys,
+  eventToQueryKeys,
+  useWebSocketContext,
+  WebSocketProvider,
+} from './WebSocketContext';

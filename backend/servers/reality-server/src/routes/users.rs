@@ -26,7 +26,7 @@ use utoipa::ToSchema;
 const MAX_PROFILE_URL_LEN: usize = 2048;
 
 fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.len() > MAX_PROFILE_URL_LEN {
+    if s.chars().count() > MAX_PROFILE_URL_LEN {
         return Err(format!(
             "URL must be at most {} characters",
             MAX_PROFILE_URL_LEN
@@ -332,7 +332,7 @@ pub async fn update_me(
                 "Name cannot be empty".to_string(),
             ));
         }
-        if name.len() > 100 {
+        if name.chars().count() > 100 {
             return Err((
                 axum::http::StatusCode::BAD_REQUEST,
                 "Name must be less than 100 characters".to_string(),

@@ -20,6 +20,7 @@ import { Footer, Header } from '@/components/ui';
 
 function SavedSearchCard({ search }: { search: SavedSearch }) {
   const t = useTranslations('pages.savedSearches');
+  const tError = useTranslations('error');
   const deleteSearch = useDeleteSavedSearch();
   const toggleAlert = useToggleSearchAlert();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -136,12 +137,24 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
         </div>
       </div>
 
+      {(deleteSearch.isError || toggleAlert.isError) && (
+        <p className="card-error" role="alert" aria-live="assertive">
+          {tError('description')}
+        </p>
+      )}
+
       <style jsx>{`
         .search-card {
           background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 20px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-error {
+          margin: 12px 0 0;
+          color: var(--ppt-color-danger-hover);
+          font-size: 14px;
         }
 
         .card-header {

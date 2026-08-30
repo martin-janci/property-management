@@ -9773,7 +9773,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30"
       ],
@@ -9788,7 +9788,12 @@
         "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:24:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2890
+      }
     },
     {
       "id": "code-review-reality-web-saved-searches-i18n",
@@ -9836,7 +9841,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d api-handlers)"
       ],
@@ -9851,7 +9856,12 @@
         "backend/crates/api-core/src/middleware/authorization.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:54:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2899
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
@@ -9883,7 +9893,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core)"
       ],
@@ -9899,7 +9909,12 @@
         "backend/servers/api-server/src/routes/ws_notifications.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:24:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2889
+      }
     },
     {
       "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
@@ -9907,7 +9922,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core)"
       ],
@@ -9924,7 +9939,12 @@
         "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:24:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2891
+      }
     },
     {
       "id": "code-review-reality-server-alert-drainer-i18n-english-only",
@@ -9932,7 +9952,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server services sweep)"
       ],
@@ -9947,7 +9967,12 @@
         "backend/servers/reality-server/src/services/email.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:54:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2896
+      }
     },
     {
       "id": "code-review-reality-server-sso-introspect-negcache-poison",
@@ -9955,7 +9980,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep)"
       ],
@@ -9970,7 +9995,12 @@
         "backend/servers/reality-server/src/state.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:24:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2893
+      }
     },
     {
       "id": "code-review-reality-server-sso-per-call-client-no-timeout",
@@ -10000,7 +10030,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server)"
       ],
@@ -10017,7 +10047,12 @@
         "backend/servers/reality-server/src/routes/reports.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:24:58Z",
+        "assignment_status": "merged",
+        "pr_number": 2892
+      }
     },
     {
       "id": "code-review-reality-server-report-contact-unvalidated",
@@ -10025,7 +10060,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server)"
       ],
@@ -10039,7 +10074,12 @@
         "backend/servers/reality-server/src/routes/reports.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-30T18:54:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2898
+      }
     }
   ]
 }
