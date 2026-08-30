@@ -40,18 +40,18 @@ fn validate_inquiry_lengths(
     phone: Option<&str>,
     message: &str,
 ) -> Result<(), &'static str> {
-    if name.len() > MAX_INQUIRY_NAME_LEN {
+    if name.chars().count() > MAX_INQUIRY_NAME_LEN {
         return Err("Name is too long");
     }
-    if email.len() > MAX_INQUIRY_EMAIL_LEN {
+    if email.chars().count() > MAX_INQUIRY_EMAIL_LEN {
         return Err("Email is too long");
     }
     if let Some(p) = phone {
-        if p.len() > MAX_INQUIRY_PHONE_LEN {
+        if p.chars().count() > MAX_INQUIRY_PHONE_LEN {
             return Err("Phone is too long");
         }
     }
-    if message.len() > MAX_INQUIRY_MESSAGE_LEN {
+    if message.chars().count() > MAX_INQUIRY_MESSAGE_LEN {
         return Err("Message is too long (max 5000 characters)");
     }
     Ok(())
@@ -422,20 +422,20 @@ pub async fn request_viewing(
     enforce_inquiry_rate_limit(&state, &headers, listing_id).await?;
 
     // H6: cap fields BEFORE we concatenate them into the outgoing message.
-    if req.name.len() > MAX_INQUIRY_NAME_LEN {
+    if req.name.chars().count() > MAX_INQUIRY_NAME_LEN {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             "Name is too long".to_string(),
         ));
     }
-    if req.email.len() > MAX_INQUIRY_EMAIL_LEN {
+    if req.email.chars().count() > MAX_INQUIRY_EMAIL_LEN {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             "Email is too long".to_string(),
         ));
     }
     if let Some(ref phone) = req.phone {
-        if phone.len() > MAX_INQUIRY_PHONE_LEN {
+        if phone.chars().count() > MAX_INQUIRY_PHONE_LEN {
             return Err((
                 axum::http::StatusCode::BAD_REQUEST,
                 "Phone is too long".to_string(),
@@ -443,7 +443,7 @@ pub async fn request_viewing(
         }
     }
     if let Some(ref m) = req.message {
-        if m.len() > MAX_INQUIRY_MESSAGE_LEN {
+        if m.chars().count() > MAX_INQUIRY_MESSAGE_LEN {
             return Err((
                 axum::http::StatusCode::BAD_REQUEST,
                 "Message is too long (max 5000 characters)".to_string(),
@@ -461,7 +461,7 @@ pub async fn request_viewing(
             ));
         }
         for t in times.iter() {
-            if t.len() > MAX_INQUIRY_PREFERRED_TIME_LEN {
+            if t.chars().count() > MAX_INQUIRY_PREFERRED_TIME_LEN {
                 return Err((
                     axum::http::StatusCode::BAD_REQUEST,
                     "Preferred time entry is too long".to_string(),
@@ -783,7 +783,7 @@ pub async fn respond_to_inquiry(
         ));
     }
 
-    if req.message.len() > 5000 {
+    if req.message.chars().count() > 5000 {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             "Message must be less than 5000 characters".to_string(),
@@ -907,6 +907,54 @@ mod inquiry_result_mapping_tests {
         .expect_err("must be an error");
         assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(err.1, "Internal server error");
+    }
+}
+
+#[cfg(test)]
+mod length_validation_tests {
+    //! Length caps are enforced by Unicode scalar count, not UTF-8 byte length.
+    //! Slovak/Czech/German accented input (multi-byte chars) must not be
+    //! rejected below the advertised character limit — the error strings say
+    //! "characters", so the measurement has to match.
+    use super::{validate_inquiry_lengths, MAX_INQUIRY_MESSAGE_LEN, MAX_INQUIRY_NAME_LEN};
+
+    /// A name of exactly MAX_INQUIRY_NAME_LEN accented chars (2 bytes each, so
+    /// well over the byte cap) is accepted. Under the old `.len()` byte check
+    /// this over-rejected valid sk/cs/de names.
+    #[test]
+    fn accented_name_at_char_limit_is_accepted() {
+        let name: String = "á".repeat(MAX_INQUIRY_NAME_LEN);
+        assert!(
+            name.len() > MAX_INQUIRY_NAME_LEN,
+            "precondition: byte len exceeds char cap"
+        );
+        assert!(validate_inquiry_lengths(
+            &name,
+            "buyer@example.sk",
+            None,
+            "Dobrý deň, mám záujem."
+        )
+        .is_ok());
+    }
+
+    /// One accented char over the limit is still rejected — the cap is a real
+    /// cap, measured in characters.
+    #[test]
+    fn accented_name_over_char_limit_is_rejected() {
+        let name: String = "á".repeat(MAX_INQUIRY_NAME_LEN + 1);
+        assert_eq!(
+            validate_inquiry_lengths(&name, "buyer@example.sk", None, "hello there").unwrap_err(),
+            "Name is too long"
+        );
+    }
+
+    /// A full accented message at the character limit is accepted despite its
+    /// byte length being roughly double.
+    #[test]
+    fn accented_message_at_char_limit_is_accepted() {
+        let message: String = "ř".repeat(MAX_INQUIRY_MESSAGE_LEN);
+        assert!(message.len() > MAX_INQUIRY_MESSAGE_LEN);
+        assert!(validate_inquiry_lengths("Žofia", "z@example.cz", None, &message).is_ok());
     }
 }
 
