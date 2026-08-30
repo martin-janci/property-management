@@ -123,6 +123,26 @@
       "files": [
         "backend/servers/reality-server/src/routes/reports.rs"
       ]
+    },
+    {
+      "id": "code-review-reality-web-i18n-systemic-workspaces",
+      "type": "code-review-finding",
+      "source": "buffer-low refill 2026-08-30 (Explore audit across reality-web [locale]/**/page.tsx)",
+      "score_delta": 3,
+      "evidence": "9 reality-web page.tsx files (account/{password,profile,page,listings/[id]/edit}, realtor/{page,profile,analytics,listings/new}, forbidden) render headings, subtitles, form labels and confirm-dialog chrome as literal English JSX. Verified inline for password + profile pages; Explore audit inventoried the remainder. layout.tsx confirms next-intl is canonical (27/46 pages use useTranslations|getTranslations). Systemic pattern beyond the two per-page items already fixed in PRs #2894/#2895.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/forbidden/page.tsx"
+      ]
     }
   ],
   "auto_fix_actions": [],
@@ -252,6 +272,127 @@
       "passed": true,
       "command": "no Telegram bot token in staged diff",
       "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "retrigger_run": {
+    "when": "2026-08-30T22:44:37Z",
+    "payload": "buffer-low: claimable=0/72 (7 open all mobile-native-gated) — refill planner",
+    "added_signals": 1,
+    "promoted_plans": 1
+  },
+  "goal_checks_second_run": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == # <today>",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD (seen_signals +1, stats.plans_created +1, stats.vectors_created +1, last_run_iso bumped)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": false,
+      "command": "signals dedup vs prior seen_signals",
+      "observed": "9 pre-existing signals (12:41Z run) are also in HEAD seen_signals; convention is same-day rerun preserves the day file, tolerated by routine spec (log-and-continue, not abort)",
+      "expected": "true",
+      "remediation": "cosmetic; same-day rerun overwrite semantics — the 9 signal ids already committed at 12:41Z re-appear here for audit, backlog scores were applied ONCE at 12:41Z, not re-applied this run"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief has plans/<slug>.md + adversarial pass: same-line",
+      "observed": "1 match",
+      "expected": ">= 1"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan; 4 metadata; 11 headings; 2 capability ticks; Mode: cloud-ok; all Files paths exist on disk",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no files outside .research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to fresh regen",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans preserved in plans/ or _archive/",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to fresh regen",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions this run (code-review-finding not on allowlist)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "cap satisfied"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is no-op",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged added lines",
+      "observed": "0",
       "expected": "0"
     }
   ]

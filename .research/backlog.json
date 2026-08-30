@@ -10080,6 +10080,38 @@
         "assignment_status": "merged",
         "pr_number": 2898
       }
+    },
+    {
+      "id": "code-review-reality-web-i18n-systemic-workspaces",
+      "title": "reality-web account/realtor/forbidden pages render hardcoded English chrome in a 6-language app (systemic)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (buffer-low refill Explore audit)"
+      ],
+      "evidence": [
+        "9 page.tsx files under frontend/apps/reality-web/src/app/[locale]/ (account/*, realtor/*, forbidden/) never import useTranslations/getTranslations from next-intl — Explore audit 2026-08-30",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx:68-70 — <h1>Change password</h1> + subtitle + 3 form labels; verified inline",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx:48-77 — <h1>Edit profile</h1> + Display name/Email labels + hardcoded hint; verified inline",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx:93-171 — <h1>Realtor profile</h1> + 7 form labels (Name/Email/Phone/Title/Bio/License number/Specializations); Explore audit",
+        "6 more pages same pattern: realtor/analytics:68-69, realtor/listings/new:37-38, realtor/page.tsx:46, account/page.tsx:52, account/listings/[id]/edit:68-75, forbidden/page.tsx:29; layout.tsx confirms next-intl is the canonical API (27/46 pages already use it)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/forbidden/page.tsx"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
+      "plan": "plans/code-review-reality-web-i18n-systemic-workspaces.md"
     }
   ]
 }
