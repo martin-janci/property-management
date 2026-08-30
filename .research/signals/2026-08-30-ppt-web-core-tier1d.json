@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-30T00:00:00Z",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "breadth-uncovered-today",
+  "selection_detail": "Standalone Tier-1d demand-driven run (claim buffer starved: 0 non-gated claimable backlog items). Three segments were already reviewed TODAY (2026-08-30): api-handlers, mobile-native-kmp, reality-server — all Rust/Kotlin. Per the dispatcher directive I picked a DIFFERENT, un-covered segment to add breadth, preferring one CLAIMABLE in the cloud runner (NOT mobile-native, which is AGP-egress-gated/unclaimable). Landable candidates not touched today were api-core and ppt-web-core; I chose ppt-web-core (frontend React/TS core: hooks/, lib/, contexts/, routes/ under frontend/apps/ppt-web/src) because it is (a) a different stack from all three of today's segments (maximum breadth add), (b) fully cloud-landable (self-contained TS, no backend/migration/mobile dependency), and (c) contains the realtime-WS wiring, a historically bug-prone surface. Saturation check passed: backlog.json has ZERO open code-review-finding items for any segment (382 items scanned, none type=code-review-finding+status=open). Static-only sweep of hooks/lib/contexts/routes: no `as any`/`as unknown as` boundary casts outside *.test files; no TODO/FIXME; console.* hits are all dev-gated (usePerformanceMetrics dev logger, api.ts DEV retry warn, websocket.ts wsWarn/wsError gated on import.meta.env.DEV). api.ts (axios retry/backoff), websocket.ts (reconnect state machine + token-rotation teardown), AuthContext.tsx (concurrent-refresh dedupe, cold-boot role re-derivation), useNetworkStatus.ts and useWebSocket.ts were all read in full and found hardened. The two net-new findings below survived that sweep, both traced end-to-end (client subscribe keys vs server-emitted event_type strings; configureApiClient call sites vs the interceptor's onUnauthorized branch). NOTE: the pre-existing filed item code-review-ppt-web-core-ws-query-invalidation-dead (App.tsx not passing the onEntityEvent prop to WebSocketProvider) was confirmed still present but is NOT re-filed here; finding #1 below is an INDEPENDENT second root cause of the same dead-invalidation symptom (wrong event-name keys), distinct file/mechanism.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "note": "ppt-web-core (React/TS core — realtime WS + axios client). Highest-severity finding is a WS event-name mismatch that makes server-push TanStack Query invalidation dead-on-arrival even if the already-filed onEntityEvent-prop gap were fixed (medium); second is the axios client's documented `401 -> onUnauthorized` contract being unwired, so token-expiry 401s on getApiClient() feature endpoints never trigger re-auth (low). Both fully landable in the cloud runner — self-contained frontend TS, no backend/migration/mobile dependency. Distinct id/file from the pre-existing ws-query-invalidation-dead item.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "backend/servers/api-server/src/routes/ws_notifications.rs"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 — the `eventToQueryKeys` map (the whole point of WebSocketContext per its file header: 'Query invalidation on server push') keys on colon-namespaced event names: `entity:announcement`, `entity:fault`, `entity:vote`, `entity:document`, `entity:message`, `entity:neighbor`. The entity-event effect (:305-330) subscribes the service to exactly those keys, plus the generic `entity:updated` / `entity:created` / `entity:deleted` (:313). Every subscribe call keys off these colon strings.",
+        "The api-server never emits any of those names. The wire envelope's `event` field is set verbatim from the pub/sub `event_type` (backend/servers/api-server/src/routes/ws_notifications.rs:220 `event: msg.event_type.clone()`), and the only event_type strings produced across api-server are DOT-namespaced domain.action names: `notification.created` (ws_notifications.rs:301), and from the notification producers `announcement.published`, `announcement.acknowledgment_required`, `message.created`, `vote.started`, `vote.closed`, `vote.ending_soon`, `vote.reminder_not_voted`, `vote.results_available`. A repo grep for the literal `\"entity:` under backend/servers/api-server/src returns ZERO hits — no `entity:*` (colon) and no `entity.updated`/`entity.created`/`entity.deleted` (dot) event is ever broadcast.",
+        "Dispatch is an exact-string match, so the mismatch is total: lib/websocket.ts parseServerMessage (:65-82) maps the server `event` straight onto `message.type` unchanged (dot-style), and handleMessage (:557) dispatches via `this.messageHandlers.get(message.type)` — a plain Map keyed by the exact string. A handler registered under `entity:fault` can therefore NEVER be invoked by a server frame whose type is `vote.started` / `announcement.published` / `message.created`. Result: WebSocketContext's server-push TanStack Query invalidation is dead on arrival for 100% of real events.",
+        "This is an INDEPENDENT second root cause from the already-filed code-review-ppt-web-core-ws-query-invalidation-dead (that item is App.tsx not passing the `onEntityEvent` prop to WebSocketProvider — a missing wire). Even if App.tsx were fixed to pass onEntityEvent, invalidation would STILL never fire because the subscription keys don't match any emitted event name. Both defects must be fixed for realtime cache invalidation to work; this one lives in WebSocketContext's map + the client/server event-name contract, not in App.tsx.",
+        "Fix: align the client event-name keys with the server's `domain.action` scheme — rebuild `eventToQueryKeys` around the real emitted names (`announcement.published`/`announcement.acknowledgment_required` -> ['announcements'], `vote.*` -> ['votes'], `message.created` -> ['messages'], `notification.created` -> ['notifications'], etc.) and drop the non-existent `entity:*`/`entity:updated` colon subscriptions (or, less preferably, have the server additionally emit the colon names — but the dot scheme is already the established contract per ws_notifications.rs doc comments). Self-contained TS in WebSocketContext.tsx (+ optionally the map), fully landable in the cloud runner. IG3: a WebSocketContext test that pushes a `vote.started` frame through the service and asserts onEntityEvent fires with the ['votes'] keys — fails today because the subscription key is `entity:vote`.",
+        "Confidence medium: the colon-vs-dot mismatch and the exact-string Map dispatch are directly confirmed by static read of both sides (client keys at WebSocketContext.tsx:33-40 + :313; server event_type literals enumerated by grep; dispatch at websocket.ts:557). 'medium' not 'high' only because the emitted-event enumeration is grep-based over api-server/src (a producer in another crate or a dynamically-built event_type string not caught by the literal grep could theoretically emit an `entity:*` name), and the practical blast radius depends on the already-filed onEntityEvent wire being fixed too."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 — the axios response interceptor's only 401 reaction is `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();`. That module-level `onUnauthorizedCallback` is set ONLY by createAxiosInstance from `config.onUnauthorized` (:196), which is only reachable via configureApiClient (:298).",
+        "The single configureApiClient call site never passes onUnauthorized: AuthContext.tsx:337 calls `configureApiClient({ getToken: getAccessToken })` — getToken only, no onUnauthorized. A repo grep confirms this is the only invocation in ppt-web outside lib/api.ts itself. So `onUnauthorizedCallback` is permanently `undefined` and the 401 branch is dead code: the interceptor just falls through to `transformError` and rejects.",
+        "This contradicts the documented contract the consumers rely on: usePredictiveMaintenance.ts:10 and useSentiment.ts:19 both comment that getApiClient() applies '401 -> onUnauthorized' handling. It does not. The hand-rolled client also has NO refresh-on-401 retry (401 is not in RETRYABLE_STATUS_CODES and there is no refresh interceptor), so when the access token expires, every getApiClient() consumer — features/sentiment, features/predictive-maintenance, routes/groups/person-months — surfaces a hard ApiError with zero session-level reaction: no silent refresh, no logout/redirect-to-login. The user is stuck seeing errors on those screens until some unrelated @ppt/api-client call happens to trigger AuthContext's refresh path.",
+        "Fix: wire the callback at the single configuration point — `configureApiClient({ getToken: getAccessToken, onUnauthorized: () => { void refreshToken(); /* or logout()+redirect on refresh failure */ } })` in AuthContext.tsx:337 — so the interceptor's existing 401 branch actually drives re-auth (mirroring the refresh dedupe already implemented at AuthContext.tsx:449-462). Alternatively add a refresh-and-retry-once interceptor to lib/api.ts. Either way self-contained frontend TS, no backend/mobile dependency, landable in the cloud runner. IG3: a lib/api.ts test that stubs a 401 and asserts the configured onUnauthorized callback fires — fails today because AuthContext never supplies one.",
+        "Confidence medium: the dead 401 branch is statically confirmed (only configureApiClient call passes getToken only; interceptor guards on the unset callback). Severity kept low (score_delta 1) rather than medium because impact is degraded re-auth UX on a bounded set of getApiClient() endpoints rather than a security hole or data loss, and the primary auth surface (@ppt/api-client) has its own token handling; 'medium' confidence (not high) because whether a parallel @ppt/api-client refresh masks the gap in practice is timing/route-dependent and was not runtime-confirmed."
+      ]
+    }
+  ]
+}
