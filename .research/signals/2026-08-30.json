@@ -1,0 +1,220 @@
+{
+  "generated": "2026-08-30T04:36:00Z",
+  "routine_lag_hours": 6,
+  "signals": [
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "Every user-facing length validation on reality-server public write paths measures BYTES (str::len()) but the constants and 400 error messages are phrased in CHARACTERS. Slovak/Czech/German text is diacritic-heavy (2 bytes per char); ~2500 accented chars already exceeds a 5000-'character' cap, roughly halving the effective allowance for sk/cs/de.",
+        "Six call sites: inquiries.rs:43-55 validate_inquiry_lengths (name/email/phone/message), inquiries.rs:425-464 request_viewing (same + preferred-time), inquiries.rs:786-789 respond_to_inquiry (magic 5000 rather than MAX_INQUIRY_MESSAGE_LEN), articles.rs:456-461 create_comment (MAX_COMMENT_BODY_LEN 5000), agent_reviews.rs:212-215 create_review (MAX_REVIEW_BODY_LEN 5000), reports.rs submit_report (MAX_REPORT_DESCRIPTION_LEN 5000).",
+        "Fix: replace .len() with .chars().count() on the free-text fields; route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN; keep byte caps as a separate hard-DoS backstop but worded as bytes. IG3: unit test asserting N-accented-char string at N <= limit is accepted.",
+        "Source Tier-1d artifact: .research/signals/2026-08-30-reality-server-tier1d.json (score_delta=2, confidence=medium)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "reality-server submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is OptionalRequestPrincipal / anonymous-allowed. reporter_email and reporter_phone (SubmitReportRequest, reports.rs:91-92) bound straight into INSERT (reports.rs:279-280) with NO length or format validation.",
+        "Sibling inquiries path caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and runs InquiriesHandler::validate_contact. The report path shares the inquiry rate limiter so raw request VOLUME is throttled, but a single permitted request can persist an arbitrarily large / malformed string.",
+        "Impact: row bloat in listing_reports.reporter_email/reporter_phone, junk contact data surfaced to moderators, and (if the DB column has a length constraint) a raw DB error → generic 500 via db_error() instead of a clean 400.",
+        "Fix: before INSERT apply the existing inquiry caps/validators (MAX_INQUIRY_EMAIL_LEN, MAX_INQUIRY_PHONE_LEN, validate_contact) and return 400 with a generic message.",
+        "Source Tier-1d artifact: .research/signals/2026-08-30-reality-server-tier1d.json (score_delta=1, confidence=medium)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "evidence": [
+        "Navigation.kt:493 wires CreateListingScreen with onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) } — hardcoded stub that always fails.",
+        "Reachable from AgencyHubScreen (Navigation.kt:415) and MyListingsScreen (Navigation.kt:484), both navigating to Screen.CreateListing.route (\"realtor/listings/new\", Navigation.kt:125).",
+        "CreateListingScreen renders a validated Compose form (~390 lines); submit shows the realtor_create_validation_publish_failed toast, form data is discarded, listing never created.",
+        "Backend already exposes POST /api/v1/my/listings (routes/portal_listings.rs:24 route + :207 create_listing, registered main.rs:205). PortalListingsRepository already calls sibling GET but has NO create method. Fix: add createListing(input): Result<Unit> to PortalListingsRepository and pass as composable onSubmit.",
+        "Cloud-landability caveat: mobile-native-kmp is AGP egress-blocked in the cloud runner (issue #2652) — landable only by a local implementer. Dispatcher Tier-1b should tag or route accordingly.",
+        "Source Tier-1d artifact: .research/signals/2026-08-30-mobile-native-kmp-tier1d.json (score_delta=2, confidence=high)."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2876-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2876",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "evidence": [
+        "PR #2876 (fix(ppt-web): route useBuildingUnits through axios client for JWT) modified frontend/apps/ppt-web/src/routes/groups/person-months.tsx and added a colocated .route.test.tsx; no docs/screens/ppt/*.md update.",
+        "Heuristic caveat (routine spec § Best-effort heuristic): this change is an internal hook refactor (raw fetch → axios client with JWT interceptor) with no user-visible screen behavior change. Likely a false-positive review candidate."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist (allowlisted types this run: screen-map-drift needs additional matching product doc path; the drift signal fired but the touched route file was a hook-internal refactor with no user-visible screen behavior, so auto-generating a stub doc would create rot).",
+  "phase_1_5_skipped_reason": "dispatcher Tier-1d generator already covered reality-server (commit 0182df4f) and mobile-native-kmp (2026-08-30-mobile-native-kmp-tier1d.json) today; 3 landable findings folded via signals above. Running the ppt-dev-review skill on top would double-review the same territory.",
+  "phase_1_6_skipped_reason": "buffer-low is a capacity/dispatch gap (claimable 7/72), not a delivery-analysis gap. Same rationale as 2026-08-29 brief; PM cursor + coverage cursor unchanged.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-30.md && head -1 == \"# 2026-08-30\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq (staged.state != HEAD.state)",
+      "observed": "true",
+      "expected": "true",
+      "note": "advanced last_pr_seen 2874->2886, last_commit_sha, last_run_iso; +4 seen_signals, +1 run, +4 vectors_created; review_cursor reality-server/mobile-native-kmp -> 2026-08-30"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique.length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal ids not in prior seen_signals with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item .score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items with updated_at <= 2026-08-16",
+      "observed": "0 remaining (decayed code-review-mobile-native-kmp-httpclient-no-timeout 2->1)",
+      "expected": "0 remaining"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans/<slug>.md files this run",
+      "observed": "none",
+      "expected": "every new plan has adversarial-pass annotation (vacuously true)"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "count new plans/*.md (excluding _archive)",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/private hostnames in staged diff (excl 4 baseline docs)",
+      "observed": "0 (fixed brief line to avoid literal Authorization: Bearer string)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md <(render-backlog.py .research/backlog.json)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief Phases that failed line",
+      "observed": "none",
+      "expected": "no cursor advanced for failed phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "for each prior plan slug, verify in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "count files in plans/_archive/ (now vs HEAD)",
+      "observed": "9 vs 9",
+      "expected": "now >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md <(render-triage.py .research/backlog.json)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length & idempotency",
+      "observed": "0 (no candidate)",
+      "expected": "<= 3 total, dedup vs auto_fix_history"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is a no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token pattern in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

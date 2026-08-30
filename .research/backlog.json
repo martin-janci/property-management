@@ -8313,7 +8313,7 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
@@ -8321,13 +8321,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
-        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS."
+        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
+        "decayed: no new signals in 14d (updated_at was 2026-08-16 vs 2026-08-30)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9473,15 +9474,17 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)",
+        "PR #2878"
       ],
       "evidence": [
         "Many list endpoints resolve `query.limit.unwrap_or(N)` with NO upper-bound clamp then pass straight into repository LIMIT. Sites: ai/sessions.rs:101/:205/:924/:997; ai/equipment.rs:203/:297/:379; ai/voice.rs:317; ai/workflows.rs:546 (the `as usize` cast also silently wraps hostile i64); ai/llm.rs:1448; vendors/contacts.rs:130; compliance.rs:167/:240/:268; predictive_maintenance.rs:316/:503/:536.",
         "End-to-end confirmed for ai_chat: routes/ai/sessions.rs:205 → crates/db/src/repositories/ai_chat.rs:229-247 binds `limit: i64` into `LIMIT $4 OFFSET $5` with no clamp anywhere in the repo. Same shape at :137/:156/:160 and :365/:377/:381.",
         "Intended pattern already exists: admin/users.rs:58 `.min(100)`, admin/audit.rs:261 `.min(500)` and :280 `.min(50_000)`, market_pricing.rs:1665 `.min(50)`.",
-        "Fix: clamp at handler boundary with `.min(MAX_PAGE_SIZE)` (or shared `Pagination::clamped()` helper); defense-in-depth clamp in repos taking raw `limit: i64`. IG3: handler test with `?limit=1000000` returns ≤MAX rows."
+        "Fix: clamp at handler boundary with `.min(MAX_PAGE_SIZE)` (or shared `Pagination::clamped()` helper); defense-in-depth clamp in repos taking raw `limit: i64`. IG3: handler test with `?limit=1000000` returns ≤MAX rows.",
+        "resolved: PR #2878 merged 2026-08-30 — fix(api-server): clamp user-supplied pagination limit on list endpoints"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai/sessions.rs",
@@ -9495,7 +9498,7 @@
         "backend/crates/db/src/repositories/ai_chat.rs"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9526,22 +9529,24 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)",
+        "PR #2876"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:77-91 — `useBuildingUnits` calls raw `fetch('/api/v1/units?buildingId=…&limit=500', { headers: { 'Content-Type': 'application/json' } })` inside a TanStack queryFn.",
         "JWT is injected ONLY via the axios request interceptor in lib/api.ts:198-204; contexts/AuthContext.tsx:327 registers `setTokenProvider(getAccessToken)`. No global fetch override, no service worker, no cookie session — grep across the app confirms.",
         "Impact: request to authenticated `/api/v1/units` goes out with NO bearer token → 401 for real logged-in sessions, building-units dropdown that feeds person-months silently fails to populate.",
-        "Fix: route through the shared axios client (`api.get('/units', { params: …})`) or a helper hook that mirrors the interceptor plumbing. IG3: unit test asserts useBuildingUnits sends Authorization header when token provider is registered."
+        "Fix: route through the shared axios client (`api.get('/units', { params: …})`) or a helper hook that mirrors the interceptor plumbing. IG3: unit test asserts useBuildingUnits sends Authorization header when token provider is registered.",
+        "resolved: PR #2876 merged 2026-08-30 — fix(ppt-web): route useBuildingUnits through axios client for JWT"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
         "frontend/apps/ppt-web/src/lib/api.ts"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9572,21 +9577,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)",
+        "PR #2877"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit collects a complete CreateDisputeRequest but its entire side-effect is `await new Promise(r => setTimeout(r, 1000))` then `navigate('/disputes')`. No useMutation, no api call, no @ppt/api-client import in the file. formData is silently discarded.",
         "Live trap: routes/groups/disputes.tsx:482 wires `/disputes/new` to FileDisputePageRoute (the real path), but CreateDisputePage IS re-exported from features/disputes/pages/index.ts:6. A future author importing from the barrel and mounting it ships a form that loses every submission with no error.",
-        "Fix (cheapest): delete CreateDisputePage.tsx + its barrel re-export (FileDisputePage is the live path). Alternative: wire useMutation into the real @ppt/api-client createDispute endpoint. IG3: grep-guard that features/disputes/pages/index.ts does not export CreateDisputePage."
+        "Fix (cheapest): delete CreateDisputePage.tsx + its barrel re-export (FileDisputePage is the live path). Alternative: wire useMutation into the real @ppt/api-client createDispute endpoint. IG3: grep-guard that features/disputes/pages/index.ts does not export CreateDisputePage.",
+        "resolved: PR #2877 merged 2026-08-30 — fix(ppt-web): remove orphaned CreateDisputePage stub that discarded submissions"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
         "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9699,6 +9706,102 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "title": "reality-server public write paths measure str::len() bytes but user-facing caps are phrased in characters — over-rejects diacritic-heavy sk/cs/de submissions (halves effective allowance)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-08-30 (reality-server)"
+      ],
+      "evidence": [
+        "reality-server byte-vs-char length validation: inquiries.rs:43-55 validate_inquiry_lengths, inquiries.rs:425-464 request_viewing, inquiries.rs:786-789 respond_to_inquiry, articles.rs:456-461 create_comment, agent_reviews.rs:212-215 create_review, reports.rs submit_report all cap .len() (bytes) but the 400 error messages say \"max N characters\"; sk/cs/de messages of ~2500 accented chars already exceed a 5000-char cap because diacritics are 2 bytes each.",
+        "Fix: replace .len() with .chars().count() on the free-text fields; route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN instead of literal 5000; keep byte caps as a separate hard-DoS backstop, but worded as bytes.",
+        "Confidence medium: static-read confirmed across all 6 call sites; severity is over-rejection (UX defect on the sk/cs/de locales), not crash/data-loss/security."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "title": "reality-server submit_report reporter_email/reporter_phone bound into INSERT with no length/format validation on an anonymous-allowed endpoint (sibling inquiries path caps both)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-08-30 (reality-server)"
+      ],
+      "evidence": [
+        "reality-server submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is OptionalRequestPrincipal / anonymous-allowed; description is bounded (MAX_REPORT_DESCRIPTION_LEN) and attachments validated, but reporter_email and reporter_phone (SubmitReportRequest, reports.rs:91-92) are bound straight into the INSERT (reports.rs:279-280) with NO length or format guard.",
+        "Inconsistent with the sibling inquiries path which caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and runs InquiriesHandler::validate_contact. Volume is throttled by enforce_public_report_rate_limit but a single allowed request can persist an arbitrarily large / malformed string into listing_reports.reporter_email/reporter_phone.",
+        "Fix: before the INSERT, apply the existing inquiry caps/validators (MAX_INQUIRY_EMAIL_LEN, MAX_INQUIRY_PHONE_LEN, validate_contact) and return 400 with a generic message. Self-contained in reports.rs.",
+        "Confidence medium: static-read confirmed; severity low (+1) because rate limiter caps exploit volume and the description payload is already bounded."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "title": "mobile-native-kmp realtor CreateListingScreen onSubmit stubbed to NotImplementedError — reachable production flow silently fails; PortalListingsRepository has no createListing method",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-08-30 (mobile-native-kmp)"
+      ],
+      "evidence": [
+        "Navigation.kt:493 wires the fully-built CreateListingScreen with onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) } — the submit handler is hardcoded to always fail.",
+        "Screen is reachable from AgencyHubScreen (Navigation.kt:415) and MyListingsScreen (Navigation.kt:484), both navigating to Screen.CreateListing.route (\"realtor/listings/new\", Navigation.kt:125).",
+        "CreateListingScreen renders a complete validated Compose form; on submit it gets the NotImplementedError failure and shows realtor_create_validation_publish_failed. Form data is discarded, listing never created.",
+        "Backend already exposes POST /api/v1/my/listings (backend/servers/reality-server/src/routes/portal_listings.rs:24 route, :207 create_listing, registered main.rs:205). PortalListingsRepository already calls sibling GET but has NO create method. Fix: add createListing(input): Result<Unit> to PortalListingsRepository (POST /api/v1/my/listings) and pass it as the composable onSubmit instead of the stub.",
+        "Cloud-landability caveat: mobile-native-kmp cannot be built by the cloud runner (AGP egress-403, issue #2652). Landable only by a local implementer."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2876-ppt",
+      "title": "Screen-map drift: PR #2876 touched frontend/apps/ppt-web/src/routes/groups/person-months.tsx without a docs/screens/ppt/* update (heuristic — internal hook refactor, no user-visible change)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2876"
+      ],
+      "evidence": [
+        "Merged PR #2876 (fix(ppt-web): route useBuildingUnits through axios client for JWT) modified frontend/apps/ppt-web/src/routes/groups/person-months.tsx and added a colocated .route.test.tsx; no matching docs/screens/ppt/*.md update in the same PR.",
+        "Heuristic caveat: the change is a hook-internal refactor (raw fetch → axios client with JWT interceptor) with no user-visible screen behavior change. Likely a false-positive review candidate — resolve by either (a) adding a one-line note to the corresponding ppt screen doc, or (b) marking this row dropped in backlog.json with rationale."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
       "plan": null
     }
   ]
