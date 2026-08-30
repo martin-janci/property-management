@@ -1,7 +1,8 @@
 import { MfaChallengeProvider } from '@ppt/admin-ui';
 import { setMfaChallengeHandler } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { type ReactNode, Suspense, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -90,12 +91,29 @@ function MfaWrapper({ children }: { children: ReactNode }) {
  */
 function WebSocketWrapper({ children }: { children: ReactNode }) {
   const { getAccessToken, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Bridge realtime `domain.action` events to cache invalidation. The provider
+  // resolves each event to its affected query roots (see `eventToQueryKeys` /
+  // `categoryToQueryKeys`); here we invalidate them so the affected lists
+  // refetch. Without this wiring the WebSocket delivers events that never touch
+  // the cache — the realtime sync is dead end-to-end.
+  const handleEntityEvent = useCallback(
+    (_eventType: string, queryKeys: string[]) => {
+      for (const key of queryKeys) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+    [queryClient]
+  );
+
   return (
     <WebSocketProvider
       auth={{
         accessToken: getAccessToken(),
         isAuthenticated,
       }}
+      onEntityEvent={handleEntityEvent}
     >
       {children}
     </WebSocketProvider>

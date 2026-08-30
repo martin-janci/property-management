@@ -27,16 +27,44 @@ import {
 } from '../lib/websocket';
 
 /**
- * Query key mapping for entity events.
- * Used to invalidate TanStack Query caches when entities change.
+ * Query key mapping for realtime events emitted by the api-server.
+ *
+ * The api-server pushes canonical `domain.action` event envelopes on the
+ * per-user `notifications:{user_id}` channel (see `ws_notifications.rs` and its
+ * publishers). It never emits the legacy `entity:*` names this map used to key
+ * on, so before this mapping was corrected every realtime frame missed the
+ * lookup and no TanStack Query cache was ever invalidated (100% dead sync).
+ *
+ * Keys are the exact `event` strings the server sends; values are the
+ * first-segment query roots (see `lib/queryKeys.ts`) to invalidate. The
+ * polymorphic `notification.created` event is handled separately — its
+ * affected entity list is carried in `payload.category`, see
+ * {@link categoryToQueryKeys}.
  */
 export const eventToQueryKeys: Record<string, string[]> = {
-  'entity:announcement': ['announcements'],
-  'entity:fault': ['faults'],
-  'entity:vote': ['votes'],
-  'entity:document': ['documents'],
-  'entity:message': ['messages'],
-  'entity:neighbor': ['neighbors'],
+  // Direct message sent to the user (`messaging.rs::dispatch_new_message_event`).
+  'message.created': ['messages'],
+  // Notification-preference toggled (`notification_preferences.rs`).
+  'preference.updated': ['notifications'],
+};
+
+/**
+ * Map a `notification.created` payload `category` to the query roots to
+ * invalidate alongside the `notifications` root.
+ *
+ * `notification.created` (`notification_pipeline.rs::DbInAppAdapter::send`) is
+ * polymorphic: a single event type covers every domain, and its
+ * `payload.category` (serialized snake_case, see `NotificationCategory`) pins
+ * which entity list just changed. A new announcement notification, for example,
+ * should refresh both the notification list and the announcements list.
+ */
+export const categoryToQueryKeys: Record<string, string[]> = {
+  announcements: ['announcements'],
+  faults: ['faults'],
+  votes: ['votes'],
+  messages: ['messages'],
+  documents: ['documents'],
+  financial: ['financial'],
 };
 
 /**
@@ -301,7 +329,8 @@ export function WebSocketProvider({
 
     const unsubscribers: (() => void)[] = [];
 
-    // Subscribe to all entity events
+    // Subscribe to the fixed `domain.action` events whose query roots are known
+    // up front.
     for (const [eventType, queryKeys] of Object.entries(eventToQueryKeys)) {
       const unsubscribe = service.subscribe(eventType, (message) => {
         onEntityEvent(eventType, queryKeys, message);
@@ -309,25 +338,17 @@ export function WebSocketProvider({
       unsubscribers.push(unsubscribe);
     }
 
-    // Also subscribe to the generic entity events
-    const entityEvents = ['entity:updated', 'entity:created', 'entity:deleted'] as const;
-    for (const eventType of entityEvents) {
-      const unsubscribe = service.subscribe(eventType, (message) => {
-        // Try to extract entity type from payload
-        const payload = message.payload as { entityType?: string } | null;
-        const entityType = payload?.entityType;
-
-        if (entityType) {
-          const mappedKey = `entity:${entityType}`;
-          const queryKeys = eventToQueryKeys[mappedKey];
-
-          if (queryKeys) {
-            onEntityEvent(eventType, queryKeys, message);
-          }
-        }
-      });
-      unsubscribers.push(unsubscribe);
-    }
+    // `notification.created` is polymorphic: one event type spans every domain,
+    // with `payload.category` naming the affected entity list. Refresh the
+    // `notifications` root (list + unread count) plus that entity's list.
+    const unsubscribeNotification = service.subscribe('notification.created', (message) => {
+      const payload = message.payload as { category?: string } | null;
+      const category = payload?.category;
+      const entityKeys = category ? categoryToQueryKeys[category] : undefined;
+      const queryKeys = entityKeys ? ['notifications', ...entityKeys] : ['notifications'];
+      onEntityEvent('notification.created', queryKeys, message);
+    });
+    unsubscribers.push(unsubscribeNotification);
 
     return () => {
       for (const unsubscribe of unsubscribers) {
