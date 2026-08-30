@@ -699,7 +699,26 @@
       "error": "Nem sikerült betölteni a megkereséseket. Kérjük, próbálja újra.",
       "emptyTitle": "Még nincsenek megkeresések",
       "emptyText": "Amikor kapcsolatba lép az ügynökökkel a hirdetésekkel kapcsolatban, a megkeresései itt jelennek meg.",
-      "browseListings": "Hirdetések böngészése"
+      "browseListings": "Hirdetések böngészése",
+      "title": "Érdeklődéseim",
+      "subtitle": "Kövesse nyomon ingatlan-érdeklődéseit és megtekintési kérelmeit.",
+      "filterAll": "Összes",
+      "status": {
+        "pending": "Függőben",
+        "responded": "Megválaszolva",
+        "scheduled": "Ütemezve",
+        "completed": "Befejezve",
+        "cancelled": "Törölve"
+      },
+      "viewingScheduled": "Megtekintés ütemezve: {date} {time}",
+      "agentResponse": "Ügynök válasza:",
+      "cancelConfirm": "Törli ezt az érdeklődést?",
+      "cancelYes": "Igen, törlés",
+      "cancelNo": "Nem",
+      "cancelInquiry": "Érdeklődés törlése",
+      "previous": "Előző",
+      "next": "Következő",
+      "pageInfo": "Oldal: {page} / {total}"
     },
     "savedSearches": {
       "alertsOff": "Értesítések kikapcsolva",

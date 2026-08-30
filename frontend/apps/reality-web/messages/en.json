@@ -706,7 +706,26 @@
       "error": "Failed to load inquiries. Please try again.",
       "emptyTitle": "No inquiries yet",
       "emptyText": "When you contact agents about listings, your inquiries will appear here.",
-      "browseListings": "Browse listings"
+      "browseListings": "Browse listings",
+      "title": "My Inquiries",
+      "subtitle": "Track your property inquiries and viewing requests.",
+      "filterAll": "All",
+      "status": {
+        "pending": "Pending",
+        "responded": "Responded",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "viewingScheduled": "Viewing scheduled: {date} at {time}",
+      "agentResponse": "Agent response:",
+      "cancelConfirm": "Cancel this inquiry?",
+      "cancelYes": "Yes, cancel",
+      "cancelNo": "No",
+      "cancelInquiry": "Cancel inquiry",
+      "previous": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {page} of {total}"
     },
     "savedSearches": {
       "alertsOff": "Alerts off",

@@ -706,7 +706,26 @@
       "error": "Anfragen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
       "emptyTitle": "Noch keine Anfragen",
       "emptyText": "Wenn Sie Makler zu Angeboten kontaktieren, erscheinen Ihre Anfragen hier.",
-      "browseListings": "Angebote durchsuchen"
+      "browseListings": "Angebote durchsuchen",
+      "title": "Meine Anfragen",
+      "subtitle": "Verfolgen Sie Ihre Immobilienanfragen und Besichtigungstermine.",
+      "filterAll": "Alle",
+      "status": {
+        "pending": "Ausstehend",
+        "responded": "Beantwortet",
+        "scheduled": "Geplant",
+        "completed": "Abgeschlossen",
+        "cancelled": "Storniert"
+      },
+      "viewingScheduled": "Besichtigung geplant: {date} um {time}",
+      "agentResponse": "Antwort des Maklers:",
+      "cancelConfirm": "Diese Anfrage stornieren?",
+      "cancelYes": "Ja, stornieren",
+      "cancelNo": "Nein",
+      "cancelInquiry": "Anfrage stornieren",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "pageInfo": "Seite {page} von {total}"
     },
     "savedSearches": {
       "alertsOff": "Benachrichtigungen aus",

@@ -706,7 +706,26 @@
       "error": "Nepodařilo se načíst poptávky. Zkuste to znovu.",
       "emptyTitle": "Zatím žádné poptávky",
       "emptyText": "Když kontaktujete makléře ohledně nabídek, vaše poptávky se zobrazí zde.",
-      "browseListings": "Procházet nabídky"
+      "browseListings": "Procházet nabídky",
+      "title": "Moje poptávky",
+      "subtitle": "Sledujte své poptávky nemovitostí a žádosti o prohlídku.",
+      "filterAll": "Vše",
+      "status": {
+        "pending": "Čeká se",
+        "responded": "Zodpovězeno",
+        "scheduled": "Naplánováno",
+        "completed": "Dokončeno",
+        "cancelled": "Zrušeno"
+      },
+      "viewingScheduled": "Prohlídka naplánována: {date} v {time}",
+      "agentResponse": "Odpověď makléře:",
+      "cancelConfirm": "Zrušit tuto poptávku?",
+      "cancelYes": "Ano, zrušit",
+      "cancelNo": "Ne",
+      "cancelInquiry": "Zrušit poptávku",
+      "previous": "Předchozí",
+      "next": "Další",
+      "pageInfo": "Strana {page} z {total}"
     },
     "savedSearches": {
       "alertsOff": "Upozornění vypnutá",
