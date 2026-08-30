@@ -307,6 +307,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isRefreshing = useRef(false);
   const refreshPromise = useRef<Promise<string | null> | null>(null);
 
+  // Holds the latest 401 handler so the configureApiClient effect below can be
+  // registered exactly once (stable deps) yet always invoke the current logic.
+  // `handleUnauthorized` closes over `refreshToken`/`logout`, whose identities
+  // change across renders; routing through a ref avoids re-running the
+  // configure effect (which would tear down and recreate the axios instance)
+  // on every one of those changes.
+  const onUnauthorizedRef = useRef<() => void>(() => {});
+
   // Derived state
   const isAuthenticated = user !== null;
 
@@ -334,7 +342,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // with no token getter and every request goes out WITHOUT an Authorization
     // header. Wiring it here — alongside setTokenProvider — keeps a single
     // source of truth for the access token (getAccessToken).
-    configureApiClient({ getToken: getAccessToken });
+    //
+    // `onUnauthorized` fires from the response interceptor on a 401. It is
+    // routed through `onUnauthorizedRef` (kept current by the effect below) so
+    // this effect stays single-run: the actual handler attempts a silent token
+    // refresh and, failing that, tears down the session so ProtectedRoute
+    // redirects to login. Without this, the interceptor's 401 branch was dead
+    // and getApiClient() consumers stayed stuck on an expired access token.
+    configureApiClient({
+      getToken: getAccessToken,
+      onUnauthorized: () => onUnauthorizedRef.current(),
+    });
 
     // Clean up on unmount
     return () => {
@@ -578,6 +596,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [queryClient]);
 
   /**
+   * Handle a 401 surfaced by the shared axios client (getApiClient). The
+   * access token has expired or been revoked, so every in-flight feature-hook
+   * request is failing. Recovery mirrors the intended `onUnauthorized` design:
+   *
+   *  - If a refresh token is available, kick off a single silent refresh
+   *    (deduplicated via `refreshToken`'s in-flight guard). On success the
+   *    rotated access token lands in storage and the query layer's next run
+   *    succeeds; on failure `refreshTokenInternal` has already cleared storage
+   *    and de-authenticated the user.
+   *  - If there is no refresh token, nothing can recover the session — log out
+   *    so ProtectedRoute redirects to the login screen.
+   *
+   * The interceptor invokes this without awaiting it (a 401 is non-retryable
+   * and surfaces immediately), so recovery happens in the background.
+   */
+  const handleUnauthorized = useCallback((): void => {
+    if (tokenStorage.getRefreshToken()) {
+      void refreshToken().catch(() => {
+        // refreshTokenInternal already cleared storage + de-authenticated.
+      });
+      return;
+    }
+    void logout();
+  }, [refreshToken, logout]);
+
+  // Keep the ref read by the configureApiClient effect pointed at the current
+  // handler, so a 401 always runs the latest refresh/logout closures without
+  // re-registering the axios interceptors.
+  useEffect(() => {
+    onUnauthorizedRef.current = handleUnauthorized;
+  }, [handleUnauthorized]);
+
+  /**
    * Update the in-memory user and persist to storage. Lets profile-edit
    * surfaces refresh the cached `user` so the UI doesn't show stale data
    * until the next reload.
@@ -638,7 +689,7 @@ AuthProvider.displayName = 'AuthProvider';
  *   }
  *
  *   return <div>Welcome, {user.firstName}!</div>;
- * }
+ *   }
  * ```
  */
 export function useAuth(): AuthContextValue {
