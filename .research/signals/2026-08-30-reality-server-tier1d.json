@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-30T00:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (research backlog buffer starved: honest_claimable=19 < floor=36, so fresh landable review signals were required). No CHURN_FILES passed by the dispatcher (state.json hotspot_history is stale, dated 2026-05, all pointing at api-server routes which map to already-reviewed segments). Selection fell to oldest-unreviewed from state.review_cursor: mobile-native-kmp (2026-08-25) is the true oldest but is EXCLUDED per assignment (cloud-unlandable, AGP egress-403 — any KMP finding cannot be implemented in the cloud runner). Next oldest is reality-server (2026-08-28); every other landable segment (api-handlers, api-core, ppt-web-ui, ppt-web-core, reality-web, mobile-rn) is at 2026-08-29. Saturation check passed: zero open code-review-finding items in backlog.json for ANY segment (18 total code-review-finding rows, all done; none open), so no saturation-skip. Primary expert = Rust, no secondary (per segment->expert map for reality-server). Static-only review: grep sweep of backend/servers/reality-server/src (43 .rs files) for unwrap/expect/unsafe/todo/panic/dynamic-SQL/PII-in-logs, then read of the security-critical + churn-relevant hot spots.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "note": "reality-server is a mature, security-audited codebase and the obvious high-severity classes are CLEAN: all non-test unwrap/expect are either startup-config fail-fast (state.rs JWT_SECRET panics), OS-rng failures (fatal, acceptable), or guarded (extractors/auth.rs:63 strip_prefix unwrap is gated by the starts_with check in the same closure; handlers/inquiries/mod.rs:266 chars().next().unwrap() is gated by an earlier is_empty() return). No unsafe blocks. SSO (routes/sso.rs, 71KB) is hardened: session cookies always HttpOnly+Secure+SameSite=Strict scoped to /api/v1/sso, cookie-octet allowlist guard mirrors api-server, and derive_pm_roles closes the #2249 portal privilege-escalation hole by intersecting (never falling back to) client-supplied roles. Public search (routes/listings.rs) clamps page/limit to safe bounds (#953 regression guard). The one format!-built SQL (routes/price_map.rs:158) only interpolates an allowlisted INTERVAL literal (user time_window validated against {1m,3m,12m,5y} first) and correctly uses sqlx::AssertSqlSafe; all user values are bound params. All user-scoped mutations (favorites, inquiries, compare, agency_branding, agency_imports) are correctly owner/org-scoped (no IDOR); public reports carry a per-IP rate limiter and an existence-oracle status filter (H5 audit). articles list/count WHERE clauses are in parity. The two findings below are the genuine, distinct, landable defects that survived that sweep — both confined to reality-server route files, no KMP, clean self-contained fixes.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "Every user-facing length validation on the public Reality Portal write paths measures BYTES (str::len()) but the constants and the 400 error messages are all phrased in CHARACTERS. This is a correctness bug for the product's primary locales: per CLAUDE.md the portal ships i18n for sk, cs, de, en, and Slovak/Czech/German text is full of 2-byte-per-char diacritics (a c d e l n o r s t z u y with hacek/carka, plus a o u umlaut and ss), while emoji are 4 bytes. Effect: a submission that is well under the advertised character cap is rejected once its UTF-8 byte length crosses the limit — a Slovak message of ~2500 accented chars already exceeds a 5000-'character' cap, roughly halving the effective allowance for diacritic-heavy input.",
+        "inquiries.rs:43-55 validate_inquiry_lengths — name.len() > MAX_INQUIRY_NAME_LEN (200), email.len() > MAX_INQUIRY_EMAIL_LEN (320), phone p.len() > MAX_INQUIRY_PHONE_LEN (32), message.len() > MAX_INQUIRY_MESSAGE_LEN (5000) with error 'Message is too long (max 5000 characters)'.",
+        "inquiries.rs:425-464 request_viewing — the same byte-vs-char checks inlined for name/email/phone/message plus preferred-time length; message error at :449 again says 'max 5000 characters'.",
+        "inquiries.rs:786-789 respond_to_inquiry — 'if req.message.len() > 5000' with error 'Message must be less than 5000 characters'; also a magic 5000 rather than MAX_INQUIRY_MESSAGE_LEN.",
+        "articles.rs:456-461 create_comment — data.body.len() > MAX_COMMENT_BODY_LEN (5000), error 'Comment body must be at most {} characters'. agent_reviews.rs:212-215 create_review — body.len() > MAX_REVIEW_BODY_LEN (5000), error 'Review body must be at most {} characters'. reports.rs:~200 submit_report — description.len() > MAX_REPORT_DESCRIPTION_LEN (5000), error 'Description must be at most {} characters'.",
+        "Fix: measure grapheme-ish length consistently with the messaging — replace the .len() checks on these free-text fields with .chars().count() (and route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN instead of the literal 5000). A single small PR across the four route files; IG3 can assert with a unit test that a string of N accented chars (byte length ~2N) at N <= limit is accepted. Byte caps may still be wanted as a hard DoS backstop, but they should be a separate, larger, explicitly-byte-worded guard — not the value quoted to the user as 'characters'.",
+        "Confidence medium: the .len()/message mismatch is confirmed by static read across all six call sites; 'medium' rather than 'high' because the impact is over-rejection of valid input (functional/UX defect on the sk/cs/de locales) rather than a crash, data loss, or security bypass."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is an OPTIONALLY-authenticated / anonymous-allowed endpoint (OptionalRequestPrincipal; reporter_user_id bound as principal.as_ref().map(|p| p.user_id)). It carefully validates description (non-empty + MAX_REPORT_DESCRIPTION_LEN) and attachments (count cap MAX_REPORT_ATTACHMENTS + per-URL validate_image_or_link_url), but the two free-text contact fields reporter_email and reporter_phone (SubmitReportRequest, reports.rs:91-92) are bound straight into the INSERT at reports.rs:279-280 with NO length and NO format validation whatsoever.",
+        "This is inconsistent with the sibling inquiries path, which DOES cap the same class of input: inquiries.rs caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and additionally runs InquiriesHandler::validate_contact for format. The report path shares inquiries' rate limiter (enforce_public_report_rate_limit reuses state.inquiry_rate_limiters) so raw request VOLUME is throttled, but a single permitted request can still persist an arbitrarily large / malformed string into listing_reports.reporter_email / reporter_phone.",
+        "Impact: unbounded unauthenticated free-text stored per allowed report — row/column bloat in the moderation table, junk contact data surfaced to moderators, and (if the DB column has a length constraint) a raw DB error mapped to a generic 500 via db_error() instead of a clean 400, i.e. the same failure mode the listings pagination clamp (#953) was added to prevent.",
+        "Fix: before the INSERT, apply the existing inquiry caps/validators to the report contact fields — reject when reporter_email exceeds MAX_INQUIRY_EMAIL_LEN or reporter_phone exceeds MAX_INQUIRY_PHONE_LEN (and optionally reuse validate_contact for format), returning 400 with a generic message (do NOT echo the offending value — same reflected-XSS caution the file already documents for attachment URLs). Self-contained change in reports.rs; IG3 via a unit/integration test that an over-length reporter_email yields 400.",
+        "Confidence medium: the absence of any length/format guard on reporter_email/reporter_phone and the direct bind into the INSERT are confirmed by static read; severity is low (+1) because the per-IP rate limiter caps exploit volume and the description field — the primary payload — is already bounded."
+      ]
+    }
+  ]
+}
