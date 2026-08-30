@@ -32,6 +32,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use db::models::user::Locale;
 use db::repositories::{DevicePushTokenRepository, RealityPortalRepository};
 use db::DbPool;
 use tokio::time::interval;
@@ -42,8 +43,111 @@ use tracing::Instrument;
 pub struct AlertNotification {
     pub subject: String,
     pub body: String,
-    /// Recipient locale (`sk` | `cs` | `de` | `en`), for localized copy later.
+    /// Recipient locale (`sk` | `cs` | `de` | `en`) the copy was rendered in.
     pub locale: String,
+}
+
+impl AlertNotification {
+    /// Compose a fully localized subject + body for the recipient's `locale`,
+    /// given how many new listings matched (`count`, always ≥ 1 when an alert is
+    /// enqueued) and the saved-search `name`.
+    ///
+    /// `locale` is the recipient's carried locale string (`u.locale`), which may
+    /// be absent — [`Locale::parse`] normalizes it and falls back to English for
+    /// an absent or unrecognized value. Every supported language (sk, cs, de, en)
+    /// is covered, with correct count-based noun/verb forms.
+    pub fn localized(locale: Option<&str>, count: usize, name: &str) -> Self {
+        let loc = Locale::parse(locale.unwrap_or_default());
+        let (subject, body) = compose_alert_copy(&loc, count, name);
+        Self {
+            subject,
+            body,
+            locale: loc.as_str().to_string(),
+        }
+    }
+}
+
+/// Render the localized (subject, body) pair for one saved-search alert.
+///
+/// Slovak and Czech use three count buckets (1 / 2–4 / 5+); German and English
+/// use two (1 / many). Verb and pronoun agreement follow the same bucketing.
+fn compose_alert_copy(locale: &Locale, count: usize, name: &str) -> (String, String) {
+    // Slavic plural category for `count`: 0 = singular, 1 = paucal (2–4),
+    // 2 = plural/genitive (0, 5+). Only ever called with count ≥ 1.
+    let slavic_bucket = |n: usize| -> usize {
+        match n {
+            1 => 0,
+            2..=4 => 1,
+            _ => 2,
+        }
+    };
+
+    match locale {
+        Locale::Slovak => {
+            let noun = ["nový inzerát", "nové inzeráty", "nových inzerátov"][slavic_bucket(count)];
+            let matches_verb = if count == 1 {
+                "zodpovedá"
+            } else {
+                "zodpovedajú"
+            };
+            let pronoun = if count == 1 { "ho" } else { "ich" };
+            (
+                format!("{count} {noun} {matches_verb} vášmu uloženému hľadaniu „{name}“"),
+                format!(
+                    "Vaše uložené hľadanie „{name}“ má {count} {noun}. \
+                     Otvorte aplikáciu a zobrazte si {pronoun}."
+                ),
+            )
+        }
+        Locale::Czech => {
+            let noun = ["nový inzerát", "nové inzeráty", "nových inzerátů"][slavic_bucket(count)];
+            let matches_verb = if (2..=4).contains(&count) {
+                "odpovídají"
+            } else {
+                "odpovídá"
+            };
+            let pronoun = if count == 1 { "jej" } else { "je" };
+            (
+                format!("{count} {noun} {matches_verb} vašemu uloženému hledání „{name}“"),
+                format!(
+                    "Vaše uložené hledání „{name}“ má {count} {noun}. \
+                     Otevřete aplikaci a zobrazte si {pronoun}."
+                ),
+            )
+        }
+        Locale::German => {
+            let (noun, matches_verb, pronoun) = if count == 1 {
+                ("neues Inserat", "passt", "es")
+            } else {
+                ("neue Inserate", "passen", "sie")
+            };
+            (
+                format!("{count} {noun} {matches_verb} zu Ihrer gespeicherten Suche „{name}“"),
+                format!(
+                    "Ihre gespeicherte Suche „{name}“ hat {count} neue passende \
+                     {inserat}. Öffnen Sie die App, um {pronoun} anzusehen.",
+                    inserat = if count == 1 { "Inserat" } else { "Inserate" },
+                ),
+            )
+        }
+        Locale::English => {
+            let noun = if count == 1 {
+                "new listing"
+            } else {
+                "new listings"
+            };
+            let matches_verb = if count == 1 { "matches" } else { "match" };
+            let pronoun = if count == 1 { "it" } else { "them" };
+            (
+                format!("{count} {noun} {matches_verb} your saved search \"{name}\""),
+                format!(
+                    "Your saved search \"{name}\" has {count} new matching {listing}. \
+                     Open the app to view {pronoun}.",
+                    listing = if count == 1 { "listing" } else { "listings" },
+                ),
+            )
+        }
+    }
 }
 
 /// Email side of the drainer's transport. The default is a logging stub; a real
@@ -256,24 +360,11 @@ impl SearchAlertDrainerWorker {
         let mut delivered = 0usize;
         for alert in alerts {
             let count = alert.matching_listing_ids.len();
-            let notification = AlertNotification {
-                subject: format!(
-                    "{count} new listing{} match your saved search \"{}\"",
-                    if count == 1 { "" } else { "s" },
-                    alert.saved_search_name
-                ),
-                body: format!(
-                    "Your saved search \"{}\" has {count} new matching listing{}. \
-                     Open the app to view {}.",
-                    alert.saved_search_name,
-                    if count == 1 { "" } else { "s" },
-                    if count == 1 { "it" } else { "them" },
-                ),
-                locale: alert
-                    .recipient_locale
-                    .clone()
-                    .unwrap_or_else(|| "en".into()),
-            };
+            let notification = AlertNotification::localized(
+                alert.recipient_locale.as_deref(),
+                count,
+                &alert.saved_search_name,
+            );
 
             // An alert counts as delivered if *any* channel succeeds. Email is
             // the primary channel; push is best-effort fan-out across devices.
@@ -329,5 +420,98 @@ impl SearchAlertDrainerWorker {
             tracing::info!(delivered, "[BIT-139] saved-search alerts delivered");
         }
         delivered
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn absent_or_unknown_locale_falls_back_to_english() {
+        for loc in [None, Some(""), Some("xx"), Some("fr")] {
+            let n = AlertNotification::localized(loc, 3, "Byty BA");
+            assert_eq!(n.locale, "en", "locale {loc:?} should fall back to en");
+            assert!(n.subject.contains("new listings match"), "{}", n.subject);
+        }
+    }
+
+    #[test]
+    fn each_supported_language_renders_its_own_copy() {
+        // (locale-in, normalized code, a substring unique to that language)
+        let cases = [
+            ("sk", "sk", "uloženému hľadaniu"),
+            ("cs", "cs", "uloženému hledání"),
+            ("de", "de", "gespeicherten Suche"),
+            ("en", "en", "saved search"),
+        ];
+        for (input, code, needle) in cases {
+            let n = AlertNotification::localized(Some(input), 2, "Test");
+            assert_eq!(n.locale, code);
+            assert!(
+                n.subject.contains(needle),
+                "{code} subject missing {needle:?}: {}",
+                n.subject
+            );
+            assert!(!n.body.is_empty());
+            // Never leak English copy into a non-English notification.
+            if code != "en" {
+                assert!(
+                    !n.subject.contains("saved search") && !n.body.contains("Open the app"),
+                    "{code} copy still English: {} / {}",
+                    n.subject,
+                    n.body
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn count_based_plural_forms_are_selected() {
+        // English: singular verb/noun at 1, plural otherwise.
+        let one = AlertNotification::localized(Some("en"), 1, "S");
+        assert!(
+            one.subject.contains("1 new listing matches"),
+            "{}",
+            one.subject
+        );
+        assert!(one.body.contains("view it."), "{}", one.body);
+        let many = AlertNotification::localized(Some("en"), 5, "S");
+        assert!(
+            many.subject.contains("5 new listings match"),
+            "{}",
+            many.subject
+        );
+        assert!(many.body.contains("view them."), "{}", many.body);
+
+        // Slovak three-bucket noun declension: 1 / 2–4 / 5+.
+        assert!(AlertNotification::localized(Some("sk"), 1, "S")
+            .subject
+            .contains("nový inzerát"));
+        assert!(AlertNotification::localized(Some("sk"), 3, "S")
+            .subject
+            .contains("nové inzeráty"));
+        assert!(AlertNotification::localized(Some("sk"), 9, "S")
+            .subject
+            .contains("nových inzerátov"));
+
+        // Czech three-bucket noun declension: 1 / 2–4 / 5+.
+        assert!(AlertNotification::localized(Some("cs"), 1, "S")
+            .subject
+            .contains("nový inzerát"));
+        assert!(AlertNotification::localized(Some("cs"), 4, "S")
+            .subject
+            .contains("nové inzeráty"));
+        assert!(AlertNotification::localized(Some("cs"), 12, "S")
+            .subject
+            .contains("nových inzerátů"));
+
+        // German two-bucket.
+        assert!(AlertNotification::localized(Some("de"), 1, "S")
+            .subject
+            .contains("neues Inserat passt"));
+        assert!(AlertNotification::localized(Some("de"), 6, "S")
+            .subject
+            .contains("neue Inserate passen"));
     }
 }
