@@ -44,6 +44,7 @@ import type {
   BulkEntrySummary,
   BulkEntryUnit,
 } from '../../features/person-months/types';
+import { getApiClient } from '../../lib/api';
 
 // Person-months feature pages (Epic 3) — lazy-loaded for code splitting.
 const PersonMonthsPage = lazy(() =>
@@ -71,20 +72,23 @@ interface BuildingUnit {
   designation: string;
 }
 
-/** Fetch every unit for a building, mapped to `{ id, designation }`. */
-function useBuildingUnits(buildingId: string | undefined) {
+/**
+ * Fetch every unit for a building, mapped to `{ id, designation }`.
+ *
+ * Routes through `getApiClient()` (path relative to the `/api/v1` baseURL) so
+ * the shared axios interceptors apply — most importantly Bearer-token
+ * injection. A raw `fetch()` here bypassed the JWT interceptor and 401'd for
+ * real signed-in users, silently leaving the units dropdown empty.
+ */
+export function useBuildingUnits(buildingId: string | undefined) {
   const { data, isLoading } = useQuery({
     queryKey: ['person-months', 'building-units', buildingId ?? ''],
     enabled: !!buildingId,
     queryFn: async (): Promise<BuildingUnit[]> => {
-      const res = await fetch(`/api/v1/units?buildingId=${buildingId}&limit=500`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const body = (await res.json()) as { data: Array<{ id: string; unitNumber: string }> };
-      return (body.data ?? []).map((u) => ({ id: u.id, designation: u.unitNumber }));
+      const res = await getApiClient().get<{
+        data: Array<{ id: string; unitNumber: string }>;
+      }>('/units', { params: { buildingId, limit: 500 } });
+      return (res.data.data ?? []).map((u) => ({ id: u.id, designation: u.unitNumber }));
     },
   });
   return { units: data ?? [], isLoading };
