@@ -684,8 +684,8 @@ async fn exchange_code_for_tokens(
     code: &str,
     code_verifier: &str,
 ) -> Result<OAuthTokens, anyhow::Error> {
-    let client = reqwest::Client::new();
-    let response = client
+    let response = state
+        .pm_oauth_client
         .post(&state.config.pm_oauth_token_url)
         .form(&[
             ("grant_type", "authorization_code"),
@@ -708,8 +708,8 @@ async fn exchange_code_for_tokens(
 
 /// Get user info from PM OAuth server.
 async fn get_user_info(state: &AppState, access_token: &str) -> Result<SsoUserInfo, anyhow::Error> {
-    let client = reqwest::Client::new();
-    let response = client
+    let response = state
+        .pm_oauth_client
         .get(&state.config.pm_userinfo_url)
         .bearer_auth(access_token)
         .send()
@@ -745,8 +745,8 @@ async fn introspect_pm_token(
 
     // Cache miss - perform actual introspection
     tracing::debug!("SSO token validation cache miss, calling PM API");
-    let client = reqwest::Client::new();
-    let response = client
+    let response = state
+        .pm_oauth_client
         .post(&state.config.pm_introspect_url)
         .form(&[
             ("token", token),
