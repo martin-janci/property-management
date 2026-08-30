@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-30T06:35:17Z",
+  "archived_at": "2026-08-30T10:31:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6251,6 +6251,30 @@
         "merged_pr": 2600,
         "merged_at": "2026-07-30T20:17:12Z",
         "at": "2026-07-30T20:18:07Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "action": "reality-web ListingGrid hand-rolls its own empty state with hardcoded English + duplicated styling instead of shared <EmptyState>",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=1 conf=medium vector=refactor) | gc1-reconcile 2026-08-30T10:22:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T00:23:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2888,
+        "merged_at": "2026-08-30T08:22:43Z",
+        "at": "2026-08-30T10:22:34Z"
       }
     },
     {

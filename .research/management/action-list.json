@@ -99,23 +99,6 @@
         "score": 2,
         "vector": "bug"
       }
-    },
-    {
-      "id": "code-review-reality-web-listing-grid-empty-dup",
-      "action": "reality-web ListingGrid hand-rolls its own empty state with hardcoded English + duplicated styling instead of shared <EmptyState>",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T00:23:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"
