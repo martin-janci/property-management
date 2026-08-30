@@ -45,6 +45,7 @@ pub mod rate_limit;
 pub mod oauth;
 pub mod onboarding;
 pub mod organizations;
+pub mod pagination;
 pub mod person_months;
 pub mod platform_admin;
 pub mod rentals;

@@ -16,6 +16,7 @@
 //! context before the connection returns to the pool.
 
 use crate::routes::ai::PaginationQuery;
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -200,7 +201,7 @@ async fn list_maintenance(
             &mut **rls.conn(),
             id,
             tenant_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await
@@ -294,7 +295,7 @@ async fn list_predictions(
             &mut **rls.conn(),
             tenant_id,
             50.0,
-            query.limit.unwrap_or(20),
+            clamp_limit(query.limit, 20),
         )
         .await
     {
@@ -376,7 +377,7 @@ async fn list_needing_maintenance(
             &mut **rls.conn(),
             tenant_id,
             query.days_ahead.unwrap_or(30),
-            query.limit.unwrap_or(20),
+            clamp_limit(query.limit, 20),
         )
         .await
     {
