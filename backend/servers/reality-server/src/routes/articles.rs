@@ -453,7 +453,7 @@ pub async fn create_comment(
             "Comment body cannot be empty".to_string(),
         ));
     }
-    if data.body.len() > MAX_COMMENT_BODY_LEN {
+    if data.body.chars().count() > MAX_COMMENT_BODY_LEN {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             format!(
