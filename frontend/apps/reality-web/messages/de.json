@@ -709,10 +709,28 @@
       "browseListings": "Angebote durchsuchen"
     },
     "savedSearches": {
-      "error": "Gespeicherte Suchen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
-      "emptyTitle": "Keine gespeicherten Suchen",
+      "alertsOff": "Benachrichtigungen aus",
+      "alertsOn": "Benachrichtigungen ein",
+      "allListings": "Alle Angebote",
+      "confirmNo": "Nein",
+      "confirmYes": "Ja",
+      "deleteAriaLabel": "Gespeicherte Suche löschen",
+      "deleteConfirm": "Löschen?",
       "emptyText": "Suchen Sie nach Angeboten und speichern Sie Ihre Suche, um benachrichtigt zu werden, wenn neue Immobilien Ihren Kriterien entsprechen.",
-      "startSearching": "Suche starten"
+      "emptyTitle": "Keine gespeicherten Suchen",
+      "error": "Gespeicherte Suchen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "forRent": "Zu vermieten",
+      "forSale": "Zu verkaufen",
+      "frequency": {
+        "daily": "Täglich",
+        "instant": "Sofort",
+        "weekly": "Wöchentlich"
+      },
+      "newCount": "{count} neue",
+      "startSearching": "Suche starten",
+      "subtitle": "Verwalten Sie Ihre gespeicherten Suchen und lassen Sie sich benachrichtigen, wenn neue Angebote Ihren Kriterien entsprechen.",
+      "title": "Gespeicherte Suchen",
+      "view": "Ansehen"
     },
     "realtorListings": {
       "error": "Angebote konnten nicht geladen werden.",

@@ -709,10 +709,28 @@
       "browseListings": "Procházet nabídky"
     },
     "savedSearches": {
-      "error": "Nepodařilo se načíst uložená hledání. Zkuste to znovu.",
-      "emptyTitle": "Žádná uložená hledání",
+      "alertsOff": "Upozornění vypnutá",
+      "alertsOn": "Upozornění zapnutá",
+      "allListings": "Všechny nabídky",
+      "confirmNo": "Ne",
+      "confirmYes": "Ano",
+      "deleteAriaLabel": "Odstranit uložené hledání",
+      "deleteConfirm": "Odstranit?",
       "emptyText": "Vyhledejte nabídky a uložte si hledání, abyste dostávali upozornění, když nové nemovitosti odpovídají vašim kritériím.",
-      "startSearching": "Začít hledat"
+      "emptyTitle": "Žádná uložená hledání",
+      "error": "Nepodařilo se načíst uložená hledání. Zkuste to znovu.",
+      "forRent": "K pronájmu",
+      "forSale": "Na prodej",
+      "frequency": {
+        "daily": "Denně",
+        "instant": "Okamžitě",
+        "weekly": "Týdně"
+      },
+      "newCount": "{count} nových",
+      "startSearching": "Začít hledat",
+      "subtitle": "Spravujte svá uložená hledání a nechte se upozornit, když nové nabídky odpovídají vašim kritériím.",
+      "title": "Uložená hledání",
+      "view": "Zobrazit"
     },
     "realtorListings": {
       "error": "Nepodařilo se načíst nabídky.",
