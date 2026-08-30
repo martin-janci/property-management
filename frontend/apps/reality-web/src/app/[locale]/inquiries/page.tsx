@@ -38,6 +38,7 @@ const statusConfig: Record<InquiryStatus, { color: string; bg: string }> = {
 
 function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
   const t = useTranslations('pages.inquiries');
+  const tError = useTranslations('error');
   const cancelInquiry = useCancelInquiry();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -135,6 +136,11 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
             >
               {t('cancelInquiry')}
             </button>
+          )}
+          {cancelInquiry.isError && (
+            <p className="cancel-error" role="alert" aria-live="assertive">
+              {tError('description')}
+            </p>
           )}
         </div>
       )}
@@ -263,6 +269,12 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
         .cancel-button:hover {
           border-color: var(--ppt-color-danger-hover);
           color: var(--ppt-color-danger-hover);
+        }
+
+        .cancel-error {
+          margin: 8px 0 0;
+          color: var(--ppt-color-danger-hover);
+          font-size: 13px;
         }
 
         .cancel-confirm {

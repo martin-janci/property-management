@@ -209,7 +209,7 @@ pub async fn create_review(
     }
 
     if let Some(body) = data.body.as_deref() {
-        if body.len() > MAX_REVIEW_BODY_LEN {
+        if body.chars().count() > MAX_REVIEW_BODY_LEN {
             return Err((
                 axum::http::StatusCode::BAD_REQUEST,
                 format!("Review body must be at most {MAX_REVIEW_BODY_LEN} characters"),

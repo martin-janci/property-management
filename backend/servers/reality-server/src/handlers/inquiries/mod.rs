@@ -168,12 +168,12 @@ impl InquiriesHandler {
                 field: "name".to_string(),
                 message: "Name is required".to_string(),
             });
-        } else if name.len() < 2 {
+        } else if name.chars().count() < 2 {
             errors.push(ValidationError {
                 field: "name".to_string(),
                 message: "Name must be at least 2 characters".to_string(),
             });
-        } else if name.len() > 100 {
+        } else if name.chars().count() > 100 {
             errors.push(ValidationError {
                 field: "name".to_string(),
                 message: "Name must be less than 100 characters".to_string(),
@@ -212,12 +212,12 @@ impl InquiriesHandler {
                 field: "message".to_string(),
                 message: "Message is required".to_string(),
             });
-        } else if message.len() < 10 {
+        } else if message.chars().count() < 10 {
             errors.push(ValidationError {
                 field: "message".to_string(),
                 message: "Message must be at least 10 characters".to_string(),
             });
-        } else if message.len() > 2000 {
+        } else if message.chars().count() > 2000 {
             errors.push(ValidationError {
                 field: "message".to_string(),
                 message: "Message must be less than 2000 characters".to_string(),
@@ -231,7 +231,11 @@ impl InquiriesHandler {
     }
 
     /// Check if email format is valid.
-    fn is_valid_email(email: &str) -> bool {
+    ///
+    /// `pub(crate)` so other anonymous-contact endpoints (e.g. listing
+    /// reports, UC-23) reuse the exact same length/format semantics instead
+    /// of re-implementing a divergent email check.
+    pub(crate) fn is_valid_email(email: &str) -> bool {
         if email.is_empty() || email.len() > 254 {
             return false;
         }
@@ -251,7 +255,11 @@ impl InquiriesHandler {
     }
 
     /// Check if phone number format is valid.
-    fn is_valid_phone(phone: &str) -> bool {
+    ///
+    /// `pub(crate)` for the same reason as [`Self::is_valid_email`] — shared
+    /// by the anonymous listing-report path so contact validation stays
+    /// consistent across public endpoints.
+    pub(crate) fn is_valid_phone(phone: &str) -> bool {
         // Remove common separators and check if remaining chars are digits or +
         let cleaned: String = phone
             .chars()
@@ -381,7 +389,7 @@ impl InquiriesHandler {
         if message.is_empty() {
             return Err("Message is required".to_string());
         }
-        if message.len() > 5000 {
+        if message.chars().count() > 5000 {
             return Err("Message must be less than 5000 characters".to_string());
         }
 

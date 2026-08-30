@@ -245,6 +245,95 @@ async fn list_my_reports_total_reflects_full_count_not_page_len(pool: PgPool) {
     );
 }
 
+/// POST /api/v1/reports for `listing_id` with optional reporter contact
+/// fields, returning the response status. Used by the contact-validation
+/// regression below.
+async fn post_report_with_contact(
+    router: &Router,
+    listing_id: Uuid,
+    reporter_email: Option<&str>,
+    reporter_phone: Option<&str>,
+) -> StatusCode {
+    let mut body = serde_json::json!({
+        "listing_id": listing_id,
+        "problem_type": "fraudulent_listing",
+        "description": "contact validation report body",
+    });
+    if let Some(email) = reporter_email {
+        body["reporter_email"] = serde_json::json!(email);
+    }
+    if let Some(phone) = reporter_phone {
+        body["reporter_phone"] = serde_json::json!(phone);
+    }
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/reports")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_vec(&body).unwrap()))
+        .unwrap();
+    router.clone().oneshot(req).await.unwrap().status()
+}
+
+/// Regression (input hygiene): `reporter_email` / `reporter_phone` are
+/// persisted verbatim and later shown to moderators, so a malformed value must
+/// be rejected with 400 BEFORE any INSERT, while a well-formed one (or an
+/// omitted field) still yields 201. Before the fix these fields were bound into
+/// the INSERT with no length or format checks.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn submit_report_validates_reporter_contact_fields(pool: PgPool) {
+    let listing_id = seed_active_listing(&pool, "contact-validate").await;
+    let router = reports_router(pool.clone());
+
+    // Malformed email → 400, no row written.
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, Some("not-an-email"), None).await,
+        StatusCode::BAD_REQUEST,
+        "malformed reporter_email must be rejected"
+    );
+    // Malformed phone (too short / non-numeric) → 400.
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, None, Some("abc")).await,
+        StatusCode::BAD_REQUEST,
+        "malformed reporter_phone must be rejected"
+    );
+    // Over-long email (> 254 chars) → 400 (length bound).
+    let long_email = format!("{}@example.com", "a".repeat(260));
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, Some(&long_email), None).await,
+        StatusCode::BAD_REQUEST,
+        "over-long reporter_email must be rejected"
+    );
+    assert_eq!(
+        reports_count(&pool, listing_id).await,
+        0,
+        "no report row may be written for invalid contact input"
+    );
+
+    // Well-formed contact details → 201 and a row is written.
+    assert_eq!(
+        post_report_with_contact(
+            &router,
+            listing_id,
+            Some("reporter@example.com"),
+            Some("+421 900 123 456"),
+        )
+        .await,
+        StatusCode::CREATED,
+        "valid reporter contact must be accepted"
+    );
+    // Omitted contact fields remain valid (anonymous report) → 201.
+    assert_eq!(
+        post_report_with_contact(&router, listing_id, None, None).await,
+        StatusCode::CREATED,
+        "omitted reporter contact must still be accepted"
+    );
+    assert_eq!(
+        reports_count(&pool, listing_id).await,
+        2,
+        "both accepted reports must be persisted"
+    );
+}
+
 /// Regression (security: anonymous report flood): the anonymous POST is
 /// per-IP throttled. After the quota is exhausted from one IP, further requests
 /// get 429 and no new `listing_reports` rows are written.
