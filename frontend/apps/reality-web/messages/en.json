@@ -357,6 +357,8 @@
   },
   "listings": {
     "allProperties": "All Properties",
+    "emptyTitle": "No listings found",
+    "emptyDescription": "Try adjusting your filters or search criteria to find more properties.",
     "filters": "Filters",
     "gridView": "Grid view",
     "listView": "List view",

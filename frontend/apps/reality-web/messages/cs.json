@@ -357,6 +357,8 @@
   },
   "listings": {
     "allProperties": "Všechny nemovitosti",
+    "emptyTitle": "Nebyly nalezeny žádné nabídky",
+    "emptyDescription": "Zkuste upravit filtry nebo vyhledávací kritéria a najděte více nemovitostí.",
     "filters": "Filtry",
     "gridView": "Zobrazení mřížky",
     "listView": "Zobrazení seznamu",
