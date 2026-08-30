@@ -9408,7 +9408,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-core client-ip)"
       ],
@@ -9423,7 +9423,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": "plans/code-review-api-core-client-ip-cf-spoof.md"
+      "plan": "plans/code-review-api-core-client-ip-cf-spoof.md",
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2882
+      }
     },
     {
       "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
@@ -9431,7 +9436,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-core workflow engine)"
       ],
@@ -9444,7 +9449,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2886
+      }
     },
     {
       "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
@@ -9452,7 +9462,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-core document-generation)"
       ],
@@ -9465,7 +9475,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2885
+      }
     },
     {
       "id": "code-review-api-handlers-unbounded-pagination-limit",
@@ -9560,7 +9575,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)"
       ],
@@ -9574,7 +9589,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2880
+      }
     },
     {
       "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
@@ -9610,7 +9630,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)"
       ],
@@ -9623,7 +9643,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2883
+      }
     },
     {
       "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
@@ -9631,7 +9656,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)"
       ],
@@ -9644,7 +9669,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2884
+      }
     },
     {
       "id": "code-review-reality-web-i18n-error-state-gap",
@@ -9652,7 +9682,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (reality-web)"
       ],
@@ -9669,7 +9699,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2881
+      }
     },
     {
       "id": "code-review-reality-web-listing-grid-empty-dup",
@@ -9700,7 +9735,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (mobile-rn)"
       ],
@@ -9714,7 +9749,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T06:23:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2879
+      }
     }
   ]
 }
