@@ -13,6 +13,7 @@ import {
   useToggleSearchAlert,
 } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
@@ -279,6 +280,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
 }
 
 function SavedSearchesContent() {
+  const t = useTranslations('pages.savedSearches');
   const { data: searches, isLoading, error } = useSavedSearches();
 
   if (isLoading) {
@@ -311,7 +313,7 @@ function SavedSearchesContent() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Failed to load saved searches. Please try again.</p>
+        <p>{t('error')}</p>
         <style jsx>{`
           .error-state {
             padding: 64px 24px;
@@ -339,13 +341,10 @@ function SavedSearchesContent() {
           <path d="m21 21-4.35-4.35" />
           <path d="M11 8v6M8 11h6" />
         </svg>
-        <h2 className="empty-title">No saved searches</h2>
-        <p className="empty-text">
-          Search for listings and save your search to get alerts when new properties match your
-          criteria.
-        </p>
+        <h2 className="empty-title">{t('emptyTitle')}</h2>
+        <p className="empty-text">{t('emptyText')}</p>
         <Link href="/listings" className="browse-link">
-          Start searching
+          {t('startSearching')}
         </Link>
         <style jsx>{`
           .empty-state {

@@ -103,6 +103,11 @@
       "loading": "Načítá se…",
       "signIn": "Přihlásit se",
       "title": "Vyžaduje se přihlášení"
+    },
+    "callback": {
+      "title": "Přihlášení selhalo",
+      "invalidState": "Neplatný stavový token. Zkuste se přihlásit znovu.",
+      "returnHome": "Zpět na domovskou stránku"
     }
   },
   "common": {
@@ -611,7 +616,11 @@
       "description": "Nemovitosti, které jste si uložili.",
       "h1": "Moje oblíbené",
       "priceAlertsLink": "Cenová upozornění",
-      "watchPrice": "Sledovat cenu"
+      "watchPrice": "Sledovat cenu",
+      "error": "Nepodařilo se načíst oblíbené. Zkuste to znovu.",
+      "emptyTitle": "Zatím žádné oblíbené",
+      "emptyText": "Začněte procházet nabídky a uložte si oblíbené kliknutím na ikonu srdce.",
+      "browseListings": "Procházet nabídky"
     },
     "login": {
       "title": "Přihlášení",
@@ -690,6 +699,23 @@
     "priceAlerts": {
       "title": "Cenová upozornění",
       "description": "Upozornění na snížení ceny a návrat na trh pro vaše oblíbené nabídky."
+    },
+    "inquiries": {
+      "error": "Nepodařilo se načíst poptávky. Zkuste to znovu.",
+      "emptyTitle": "Zatím žádné poptávky",
+      "emptyText": "Když kontaktujete makléře ohledně nabídek, vaše poptávky se zobrazí zde.",
+      "browseListings": "Procházet nabídky"
+    },
+    "savedSearches": {
+      "error": "Nepodařilo se načíst uložená hledání. Zkuste to znovu.",
+      "emptyTitle": "Žádná uložená hledání",
+      "emptyText": "Vyhledejte nabídky a uložte si hledání, abyste dostávali upozornění, když nové nemovitosti odpovídají vašim kritériím.",
+      "startSearching": "Začít hledat"
+    },
+    "realtorListings": {
+      "error": "Nepodařilo se načíst nabídky.",
+      "empty": "Zatím jste nezveřejnili žádné nabídky.",
+      "createFirst": "Vytvořte svou první nabídku"
     }
   },
   "search": {

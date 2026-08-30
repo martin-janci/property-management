@@ -103,6 +103,11 @@
       "loading": "Loading…",
       "signIn": "Sign in",
       "title": "Sign in required"
+    },
+    "callback": {
+      "title": "Login Failed",
+      "invalidState": "Invalid state token. Please try logging in again.",
+      "returnHome": "Return Home"
     }
   },
   "common": {
@@ -611,7 +616,11 @@
       "description": "Properties you have saved for later.",
       "h1": "My Favorites",
       "priceAlertsLink": "Price alerts",
-      "watchPrice": "Watch price"
+      "watchPrice": "Watch price",
+      "error": "Failed to load favorites. Please try again.",
+      "emptyTitle": "No favorites yet",
+      "emptyText": "Start exploring listings and save your favorites by clicking the heart icon.",
+      "browseListings": "Browse listings"
     },
     "login": {
       "title": "Sign in",
@@ -690,6 +699,23 @@
     "priceAlerts": {
       "title": "Price Alerts",
       "description": "Price-drop and back-on-market alerts for your favorite listings."
+    },
+    "inquiries": {
+      "error": "Failed to load inquiries. Please try again.",
+      "emptyTitle": "No inquiries yet",
+      "emptyText": "When you contact agents about listings, your inquiries will appear here.",
+      "browseListings": "Browse listings"
+    },
+    "savedSearches": {
+      "error": "Failed to load saved searches. Please try again.",
+      "emptyTitle": "No saved searches",
+      "emptyText": "Search for listings and save your search to get alerts when new properties match your criteria.",
+      "startSearching": "Start searching"
+    },
+    "realtorListings": {
+      "error": "Failed to load listings.",
+      "empty": "You haven't published any listings yet.",
+      "createFirst": "Create your first listing"
     }
   },
   "search": {

@@ -80,7 +80,9 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     // The one-shot CSRF nonce is cleared after a successful callback.
     expect(sessionStorage.getItem(SSO_STATE_KEY)).toBeNull();
     // No error UI on the happy path.
-    expect(screen.queryByText('Login Failed')).not.toBeInTheDocument();
+    // With the global next-intl test mock, `t(key)` returns the key itself,
+    // so the error title renders as its i18n key `title`.
+    expect(screen.queryByText('title')).not.toBeInTheDocument();
   });
 
   it('redirects when NO nonce was issued (server-cookie-only flow, nothing to verify)', async () => {
@@ -89,7 +91,9 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     renderCallback('');
 
     await waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/'));
-    expect(screen.queryByText('Login Failed')).not.toBeInTheDocument();
+    // With the global next-intl test mock, `t(key)` returns the key itself,
+    // so the error title renders as its i18n key `title`.
+    expect(screen.queryByText('title')).not.toBeInTheDocument();
   });
 
   it('FAILS when a nonce was issued but the callback carries no state (CSRF bypass closed, #1826)', async () => {
@@ -101,9 +105,9 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     renderCallback('');
 
     await waitFor(() => {
-      expect(screen.getByText('Login Failed')).toBeInTheDocument();
+      expect(screen.getByText('title')).toBeInTheDocument();
     });
-    expect(screen.getByText(/invalid state token/i)).toBeInTheDocument();
+    expect(screen.getByText('invalidState')).toBeInTheDocument();
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 
@@ -135,12 +139,12 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     renderCallback('?state=tampered');
 
     await waitFor(() => {
-      expect(screen.getByText('Login Failed')).toBeInTheDocument();
+      expect(screen.getByText('title')).toBeInTheDocument();
     });
-    expect(screen.getByText(/invalid state token/i)).toBeInTheDocument();
+    expect(screen.getByText('invalidState')).toBeInTheDocument();
     expect(replaceSpy).not.toHaveBeenCalled();
-    // A recovery affordance back to home is rendered.
-    expect(screen.getByRole('link', { name: /return home/i })).toBeInTheDocument();
+    // A recovery affordance back to home is rendered (i18n key `returnHome`).
+    expect(screen.getByRole('link', { name: 'returnHome' })).toBeInTheDocument();
   });
 
   it('surfaces a provider error_description and does not redirect', async () => {
@@ -149,7 +153,7 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     await waitFor(() => {
       expect(screen.getByText('User declined consent')).toBeInTheDocument();
     });
-    expect(screen.getByText('Login Failed')).toBeInTheDocument();
+    expect(screen.getByText('title')).toBeInTheDocument();
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 

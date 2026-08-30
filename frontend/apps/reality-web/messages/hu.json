@@ -103,6 +103,11 @@
       "loading": "Betöltés…",
       "signIn": "Bejelentkezés",
       "title": "Bejelentkezés szükséges"
+    },
+    "callback": {
+      "title": "A bejelentkezés sikertelen",
+      "invalidState": "Érvénytelen állapot-token. Kérjük, próbáljon meg újra bejelentkezni.",
+      "returnHome": "Vissza a főoldalra"
     }
   },
   "common": {
@@ -610,7 +615,11 @@
       "description": "Az Ön által mentett ingatlanok.",
       "h1": "Kedvenceim",
       "priceAlertsLink": "Árriasztások",
-      "watchPrice": "Ár figyelése"
+      "watchPrice": "Ár figyelése",
+      "error": "Nem sikerült betölteni a kedvenceket. Kérjük, próbálja újra.",
+      "emptyTitle": "Még nincsenek kedvencek",
+      "emptyText": "Kezdje el böngészni a hirdetéseket, és mentse el kedvenceit a szív ikonra kattintva.",
+      "browseListings": "Hirdetések böngészése"
     },
     "login": {
       "title": "Sign in",
@@ -683,6 +692,23 @@
     "priceAlerts": {
       "title": "Árriasztások",
       "description": "Árcsökkenési és piacra visszatérési riasztások a kedvenc hirdetéseihez."
+    },
+    "inquiries": {
+      "error": "Nem sikerült betölteni a megkereséseket. Kérjük, próbálja újra.",
+      "emptyTitle": "Még nincsenek megkeresések",
+      "emptyText": "Amikor kapcsolatba lép az ügynökökkel a hirdetésekkel kapcsolatban, a megkeresései itt jelennek meg.",
+      "browseListings": "Hirdetések böngészése"
+    },
+    "savedSearches": {
+      "error": "Nem sikerült betölteni a mentett kereséseket. Kérjük, próbálja újra.",
+      "emptyTitle": "Nincsenek mentett keresések",
+      "emptyText": "Keressen hirdetéseket, és mentse el a keresést, hogy értesítést kapjon, amikor új ingatlanok felelnek meg a feltételeinek.",
+      "startSearching": "Keresés indítása"
+    },
+    "realtorListings": {
+      "error": "Nem sikerült betölteni a hirdetéseket.",
+      "empty": "Még nem tett közzé egyetlen hirdetést sem.",
+      "createFirst": "Hozza létre első hirdetését"
     }
   },
   "search": {

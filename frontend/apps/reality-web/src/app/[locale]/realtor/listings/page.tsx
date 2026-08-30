@@ -9,6 +9,7 @@
 import type { AgencyListing } from '@ppt/reality-api-client';
 import { useMyListings } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 
@@ -67,6 +68,7 @@ function ListingCard({ listing }: { listing: AgencyListing }) {
 }
 
 function MyListingsContent() {
+  const t = useTranslations('pages.realtorListings');
   const { data, isLoading, error } = useMyListings();
   const listings = data?.listings ?? [];
 
@@ -83,12 +85,12 @@ function MyListingsContent() {
       </header>
 
       {isLoading && <p className="state">Loading…</p>}
-      {error && <p className="state error">Failed to load listings.</p>}
+      {error && <p className="state error">{t('error')}</p>}
       {!isLoading && !error && listings.length === 0 && (
         <div className="empty">
-          <p>You haven't published any listings yet.</p>
+          <p>{t('empty')}</p>
           <Link href="/realtor/listings/new" className="primary">
-            Create your first listing
+            {t('createFirst')}
           </Link>
         </div>
       )}

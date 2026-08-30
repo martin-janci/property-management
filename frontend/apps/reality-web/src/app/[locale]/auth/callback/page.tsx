@@ -6,6 +6,7 @@
  */
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { type CSSProperties, Suspense, useEffect, useState } from 'react';
 
 /**
@@ -76,6 +77,7 @@ function LoadingSpinner() {
 }
 
 function SsoCallbackContent() {
+  const t = useTranslations('auth.callback');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +105,7 @@ function SsoCallbackContent() {
     const savedState = sessionStorage.getItem(SSO_STATE_KEY);
 
     if (savedState && state !== savedState) {
-      setError('Invalid state token. Please try logging in again.');
+      setError(t('invalidState'));
       return;
     }
 
@@ -121,16 +123,16 @@ function SsoCallbackContent() {
       !rawRedirect.startsWith('//') &&
       !rawRedirect.startsWith('/\\');
     router.replace(isSafeRedirect ? rawRedirect : '/');
-  }, [router, searchParams]);
+  }, [router, searchParams, t]);
 
   if (error) {
     return (
       <main style={styles.container}>
         <div style={styles.content}>
-          <h1 style={styles.errorTitle}>Login Failed</h1>
+          <h1 style={styles.errorTitle}>{t('title')}</h1>
           <p style={styles.errorMessage}>{error}</p>
           <a href="/" style={styles.button}>
-            Return Home
+            {t('returnHome')}
           </a>
         </div>
       </main>

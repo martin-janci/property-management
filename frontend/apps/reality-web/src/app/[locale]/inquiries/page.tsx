@@ -9,6 +9,7 @@
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
 import { useCancelInquiry, useMyInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
@@ -295,6 +296,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
 }
 
 function InquiriesContent() {
+  const t = useTranslations('pages.inquiries');
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | undefined>(undefined);
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useMyInquiries(statusFilter, page, 10);
@@ -329,7 +331,7 @@ function InquiriesContent() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Failed to load inquiries. Please try again.</p>
+        <p>{t('error')}</p>
         <style jsx>{`
           .error-state {
             padding: 64px 24px;
@@ -384,12 +386,10 @@ function InquiriesContent() {
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
             <polyline points="22,6 12,13 2,6" />
           </svg>
-          <h2 className="empty-title">No inquiries yet</h2>
-          <p className="empty-text">
-            When you contact agents about listings, your inquiries will appear here.
-          </p>
+          <h2 className="empty-title">{t('emptyTitle')}</h2>
+          <p className="empty-text">{t('emptyText')}</p>
           <Link href="/listings" className="browse-link">
-            Browse listings
+            {t('browseListings')}
           </Link>
         </div>
       ) : (
