@@ -133,40 +133,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "code-review-reality-web-inquiries-i18n",
-      "action": "Inquiries page renders hardcoded English status labels and chrome in a 4-language app",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-saved-searches-i18n",
-      "action": "Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
     }
   ],
   "generated": "2026-08-25T04:24:00Z"

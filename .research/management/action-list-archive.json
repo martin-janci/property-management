@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-30T18:55:11Z",
+  "archived_at": "2026-08-30T22:34:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6422,6 +6422,30 @@
       }
     },
     {
+      "id": "code-review-reality-web-inquiries-i18n",
+      "action": "Inquiries page renders hardcoded English status labels and chrome in a 4-language app",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=high vector=bug) | gc1-reconcile 2026-08-30T22:34:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2895,
+        "merged_at": "2026-08-30T22:32:15Z",
+        "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-listing-grid-empty-dup",
       "action": "reality-web ListingGrid hand-rolls its own empty state with hardcoded English + duplicated styling instead of shared <EmptyState>",
       "owner_role": "pm-tech-lead",
@@ -6590,6 +6614,30 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "code-review-reality-web-saved-searches-i18n",
+      "action": "Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=high vector=bug) | gc1-reconcile 2026-08-30T22:34:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2894,
+        "merged_at": "2026-08-30T22:32:09Z",
+        "at": "2026-08-30T22:34:19Z"
+      }
     },
     {
       "id": "code-review-reality-web-share-comparison-404",
