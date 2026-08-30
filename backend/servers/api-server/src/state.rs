@@ -487,6 +487,9 @@ pub struct AppState {
     /// the share-access audit log and the `token:ip` brute-force throttle:
     /// forwarding headers are only trusted when the socket peer is in this set,
     /// so a directly-reachable client can no longer spoof its source IP.
+    /// `CF-Connecting-IP` additionally requires `TRUST_CF_CONNECTING_IP=1` (off
+    /// by default) so a generic private-range reverse proxy can't be turned into
+    /// a `CF-Connecting-IP` spoofing oracle.
     pub trusted_proxies: crate::client_ip::TrustedProxies,
 }
 
