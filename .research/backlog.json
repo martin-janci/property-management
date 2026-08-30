@@ -8313,7 +8313,7 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
@@ -8321,13 +8321,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
-        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS."
+        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9473,15 +9474,17 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)",
+        "PR #2878"
       ],
       "evidence": [
         "Many list endpoints resolve `query.limit.unwrap_or(N)` with NO upper-bound clamp then pass straight into repository LIMIT. Sites: ai/sessions.rs:101/:205/:924/:997; ai/equipment.rs:203/:297/:379; ai/voice.rs:317; ai/workflows.rs:546 (the `as usize` cast also silently wraps hostile i64); ai/llm.rs:1448; vendors/contacts.rs:130; compliance.rs:167/:240/:268; predictive_maintenance.rs:316/:503/:536.",
         "End-to-end confirmed for ai_chat: routes/ai/sessions.rs:205 → crates/db/src/repositories/ai_chat.rs:229-247 binds `limit: i64` into `LIMIT $4 OFFSET $5` with no clamp anywhere in the repo. Same shape at :137/:156/:160 and :365/:377/:381.",
         "Intended pattern already exists: admin/users.rs:58 `.min(100)`, admin/audit.rs:261 `.min(500)` and :280 `.min(50_000)`, market_pricing.rs:1665 `.min(50)`.",
-        "Fix: clamp at handler boundary with `.min(MAX_PAGE_SIZE)` (or shared `Pagination::clamped()` helper); defense-in-depth clamp in repos taking raw `limit: i64`. IG3: handler test with `?limit=1000000` returns ≤MAX rows."
+        "Fix: clamp at handler boundary with `.min(MAX_PAGE_SIZE)` (or shared `Pagination::clamped()` helper); defense-in-depth clamp in repos taking raw `limit: i64`. IG3: handler test with `?limit=1000000` returns ≤MAX rows.",
+        "resolved: PR #2878 merged 2026-08-30 — fix(api-server): clamp user-supplied pagination limit on list endpoints"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai/sessions.rs",
@@ -9495,7 +9498,7 @@
         "backend/crates/db/src/repositories/ai_chat.rs"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9526,22 +9529,24 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)",
+        "PR #2876"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:77-91 — `useBuildingUnits` calls raw `fetch('/api/v1/units?buildingId=…&limit=500', { headers: { 'Content-Type': 'application/json' } })` inside a TanStack queryFn.",
         "JWT is injected ONLY via the axios request interceptor in lib/api.ts:198-204; contexts/AuthContext.tsx:327 registers `setTokenProvider(getAccessToken)`. No global fetch override, no service worker, no cookie session — grep across the app confirms.",
         "Impact: request to authenticated `/api/v1/units` goes out with NO bearer token → 401 for real logged-in sessions, building-units dropdown that feeds person-months silently fails to populate.",
-        "Fix: route through the shared axios client (`api.get('/units', { params: …})`) or a helper hook that mirrors the interceptor plumbing. IG3: unit test asserts useBuildingUnits sends Authorization header when token provider is registered."
+        "Fix: route through the shared axios client (`api.get('/units', { params: …})`) or a helper hook that mirrors the interceptor plumbing. IG3: unit test asserts useBuildingUnits sends Authorization header when token provider is registered.",
+        "resolved: PR #2876 merged 2026-08-30 — fix(ppt-web): route useBuildingUnits through axios client for JWT"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
         "frontend/apps/ppt-web/src/lib/api.ts"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9572,21 +9577,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)",
+        "PR #2877"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit collects a complete CreateDisputeRequest but its entire side-effect is `await new Promise(r => setTimeout(r, 1000))` then `navigate('/disputes')`. No useMutation, no api call, no @ppt/api-client import in the file. formData is silently discarded.",
         "Live trap: routes/groups/disputes.tsx:482 wires `/disputes/new` to FileDisputePageRoute (the real path), but CreateDisputePage IS re-exported from features/disputes/pages/index.ts:6. A future author importing from the barrel and mounting it ships a form that loses every submission with no error.",
-        "Fix (cheapest): delete CreateDisputePage.tsx + its barrel re-export (FileDisputePage is the live path). Alternative: wire useMutation into the real @ppt/api-client createDispute endpoint. IG3: grep-guard that features/disputes/pages/index.ts does not export CreateDisputePage."
+        "Fix (cheapest): delete CreateDisputePage.tsx + its barrel re-export (FileDisputePage is the live path). Alternative: wire useMutation into the real @ppt/api-client createDispute endpoint. IG3: grep-guard that features/disputes/pages/index.ts does not export CreateDisputePage.",
+        "resolved: PR #2877 merged 2026-08-30 — fix(ppt-web): remove orphaned CreateDisputePage stub that discarded submissions"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
         "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9699,6 +9706,28 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2876-ppt",
+      "title": "screen-map drift: PR #2876 touched frontend/apps/ppt-web/src/routes/groups/person-months.tsx without updating docs/screens/ppt/*",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2876"
+      ],
+      "evidence": [
+        "PR #2876 touched frontend/apps/ppt-web/src/routes/groups/person-months.tsx (routes trigger set) with no matching docs/screens/ppt/*.md edit",
+        "review candidate — best-effort basename heuristic (routes/groups vs person-months screen slug); the PR was a JWT-interceptor bug fix, not a route add/rename"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
       "plan": null
     }
   ]

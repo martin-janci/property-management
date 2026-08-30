@@ -1,0 +1,137 @@
+{
+  "generated": "2026-08-30T03:09:11Z",
+  "routine_lag_hours": 4,
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-2876-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2876",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #2876 touched frontend/apps/ppt-web/src/routes/groups/person-months.tsx (routes trigger set) with no matching docs/screens/ppt/*.md edit; JWT-interceptor bug fix (no route add/rename), best-effort heuristic — review candidate"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$TODAY.md && head-1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json vs HEAD comparison",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay compliance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run (vacuously true)",
+      "observed": "0 new",
+      "expected": "≥0 annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "diff empty",
+      "expected": "diff empty"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty (none failed)",
+      "observed": "no failures declared, no cursor rollback",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still tracked",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "9>=9",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff empty",
+      "expected": "diff empty"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "cap/idempotency held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 not run this run — no-op)",
+      "observed": "no-op",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
