@@ -136,6 +136,31 @@ fn multipart_body(meter_id: Uuid, reading_value: &str) -> (Vec<u8>, String) {
     (body.into_bytes(), content_type)
 }
 
+/// Multipart body that also carries an `image` part with raw bytes, to exercise
+/// the storage path of `process_meter_reading`.
+fn multipart_body_with_image(
+    meter_id: Uuid,
+    reading_value: &str,
+    image: &[u8],
+) -> (Vec<u8>, String) {
+    let boundary = "----TestBoundaryImg9876";
+    let mut body: Vec<u8> = Vec::new();
+    let header = format!(
+        "--{b}\r\nContent-Disposition: form-data; name=\"meter_id\"\r\n\r\n{mid}\r\n\
+         --{b}\r\nContent-Disposition: form-data; name=\"reading_value\"\r\n\r\n{rv}\r\n\
+         --{b}\r\nContent-Disposition: form-data; name=\"image\"; filename=\"meter.jpg\"\r\n\
+         Content-Type: image/jpeg\r\n\r\n",
+        b = boundary,
+        mid = meter_id,
+        rv = reading_value
+    );
+    body.extend_from_slice(header.as_bytes());
+    body.extend_from_slice(image);
+    body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
+    let content_type = format!("multipart/form-data; boundary={boundary}");
+    (body, content_type)
+}
+
 // ============================================================================
 // process_meter_reading tests
 // ============================================================================
@@ -201,7 +226,78 @@ async fn process_meter_reading_creates_pending_reading(pool: PgPool) {
     let photo_url: Option<String> = row.get("photo_url");
     assert_eq!(source, "photo", "source must be 'photo'");
     assert_eq!(status, "pending", "status must be 'pending'");
-    assert!(photo_url.is_some(), "photo_url must be set");
+    // No image part was sent, so the reading carries NO photo_url — the handler
+    // must NOT fabricate a `pending-upload/...` placeholder for it.
+    assert!(
+        photo_url.is_none(),
+        "photo_url must be NULL when no image was uploaded, got {photo_url:?}"
+    );
+}
+
+/// Regression test for the silent image-loss bug: when an image *is* submitted
+/// but no storage backend is configured, the handler previously returned 201
+/// with a fabricated `pending-upload/{meter}/{uuid}` URL — dropping the image
+/// bytes entirely (nothing stored, no reconciler to ever fulfil the URL) while
+/// telling the caller it had succeeded. The correct behaviour is to fail loudly
+/// (503) and persist NO reading, so the user knows the photo was not saved.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn process_meter_reading_image_without_storage_fails_loudly(pool: PgPool) {
+    // TestApp wires `AppState::new`, which leaves `storage_service = None`.
+    let app = TestApp::new(pool.clone()).await;
+
+    let org = seed_org(&pool, "nostore-a").await;
+    let user = seed_user(&pool, "ocr-nostore-a@test.local").await;
+    seed_membership(&pool, org, user).await;
+    let building = seed_building(&pool, org).await;
+    let meter = seed_meter(&pool, org, building, "NOSTORE-A-1").await;
+
+    let token = mint_token(user, "ocr-nostore-a@test.local");
+    let (body, content_type) =
+        multipart_body_with_image(meter, "77.7", b"\xFF\xD8\xFF\xE0fake-jpeg-bytes");
+
+    let resp = app
+        .router
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/ai/ocr/meter-reading")
+                .header(header::AUTHORIZATION, format!("Bearer {}", token))
+                .header(header::CONTENT_TYPE, content_type)
+                .body(axum::body::Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    // Must NOT be a 2xx success with a fabricated URL.
+    assert_eq!(
+        resp.status(),
+        StatusCode::SERVICE_UNAVAILABLE,
+        "image upload with storage disabled must fail with 503, not silently drop the image"
+    );
+
+    // And no reading row must have been persisted for this meter.
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM meter_readings WHERE meter_id = $1")
+        .bind(meter)
+        .fetch_one(&pool)
+        .await
+        .expect("count readings");
+    assert_eq!(
+        count, 0,
+        "no meter reading should be persisted when the image could not be stored"
+    );
+
+    // Belt-and-braces: no fabricated `pending-upload/...` URL anywhere.
+    let fabricated: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM meter_readings WHERE photo_url LIKE 'pending-upload/%'",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("count fabricated urls");
+    assert_eq!(
+        fabricated, 0,
+        "no fabricated pending-upload URL may be persisted"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
