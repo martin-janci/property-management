@@ -880,7 +880,10 @@
     "draftJustNow": "épp most",
     "draftSecondsAgo": "{{count}} másodperce",
     "draftMinutesAgo": "{{count}} perce",
-    "draftRestored": "A mentett piszkozatot visszaállítottuk."
+    "draftRestored": "A mentett piszkozatot visszaállítottuk.",
+    "filePageTitle": "Vita benyújtása",
+    "subjectPlaceholder": "A vita rövid összefoglalása",
+    "descriptionPlaceholder": "Írja le részletesen a vitát. Adja meg a dátumokat, időpontokat és konkrét eseményeket (legalább 30 karakter)."
   },
   "financial": {
     "title": "Pénzügyek",

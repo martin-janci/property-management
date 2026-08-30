@@ -882,7 +882,10 @@
     "draftJustNow": "przed chwilą",
     "draftSecondsAgo": "{{count}}s temu",
     "draftMinutesAgo": "{{count}}m temu",
-    "draftRestored": "Przywrócono zapisany szkic."
+    "draftRestored": "Przywrócono zapisany szkic.",
+    "filePageTitle": "Zgłoś spór",
+    "subjectPlaceholder": "Krótkie podsumowanie sporu",
+    "descriptionPlaceholder": "Opisz szczegółowo spór. Podaj daty, godziny i konkretne zdarzenia (minimum 30 znaków)."
   },
   "financial": {
     "title": "Finanse",

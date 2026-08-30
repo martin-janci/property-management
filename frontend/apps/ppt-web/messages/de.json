@@ -880,7 +880,10 @@
     "draftJustNow": "gerade eben",
     "draftSecondsAgo": "vor {{count}}s",
     "draftMinutesAgo": "vor {{count}}m",
-    "draftRestored": "Ihr gespeicherter Entwurf wurde wiederhergestellt."
+    "draftRestored": "Ihr gespeicherter Entwurf wurde wiederhergestellt.",
+    "filePageTitle": "Streitfall einreichen",
+    "subjectPlaceholder": "Kurze Zusammenfassung des Streitfalls",
+    "descriptionPlaceholder": "Beschreiben Sie den Streitfall im Detail. Geben Sie Daten, Uhrzeiten und konkrete Vorfälle an (mindestens 30 Zeichen)."
   },
   "financial": {
     "title": "Finanzen",
