@@ -706,7 +706,26 @@
       "error": "Nepodarilo sa načítať dopyty. Skúste to znova.",
       "emptyTitle": "Zatiaľ žiadne dopyty",
       "emptyText": "Keď kontaktujete maklérov ohľadom ponúk, vaše dopyty sa zobrazia tu.",
-      "browseListings": "Prehliadať ponuky"
+      "browseListings": "Prehliadať ponuky",
+      "title": "Moje dopyty",
+      "subtitle": "Sledujte svoje dopyty na nehnuteľnosti a žiadosti o obhliadku.",
+      "filterAll": "Všetky",
+      "status": {
+        "pending": "Čaká sa",
+        "responded": "Zodpovedané",
+        "scheduled": "Naplánované",
+        "completed": "Dokončené",
+        "cancelled": "Zrušené"
+      },
+      "viewingScheduled": "Obhliadka naplánovaná: {date} o {time}",
+      "agentResponse": "Odpoveď makléra:",
+      "cancelConfirm": "Zrušiť tento dopyt?",
+      "cancelYes": "Áno, zrušiť",
+      "cancelNo": "Nie",
+      "cancelInquiry": "Zrušiť dopyt",
+      "previous": "Predchádzajúca",
+      "next": "Ďalšia",
+      "pageInfo": "Strana {page} z {total}"
     },
     "savedSearches": {
       "error": "Nepodarilo sa načítať uložené vyhľadávania. Skúste to znova.",

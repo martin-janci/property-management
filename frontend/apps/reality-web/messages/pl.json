@@ -699,7 +699,26 @@
       "error": "Nie udało się załadować zapytań. Spróbuj ponownie.",
       "emptyTitle": "Brak zapytań",
       "emptyText": "Gdy skontaktujesz się z agentami w sprawie ofert, Twoje zapytania pojawią się tutaj.",
-      "browseListings": "Przeglądaj oferty"
+      "browseListings": "Przeglądaj oferty",
+      "title": "Moje zapytania",
+      "subtitle": "Śledź swoje zapytania o nieruchomości i prośby o oglądanie.",
+      "filterAll": "Wszystkie",
+      "status": {
+        "pending": "Oczekujące",
+        "responded": "Odpowiedziano",
+        "scheduled": "Zaplanowane",
+        "completed": "Zakończone",
+        "cancelled": "Anulowane"
+      },
+      "viewingScheduled": "Oglądanie zaplanowane: {date} o {time}",
+      "agentResponse": "Odpowiedź agenta:",
+      "cancelConfirm": "Anulować to zapytanie?",
+      "cancelYes": "Tak, anuluj",
+      "cancelNo": "Nie",
+      "cancelInquiry": "Anuluj zapytanie",
+      "previous": "Poprzednia",
+      "next": "Następna",
+      "pageInfo": "Strona {page} z {total}"
     },
     "savedSearches": {
       "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",

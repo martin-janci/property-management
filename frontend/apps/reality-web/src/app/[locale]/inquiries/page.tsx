@@ -14,31 +14,30 @@ import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 
-const statusConfig: Record<InquiryStatus, { label: string; color: string; bg: string }> = {
+// Status labels are resolved via next-intl (`pages.inquiries.status.<status>`);
+// only the presentational colors live here.
+const statusConfig: Record<InquiryStatus, { color: string; bg: string }> = {
   pending: {
-    label: 'Pending',
     color: 'var(--ppt-color-warning-dark)',
     bg: 'var(--ppt-color-warning-light)',
   },
   responded: {
-    label: 'Responded',
     color: 'var(--ppt-color-primary-hover)',
     bg: 'var(--ppt-color-primary-soft-bg)',
   },
-  scheduled: { label: 'Scheduled', color: '#6d28d9', bg: '#ede9fe' },
+  scheduled: { color: '#6d28d9', bg: '#ede9fe' },
   completed: {
-    label: 'Completed',
     color: 'var(--ppt-color-success-dark)',
     bg: 'var(--ppt-color-success-light)',
   },
   cancelled: {
-    label: 'Cancelled',
     color: 'var(--ppt-color-danger-dark)',
     bg: 'var(--ppt-color-danger-light)',
   },
 };
 
 function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
+  const t = useTranslations('pages.inquiries');
   const cancelInquiry = useCancelInquiry();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -69,7 +68,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
           </div>
         </div>
         <span className="status-badge" style={{ color: status.color, background: status.bg }}>
-          {status.label}
+          {t(`status.${inquiry.status}`)}
         </span>
       </div>
 
@@ -93,15 +92,17 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             <span>
-              Viewing scheduled: {new Date(inquiry.scheduledViewing.date).toLocaleDateString()} at{' '}
-              {inquiry.scheduledViewing.timeSlot}
+              {t('viewingScheduled', {
+                date: new Date(inquiry.scheduledViewing.date).toLocaleDateString(),
+                time: inquiry.scheduledViewing.timeSlot,
+              })}
             </span>
           </div>
         )}
 
         {inquiry.agentResponse && (
           <div className="agent-response">
-            <p className="response-label">Agent response:</p>
+            <p className="response-label">{t('agentResponse')}</p>
             <p className="response-text">{inquiry.agentResponse}</p>
             {inquiry.respondedAt && (
               <p className="response-date">{new Date(inquiry.respondedAt).toLocaleDateString()}</p>
@@ -114,16 +115,16 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
         <div className="card-footer">
           {showCancelConfirm ? (
             <div className="cancel-confirm">
-              <span>Cancel this inquiry?</span>
+              <span>{t('cancelConfirm')}</span>
               <button type="button" className="confirm-yes" onClick={handleCancel}>
-                Yes, cancel
+                {t('cancelYes')}
               </button>
               <button
                 type="button"
                 className="confirm-no"
                 onClick={() => setShowCancelConfirm(false)}
               >
-                No
+                {t('cancelNo')}
               </button>
             </div>
           ) : (
@@ -132,7 +133,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               className="cancel-button"
               onClick={() => setShowCancelConfirm(true)}
             >
-              Cancel inquiry
+              {t('cancelInquiry')}
             </button>
           )}
         </div>
@@ -355,7 +356,7 @@ function InquiriesContent() {
             setPage(1);
           }}
         >
-          All
+          {t('filterAll')}
         </button>
         {(Object.keys(statusConfig) as InquiryStatus[]).map((status) => (
           <button
@@ -367,7 +368,7 @@ function InquiriesContent() {
               setPage(1);
             }}
           >
-            {statusConfig[status].label}
+            {t(`status.${status}`)}
           </button>
         ))}
       </div>
@@ -408,18 +409,16 @@ function InquiriesContent() {
                 onClick={() => setPage((p) => p - 1)}
                 className="page-button"
               >
-                Previous
+                {t('previous')}
               </button>
-              <span className="page-info">
-                Page {page} of {data.totalPages}
-              </span>
+              <span className="page-info">{t('pageInfo', { page, total: data.totalPages })}</span>
               <button
                 type="button"
                 disabled={page >= data.totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="page-button"
               >
-                Next
+                {t('next')}
               </button>
             </div>
           )}
@@ -533,13 +532,14 @@ function InquiriesContent() {
 }
 
 export default function InquiriesPage() {
+  const t = useTranslations('pages.inquiries');
   return (
     <div className="page-container">
       <Header />
       <main className="main">
         <div className="container">
-          <h1 className="page-title">My Inquiries</h1>
-          <p className="page-subtitle">Track your property inquiries and viewing requests.</p>
+          <h1 className="page-title">{t('title')}</h1>
+          <p className="page-subtitle">{t('subtitle')}</p>
           <ProtectedRoute>
             <InquiriesContent />
           </ProtectedRoute>
