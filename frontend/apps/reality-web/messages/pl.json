@@ -357,6 +357,8 @@
   },
   "listings": {
     "allProperties": "Wszystkie nieruchomości",
+    "emptyTitle": "Nie znaleziono ofert",
+    "emptyDescription": "Spróbuj dostosować filtry lub kryteria wyszukiwania, aby znaleźć więcej nieruchomości.",
     "filters": "Filtry",
     "gridView": "Widok siatki",
     "listView": "Widok listy",

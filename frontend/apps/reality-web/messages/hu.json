@@ -357,6 +357,8 @@
   },
   "listings": {
     "allProperties": "Összes ingatlan",
+    "emptyTitle": "Nem található hirdetés",
+    "emptyDescription": "Módosítsa a szűrőket vagy a keresési feltételeket, hogy több ingatlant találjon.",
     "filters": "Szűrők",
     "gridView": "Rácsnézet",
     "listView": "Listanézet",

@@ -357,6 +357,8 @@
   },
   "listings": {
     "allProperties": "Všetky nehnuteľnosti",
+    "emptyTitle": "Neboli nájdené žiadne ponuky",
+    "emptyDescription": "Skúste upraviť filtre alebo vyhľadávacie kritériá a nájdite viac nehnuteľností.",
     "filters": "Filtre",
     "gridView": "Zobrazenie mriežky",
     "listView": "Zobrazenie zoznamu",
