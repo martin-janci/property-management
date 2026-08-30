@@ -100,6 +100,13 @@ fn not_found(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
+fn service_unavailable(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(ErrorResponse::new("STORAGE_UNAVAILABLE", msg)),
+    )
+}
+
 /// Process a meter image and persist a photo-backed reading.
 ///
 /// Accepts multipart/form-data with fields:
@@ -194,17 +201,39 @@ async fn process_meter_reading(
         return Err(not_found("Meter not found"));
     }
 
-    // Upload image to storage when available, otherwise use a placeholder.
-    let photo_url = if let (Some(bytes), Some(ref storage)) = (image_bytes, &state.storage_service)
-    {
-        let mime = image_content_type.as_deref().unwrap_or("image/jpeg");
-        let key = format!("ocr/meter-readings/{}/{}.jpg", meter_id, Uuid::new_v4());
-        storage.upload(&key, bytes, mime).await.map_err(|e| {
-            tracing::error!(error = ?e, "Failed to upload OCR image");
-            internal_err("Failed to store meter image")
-        })?
-    } else {
-        format!("pending-upload/{}/{}", meter_id, Uuid::new_v4())
+    // Resolve the photo URL. The three cases below must stay distinct — an
+    // earlier version collapsed them into a single `else` branch that
+    // fabricated a `pending-upload/{meter}/{uuid}` URL whenever the real
+    // upload didn't happen. That silently dropped the caller's image bytes
+    // (nothing was ever stored), returned 201 as if it had succeeded, and
+    // persisted a URL that no reconciler exists to fulfil — so the photo was
+    // lost with no trace and no recovery path.
+    let photo_url: Option<String> = match (image_bytes, &state.storage_service) {
+        // Image supplied and storage configured — persist it for real.
+        (Some(bytes), Some(storage)) => {
+            let mime = image_content_type.as_deref().unwrap_or("image/jpeg");
+            let key = format!("ocr/meter-readings/{}/{}.jpg", meter_id, Uuid::new_v4());
+            Some(storage.upload(&key, bytes, mime).await.map_err(|e| {
+                tracing::error!(error = ?e, "Failed to upload OCR image");
+                internal_err("Failed to store meter image")
+            })?)
+        }
+        // Image supplied but no storage backend — we cannot persist the bytes.
+        // Fail loudly (503) instead of dropping the image and lying with a 201.
+        (Some(_), None) => {
+            tracing::error!(
+                meter_id = %meter_id,
+                "OCR meter image was submitted but no storage backend is configured; \
+                 refusing to drop the image and fabricate a pending-upload URL"
+            );
+            return Err(service_unavailable(
+                "Image storage is not configured; the meter photo cannot be saved. \
+                 The reading was not recorded.",
+            ));
+        }
+        // No image supplied — a photo-source reading with no photo. Store NULL
+        // rather than a placeholder URL that points at nothing.
+        (None, _) => None,
     };
 
     let meter_reading = state
@@ -241,7 +270,8 @@ async fn process_meter_reading(
                 raw_text: extracted.to_string(),
                 processing_time_ms: 0,
             },
-            image_url: photo_url,
+            // Empty when no image was supplied; never a fabricated placeholder.
+            image_url: photo_url.unwrap_or_default(),
             reading_id: meter_reading.id,
         }),
     ))

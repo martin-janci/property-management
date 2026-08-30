@@ -1201,7 +1201,7 @@ impl MeterRepository {
         user_id: Uuid,
         meter_id: Uuid,
         reading: rust_decimal::Decimal,
-        photo_url: String,
+        photo_url: Option<String>,
         ocr_reading: Option<rust_decimal::Decimal>,
     ) -> Result<MeterReading, SqlxError> {
         let reading_date = Utc::now().date_naive();
