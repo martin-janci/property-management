@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-30T12:41:00Z",
-  "last_run_ms": 4000,
-  "last_pr_seen": 2888,
+  "last_run_iso": "2026-08-30T20:25:00Z",
+  "last_run_ms": 3200,
+  "last_pr_seen": 2899,
   "last_issue_seen": 2847,
-  "last_commit_sha": "9ba2f31c6a0c773989a50a78df8584e0dee4f5a7",
+  "last_commit_sha": "3f710e4a0931c818b2ab166f6e05c80d57da1b9c",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -983,7 +983,7 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 74,
+    "runs": 75,
     "vectors_created": 352,
     "plans_created": 29,
     "quiet_days": 3,

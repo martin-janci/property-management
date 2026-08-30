@@ -6,7 +6,7 @@
       "id": "code-review-api-handlers-compliance-superadmin-exact-match",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 api-handlers)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "compliance.rs:22-30 require_super_admin exact-matches TenantRole::SuperAdmin — locks out PlatformAdmin from all 10 platform-compliance handlers, breaking the SuperAdmin|PlatformAdmin idiom used everywhere else (rls_context.rs, rls_connection.rs, auth.rs, emergency/shared.rs). Fails CLOSED → over-restriction, not disclosure.",
       "confidence": "medium",
       "candidate_vector": "bug",
@@ -14,13 +14,15 @@
         "backend/servers/api-server/src/routes/compliance.rs",
         "backend/crates/common/src/tenant.rs",
         "backend/crates/api-core/src/middleware/authorization.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "Navigation.kt:493 wires CreateListingScreen onSubmit as NotImplementedError stub — reachable from AgencyHubScreen+MyListingsScreen; PortalListingsRepository has no create method though backend POST /api/v1/my/listings exists (portal_listings.rs:207).",
       "confidence": "high",
       "candidate_vector": "bug",
@@ -29,13 +31,15 @@
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
         "backend/servers/reality-server/src/routes/portal_listings.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "WebSocketContext.tsx:33-40 eventToQueryKeys keys on entity:* names, api-server ONLY emits dot-namespaced domain.action names (announcement.published, vote.*, message.created, notification.created). Exact-string Map dispatch → 100% dead cache invalidation. Independent 2nd root cause from ws-query-invalidation-dead.",
       "confidence": "medium",
       "candidate_vector": "bug",
@@ -43,65 +47,75 @@
         "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
         "frontend/apps/ppt-web/src/lib/websocket.ts",
         "backend/servers/api-server/src/routes/ws_notifications.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "lib/api.ts:213-221 onUnauthorized 401 branch guarded by callback set only via configureApiClient; only call site (AuthContext.tsx:337) never passes it — callback permanently undefined, 401 branch dead. No refresh-on-401 retry either.",
       "confidence": "medium",
       "candidate_vector": "bug",
       "files": [
         "frontend/apps/ppt-web/src/lib/api.ts",
         "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-reality-server-alert-drainer-i18n-english-only",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server services sweep)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "search_alert_drainer.rs:260-273 composes English-only subject/body despite recipient_locale being threaded to the AlertNotification struct. Latent (only LogEmail stub wired today) but ships English to sk/cs/de the moment a real transport is injected. Localized pattern exists at email.rs:102-125.",
       "confidence": "medium",
       "candidate_vector": "bug",
       "files": [
         "backend/servers/reality-server/src/services/search_alert_drainer.rs",
         "backend/servers/reality-server/src/services/email.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-reality-server-sso-introspect-negcache-poison",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server sso sweep)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "sso.rs:759-766 caches active=false when PM introspect returns non-2xx (transport/upstream error) → poisons 60s TTL cache with false-negative for a token whose real status is UNKNOWN. Subsequent bearer-token calls hit the poisoned entry and are denied. Fails CLOSED → availability defect.",
       "confidence": "medium",
       "candidate_vector": "bug",
       "files": [
         "backend/servers/reality-server/src/routes/sso.rs",
         "backend/servers/reality-server/src/state.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-reality-server-sso-per-call-client-no-timeout",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server sso sweep)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "exchange_pm_token/get_user_info/introspect_pm_token each build a fresh reqwest::Client::new() per request — no pooling and NO request timeout (contrast PmApiClient with .timeout()). A hung PM endpoint stalls SSO helpers indefinitely, compounding the paired negcache-poison outage scenario.",
       "confidence": "medium",
       "candidate_vector": "bug",
       "files": [
         "backend/servers/reality-server/src/routes/sso.rs",
         "backend/servers/reality-server/src/state.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-reality-server-bytelen-charcount-validation",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "All 4 public Reality Portal write paths (inquiries.rs, articles.rs, agent_reviews.rs, reports.rs) measure str::len() bytes but error messages say 'characters'. Slovak/Czech/German accented chars are 2 bytes/char; sk message of ~2500 chars trips a 5000-'char' cap. Over-rejects primary-locale input.",
       "confidence": "medium",
       "candidate_vector": "bug",
@@ -110,19 +124,23 @@
         "backend/servers/reality-server/src/routes/articles.rs",
         "backend/servers/reality-server/src/routes/agent_reviews.rs",
         "backend/servers/reality-server/src/routes/reports.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     },
     {
       "id": "code-review-reality-server-report-contact-unvalidated",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "submit_report (POST /api/v1/reports, optionally-authenticated) binds reporter_email + reporter_phone into INSERT (:279-280) with NO length or format validation. Inconsistent with inquiries.rs which caps email at 320/phone at 32 and runs validate_contact. Rate limiter throttles volume but a single permitted request persists unbounded contact strings.",
       "confidence": "medium",
       "candidate_vector": "bug",
       "files": [
         "backend/servers/reality-server/src/routes/reports.rs"
-      ]
+      ],
+      "re_emit": true,
+      "re_emit_note": "already-scored in 12:41Z run; same-day rerun preserves audit trail but does not re-score per G4 (non-cumulative type already in seen_signals)"
     }
   ],
   "auto_fix_actions": [],
@@ -131,128 +149,151 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-08-30.md && head -1 matches ^# 2026-08-30$",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "test -f brief && head -1 matches",
+      "observed": "pass",
+      "expected": "pass"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json changed vs HEAD (cursors/seen_signals)",
+      "command": "jq state advanced vs HEAD",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "last_pr_seen 2888→2899, last_commit_sha advanced"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | length == unique|length'",
+      "command": "backlog id uniqueness",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no re-emitted non-cumulative signals with score_delta != 0",
+      "command": "non-cumulative signals in seen_signals have score_delta=0",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "9 morning signals re-emitted with score_delta=0 + re_emit=true marker"
     },
     {
       "goal": "G5-cap",
       "passed": true,
-      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "command": "jq no score>8",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5-decay",
       "passed": true,
-      "command": "1 stale-open item decayed correctly",
-      "observed": "1 of 1",
-      "expected": "1 of 1"
+      "command": "decay check",
+      "observed": "no re-decay this rerun (decay applied in 12:41Z run for httpclient-no-timeout 2→1)",
+      "expected": "once-per-day",
+      "note": "same-day rerun does not re-decay"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run",
-      "observed": "no promotions",
-      "expected": "no promotions required"
+      "command": "new plans have adversarial pass annotation",
+      "observed": "trivially passes (0 new plans)",
+      "expected": "pass"
     },
     {
       "goal": "G7-count",
       "passed": true,
-      "command": "new plans <= 2",
+      "command": "count new plan files",
       "observed": "0",
-      "expected": "<= 2"
+      "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "only .research/ paths staged",
-      "observed": "0 offenders",
+      "command": "staged files outside .research/",
+      "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/private hostnames",
-      "observed": "0 hits",
+      "command": "secrets/private-hostname scan",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "no phase-failure inconsistency",
-      "observed": "no failed phases",
-      "expected": "none"
+      "command": "placeholder-rot grep on brief",
+      "observed": "1 TODO reference in shell-command evidence (allowed)",
+      "expected": "no rot"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "no prior plan silently deleted",
-      "observed": "0 missing",
-      "expected": "0"
+      "command": "plans converge (still-in-plans or in _archive)",
+      "observed": "no promotions/archives this rerun; prior plans unchanged",
+      "expected": "pass"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "_archive/ count >= HEAD count",
-      "observed": "9 >= 9",
-      "expected": ">=  "
+      "command": "archive-only-grows",
+      "observed": "9 files (unchanged from HEAD 9)",
+      "expected": "≥9"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions cap + idempotency",
-      "observed": "0 actions (no candidate)",
-      "expected": "<= 3 total"
+      "command": "auto-fix caps + idempotency",
+      "observed": "empty array",
+      "expected": "≤3 total"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped — pm_cursor unchanged",
-      "observed": "pm_cursor.next_index 4 == 4",
-      "expected": "no-op when skipped"
+      "command": "pm_cursor in 0..7 + coverage_cursor within [0,13)",
+      "observed": "pm=4, coverage=6, epics=13",
+      "expected": "in bounds",
+      "note": "Phase 1.6 skipped this rerun so pm_cursor did not advance; GC7 monotonicity condition is only enforced when pm_cursor advanced, so a no-op is fine"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram bot token in staged diff",
-      "observed": "0 hits",
+      "command": "telegram token literal scan",
+      "observed": "0 matches",
       "expected": "0"
     }
-  ]
+  ],
+  "generated_at": "2026-08-30T20:25:00Z",
+  "run_meta": {
+    "run_iso": "2026-08-30T20:25:00Z",
+    "invocation": "2nd of day (20:25Z rerun after buffer-low trigger)",
+    "first_run_iso": "2026-08-30T12:41:00Z",
+    "cursor_advance": {
+      "last_pr_seen": {
+        "from": 2888,
+        "to": 2899
+      },
+      "last_commit_sha": {
+        "from": "9ba2f31c6a0c773989a50a78df8584e0dee4f5a7",
+        "to": "3f710e4a0931c818b2ab166f6e05c80d57da1b9c"
+      }
+    },
+    "new_signals_emitted": 0,
+    "phase_1_5_skipped": "would double-review 6 segments Tier-1d already covered this morning",
+    "phase_1_6_skipped": "buffer-low is capability gap not delivery-analysis gap"
+  }
 }

@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-30 12:41 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-30 20:25 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -158,11 +158,11 @@
 | 2 | security | `code-review-api-handlers-unbounded-pagination-limit` | api-server list endpoints pass user-supplied `?limit=N` to SQL LIMIT unclamped — cheap DoS on ai/*,  | done | 2026-08-29 |  |
 | 2 | bug | `code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor` | ppt-web person-months useBuildingUnits uses raw `fetch()` — bypasses axios JWT interceptor → silent  | done | 2026-08-29 |  |
 | 2 | bug | `code-review-ppt-web-ui-create-dispute-page-stub-submit` | ppt-web CreateDisputePage.handleSubmit is a `setTimeout(1000)` stub — data silently discarded; orpha | done | 2026-08-29 |  |
-| 2 | bug | `code-review-reality-web-mutation-no-onerror` | Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surf | open | 2026-08-30 |  |
+| 2 | bug | `code-review-reality-web-mutation-no-onerror` | Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surf | done | 2026-08-30 |  |
 | 2 | bug | `code-review-mobile-native-kmp-create-listing-not-wired` | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | open | 2026-08-30 |  |
-| 2 | bug | `code-review-ppt-web-core-ws-event-name-mismatch` | WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime | open | 2026-08-30 |  |
-| 2 | bug | `code-review-reality-server-sso-introspect-negcache-poison` | SSO introspect_pm_token caches active=false on PM 5xx — 60s spurious session denials during PM intro | open | 2026-08-30 |  |
-| 2 | bug | `code-review-reality-server-bytelen-charcount-validation` | Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de acc | open | 2026-08-30 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-event-name-mismatch` | WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime | done | 2026-08-30 |  |
+| 2 | bug | `code-review-reality-server-sso-introspect-negcache-poison` | SSO introspect_pm_token caches active=false on PM 5xx — 60s spurious session denials during PM intro | done | 2026-08-30 |  |
+| 2 | bug | `code-review-reality-server-bytelen-charcount-validation` | Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de acc | done | 2026-08-30 |  |
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
@@ -352,11 +352,11 @@
 | 1 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang i | open | 2026-08-30 |  |
 | 1 | bug | `code-review-reality-web-saved-searches-i18n` | Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app | open | 2026-08-30 |  |
 | 1 | bug | `code-review-reality-web-inquiries-i18n` | Inquiries page renders hardcoded English status labels and chrome in a 4-language app | open | 2026-08-30 |  |
-| 1 | bug | `code-review-api-handlers-compliance-superadmin-exact-match` | compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier h | open | 2026-08-30 |  |
-| 1 | bug | `code-review-ppt-web-core-api-onunauthorized-unwired` | lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on to | open | 2026-08-30 |  |
-| 1 | bug | `code-review-reality-server-alert-drainer-i18n-english-only` | SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent not | open | 2026-08-30 |  |
+| 1 | bug | `code-review-api-handlers-compliance-superadmin-exact-match` | compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier h | done | 2026-08-30 |  |
+| 1 | bug | `code-review-ppt-web-core-api-onunauthorized-unwired` | lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on to | done | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-server-alert-drainer-i18n-english-only` | SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent not | done | 2026-08-30 |  |
 | 1 | bug | `code-review-reality-server-sso-per-call-client-no-timeout` | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no poo | open | 2026-08-30 |  |
-| 1 | bug | `code-review-reality-server-report-contact-unvalidated` | submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation | open | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-server-report-contact-unvalidated` | submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation | done | 2026-08-30 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
