@@ -9524,7 +9524,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)"
       ],
@@ -9538,7 +9538,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T08:23:35Z",
+        "assignment_status": "merged",
+        "pr_number": 2887
+      }
     },
     {
       "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
@@ -9712,7 +9717,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-08-29 (reality-web)"
       ],
@@ -9727,7 +9732,12 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T08:23:35Z",
+        "assignment_status": "merged",
+        "pr_number": 2888
+      }
     },
     {
       "id": "code-review-mobile-rn-deeplink-url-listener-leak",

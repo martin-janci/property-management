@@ -6305,6 +6305,28 @@
       "merge_attempted_at": "2026-07-30T20:16:07Z"
     },
     {
+      "task_id": "code-review-reality-web-listing-grid-empty-dup",
+      "branch": "auto-impl/code-review-reality-web-listing-grid-emp-dd064068",
+      "status": "merged",
+      "claimed_at": "2026-08-30T06:25:32Z",
+      "last_updated": "2026-08-30T08:23:17Z",
+      "status_changed_at": "2026-08-30T08:23:17Z",
+      "pr_number": 2888,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2888",
+      "merged_at": "2026-08-30T08:22:43Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2888 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=ListingGrid uses shared EmptyState + listings.empty* i18n in all 6 locales; verify green (biome/tsc/vitest 243); drift is only pm-tech-lead not mapped to reality-web",
+      "reviewer_summary": "verdict=approve note=clean on-scope refactor to shared EmptyState; all 6 locales real; scope_drift confirmed false-positive (owner-role mapping); CI green; GH blocked self-approve",
+      "last_reviewed_oid": "152a06c7db0a7780efb73f74d92a18452923aa7b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-listing-page-ssr-crash",
       "branch": "auto-impl/code-review-reality-web-listing-page-ssr-03ad7193",
       "status": "failed",
@@ -16489,5 +16511,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-30T06:34:55Z"
+  "archived_at": "2026-08-30T08:29:13Z"
 }
