@@ -19,6 +19,16 @@
 //! cannot forge) is inside a configured trusted-proxy allowlist. Otherwise the
 //! headers are attacker-controlled and are ignored in favour of the peer.
 //!
+//! `CF-Connecting-IP` needs one extra gate. Being in the trusted set only means
+//! the peer is a proxy we route through — it does **not** mean that proxy is
+//! Cloudflare. A generic reverse proxy (nginx, a container-network sidecar) does
+//! not strip an inbound `CF-Connecting-IP`, so if we believed it on any trusted
+//! peer, a client behind such a proxy could forge `CF-Connecting-IP: <any>` and
+//! reopen the exact `#2789` spoof class the rightmost-untrusted-XFF path closes.
+//! We therefore only consult `CF-Connecting-IP` when the operator explicitly
+//! declares the trusted edge is Cloudflare (`TRUST_CF_CONNECTING_IP=1`, off by
+//! default); otherwise it is ignored and resolution falls through to XFF.
+//!
 //! [`ConnectInfo`]: axum::extract::ConnectInfo
 
 use axum::http::HeaderMap;
@@ -121,6 +131,14 @@ fn normalize(ip: IpAddr) -> IpAddr {
 #[derive(Debug, Clone, Default)]
 pub struct TrustedProxies {
     cidrs: Vec<Cidr>,
+    /// Whether `CF-Connecting-IP` is honoured from a trusted peer. **Off by
+    /// default**: membership in `cidrs` only proves the peer is a proxy we route
+    /// through, not that it is Cloudflare. A generic reverse proxy does not strip
+    /// an inbound `CF-Connecting-IP`, so believing it on any trusted peer would
+    /// let a client forge that header (the residual `#2789` spoof class). Only a
+    /// deployment genuinely fronted by Cloudflare should opt in via
+    /// `TRUST_CF_CONNECTING_IP=1`.
+    trust_cf_connecting_ip: bool,
 }
 
 impl TrustedProxies {
@@ -140,7 +158,19 @@ impl TrustedProxies {
                 None => tracing::warn!(entry, "TRUSTED_PROXY_CIDRS: skipping unparseable entry"),
             }
         }
-        Self { cidrs }
+        Self {
+            cidrs,
+            trust_cf_connecting_ip: false,
+        }
+    }
+
+    /// Return a copy that honours (or ignores) `CF-Connecting-IP` from trusted
+    /// peers. Enable **only** when the trusted edge is genuinely Cloudflare —
+    /// see [`trust_cf_connecting_ip`](Self::trust_cf_connecting_ip).
+    #[must_use]
+    pub fn with_cf_connecting_ip_trust(mut self, trust: bool) -> Self {
+        self.trust_cf_connecting_ip = trust;
+        self
     }
 
     /// Load the trusted-proxy allowlist from `TRUSTED_PROXY_CIDRS`.
@@ -156,11 +186,17 @@ impl TrustedProxies {
     /// set `TRUSTED_PROXY_CIDRS` to that edge's published ranges — otherwise the
     /// edge's public peer address is (correctly) untrusted and the visitor is
     /// attributed to the edge IP rather than being spoofable.
+    ///
+    /// When the trusted edge is Cloudflare, additionally set
+    /// `TRUST_CF_CONNECTING_IP=1` so `CF-Connecting-IP` is believed; otherwise
+    /// (the default) that header is ignored and resolution uses XFF, closing the
+    /// spoof for generic private-range reverse proxies.
     pub fn from_env() -> Self {
-        match std::env::var("TRUSTED_PROXY_CIDRS") {
+        let base = match std::env::var("TRUSTED_PROXY_CIDRS") {
             Ok(spec) if !spec.trim().is_empty() => Self::parse(&spec),
             _ => Self::private_defaults(),
-        }
+        };
+        base.with_cf_connecting_ip_trust(cf_connecting_ip_trusted_from_env())
     }
 
     /// Loopback + private ranges — the default trusted set (see [`from_env`]).
@@ -184,6 +220,18 @@ impl TrustedProxies {
     pub fn is_empty(&self) -> bool {
         self.cidrs.is_empty()
     }
+}
+
+/// Read `TRUST_CF_CONNECTING_IP` as a boolean opt-in (default `false`).
+/// Accepts `1`, `true`, `yes`, `on` (case-insensitive); anything else — unset,
+/// empty, `0`, garbage — is `false`, the fail-safe direction.
+fn cf_connecting_ip_trusted_from_env() -> bool {
+    matches!(
+        std::env::var("TRUST_CF_CONNECTING_IP")
+            .map(|v| v.trim().to_ascii_lowercase())
+            .as_deref(),
+        Ok("1" | "true" | "yes" | "on")
+    )
 }
 
 /// Parse a single textual IP (trimming surrounding whitespace) and return it in
@@ -229,8 +277,11 @@ fn rightmost_untrusted_xff(headers: &HeaderMap, trusted: &TrustedProxies) -> Opt
 /// 1. If the socket `addr` is **not** a trusted proxy, the forwarding headers
 ///    are attacker-controlled — return the (normalised) socket peer and ignore
 ///    the headers entirely.
-/// 2. Otherwise prefer `CF-Connecting-IP`, then the rightmost untrusted
-///    `X-Forwarded-For` hop, then fall back to the socket peer.
+/// 2. Otherwise prefer `CF-Connecting-IP` **only when the trusted edge is
+///    declared to be Cloudflare** (`TrustedProxies::trust_cf_connecting_ip`),
+///    then the rightmost untrusted `X-Forwarded-For` hop, then fall back to the
+///    socket peer. When the edge is a generic reverse proxy, `CF-Connecting-IP`
+///    is client-forgeable and is ignored.
 ///
 /// The returned string is the canonical form of the chosen [`IpAddr`].
 pub fn resolve_client_ip(
@@ -242,8 +293,12 @@ pub fn resolve_client_ip(
     if !trusted.contains(peer) {
         return peer.to_string();
     }
-    cf_connecting_ip(headers)
-        .or_else(|| rightmost_untrusted_xff(headers, trusted))
+    let cf = if trusted.trust_cf_connecting_ip {
+        cf_connecting_ip(headers)
+    } else {
+        None
+    };
+    cf.or_else(|| rightmost_untrusted_xff(headers, trusted))
         .unwrap_or(peer)
         .to_string()
 }
@@ -253,9 +308,16 @@ mod tests {
     use super::*;
 
     /// Default trusted set (loopback + private ranges) as loaded when
-    /// `TRUSTED_PROXY_CIDRS` is unset.
+    /// `TRUSTED_PROXY_CIDRS` is unset. `CF-Connecting-IP` trust is OFF — the
+    /// shipped default for a generic reverse proxy.
     fn default_trusted() -> TrustedProxies {
         TrustedProxies::private_defaults()
+    }
+
+    /// A Cloudflare-fronted trusted set: same private ranges but with
+    /// `CF-Connecting-IP` trust explicitly opted in (`TRUST_CF_CONNECTING_IP=1`).
+    fn cf_trusted() -> TrustedProxies {
+        TrustedProxies::private_defaults().with_cf_connecting_ip_trust(true)
     }
 
     /// A trusted (private-range) reverse-proxy socket peer.
@@ -320,8 +382,40 @@ mod tests {
         headers.insert("cf-connecting-ip", "203.0.113.7".parse().unwrap());
         // A conflicting XFF must not win over the Cloudflare-set client IP.
         headers.insert("x-forwarded-for", "198.51.100.1".parse().unwrap());
-        let ip = resolve_client_ip(&headers, proxy_peer(), &default_trusted());
+        // Cloudflare-fronted deployment: CF trust is explicitly opted in.
+        let ip = resolve_client_ip(&headers, proxy_peer(), &cf_trusted());
         assert_eq!(ip, "203.0.113.7", "CF-Connecting-IP takes precedence");
+    }
+
+    /// The residual `#2789` hole: a generic private-range reverse proxy (CF trust
+    /// OFF — the shipped default) does not strip an inbound `CF-Connecting-IP`,
+    /// so it is client-forgeable. It must NOT become the resolved client IP; with
+    /// no XFF we fall back to the trusted socket peer.
+    #[test]
+    fn forged_cf_connecting_ip_ignored_when_flag_off() {
+        let mut headers = HeaderMap::new();
+        headers.insert("cf-connecting-ip", "6.6.6.6".parse().unwrap());
+        let ip = resolve_client_ip(&headers, proxy_peer(), &default_trusted());
+        assert_ne!(
+            ip, "6.6.6.6",
+            "a forged CF-Connecting-IP must not be trusted unless the edge is Cloudflare"
+        );
+        assert_eq!(ip, "10.0.0.5", "falls back to the trusted socket peer");
+    }
+
+    /// With CF trust OFF, a forged `CF-Connecting-IP` is ignored and resolution
+    /// falls through to the rightmost untrusted XFF hop — the same real client
+    /// the XFF path would pick with no CF header present.
+    #[test]
+    fn forged_cf_connecting_ip_falls_through_to_xff_when_flag_off() {
+        let mut headers = HeaderMap::new();
+        headers.insert("cf-connecting-ip", "6.6.6.6".parse().unwrap());
+        headers.insert("x-forwarded-for", "203.0.113.9, 10.0.0.5".parse().unwrap());
+        let ip = resolve_client_ip(&headers, proxy_peer(), &default_trusted());
+        assert_eq!(
+            ip, "203.0.113.9",
+            "CF header ignored (flag off); rightmost untrusted XFF hop wins"
+        );
     }
 
     /// The real client is the rightmost *untrusted* hop: internal proxies
@@ -347,7 +441,7 @@ mod tests {
         let mut headers = HeaderMap::new();
         headers.insert("cf-connecting-ip", "not-an-ip".parse().unwrap());
         headers.insert("x-forwarded-for", "203.0.113.11".parse().unwrap());
-        let ip = resolve_client_ip(&headers, proxy_peer(), &default_trusted());
+        let ip = resolve_client_ip(&headers, proxy_peer(), &cf_trusted());
         assert_eq!(
             ip, "203.0.113.11",
             "an unparsable CF header must fall through to XFF"
@@ -376,7 +470,7 @@ mod tests {
             "cf-connecting-ip",
             "2001:0db8:0000:0000:0000:0000:0000:0001".parse().unwrap(),
         );
-        let ip = resolve_client_ip(&headers, proxy_peer(), &default_trusted());
+        let ip = resolve_client_ip(&headers, proxy_peer(), &cf_trusted());
         assert_eq!(
             ip, "2001:db8::1",
             "the stored value is the canonical IP form"
@@ -398,7 +492,7 @@ mod tests {
     /// still recognised against an IPv4 trusted CIDR.
     #[test]
     fn normalises_ipv4_mapped_peer_for_trust_check() {
-        let trusted = TrustedProxies::parse("10.0.0.0/8");
+        let trusted = TrustedProxies::parse("10.0.0.0/8").with_cf_connecting_ip_trust(true);
         let peer: SocketAddr = "[::ffff:10.0.0.9]:443".parse().unwrap();
         let mut headers = HeaderMap::new();
         headers.insert("cf-connecting-ip", "203.0.113.42".parse().unwrap());
