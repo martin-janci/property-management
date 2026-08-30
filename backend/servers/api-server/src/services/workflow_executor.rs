@@ -609,8 +609,8 @@ fn evaluate_single_condition(
             })?;
 
             match condition.operator {
-                ComparisonOperator::Eq => Ok(field_value == *compare_value),
-                ComparisonOperator::Ne => Ok(field_value != *compare_value),
+                ComparisonOperator::Eq => Ok(values_equivalent(&field_value, compare_value)),
+                ComparisonOperator::Ne => Ok(!values_equivalent(&field_value, compare_value)),
                 ComparisonOperator::Gt => Ok(compare_numeric(&field_value, compare_value)? > 0),
                 ComparisonOperator::Gte => Ok(compare_numeric(&field_value, compare_value)? >= 0),
                 ComparisonOperator::Lt => Ok(compare_numeric(&field_value, compare_value)? < 0),
@@ -638,14 +638,14 @@ fn evaluate_single_condition(
                 }
                 ComparisonOperator::In => {
                     if let Some(arr) = compare_value.as_array() {
-                        Ok(arr.contains(&field_value))
+                        Ok(arr.iter().any(|item| values_equivalent(&field_value, item)))
                     } else {
                         Ok(false)
                     }
                 }
                 ComparisonOperator::NotIn => {
                     if let Some(arr) = compare_value.as_array() {
-                        Ok(!arr.contains(&field_value))
+                        Ok(!arr.iter().any(|item| values_equivalent(&field_value, item)))
                     } else {
                         Ok(true)
                     }
@@ -728,6 +728,51 @@ fn coerce_finite_f64(v: &serde_json::Value) -> Option<f64> {
     v.as_f64()
         .or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok()))
         .filter(|n| n.is_finite())
+}
+
+/// Equivalence used by the `Eq`/`Ne`/`In`/`NotIn` operators.
+///
+/// The ordering operators (`Gt`/`Lt`/…) coerce via [`compare_numeric`] and the
+/// substring operators (`Contains`/`StartsWith`/`EndsWith`) coerce via
+/// `to_string`, but equality historically used raw JSON structural equality
+/// (`==`). That mismatch meant a trigger emitting a JSON number (`12`) would
+/// silently fail an `eq` condition configured as a string (`"12"`), and vice
+/// versa — the two sides never met even though every other operator would have
+/// coerced them. This helper closes that gap by mirroring the same coercion:
+///
+/// 1. exact structural equality (also covers arrays/objects/bool/null), then
+/// 2. finite-numeric coercion — the same normalization as the ordering
+///    operators (`12` matches `"12"`, `1.0` matches `"1"`), then
+/// 3. scalar string normalization — the same `to_string`/`as_str` view the
+///    substring operators use, so a bool/number configured as its text form
+///    still matches.
+///
+/// Non-finite numeric strings (`"NaN"`, `"inf"`) are intentionally *not* forced
+/// equal via the numeric path — [`coerce_finite_f64`] rejects them — so they
+/// only match under exact structural/string equality, consistent with how the
+/// ordering operators treat them as uncomparable.
+fn values_equivalent(a: &serde_json::Value, b: &serde_json::Value) -> bool {
+    // 1. Exact JSON structural equality (arrays, objects, null, bool, and
+    //    same-typed scalars).
+    if a == b {
+        return true;
+    }
+    // 2. Numeric coercion — same normalization as the ordering operators.
+    if let (Some(a_num), Some(b_num)) = (coerce_finite_f64(a), coerce_finite_f64(b)) {
+        return (a_num - b_num).abs() < f64::EPSILON;
+    }
+    // 3. Scalar string normalization — same `to_string`/`as_str` view the
+    //    substring operators use. Restricted to scalars so we never coerce a
+    //    container (array/object) or null into a text match.
+    let is_scalar = |v: &serde_json::Value| v.is_number() || v.is_string() || v.is_boolean();
+    if is_scalar(a) && is_scalar(b) {
+        let a_string = a.to_string();
+        let b_string = b.to_string();
+        let a_str = a.as_str().unwrap_or(&a_string);
+        let b_str = b.as_str().unwrap_or(&b_string);
+        return a_str == b_str;
+    }
+    false
 }
 
 /// Compare two JSON values as numbers.
@@ -1252,6 +1297,119 @@ mod tests {
             "field": "trigger.amount", "operator": "lt", "value": 10
         });
         assert!(!evaluate_conditions_list(&[unsatisfied], &ctx).unwrap());
+    }
+
+    // ------------------------------------------------------------------
+    // Eq/Ne/In/NotIn type coercion: a numeric trigger value must match a
+    // string-configured condition (and vice versa), consistent with the
+    // coercion the ordering / substring operators already apply. Regression
+    // for the silent condition mismatch where `eq` used raw JSON structural
+    // equality (`12` != `"12"`).
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_eq_number_trigger_matches_string_condition() {
+        // Trigger emits a JSON number; condition is configured as a string.
+        // Previously `12 == "12"` was false → the workflow silently skipped.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 12 }));
+        let condition = serde_json::json!({
+            "field": "trigger.amount", "operator": "eq", "value": "12"
+        });
+        assert!(
+            evaluate_conditions_list(&[condition], &ctx).unwrap(),
+            "numeric trigger value must match a string-configured eq condition"
+        );
+    }
+
+    #[test]
+    fn test_eq_string_trigger_matches_number_condition() {
+        // The reverse: trigger emits a string, condition is a number.
+        let ctx = eval_ctx(serde_json::json!({ "amount": "12" }));
+        let condition = serde_json::json!({
+            "field": "trigger.amount", "operator": "eq", "value": 12
+        });
+        assert!(
+            evaluate_conditions_list(&[condition], &ctx).unwrap(),
+            "string trigger value must match a number-configured eq condition"
+        );
+    }
+
+    #[test]
+    fn test_ne_respects_coercion() {
+        // `12 != "12"` must now be FALSE (they are equivalent), and a genuine
+        // mismatch must still be TRUE.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 12 }));
+        let equivalent = serde_json::json!({
+            "field": "trigger.amount", "operator": "ne", "value": "12"
+        });
+        assert!(
+            !evaluate_conditions_list(&[equivalent], &ctx).unwrap(),
+            "ne must be false for coercion-equivalent values"
+        );
+        let different = serde_json::json!({
+            "field": "trigger.amount", "operator": "ne", "value": "13"
+        });
+        assert!(
+            evaluate_conditions_list(&[different], &ctx).unwrap(),
+            "ne must be true for genuinely different values"
+        );
+    }
+
+    #[test]
+    fn test_in_notin_coerce_across_types() {
+        // Numeric trigger value against a list of string-configured members.
+        let ctx = eval_ctx(serde_json::json!({ "amount": 12 }));
+        let in_cond = serde_json::json!({
+            "field": "trigger.amount", "operator": "in", "value": ["10", "12", "14"]
+        });
+        assert!(
+            evaluate_conditions_list(&[in_cond], &ctx).unwrap(),
+            "in must coerce a numeric trigger against string-typed list members"
+        );
+        let not_in_cond = serde_json::json!({
+            "field": "trigger.amount", "operator": "not_in", "value": ["10", "12", "14"]
+        });
+        assert!(
+            !evaluate_conditions_list(&[not_in_cond], &ctx).unwrap(),
+            "not_in must be false when the coerced value is present in the list"
+        );
+    }
+
+    #[test]
+    fn test_values_equivalent_unit() {
+        // Numeric/string coercion both directions.
+        assert!(values_equivalent(
+            &serde_json::json!(12),
+            &serde_json::json!("12")
+        ));
+        assert!(values_equivalent(
+            &serde_json::json!("12"),
+            &serde_json::json!(12)
+        ));
+        // Float vs integer-looking string.
+        assert!(values_equivalent(
+            &serde_json::json!(1.0),
+            &serde_json::json!("1")
+        ));
+        // Exact structural equality still holds.
+        assert!(values_equivalent(
+            &serde_json::json!("open"),
+            &serde_json::json!("open")
+        ));
+        // Genuine mismatches remain unequal.
+        assert!(!values_equivalent(
+            &serde_json::json!(12),
+            &serde_json::json!("13")
+        ));
+        assert!(!values_equivalent(
+            &serde_json::json!("open"),
+            &serde_json::json!("closed")
+        ));
+        // Non-finite numeric strings are not forced equal to a number.
+        assert!(!values_equivalent(
+            &serde_json::json!("NaN"),
+            &serde_json::json!(0)
+        ));
     }
 
     #[test]
