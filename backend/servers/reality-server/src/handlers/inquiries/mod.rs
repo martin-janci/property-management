@@ -231,7 +231,11 @@ impl InquiriesHandler {
     }
 
     /// Check if email format is valid.
-    fn is_valid_email(email: &str) -> bool {
+    ///
+    /// `pub(crate)` so other anonymous-contact endpoints (e.g. listing
+    /// reports, UC-23) reuse the exact same length/format semantics instead
+    /// of re-implementing a divergent email check.
+    pub(crate) fn is_valid_email(email: &str) -> bool {
         if email.is_empty() || email.len() > 254 {
             return false;
         }
@@ -251,7 +255,11 @@ impl InquiriesHandler {
     }
 
     /// Check if phone number format is valid.
-    fn is_valid_phone(phone: &str) -> bool {
+    ///
+    /// `pub(crate)` for the same reason as [`Self::is_valid_email`] — shared
+    /// by the anonymous listing-report path so contact validation stays
+    /// consistent across public endpoints.
+    pub(crate) fn is_valid_phone(phone: &str) -> bool {
         // Remove common separators and check if remaining chars are digits or +
         let cleaned: String = phone
             .chars()

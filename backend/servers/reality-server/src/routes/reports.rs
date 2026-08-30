@@ -226,6 +226,33 @@ pub async fn submit_report(
         }
     }
 
+    // Optional reporter contact details are persisted verbatim into
+    // `listing_reports` and later surfaced to moderators, so they need the same
+    // length + format guarantees as the anonymous inquiry contact fields.
+    // Reuse `InquiriesHandler::is_valid_email` / `is_valid_phone` (the identical
+    // anonymous-contact validators) rather than re-deriving divergent checks
+    // here. Both are optional: skip when absent or blank, reject when present
+    // but malformed. `is_valid_email` caps length at 254 chars and
+    // `is_valid_phone` at 9–15 cleaned digits, covering the length bound too.
+    if let Some(ref email) = data.reporter_email {
+        let email = email.trim().to_lowercase();
+        if !email.is_empty() && !InquiriesHandler::is_valid_email(&email) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid reporter email format".to_string(),
+            ));
+        }
+    }
+    if let Some(ref phone) = data.reporter_phone {
+        let phone = phone.trim();
+        if !phone.is_empty() && !InquiriesHandler::is_valid_phone(phone) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid reporter phone number format".to_string(),
+            ));
+        }
+    }
+
     let mut conn = state
         .acquire_public_conn()
         .await
