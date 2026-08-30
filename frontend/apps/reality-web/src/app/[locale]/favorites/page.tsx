@@ -59,7 +59,7 @@ function FavoritesContent() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Failed to load favorites. Please try again.</p>
+        <p>{t('error')}</p>
         <style jsx>{`
           .error-state {
             padding: 64px 24px;
@@ -85,12 +85,10 @@ function FavoritesContent() {
         >
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
         </svg>
-        <h2 className="empty-title">No favorites yet</h2>
-        <p className="empty-text">
-          Start exploring listings and save your favorites by clicking the heart icon.
-        </p>
+        <h2 className="empty-title">{t('emptyTitle')}</h2>
+        <p className="empty-text">{t('emptyText')}</p>
         <Link href="/listings" className="browse-link">
-          Browse listings
+          {t('browseListings')}
         </Link>
         <style jsx>{`
           .empty-state {

@@ -103,6 +103,11 @@
       "loading": "Načítava sa…",
       "signIn": "Prihlásiť sa",
       "title": "Vyžaduje sa prihlásenie"
+    },
+    "callback": {
+      "title": "Prihlásenie zlyhalo",
+      "invalidState": "Neplatný stavový token. Skúste sa prihlásiť znova.",
+      "returnHome": "Späť na domovskú stránku"
     }
   },
   "common": {
@@ -611,7 +616,11 @@
       "description": "Nehnuteľnosti, ktoré ste si uložili.",
       "h1": "Moje obľúbené",
       "priceAlertsLink": "Cenové upozornenia",
-      "watchPrice": "Sledovať cenu"
+      "watchPrice": "Sledovať cenu",
+      "error": "Nepodarilo sa načítať obľúbené. Skúste to znova.",
+      "emptyTitle": "Zatiaľ žiadne obľúbené",
+      "emptyText": "Začnite prehliadať ponuky a uložte si obľúbené kliknutím na ikonu srdca.",
+      "browseListings": "Prehliadať ponuky"
     },
     "login": {
       "title": "Prihlásenie",
@@ -690,6 +699,23 @@
     "priceAlerts": {
       "title": "Cenové upozornenia",
       "description": "Upozornenia na zníženie ceny a návrat na trh pre vaše obľúbené ponuky."
+    },
+    "inquiries": {
+      "error": "Nepodarilo sa načítať dopyty. Skúste to znova.",
+      "emptyTitle": "Zatiaľ žiadne dopyty",
+      "emptyText": "Keď kontaktujete maklérov ohľadom ponúk, vaše dopyty sa zobrazia tu.",
+      "browseListings": "Prehliadať ponuky"
+    },
+    "savedSearches": {
+      "error": "Nepodarilo sa načítať uložené vyhľadávania. Skúste to znova.",
+      "emptyTitle": "Žiadne uložené vyhľadávania",
+      "emptyText": "Vyhľadajte ponuky a uložte si vyhľadávanie, aby ste dostávali upozornenia, keď nové nehnuteľnosti zodpovedajú vašim kritériám.",
+      "startSearching": "Začať vyhľadávať"
+    },
+    "realtorListings": {
+      "error": "Nepodarilo sa načítať ponuky.",
+      "empty": "Zatiaľ ste nezverejnili žiadne ponuky.",
+      "createFirst": "Vytvorte svoju prvú ponuku"
     }
   },
   "search": {

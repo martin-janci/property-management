@@ -103,6 +103,11 @@
       "loading": "Wird geladen…",
       "signIn": "Anmelden",
       "title": "Anmeldung erforderlich"
+    },
+    "callback": {
+      "title": "Anmeldung fehlgeschlagen",
+      "invalidState": "Ungültiges Status-Token. Bitte versuchen Sie erneut, sich anzumelden.",
+      "returnHome": "Zurück zur Startseite"
     }
   },
   "common": {
@@ -611,7 +616,11 @@
       "description": "Immobilien, die Sie gespeichert haben.",
       "h1": "Meine Favoriten",
       "priceAlertsLink": "Preisbenachrichtigungen",
-      "watchPrice": "Preis beobachten"
+      "watchPrice": "Preis beobachten",
+      "error": "Favoriten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "emptyTitle": "Noch keine Favoriten",
+      "emptyText": "Entdecken Sie Angebote und speichern Sie Ihre Favoriten, indem Sie auf das Herzsymbol klicken.",
+      "browseListings": "Angebote durchsuchen"
     },
     "login": {
       "title": "Anmelden",
@@ -690,6 +699,23 @@
     "priceAlerts": {
       "title": "Preisbenachrichtigungen",
       "description": "Benachrichtigungen zu Preissenkungen und Rückkehr auf den Markt für Ihre Favoriten."
+    },
+    "inquiries": {
+      "error": "Anfragen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "emptyTitle": "Noch keine Anfragen",
+      "emptyText": "Wenn Sie Makler zu Angeboten kontaktieren, erscheinen Ihre Anfragen hier.",
+      "browseListings": "Angebote durchsuchen"
+    },
+    "savedSearches": {
+      "error": "Gespeicherte Suchen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "emptyTitle": "Keine gespeicherten Suchen",
+      "emptyText": "Suchen Sie nach Angeboten und speichern Sie Ihre Suche, um benachrichtigt zu werden, wenn neue Immobilien Ihren Kriterien entsprechen.",
+      "startSearching": "Suche starten"
+    },
+    "realtorListings": {
+      "error": "Angebote konnten nicht geladen werden.",
+      "empty": "Sie haben noch keine Angebote veröffentlicht.",
+      "createFirst": "Erstellen Sie Ihr erstes Angebot"
     }
   },
   "search": {

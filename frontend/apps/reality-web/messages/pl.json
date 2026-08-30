@@ -103,6 +103,11 @@
       "loading": "Ładowanie…",
       "signIn": "Zaloguj się",
       "title": "Wymagane logowanie"
+    },
+    "callback": {
+      "title": "Logowanie nie powiodło się",
+      "invalidState": "Nieprawidłowy token stanu. Spróbuj zalogować się ponownie.",
+      "returnHome": "Powrót do strony głównej"
     }
   },
   "common": {
@@ -610,7 +615,11 @@
       "description": "Nieruchomości, które zapisałeś.",
       "h1": "Moje ulubione",
       "priceAlertsLink": "Alerty cenowe",
-      "watchPrice": "Śledź cenę"
+      "watchPrice": "Śledź cenę",
+      "error": "Nie udało się załadować ulubionych. Spróbuj ponownie.",
+      "emptyTitle": "Brak ulubionych",
+      "emptyText": "Zacznij przeglądać oferty i zapisuj ulubione, klikając ikonę serca.",
+      "browseListings": "Przeglądaj oferty"
     },
     "login": {
       "title": "Sign in",
@@ -683,6 +692,23 @@
     "priceAlerts": {
       "title": "Alerty cenowe",
       "description": "Alerty o obniżkach cen i powrocie na rynek dla Twoich ulubionych ofert."
+    },
+    "inquiries": {
+      "error": "Nie udało się załadować zapytań. Spróbuj ponownie.",
+      "emptyTitle": "Brak zapytań",
+      "emptyText": "Gdy skontaktujesz się z agentami w sprawie ofert, Twoje zapytania pojawią się tutaj.",
+      "browseListings": "Przeglądaj oferty"
+    },
+    "savedSearches": {
+      "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",
+      "emptyTitle": "Brak zapisanych wyszukiwań",
+      "emptyText": "Wyszukuj oferty i zapisz wyszukiwanie, aby otrzymywać powiadomienia, gdy nowe nieruchomości spełnią Twoje kryteria.",
+      "startSearching": "Rozpocznij wyszukiwanie"
+    },
+    "realtorListings": {
+      "error": "Nie udało się załadować ofert.",
+      "empty": "Nie opublikowałeś jeszcze żadnych ofert.",
+      "createFirst": "Utwórz swoją pierwszą ofertę"
     }
   },
   "search": {
