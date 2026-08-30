@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-30T10:31:34Z",
+  "archived_at": "2026-08-30T18:35:22Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4534,6 +4534,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "action": "lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on token expiry",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2891,
+        "merged_at": "2026-08-30T16:43:30Z",
+        "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-api-retry-nonidempotent",
       "action": "ppt-web axios retry interceptor retries non-idempotent POST/PUT on 5xx / network errors — risk of duplicate server-side writes",
       "owner_role": "pm-backend",
@@ -4895,6 +4919,30 @@
         "merged_pr": 2646,
         "merged_at": "2026-08-03T22:18:47Z",
         "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "action": "WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime cache invalidation 100% dead",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2889,
+        "merged_at": "2026-08-30T16:42:00Z",
+        "at": "2026-08-30T18:24:58Z"
       }
     },
     {
@@ -5609,6 +5657,30 @@
       "dispatcher_reconciled": "assignment merged as PR #2727 on 2026-08-09; action-list in-progress→done (dispatcher hygiene 2026-08-09)"
     },
     {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "action": "Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de accented input",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2892,
+        "merged_at": "2026-08-30T16:37:56Z",
+        "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-create-review-body-length-uncapped",
       "action": "reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs possible)",
       "owner_role": "pm-security",
@@ -6022,6 +6094,30 @@
       }
     },
     {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "action": "SSO introspect_pm_token caches active=false on PM 5xx — 60s spurious session denials during PM introspection outages",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2893,
+        "merged_at": "2026-08-30T16:40:51Z",
+        "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-sso-session-invalidate-swallowed",
       "action": "reality-server sync_session swallows invalidate_session error — portal session survives after PM token goes inactive",
       "owner_role": "pm-security",
@@ -6344,6 +6440,30 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-web-mutation-no-onerror",
+      "action": "Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surfacing)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:24:58Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2890,
+        "merged_at": "2026-08-30T16:40:38Z",
+        "at": "2026-08-30T18:24:58Z"
       }
     },
     {
