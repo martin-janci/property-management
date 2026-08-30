@@ -163,6 +163,7 @@ function IotDashboardPageRoute() {
  * Wires list + delete and navigation to register/edit.
  */
 function SensorListPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -179,7 +180,11 @@ function SensorListPageRoute() {
   const handleDelete = async (sensor: Sensor) => {
     if (
       !window.confirm(
-        `Delete sensor "${sensor.name}"? This removes its readings and alerts and cannot be undone.`
+        t('iot.sensorDeleteConfirm', {
+          name: sensor.name,
+          defaultValue:
+            'Delete sensor "{{name}}"? This removes its readings and alerts and cannot be undone.',
+        })
       )
     ) {
       return;

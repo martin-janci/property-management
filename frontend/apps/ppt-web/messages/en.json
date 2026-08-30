@@ -4067,6 +4067,7 @@
     "thresholdCreateFailed": "Failed to create threshold",
     "thresholdUpdated": "Threshold updated",
     "thresholdUpdateFailed": "Failed to update threshold",
+    "sensorDeleteConfirm": "Delete sensor \"{{name}}\"? This removes its readings and alerts and cannot be undone.",
     "thresholdDeleteConfirm": "Delete this threshold? This cannot be undone.",
     "thresholdDeleted": "Threshold deleted",
     "thresholdDeleteFailed": "Failed to delete threshold",
