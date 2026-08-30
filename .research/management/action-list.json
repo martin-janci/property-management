@@ -152,57 +152,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-unbounded-pagination-limit",
-      "action": "api-server list endpoints pass user-supplied `?limit=N` to SQL LIMIT unclamped — cheap DoS on ai/*, compliance, vendors, predictive_maintenance",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=2 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T00:23:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "security"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
-      "action": "ppt-web person-months useBuildingUnits uses raw `fetch()` — bypasses axios JWT interceptor → silent 401 for real signed-in users",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T00:23:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
-      "action": "ppt-web CreateDisputePage.handleSubmit is a `setTimeout(1000)` stub — data silently discarded; orphaned trap re-exported from feature barrel",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T00:23:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
       "action": "ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image bytes dropped, no reconciler",
       "owner_role": "pm-backend",

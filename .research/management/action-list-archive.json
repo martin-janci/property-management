@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-28T20:32:09Z",
+  "archived_at": "2026-08-30T02:36:47Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3307,6 +3307,30 @@
       }
     },
     {
+      "id": "code-review-api-handlers-unbounded-pagination-limit",
+      "action": "api-server list endpoints pass user-supplied `?limit=N` to SQL LIMIT unclamped — cheap DoS on ai/*, compliance, vendors, predictive_maintenance",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=2 conf=medium vector=security) | gc1-reconcile 2026-08-30T02:36:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T00:23:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2878,
+        "merged_at": "2026-08-30T02:35:22Z",
+        "at": "2026-08-30T02:36:47Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
       "action": "voice fetch_alexa_cert_chain builds a fresh reqwest::Client per call with no connect/request timeout — slow S3 stalls the handler + burst of cold-cache spawns unbounded TLS clients",
       "owner_role": "pm-backend",
@@ -4658,6 +4682,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "action": "ppt-web person-months useBuildingUnits uses raw `fetch()` — bypasses axios JWT interceptor → silent 401 for real signed-in users",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-30T02:36:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T00:23:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2876,
+        "merged_at": "2026-08-30T02:35:22Z",
+        "at": "2026-08-30T02:36:47Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
       "action": "ppt-web rentals mutations dereference `auth!` non-null — mid-session token loss throws uncaught TypeError instead of handled auth error",
       "owner_role": "pm-backend",
@@ -4966,6 +5014,30 @@
         "merged_pr": 2841,
         "merged_at": "2026-08-25T06:38:31Z",
         "at": "2026-08-25T08:23:13Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "action": "ppt-web CreateDisputePage.handleSubmit is a `setTimeout(1000)` stub — data silently discarded; orphaned trap re-exported from feature barrel",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T00:23:43Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-08-30T02:36:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T00:23:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2877,
+        "merged_at": "2026-08-30T02:35:22Z",
+        "at": "2026-08-30T02:36:47Z"
       }
     },
     {

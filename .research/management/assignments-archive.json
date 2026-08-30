@@ -3337,6 +3337,28 @@
       "merge_attempted_at": "2026-07-08T18:03:00Z"
     },
     {
+      "task_id": "code-review-api-handlers-unbounded-pagination-limit",
+      "branch": "auto-impl/code-review-api-handlers-unbounded-pagin-c20791ee",
+      "status": "merged",
+      "claimed_at": "2026-08-30T00:26:35Z",
+      "last_updated": "2026-08-30T02:35:22Z",
+      "status_changed_at": "2026-08-30T02:35:22Z",
+      "pr_number": 2878,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2878",
+      "merged_at": "2026-08-30T02:35:22Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=clamp-helper-correct-scoped-tests-present-ci-green-on-fmt-clippy-check-security;review-post-blocked-self-pr",
+      "last_reviewed_oid": "f6265a1c2693d9ff74792e8441a4d933cec5432d",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-30T02:34:32Z"
+    },
+    {
       "task_id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
       "branch": "auto-impl/code-review-api-handlers-voice-alexa-cer-8c646298",
       "status": "merged",
@@ -4753,6 +4775,28 @@
       "merge_attempted_at": "2026-08-12T16:41:50Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "branch": "auto-impl/code-review-ppt-web-core-raw-fetch-bypas-d1d1884b",
+      "status": "merged",
+      "claimed_at": "2026-08-30T00:26:35Z",
+      "last_updated": "2026-08-30T02:35:22Z",
+      "status_changed_at": "2026-08-30T02:35:22Z",
+      "pr_number": 2876,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2876",
+      "merged_at": "2026-08-30T02:35:22Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=clean-jwt-fix+ig3-test;ci-green;self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "40d7920fa86eb5260659d62e350eaf63f508049b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-30T02:34:32Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
       "branch": "auto-impl/code-review-ppt-web-core-rentals-auth-no-bf961d7e",
       "status": "merged",
@@ -5061,6 +5105,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-25T06:33:42Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "branch": "auto-impl/code-review-ppt-web-ui-create-dispute-pa-6bd9185e",
+      "status": "merged",
+      "claimed_at": "2026-08-30T00:26:35Z",
+      "last_updated": "2026-08-30T02:35:22Z",
+      "status_changed_at": "2026-08-30T02:35:22Z",
+      "pr_number": 2877,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2877",
+      "merged_at": "2026-08-30T02:35:22Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=dead-stub-deleted+barrel-guard-added;all-ci-green;scope/reuse ok;approve-not-posted(self-PR)",
+      "last_reviewed_oid": "bfc50e93b2a135199a5084f841b85dafb50a6f70",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-30T02:34:32Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-createfault-mock-ai",
@@ -16225,5 +16291,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-28T20:32:09Z"
+  "archived_at": "2026-08-30T02:36:30Z"
 }

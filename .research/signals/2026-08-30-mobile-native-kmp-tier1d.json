@@ -1,0 +1,34 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-30T00:00:00Z",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (claim buffer starved: claimable=13 < floor=36; Tier 1b/1c found nothing). No CHURN_FILES passed by the dispatcher (state.json hotspot_history is stale, dated 2026-05, and points only at api-server routes = already-reviewed segments). Selection fell to oldest-unreviewed from state.review_cursor: mobile-native-kmp (2026-08-25) is the true oldest, 5 days stale. Every landable segment is exhausted for this cycle: reality-server (cursor 2026-08-28) was already re-reviewed earlier today (2026-08-30-reality-server-tier1d.json); api-core (cursor 2026-08-29) is the single most-reviewed segment of all (two dedicated Tier-1d files on 2026-08-29 alone plus ~30 historical); api-handlers/ppt-web-ui/ppt-web-core/reality-web/mobile-rn all reviewed 2026-08-29. A spot Rust+Security sweep of the churn-named api-handlers dirs (integrations/organizations/documents/ai/platform_admin) surfaced nothing new beyond the two findings already emitted on 2026-08-29 (unbounded pagination, ocr silent loss): secret logging uses ids only, no dynamic SQL, unwrap/expect confined to #[cfg(test)] modules or standard mutex-poison. Rather than emit a manufactured nit, this run reports the one genuine, previously-unreported, fully-traced finding held in hand from the oldest-unreviewed segment. Saturation check passed: zero open code-review-finding rows in backlog.json for ANY segment. Primary expert = Kotlin, secondary = Tester (per segment->expert map). Static-only: grep sweep of mobile-native (103 .kt files) for !!/GlobalScope/TODO()/NotImplementedError/actual-stubs, read of the reachable hot spots, plus cross-check against the reality-server route table to confirm the missing wire.",
+  "experts_used": ["kotlin"],
+  "findings_count": 1,
+  "note": "CLOUD-LANDABILITY CAVEAT: a prior Tier-1d run today (2026-08-30-reality-server-tier1d.json) noted mobile-native-kmp is normally excluded because the cloud runner cannot BUILD the KMP module (AGP egress-403), so a KMP fix cannot be verified in-cloud. This finding is nonetheless real, high-value and previously unreported; it is a small, self-contained wire-up (add a createListing method to the existing PortalListingsRepository and pass it into the CreateListing composable) that a local/non-cloud implementer can land quickly. Dispatcher should route it to a non-cloud implementer or tag it accordingly rather than claiming it for the cloud runner. The landable review rotation is genuinely exhausted this cycle (see selection_detail), so this is the best available fresh signal. mobile-native-kmp is a mature, otherwise-clean segment: all !! sites are guarded by immediately-preceding null checks, no GlobalScope, no no-op iOS actuals, repositories uniformly wrap network calls in try/catch -> Result.",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "evidence": [
+        "The realtor Create-Listing flow is a reachable production screen whose submit is permanently broken. Navigation.kt:493 wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — the submit handler is a hardcoded stub that always fails.",
+        "The screen is entered from at least two live entry points: AgencyHubScreen `onCreateListingClick` (Navigation.kt:415) and MyListingsScreen `onCreateClick` (Navigation.kt:484), both navigating to Screen.CreateListing.route (\"realtor/listings/new\", Navigation.kt:125).",
+        "CreateListingScreen (CreateListingScreen.kt:39-41) renders a complete, validated Compose form (~390 lines: title/city/price/description/currency/transactionType, client-side validation). On submit (CreateListingScreen.kt:107-127) it calls the injected `onSubmit`, gets the NotImplementedError failure, and shows the user the generic `realtor_create_validation_publish_failed` (\"publish failed\") string — the entered form data is discarded and the listing is never created. No crash (fails via Result), but the advertised feature is 100% non-functional.",
+        "This is a completeness gap, not a missing endpoint: the backend already exposes POST /api/v1/my/listings (backend/servers/reality-server/src/routes/portal_listings.rs:24 route + :207 `create_listing`, registered in main.rs:205). The KMP PortalListingsRepository already calls the sibling GET /api/v1/my/listings (`listMyListings`) but has NO create method. Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) and pass it as the composable's `onSubmit` instead of the stub."
+      ]
+    }
+  ]
+}
