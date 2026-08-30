@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-30T18:35:22Z",
+  "archived_at": "2026-08-30T18:55:11Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3148,6 +3148,30 @@
       }
     },
     {
+      "id": "code-review-api-handlers-compliance-superadmin-exact-match",
+      "action": "compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier hierarchy)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:54:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2899,
+        "merged_at": "2026-08-30T18:54:49Z",
+        "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-decide-appeal-unvalidated",
       "action": "api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/casing; req.rationale not length-validated",
       "owner_role": "pm-backend",
@@ -5657,6 +5681,30 @@
       "dispatcher_reconciled": "assignment merged as PR #2727 on 2026-08-09; action-list in-progress→done (dispatcher hygiene 2026-08-09)"
     },
     {
+      "id": "code-review-reality-server-alert-drainer-i18n-english-only",
+      "action": "SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent notification-i18n gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:54:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2896,
+        "merged_at": "2026-08-30T18:32:11Z",
+        "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-bytelen-charcount-validation",
       "action": "Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de accented input",
       "owner_role": "pm-backend",
@@ -6023,6 +6071,30 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "action": "submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-08-30T18:54:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2898,
+        "merged_at": "2026-08-30T18:32:40Z",
+        "at": "2026-08-30T18:54:59Z"
       }
     },
     {

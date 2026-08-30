@@ -3183,6 +3183,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-compliance-superadmin-exact-match",
+      "branch": "auto-impl/code-review-api-handlers-compliance-supe-c3fcc45e",
+      "status": "merged",
+      "claimed_at": "2026-08-30T14:27:46Z",
+      "last_updated": "2026-08-30T18:54:49Z",
+      "status_changed_at": "2026-08-30T18:54:49Z",
+      "pr_number": 2899,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2899",
+      "merged_at": "2026-08-30T18:54:49Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2899 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=require_super_admin->is_platform_admin reuse; clippy+tests green",
+      "reviewer_summary": "verdict=approve note=platform-admin widen correct, no escalation, verified vs source; self-approve blocked",
+      "last_reviewed_oid": "14350635566f6cc5a7b45a5e25a802b19e14cd46",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-decide-appeal-unvalidated",
       "branch": "auto-impl/code-review-api-handlers-decide-appeal-u-35ccbbfc",
       "status": "merged",
@@ -16665,5 +16687,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-30T18:35:14Z"
+  "archived_at": "2026-08-30T18:54:49Z"
 }

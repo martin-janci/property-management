@@ -118,57 +118,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-compliance-superadmin-exact-match",
-      "action": "compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier hierarchy)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-alert-drainer-i18n-english-only",
-      "action": "SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent notification-i18n gap",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-report-contact-unvalidated",
-      "action": "submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-server-sso-per-call-client-no-timeout",
       "action": "SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk",
       "owner_role": "pm-backend",
