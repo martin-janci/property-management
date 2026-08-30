@@ -1,0 +1,402 @@
+{
+  "date": "2026-08-30",
+  "trigger": "routine-fire buffer-low (claimable=6/72 all KMP)",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-compliance-superadmin-exact-match",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs",
+        "backend/crates/common/src/tenant.rs",
+        "backend/crates/api-core/src/middleware/authorization.rs"
+      ],
+      "evidence": [
+        "compliance.rs:22-30 `require_super_admin` gates access with an EXACT variant match — `match user.role { Some(TenantRole::SuperAdmin) => Ok(()), _ => Err(FORBIDDEN) }` — rather than the hierarchical `has_role`/permission model used elsewhere. This single gate guards all 10 platform-compliance handlers: get_audit_logs (:120), get_audit_summary (:195), get_user_audit_logs (:235), verify_audit_integrity (:287), get_data_export_report (:342), get_deletion_requests_report (:384), get_privacy_settings_report (:442), get_login_activity_report (:518), get_mfa_status_report (:604), get_failed_logins_report (:665) — i.e. the entire GDPR / audit-log / MFA-adoption / login-security dashboard surface.",
+        "This exact-match is inconsistent with how the rest of the codebase treats the platform tier. The role model (crates/common/src/tenant.rs:83-114, crates/api-core/src/middleware/authorization.rs:30) is an ordered hierarchy SuperAdmin(100) > PlatformAdmin(95) > OrgAdmin(90) > Manager(80), and every other platform-tier check pairs the two top roles: crates/api-core/src/middleware/rls_context.rs:100,226 and extractors/rls_connection.rs:129,237,399 and extractors/auth.rs:255 all bypass RLS for `SuperAdmin | PlatformAdmin` together; sibling route gate emergency/shared.rs:56-57 admits `SuperAdmin | PlatformAdmin`; listings.rs:1123-1124 documents `has_role` as hierarchical so PlatformAdmin passes. compliance.rs is the lone outlier that hard-denies PlatformAdmin.",
+        "Impact is over-restriction, not disclosure: the gate fails CLOSED, so this is a functionality/consistency bug (a PlatformAdmin — a platform-tier operator who already bypasses RLS org-scoping everywhere else — is locked out of the compliance/GDPR/audit tooling) and a maintainability hazard (exact-variant authz silently breaks the hierarchical contract and will mis-behave if the role set is ever extended). Not scored as a security finding because it grants nothing extra.",
+        "Fix: replace the exact match with the hierarchical/permission check used elsewhere — either `matches!(user.role, Some(TenantRole::SuperAdmin) | Some(TenantRole::PlatformAdmin))` mirroring emergency/shared.rs, or the shared permission predicate (permissions::SUPER_ADMIN.is_satisfied_by / has_role) so the gate follows the documented hierarchy. Confirm with the owner whether PlatformAdmin exclusion is deliberate; if it IS deliberate, add a code comment saying so, because the current form reads as an oversight against the codebase-wide `SuperAdmin | PlatformAdmin` idiom. Backend-only, single-file change. IG3: a handler/authz test asserting a PlatformAdmin principal reaches (or is intentionally 403'd from) a compliance endpoint — fails today because behavior is untested and diverges from the platform-tier convention.",
+        "Confidence medium: the exact-match gate and its 10 call sites are directly read in compliance.rs, and the divergent `SuperAdmin | PlatformAdmin` idiom is confirmed across rls_context.rs / rls_connection.rs / auth.rs / emergency/shared.rs; 'medium' not 'high' because whether locking out PlatformAdmin is intentional product policy vs an oversight requires owner confirmation."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "evidence": [
+        "The realtor Create-Listing flow is a reachable production screen whose submit is permanently broken. Navigation.kt:493 wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — the submit handler is a hardcoded stub that always fails.",
+        "The screen is entered from at least two live entry points: AgencyHubScreen `onCreateListingClick` (Navigation.kt:415) and MyListingsScreen `onCreateClick` (Navigation.kt:484), both navigating to Screen.CreateListing.route (\"realtor/listings/new\", Navigation.kt:125).",
+        "CreateListingScreen (CreateListingScreen.kt:39-41) renders a complete, validated Compose form (~390 lines: title/city/price/description/currency/transactionType, client-side validation). On submit (CreateListingScreen.kt:107-127) it calls the injected `onSubmit`, gets the NotImplementedError failure, and shows the user the generic `realtor_create_validation_publish_failed` (\"publish failed\") string — the entered form data is discarded and the listing is never created. No crash (fails via Result), but the advertised feature is 100% non-functional.",
+        "This is a completeness gap, not a missing endpoint: the backend already exposes POST /api/v1/my/listings (backend/servers/reality-server/src/routes/portal_listings.rs:24 route + :207 `create_listing`, registered in main.rs:205). The KMP PortalListingsRepository already calls the sibling GET /api/v1/my/listings (`listMyListings`) but has NO create method. Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) and pass it as the composable's `onSubmit` instead of the stub."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "backend/servers/api-server/src/routes/ws_notifications.rs"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:33-40 — the `eventToQueryKeys` map (the whole point of WebSocketContext per its file header: 'Query invalidation on server push') keys on colon-namespaced event names: `entity:announcement`, `entity:fault`, `entity:vote`, `entity:document`, `entity:message`, `entity:neighbor`. The entity-event effect (:305-330) subscribes the service to exactly those keys, plus the generic `entity:updated` / `entity:created` / `entity:deleted` (:313). Every subscribe call keys off these colon strings.",
+        "The api-server never emits any of those names. The wire envelope's `event` field is set verbatim from the pub/sub `event_type` (backend/servers/api-server/src/routes/ws_notifications.rs:220 `event: msg.event_type.clone()`), and the only event_type strings produced across api-server are DOT-namespaced domain.action names: `notification.created` (ws_notifications.rs:301), and from the notification producers `announcement.published`, `announcement.acknowledgment_required`, `message.created`, `vote.started`, `vote.closed`, `vote.ending_soon`, `vote.reminder_not_voted`, `vote.results_available`. A repo grep for the literal `\"entity:` under backend/servers/api-server/src returns ZERO hits — no `entity:*` (colon) and no `entity.updated`/`entity.created`/`entity.deleted` (dot) event is ever broadcast.",
+        "Dispatch is an exact-string match, so the mismatch is total: lib/websocket.ts parseServerMessage (:65-82) maps the server `event` straight onto `message.type` unchanged (dot-style), and handleMessage (:557) dispatches via `this.messageHandlers.get(message.type)` — a plain Map keyed by the exact string. A handler registered under `entity:fault` can therefore NEVER be invoked by a server frame whose type is `vote.started` / `announcement.published` / `message.created`. Result: WebSocketContext's server-push TanStack Query invalidation is dead on arrival for 100% of real events.",
+        "This is an INDEPENDENT second root cause from the already-filed code-review-ppt-web-core-ws-query-invalidation-dead (that item is App.tsx not passing the `onEntityEvent` prop to WebSocketProvider — a missing wire). Even if App.tsx were fixed to pass onEntityEvent, invalidation would STILL never fire because the subscription keys don't match any emitted event name. Both defects must be fixed for realtime cache invalidation to work; this one lives in WebSocketContext's map + the client/server event-name contract, not in App.tsx.",
+        "Fix: align the client event-name keys with the server's `domain.action` scheme — rebuild `eventToQueryKeys` around the real emitted names (`announcement.published`/`announcement.acknowledgment_required` -> ['announcements'], `vote.*` -> ['votes'], `message.created` -> ['messages'], `notification.created` -> ['notifications'], etc.) and drop the non-existent `entity:*`/`entity:updated` colon subscriptions (or, less preferably, have the server additionally emit the colon names — but the dot scheme is already the established contract per ws_notifications.rs doc comments). Self-contained TS in WebSocketContext.tsx (+ optionally the map), fully landable in the cloud runner. IG3: a WebSocketContext test that pushes a `vote.started` frame through the service and asserts onEntityEvent fires with the ['votes'] keys — fails today because the subscription key is `entity:vote`.",
+        "Confidence medium: the colon-vs-dot mismatch and the exact-string Map dispatch are directly confirmed by static read of both sides (client keys at WebSocketContext.tsx:33-40 + :313; server event_type literals enumerated by grep; dispatch at websocket.ts:557). 'medium' not 'high' only because the emitted-event enumeration is grep-based over api-server/src (a producer in another crate or a dynamically-built event_type string not caught by the literal grep could theoretically emit an `entity:*` name), and the practical blast radius depends on the already-filed onEntityEvent wire being fixed too."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:213-221 — the axios response interceptor's only 401 reaction is `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();`. That module-level `onUnauthorizedCallback` is set ONLY by createAxiosInstance from `config.onUnauthorized` (:196), which is only reachable via configureApiClient (:298).",
+        "The single configureApiClient call site never passes onUnauthorized: AuthContext.tsx:337 calls `configureApiClient({ getToken: getAccessToken })` — getToken only, no onUnauthorized. A repo grep confirms this is the only invocation in ppt-web outside lib/api.ts itself. So `onUnauthorizedCallback` is permanently `undefined` and the 401 branch is dead code: the interceptor just falls through to `transformError` and rejects.",
+        "This contradicts the documented contract the consumers rely on: usePredictiveMaintenance.ts:10 and useSentiment.ts:19 both comment that getApiClient() applies '401 -> onUnauthorized' handling. It does not. The hand-rolled client also has NO refresh-on-401 retry (401 is not in RETRYABLE_STATUS_CODES and there is no refresh interceptor), so when the access token expires, every getApiClient() consumer — features/sentiment, features/predictive-maintenance, routes/groups/person-months — surfaces a hard ApiError with zero session-level reaction: no silent refresh, no logout/redirect-to-login. The user is stuck seeing errors on those screens until some unrelated @ppt/api-client call happens to trigger AuthContext's refresh path.",
+        "Fix: wire the callback at the single configuration point — `configureApiClient({ getToken: getAccessToken, onUnauthorized: () => { void refreshToken(); /* or logout()+redirect on refresh failure */ } })` in AuthContext.tsx:337 — so the interceptor's existing 401 branch actually drives re-auth (mirroring the refresh dedupe already implemented at AuthContext.tsx:449-462). Alternatively add a refresh-and-retry-once interceptor to lib/api.ts. Either way self-contained frontend TS, no backend/mobile dependency, landable in the cloud runner. IG3: a lib/api.ts test that stubs a 401 and asserts the configured onUnauthorized callback fires — fails today because AuthContext never supplies one.",
+        "Confidence medium: the dead 401 branch is statically confirmed (only configureApiClient call passes getToken only; interceptor guards on the unset callback). Severity kept low (score_delta 1) rather than medium because impact is degraded re-auth UX on a bounded set of getApiClient() endpoints rather than a security hole or data loss, and the primary auth surface (@ppt/api-client) has its own token handling; 'medium' confidence (not high) because whether a parallel @ppt/api-client refresh masks the gap in practice is timing/route-dependent and was not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-alert-drainer-i18n-english-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server, services sweep)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs",
+        "backend/servers/reality-server/src/services/email.rs"
+      ],
+      "evidence": [
+        "services/search_alert_drainer.rs:260-273 -- SearchAlertDrainerWorker::run_once builds each saved-search alert's AlertNotification with HARDCODED ENGLISH copy: subject = format!(\"{count} new listing{} match your saved search \\\"{}\\\"\", ...) (sso... i.e. lines 260-264) and body = format!(\"Your saved search \\\"{}\\\" has {count} new matching listing{}. Open the app to view {}.\", ...) (lines 265-271). The subject/body strings never consult any locale.",
+        "The same struct DOES capture the recipient's locale: services/search_alert_drainer.rs:272-276 sets `locale: alert.recipient_locale.clone().unwrap_or_else(|| \"en\".into())`, and the AlertNotification field is documented at services/search_alert_drainer.rs:45 as `/// Recipient locale (`sk` | `cs` | `de` | `en`), for localized copy later.` So the drainer already threads the locale through to the transport boundary but discards it when composing the message -- every sk/cs/de recipient gets English subject+body.",
+        "This is an inconsistency with the localization capability that ALREADY EXISTS in this exact directory: services/email.rs:102-109 (reset_subject) and services/email.rs:111-125 (reset_body) fully localize the password-reset email across Locale::Slovak / Czech / German / English via `use db::models::user::Locale` (email.rs:27). The reality portal is a 4-locale product (sk/cs/de/en per CLAUDE.md and the field doc), and the localized-copy pattern + Locale enum are in place -- the drainer simply does not use them.",
+        "Impact (why low / +1, not higher): reality-server currently wires only the LogEmailTransport / LogPushTransport stubs (search_alert_drainer.rs:74-118) -- no real SMTP/FCM/APNs adapter is injected yet -- so no mislocalized message reaches a user TODAY. This is a latent correctness gap that will ship English notifications to all locales the moment a real transport is wired via SearchAlertDrainerWorker::with_transports, unless the copy is localized first. It is user-facing-notification copy, not a crash/security issue, so it is scored Low (+1).",
+        "Fix (self-contained, services/ only, no build-gated / KMP dependency): parse alert.recipient_locale into db::models::user::Locale (fall back to English) and compose subject/body via a locale match mirroring email.rs's reset_subject/reset_body, or route the copy through the existing i18n mechanism, so the AlertNotification's subject/body honor the locale the drainer already carries. IG3: unit test that run_once (with a capturing test transport) produces a non-English subject/body for a Slovak recipient_locale and English for `en`/None.",
+        "Confidence medium: the English-only composition and the unused locale field are unambiguous from static read of search_alert_drainer.rs:42-46 and :255-276; the parallel localized pattern is confirmed at email.rs:27,102-125. Not upgraded to high only because it is a latent (stub-transport) gap rather than a live user-observable defect at present."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server, sso sweep)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "evidence": [
+        "introspect_pm_token (routes/sso.rs:729-786) caches PM token-introspection results in state.token_cache (TokenValidationCache, 60s TTL, 10000 entries -- state.rs:947 `TokenValidationCache::new(60, 10000)`). On the FAILURE branch at routes/sso.rs:759-766, when the PM introspection endpoint returns a NON-SUCCESS HTTP status (`if !response.status().is_success()`), the code does `state.token_cache.set(token, false, None, None).await` (sso.rs:762) and then returns Err. This caches active=false for a token whose real status is UNKNOWN.",
+        "This conflates two very different conditions. Per RFC 7662, a genuinely inactive token is signalled by HTTP 200 with a body `{\"active\": false}` (handled correctly further down at sso.rs:770-784). A 4xx/5xx from the introspection endpoint instead means a client-config or upstream error -- PM API down/redeploying, a 502/503 from its proxy, bad client_credentials, etc. -- and is NOT evidence that the user's token is inactive. Caching false on `!is_success()` treats an upstream outage as an authoritative negative.",
+        "The poisoning is observable on SUBSEQUENT requests, not the failing one. The cache-hit path (sso.rs:735-745) returns `Ok(TokenIntrospectionResponse { active: cached.active, .. })` for any non-expired entry with NO error surfaced, and TokenValidationCache::get (state.rs:656-673) returns any entry while `Instant::now() < cached.expires_at` regardless of how it was set (state.rs:675-716 stores `active` with a uniform `ttl_seconds` expiry). So during a PM introspection blip, the first request with a valid token 5xx-fails and writes active=false; every following request with that SAME valid token for up to 60s hits the cache and is told the token is inactive -- denying an otherwise-valid Reality Portal session. Common because a browser fires several API calls per page with the same bearer token.",
+        "Impact: availability/correctness defect on the SSO auth hot path -- a transient PM introspection failure (deploy, 5xx, proxy timeout) is amplified into up-to-60s of spurious session denials for valid users. It fails CLOSED (denies rather than grants), so it is not a security bypass, which is why this is scored medium (+2) rather than high.",
+        "Fix (self-contained, routes/sso.rs only): populate the cache ONLY from a successfully-parsed 200 introspection body -- cache both active=true and the genuine active=false that PM returns in the JSON. On any transport error or non-2xx status, return Err WITHOUT calling token_cache.set, so the next request re-validates instead of reading a poisoned negative. IG3: unit test that a 503 introspection response leaves state.token_cache empty for that token and that a following 200 introspection re-validates (active=true).",
+        "Confidence medium: the set(false)-on-!is_success() -> get()-returns-Ok(active:false)-within-TTL path is confirmed by static read of sso.rs:735-766 and state.rs:656-716; not upgraded to high because runtime confirmation of the exact caller re-entry within the 60s window was not executed (static-only pass)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-per-call-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server, sso sweep)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "evidence": [
+        "All three PM-facing SSO helpers construct a brand-new HTTP client per request via `reqwest::Client::new()`: exchange_pm_token (routes/sso.rs:687), get_user_info (routes/sso.rs:711), and introspect_pm_token (routes/sso.rs:748). Each call therefore builds a fresh connection pool and re-runs TLS setup instead of reusing a keep-alive connection to the PM API -- on the SSO login/validation hot path that runs on effectively every authenticated portal request.",
+        "More importantly for robustness: `reqwest::Client::new()` applies NO request timeout. A hung or slow PM endpoint (the very outage scenario in the sibling finding) can stall these SSO helpers indefinitely, holding the portal request open. Contrast state.rs:756-762, where PmApiClient::new deliberately builds its reqwest client with `.timeout(Duration::from_secs(timeout_seconds))` -- the timeout discipline exists in the codebase but is not applied to the SSO client calls.",
+        "Fix (self-contained): build a single shared `reqwest::Client` once (with an explicit `.timeout(...)`, mirroring PmApiClient) -- either store it on AppState alongside the existing PmApiClient or pass the already-pooled client in -- and reuse it across exchange_pm_token / get_user_info / introspect_pm_token instead of `reqwest::Client::new()` at each call site. IG3: a test asserting the SSO helpers use a client with a configured timeout (or a construction-site assertion that no bare Client::new() remains in sso.rs).",
+        "Confidence medium; severity low (+1): the missing pooling is a pure efficiency smell, but the missing timeout is a genuine robustness gap that compounds the introspection-outage scenario, so this is worth landing rather than dropping as a nit. Both aspects are confirmed by static read of the three Client::new() sites vs the timeout-configured PmApiClient."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "Every user-facing length validation on the public Reality Portal write paths measures BYTES (str::len()) but the constants and the 400 error messages are all phrased in CHARACTERS. This is a correctness bug for the product's primary locales: per CLAUDE.md the portal ships i18n for sk, cs, de, en, and Slovak/Czech/German text is full of 2-byte-per-char diacritics (a c d e l n o r s t z u y with hacek/carka, plus a o u umlaut and ss), while emoji are 4 bytes. Effect: a submission that is well under the advertised character cap is rejected once its UTF-8 byte length crosses the limit — a Slovak message of ~2500 accented chars already exceeds a 5000-'character' cap, roughly halving the effective allowance for diacritic-heavy input.",
+        "inquiries.rs:43-55 validate_inquiry_lengths — name.len() > MAX_INQUIRY_NAME_LEN (200), email.len() > MAX_INQUIRY_EMAIL_LEN (320), phone p.len() > MAX_INQUIRY_PHONE_LEN (32), message.len() > MAX_INQUIRY_MESSAGE_LEN (5000) with error 'Message is too long (max 5000 characters)'.",
+        "inquiries.rs:425-464 request_viewing — the same byte-vs-char checks inlined for name/email/phone/message plus preferred-time length; message error at :449 again says 'max 5000 characters'.",
+        "inquiries.rs:786-789 respond_to_inquiry — 'if req.message.len() > 5000' with error 'Message must be less than 5000 characters'; also a magic 5000 rather than MAX_INQUIRY_MESSAGE_LEN.",
+        "articles.rs:456-461 create_comment — data.body.len() > MAX_COMMENT_BODY_LEN (5000), error 'Comment body must be at most {} characters'. agent_reviews.rs:212-215 create_review — body.len() > MAX_REVIEW_BODY_LEN (5000), error 'Review body must be at most {} characters'. reports.rs:~200 submit_report — description.len() > MAX_REPORT_DESCRIPTION_LEN (5000), error 'Description must be at most {} characters'.",
+        "Fix: measure grapheme-ish length consistently with the messaging — replace the .len() checks on these free-text fields with .chars().count() (and route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN instead of the literal 5000). A single small PR across the four route files; IG3 can assert with a unit test that a string of N accented chars (byte length ~2N) at N <= limit is accepted. Byte caps may still be wanted as a hard DoS backstop, but they should be a separate, larger, explicitly-byte-worded guard — not the value quoted to the user as 'characters'.",
+        "Confidence medium: the .len()/message mismatch is confirmed by static read across all six call sites; 'medium' rather than 'high' because the impact is over-rejection of valid input (functional/UX defect on the sk/cs/de locales) rather than a crash, data loss, or security bypass."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is an OPTIONALLY-authenticated / anonymous-allowed endpoint (OptionalRequestPrincipal; reporter_user_id bound as principal.as_ref().map(|p| p.user_id)). It carefully validates description (non-empty + MAX_REPORT_DESCRIPTION_LEN) and attachments (count cap MAX_REPORT_ATTACHMENTS + per-URL validate_image_or_link_url), but the two free-text contact fields reporter_email and reporter_phone (SubmitReportRequest, reports.rs:91-92) are bound straight into the INSERT at reports.rs:279-280 with NO length and NO format validation whatsoever.",
+        "This is inconsistent with the sibling inquiries path, which DOES cap the same class of input: inquiries.rs caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and additionally runs InquiriesHandler::validate_contact for format. The report path shares inquiries' rate limiter (enforce_public_report_rate_limit reuses state.inquiry_rate_limiters) so raw request VOLUME is throttled, but a single permitted request can still persist an arbitrarily large / malformed string into listing_reports.reporter_email / reporter_phone.",
+        "Impact: unbounded unauthenticated free-text stored per allowed report — row/column bloat in the moderation table, junk contact data surfaced to moderators, and (if the DB column has a length constraint) a raw DB error mapped to a generic 500 via db_error() instead of a clean 400, i.e. the same failure mode the listings pagination clamp (#953) was added to prevent.",
+        "Fix: before the INSERT, apply the existing inquiry caps/validators to the report contact fields — reject when reporter_email exceeds MAX_INQUIRY_EMAIL_LEN or reporter_phone exceeds MAX_INQUIRY_PHONE_LEN (and optionally reuse validate_contact for format), returning 400 with a generic message (do NOT echo the offending value — same reflected-XSS caution the file already documents for attachment URLs). Self-contained change in reports.rs; IG3 via a unit/integration test that an over-length reporter_email yields 400.",
+        "Confidence medium: the absence of any length/format guard on reporter_email/reporter_phone and the direct bind into the INSERT are confirmed by static read; severity is low (+1) because the per-IP rate limiter caps exploit volume and the description field — the primary payload — is already bounded."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — none of today's signals match the Phase 5 allowlist (screen-map-drift/orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review). All 9 are code-review-finding signals which the allowlist explicitly excludes.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# 2026-08-30'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged vs HEAD state.json diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative dup with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; decay applied (1 item decayed)",
+      "observed": "true (0 over cap, 1 decayed >=14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no-op — 0 new plans",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0 <= 2",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity check",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed line",
+      "observed": "none",
+      "expected": "none | matches state"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length + caps",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + pm/coverage cursors",
+      "observed": "artifacts valid; pm_cursor=4 (unchanged); coverage_cursor=6 (< 13 epics); GC7 no-op (Phase 1.6 skipped)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "note": "Adopted per-segment Phase 1.5 sub-signal files (2026-08-30-*-tier1d*.json) already on disk from earlier partial run; four segments reviewed: api-handlers, mobile-native-kmp, ppt-web-core, reality-server. 8/9 signals cover landable segments (api-handlers, ppt-web-core, reality-server) — the buffer-refill target.",
+  "segments_reviewed": [
+    "api-handlers",
+    "mobile-native-kmp",
+    "ppt-web-core",
+    "reality-server"
+  ],
+  "merged_prs_since_last_run": [
+    {
+      "n": 2888,
+      "id": "code-review-reality-web-listing-grid-empty-dup",
+      "when": "2026-08-30T08:22"
+    },
+    {
+      "n": 2887,
+      "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
+      "when": "2026-08-30T06:33"
+    },
+    {
+      "n": 2884,
+      "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
+      "when": "2026-08-30T04:38"
+    },
+    {
+      "n": 2886,
+      "id": "code-review-api-core-workflow-eq-type-strict-no-coercion",
+      "when": "2026-08-30T04:38"
+    },
+    {
+      "n": 2883,
+      "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
+      "when": "2026-08-30T04:37"
+    },
+    {
+      "n": 2882,
+      "id": "code-review-api-core-client-ip-cf-spoof",
+      "when": "2026-08-30T04:36"
+    },
+    {
+      "n": 2881,
+      "id": "code-review-reality-web-i18n-error-state-gap",
+      "when": "2026-08-30T04:36"
+    },
+    {
+      "n": 2880,
+      "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+      "when": "2026-08-30T04:35"
+    },
+    {
+      "n": 2885,
+      "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
+      "when": "2026-08-30T04:34"
+    },
+    {
+      "n": 2879,
+      "id": "code-review-mobile-rn-deeplink-url-listener-leak",
+      "when": "2026-08-30T04:34"
+    },
+    {
+      "n": 2878,
+      "id": "code-review-api-handlers-unbounded-pagination-limit",
+      "when": "2026-08-30T02:35"
+    },
+    {
+      "n": 2877,
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "when": "2026-08-30T02:34"
+    },
+    {
+      "n": 2876,
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "when": "2026-08-30T02:34"
+    }
+  ]
+}
