@@ -1,0 +1,236 @@
+{
+  "generated_at": "2026-08-30T02:43:49Z",
+  "generator": "research-routine",
+  "trigger": "buffer-low: claimable=13/72 (floor=36, <floor/2) — refill planner",
+  "since": "2026-08-29T22:36:00Z",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "evidence": [
+        "The realtor Create-Listing flow is a reachable production screen whose submit is permanently broken. Navigation.kt:493 wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — the submit handler is a hardcoded stub that always fails.",
+        "The screen is entered from at least two live entry points: AgencyHubScreen `onCreateListingClick` (Navigation.kt:415) and MyListingsScreen `onCreateClick` (Navigation.kt:484), both navigating to Screen.CreateListing.route (\"realtor/listings/new\", Navigation.kt:125).",
+        "CreateListingScreen (CreateListingScreen.kt:39-41) renders a complete, validated Compose form (~390 lines: title/city/price/description/currency/transactionType, client-side validation). On submit (CreateListingScreen.kt:107-127) it calls the injected `onSubmit`, gets the NotImplementedError failure, and shows the user the generic `realtor_create_validation_publish_failed` (\"publish failed\") string — the entered form data is discarded and the listing is never created. No crash (fails via Result), but the advertised feature is 100% non-functional.",
+        "This is a completeness gap, not a missing endpoint: the backend already exposes POST /api/v1/my/listings (backend/servers/reality-server/src/routes/portal_listings.rs:24 route + :207 `create_listing`, registered in main.rs:205). The KMP PortalListingsRepository already calls the sibling GET /api/v1/my/listings (`listMyListings`) but has NO create method. Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) and pass it as the composable's `onSubmit` instead of the stub."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "Every user-facing length validation on the public Reality Portal write paths measures BYTES (str::len()) but the constants and the 400 error messages are all phrased in CHARACTERS. This is a correctness bug for the product's primary locales: per CLAUDE.md the portal ships i18n for sk, cs, de, en, and Slovak/Czech/German text is full of 2-byte-per-char diacritics (a c d e l n o r s t z u y with hacek/carka, plus a o u umlaut and ss), while emoji are 4 bytes. Effect: a submission that is well under the advertised character cap is rejected once its UTF-8 byte length crosses the limit — a Slovak message of ~2500 accented chars already exceeds a 5000-'character' cap, roughly halving the effective allowance for diacritic-heavy input.",
+        "inquiries.rs:43-55 validate_inquiry_lengths — name.len() > MAX_INQUIRY_NAME_LEN (200), email.len() > MAX_INQUIRY_EMAIL_LEN (320), phone p.len() > MAX_INQUIRY_PHONE_LEN (32), message.len() > MAX_INQUIRY_MESSAGE_LEN (5000) with error 'Message is too long (max 5000 characters)'.",
+        "inquiries.rs:425-464 request_viewing — the same byte-vs-char checks inlined for name/email/phone/message plus preferred-time length; message error at :449 again says 'max 5000 characters'.",
+        "inquiries.rs:786-789 respond_to_inquiry — 'if req.message.len() > 5000' with error 'Message must be less than 5000 characters'; also a magic 5000 rather than MAX_INQUIRY_MESSAGE_LEN.",
+        "articles.rs:456-461 create_comment — data.body.len() > MAX_COMMENT_BODY_LEN (5000), error 'Comment body must be at most {} characters'. agent_reviews.rs:212-215 create_review — body.len() > MAX_REVIEW_BODY_LEN (5000), error 'Review body must be at most {} characters'. reports.rs:~200 submit_report — description.len() > MAX_REPORT_DESCRIPTION_LEN (5000), error 'Description must be at most {} characters'.",
+        "Fix: measure grapheme-ish length consistently with the messaging — replace the .len() checks on these free-text fields with .chars().count() (and route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN instead of the literal 5000). A single small PR across the four route files; IG3 can assert with a unit test that a string of N accented chars (byte length ~2N) at N <= limit is accepted. Byte caps may still be wanted as a hard DoS backstop, but they should be a separate, larger, explicitly-byte-worded guard — not the value quoted to the user as 'characters'.",
+        "Confidence medium: the .len()/message mismatch is confirmed by static read across all six call sites; 'medium' rather than 'high' because the impact is over-rejection of valid input (functional/UX defect on the sk/cs/de locales) rather than a crash, data loss, or security bypass."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "evidence": [
+        "submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is an OPTIONALLY-authenticated / anonymous-allowed endpoint (OptionalRequestPrincipal; reporter_user_id bound as principal.as_ref().map(|p| p.user_id)). It carefully validates description (non-empty + MAX_REPORT_DESCRIPTION_LEN) and attachments (count cap MAX_REPORT_ATTACHMENTS + per-URL validate_image_or_link_url), but the two free-text contact fields reporter_email and reporter_phone (SubmitReportRequest, reports.rs:91-92) are bound straight into the INSERT at reports.rs:279-280 with NO length and NO format validation whatsoever.",
+        "This is inconsistent with the sibling inquiries path, which DOES cap the same class of input: inquiries.rs caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and additionally runs InquiriesHandler::validate_contact for format. The report path shares inquiries' rate limiter (enforce_public_report_rate_limit reuses state.inquiry_rate_limiters) so raw request VOLUME is throttled, but a single permitted request can still persist an arbitrarily large / malformed string into listing_reports.reporter_email / reporter_phone.",
+        "Impact: unbounded unauthenticated free-text stored per allowed report — row/column bloat in the moderation table, junk contact data surfaced to moderators, and (if the DB column has a length constraint) a raw DB error mapped to a generic 500 via db_error() instead of a clean 400, i.e. the same failure mode the listings pagination clamp (#953) was added to prevent.",
+        "Fix: before the INSERT, apply the existing inquiry caps/validators to the report contact fields — reject when reporter_email exceeds MAX_INQUIRY_EMAIL_LEN or reporter_phone exceeds MAX_INQUIRY_PHONE_LEN (and optionally reuse validate_contact for format), returning 400 with a generic message (do NOT echo the offending value — same reflected-XSS caution the file already documents for attachment URLs). Self-contained change in reports.rs; IG3 via a unit/integration test that an over-length reporter_email yields 400.",
+        "Confidence medium: the absence of any length/format guard on reporter_email/reporter_phone and the direct bind into the INSERT are confirmed by static read; severity is low (+1) because the per-IP rate limiter caps exploit volume and the description field — the primary payload — is already bounded."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-08-30.md && head -1 == '# 2026-08-30'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq (state.last_pr_seen changed vs HEAD)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [ids | unique length]",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq (no non-cumulative re-emit with score_delta)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq (score cap<=8; decay applied for 14d+)",
+      "observed": "true",
+      "expected": "true",
+      "note": "1 decay applied (mobile-native-kmp-httpclient-no-timeout 2->1)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "n/a — 0 new plans",
+      "expected": "each new plan has adversarial pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0",
+      "note": "brief wording adjusted to avoid literal 'Authorization: Bearer' pattern"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs fresh regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases-failed matches cursor advance",
+      "observed": "0 failed phases; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present as active or archived",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "9 >= 9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs fresh regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidate)",
+      "observed": "[]",
+      "expected": "cap+idempotency respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped -> no-op gate",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — 3 tier1d signals are code-review-finding type (not on allowlist)",
+  "phases_that_failed": [],
+  "phases_skipped": [
+    "1.5 (dispatcher tier1d already covered mobile-native-kmp + reality-server this run — see .research/signals/2026-08-30-*.json)",
+    "1.6 (buffer-low emergency; pm rotation runs on next normal cadence; pm_cursor untouched)",
+    "5 (auto-fix: no allowlist-matching high-confidence candidate this run)"
+  ],
+  "resolutions": [
+    {
+      "id": "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
+      "pr": 2876,
+      "outcome": "done"
+    },
+    {
+      "id": "code-review-ppt-web-ui-create-dispute-page-stub-submit",
+      "pr": 2877,
+      "outcome": "done"
+    },
+    {
+      "id": "code-review-api-handlers-unbounded-pagination-limit",
+      "pr": 2878,
+      "outcome": "done"
+    }
+  ],
+  "new_items": [
+    "code-review-mobile-native-kmp-create-listing-not-wired",
+    "code-review-reality-server-bytelen-charcount-validation",
+    "code-review-reality-server-report-contact-unvalidated"
+  ],
+  "decayed_items": [
+    [
+      "code-review-mobile-native-kmp-httpclient-no-timeout",
+      2,
+      1
+    ]
+  ],
+  "dropped_items": []
+}

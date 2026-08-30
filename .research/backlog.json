@@ -8313,7 +8313,7 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
@@ -8321,13 +8321,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
-        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS."
+        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
+        "decayed on 2026-08-30: no new signals in 14 days (score 2 → 1)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9473,15 +9474,17 @@
       "vector": "security",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers)",
+        "PR #2878"
       ],
       "evidence": [
         "Many list endpoints resolve `query.limit.unwrap_or(N)` with NO upper-bound clamp then pass straight into repository LIMIT. Sites: ai/sessions.rs:101/:205/:924/:997; ai/equipment.rs:203/:297/:379; ai/voice.rs:317; ai/workflows.rs:546 (the `as usize` cast also silently wraps hostile i64); ai/llm.rs:1448; vendors/contacts.rs:130; compliance.rs:167/:240/:268; predictive_maintenance.rs:316/:503/:536.",
         "End-to-end confirmed for ai_chat: routes/ai/sessions.rs:205 → crates/db/src/repositories/ai_chat.rs:229-247 binds `limit: i64` into `LIMIT $4 OFFSET $5` with no clamp anywhere in the repo. Same shape at :137/:156/:160 and :365/:377/:381.",
         "Intended pattern already exists: admin/users.rs:58 `.min(100)`, admin/audit.rs:261 `.min(500)` and :280 `.min(50_000)`, market_pricing.rs:1665 `.min(50)`.",
-        "Fix: clamp at handler boundary with `.min(MAX_PAGE_SIZE)` (or shared `Pagination::clamped()` helper); defense-in-depth clamp in repos taking raw `limit: i64`. IG3: handler test with `?limit=1000000` returns ≤MAX rows."
+        "Fix: clamp at handler boundary with `.min(MAX_PAGE_SIZE)` (or shared `Pagination::clamped()` helper); defense-in-depth clamp in repos taking raw `limit: i64`. IG3: handler test with `?limit=1000000` returns ≤MAX rows.",
+        "resolved: PR #2878 merged 2026-08-30 — clamp user-supplied ?limit on list endpoints"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai/sessions.rs",
@@ -9495,8 +9498,13 @@
         "backend/crates/db/src/repositories/ai_chat.rs"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
-      "plan": null
+      "updated_at": "2026-08-30",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T02:43:49Z",
+        "assignment_status": "merged",
+        "pr_number": 2878
+      }
     },
     {
       "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
@@ -9526,23 +9534,30 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes)",
+        "PR #2876"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:77-91 — `useBuildingUnits` calls raw `fetch('/api/v1/units?buildingId=…&limit=500', { headers: { 'Content-Type': 'application/json' } })` inside a TanStack queryFn.",
         "JWT is injected ONLY via the axios request interceptor in lib/api.ts:198-204; contexts/AuthContext.tsx:327 registers `setTokenProvider(getAccessToken)`. No global fetch override, no service worker, no cookie session — grep across the app confirms.",
         "Impact: request to authenticated `/api/v1/units` goes out with NO bearer token → 401 for real logged-in sessions, building-units dropdown that feeds person-months silently fails to populate.",
-        "Fix: route through the shared axios client (`api.get('/units', { params: …})`) or a helper hook that mirrors the interceptor plumbing. IG3: unit test asserts useBuildingUnits sends Authorization header when token provider is registered."
+        "Fix: route through the shared axios client (`api.get('/units', { params: …})`) or a helper hook that mirrors the interceptor plumbing. IG3: unit test asserts useBuildingUnits sends Authorization header when token provider is registered.",
+        "resolved: PR #2876 merged 2026-08-30 — route useBuildingUnits through axios JWT client"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
         "frontend/apps/ppt-web/src/lib/api.ts"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
-      "plan": null
+      "updated_at": "2026-08-30",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T02:43:49Z",
+        "assignment_status": "merged",
+        "pr_number": 2876
+      }
     },
     {
       "id": "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
@@ -9572,22 +9587,29 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)"
+        "dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-ui disputes)",
+        "PR #2877"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx:29-42 — handleSubmit collects a complete CreateDisputeRequest but its entire side-effect is `await new Promise(r => setTimeout(r, 1000))` then `navigate('/disputes')`. No useMutation, no api call, no @ppt/api-client import in the file. formData is silently discarded.",
         "Live trap: routes/groups/disputes.tsx:482 wires `/disputes/new` to FileDisputePageRoute (the real path), but CreateDisputePage IS re-exported from features/disputes/pages/index.ts:6. A future author importing from the barrel and mounting it ships a form that loses every submission with no error.",
-        "Fix (cheapest): delete CreateDisputePage.tsx + its barrel re-export (FileDisputePage is the live path). Alternative: wire useMutation into the real @ppt/api-client createDispute endpoint. IG3: grep-guard that features/disputes/pages/index.ts does not export CreateDisputePage."
+        "Fix (cheapest): delete CreateDisputePage.tsx + its barrel re-export (FileDisputePage is the live path). Alternative: wire useMutation into the real @ppt/api-client createDispute endpoint. IG3: grep-guard that features/disputes/pages/index.ts does not export CreateDisputePage.",
+        "resolved: PR #2877 merged 2026-08-30 — remove orphaned CreateDisputePage stub that discarded submissions"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/disputes/pages/CreateDisputePage.tsx",
         "frontend/apps/ppt-web/src/features/disputes/pages/index.ts"
       ],
       "created_at": "2026-08-29",
-      "updated_at": "2026-08-29",
-      "plan": null
+      "updated_at": "2026-08-30",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-30T02:43:49Z",
+        "assignment_status": "merged",
+        "pr_number": 2877
+      }
     },
     {
       "id": "code-review-ppt-web-ui-dispute-list-no-i18n",
@@ -9699,6 +9721,85 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "title": "mobile-native-kmp CreateListingScreen onSubmit is a NotImplementedError stub — realtor Create-Listing flow 100% non-functional; PortalListingsRepository lacks createListing",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-30 mobile-native-kmp)"
+      ],
+      "evidence": [
+        "The realtor Create-Listing flow is a reachable production screen whose submit is permanently broken. Navigation.kt:493 wires the fully-built CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — the submit handler is a hardcoded stub that always fails.",
+        "The screen is entered from at least two live entry points: AgencyHubScreen `onCreateListingClick` (Navigation.kt:415) and MyListingsScreen `onCreateClick` (Navigation.kt:484), both navigating to Screen.CreateListing.route (\"realtor/listings/new\", Navigation.kt:125).",
+        "CreateListingScreen (CreateListingScreen.kt:39-41) renders a complete, validated Compose form (~390 lines: title/city/price/description/currency/transactionType, client-side validation). On submit (CreateListingScreen.kt:107-127) it calls the injected `onSubmit`, gets the NotImplementedError failure, and shows the user the generic `realtor_create_validation_publish_failed` (\"publish failed\") string — the entered form data is discarded and the listing is never created. No crash (fails via Result), but the advertised feature is 100% non-functional.",
+        "This is a completeness gap, not a missing endpoint: the backend already exposes POST /api/v1/my/listings (backend/servers/reality-server/src/routes/portal_listings.rs:24 route + :207 `create_listing`, registered in main.rs:205). The KMP PortalListingsRepository already calls the sibling GET /api/v1/my/listings (`listMyListings`) but has NO create method. Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) and pass it as the composable's `onSubmit` instead of the stub."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "title": "reality-server public-write validators (inquiries/articles/agent_reviews/reports) measure BYTES but message users 'characters' — over-rejects diacritic-heavy sk/cs/de input, ~halves the effective allowance",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)"
+      ],
+      "evidence": [
+        "Every user-facing length validation on the public Reality Portal write paths measures BYTES (str::len()) but the constants and the 400 error messages are all phrased in CHARACTERS. This is a correctness bug for the product's primary locales: per CLAUDE.md the portal ships i18n for sk, cs, de, en, and Slovak/Czech/German text is full of 2-byte-per-char diacritics (a c d e l n o r s t z u y with hacek/carka, plus a o u umlaut and ss), while emoji are 4 bytes. Effect: a submission that is well under the advertised character cap is rejected once its UTF-8 byte length crosses the limit — a Slovak message of ~2500 accented chars already exceeds a 5000-'character' cap, roughly halving the effective allowance for diacritic-heavy input.",
+        "inquiries.rs:43-55 validate_inquiry_lengths — name.len() > MAX_INQUIRY_NAME_LEN (200), email.len() > MAX_INQUIRY_EMAIL_LEN (320), phone p.len() > MAX_INQUIRY_PHONE_LEN (32), message.len() > MAX_INQUIRY_MESSAGE_LEN (5000) with error 'Message is too long (max 5000 characters)'.",
+        "inquiries.rs:425-464 request_viewing — the same byte-vs-char checks inlined for name/email/phone/message plus preferred-time length; message error at :449 again says 'max 5000 characters'.",
+        "inquiries.rs:786-789 respond_to_inquiry — 'if req.message.len() > 5000' with error 'Message must be less than 5000 characters'; also a magic 5000 rather than MAX_INQUIRY_MESSAGE_LEN.",
+        "articles.rs:456-461 create_comment — data.body.len() > MAX_COMMENT_BODY_LEN (5000), error 'Comment body must be at most {} characters'. agent_reviews.rs:212-215 create_review — body.len() > MAX_REVIEW_BODY_LEN (5000), error 'Review body must be at most {} characters'. reports.rs:~200 submit_report — description.len() > MAX_REPORT_DESCRIPTION_LEN (5000), error 'Description must be at most {} characters'.",
+        "Fix: measure grapheme-ish length consistently with the messaging — replace the .len() checks on these free-text fields with .chars().count() (and route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN instead of the literal 5000). A single small PR across the four route files; IG3 can assert with a unit test that a string of N accented chars (byte length ~2N) at N <= limit is accepted. Byte caps may still be wanted as a hard DoS backstop, but they should be a separate, larger, explicitly-byte-worded guard — not the value quoted to the user as 'characters'.",
+        "Confidence medium: the .len()/message mismatch is confirmed by static read across all six call sites; 'medium' rather than 'high' because the impact is over-rejection of valid input (functional/UX defect on the sk/cs/de locales) rather than a crash, data loss, or security bypass."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "title": "reality-server submit_report reporter_email/reporter_phone bound into INSERT with NO length or format validation on anonymous-allowed endpoint — inconsistent with inquiries caps; unbounded stored free-text",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-30 reality-server)"
+      ],
+      "evidence": [
+        "submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is an OPTIONALLY-authenticated / anonymous-allowed endpoint (OptionalRequestPrincipal; reporter_user_id bound as principal.as_ref().map(|p| p.user_id)). It carefully validates description (non-empty + MAX_REPORT_DESCRIPTION_LEN) and attachments (count cap MAX_REPORT_ATTACHMENTS + per-URL validate_image_or_link_url), but the two free-text contact fields reporter_email and reporter_phone (SubmitReportRequest, reports.rs:91-92) are bound straight into the INSERT at reports.rs:279-280 with NO length and NO format validation whatsoever.",
+        "This is inconsistent with the sibling inquiries path, which DOES cap the same class of input: inquiries.rs caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and additionally runs InquiriesHandler::validate_contact for format. The report path shares inquiries' rate limiter (enforce_public_report_rate_limit reuses state.inquiry_rate_limiters) so raw request VOLUME is throttled, but a single permitted request can still persist an arbitrarily large / malformed string into listing_reports.reporter_email / reporter_phone.",
+        "Impact: unbounded unauthenticated free-text stored per allowed report — row/column bloat in the moderation table, junk contact data surfaced to moderators, and (if the DB column has a length constraint) a raw DB error mapped to a generic 500 via db_error() instead of a clean 400, i.e. the same failure mode the listings pagination clamp (#953) was added to prevent.",
+        "Fix: before the INSERT, apply the existing inquiry caps/validators to the report contact fields — reject when reporter_email exceeds MAX_INQUIRY_EMAIL_LEN or reporter_phone exceeds MAX_INQUIRY_PHONE_LEN (and optionally reuse validate_contact for format), returning 400 with a generic message (do NOT echo the offending value — same reflected-XSS caution the file already documents for attachment URLs). Self-contained change in reports.rs; IG3 via a unit/integration test that an over-length reporter_email yields 400.",
+        "Confidence medium: the absence of any length/format guard on reporter_email/reporter_phone and the direct bind into the INSERT are confirmed by static read; severity is low (+1) because the per-IP rate limiter caps exploit volume and the description field — the primary payload — is already bounded."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30",
       "plan": null
     }
   ]
