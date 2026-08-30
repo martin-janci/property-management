@@ -1000,7 +1000,10 @@
     "draftJustNow": "just now",
     "draftSecondsAgo": "{{count}}s ago",
     "draftMinutesAgo": "{{count}}m ago",
-    "draftRestored": "Restored your saved draft."
+    "draftRestored": "Restored your saved draft.",
+    "filePageTitle": "File a Dispute",
+    "subjectPlaceholder": "Brief summary of the dispute",
+    "descriptionPlaceholder": "Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters)."
   },
   "financial": {
     "title": "Financial",

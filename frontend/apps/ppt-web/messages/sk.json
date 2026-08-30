@@ -940,7 +940,10 @@
     "draftJustNow": "práve teraz",
     "draftSecondsAgo": "pred {{count}}s",
     "draftMinutesAgo": "pred {{count}}m",
-    "draftRestored": "Obnovili sme váš uložený návrh."
+    "draftRestored": "Obnovili sme váš uložený návrh.",
+    "filePageTitle": "Podať spor",
+    "subjectPlaceholder": "Stručné zhrnutie sporu",
+    "descriptionPlaceholder": "Podrobne opíšte spor. Uveďte dátumy, časy a konkrétne incidenty (minimálne 30 znakov)."
   },
   "financial": {
     "title": "Financie",

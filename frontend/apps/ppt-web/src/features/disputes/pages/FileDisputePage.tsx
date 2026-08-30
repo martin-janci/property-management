@@ -190,7 +190,9 @@ export function FileDisputePage({
         </button>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">File a Dispute</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t('disputes.filePageTitle', 'File a Dispute')}
+            </h1>
             <p className="text-gray-500 mt-1">
               Submit a formal dispute. All fields marked <span className="text-red-500">*</span> are
               required.
@@ -348,7 +350,7 @@ export function FileDisputePage({
                 id="subject"
                 type="text"
                 maxLength={200}
-                placeholder="Brief summary of the dispute"
+                placeholder={t('disputes.subjectPlaceholder', 'Brief summary of the dispute')}
                 {...register('subject')}
                 aria-describedby={errors.subject ? 'subject-error' : undefined}
                 className={[
@@ -372,7 +374,10 @@ export function FileDisputePage({
                 id="description"
                 rows={6}
                 maxLength={5000}
-                placeholder="Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters)."
+                placeholder={t(
+                  'disputes.descriptionPlaceholder',
+                  'Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).'
+                )}
                 {...register('description')}
                 aria-describedby={errors.description ? 'description-error' : 'description-hint'}
                 className={[
