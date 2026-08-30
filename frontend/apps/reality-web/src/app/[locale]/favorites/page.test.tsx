@@ -162,4 +162,26 @@ describe('FavoritesPage — AC-5 watch-price toggle (#2365)', () => {
     rejectPatch?.();
     await waitFor(() => expect(screen.getByRole('checkbox')).toBeChecked());
   });
+
+  it('surfaces an error alert when the update mutation fails (no longer silently swallowed)', async () => {
+    // Regression for the swallowed-mutation-error bug: a failing PATCH must
+    // reach the user via an alert, not disappear. On main this asserts nothing
+    // renders (no `onError`/`isError` UI existed); with the fix the page shows
+    // the generic `error.description` message. `useTranslations` is mocked to
+    // echo the key, so the alert text is the literal key `description`.
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if ((init?.method ?? 'GET') === 'PATCH') {
+        return Promise.resolve({ ok: false, status: 500, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => favoritesPayload(true) });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('checkbox'));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('description');
+  });
 });

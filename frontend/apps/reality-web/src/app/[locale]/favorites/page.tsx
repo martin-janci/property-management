@@ -16,6 +16,7 @@ import { Link } from '@/i18n/routing';
 
 function FavoritesContent() {
   const t = useTranslations('pages.favorites');
+  const tError = useTranslations('error');
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useFavorites(page, 12);
   const removeFavorite = useRemoveFavorite();
@@ -128,6 +129,11 @@ function FavoritesContent() {
 
   return (
     <>
+      {(removeFavorite.isError || updateFavorite.isError) && (
+        <div className="action-error" role="alert" aria-live="assertive">
+          {tError('description')}
+        </div>
+      )}
       <div className="favorites-grid">
         {data.data.map((favorite) => {
           // Backend default for `price_alert_enabled` is `true`; treat an
@@ -181,6 +187,14 @@ function FavoritesContent() {
       )}
 
       <style jsx>{`
+        .action-error {
+          margin: 0 0 16px;
+          padding: 12px 16px;
+          border-radius: 8px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-hover);
+          font-size: 14px;
+        }
         .favorites-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
