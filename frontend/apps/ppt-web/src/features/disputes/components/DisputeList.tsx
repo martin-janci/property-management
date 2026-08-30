@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import {
   categoryLabels,
@@ -47,6 +48,7 @@ export function DisputeList({
   onManage,
   onCreate,
 }: DisputeListProps) {
+  const { t } = useTranslation();
   const [searchInput, setSearchInput] = useState('');
   const [activeStatus, setActiveStatus] = useState<DisputeStatus | undefined>();
   const [activePriority, setActivePriority] = useState<DisputePriority | undefined>();
@@ -81,13 +83,13 @@ export function DisputeList({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Disputes</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('disputes.title')}</h1>
         <button
           type="button"
           onClick={onCreate}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          File New Dispute
+          {t('disputes.fileNewDispute')}
         </button>
       </div>
 
@@ -98,7 +100,7 @@ export function DisputeList({
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"
-              placeholder="Search disputes..."
+              placeholder={t('disputes.searchPlaceholder')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -107,7 +109,7 @@ export function DisputeList({
               type="submit"
               className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              Search
+              {t('disputes.search')}
             </button>
           </form>
 
@@ -117,7 +119,7 @@ export function DisputeList({
             onChange={(e) => handleStatusChange(e.target.value as DisputeStatus | '')}
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Statuses</option>
+            <option value="">{t('disputes.allStatuses')}</option>
             {Object.entries(statusLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -131,7 +133,7 @@ export function DisputeList({
             onChange={(e) => handlePriorityChange(e.target.value as DisputePriority | '')}
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Priorities</option>
+            <option value="">{t('disputes.allPriorities')}</option>
             {Object.entries(priorityLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -145,7 +147,7 @@ export function DisputeList({
             onChange={(e) => handleCategoryChange(e.target.value as DisputeCategory | '')}
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Categories</option>
+            <option value="">{t('disputes.allCategories')}</option>
             {Object.entries(categoryLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -162,13 +164,13 @@ export function DisputeList({
         </div>
       ) : disputes.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500">No disputes found.</p>
+          <p className="text-gray-500">{t('disputes.noDisputesFound')}</p>
           <button
             type="button"
             onClick={onCreate}
             className="mt-4 text-blue-600 hover:text-blue-800"
           >
-            File a new dispute
+            {t('disputes.fileANewDispute')}
           </button>
         </div>
       ) : (
@@ -183,8 +185,11 @@ export function DisputeList({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}{' '}
-            disputes
+            {t('disputes.paginationShowing', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -193,7 +198,7 @@ export function DisputeList({
               disabled={page <= 1}
               className="px-3 py-1 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {t('disputes.previous')}
             </button>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const pageNum = page <= 3 ? i + 1 : page + i - 2;
@@ -217,7 +222,7 @@ export function DisputeList({
               disabled={page >= totalPages}
               className="px-3 py-1 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {t('disputes.next')}
             </button>
           </div>
         </div>
