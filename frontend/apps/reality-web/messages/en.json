@@ -709,10 +709,28 @@
       "browseListings": "Browse listings"
     },
     "savedSearches": {
-      "error": "Failed to load saved searches. Please try again.",
-      "emptyTitle": "No saved searches",
+      "alertsOff": "Alerts off",
+      "alertsOn": "Alerts on",
+      "allListings": "All listings",
+      "confirmNo": "No",
+      "confirmYes": "Yes",
+      "deleteAriaLabel": "Delete saved search",
+      "deleteConfirm": "Delete?",
       "emptyText": "Search for listings and save your search to get alerts when new properties match your criteria.",
-      "startSearching": "Start searching"
+      "emptyTitle": "No saved searches",
+      "error": "Failed to load saved searches. Please try again.",
+      "forRent": "For Rent",
+      "forSale": "For Sale",
+      "frequency": {
+        "daily": "Daily",
+        "instant": "Instant",
+        "weekly": "Weekly"
+      },
+      "newCount": "{count} new",
+      "startSearching": "Start searching",
+      "subtitle": "Manage your saved searches and get notified when new listings match your criteria.",
+      "title": "Saved Searches",
+      "view": "View"
     },
     "realtorListings": {
       "error": "Failed to load listings.",

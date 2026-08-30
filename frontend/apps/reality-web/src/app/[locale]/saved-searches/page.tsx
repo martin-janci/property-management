@@ -19,6 +19,7 @@ import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 
 function SavedSearchCard({ search }: { search: SavedSearch }) {
+  const t = useTranslations('pages.savedSearches');
   const deleteSearch = useDeleteSavedSearch();
   const toggleAlert = useToggleSearchAlert();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -36,7 +37,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
     const parts: string[] = [];
 
     if (search.filters.transactionType) {
-      parts.push(search.filters.transactionType === 'sale' ? 'For Sale' : 'For Rent');
+      parts.push(search.filters.transactionType === 'sale' ? t('forSale') : t('forRent'));
     }
 
     if (search.filters.propertyType?.length) {
@@ -53,7 +54,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
       parts.push(`€${min} - €${max}`);
     }
 
-    return parts.length > 0 ? parts.join(' • ') : 'All listings';
+    return parts.length > 0 ? parts.join(' • ') : t('allListings');
   };
 
   const searchUrl = `/listings?${new URLSearchParams(
@@ -70,7 +71,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
           <p className="card-summary">{getFilterSummary()}</p>
         </div>
         <Link href={searchUrl} className="view-button">
-          View
+          {t('view')}
         </Link>
       </div>
 
@@ -84,29 +85,31 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
               className="toggle-checkbox"
               disabled={toggleAlert.isPending}
             />
-            <span className="toggle-text">{search.alertsEnabled ? 'Alerts on' : 'Alerts off'}</span>
+            <span className="toggle-text">
+              {search.alertsEnabled ? t('alertsOn') : t('alertsOff')}
+            </span>
           </label>
           {search.alertsEnabled && search.alertFrequency && (
-            <span className="frequency-badge">{search.alertFrequency}</span>
+            <span className="frequency-badge">{t(`frequency.${search.alertFrequency}`)}</span>
           )}
         </div>
 
         <div className="card-actions">
           {search.newListingsCount !== undefined && search.newListingsCount > 0 && (
-            <span className="new-badge">{search.newListingsCount} new</span>
+            <span className="new-badge">{t('newCount', { count: search.newListingsCount })}</span>
           )}
           {showDeleteConfirm ? (
             <div className="delete-confirm">
-              <span>Delete?</span>
+              <span>{t('deleteConfirm')}</span>
               <button type="button" className="confirm-yes" onClick={handleDelete}>
-                Yes
+                {t('confirmYes')}
               </button>
               <button
                 type="button"
                 className="confirm-no"
                 onClick={() => setShowDeleteConfirm(false)}
               >
-                No
+                {t('confirmNo')}
               </button>
             </div>
           ) : (
@@ -114,7 +117,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
               type="button"
               className="delete-button"
               onClick={() => setShowDeleteConfirm(true)}
-              aria-label="Delete saved search"
+              aria-label={t('deleteAriaLabel')}
             >
               <svg
                 width="16"
@@ -400,15 +403,14 @@ function SavedSearchesContent() {
 }
 
 export default function SavedSearchesPage() {
+  const t = useTranslations('pages.savedSearches');
   return (
     <div className="page-container">
       <Header />
       <main className="main">
         <div className="container">
-          <h1 className="page-title">Saved Searches</h1>
-          <p className="page-subtitle">
-            Manage your saved searches and get notified when new listings match your criteria.
-          </p>
+          <h1 className="page-title">{t('title')}</h1>
+          <p className="page-subtitle">{t('subtitle')}</p>
           <ProtectedRoute>
             <SavedSearchesContent />
           </ProtectedRoute>

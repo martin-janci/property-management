@@ -702,10 +702,28 @@
       "browseListings": "Przeglądaj oferty"
     },
     "savedSearches": {
-      "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",
-      "emptyTitle": "Brak zapisanych wyszukiwań",
+      "alertsOff": "Powiadomienia wyłączone",
+      "alertsOn": "Powiadomienia włączone",
+      "allListings": "Wszystkie oferty",
+      "confirmNo": "Nie",
+      "confirmYes": "Tak",
+      "deleteAriaLabel": "Usuń zapisane wyszukiwanie",
+      "deleteConfirm": "Usunąć?",
       "emptyText": "Wyszukuj oferty i zapisz wyszukiwanie, aby otrzymywać powiadomienia, gdy nowe nieruchomości spełnią Twoje kryteria.",
-      "startSearching": "Rozpocznij wyszukiwanie"
+      "emptyTitle": "Brak zapisanych wyszukiwań",
+      "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",
+      "forRent": "Na wynajem",
+      "forSale": "Na sprzedaż",
+      "frequency": {
+        "daily": "Codziennie",
+        "instant": "Natychmiast",
+        "weekly": "Co tydzień"
+      },
+      "newCount": "{count} nowych",
+      "startSearching": "Rozpocznij wyszukiwanie",
+      "subtitle": "Zarządzaj swoimi zapisanymi wyszukiwaniami i otrzymuj powiadomienia, gdy nowe oferty spełnią Twoje kryteria.",
+      "title": "Zapisane wyszukiwania",
+      "view": "Zobacz"
     },
     "realtorListings": {
       "error": "Nie udało się załadować ofert.",

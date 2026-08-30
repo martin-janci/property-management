@@ -702,10 +702,28 @@
       "browseListings": "Hirdetések böngészése"
     },
     "savedSearches": {
-      "error": "Nem sikerült betölteni a mentett kereséseket. Kérjük, próbálja újra.",
-      "emptyTitle": "Nincsenek mentett keresések",
+      "alertsOff": "Értesítések kikapcsolva",
+      "alertsOn": "Értesítések bekapcsolva",
+      "allListings": "Összes hirdetés",
+      "confirmNo": "Nem",
+      "confirmYes": "Igen",
+      "deleteAriaLabel": "Mentett keresés törlése",
+      "deleteConfirm": "Törlés?",
       "emptyText": "Keressen hirdetéseket, és mentse el a keresést, hogy értesítést kapjon, amikor új ingatlanok felelnek meg a feltételeinek.",
-      "startSearching": "Keresés indítása"
+      "emptyTitle": "Nincsenek mentett keresések",
+      "error": "Nem sikerült betölteni a mentett kereséseket. Kérjük, próbálja újra.",
+      "forRent": "Kiadó",
+      "forSale": "Eladó",
+      "frequency": {
+        "daily": "Naponta",
+        "instant": "Azonnal",
+        "weekly": "Hetente"
+      },
+      "newCount": "{count} új",
+      "startSearching": "Keresés indítása",
+      "subtitle": "Kezelje mentett kereséseit, és kapjon értesítést, amikor új hirdetések felelnek meg a feltételeinek.",
+      "title": "Mentett keresések",
+      "view": "Megtekintés"
     },
     "realtorListings": {
       "error": "Nem sikerült betölteni a hirdetéseket.",
