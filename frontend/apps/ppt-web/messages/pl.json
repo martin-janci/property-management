@@ -1807,6 +1807,7 @@
     "thresholdCreateFailed": "Nie udało się utworzyć progu",
     "thresholdUpdated": "Próg zaktualizowany",
     "thresholdUpdateFailed": "Nie udało się zaktualizować progu",
+    "sensorDeleteConfirm": "Usunąć czujnik \"{{name}}\"? Spowoduje to również usunięcie jego odczytów i alertów, a operacji nie można cofnąć.",
     "thresholdDeleteConfirm": "Usunąć ten próg? Tej operacji nie można cofnąć.",
     "thresholdDeleted": "Próg usunięty",
     "thresholdDeleteFailed": "Nie udało się usunąć progu",

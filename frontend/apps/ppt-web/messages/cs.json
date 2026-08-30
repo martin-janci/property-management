@@ -1879,6 +1879,7 @@
     "thresholdCreateFailed": "Nepodařilo se vytvořit prah",
     "thresholdUpdated": "Prah aktualizován",
     "thresholdUpdateFailed": "Nepodařilo se aktualizovat prah",
+    "sensorDeleteConfirm": "Smazat senzor \"{{name}}\"? Odstraní se i jeho měření a upozornění a tuto akci nelze vrátit zpět.",
     "thresholdDeleteConfirm": "Smazat tento prah? Tuto akci nelze vrátit zpět.",
     "thresholdDeleted": "Prah smazán",
     "thresholdDeleteFailed": "Nepodařilo se smazat prah",

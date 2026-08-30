@@ -1801,6 +1801,7 @@
     "thresholdCreateFailed": "A küszöbérték létrehozása nem sikerült",
     "thresholdUpdated": "Küszöbérték frissítve",
     "thresholdUpdateFailed": "A küszöbérték frissítése nem sikerült",
+    "sensorDeleteConfirm": "Törli a(z) \"{{name}}\" érzékelőt? Ezzel a méréseit és riasztásait is eltávolítja, és a művelet nem vonható vissza.",
     "thresholdDeleteConfirm": "Törli ezt a küszöbértéket? Ezt nem lehet visszavonni.",
     "thresholdDeleted": "Küszöbérték törölve",
     "thresholdDeleteFailed": "A küszöbérték törlése nem sikerült",

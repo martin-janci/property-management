@@ -1828,6 +1828,7 @@
     "thresholdCreateFailed": "Schwellenwert konnte nicht erstellt werden",
     "thresholdUpdated": "Schwellenwert aktualisiert",
     "thresholdUpdateFailed": "Schwellenwert konnte nicht aktualisiert werden",
+    "sensorDeleteConfirm": "Sensor \"{{name}}\" löschen? Dabei werden auch seine Messwerte und Warnungen entfernt und dies kann nicht rückgängig gemacht werden.",
     "thresholdDeleteConfirm": "Diesen Schwellenwert löschen? Dies kann nicht rückgängig gemacht werden.",
     "thresholdDeleted": "Schwellenwert gelöscht",
     "thresholdDeleteFailed": "Schwellenwert konnte nicht gelöscht werden",
