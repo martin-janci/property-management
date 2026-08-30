@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-08-29 22:36 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-30 12:41 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -36,7 +36,7 @@
 | 3 | security | `code-review-api-handlers-booking-connect-non-manager-hijack` | SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing  | done | 2026-08-22 | [plan](plans/_archive/code-review-api-handlers-booking-connect-non-manager-hijack.md) |
 | 3 | bug | `code-review-mobile-native-kmp-inquiries-response-contract` | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFi | ready | 2026-08-25 | [plan](plans/code-review-mobile-native-kmp-inquiries-response-contract.md) |
 | 3 | bug | `code-review-ppt-web-ui-content-mod-unsafe-cast` | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | done | 2026-08-25 | [plan](plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md) |
-| 3 | security | `code-review-api-core-client-ip-cf-spoof` | api-server client-ip resolver trusts CF-Connecting-IP on any private-range peer — CF-only gate missi | ready | 2026-08-29 | [plan](plans/code-review-api-core-client-ip-cf-spoof.md) |
+| 3 | security | `code-review-api-core-client-ip-cf-spoof` | api-server client-ip resolver trusts CF-Connecting-IP on any private-range peer — CF-only gate missi | done | 2026-08-29 | [plan](plans/code-review-api-core-client-ip-cf-spoof.md) |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | refactor | `refactor-documents-rs-hot` | documents.rs churn-hot — 10,659 lines over 14d | done | 2026-05-25 |  |
@@ -136,7 +136,6 @@
 | 2 | bug | `code-review-ppt-web-core-perfmetrics-listener-leak` | usePerformanceMetrics never removes its visibilitychange/load listeners on cleanup — event-listener  | done | 2026-08-12 |  |
 | 2 | security | `code-review-api-handlers-voice-oauth-refresh-unauthenticated` | SECURITY: voice /oauth/refresh accepts unauth {device_id} and rotates linked user OAuth token — anyo | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md) |
 | 2 | security | `code-review-api-handlers-voice-google-verify-fail-open` | SECURITY: voice verify_google_request is fail-open — no JWT signature verify; substring project-id m | done | 2026-08-15 | [plan](plans/code-review-api-handlers-voice-google-verify-fail-open.md) |
-| 2 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang i | open | 2026-08-16 |  |
 | 2 | bug | `code-review-api-handlers-share-pw-no-throttle` | SECURITY: public access_protected_share endpoint verifies share password with no rate-limit / lockou | done | 2026-08-17 |  |
 | 2 | bug | `code-review-ppt-web-ui-createfault-mock-ai` | ppt-web CreateFault page uses hardcoded mock AI triage response instead of real API — ships fake dat | done | 2026-08-17 |  |
 | 2 | bug | `code-review-ppt-web-ui-moderation-fabricated-context` | ppt-web moderation page fabricates context that the moderation API never returns — misleading data | done | 2026-08-17 |  |
@@ -154,11 +153,16 @@
 | 2 | bug | `code-review-api-handlers-decide-appeal-unvalidated` | api-handlers moderation.rs decide_appeal — free-form req.decision silently rejects appeals on typo/c | done | 2026-08-28 |  |
 | 2 | bug | `code-review-api-handlers-report-content-unbounded` | api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open  | done | 2026-08-28 |  |
 | 2 | security | `code-review-api-handlers-capabilities-list-cross-org` | SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant  | dropped | 2026-08-28 |  |
-| 2 | bug | `code-review-api-core-workflow-eq-type-strict-no-coercion` | workflow_executor Eq/Ne/In/NotIn use strict JSON structural equality while Gt/Lt/Contains coerce — s | open | 2026-08-29 |  |
-| 2 | bug | `code-review-api-core-docgen-summarize-char-boundary-panic` | document_generation summarize_document long-doc branch slices String by byte offset without char-bou | open | 2026-08-29 |  |
-| 2 | security | `code-review-api-handlers-unbounded-pagination-limit` | api-server list endpoints pass user-supplied `?limit=N` to SQL LIMIT unclamped — cheap DoS on ai/*,  | open | 2026-08-29 |  |
-| 2 | bug | `code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor` | ppt-web person-months useBuildingUnits uses raw `fetch()` — bypasses axios JWT interceptor → silent  | open | 2026-08-29 |  |
-| 2 | bug | `code-review-ppt-web-ui-create-dispute-page-stub-submit` | ppt-web CreateDisputePage.handleSubmit is a `setTimeout(1000)` stub — data silently discarded; orpha | open | 2026-08-29 |  |
+| 2 | bug | `code-review-api-core-workflow-eq-type-strict-no-coercion` | workflow_executor Eq/Ne/In/NotIn use strict JSON structural equality while Gt/Lt/Contains coerce — s | done | 2026-08-29 |  |
+| 2 | bug | `code-review-api-core-docgen-summarize-char-boundary-panic` | document_generation summarize_document long-doc branch slices String by byte offset without char-bou | done | 2026-08-29 |  |
+| 2 | security | `code-review-api-handlers-unbounded-pagination-limit` | api-server list endpoints pass user-supplied `?limit=N` to SQL LIMIT unclamped — cheap DoS on ai/*,  | done | 2026-08-29 |  |
+| 2 | bug | `code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor` | ppt-web person-months useBuildingUnits uses raw `fetch()` — bypasses axios JWT interceptor → silent  | done | 2026-08-29 |  |
+| 2 | bug | `code-review-ppt-web-ui-create-dispute-page-stub-submit` | ppt-web CreateDisputePage.handleSubmit is a `setTimeout(1000)` stub — data silently discarded; orpha | done | 2026-08-29 |  |
+| 2 | bug | `code-review-reality-web-mutation-no-onerror` | Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surf | open | 2026-08-30 |  |
+| 2 | bug | `code-review-mobile-native-kmp-create-listing-not-wired` | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | open | 2026-08-30 |  |
+| 2 | bug | `code-review-ppt-web-core-ws-event-name-mismatch` | WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime | open | 2026-08-30 |  |
+| 2 | bug | `code-review-reality-server-sso-introspect-negcache-poison` | SSO introspect_pm_token caches active=false on PM 5xx — 60s spurious session denials during PM intro | open | 2026-08-30 |  |
+| 2 | bug | `code-review-reality-server-bytelen-charcount-validation` | Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de acc | open | 2026-08-30 |  |
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
@@ -338,13 +342,21 @@
 | 1 | refactor | `churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | Churn hotspot: ContentModerationPage.tsx — 4 touches (server-side filter, toast, truncation notice,  | done | 2026-08-28 |  |
 | 1 | refactor | `churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs` | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead cap | done | 2026-08-28 |  |
 | 1 | refactor | `churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation | done | 2026-08-28 |  |
-| 1 | bug | `code-review-api-handlers-ocr-photo-url-silent-loss` | ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image | open | 2026-08-29 |  |
-| 1 | bug | `code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded` | ppt-web iot.tsx sensor-delete confirm is hardcoded English `window.confirm(…)` — sk/cs/de users see  | open | 2026-08-29 |  |
-| 1 | bug | `code-review-ppt-web-ui-dispute-list-no-i18n` | ppt-web DisputeList (live /disputes route) has ZERO useTranslation — h1, filters, empty state all ra | open | 2026-08-29 |  |
-| 1 | bug | `code-review-ppt-web-ui-file-dispute-page-partial-i18n` | ppt-web FileDisputePage (live /disputes/new) — h1, placeholders left hardcoded English despite parti | open | 2026-08-29 |  |
-| 1 | bug | `code-review-reality-web-i18n-error-state-gap` | reality-web (public, 4-locale) error/empty states hardcoded English across inquiries/favorites/saved | open | 2026-08-29 |  |
-| 1 | refactor | `code-review-reality-web-listing-grid-empty-dup` | reality-web ListingGrid hand-rolls its own empty state with hardcoded English + duplicated styling i | open | 2026-08-29 |  |
-| 1 | bug | `code-review-mobile-rn-deeplink-url-listener-leak` | mobile RN DeepLinkManager.initialize() discards Linking.addEventListener subscription — leaks + doub | open | 2026-08-29 |  |
+| 1 | bug | `code-review-api-handlers-ocr-photo-url-silent-loss` | ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image | done | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded` | ppt-web iot.tsx sensor-delete confirm is hardcoded English `window.confirm(…)` — sk/cs/de users see  | done | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-ui-dispute-list-no-i18n` | ppt-web DisputeList (live /disputes route) has ZERO useTranslation — h1, filters, empty state all ra | done | 2026-08-29 |  |
+| 1 | bug | `code-review-ppt-web-ui-file-dispute-page-partial-i18n` | ppt-web FileDisputePage (live /disputes/new) — h1, placeholders left hardcoded English despite parti | done | 2026-08-29 |  |
+| 1 | bug | `code-review-reality-web-i18n-error-state-gap` | reality-web (public, 4-locale) error/empty states hardcoded English across inquiries/favorites/saved | done | 2026-08-29 |  |
+| 1 | refactor | `code-review-reality-web-listing-grid-empty-dup` | reality-web ListingGrid hand-rolls its own empty state with hardcoded English + duplicated styling i | done | 2026-08-29 |  |
+| 1 | bug | `code-review-mobile-rn-deeplink-url-listener-leak` | mobile RN DeepLinkManager.initialize() discards Linking.addEventListener subscription — leaks + doub | done | 2026-08-29 |  |
+| 1 | bug | `code-review-mobile-native-kmp-httpclient-no-timeout` | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang i | open | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-web-saved-searches-i18n` | Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app | open | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-web-inquiries-i18n` | Inquiries page renders hardcoded English status labels and chrome in a 4-language app | open | 2026-08-30 |  |
+| 1 | bug | `code-review-api-handlers-compliance-superadmin-exact-match` | compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier h | open | 2026-08-30 |  |
+| 1 | bug | `code-review-ppt-web-core-api-onunauthorized-unwired` | lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on to | open | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-server-alert-drainer-i18n-english-only` | SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent not | open | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-server-sso-per-call-client-no-timeout` | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no poo | open | 2026-08-30 |  |
+| 1 | bug | `code-review-reality-server-report-contact-unvalidated` | submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation | open | 2026-08-30 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |

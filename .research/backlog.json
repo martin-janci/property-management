@@ -8313,7 +8313,7 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
@@ -8321,13 +8321,14 @@
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
-        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS."
+        "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
+        "decayed 2026-08-30: -1 (no new signal in 14 days)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-16",
+      "updated_at": "2026-08-30",
       "plan": null
     },
     {
@@ -9825,6 +9826,217 @@
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-api-handlers-compliance-superadmin-exact-match",
+      "title": "compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier hierarchy)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d api-handlers)"
+      ],
+      "evidence": [
+        "compliance.rs:22-30 require_super_admin uses exact `match user.role { Some(TenantRole::SuperAdmin) => Ok(()), _ => Err(FORBIDDEN) }` gating all 10 platform-compliance handlers (audit logs, GDPR/audit summary, deletion requests, privacy settings, login/MFA/failed-login reports); every other platform-tier gate in the codebase (rls_context.rs, rls_connection.rs, auth.rs, emergency/shared.rs) admits `SuperAdmin | PlatformAdmin` together",
+        "Fails CLOSED — over-restriction, not disclosure — so PlatformAdmin (a platform-tier operator that already bypasses RLS everywhere else) is locked out of the entire compliance/GDPR dashboard; also a maintainability hazard against the documented hierarchical role model",
+        "Fix: replace with `matches!(user.role, Some(SuperAdmin) | Some(PlatformAdmin))` mirroring emergency/shared.rs, or the shared permission predicate. Backend-only, single-file change. IG3: handler/authz test that a PlatformAdmin principal reaches a compliance endpoint — fails today"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs",
+        "backend/crates/common/src/tenant.rs",
+        "backend/crates/api-core/src/middleware/authorization.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)"
+      ],
+      "evidence": [
+        "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
+        "PortalListingsRepository already calls GET /api/v1/my/listings (listMyListings) but has NO create method; backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:24 route + :207 create_listing, registered in main.rs:205) — fix is KMP-only",
+        "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-event-name-mismatch",
+      "title": "WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime cache invalidation 100% dead",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core)"
+      ],
+      "evidence": [
+        "WebSocketContext.tsx:33-40 eventToQueryKeys keys on colon-namespaced names (`entity:announcement`, `entity:fault`, `entity:vote`, `entity:document`, `entity:message`, `entity:neighbor`); the entity-event effect at :305-330 subscribes on those exact strings plus `entity:updated`/`entity:created`/`entity:deleted`",
+        "api-server ONLY emits dot-namespaced `domain.action` event_type values (`notification.created`, `announcement.published`, `announcement.acknowledgment_required`, `message.created`, `vote.started`, `vote.closed`, `vote.ending_soon`, `vote.reminder_not_voted`, `vote.results_available`); grep for literal `\"entity:` under backend/servers/api-server/src returns ZERO hits",
+        "Dispatch is exact-string Map match (websocket.ts:557 `this.messageHandlers.get(message.type)`), so subscription keyed on `entity:*` can NEVER be invoked by a server frame typed `vote.started` / `announcement.published`. Independent SECOND root cause from the already-filed `ws-query-invalidation-dead` (that one is App.tsx not passing onEntityEvent to WebSocketProvider)",
+        "Fix: rebuild eventToQueryKeys around the emitted `domain.action` names (`announcement.published` → ['announcements'], `vote.*` → ['votes'], `message.created` → ['messages'], `notification.created` → ['notifications']) and drop the non-existent `entity:*`/`entity:updated` subscriptions. Frontend TS only, landable in cloud. IG3: WebSocketContext test that a `vote.started` frame triggers onEntityEvent with ['votes'] — fails today"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "backend/servers/api-server/src/routes/ws_notifications.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-onunauthorized-unwired",
+      "title": "lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on token expiry",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core)"
+      ],
+      "evidence": [
+        "lib/api.ts:213-221 axios response interceptor's only 401 reaction is `if (error.response?.status === 401 && onUnauthorizedCallback) onUnauthorizedCallback();`; onUnauthorizedCallback set only by createAxiosInstance from config.onUnauthorized (:196), reachable via configureApiClient (:298)",
+        "The sole configureApiClient call site (AuthContext.tsx:337) passes only `{ getToken: getAccessToken }` — no onUnauthorized — so onUnauthorizedCallback is permanently undefined and the 401 branch is dead. Contradicts the documented contract at usePredictiveMaintenance.ts:10 and useSentiment.ts:19 ('401 → onUnauthorized' comment)",
+        "No refresh-on-401 retry either (401 not in RETRYABLE_STATUS_CODES, no refresh interceptor), so features/sentiment + features/predictive-maintenance + routes/groups/person-months surface a hard ApiError on token expiry with no re-auth reaction until an unrelated @ppt/api-client call triggers the AuthContext refresh path",
+        "Fix: wire the callback at AuthContext.tsx:337 — `configureApiClient({ getToken: getAccessToken, onUnauthorized: () => { void refreshToken(); }})` — so the existing 401 branch drives re-auth via the refresh-dedupe already at :449-462. Alternatively add refresh-and-retry-once to lib/api.ts. Frontend TS only, landable in cloud. IG3: lib/api.ts test that stubs 401 asserts onUnauthorized fires — fails today"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-server-alert-drainer-i18n-english-only",
+      "title": "SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent notification-i18n gap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server services sweep)"
+      ],
+      "evidence": [
+        "services/search_alert_drainer.rs:260-273 SearchAlertDrainerWorker::run_once builds AlertNotification with hardcoded English `format!(\"{count} new listing{} match your saved search \\\"{}\\\"\", ...)` subject and body — never consults locale",
+        "The same struct DOES carry the recipient's locale (:272-276 `locale: alert.recipient_locale.clone().unwrap_or_else(|| \"en\".into())`, field doc at :45 `/// Recipient locale (sk|cs|de|en), for localized copy later`) — the drainer threads locale through then discards it when composing the message",
+        "Localization pattern already exists in the same directory: services/email.rs:102-125 (reset_subject/reset_body) fully localize across Locale::Slovak/Czech/German/English via `db::models::user::Locale`; reality portal ships sk/cs/de/en per CLAUDE.md",
+        "Impact is latent (only LogEmail/LogPush transports wired today at :74-118 — no real SMTP/FCM injected yet), scored +1 accordingly; will ship English notifications to all locales the moment a real transport is wired via with_transports. Fix: parse recipient_locale into Locale + compose subject/body via locale match mirroring email.rs. Backend Rust only, landable in cloud. IG3: unit test that run_once with a Slovak recipient_locale yields non-English subject"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs",
+        "backend/servers/reality-server/src/services/email.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-server-sso-introspect-negcache-poison",
+      "title": "SSO introspect_pm_token caches active=false on PM 5xx — 60s spurious session denials during PM introspection outages",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep)"
+      ],
+      "evidence": [
+        "routes/sso.rs:729-786 introspect_pm_token caches in state.token_cache (TokenValidationCache, 60s TTL, state.rs:947); on the FAILURE branch at :759-766 when the PM endpoint returns non-success HTTP, it calls `state.token_cache.set(token, false, None, None)` — caches active=false for a token whose real status is UNKNOWN",
+        "Per RFC 7662 a genuinely inactive token is HTTP 200 with `{active: false}` (handled at :770-784); a 4xx/5xx means client-config or upstream error (PM API down/redeploy, 502/503, bad credentials) — NOT authoritative evidence the user's token is inactive. Caching false on !is_success() treats an upstream outage as an authoritative negative",
+        "Cache-hit path (:735-745) returns `Ok(TokenIntrospectionResponse { active: cached.active, .. })` for any non-expired entry with NO error signal (state.rs:656-673 returns any entry while `Instant::now() < cached.expires_at`), so during a PM blip the first request 5xx-fails + writes active=false; every subsequent request with that SAME valid token for up to 60s hits the poisoned cache and is denied. Common because a page fires several bearer-token calls",
+        "Fails CLOSED (denies rather than grants), so availability defect not security bypass — scored +2 medium. Fix (routes/sso.rs only): populate cache ONLY from a successfully-parsed 200 body (cache both active=true and PM's genuine active=false); on any transport/non-2xx error return Err WITHOUT calling token_cache.set. Backend Rust only, landable in cloud. IG3: unit test that a 503 introspection leaves token_cache empty and a following 200 re-validates active=true"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-server-sso-per-call-client-no-timeout",
+      "title": "SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep)"
+      ],
+      "evidence": [
+        "All three PM-facing SSO helpers construct a brand-new HTTP client per request via `reqwest::Client::new()`: exchange_pm_token (routes/sso.rs:687), get_user_info (:711), and introspect_pm_token (:748) — fresh connection pool + TLS setup on every authenticated portal request",
+        "`reqwest::Client::new()` applies NO request timeout. A hung/slow PM endpoint (the very outage scenario in the paired negcache-poison finding) can stall these helpers indefinitely, holding the portal request open. Contrast state.rs:756-762 where PmApiClient::new builds its client with `.timeout(Duration::from_secs(timeout_seconds))` — the timeout discipline exists but is not applied here",
+        "Fix: build a shared `reqwest::Client` once with explicit `.timeout(...)` mirroring PmApiClient — store on AppState alongside existing PmApiClient or pass the already-pooled client — and reuse across exchange_pm_token / get_user_info / introspect_pm_token. Backend Rust only, landable in cloud. IG3: test that the SSO helpers use a client with a configured timeout, or construction-site assertion that no bare `Client::new()` remains in sso.rs"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-server-bytelen-charcount-validation",
+      "title": "Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de accented input",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server)"
+      ],
+      "evidence": [
+        "Every user-facing length validation on the public Reality Portal write paths measures BYTES (str::len()) but constants and 400 error messages are all phrased in CHARACTERS — Slovak/Czech/German accented chars are 2 bytes/char and emoji are 4 bytes, so a submission well under the advertised character cap is rejected once its UTF-8 byte length crosses the limit (a ~2500-char Slovak message already trips a 5000-char cap)",
+        "inquiries.rs:43-55 validate_inquiry_lengths — name.len() > 200, email.len() > 320, phone > 32, message.len() > 5000 with 'max 5000 characters' error. inquiries.rs:425-464 request_viewing repeats the same inline. inquiries.rs:786-789 respond_to_inquiry uses `if req.message.len() > 5000` with 'less than 5000 characters' AND a magic 5000 instead of MAX_INQUIRY_MESSAGE_LEN",
+        "articles.rs:456-461 create_comment — data.body.len() > MAX_COMMENT_BODY_LEN error 'at most {} characters'. agent_reviews.rs:212-215 create_review — body.len() > MAX_REVIEW_BODY_LEN error 'at most {} characters'. reports.rs:~200 submit_report — description.len() > MAX_REPORT_DESCRIPTION_LEN error 'at most {} characters'",
+        "Fix: measure grapheme-ish length consistently with the messaging — replace .len() with .chars().count() on these free-text fields and route respond_to_inquiry through MAX_INQUIRY_MESSAGE_LEN. Byte caps may still be wanted as an explicit DoS backstop but should be a separate, explicitly-byte-worded guard. Backend Rust, multi-file (4 route files). Landable in cloud. IG3: unit test asserting N accented chars (byte length ~2N) at N <= limit is accepted"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-08-30",
+      "updated_at": "2026-08-30"
+    },
+    {
+      "id": "code-review-reality-server-report-contact-unvalidated",
+      "title": "submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server)"
+      ],
+      "evidence": [
+        "submit_report (routes/reports.rs, POST /api/v1/reports, UC-23) is an optionally-authenticated/anonymous-allowed endpoint (OptionalRequestPrincipal). It validates description (non-empty + MAX_REPORT_DESCRIPTION_LEN) and attachments (count cap + per-URL validate_image_or_link_url), but reporter_email and reporter_phone (SubmitReportRequest reports.rs:91-92) are bound straight into the INSERT at :279-280 with NO length and NO format validation",
+        "Inconsistent with sibling inquiries which DOES cap the same input: inquiries.rs caps email at MAX_INQUIRY_EMAIL_LEN (320) and phone at MAX_INQUIRY_PHONE_LEN (32) and runs InquiriesHandler::validate_contact for format. The report path shares inquiries' rate limiter (state.inquiry_rate_limiters) so raw request volume is throttled, but a single permitted request can persist arbitrarily large/malformed contact strings",
+        "Impact: unbounded unauthenticated free-text per allowed report — table/column bloat, junk contact data surfaced to moderators, and (if the DB column has a length constraint) a raw DB error mapped to generic 500 via db_error() instead of a clean 400 — same failure mode the listings pagination clamp (#953) prevented",
+        "Fix: apply the existing inquiry caps/validators to reporter_email/reporter_phone before the INSERT (reject when reporter_email > MAX_INQUIRY_EMAIL_LEN or reporter_phone > MAX_INQUIRY_PHONE_LEN, optionally reuse validate_contact), return 400 with a generic message (do NOT echo offending value — same reflected-XSS caution the file already documents for attachment URLs). Backend Rust only, single-file, landable in cloud. IG3: integration test that an over-length reporter_email yields 400"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
       ],
       "created_at": "2026-08-30",
       "updated_at": "2026-08-30"

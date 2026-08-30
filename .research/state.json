@@ -5,9 +5,9 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-29T22:36:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2874,
+  "last_run_iso": "2026-08-30T12:41:00Z",
+  "last_run_ms": 4000,
+  "last_pr_seen": 2888,
   "last_issue_seen": 2847,
   "last_commit_sha": "9ba2f31c6a0c773989a50a78df8584e0dee4f5a7",
   "paused": false,
@@ -960,7 +960,16 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-api-handlers-compliance-superadmin-exact-match",
+    "code-review-mobile-native-kmp-create-listing-not-wired",
+    "code-review-ppt-web-core-ws-event-name-mismatch",
+    "code-review-ppt-web-core-api-onunauthorized-unwired",
+    "code-review-reality-server-alert-drainer-i18n-english-only",
+    "code-review-reality-server-sso-introspect-negcache-poison",
+    "code-review-reality-server-sso-per-call-client-no-timeout",
+    "code-review-reality-server-bytelen-charcount-validation",
+    "code-review-reality-server-report-contact-unvalidated"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -974,8 +983,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 73,
-    "vectors_created": 343,
+    "runs": 74,
+    "vectors_created": 352,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
