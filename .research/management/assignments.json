@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-31T11:36:19Z",
+  "generated": "2026-08-31T11:37:32Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -116,15 +116,15 @@
       "branch": "auto-impl/gh-issue-2906-733e464e",
       "status": "review",
       "claimed_at": "2026-08-31T10:32:35Z",
-      "last_updated": "2026-08-31T11:35:46Z",
+      "last_updated": "2026-08-31T11:37:32Z",
       "status_changed_at": "2026-08-31T11:35:46Z",
       "pr_number": 2907,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2907",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=2907 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=issue misdiagnosed; real shard-1 fail was booking_cross_user_idor_tests 401 (JWT-secret mismatch vs process-global JWT_VERIFIER OnceLock), aligned test secret, suite_2 412/0",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=test-only-jwt-secret-alignment-verified-oncelock-and-canonical-secret-confirmed-scope-drift-justified",
+      "last_reviewed_oid": "5f806f8dd62993522463aa6b3d3ab05bac4c6375",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
