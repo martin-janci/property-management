@@ -1593,7 +1593,15 @@ mod introspect_negcache_tests {
         let cache = TokenValidationCache::new(60, 100);
         let token = "tok-under-outage";
 
-        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token).await;
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await;
         assert!(result.is_err(), "a PM 5xx must surface as an error");
 
         assert!(
@@ -1609,7 +1617,15 @@ mod introspect_negcache_tests {
         let cache = TokenValidationCache::new(60, 100);
         let token = "tok-gateway-error";
 
-        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token).await;
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await;
         assert!(result.is_err());
         assert!(
             cache.get(token).await.is_none(),
@@ -1626,9 +1642,16 @@ mod introspect_negcache_tests {
         let cache = TokenValidationCache::new(60, 100);
         let token = "tok-really-inactive";
 
-        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token)
-            .await
-            .expect("2xx introspection must succeed");
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await
+        .expect("2xx introspection must succeed");
         assert!(!result.active, "body says inactive");
 
         let cached = cache.get(token).await.expect("genuine inactive is cached");
@@ -1642,9 +1665,16 @@ mod introspect_negcache_tests {
         let cache = TokenValidationCache::new(60, 100);
         let token = "tok-active";
 
-        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token)
-            .await
-            .expect("2xx introspection must succeed");
+        let result = introspect_pm_token_inner(
+            &cache,
+            &reqwest::Client::new(),
+            &url,
+            "cid",
+            "secret",
+            token,
+        )
+        .await
+        .expect("2xx introspection must succeed");
         assert!(result.active);
 
         let cached = cache.get(token).await.expect("active result is cached");
