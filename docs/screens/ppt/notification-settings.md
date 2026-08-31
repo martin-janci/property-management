@@ -86,9 +86,12 @@ There is a sibling **Advanced** route (`/settings/notifications/advanced`, `Adva
 - The disable-all guard is enforced **server-side** (the PATCH returns 409 / `ConfirmationRequiredError` for the last active channel); the dialog is purely the client surface for that contract. Do not rely on client-only counting.
 - The page currently renders standalone (no shared settings side-nav). `accessibility-settings` and `privacy-settings` both ship the side-nav and flag "Upozornenia" as a placeholder target — wiring this page into that shell is the natural redesign step (`redesignStatus: not-started`).
 - Labels/descriptions come from `CHANNEL_LABELS` / `CHANNEL_DESCRIPTIONS` in `@ppt/api-client` (English only today); i18n is a follow-up.
+- 2026-08-31 — realtime sync (PR #2889): the Story 8A.3 cross-session refresh path was only partly live. The api-client `sync.ts` WebSocket path documented above is separate from the app-wide TanStack invalidation in `WebSocketContext`, which was keyed on dead `entity:*` names the api-server never emits — so `preference.updated` (and `notification.created`) never invalidated the `notifications` query root. PR #2889 re-keyed `eventToQueryKeys['preference.updated'] → ['notifications']` and wired `App.tsx`'s `onEntityEvent`, so the notifications root now refetches on a preference change from another session. No change to this screen's own PATCH/GET wiring or status.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation from dead `entity:*` names to canonical `domain.action` events (`preference.updated → ['notifications']`, plus a polymorphic `notification.created` subscriber routing by `payload.category`), and `App.tsx` now wires `onEntityEvent → queryClient.invalidateQueries`. This is the app-wide invalidation counterpart to the Story 8A.3 `sync.ts` path already noted in Functionality D. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-06-28 — agent (coverage gap 8a-1): created screen-map for the already-shipped Channel-Level Notification Toggles feature (orphan epic — code on dev, no map). Added sitemap routes `ppt-settings-notifications` + `ppt-settings-notifications-advanced` and api-server endpoints `notification_preferences_list` / `notification_preference_update`; linked as sibling of accessibility/privacy-settings. buildStatus shipped, apiStatus complete, redesignStatus not-started.

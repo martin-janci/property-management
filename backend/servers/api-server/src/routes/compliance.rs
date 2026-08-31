@@ -38,6 +38,25 @@ fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
     }
 }
 
+/// Require the exact top-tier `SuperAdmin` role.
+///
+/// Stricter than [`require_platform_admin`]: the audit-log endpoints expose the
+/// platform-wide tamper-evident audit trail (who did what, integrity proofs),
+/// which must be readable only by `SuperAdmin` — not the operations-tier
+/// `PlatformAdmin` that `is_platform_admin` also admits. Match the exact variant
+/// (`TenantRole::SuperAdmin`, `level() == 100`) rather than a level threshold so
+/// no lower role can ever satisfy this gate.
+fn require_super_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
+    if matches!(user.role, Some(common::TenantRole::SuperAdmin)) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            "This endpoint requires super administrator privileges".to_string(),
+        ))
+    }
+}
+
 /// Create the compliance router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -126,7 +145,7 @@ async fn get_audit_logs(
     user: AuthUser,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_super_admin(&user)?;
     let action = params.action.and_then(|a| parse_audit_action(&a));
 
     let query = AuditLogQuery {
@@ -201,7 +220,7 @@ async fn get_audit_summary(
     user: AuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<AuditSummaryResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_super_admin(&user)?;
     let action_counts = state
         .audit_log_repo
         .get_action_counts(params.from_date, params.to_date, params.org_id)
@@ -241,7 +260,7 @@ async fn get_user_audit_logs(
     Path(user_id): Path<Uuid>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_super_admin(&user)?;
     let logs = state
         .audit_log_repo
         .get_user_logs(
@@ -293,7 +312,7 @@ async fn verify_audit_integrity(
     State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<IntegrityResponse>, (StatusCode, String)> {
-    require_platform_admin(&user)?;
+    require_super_admin(&user)?;
     let entries_to_check: i64 = 10000;
 
     let verified = state
@@ -816,6 +835,26 @@ mod tests {
             None,
         ] {
             let err = require_platform_admin(&user_with_role(role)).unwrap_err();
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+    }
+
+    #[test]
+    fn super_admin_guard_accepts_only_super_admin() {
+        // Audit-log endpoints are super-admin only: even the platform-tier
+        // PlatformAdmin must be rejected. (#2906)
+        assert!(require_super_admin(&user_with_role(Some(TenantRole::SuperAdmin))).is_ok());
+
+        for role in [
+            Some(TenantRole::PlatformAdmin),
+            Some(TenantRole::OrgAdmin),
+            Some(TenantRole::Manager),
+            Some(TenantRole::Owner),
+            Some(TenantRole::Tenant),
+            Some(TenantRole::Guest),
+            None,
+        ] {
+            let err = require_super_admin(&user_with_role(role)).unwrap_err();
             assert_eq!(err.0, StatusCode::FORBIDDEN);
         }
     }

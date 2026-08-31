@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-30T12:41:00Z",
+  "last_run_iso": "2026-08-31T14:45:57Z",
   "last_run_ms": 4000,
-  "last_pr_seen": 2888,
+  "last_pr_seen": 2904,
   "last_issue_seen": 2847,
-  "last_commit_sha": "9ba2f31c6a0c773989a50a78df8584e0dee4f5a7",
+  "last_commit_sha": "0b2999f361dfb88ad2f9fa38977ee799d3dece5d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -343,9 +343,9 @@
       "recent_churn": 3
     },
     "backend/servers/reality-server/src/routes/sso.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-12",
-      "recent_churn": 2
+      "runs_seen": 2,
+      "last_seen": "2026-08-31",
+      "recent_churn": 151
     },
     "frontend/apps/ppt-web/messages/en.json": {
       "runs_seen": 1,
@@ -511,6 +511,16 @@
       "runs_seen": 1,
       "last_seen": "2026-08-28",
       "recent_churn": 2
+    },
+    "backend/servers/reality-server/src/services/search_alert_drainer.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-31",
+      "recent_churn": 222
+    },
+    "frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-08-31",
+      "recent_churn": 151
     }
   },
   "seen_signals": [
@@ -580,6 +590,7 @@
     "churn-hotspot-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
     "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+    "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
     "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
     "churn-hotspot-docker/nginx/ppt-web.nginx.conf.template",
     "churn-hotspot-docs/repo-map.md",
@@ -604,6 +615,7 @@
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
@@ -660,6 +672,7 @@
     "code-review-api-handlers-capabilities-list-cross-org",
     "code-review-api-handlers-community-cross-tenant-idor",
     "code-review-api-handlers-community-unauthenticated-reads",
+    "code-review-api-handlers-compliance-superadmin-exact-match",
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
     "code-review-api-handlers-decide-appeal-unvalidated",
     "code-review-api-handlers-enhanced-chat-stub",
@@ -677,6 +690,7 @@
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
+    "code-review-mobile-native-kmp-create-listing-not-wired",
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
     "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
     "code-review-mobile-native-kmp-httpclient-no-timeout",
@@ -702,6 +716,7 @@
     "code-review-mobile-rn-thread-send-silent-fail",
     "code-review-mobile-rn-vote-list-cast",
     "code-review-mobile-rn-vote-xform-untested",
+    "code-review-ppt-web-core-api-onunauthorized-unwired",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
@@ -712,6 +727,7 @@
     "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
     "code-review-ppt-web-core-ws-pong-timeout-drop",
     "code-review-ppt-web-core-ws-token-rotation-stale",
@@ -738,6 +754,8 @@
     "code-review-ppt-web-ui-sessions-double-cast",
     "code-review-ppt-web-ui-untranslated-strings",
     "code-review-reality-server-agency-members-unauth-idor",
+    "code-review-reality-server-alert-drainer-i18n-english-only",
+    "code-review-reality-server-bytelen-charcount-validation",
     "code-review-reality-server-create-review-body-length-uncapped",
     "code-review-reality-server-inquiries-no-ratelimit",
     "code-review-reality-server-inquiry-email-stub",
@@ -747,6 +765,9 @@
     "code-review-reality-server-orphan-listinghandler-stub-detail",
     "code-review-reality-server-orphan-schedule-viewing-stub",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-reality-server-report-contact-unvalidated",
+    "code-review-reality-server-sso-introspect-negcache-poison",
+    "code-review-reality-server-sso-per-call-client-no-timeout",
     "code-review-reality-server-submit-report-no-rate-limit",
     "code-review-reality-web-agency-errorstate-i18n",
     "code-review-reality-web-agency-import-i18n",
@@ -882,6 +903,10 @@
     "screen-map-drift-pr-2647-ppt",
     "screen-map-drift-pr-2648-ppt",
     "screen-map-drift-pr-2649-ppt",
+    "screen-map-drift-pr-2889-ppt",
+    "screen-map-drift-pr-2890-reality",
+    "screen-map-drift-pr-2894-reality",
+    "screen-map-drift-pr-2895-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -961,21 +986,15 @@
     "untriaged-issue-950",
     "untriaged-issue-951",
     "untriaged-issue-952",
-    "code-review-api-handlers-compliance-superadmin-exact-match",
-    "code-review-mobile-native-kmp-create-listing-not-wired",
-    "code-review-ppt-web-core-ws-event-name-mismatch",
-    "code-review-ppt-web-core-api-onunauthorized-unwired",
-    "code-review-reality-server-alert-drainer-i18n-english-only",
-    "code-review-reality-server-sso-introspect-negcache-poison",
-    "code-review-reality-server-sso-per-call-client-no-timeout",
-    "code-review-reality-server-bytelen-charcount-validation",
-    "code-review-reality-server-report-contact-unvalidated"
+    "lag-warning-supplement-2026-08-31",
+    "resolution-check-2026-08-31-drift-2894",
+    "resolution-check-2026-08-31-drift-2895"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-29",
     "api-core": "2026-08-29",
-    "reality-server": "2026-08-28",
+    "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-08-29",
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
@@ -983,8 +1002,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 74,
-    "vectors_created": 352,
+    "runs": 76,
+    "vectors_created": 359,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
@@ -1000,19 +1019,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 4,
+    "next_index": 5,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
-      "pm-devops": "2026-06-16",
+      "pm-devops": "2026-08-31",
       "pm-security": "2026-07-21",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 6
+    "next_index": 7
   }
 }

@@ -9801,7 +9801,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30"
       ],
@@ -9813,7 +9813,12 @@
         "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-31T00:29:18Z",
+        "assignment_status": "merged",
+        "pr_number": 2894
+      }
     },
     {
       "id": "code-review-reality-web-inquiries-i18n",
@@ -9821,7 +9826,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30"
       ],
@@ -9833,7 +9838,12 @@
         "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-31T00:29:18Z",
+        "assignment_status": "merged",
+        "pr_number": 2895
+      }
     },
     {
       "id": "code-review-api-handlers-compliance-superadmin-exact-match",
@@ -10079,6 +10089,168 @@
         "at": "2026-08-30T18:54:59Z",
         "assignment_status": "merged",
         "pr_number": 2898
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2889-ppt",
+      "title": "screen-map-drift: PR #2889 touched ppt-web routes without updating docs/screens/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #2889"
+      ],
+      "evidence": [
+        "PR #2889 modified frontend/apps/ppt-web/src/App.tsx without touching docs/screens/ppt/*.md — see heuristic caveat (App.tsx wrapper-only edit; likely false positive)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-31T08:29:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2901
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2890-reality",
+      "title": "screen-map-drift: PR #2890 touched reality-web routes without updating docs/scre",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #2890"
+      ],
+      "evidence": [
+        "PR #2890 modified frontend/apps/reality-web/src/app/[locale]/{favorites,inquiries,saved-searches}/page.tsx without updating docs/screens/reality/*.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-31T08:29:59Z",
+        "assignment_status": "merged",
+        "pr_number": 2900
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2894-reality",
+      "title": "screen-map-drift: PR #2894 touched reality-web routes without updating docs/scre",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #2894",
+        "PR #2900"
+      ],
+      "evidence": [
+        "PR #2894 modified frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx without updating docs/screens/reality/saved-searches.md",
+        "resolved: PR #2900 merged 2026-08-31 updated docs/screens/reality/saved-searches.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2895-reality",
+      "title": "screen-map-drift: PR #2895 touched reality-web routes without updating docs/scre",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #2895",
+        "PR #2903"
+      ],
+      "evidence": [
+        "PR #2895 modified frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx without updating docs/screens/reality/inquiries.md",
+        "resolved: PR #2903 merged 2026-08-31 updated docs/screens/reality/inquiries.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
+      "title": "churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer.",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-08-31 (PR #2896)"
+      ],
+      "evidence": [
+        "churn=222 lines this run (PRs [2896])"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "title": "churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 0,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-08-31 (PR #2893)"
+      ],
+      "evidence": [
+        "churn=151 lines this run (PRs [2893])",
+        "cumulative re-emit — score_delta suppressed to 0 (already in state.seen_signals)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
+      "title": "churn-hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unautho",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "top-3 churn 2026-08-31 (PR #2891)"
+      ],
+      "evidence": [
+        "churn=151 lines this run (PRs [2891])"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx"
+      ],
+      "created_at": "2026-08-31",
+      "updated_at": "2026-08-31",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-31T10:29:00Z",
+        "assignment_status": "merged",
+        "pr_number": 2904
       }
     }
   ]
