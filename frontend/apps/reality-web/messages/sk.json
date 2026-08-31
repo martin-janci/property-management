@@ -706,13 +706,50 @@
       "error": "Nepodarilo sa načítať dopyty. Skúste to znova.",
       "emptyTitle": "Zatiaľ žiadne dopyty",
       "emptyText": "Keď kontaktujete maklérov ohľadom ponúk, vaše dopyty sa zobrazia tu.",
-      "browseListings": "Prehliadať ponuky"
+      "browseListings": "Prehliadať ponuky",
+      "title": "Moje dopyty",
+      "subtitle": "Sledujte svoje dopyty na nehnuteľnosti a žiadosti o obhliadku.",
+      "filterAll": "Všetky",
+      "status": {
+        "pending": "Čaká sa",
+        "responded": "Zodpovedané",
+        "scheduled": "Naplánované",
+        "completed": "Dokončené",
+        "cancelled": "Zrušené"
+      },
+      "viewingScheduled": "Obhliadka naplánovaná: {date} o {time}",
+      "agentResponse": "Odpoveď makléra:",
+      "cancelConfirm": "Zrušiť tento dopyt?",
+      "cancelYes": "Áno, zrušiť",
+      "cancelNo": "Nie",
+      "cancelInquiry": "Zrušiť dopyt",
+      "previous": "Predchádzajúca",
+      "next": "Ďalšia",
+      "pageInfo": "Strana {page} z {total}"
     },
     "savedSearches": {
-      "error": "Nepodarilo sa načítať uložené vyhľadávania. Skúste to znova.",
-      "emptyTitle": "Žiadne uložené vyhľadávania",
+      "alertsOff": "Upozornenia vypnuté",
+      "alertsOn": "Upozornenia zapnuté",
+      "allListings": "Všetky ponuky",
+      "confirmNo": "Nie",
+      "confirmYes": "Áno",
+      "deleteAriaLabel": "Odstrániť uložené vyhľadávanie",
+      "deleteConfirm": "Odstrániť?",
       "emptyText": "Vyhľadajte ponuky a uložte si vyhľadávanie, aby ste dostávali upozornenia, keď nové nehnuteľnosti zodpovedajú vašim kritériám.",
-      "startSearching": "Začať vyhľadávať"
+      "emptyTitle": "Žiadne uložené vyhľadávania",
+      "error": "Nepodarilo sa načítať uložené vyhľadávania. Skúste to znova.",
+      "forRent": "Na prenájom",
+      "forSale": "Na predaj",
+      "frequency": {
+        "daily": "Denne",
+        "instant": "Okamžite",
+        "weekly": "Týždenne"
+      },
+      "newCount": "{count} nových",
+      "startSearching": "Začať vyhľadávať",
+      "subtitle": "Spravujte svoje uložené vyhľadávania a dostávajte upozornenia, keď nové ponuky zodpovedajú vašim kritériám.",
+      "title": "Uložené vyhľadávania",
+      "view": "Zobraziť"
     },
     "realtorListings": {
       "error": "Nepodarilo sa načítať ponuky.",

@@ -13,19 +13,28 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
-use common::TenantRole;
 use db::models::{AuditAction, AuditLogQuery};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Check if user is a super admin.
-fn require_super_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
-    match user.role {
-        Some(TenantRole::SuperAdmin) => Ok(()),
-        _ => Err((
+/// Require platform-tier (SuperAdmin **or** PlatformAdmin) privileges.
+///
+/// These compliance reports (audit trails, GDPR, security) are platform-wide,
+/// so the whole platform tier must reach them. Previously this gated on an
+/// exact `SuperAdmin` match, which locked out `PlatformAdmin` — the
+/// infrastructure/operations role that sits directly below `SuperAdmin` in the
+/// role hierarchy (`TenantRole::level()`: 100 vs 95) and is classified as
+/// platform-tier by [`AuthUser::is_platform_admin`]. Reuse that canonical
+/// helper rather than hard-coding the variant list so the two cannot drift
+/// (mirrors `aml_dsa::shared::require_compliance_role`).
+fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
+    if user.is_platform_admin() {
+        Ok(())
+    } else {
+        Err((
             StatusCode::FORBIDDEN,
-            "This endpoint requires SUPER_ADMIN privileges".to_string(),
-        )),
+            "This endpoint requires platform administrator privileges".to_string(),
+        ))
     }
 }
 
@@ -117,7 +126,7 @@ async fn get_audit_logs(
     user: AuthUser,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let action = params.action.and_then(|a| parse_audit_action(&a));
 
     let query = AuditLogQuery {
@@ -192,7 +201,7 @@ async fn get_audit_summary(
     user: AuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<AuditSummaryResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let action_counts = state
         .audit_log_repo
         .get_action_counts(params.from_date, params.to_date, params.org_id)
@@ -232,7 +241,7 @@ async fn get_user_audit_logs(
     Path(user_id): Path<Uuid>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let logs = state
         .audit_log_repo
         .get_user_logs(
@@ -284,7 +293,7 @@ async fn verify_audit_integrity(
     State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<IntegrityResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let entries_to_check: i64 = 10000;
 
     let verified = state
@@ -339,7 +348,7 @@ async fn get_data_export_report(
     user: AuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<DataExportReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // For now, return a summary (in production, this would query with filters)
     let _ = params;
 
@@ -381,7 +390,7 @@ async fn get_deletion_requests_report(
     user: AuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<DeletionRequestsReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // Query users with scheduled_deletion_at set
     let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(
         r#"
@@ -439,7 +448,7 @@ async fn get_privacy_settings_report(
     user: AuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<PrivacySettingsReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // Get visibility distribution
     let visibility_rows: Vec<(String, i64)> = sqlx::query_as(
         r#"
@@ -515,7 +524,7 @@ async fn get_login_activity_report(
     mut rls: RlsConnection,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<LoginActivityReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let from_date = params
         .from_date
         .unwrap_or_else(|| Utc::now() - chrono::Duration::days(30));
@@ -601,7 +610,7 @@ async fn get_mfa_status_report(
     user: AuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<MfaStatusReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     // Count users with MFA enabled
     let (mfa_enabled,): (i64,) = sqlx::query_as(
         r#"
@@ -662,7 +671,7 @@ async fn get_failed_logins_report(
     mut rls: RlsConnection,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<FailedLoginsReportResponse>, (StatusCode, String)> {
-    require_super_admin(&user)?;
+    require_platform_admin(&user)?;
     let from_date = params
         .from_date
         .unwrap_or_else(|| Utc::now() - chrono::Duration::days(7));
@@ -768,5 +777,46 @@ fn parse_audit_action(s: &str) -> Option<AuditAction> {
         "resource_deleted" => Some(AuditAction::ResourceDeleted),
         "resource_accessed" => Some(AuditAction::ResourceAccessed),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use common::TenantRole;
+
+    fn user_with_role(role: Option<TenantRole>) -> AuthUser {
+        AuthUser {
+            user_id: Uuid::nil(),
+            email: "compliance@example.test".to_string(),
+            name: "Compliance Officer".to_string(),
+            tenant_id: None,
+            role,
+        }
+    }
+
+    #[test]
+    fn platform_tier_roles_pass_the_guard() {
+        // Both platform-tier roles must reach the platform-wide compliance
+        // reports. Regression: the guard previously matched SuperAdmin exactly
+        // and returned 403 for PlatformAdmin, breaking the platform-tier
+        // hierarchy (SuperAdmin=100, PlatformAdmin=95).
+        assert!(require_platform_admin(&user_with_role(Some(TenantRole::SuperAdmin))).is_ok());
+        assert!(require_platform_admin(&user_with_role(Some(TenantRole::PlatformAdmin))).is_ok());
+    }
+
+    #[test]
+    fn tenant_scoped_roles_and_anonymous_get_403() {
+        for role in [
+            Some(TenantRole::OrgAdmin),
+            Some(TenantRole::Manager),
+            Some(TenantRole::Owner),
+            Some(TenantRole::Tenant),
+            Some(TenantRole::Guest),
+            None,
+        ] {
+            let err = require_platform_admin(&user_with_role(role)).unwrap_err();
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
     }
 }

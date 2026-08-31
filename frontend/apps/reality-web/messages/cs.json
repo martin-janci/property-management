@@ -706,13 +706,50 @@
       "error": "Nepodařilo se načíst poptávky. Zkuste to znovu.",
       "emptyTitle": "Zatím žádné poptávky",
       "emptyText": "Když kontaktujete makléře ohledně nabídek, vaše poptávky se zobrazí zde.",
-      "browseListings": "Procházet nabídky"
+      "browseListings": "Procházet nabídky",
+      "title": "Moje poptávky",
+      "subtitle": "Sledujte své poptávky nemovitostí a žádosti o prohlídku.",
+      "filterAll": "Vše",
+      "status": {
+        "pending": "Čeká se",
+        "responded": "Zodpovězeno",
+        "scheduled": "Naplánováno",
+        "completed": "Dokončeno",
+        "cancelled": "Zrušeno"
+      },
+      "viewingScheduled": "Prohlídka naplánována: {date} v {time}",
+      "agentResponse": "Odpověď makléře:",
+      "cancelConfirm": "Zrušit tuto poptávku?",
+      "cancelYes": "Ano, zrušit",
+      "cancelNo": "Ne",
+      "cancelInquiry": "Zrušit poptávku",
+      "previous": "Předchozí",
+      "next": "Další",
+      "pageInfo": "Strana {page} z {total}"
     },
     "savedSearches": {
-      "error": "Nepodařilo se načíst uložená hledání. Zkuste to znovu.",
-      "emptyTitle": "Žádná uložená hledání",
+      "alertsOff": "Upozornění vypnutá",
+      "alertsOn": "Upozornění zapnutá",
+      "allListings": "Všechny nabídky",
+      "confirmNo": "Ne",
+      "confirmYes": "Ano",
+      "deleteAriaLabel": "Odstranit uložené hledání",
+      "deleteConfirm": "Odstranit?",
       "emptyText": "Vyhledejte nabídky a uložte si hledání, abyste dostávali upozornění, když nové nemovitosti odpovídají vašim kritériím.",
-      "startSearching": "Začít hledat"
+      "emptyTitle": "Žádná uložená hledání",
+      "error": "Nepodařilo se načíst uložená hledání. Zkuste to znovu.",
+      "forRent": "K pronájmu",
+      "forSale": "Na prodej",
+      "frequency": {
+        "daily": "Denně",
+        "instant": "Okamžitě",
+        "weekly": "Týdně"
+      },
+      "newCount": "{count} nových",
+      "startSearching": "Začít hledat",
+      "subtitle": "Spravujte svá uložená hledání a nechte se upozornit, když nové nabídky odpovídají vašim kritériím.",
+      "title": "Uložená hledání",
+      "view": "Zobrazit"
     },
     "realtorListings": {
       "error": "Nepodařilo se načíst nabídky.",

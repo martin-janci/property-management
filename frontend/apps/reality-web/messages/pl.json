@@ -699,13 +699,50 @@
       "error": "Nie udało się załadować zapytań. Spróbuj ponownie.",
       "emptyTitle": "Brak zapytań",
       "emptyText": "Gdy skontaktujesz się z agentami w sprawie ofert, Twoje zapytania pojawią się tutaj.",
-      "browseListings": "Przeglądaj oferty"
+      "browseListings": "Przeglądaj oferty",
+      "title": "Moje zapytania",
+      "subtitle": "Śledź swoje zapytania o nieruchomości i prośby o oglądanie.",
+      "filterAll": "Wszystkie",
+      "status": {
+        "pending": "Oczekujące",
+        "responded": "Odpowiedziano",
+        "scheduled": "Zaplanowane",
+        "completed": "Zakończone",
+        "cancelled": "Anulowane"
+      },
+      "viewingScheduled": "Oglądanie zaplanowane: {date} o {time}",
+      "agentResponse": "Odpowiedź agenta:",
+      "cancelConfirm": "Anulować to zapytanie?",
+      "cancelYes": "Tak, anuluj",
+      "cancelNo": "Nie",
+      "cancelInquiry": "Anuluj zapytanie",
+      "previous": "Poprzednia",
+      "next": "Następna",
+      "pageInfo": "Strona {page} z {total}"
     },
     "savedSearches": {
-      "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",
-      "emptyTitle": "Brak zapisanych wyszukiwań",
+      "alertsOff": "Powiadomienia wyłączone",
+      "alertsOn": "Powiadomienia włączone",
+      "allListings": "Wszystkie oferty",
+      "confirmNo": "Nie",
+      "confirmYes": "Tak",
+      "deleteAriaLabel": "Usuń zapisane wyszukiwanie",
+      "deleteConfirm": "Usunąć?",
       "emptyText": "Wyszukuj oferty i zapisz wyszukiwanie, aby otrzymywać powiadomienia, gdy nowe nieruchomości spełnią Twoje kryteria.",
-      "startSearching": "Rozpocznij wyszukiwanie"
+      "emptyTitle": "Brak zapisanych wyszukiwań",
+      "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",
+      "forRent": "Na wynajem",
+      "forSale": "Na sprzedaż",
+      "frequency": {
+        "daily": "Codziennie",
+        "instant": "Natychmiast",
+        "weekly": "Co tydzień"
+      },
+      "newCount": "{count} nowych",
+      "startSearching": "Rozpocznij wyszukiwanie",
+      "subtitle": "Zarządzaj swoimi zapisanymi wyszukiwaniami i otrzymuj powiadomienia, gdy nowe oferty spełnią Twoje kryteria.",
+      "title": "Zapisane wyszukiwania",
+      "view": "Zobacz"
     },
     "realtorListings": {
       "error": "Nie udało się załadować ofert.",

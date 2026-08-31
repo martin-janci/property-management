@@ -706,13 +706,50 @@
       "error": "Failed to load inquiries. Please try again.",
       "emptyTitle": "No inquiries yet",
       "emptyText": "When you contact agents about listings, your inquiries will appear here.",
-      "browseListings": "Browse listings"
+      "browseListings": "Browse listings",
+      "title": "My Inquiries",
+      "subtitle": "Track your property inquiries and viewing requests.",
+      "filterAll": "All",
+      "status": {
+        "pending": "Pending",
+        "responded": "Responded",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "viewingScheduled": "Viewing scheduled: {date} at {time}",
+      "agentResponse": "Agent response:",
+      "cancelConfirm": "Cancel this inquiry?",
+      "cancelYes": "Yes, cancel",
+      "cancelNo": "No",
+      "cancelInquiry": "Cancel inquiry",
+      "previous": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {page} of {total}"
     },
     "savedSearches": {
-      "error": "Failed to load saved searches. Please try again.",
-      "emptyTitle": "No saved searches",
+      "alertsOff": "Alerts off",
+      "alertsOn": "Alerts on",
+      "allListings": "All listings",
+      "confirmNo": "No",
+      "confirmYes": "Yes",
+      "deleteAriaLabel": "Delete saved search",
+      "deleteConfirm": "Delete?",
       "emptyText": "Search for listings and save your search to get alerts when new properties match your criteria.",
-      "startSearching": "Start searching"
+      "emptyTitle": "No saved searches",
+      "error": "Failed to load saved searches. Please try again.",
+      "forRent": "For Rent",
+      "forSale": "For Sale",
+      "frequency": {
+        "daily": "Daily",
+        "instant": "Instant",
+        "weekly": "Weekly"
+      },
+      "newCount": "{count} new",
+      "startSearching": "Start searching",
+      "subtitle": "Manage your saved searches and get notified when new listings match your criteria.",
+      "title": "Saved Searches",
+      "view": "View"
     },
     "realtorListings": {
       "error": "Failed to load listings.",

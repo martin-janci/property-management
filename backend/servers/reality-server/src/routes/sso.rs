@@ -732,8 +732,39 @@ async fn introspect_pm_token(
     state: &AppState,
     token: &str,
 ) -> Result<TokenIntrospectionResponse, anyhow::Error> {
+    introspect_pm_token_inner(
+        &state.token_cache,
+        &state.pm_oauth_client,
+        &state.config.pm_introspect_url,
+        &state.config.pm_client_id,
+        &state.config.pm_client_secret,
+        token,
+    )
+    .await
+}
+
+/// DB-free core of [`introspect_pm_token`], taking only the token cache and the
+/// PM introspection endpoint config so the negative-cache-poisoning invariant
+/// is unit-testable without an `AppState`/database.
+///
+/// Negative-cache poisoning guard: an introspection *failure* — a PM 5xx
+/// outage, a 502/504 gateway error, or a transport error — tells us nothing
+/// about the token's real state. RFC 7662 reports a genuinely inactive token as
+/// an HTTP 2xx carrying `{"active": false}`, so a real "inactive" verdict is
+/// always recorded via the success path below. We therefore cache ONLY
+/// successful responses; a non-2xx status returns an error WITHOUT writing the
+/// cache, so a transient PM outage cannot deny every session presenting that
+/// token for the full cache TTL (Epic 104.2).
+async fn introspect_pm_token_inner(
+    token_cache: &crate::state::TokenValidationCache,
+    client: &reqwest::Client,
+    introspect_url: &str,
+    client_id: &str,
+    client_secret: &str,
+    token: &str,
+) -> Result<TokenIntrospectionResponse, anyhow::Error> {
     // Story 104.2: Check cache first
-    if let Some(cached) = state.token_cache.get(token).await {
+    if let Some(cached) = token_cache.get(token).await {
         tracing::debug!(active = cached.active, "SSO token validation cache hit");
         return Ok(TokenIntrospectionResponse {
             active: cached.active,
@@ -745,32 +776,34 @@ async fn introspect_pm_token(
 
     // Cache miss - perform actual introspection
     tracing::debug!("SSO token validation cache miss, calling PM API");
-    let response = state
-        .pm_oauth_client
-        .post(&state.config.pm_introspect_url)
+    let response = client
+        .post(introspect_url)
         .form(&[
             ("token", token),
-            ("client_id", &state.config.pm_client_id),
-            ("client_secret", &state.config.pm_client_secret),
+            ("client_id", client_id),
+            ("client_secret", client_secret),
         ])
         .send()
         .await?;
 
-    if !response.status().is_success() {
+    let status = response.status();
+    if !status.is_success() {
         let error_text = response.text().await.unwrap_or_default();
-        // Cache inactive tokens too (to prevent repeated failed validations)
-        state.token_cache.set(token, false, None, None).await;
+        // Do NOT cache: a non-2xx introspection response (PM 5xx/outage,
+        // gateway error, auth misconfig) is not a genuine `active=false`
+        // verdict. Caching it as inactive would poison the negative cache and
+        // deny otherwise-valid sessions for the full TTL during a transient PM
+        // introspection outage.
         return Err(anyhow::anyhow!(
-            "Token introspection failed: {}",
-            error_text
+            "Token introspection failed ({status}): {error_text}"
         ));
     }
 
     let result: TokenIntrospectionResponse = response.json().await?;
 
-    // Story 104.2: Cache the validation result
-    state
-        .token_cache
+    // Story 104.2: Cache the definitive validation result — including a genuine
+    // `active=false`, which arrives here as an HTTP 2xx per RFC 7662.
+    token_cache
         .set(
             token,
             result.active,
@@ -1522,6 +1555,101 @@ mod sync_session_invalidation_tests {
         let (status, err) = inactive_pm_token_response(None);
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(err.error, "pm_session_expired");
+    }
+}
+
+/// Regression: PM introspection outages must NOT poison the negative
+/// (`active=false`) token-validation cache.
+///
+/// Before the fix, a non-2xx response from the PM introspection endpoint wrote
+/// `active=false` into the 60 s cache, so every session presenting that token
+/// was denied for the full TTL during a transient PM 5xx outage. These tests
+/// exercise the DB-free introspection core against a stubbed PM endpoint.
+#[cfg(test)]
+mod introspect_negcache_tests {
+    use super::introspect_pm_token_inner;
+    use crate::state::TokenValidationCache;
+    use axum::{http::StatusCode, routing::post, Router};
+
+    /// Spin a throwaway HTTP server on 127.0.0.1 that answers every POST with a
+    /// fixed status + body, and return its introspection URL.
+    async fn spawn_pm_stub(status: StatusCode, body: &'static str) -> String {
+        let app = Router::new().route("/introspect", post(move || async move { (status, body) }));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind stub");
+        let addr = listener.local_addr().expect("addr");
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+        format!("http://{addr}/introspect")
+    }
+
+    /// A PM 5xx (introspection outage) must return an error AND leave the cache
+    /// untouched — no negative entry to deny the token for the next 60 s.
+    #[tokio::test]
+    async fn pm_5xx_does_not_poison_negative_cache() {
+        let url = spawn_pm_stub(StatusCode::SERVICE_UNAVAILABLE, "pm down").await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-under-outage";
+
+        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token).await;
+        assert!(result.is_err(), "a PM 5xx must surface as an error");
+
+        assert!(
+            cache.get(token).await.is_none(),
+            "an introspection outage must NOT write a negative cache entry",
+        );
+    }
+
+    /// A PM 502 gateway error is likewise indeterminate and must not be cached.
+    #[tokio::test]
+    async fn pm_502_does_not_poison_negative_cache() {
+        let url = spawn_pm_stub(StatusCode::BAD_GATEWAY, "bad gateway").await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-gateway-error";
+
+        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token).await;
+        assert!(result.is_err());
+        assert!(
+            cache.get(token).await.is_none(),
+            "a gateway error must NOT write a negative cache entry",
+        );
+    }
+
+    /// A genuine inactive verdict arrives as HTTP 2xx per RFC 7662 — that IS
+    /// cacheable, so repeated presentations of a truly-inactive token are still
+    /// short-circuited by the cache.
+    #[tokio::test]
+    async fn genuine_inactive_is_cached() {
+        let url = spawn_pm_stub(StatusCode::OK, r#"{"active":false}"#).await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-really-inactive";
+
+        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token)
+            .await
+            .expect("2xx introspection must succeed");
+        assert!(!result.active, "body says inactive");
+
+        let cached = cache.get(token).await.expect("genuine inactive is cached");
+        assert!(!cached.active);
+    }
+
+    /// A genuine active verdict is cached as active.
+    #[tokio::test]
+    async fn genuine_active_is_cached() {
+        let url = spawn_pm_stub(StatusCode::OK, r#"{"active":true,"sub":"u-1"}"#).await;
+        let cache = TokenValidationCache::new(60, 100);
+        let token = "tok-active";
+
+        let result = introspect_pm_token_inner(&cache, &reqwest::Client::new(), &url, "cid", "secret", token)
+            .await
+            .expect("2xx introspection must succeed");
+        assert!(result.active);
+
+        let cached = cache.get(token).await.expect("active result is cached");
+        assert!(cached.active);
+        assert_eq!(cached.sub.as_deref(), Some("u-1"));
     }
 }
 

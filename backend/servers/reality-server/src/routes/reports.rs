@@ -36,7 +36,7 @@ const MAX_URL_LEN: usize = 2048;
 /// Inlined locally per H7 brief — once the auth-hardening branch lands a
 /// shared `url_validator` module this should be swapped for the import.
 fn validate_image_or_link_url(s: &str) -> Result<(), String> {
-    if s.len() > MAX_URL_LEN {
+    if s.chars().count() > MAX_URL_LEN {
         return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
     }
     let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
@@ -196,7 +196,7 @@ pub async fn submit_report(
             "Description is required".to_string(),
         ));
     }
-    if data.description.len() > MAX_REPORT_DESCRIPTION_LEN {
+    if data.description.chars().count() > MAX_REPORT_DESCRIPTION_LEN {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             format!(
@@ -223,6 +223,33 @@ pub async fn submit_report(
                     "Attachment URL is invalid (must be http(s) and <= 2048 chars)".to_string(),
                 ));
             }
+        }
+    }
+
+    // Optional reporter contact details are persisted verbatim into
+    // `listing_reports` and later surfaced to moderators, so they need the same
+    // length + format guarantees as the anonymous inquiry contact fields.
+    // Reuse `InquiriesHandler::is_valid_email` / `is_valid_phone` (the identical
+    // anonymous-contact validators) rather than re-deriving divergent checks
+    // here. Both are optional: skip when absent or blank, reject when present
+    // but malformed. `is_valid_email` caps length at 254 chars and
+    // `is_valid_phone` at 9–15 cleaned digits, covering the length bound too.
+    if let Some(ref email) = data.reporter_email {
+        let email = email.trim().to_lowercase();
+        if !email.is_empty() && !InquiriesHandler::is_valid_email(&email) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid reporter email format".to_string(),
+            ));
+        }
+    }
+    if let Some(ref phone) = data.reporter_phone {
+        let phone = phone.trim();
+        if !phone.is_empty() && !InquiriesHandler::is_valid_phone(phone) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid reporter phone number format".to_string(),
+            ));
         }
     }
 
