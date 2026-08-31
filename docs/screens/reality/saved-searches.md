@@ -107,11 +107,13 @@ UC-45 saved searches & alerts. Each saved search is a serialized filter state fr
 - Modal must trap focus + close on Escape; scrim click-to-close optional but standard.
 - DE strings ~35% longer ("Gespeicherte Suchen" vs "Uložené hľadania") — hero h1 must wrap; modal accordion summary text uses ellipsis only on closed state.
 - Frequency `instant` ships push + email within 5 min of new match; daily uses 09:00 local with weekend silence — backend must respect both. Surface this to UC-23 quiet-hours user prefs.
+- **Mutation error surfacing (PR #2890, 2026-08-30):** delete-search (`useDeleteSavedSearch`) and alert-toggle (`useToggleSearchAlert`) failures were previously swallowed silently; the shipped `SavedSearchCard` now renders an inline `.card-error` message (`role="alert"`, `aria-live="assertive"`) inside the affected card via the mutation `isError` flag. Reuses the shared `error.description` key (all six locales) — no new locale strings, no endpoint change.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-08-31 — agent: screen-map drift reconcile for PR #2890 ("surface swallowed mutation errors"). reality-web `app/[locale]/saved-searches/page.tsx` `SavedSearchCard` now surfaces `useDeleteSavedSearch`/`useToggleSearchAlert` failures inline (`.card-error`, `role="alert"`, `aria-live="assertive"`, rendered inside the affected card) instead of silently swallowing them. Reuses the shared `error.description` i18n key — no catalog change, no new endpoints. Added a Specific note. Frontmatter unchanged: `buildStatus: shipped`, `apiStatus: partial` (error-handling hardening, no API surface change).
 - 2026-05-13 — agent: implemented KMP SavedSearchesScreen redesign per ui_kits/mobile-native/screens-extension.jsx KmpSavedSearchesScreen. Large-title header + back + primaryContainer "New search" pill, row cards with bookmark leading icon (filled when alerts on), clock + age + match-count meta, kebab menu (Enable/Disable alerts · Delete), "ALERTS ON/OFF" uppercase pill + "Run" primaryContainer pill action. Empty state with 72dp tinted circle. Added 6 strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (pages/saved-searches.html — 4 list states + create-edit modal); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (6 sections), all 4 states, design-specific notes; linked UC-45/31; declared 7 sharedComponents; added 2 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)
