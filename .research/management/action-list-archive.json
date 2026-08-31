@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-31T08:30:08Z",
+  "archived_at": "2026-08-31T08:37:48Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1880,6 +1880,30 @@
         "pr": 2735,
         "merged_at": "2026-08-11T14:09:24Z",
         "landed_on": "dev"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
+      "action": "churn-hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unautho",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-31T04:25:43Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-08-31T08:37:48Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-31T04:25:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2904,
+        "merged_at": "2026-08-31T08:37:34Z",
+        "at": "2026-08-31T08:37:48Z"
       }
     },
     {
