@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-08-31 03:11 UTC by routine</sub>
+<sub>Last regenerated: 2026-08-31 14:45 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -38,10 +38,10 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
-| 2 | test-gap | screen-map-drift: PR #2889 touched ppt-web routes without updating docs/screens/ | `frontend/apps/ppt-web/src/App.tsx` | PR #2889 | 2026-08-31 | open | — |
-| 2 | test-gap | screen-map-drift: PR #2890 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx (+2)` | PR #2890 | 2026-08-31 | open | — |
-| 2 | test-gap | screen-map-drift: PR #2894 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx` | PR #2894 | 2026-08-31 | open | — |
-| 2 | test-gap | screen-map-drift: PR #2895 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx` | PR #2895 | 2026-08-31 | open | — |
+| 2 | test-gap | screen-map-drift: PR #2889 touched ppt-web routes without updating docs/screens/ | `frontend/apps/ppt-web/src/App.tsx` | PR #2889 | 2026-08-31 | done | — |
+| 2 | test-gap | screen-map-drift: PR #2890 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx (+2)` | PR #2890 | 2026-08-31 | done | — |
+| 2 | test-gap | screen-map-drift: PR #2894 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx` | PR #2894 (+1) | 2026-08-31 | done | — |
+| 2 | test-gap | screen-map-drift: PR #2895 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx` | PR #2895 (+1) | 2026-08-31 | done | — |
 | 2 | bug | Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surfacing) | `frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx (+2)` | rotating-expert-review 2026-08-30 | 2026-08-30 | done | — |
 | 2 | bug | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | `mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp) | 2026-08-30 | open | — |
 | 2 | bug | WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime cache invalidation 100% dead | `frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx (+2)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core) | 2026-08-30 | done | — |
@@ -169,7 +169,7 @@
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
 | 1 | refactor | churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer. | `backend/servers/reality-server/src/services/search_alert_drainer.rs` | top-3 churn 2026-08-31 (PR #2896) | 2026-08-31 | open | — |
-| 1 | refactor | churn-hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unautho | `frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx` | top-3 churn 2026-08-31 (PR #2891) | 2026-08-31 | open | — |
+| 1 | refactor | churn-hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unautho | `frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx` | top-3 churn 2026-08-31 (PR #2891) | 2026-08-31 | done | — |
 | 1 | bug | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | mobile-native-kmp segment review 2026-08-16 | 2026-08-30 | open | — |
 | 1 | bug | Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app | `frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx` | rotating-expert-review 2026-08-30 | 2026-08-30 | done | — |
 | 1 | bug | Inquiries page renders hardcoded English status labels and chrome in a 4-language app | `frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx` | rotating-expert-review 2026-08-30 | 2026-08-30 | done | — |

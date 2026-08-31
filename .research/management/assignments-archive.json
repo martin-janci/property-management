@@ -1969,6 +1969,28 @@
       "merge_attempted_at": "2026-08-11T14:08:58Z"
     },
     {
+      "task_id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-481ca55d",
+      "status": "merged",
+      "claimed_at": "2026-08-31T06:26:28Z",
+      "last_updated": "2026-08-31T08:37:34Z",
+      "status_changed_at": "2026-08-31T08:37:34Z",
+      "pr_number": 2904,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2904",
+      "merged_at": "2026-08-31T08:37:34Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2904 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=removed redundant localStorage shim (already in global src/test/setup.ts); ppt-web verify green (132 files/2576 tests); drift is owner-area-map mismatch only, single test file",
+      "reviewer_summary": "verdict=approve note=test-only dedup of dead localStorage shim; CI green; COMMENT (no self-approve)",
+      "last_reviewed_oid": "fb517b0195fdcf3e1208778f2df44bd195c9072b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-31T08:37:34Z"
+    },
+    {
       "task_id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-src-1cd45238",
       "status": "merged",
@@ -15845,6 +15867,28 @@
       "merge_attempted_at": "2026-08-31T06:38:30Z"
     },
     {
+      "task_id": "screen-map-drift-pr-2895-reality",
+      "branch": "auto-impl/screen-map-drift-pr-2895-reality-a9018a0a",
+      "status": "merged",
+      "claimed_at": "2026-08-31T06:26:28Z",
+      "last_updated": "2026-08-31T14:41:22Z",
+      "status_changed_at": "2026-08-31T14:41:22Z",
+      "pr_number": 2903,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2903",
+      "merged_at": "2026-08-31T14:41:22Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2903 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=reconciled docs/screens/reality/inquiries.md for PR #2895 i18n; agent-log+specific note, no frontmatter flip; /screens validate clean (167,0) | [dispatcher 2026-08-31: MERGED via MCP squash 0b2999f3 — docs-only, CI green, GH mergeable=clean; gh unavailable → mcp__github__merge_pull_request fallback]",
+      "reviewer_summary": "verdict=approve note=docs-only reality screen-map reconcile for PR#2895 pure-i18n; frontmatter correctly unchanged; COMMENT (no self-approve)",
+      "last_reviewed_oid": "d583ffa9cf477eb57f7398126490bae045f1cb5e",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -16775,5 +16819,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-31T06:38:47Z"
+  "archived_at": "2026-08-31T14:41:32Z"
 }

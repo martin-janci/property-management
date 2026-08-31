@@ -27,14 +27,25 @@ use uuid::Uuid;
 use crate::common::TestApp;
 use std::sync::Once;
 
-const JWT_SECRET: &str = "test-secret-key-at-least-32-chars-long!!";
+/// Must be the SAME secret the shared `TestConfig::default()` harness stamps
+/// into `JWT_SECRET` (see `tests/common/mod.rs`). The `AuthUser` extractor's
+/// `JWT_VERIFIER` is a process-global `OnceLock`: the first request in the test
+/// binary caches a `DecodingKey` from whatever `JWT_SECRET` is set then, and
+/// every later request in that process reuses it. These cases run inside the
+/// bundled `suite_2` binary alongside ~400 tests that use the canonical secret,
+/// so that secret wins the cache. Minting with a *different* key here made every
+/// token fail signature validation → 401 instead of the expected 403/200 (#2906).
+/// Keep this identical to the harness secret so tokens validate regardless of
+/// which test initializes the verifier first.
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 static SECRET_ONCE: Once = Once::new();
 
 /// Stamp `JWT_SECRET` so the `AuthUser` extractor validates against the same
 /// key our tokens are minted with. Must run before `TestApp::new`, which only
-/// sets a default when the var is unset (CI does not export it). Mirrors the
-/// pattern in `token_scope_tests.rs`.
+/// sets a default when the var is unset (CI does not export it). Sets the
+/// canonical harness secret, so it is consistent with every other `suite_2`
+/// test sharing the process-global `JWT_VERIFIER`.
 fn ensure_jwt_secret() {
     SECRET_ONCE.call_once(|| std::env::set_var("JWT_SECRET", JWT_SECRET));
 }

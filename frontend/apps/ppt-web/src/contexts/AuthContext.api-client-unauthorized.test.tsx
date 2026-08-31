@@ -18,38 +18,10 @@
  */
 /// <reference types="vitest/globals" />
 
-// jsdom under vitest 4 does not expose localStorage by default (mirrors the
-// polyfill in the sibling token test). Provide an in-memory shim before any
-// SUT module is imported so tokenStorage.* can read/write.
-const __memStore = new Map<string, string>();
-const __localStorageShim: Storage = {
-  get length() {
-    return __memStore.size;
-  },
-  clear: () => __memStore.clear(),
-  getItem: (k) => (__memStore.has(k) ? (__memStore.get(k) as string) : null),
-  key: (i) => Array.from(__memStore.keys())[i] ?? null,
-  removeItem: (k) => {
-    __memStore.delete(k);
-  },
-  setItem: (k, v) => {
-    __memStore.set(k, String(v));
-  },
-};
-if (typeof globalThis.localStorage === 'undefined') {
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: __localStorageShim,
-    configurable: true,
-    writable: true,
-  });
-}
-if (typeof window !== 'undefined' && typeof window.localStorage === 'undefined') {
-  Object.defineProperty(window, 'localStorage', {
-    value: __localStorageShim,
-    configurable: true,
-    writable: true,
-  });
-}
+// The in-memory `localStorage` polyfill (jsdom under vitest omits it) and the
+// per-test storage cleanup are provided globally by `src/test/setup.ts`
+// (wired via `setupFiles` in vitest.config.ts), so this file no longer needs
+// its own shim — it just reads/writes `localStorage` directly.
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, waitFor } from '@testing-library/react';

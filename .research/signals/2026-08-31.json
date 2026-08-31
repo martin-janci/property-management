@@ -12,7 +12,9 @@
     "closed_not_merged": 0,
     "issues": 0,
     "commits_on_dev": 21,
-    "signals_emitted": 7
+    "signals_emitted": 7,
+    "merged_prs_including_supplementary": 14,
+    "drift_resolutions_this_run": 2
   },
   "signals": [
     {
@@ -24,7 +26,7 @@
       "candidate_vector": "test-gap",
       "product": "ppt",
       "evidence": [
-        "PR #2889 modified frontend/apps/ppt-web/src/App.tsx without touching docs/screens/ppt/*.md \u2014 see heuristic caveat (App.tsx wrapper-only edit; likely false positive)"
+        "PR #2889 modified frontend/apps/ppt-web/src/App.tsx without touching docs/screens/ppt/*.md — see heuristic caveat (App.tsx wrapper-only edit; likely false positive)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx"
@@ -100,7 +102,7 @@
       "candidate_vector": "refactor",
       "evidence": [
         "churn=151 lines this run (PRs [2893])",
-        "cumulative re-emit \u2014 score_delta suppressed to 0 (already in state.seen_signals)"
+        "cumulative re-emit — score_delta suppressed to 0 (already in state.seen_signals)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/sso.rs"
@@ -258,6 +260,30 @@
       "command": "grep telegram token pattern",
       "observed": "0",
       "expected": "0"
+    },
+    {
+      "goal": "supplementary-run-integrity",
+      "passed": true,
+      "command": "python3 <resolution-flip>; regen backlog.md + IDEAS_TRIAGE.md; jq state.json advance",
+      "observed": "2 drift rows flipped open->done in backlog.json; backlog.md and IDEAS_TRIAGE.md byte-identical to fresh regen; state.json advanced",
+      "expected": "exit 0"
+    }
+  ],
+  "supplementary_runs": [
+    {
+      "trigger_iso": "2026-08-31T14:47:30Z",
+      "trigger": "buffer-low-refill",
+      "payload_data": "landable-claimable~1/72 (remaining backlog all mobile-native-gated + operator-only devops infra; backend queue jammed on audit-log RBAC base failure)",
+      "actions": [
+        "flip screen-map-drift-pr-2894-reality open -> done (resolved by merged PR #2900)",
+        "flip screen-map-drift-pr-2895-reality open -> done (resolved by merged PR #2903)",
+        "regenerate backlog.md and IDEAS_TRIAGE.md (also picks up dispatcher-flipped 2889/2890/AuthContext done rows the morning render missed)",
+        "advance state.json last_pr_seen 2899 -> 2904, last_commit_sha to 0b2999f, last_run_iso",
+        "notify operator via PushNotification about buffer-low landing options"
+      ],
+      "signals_derived": [],
+      "plans_promoted": 0,
+      "auto_fix_actions": []
     }
   ]
 }
