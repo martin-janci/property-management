@@ -15801,6 +15801,50 @@
       "merge_attempted_at": "2026-08-04T18:11:30Z"
     },
     {
+      "task_id": "screen-map-drift-pr-2889-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-2889-ppt-2aba9c1b",
+      "status": "merged",
+      "claimed_at": "2026-08-31T04:31:08Z",
+      "last_updated": "2026-08-31T06:38:30Z",
+      "status_changed_at": "2026-08-31T06:38:30Z",
+      "pr_number": 2901,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2901",
+      "merged_at": "2026-08-31T06:37:21Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2901 status=done specialist=react-web scope_drift=false note=docs-only reconcile of 7 ppt list screens for PR #2889 realtime invalidation; validate 167/0/0; VERIFY OK; no frontmatter flip",
+      "reviewer_summary": "verdict=approve note=docs-only-screen-map-reconciliation-accurate-vs-pr2889-no-fabricated-status",
+      "last_reviewed_oid": "66e06951b50ed70951680c3327f0331096a1ab05",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-31T06:38:30Z"
+    },
+    {
+      "task_id": "screen-map-drift-pr-2890-reality",
+      "branch": "auto-impl/screen-map-drift-pr-2890-reality-c45db2ca",
+      "status": "merged",
+      "claimed_at": "2026-08-31T04:31:08Z",
+      "last_updated": "2026-08-31T06:38:30Z",
+      "status_changed_at": "2026-08-31T06:38:30Z",
+      "pr_number": 2900,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2900",
+      "merged_at": "2026-08-31T06:37:24Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2900 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=reconciled favorites/saved-searches/inquiries screen-maps for PR #2890; no status flip; validate 0/0",
+      "reviewer_summary": "verdict=approve note=docs-only-reality-screen-map-reconcile-verified-accurate-vs-pr2890-validate-clean",
+      "last_reviewed_oid": "e8fdfd9ba01e6ae5973c311773c0047b3f73054b",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-31T06:38:30Z"
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -16731,5 +16775,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-30T22:34:19Z"
+  "archived_at": "2026-08-31T06:38:47Z"
 }
